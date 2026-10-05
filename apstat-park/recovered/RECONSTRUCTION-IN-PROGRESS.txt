@@ -1,0 +1,78 @@
+Work branch: work/pico-native-fidelity. NOT READY TO MERGE OR DEPLOY.
+
+The user requested continued work until the complete 48-stage campaign is
+faithful. That objective is not yet achieved. This isolated checkout keeps
+unfinished runtime changes out of the classroom deployment.
+
+Integrated corrections with focused browser coverage:
+- Closed standard goals, category-8 key delivery, command-9 opening and
+  consumption on the next Key PRE; per-player fresh-Up entry.
+- Entered players stop updating and hide. Completion requires the full
+  player count, rather than excluding guarding/collision-off teammates.
+- Native goal contact bounds and 64x64 closed/open artwork. Native constants
+  at 7ff72bcbada0 are [-24,-32,48,32]. Optional goal height extends upwards.
+- BreakoutKey uses Key sensor/carry/consumption, initially hidden until the
+  native BR1..BR5 range is absent. Source: bb65430 -> bc30790.
+- BreakoutSyncArea no longer clears by overlap or draws a fake trigger.
+  Factory bb778c0 and update bae82a0 provide network helper behavior.
+
+Reconstructed and unit-tested, NOT YET WIRED TO THE RUNTIME:
+- native-key-box.mjs: BallBox center tolerance 5, accepted command 11,
+  reward at actor X,Y-30; LaserKeyBox three category-5 contacts with callback
+  argument 3 == 1, command 37 reset, pitcher commands 21/22, 40-tick removal.
+- native-pitcher.mjs: launcher direction, spawn offset 20, per-frame speed,
+  party-dependent BoundBall/PhysicsBall speed, one live child, command
+  speed changes and delayed replacement after child removal.
+
+Critical findings: old ENGINE_SPEC actor mappings are not reliable evidence
+without checking the factory branch. BallBox is bb53e10 (size 0x408),
+LaserKeyBox is bb544e0 (size 0x430). Both create a Key (bb64f20, variant 0)
+in their initialization hooks bb53ff0 / bb54780. LaserKeyBox DOES implement
+command 37 in bb54860; the old mapping to bb5d420/no-op is wrong.
+Its Lua parser bb54fe0 is absent from functions_split but present in raw
+code. Capstone confirms target at raw[6], multiplier at raw[6+max(1,N-1)].
+
+Launcher bb37d70, parser bb37f30, PRE bb38130, commands bb38210 and spawning
+bb383e0 are the common native pitcher. Literal BoundBallPitcher is a
+launcher, not a player-input-controlled ball. The port's bb3b5e0 behavior
+was mapped to the wrong actor. Native BoundBall is bb36d10, PRE bb36ee0,
+accepted command-11 handler bb37250, contact response bb37500. That response
+uses previous position/velocity to reconstruct vertical speed, then contact
+normals, both actors' masses and a party-dependent coefficient. Do not replace
+it with a guessed restitution or player jump control.
+
+Next required integration:
+1. Native projectile movement, collision response and 30-tick removal.
+   Laser projectile bb4e470, PRE bb4e6f0, contact bb4ea70, removal bb4ec10.
+   Body bb4ecb0 is category 5. Player contact broadcasts target command 37;
+   any physical contact starts removal. The current preview's 96-pixel
+   looping projectile and angle convention cannot solve native key boxes.
+2. Native BallBox/LaserKeyBox body placement and collision adapters, reward
+   Key creation, pitcher speed/reset command routing and fade/removal.
+   Current strict goal locking makes stages 9-1 and 9-4 impossible because
+   their preview actors never create their reward keys. DO NOT DEPLOY THIS
+   BRANCH until these paths work and have end-to-end puzzle tests.
+3. Remove entered players from physical/support contacts without removing
+   them from the team goal requirement. Current freezing/hiding is incomplete.
+4. Re-audit Warp Y anchoring. Prior patch claims a left/bottom anchor, but
+   bc12370 and bb4e260 expose no Y inversion. Need final world-body transform
+   proof; current tests only prove returning safely, not exact trigger height.
+5. Generic Rects, all remaining suspected mechanics, checkpoints/retries,
+   movement/phase ordering and complete puzzle routes for all party sizes.
+
+Validation already passed before isolation:
+  campaign-goals-browser-smoke.mjs (also covers breakout01/02 activation)
+  campaign-browser-smoke.mjs (48 stages, 2/8 players, replay/team transition)
+  11 focused native-*.test.mjs cases. These do NOT certify stage fidelity.
+
+Native evidence root:
+  C:/Users/rober/Downloads/Projects/not-school/hermes/old-app/recovered
+  memdump/ghidra_decompiled/functions_split (read only)
+  memdump/region_7FF72BA91000_MX.bin for missing code (Capstone installed)
+  memdump/region_7FF72BC7C000_M.bin for static constants/vtables
+  lua_archive_sources/stage and seq_setting.lua
+
+Before release, update campaign protocol on client and relay together,
+run meaningful scenario tests plus full existing regressions, bump the desk
+build and inspect GitNexus detect_changes. Original main checkout retains
+unrelated dirty user work; do not stage or discard it.

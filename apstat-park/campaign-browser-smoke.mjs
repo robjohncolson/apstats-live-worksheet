@@ -127,6 +127,7 @@ try {
   // presentation; it intentionally does not solve the platform route.
   for (const next of pages) await next.evaluate(() => {
     const runtime = board.getParkScene().getGame().runtime;
+    for (const goal of runtime.goals) goal.open();
     for (const player of runtime.players) runtime.goalClearedPlayers.add(player);
     runtime.checkGoals();
   });
