@@ -1,5 +1,16 @@
 Work branch: work/pico-native-fidelity. NOT READY TO MERGE OR DEPLOY.
 
+JumpStand/Watch checkpoint: factory explicitly ignores original Watch rows
+as the binary does. JumpStand and JumpStandEx use recovered contact-order,
+stack suppression and player/box launch commands. Actual native Player launches
+without jump input. Regression suite498/498 passes. Action animation metadata
+is retained; shared skeletal playback/render integration remains unfinished.
+Next highest-coverage missing factory family: StepEnemy(6 campaign sources),
+then Gate(5). Four source stages have full factory coverage; none of these
+coverage counts establish completed solutions or visual parity. Continue until
+all48 campaign stages and their multiplayer variants are actually integrated,
+playable and verified, not merely constructible. Production remains unchanged.
+
 Thunder checkpoint: native-thunder-actor implements ordinary Thunder's four
 beam orientations, initial map probe, dynamic cover, two-frame hit detection,
 multiplayer mask cooldown, client suppression and recovered draw-strip data.

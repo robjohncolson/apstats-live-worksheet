@@ -104,3 +104,15 @@ test('shared stage factory fails explicitly for an actor whose native implementa
     assert.equal(scene.bodyWorld.bodies.length, 0);
   } finally { scene.rigidWorld.dispose(); }
 });
+
+test('original Watch rows are consumed without creating an actor or blocking later stage rows', () => {
+  const { scene } = fixture([row('Watch', 36, 60, 46), row('Rect', 20, 100, 100, 50)]);
+  try {
+    scene.setActive(true);
+    assert.equal(scene.findActor('Watch'), null);
+    assert.ok(scene.findActor('Rect'));
+    assert.equal(scene.bodyWorld.bodies.length, 1);
+    assert.equal(spawnNativeStageActor(scene, row('Watch', 36, 60, 46)), null);
+    assert.equal(scene.bodyWorld.bodies.length, 1);
+  } finally { scene.rigidWorld.dispose(); }
+});

@@ -1,3 +1,25 @@
+JumpStand/Watch checkpoint (498/498 regression tests):
+- Watch is intentionally ignored, NOT an unimplemented timer. Raw factory
+  bb72b5f zeroesr14;bb72b62 copiesesi=0. Watch match bb75806/808 branches to
+  bb7730a(movr14,rsi), then returnsr14. No config, placement or constructor.
+  Factory returnsnull explicitly; a scheduler test proves later Rect still loads.
+- JumpStand/JumpStandEx factory bb74957 andbb749e7 constructbb649a0 with
+  (0,param0) or(param0,param1), preserving f32. Body[-16,-34,32,34]type3cat5,
+  actorflags12,motion12. Sprite[-16,-40,32,42],depth-.1,UV(.1875,.359375,
+  .015625,.0205078125),spriteflag9. Action root's7keys c62ab60 at0,4,...24
+  contain UV-X offsets0,.03125,.0625,.09375,.0625,.03125,0. Shared skeletal
+  animation playback/render integration remains unfinished; metadata retained.
+- PRE bb64c70 counts direct UP contact bodies maskffffffff via bc132c0,
+  then inspects FIRST N RAW contacts (not a newly filtered list). For each
+  resolved body with no directUP body, send0impulse. Category1 getsX0 then
+  command2d with same vector. Others retainX. Orphan actor returns from loop.
+Four spring tests cover geometry,player/box payloads,blocked stacks,raw order,
+orphan early return and actual native Player landing/launch with no jump input.
+Campaign-only actor coverage now has no missing factory rows for jump01,push02,
+seesaw01,weight02. This is NOT visual parity or completed input-only solutions.
+Remaining highest-frequency families: StepEnemy6,Gate5,DeadTimer4,
+CollisionChangePlayer4,FallBox4,UpDownLift4. Many specialized forms still missing.
+
 Thunder checkpoint: ordinary factory bb76595 calls bb4d220 (NOT bb3a640,
 which belongs to collision actor creation). Vtable bcba1a0 has Lua bb4d330,
 PRE bb4d600 (raw machine code; absent C export), POST bb4d850. Overlap bb4da00,
