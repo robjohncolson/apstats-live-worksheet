@@ -1,3 +1,40 @@
+UpDownLift/FallBox checkpoint:
+UpDownLift ctorbb6d980/Luabb6dac0/PREbb6db60/correctionbb6e0e0.
+- Amplitude=intparam0+intparam1*party (int32), nonzero overrides default-70.
+  Positive numericparam2 sets speed(default1). Bodyc62d270[-59,-9,118,18],
+  type2/category0/flags3,priority0; sprite[-60,-10,120,20],depth-.1,
+  UV(.3759765625,.0478515625,.05859375,.009765625).
+- Sin period5, float32 PIbcff620; bc4cd48 stub resolves PE import CRT sin.
+  PRE computes phase+dt*speed, subtracts5 once if>5, sin(angle)*amplitude.
+  Existing movement gate then full recursive UP carry uses bcb6220 options.
+- Blocked movement/correction marksflag1. Next PRE holds previous phase;
+  skip=(2.5-distance)-distance, distance=phase-(phase>2.5?2.5:0), add7.5
+  ifnegative. Wait adds rawdt (not speed-scaled). On elapsed>=skip, advance
+  phase byskip then clearwait. Failed movement retains offset and retries.
+- Correction stores position-spawn in both offset axes and marksflag1.
+Five tests cover integerconfig, sineextrema/wrap/speed, blockedstack reversal,
+correction and actual native Player riding a whole cycle. The Math.sin adapter
+preserves recovered float32 boundaries; bit-for-bit CRT/libm equivalence across
+all inputs has NOT been proven. Native replay/render comparison remains pending.
+
+FallBox ctorbb42810/Luabb42900/geometrybb42d90/PREbb429b0/STAYbb42fb0,
+horizontal cullbb42ff0. Rect is bottom-anchored (-width/2,-height), numericf32;
+bodyinset2,type3/category2,initialdisabled;priority2. Patch16x16,depth-.4,
+palette9,UV3x3 descriptor frombcb7d80..7e0c,cell/inset.0078125.
+- Any STAY normalY<0 setsfallflag1 (including map contacts). Whiletimer<=.22f
+  onlyadddt; gravity begins on NEXT PRE after crossing. Then DOWNcontactsetsY0,
+  otherwiseadd.65f perframe,notifycomponents. Landing retains trigger/time.
+- ActorY>2*(720/viewScale) marksremoval beforecommonmotion; no cameraY offset.
+- Every surviving PRE culls bydisplayX: left+width+1<0 OR 1280/scale<=left-1.
+  Toggles bodyenabled andpatch8 together, even whilefalling; no autorespawn.
+Six behavior tests plus original stage_fall01/stage_fall02 assembly2/8players
+pass. Real Player triggers/falls/lands; out-of-bounds body unregisters. These
+original-stage tests are initial simulation only, NOT completed puzzle solutions.
+Unsupported-factory regression now uses DeadTimer. Campaign factory coverage
+is complete for6source stages:fall01,fall02,jump01,push02,seesaw01,weight02.
+Remaining leaders:DeadTimer4,CollisionChangePlayer4; BreakoutPlayer3,
+BreakoutSyncArea3,CollisionActorCreatorSilent3,UpDownEnemy3,CheckPoint3.
+
 Gate and StepEnemy checkpoint:507/507 regression tests.
 Gate reuses recovered Bridge segment solver. Factory bb75274..bb75301 reads
 numericf32 direction params1/2 (unlike Bridge's integer direction), normalizes,

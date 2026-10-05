@@ -9,6 +9,8 @@ import { createNativeDarknessLiftActor } from './native-darkness-lift-actor.mjs'
 import { createNativeThunderActor } from './native-thunder-actor.mjs';
 import { createNativeJumpStandActor } from './native-jump-stand-actor.mjs';
 import { createNativeStepEnemyActor } from './native-step-enemy-actor.mjs';
+import { createNativeUpDownLiftActor } from './native-up-down-lift-actor.mjs';
+import { createNativeFallBoxActor } from './native-fall-box-actor.mjs';
 import { populateNativeSeesawActors } from './native-seesaw-stage.mjs';
 
 // Explicit factory coverage (including the intentionally ignored Watch row).
@@ -26,6 +28,8 @@ export const NATIVE_STAGE_ACTOR_TYPES = Object.freeze([
   'Thunder', 'Watch',
   'JumpStand', 'JumpStandEx',
   'StepEnemy',
+  'UpDownLift',
+  'FallBox',
 ]);
 
 export function spawnNativeStageActor(scene, spawn, { playerPresentation, playerExtensions } = {}) {
@@ -41,6 +45,8 @@ export function spawnNativeStageActor(scene, spawn, { playerPresentation, player
   if (spawn.actorName === 'PushBox') return scene.addActor(createNativePushBoxActor({ spawn }));
   if (spawn.actorName === 'Thunder') return scene.addActor(createNativeThunderActor({ spawn }));
   if (spawn.actorName === 'StepEnemy') return scene.addActor(createNativeStepEnemyActor({ spawn }));
+  if (spawn.actorName === 'UpDownLift') return scene.addActor(createNativeUpDownLiftActor({ spawn, partySize: scene.playerCount }));
+  if (spawn.actorName === 'FallBox') return scene.addActor(createNativeFallBoxActor({ spawn }));
   if (spawn.actorName === 'JumpStand' || spawn.actorName === 'JumpStandEx') {
     return scene.addActor(createNativeJumpStandActor({ spawn }));
   }

@@ -1,5 +1,15 @@
 Work branch: work/pico-native-fidelity. NOT READY TO MERGE OR DEPLOY.
 
+UpDownLift/FallBox checkpoint: native sine lift includes blocked-phase wait
+and reversal with recursive rider carry. FallBox includes .22s trigger delay,
+gravity, viewport collision culling, landing persistence and cutoff removal.
+Actual Player tests pass, plus original fall01/fall02 initial assembly2/8players.
+Suite522/522 passes. Complete factory coverage now6source stages; this is not
+full puzzle completion or visual parity. Next:DeadTimer and CollisionChangePlayer
+(each4sources), then other mechanisms/forms. Renderer/network/saved checkpoint
+integration, native golden traces, complete original-stage solutions and live
+campaign integration remain outstanding. Keep full48-stage goal active.
+
 Gate/StepEnemy checkpoint: Gate now starts spread and opens/closes through
 native segment motion and named switches. StepEnemy walks, falls, turns at
 walls/contact, bounces riders and damages eligible side contacts. Actual native
