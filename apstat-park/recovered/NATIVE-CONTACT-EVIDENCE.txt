@@ -1,5 +1,26 @@
 Native body-pair reconstruction checkpoint
 
+PhysicsSwitch checkpoint (bb74f1f/bb5e8c0/bb5eef0/bb5f1d0/bb5ebb0):
+  Raw factory bb74f1f..29 passes mode 2, style 0 to Switch constructor and
+  applies none of the ordinary Switch parameter flags. Constructor defaults
+  flags to zero and creates custom bodies only for modes 0/1, not mode 2.
+  bb5eef0 first publishes existing pressed bit 2: style-0 UV changes from
+  [.15625,.4375,.015625,.015625] to [.171875,.4375,.015625,.015625]. On the
+  rising edge bb5ebb0 strips through Switch in the combined actor name and
+  sends command 9, payload actor+3fc (default integer 0). Play switch sound;
+  virtual +108 points to bb5ff70, whose raw body is a debugger no-op.
+  Then previous-state bit 1 is updated. Default flags do not clear pressed.
+  Finally raycast from display position to display+[0,-16]; any hit invokes
+  bb5f1d0 with a null contact. Mode 2 skips player category/contact gates;
+  local/default flags simply set pressed bit 2. Thus the ray publishes its
+  command on the NEXT PRE and stays latched after the hit disappears.
+  Sprite bounds bcbc930 are [-16,-32,32,32]. No player sensor is attached.
+  Actual rigid-ball tests verify the delayed command and permanent latch;
+  inactive sensor and start-inside cases preserve the direct ray semantics.
+  Chrome exercises the same actor and backend query. This module deliberately
+  implements the shipped local PhysicsSwitch configuration, not other Switch
+  modes, modified flags or replicated presentation.
+
 PhysicsBallPitcher scene checkpoint (bb37d70/bb38130/bb383e0/bb55d80):
   Reuses native-pitcher parameter/direction/controller reconstruction. Raw ctor
   bb37e44..67 reads [-40,-18,54,40], creates type-3 following body (r9=1),

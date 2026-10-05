@@ -117,6 +117,26 @@ try {
   });
   assert.deepEqual(ballResult, { armed: 30, countdown: 0, removed: true, alpha: 0 });
   console.log('PHYSICS AREA/BALL BROWSER PASS: independent boundary edges arm native fade/removal sequence');
+  const switchResult = await page.evaluate(async () => {
+    const { createNativeRigidWorld } = await import('/apstat-park/native-rigid-world.mjs');
+    const { createNativePhysicsSwitch } = await import('/apstat-park/native-physics-switch.mjs');
+    const world = await createNativeRigidWorld();
+    try {
+      const commands = [], sounds = [];
+      const sensor = createNativePhysicsSwitch({ name: 'PhysicsSwitchKey', position: { x: 100, y: 100 } });
+      sensor.onAdded({ rigidWorld: world, sendCommand: (...args) => commands.push(args), playSound: name => sounds.push(name) });
+      const body = world.createBody({ x: 1, y: .9 }).addCircle({ radius: .03, sensor: true });
+      body.setActive(false);
+      sensor.beforeMotion();
+      const first = { pressed: sensor.pressed, commandCount: commands.length };
+      body.destroy();
+      sensor.beforeMotion(); sensor.beforeMotion();
+      return { first, pressed: sensor.pressed, commands, sounds, uvX: sensor.spriteUV.x };
+    } finally { world.dispose(); }
+  });
+  assert.deepEqual(switchResult, { first: { pressed: true, commandCount: 0 }, pressed: true,
+    commands: [['Key', 9, 0]], sounds: ['switch'], uvX: .171875 });
+  console.log('PHYSICS SWITCH BROWSER PASS: delayed command and permanent latch after rigid hit disappears');
   console.log('RIGID WORLD BROWSER PASS: WASM loading, free fall, floor contact and revolute joint match desktop reference');
 } finally {
   await browser.close(); server.closeAllConnections();
