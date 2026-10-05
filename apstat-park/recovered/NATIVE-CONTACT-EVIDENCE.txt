@@ -1,5 +1,21 @@
 Native body-pair reconstruction checkpoint
 
+Scene outcome checkpoint (bb7bbe0/bb7c950/bb67e40):
+  Goal count is door-controller kind4 players plus attachment-chain entries.
+  Native tests attachment RTTI c62a103, then +430 actor RTTI c62a101; this
+  resolution remains an explicit scene adapter until those actors are ported.
+  No deduplication. Nonempty team with exact count equality sets scene bit4.
+  Otherwise registry-eligible stage without scroll bit40 retries (scene bit2)
+  for scene bit8 or every player flagged10/controller1. Kind3 death alone
+  is not unavailable. Existing scene outcome bits are never cleared here.
+  Scroll bit800 sorts players stably by descending world Y for sprite depth;
+  raw bcbdf8c=-.3f, bc7d45c=.01f, depth=-.3f-index*.01f at Player+360.
+  Native ten-pointer limits are explicit errors in JS instead of overflows.
+  Five tests include assembled Player door entry, retry exemptions, empty
+  teams, linked counting and depth order. Full park suite: 402/402 passing.
+  Production scene wiring, attachment actor resolution and full campaign
+  completion remain open. This module is not the CLEAR presentation layer.
+
 Key actor checkpoint (bb64f20/bb65cf0/bb65430/bb657c0/bb65700/bb65340):
   Category8/type0 sensor and sprite bounds [-16,-28,32,56], UV [.109375,.625,
   .015625,.02734375] from bcbdab0/bcbdac0. Ordinary Lua params0/1 truncate to

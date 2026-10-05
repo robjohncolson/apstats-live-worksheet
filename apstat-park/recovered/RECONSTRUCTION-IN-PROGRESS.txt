@@ -1,5 +1,11 @@
 Work branch: work/pico-native-fidelity. NOT READY TO MERGE OR DEPLOY.
 
+Scene outcome checkpoint: native-scene-outcomes ports team goal counting,
+clear/retry precedence, stage exemptions and height-based sprite depth.
+Actual assembled Player entry is covered; 402/402 park tests pass. Attachment
+RTTI resolution is an explicit adapter dependency. Full scene/renderer wiring,
+remaining actor families and all48 input-only stage solutions remain open.
+
 Key actor checkpoint: native-key-actor implements ordinary/BreakoutKey creation,
 hidden reveal, carrier following/handoff, return-to-spawn and Goal consumption
 on following PRE. Original seesaw rows now create the hidden Key before its
