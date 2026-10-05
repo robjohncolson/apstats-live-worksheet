@@ -6,6 +6,7 @@ import { createNativeSwitchActor } from './native-switch-actor.mjs';
 import { createNativeBridgeActor } from './native-bridge-actor.mjs';
 import { createNativeWeightedLiftActor } from './native-weighted-lift-actor.mjs';
 import { createNativeDarknessLiftActor } from './native-darkness-lift-actor.mjs';
+import { createNativeThunderActor } from './native-thunder-actor.mjs';
 import { populateNativeSeesawActors } from './native-seesaw-stage.mjs';
 
 // Explicit coverage for the assembled native scene. Unsupported actors must
@@ -19,6 +20,7 @@ export const NATIVE_STAGE_ACTOR_TYPES = Object.freeze([
   'Bridge', 'KeyBridge',
   'WeightedLift', 'WeightedLiftEx', 'WeightedLiftEx2',
   'DarknessWeightedLift', 'InvisibleWeightedLift',
+  'Thunder',
 ]);
 
 export function spawnNativeStageActor(scene, spawn, { playerPresentation, playerExtensions } = {}) {
@@ -30,6 +32,7 @@ export function spawnNativeStageActor(scene, spawn, { playerPresentation, player
     return scene.addActor(createNativeRectActor({ spawn, partySize: scene.playerCount }));
   }
   if (spawn.actorName === 'PushBox') return scene.addActor(createNativePushBoxActor({ spawn }));
+  if (spawn.actorName === 'Thunder') return scene.addActor(createNativeThunderActor({ spawn }));
   if (spawn.actorName === 'Switch') return scene.addActor(createNativeSwitchActor({ spawn }));
   if (spawn.actorName === 'Bridge' || spawn.actorName === 'KeyBridge') {
     return scene.addActor(createNativeBridgeActor({ spawn, partySize: scene.playerCount }));

@@ -1,5 +1,14 @@
 Work branch: work/pico-native-fidelity. NOT READY TO MERGE OR DEPLOY.
 
+Thunder checkpoint: native-thunder-actor implements ordinary Thunder's four
+beam orientations, initial map probe, dynamic cover, two-frame hit detection,
+multiplayer mask cooldown, client suppression and recovered draw-strip data.
+Seven tests pass including an actual native Player entering its death animation.
+Full campaign parity remains incomplete: Watch, JumpStand, StepEnemy and other
+families, special player forms, scene/global adapters, renderer/network wiring
+and input-only original-stage solutions still require work. Production remains
+on the prior preview runtime; this branch must not be deployed as full parity.
+
 Darkness lift checkpoint: native-darkness-lift-actor assembles DarknessWeightedLift
 and InvisibleWeightedLift with Lua-sized top-left geometry, live scene-player
 threshold, hidden boarding cue, and visibility commands that retain collision.

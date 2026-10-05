@@ -1,3 +1,27 @@
+Thunder checkpoint: ordinary factory bb76595 calls bb4d220 (NOT bb3a640,
+which belongs to collision actor creation). Vtable bcba1a0 has Lua bb4d330,
+PRE bb4d600 (raw machine code; absent C export), POST bb4d850. Overlap bb4da00,
+beam rectangle bb4dea0, renderer bb4dc10. Native actor factory now accepts Thunder.
+- int params: direction0UP/1DOWN/2LEFT/3RIGHT, param1 flag2 hides emitter and
+  ignores actor blockers, param2 flag4 retains the second body's enabled bit.
+- Sensor category5/type0, four-pixel thickness,2400 range. Second square32x32
+  centered at origin category0/type3 (type2 if flag2). First PRE tile-sweeps
+  that square2400 in the chosen direction; cached range=travel length+width.
+- Each PRE resets candidate list and beam to cached range. Nonplayer overlaps
+  shorten range to nearest intersecting rectangle edge. Thunder and separate
+  MagnetPlayer companion RTTI c62a102 are ignored. Player candidates cap10.
+- POST host/offline only: rectangle-only primary player bodies, strict overlap
+  after all cover contacts. currentMask adds playerIndex bit. command5 only if
+  previousMask has bit AND entire olderMask==0. Native damage callback remains
+  scene-owned; fixture explicitly supplies global special-damage recording.
+- Animation toggles after time>.1f, discards remainder. UV frames bcba170/180,
+  upward32px strips with1px overlap, starting y=-5, partial final strip and
+  zero-height UV final strip for exact multiples. Emitter depth-.4;beam+.3.
+Seven tests cover geometry/flags, map range, cover in four directions, global
+hit-mask timing, client exclusion, shape/candidate limits, draw crops and actual
+native Player walking into damage/death. Renderer wiring, MagnetPlayer actor,
+production integration and full campaign solutions remain unfinished.
+
 Native body-pair reconstruction checkpoint
 
 Rect actor/factory checkpoint (bb5b820/bb5ba50/bb5bac0/bb5bb30):
