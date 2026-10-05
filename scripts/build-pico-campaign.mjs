@@ -7,6 +7,7 @@ import { createHash } from 'node:crypto';
 import { build } from 'esbuild';
 import { execFileSync } from 'node:child_process';
 import assert from 'node:assert/strict';
+import { CAMPAIGN_PATCHES, patchCampaignSource } from './pico-campaign-patches.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const source = resolve(process.argv[2] || resolve(root, '../../not-school/hermes/old-app/recovered/browser_port'));
@@ -64,6 +65,7 @@ await build({ stdin: { contents: runtimeEntry, resolveDir: source, sourcefile: '
       if (!args.path.startsWith(resolve(source, 'src'))) return;
       let contents = readFileSync(args.path, 'utf8');
       hashes[relative(source, args.path).replaceAll('\\', '/')] = createHash('sha256').update(contents).digest('hex');
+      contents = patchCampaignSource(relative(source, args.path).replaceAll('\\', '/'), contents);
       // Per-runtime seeded randomness makes input replay identical across classmates.
       if (contents.includes('Math.random()')) contents = "import { picoRandom } from 'campaign-random';\n" + contents.replaceAll('Math.random()', 'picoRandom()');
       // The calendar supplies the background; preserve the recovered terrain/art.
@@ -73,6 +75,8 @@ await build({ stdin: { contents: runtimeEntry, resolveDir: source, sourcefile: '
   } }], metafile: true });
 writeFileSync(resolve(output, 'provenance.json'), JSON.stringify({
   source: 'hermes/old-app/recovered/browser_port', campaignSource: 'lua_archive_sources/seq_setting.lua',
-  stages: 48, worlds: 12, adaptations: ['seeded randomness for synchronized input replay', 'transparent map background'], hashes,
+  stages: 48, worlds: 12, adaptations: ['seeded randomness for synchronized input replay', 'transparent map background'],
+  patches: CAMPAIGN_PATCHES, hashes,
 }, null, 2) + '\n');
+execFileSync(process.execPath, [resolve(root, 'scripts/audit-pico-campaign.mjs')], { stdio: 'inherit' });
 console.log('Bundled 48 original campaign stages and recovered engine (' + Object.keys(hashes).length + ' source files).');

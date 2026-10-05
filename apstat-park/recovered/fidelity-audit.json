@@ -1,0 +1,2181 @@
+{
+  "scope": "All 48 campaign entries including alternate large-party definitions; dynamically spawned actors require separate tracing.",
+  "interpretation": "Upstream recovered-data labels describe evidence provenance, not complete verified behavior. Smoke and determinism tests do not establish fidelity.",
+  "stages": [
+    {
+      "stage": "1-1",
+      "source": "stage_jump01",
+      "definitions": [
+        "stage/stage_jump01.lua"
+      ],
+      "fidelity": "not-fully-verified",
+      "actors": [
+        {
+          "name": "Bridge",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Goal",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Key",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Player",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Rect",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Switch",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Warp",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "WeightedLift",
+          "upstreamProvenance": "recovered-data"
+        }
+      ],
+      "correctedContracts": [
+        "Warp/WarpAll left-bottom sensor bounds; invisible sensor presentation"
+      ],
+      "remainingChecks": [
+        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Native timing, collisions and complete puzzle solution for every supported party size",
+        "Presentation and retry/checkpoint behavior against native evidence"
+      ]
+    },
+    {
+      "stage": "1-2",
+      "source": "stage_push02",
+      "definitions": [
+        "stage/stage_push02.lua"
+      ],
+      "fidelity": "not-fully-verified",
+      "actors": [
+        {
+          "name": "Goal",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Key",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Player",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "PushBox",
+          "upstreamProvenance": "recovered-data"
+        }
+      ],
+      "correctedContracts": [],
+      "remainingChecks": [
+        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Native timing, collisions and complete puzzle solution for every supported party size",
+        "Presentation and retry/checkpoint behavior against native evidence"
+      ]
+    },
+    {
+      "stage": "1-3",
+      "source": "stage_jump02",
+      "definitions": [
+        "stage/stage_jump02.lua"
+      ],
+      "fidelity": "not-fully-verified",
+      "actors": [
+        {
+          "name": "Bridge",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Gate",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Goal",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Key",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Player",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "PushBox",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Rect",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Switch",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "SwitchMediator",
+          "upstreamProvenance": "suspected"
+        },
+        {
+          "name": "Warp",
+          "upstreamProvenance": "recovered-data"
+        }
+      ],
+      "correctedContracts": [
+        "Warp/WarpAll left-bottom sensor bounds; invisible sensor presentation"
+      ],
+      "remainingChecks": [
+        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Rect anchor, collision surface and visible skirt",
+        "Native timing, collisions and complete puzzle solution for every supported party size",
+        "Presentation and retry/checkpoint behavior against native evidence"
+      ]
+    },
+    {
+      "stage": "1-4",
+      "source": "stage_weight01",
+      "definitions": [
+        "stage/stage_weight01.lua"
+      ],
+      "fidelity": "not-fully-verified",
+      "actors": [
+        {
+          "name": "Goal",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Key",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "MoveWall",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Player",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "UpDownLift",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "WeightedLift",
+          "upstreamProvenance": "recovered-data"
+        }
+      ],
+      "correctedContracts": [],
+      "remainingChecks": [
+        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Native timing, collisions and complete puzzle solution for every supported party size",
+        "Presentation and retry/checkpoint behavior against native evidence"
+      ]
+    },
+    {
+      "stage": "2-1",
+      "source": "stage_constraint01",
+      "definitions": [
+        "stage/stage_constraint01.lua"
+      ],
+      "fidelity": "not-fully-verified",
+      "actors": [
+        {
+          "name": "CollisionConstraintMove",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "DistanceConstraint",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Goal",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Key",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "MapRect",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Player",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Rect",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "WarpAll",
+          "upstreamProvenance": "recovered-data"
+        }
+      ],
+      "correctedContracts": [
+        "Warp/WarpAll left-bottom sensor bounds; invisible sensor presentation"
+      ],
+      "remainingChecks": [
+        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Rect anchor, collision surface and visible skirt",
+        "Native timing, collisions and complete puzzle solution for every supported party size",
+        "Presentation and retry/checkpoint behavior against native evidence"
+      ]
+    },
+    {
+      "stage": "2-2",
+      "source": "stage_fall01",
+      "definitions": [
+        "stage/stage_fall01.lua"
+      ],
+      "fidelity": "not-fully-verified",
+      "actors": [
+        {
+          "name": "FallBox",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Goal",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Key",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Player",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Rect",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Thunder",
+          "upstreamProvenance": "recovered-data"
+        }
+      ],
+      "correctedContracts": [],
+      "remainingChecks": [
+        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Rect anchor, collision surface and visible skirt",
+        "Native timing, collisions and complete puzzle solution for every supported party size",
+        "Presentation and retry/checkpoint behavior against native evidence"
+      ]
+    },
+    {
+      "stage": "2-3",
+      "source": "stage_constraint02",
+      "definitions": [
+        "stage/stage_constraint02.lua"
+      ],
+      "fidelity": "not-fully-verified",
+      "actors": [
+        {
+          "name": "DistanceConstraint",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Goal",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Key",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Player",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Thunder",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "WarpAll",
+          "upstreamProvenance": "recovered-data"
+        }
+      ],
+      "correctedContracts": [
+        "Warp/WarpAll left-bottom sensor bounds; invisible sensor presentation"
+      ],
+      "remainingChecks": [
+        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Native timing, collisions and complete puzzle solution for every supported party size",
+        "Presentation and retry/checkpoint behavior against native evidence"
+      ]
+    },
+    {
+      "stage": "2-4",
+      "source": "stage_fall02",
+      "definitions": [
+        "stage/stage_fall02.lua"
+      ],
+      "fidelity": "not-fully-verified",
+      "actors": [
+        {
+          "name": "FallBox",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Goal",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "JumpStandEx",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Key",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Player",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "PushBox",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Rect",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Thunder",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "WeightedLift",
+          "upstreamProvenance": "recovered-data"
+        }
+      ],
+      "correctedContracts": [],
+      "remainingChecks": [
+        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Rect anchor, collision surface and visible skirt",
+        "Native timing, collisions and complete puzzle solution for every supported party size",
+        "Presentation and retry/checkpoint behavior against native evidence"
+      ]
+    },
+    {
+      "stage": "3-1",
+      "source": "stage_coin01",
+      "definitions": [
+        "stage/stage_coin01.lua"
+      ],
+      "fidelity": "not-fully-verified",
+      "actors": [
+        {
+          "name": "Coin",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "CoinObserver",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "DeadTimer",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Goal",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Key",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Player",
+          "upstreamProvenance": "recovered-data"
+        }
+      ],
+      "correctedContracts": [],
+      "remainingChecks": [
+        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Native timing, collisions and complete puzzle solution for every supported party size",
+        "Presentation and retry/checkpoint behavior against native evidence"
+      ]
+    },
+    {
+      "stage": "3-2",
+      "source": "stage_time_limit02",
+      "definitions": [
+        "stage/stage_time_limit02.lua"
+      ],
+      "fidelity": "not-fully-verified",
+      "actors": [
+        {
+          "name": "DeadTimer",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Goal",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "JumpStand",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Key",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Player",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Rect",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Switch",
+          "upstreamProvenance": "recovered-data"
+        }
+      ],
+      "correctedContracts": [],
+      "remainingChecks": [
+        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Rect anchor, collision surface and visible skirt",
+        "Native timing, collisions and complete puzzle solution for every supported party size",
+        "Presentation and retry/checkpoint behavior against native evidence"
+      ]
+    },
+    {
+      "stage": "3-3",
+      "source": "stage_coin02",
+      "definitions": [
+        "stage/stage_coin02.lua"
+      ],
+      "fidelity": "not-fully-verified",
+      "actors": [
+        {
+          "name": "BlinkBlock",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Coin",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "CoinObserver",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "DeadTimer",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Goal",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "JumpStand",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Key",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Player",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Watch",
+          "upstreamProvenance": "recovered-data"
+        }
+      ],
+      "correctedContracts": [],
+      "remainingChecks": [
+        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Native timing, collisions and complete puzzle solution for every supported party size",
+        "Presentation and retry/checkpoint behavior against native evidence"
+      ]
+    },
+    {
+      "stage": "3-4",
+      "source": "stage_time_limit01",
+      "definitions": [
+        "stage/stage_time_limit01.lua"
+      ],
+      "fidelity": "not-fully-verified",
+      "actors": [
+        {
+          "name": "DeadTimer",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Goal",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Key",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Player",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "PushBox",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Rect",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Switch",
+          "upstreamProvenance": "recovered-data"
+        }
+      ],
+      "correctedContracts": [],
+      "remainingChecks": [
+        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Rect anchor, collision surface and visible skirt",
+        "Native timing, collisions and complete puzzle solution for every supported party size",
+        "Presentation and retry/checkpoint behavior against native evidence"
+      ]
+    },
+    {
+      "stage": "4-1",
+      "source": "stage_thunder01",
+      "definitions": [
+        "stage/stage_thunder01.lua"
+      ],
+      "fidelity": "not-fully-verified",
+      "actors": [
+        {
+          "name": "Goal",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "GuardPlayer",
+          "upstreamProvenance": "suspected"
+        },
+        {
+          "name": "Key",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Player",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Thunder",
+          "upstreamProvenance": "recovered-data"
+        }
+      ],
+      "correctedContracts": [],
+      "remainingChecks": [
+        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Native timing, collisions and complete puzzle solution for every supported party size",
+        "Presentation and retry/checkpoint behavior against native evidence"
+      ]
+    },
+    {
+      "stage": "4-2",
+      "source": "stage_plane01",
+      "definitions": [
+        "stage/stage_plane01.lua"
+      ],
+      "fidelity": "not-fully-verified",
+      "actors": [
+        {
+          "name": "Goal",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Key",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "PlaneObstacle",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "PlanePlayer",
+          "upstreamProvenance": "recovered-data"
+        }
+      ],
+      "correctedContracts": [],
+      "remainingChecks": [
+        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Native timing, collisions and complete puzzle solution for every supported party size",
+        "Presentation and retry/checkpoint behavior against native evidence"
+      ]
+    },
+    {
+      "stage": "4-3",
+      "source": "stage_stopwatch01",
+      "definitions": [
+        "stage/stage_stopwatch01.lua",
+        "stage/stage_stopwatch01_many.lua"
+      ],
+      "fidelity": "not-fully-verified",
+      "actors": [
+        {
+          "name": "CoopStopWatch",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Goal",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "JumpStand",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Key",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Player",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "StopWatch",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Switch",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Watch",
+          "upstreamProvenance": "recovered-data"
+        }
+      ],
+      "correctedContracts": [],
+      "remainingChecks": [
+        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Native timing, collisions and complete puzzle solution for every supported party size",
+        "Presentation and retry/checkpoint behavior against native evidence"
+      ]
+    },
+    {
+      "stage": "4-4",
+      "source": "stage_big_and_small",
+      "definitions": [
+        "stage/stage_big_and_small.lua"
+      ],
+      "fidelity": "not-fully-verified",
+      "actors": [
+        {
+          "name": "Gate",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Goal",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Key",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Player",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "PushBox",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Rect",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "ScaleSwitch",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Switch",
+          "upstreamProvenance": "recovered-data"
+        }
+      ],
+      "correctedContracts": [],
+      "remainingChecks": [
+        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Rect anchor, collision surface and visible skirt",
+        "Native timing, collisions and complete puzzle solution for every supported party size",
+        "Presentation and retry/checkpoint behavior against native evidence"
+      ]
+    },
+    {
+      "stage": "5-1",
+      "source": "stage_majo01",
+      "definitions": [
+        "stage/stage_majo01.lua"
+      ],
+      "fidelity": "not-fully-verified",
+      "actors": [
+        {
+          "name": "CheckPoint",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Goal",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Key",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "MajorityController",
+          "upstreamProvenance": "suspected"
+        },
+        {
+          "name": "MajorityPlayer",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Rect",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "StepEnemy",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Thunder",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "UpDownEnemy",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "UpDownLift",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Warp",
+          "upstreamProvenance": "recovered-data"
+        }
+      ],
+      "correctedContracts": [
+        "Warp/WarpAll left-bottom sensor bounds; invisible sensor presentation"
+      ],
+      "remainingChecks": [
+        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Rect anchor, collision surface and visible skirt",
+        "Native timing, collisions and complete puzzle solution for every supported party size",
+        "Presentation and retry/checkpoint behavior against native evidence"
+      ]
+    },
+    {
+      "stage": "5-2",
+      "source": "stage_multijump01",
+      "definitions": [
+        "stage/stage_multijump01.lua"
+      ],
+      "fidelity": "not-fully-verified",
+      "actors": [
+        {
+          "name": "Goal",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "JumpArea",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Key",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "MultiPlayer",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Switch",
+          "upstreamProvenance": "recovered-data"
+        }
+      ],
+      "correctedContracts": [],
+      "remainingChecks": [
+        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Native timing, collisions and complete puzzle solution for every supported party size",
+        "Presentation and retry/checkpoint behavior against native evidence"
+      ]
+    },
+    {
+      "stage": "5-3",
+      "source": "stage_majo02",
+      "definitions": [
+        "stage/stage_majo02.lua"
+      ],
+      "fidelity": "not-fully-verified",
+      "actors": [
+        {
+          "name": "CheckPoint",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Goal",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Key",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "MajorityController",
+          "upstreamProvenance": "suspected"
+        },
+        {
+          "name": "MajorityPlayer",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "StepEnemy",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Thunder",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "UpDownEnemy",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "UpDownLift",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Warp",
+          "upstreamProvenance": "recovered-data"
+        }
+      ],
+      "correctedContracts": [
+        "Warp/WarpAll left-bottom sensor bounds; invisible sensor presentation"
+      ],
+      "remainingChecks": [
+        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Native timing, collisions and complete puzzle solution for every supported party size",
+        "Presentation and retry/checkpoint behavior against native evidence"
+      ]
+    },
+    {
+      "stage": "5-4",
+      "source": "stage_multijump02",
+      "definitions": [
+        "stage/stage_multijump02.lua"
+      ],
+      "fidelity": "not-fully-verified",
+      "actors": [
+        {
+          "name": "CheckPoint",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Goal",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Key",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "MultiPlayer",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Thunder",
+          "upstreamProvenance": "recovered-data"
+        }
+      ],
+      "correctedContracts": [],
+      "remainingChecks": [
+        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Native timing, collisions and complete puzzle solution for every supported party size",
+        "Presentation and retry/checkpoint behavior against native evidence"
+      ]
+    },
+    {
+      "stage": "6-1",
+      "source": "stage_push01",
+      "definitions": [
+        "stage/stage_push01.lua"
+      ],
+      "fidelity": "not-fully-verified",
+      "actors": [
+        {
+          "name": "ColorBox",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Goal",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Key",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Player",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Rect",
+          "upstreamProvenance": "recovered-data"
+        }
+      ],
+      "correctedContracts": [],
+      "remainingChecks": [
+        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Rect anchor, collision surface and visible skirt",
+        "Native timing, collisions and complete puzzle solution for every supported party size",
+        "Presentation and retry/checkpoint behavior against native evidence"
+      ]
+    },
+    {
+      "stage": "6-2",
+      "source": "stage_auto_scroll01",
+      "definitions": [
+        "stage/stage_auto_scroll01.lua"
+      ],
+      "fidelity": "not-fully-verified",
+      "actors": [
+        {
+          "name": "ColorBox",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Goal",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Key",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Player",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Rect",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Thunder",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "WeightedLift",
+          "upstreamProvenance": "recovered-data"
+        }
+      ],
+      "correctedContracts": [],
+      "remainingChecks": [
+        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Rect anchor, collision surface and visible skirt",
+        "Native timing, collisions and complete puzzle solution for every supported party size",
+        "Presentation and retry/checkpoint behavior against native evidence"
+      ]
+    },
+    {
+      "stage": "6-3",
+      "source": "stage_weight02",
+      "definitions": [
+        "stage/stage_weight02.lua"
+      ],
+      "fidelity": "not-fully-verified",
+      "actors": [
+        {
+          "name": "Goal",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Key",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Player",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Warp",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "WeightedLiftEx",
+          "upstreamProvenance": "recovered-data"
+        }
+      ],
+      "correctedContracts": [
+        "Warp/WarpAll left-bottom sensor bounds; invisible sensor presentation"
+      ],
+      "remainingChecks": [
+        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Native timing, collisions and complete puzzle solution for every supported party size",
+        "Presentation and retry/checkpoint behavior against native evidence"
+      ]
+    },
+    {
+      "stage": "6-4",
+      "source": "stage_jump06",
+      "definitions": [
+        "stage/stage_jump06.lua"
+      ],
+      "fidelity": "not-fully-verified",
+      "actors": [
+        {
+          "name": "DeadSwitch",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Goal",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Key",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Player",
+          "upstreamProvenance": "recovered-data"
+        }
+      ],
+      "correctedContracts": [],
+      "remainingChecks": [
+        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Native timing, collisions and complete puzzle solution for every supported party size",
+        "Presentation and retry/checkpoint behavior against native evidence"
+      ]
+    },
+    {
+      "stage": "7-1",
+      "source": "stage_bowwow01",
+      "definitions": [
+        "stage/stage_bowwow01.lua"
+      ],
+      "fidelity": "not-fully-verified",
+      "actors": [
+        {
+          "name": "BowwowEnemy",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Goal",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Key",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Player",
+          "upstreamProvenance": "recovered-data"
+        }
+      ],
+      "correctedContracts": [],
+      "remainingChecks": [
+        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Native timing, collisions and complete puzzle solution for every supported party size",
+        "Presentation and retry/checkpoint behavior against native evidence"
+      ]
+    },
+    {
+      "stage": "7-2",
+      "source": "stage_traffic_light01",
+      "definitions": [
+        "stage/stage_traffic_light01.lua"
+      ],
+      "fidelity": "not-fully-verified",
+      "actors": [
+        {
+          "name": "Goal",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "JumpStand",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Key",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "NormalBox",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Player",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Rect",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "SmallBox",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "StepEnemy",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Thunder",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "TrafficLight",
+          "upstreamProvenance": "suspected"
+        },
+        {
+          "name": "Warp",
+          "upstreamProvenance": "recovered-data"
+        }
+      ],
+      "correctedContracts": [
+        "Warp/WarpAll left-bottom sensor bounds; invisible sensor presentation"
+      ],
+      "remainingChecks": [
+        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Rect anchor, collision surface and visible skirt",
+        "Native timing, collisions and complete puzzle solution for every supported party size",
+        "Presentation and retry/checkpoint behavior against native evidence"
+      ]
+    },
+    {
+      "stage": "7-3",
+      "source": "stage_ghost01",
+      "definitions": [
+        "stage/stage_ghost01.lua"
+      ],
+      "fidelity": "not-fully-verified",
+      "actors": [
+        {
+          "name": "Ghost",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Goal",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Key",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Player",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "StepEnemy",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "UpDownEnemy",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "WeightedLift",
+          "upstreamProvenance": "recovered-data"
+        }
+      ],
+      "correctedContracts": [],
+      "remainingChecks": [
+        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Native timing, collisions and complete puzzle solution for every supported party size",
+        "Presentation and retry/checkpoint behavior against native evidence"
+      ]
+    },
+    {
+      "stage": "7-4",
+      "source": "stage_move01",
+      "definitions": [
+        "stage/stage_move01.lua"
+      ],
+      "fidelity": "not-fully-verified",
+      "actors": [
+        {
+          "name": "Goal",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "JumpStand",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Key",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "MoveEnergy",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Player",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "PushBox",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Rect",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "StepEnemy",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Thunder",
+          "upstreamProvenance": "recovered-data"
+        }
+      ],
+      "correctedContracts": [],
+      "remainingChecks": [
+        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Rect anchor, collision surface and visible skirt",
+        "Native timing, collisions and complete puzzle solution for every supported party size",
+        "Presentation and retry/checkpoint behavior against native evidence"
+      ]
+    },
+    {
+      "stage": "8-1",
+      "source": "stage_switch_puzzle01",
+      "definitions": [
+        "stage/stage_switch_puzzle01.lua"
+      ],
+      "fidelity": "not-fully-verified",
+      "actors": [
+        {
+          "name": "Goal",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Key",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Player",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Puzzle",
+          "upstreamProvenance": "suspected"
+        },
+        {
+          "name": "PuzzlePredictProxy",
+          "upstreamProvenance": "suspected"
+        },
+        {
+          "name": "Watch",
+          "upstreamProvenance": "recovered-data"
+        }
+      ],
+      "correctedContracts": [],
+      "remainingChecks": [
+        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Native timing, collisions and complete puzzle solution for every supported party size",
+        "Presentation and retry/checkpoint behavior against native evidence"
+      ]
+    },
+    {
+      "stage": "8-2",
+      "source": "stage_breakout01",
+      "definitions": [
+        "stage/stage_breakout01.lua"
+      ],
+      "fidelity": "not-fully-verified",
+      "actors": [
+        {
+          "name": "BreakoutKey",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "BreakoutPlayer",
+          "upstreamProvenance": "suspected"
+        },
+        {
+          "name": "BreakoutSyncArea",
+          "upstreamProvenance": "suspected"
+        },
+        {
+          "name": "Goal",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Watch",
+          "upstreamProvenance": "recovered-data"
+        }
+      ],
+      "correctedContracts": [],
+      "remainingChecks": [
+        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Native timing, collisions and complete puzzle solution for every supported party size",
+        "Presentation and retry/checkpoint behavior against native evidence"
+      ]
+    },
+    {
+      "stage": "8-3",
+      "source": "stage_switch_puzzle02",
+      "definitions": [
+        "stage/stage_switch_puzzle02.lua"
+      ],
+      "fidelity": "not-fully-verified",
+      "actors": [
+        {
+          "name": "Goal",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Key",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Player",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Puzzle",
+          "upstreamProvenance": "suspected"
+        },
+        {
+          "name": "PuzzlePredictProxy",
+          "upstreamProvenance": "suspected"
+        },
+        {
+          "name": "Text",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Watch",
+          "upstreamProvenance": "recovered-data"
+        }
+      ],
+      "correctedContracts": [],
+      "remainingChecks": [
+        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Native timing, collisions and complete puzzle solution for every supported party size",
+        "Presentation and retry/checkpoint behavior against native evidence"
+      ]
+    },
+    {
+      "stage": "8-4",
+      "source": "stage_breakout02",
+      "definitions": [
+        "stage/stage_breakout02.lua"
+      ],
+      "fidelity": "not-fully-verified",
+      "actors": [
+        {
+          "name": "BreakoutKey",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "BreakoutPlayer",
+          "upstreamProvenance": "suspected"
+        },
+        {
+          "name": "BreakoutSyncArea",
+          "upstreamProvenance": "suspected"
+        },
+        {
+          "name": "Goal",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Watch",
+          "upstreamProvenance": "recovered-data"
+        }
+      ],
+      "correctedContracts": [],
+      "remainingChecks": [
+        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Native timing, collisions and complete puzzle solution for every supported party size",
+        "Presentation and retry/checkpoint behavior against native evidence"
+      ]
+    },
+    {
+      "stage": "9-1",
+      "source": "stage_laser_ball01",
+      "definitions": [
+        "stage/stage_laser_ball01.lua",
+        "stage/stage_laser_ball01_many.lua"
+      ],
+      "fidelity": "not-fully-verified",
+      "actors": [
+        {
+          "name": "Goal",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "LaserBallPitcher",
+          "upstreamProvenance": "suspected"
+        },
+        {
+          "name": "LaserKeyBox",
+          "upstreamProvenance": "suspected"
+        },
+        {
+          "name": "Player",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Rect",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Watch",
+          "upstreamProvenance": "recovered-data"
+        }
+      ],
+      "correctedContracts": [],
+      "remainingChecks": [
+        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Rect anchor, collision surface and visible skirt",
+        "Native timing, collisions and complete puzzle solution for every supported party size",
+        "Presentation and retry/checkpoint behavior against native evidence"
+      ]
+    },
+    {
+      "stage": "9-2",
+      "source": "stage_seesaw01",
+      "definitions": [
+        "stage/stage_seesaw01.lua"
+      ],
+      "fidelity": "not-fully-verified",
+      "actors": [
+        {
+          "name": "Balance",
+          "upstreamProvenance": "suspected"
+        },
+        {
+          "name": "Goal",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Key",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "PhysicsArea",
+          "upstreamProvenance": "suspected"
+        },
+        {
+          "name": "PhysicsBallPitcher",
+          "upstreamProvenance": "suspected"
+        },
+        {
+          "name": "PhysicsSwitch",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Player",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Seesaw",
+          "upstreamProvenance": "suspected"
+        },
+        {
+          "name": "SeesawParent",
+          "upstreamProvenance": "suspected"
+        },
+        {
+          "name": "Watch",
+          "upstreamProvenance": "recovered-data"
+        }
+      ],
+      "correctedContracts": [],
+      "remainingChecks": [
+        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Native timing, collisions and complete puzzle solution for every supported party size",
+        "Presentation and retry/checkpoint behavior against native evidence"
+      ]
+    },
+    {
+      "stage": "9-3",
+      "source": "stage_breakout03",
+      "definitions": [
+        "stage/stage_breakout03.lua"
+      ],
+      "fidelity": "not-fully-verified",
+      "actors": [
+        {
+          "name": "BreakoutPlayer",
+          "upstreamProvenance": "suspected"
+        },
+        {
+          "name": "BreakoutSyncArea",
+          "upstreamProvenance": "suspected"
+        },
+        {
+          "name": "Goal",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Key",
+          "upstreamProvenance": "recovered-data"
+        }
+      ],
+      "correctedContracts": [],
+      "remainingChecks": [
+        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Native timing, collisions and complete puzzle solution for every supported party size",
+        "Presentation and retry/checkpoint behavior against native evidence"
+      ]
+    },
+    {
+      "stage": "9-4",
+      "source": "stage_bound01",
+      "definitions": [
+        "stage/stage_bound01.lua",
+        "stage/stage_bound01_net_many.lua"
+      ],
+      "fidelity": "not-fully-verified",
+      "actors": [
+        {
+          "name": "BallBox",
+          "upstreamProvenance": "suspected"
+        },
+        {
+          "name": "BoundBallPitcher",
+          "upstreamProvenance": "suspected"
+        },
+        {
+          "name": "Goal",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Player",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Watch",
+          "upstreamProvenance": "recovered-data"
+        }
+      ],
+      "correctedContracts": [],
+      "remainingChecks": [
+        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Native timing, collisions and complete puzzle solution for every supported party size",
+        "Presentation and retry/checkpoint behavior against native evidence"
+      ]
+    },
+    {
+      "stage": "10-1",
+      "source": "stage_jump07",
+      "definitions": [
+        "stage/stage_jump07.lua"
+      ],
+      "fidelity": "not-fully-verified",
+      "actors": [
+        {
+          "name": "CollisionChangePlayer",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "FallBox",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Gate",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Goal",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Key",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Player",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "ScaleSwitch",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Switch",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "SwitchRect",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Thunder",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Warp",
+          "upstreamProvenance": "recovered-data"
+        }
+      ],
+      "correctedContracts": [
+        "Warp/WarpAll left-bottom sensor bounds; invisible sensor presentation"
+      ],
+      "remainingChecks": [
+        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Native timing, collisions and complete puzzle solution for every supported party size",
+        "Presentation and retry/checkpoint behavior against native evidence"
+      ]
+    },
+    {
+      "stage": "10-2",
+      "source": "stage_jump04",
+      "definitions": [
+        "stage/stage_jump04.lua"
+      ],
+      "fidelity": "not-fully-verified",
+      "actors": [
+        {
+          "name": "Bridge",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "CollisionChangePlayer",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Gate",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Goal",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "JumpStand",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Key",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Player",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "RouletteLift",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Switch",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Warp",
+          "upstreamProvenance": "recovered-data"
+        }
+      ],
+      "correctedContracts": [
+        "Warp/WarpAll left-bottom sensor bounds; invisible sensor presentation"
+      ],
+      "remainingChecks": [
+        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Native timing, collisions and complete puzzle solution for every supported party size",
+        "Presentation and retry/checkpoint behavior against native evidence"
+      ]
+    },
+    {
+      "stage": "10-3",
+      "source": "stage_darkness01",
+      "definitions": [
+        "stage/stage_darkness01.lua"
+      ],
+      "fidelity": "not-fully-verified",
+      "actors": [
+        {
+          "name": "CollisionActorCreator",
+          "upstreamProvenance": "suspected"
+        },
+        {
+          "name": "CollisionActorCreatorSilent",
+          "upstreamProvenance": "suspected"
+        },
+        {
+          "name": "CollisionChangePlayer",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "DarknessWeightedLift",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Player",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "PushBox",
+          "upstreamProvenance": "recovered-data"
+        }
+      ],
+      "correctedContracts": [],
+      "remainingChecks": [
+        "Native timing, collisions and complete puzzle solution for every supported party size",
+        "Presentation and retry/checkpoint behavior against native evidence"
+      ]
+    },
+    {
+      "stage": "10-4",
+      "source": "stage_darkness02",
+      "definitions": [
+        "stage/stage_darkness02.lua"
+      ],
+      "fidelity": "not-fully-verified",
+      "actors": [
+        {
+          "name": "CollisionActorCreator",
+          "upstreamProvenance": "suspected"
+        },
+        {
+          "name": "CollisionActorCreatorSilent",
+          "upstreamProvenance": "suspected"
+        },
+        {
+          "name": "CollisionChangePlayer",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "DarknessRect",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "DarknessWeightedLift",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Player",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "PushBox",
+          "upstreamProvenance": "recovered-data"
+        }
+      ],
+      "correctedContracts": [],
+      "remainingChecks": [
+        "Native timing, collisions and complete puzzle solution for every supported party size",
+        "Presentation and retry/checkpoint behavior against native evidence"
+      ]
+    },
+    {
+      "stage": "11-1",
+      "source": "stage_gun01",
+      "definitions": [
+        "stage/stage_gun01.lua"
+      ],
+      "fidelity": "not-fully-verified",
+      "actors": [
+        {
+          "name": "Goal",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Key",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "OnlineText",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Rect",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Warp",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "WarpGunPlayer",
+          "upstreamProvenance": "suspected"
+        }
+      ],
+      "correctedContracts": [
+        "Warp/WarpAll left-bottom sensor bounds; invisible sensor presentation"
+      ],
+      "remainingChecks": [
+        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Rect anchor, collision surface and visible skirt",
+        "Native timing, collisions and complete puzzle solution for every supported party size",
+        "Presentation and retry/checkpoint behavior against native evidence"
+      ]
+    },
+    {
+      "stage": "11-2",
+      "source": "stage_magnet01",
+      "definitions": [
+        "stage/stage_magnet01.lua"
+      ],
+      "fidelity": "not-fully-verified",
+      "actors": [
+        {
+          "name": "Goal",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Key",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "MagnetPlayer",
+          "upstreamProvenance": "suspected"
+        },
+        {
+          "name": "Rect",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Thunder",
+          "upstreamProvenance": "recovered-data"
+        }
+      ],
+      "correctedContracts": [],
+      "remainingChecks": [
+        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Rect anchor, collision surface and visible skirt",
+        "Native timing, collisions and complete puzzle solution for every supported party size",
+        "Presentation and retry/checkpoint behavior against native evidence"
+      ]
+    },
+    {
+      "stage": "11-3",
+      "source": "stage_gun02",
+      "definitions": [
+        "stage/stage_gun02.lua"
+      ],
+      "fidelity": "not-fully-verified",
+      "actors": [
+        {
+          "name": "FallBox",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "ForceColorBox",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Goal",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Key",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Thunder",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Warp",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "WarpGunPlayer",
+          "upstreamProvenance": "suspected"
+        }
+      ],
+      "correctedContracts": [
+        "Warp/WarpAll left-bottom sensor bounds; invisible sensor presentation"
+      ],
+      "remainingChecks": [
+        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Native timing, collisions and complete puzzle solution for every supported party size",
+        "Presentation and retry/checkpoint behavior against native evidence"
+      ]
+    },
+    {
+      "stage": "11-4",
+      "source": "stage_magnet02",
+      "definitions": [
+        "stage/stage_magnet02.lua"
+      ],
+      "fidelity": "not-fully-verified",
+      "actors": [
+        {
+          "name": "DelaySwitch",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Gate",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Goal",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Key",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Lift",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "MagnetPlayer",
+          "upstreamProvenance": "suspected"
+        },
+        {
+          "name": "Rect",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "SmallBox",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Switch",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Thunder",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Warp",
+          "upstreamProvenance": "recovered-data"
+        }
+      ],
+      "correctedContracts": [
+        "Warp/WarpAll left-bottom sensor bounds; invisible sensor presentation"
+      ],
+      "remainingChecks": [
+        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Rect anchor, collision surface and visible skirt",
+        "Native timing, collisions and complete puzzle solution for every supported party size",
+        "Presentation and retry/checkpoint behavior against native evidence"
+      ]
+    },
+    {
+      "stage": "12-1",
+      "source": "stage_thunder02",
+      "definitions": [
+        "stage/stage_thunder02.lua"
+      ],
+      "fidelity": "not-fully-verified",
+      "actors": [
+        {
+          "name": "Goal",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "GuardPlayer",
+          "upstreamProvenance": "suspected"
+        },
+        {
+          "name": "JumpSwitch",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Key",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Player",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "PushBox",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Rect",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Thunder",
+          "upstreamProvenance": "recovered-data"
+        }
+      ],
+      "correctedContracts": [],
+      "remainingChecks": [
+        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Rect anchor, collision surface and visible skirt",
+        "Native timing, collisions and complete puzzle solution for every supported party size",
+        "Presentation and retry/checkpoint behavior against native evidence"
+      ]
+    },
+    {
+      "stage": "12-2",
+      "source": "stage_jump05",
+      "definitions": [
+        "stage/stage_jump05.lua"
+      ],
+      "fidelity": "not-fully-verified",
+      "actors": [
+        {
+          "name": "CollisionActorCreatorSilent",
+          "upstreamProvenance": "suspected"
+        },
+        {
+          "name": "Goal",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "JumpStandEx",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Key",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "KeyBridge",
+          "upstreamProvenance": "suspected"
+        },
+        {
+          "name": "Player",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "ScrollLimitRange",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Thunder",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "UpDownLift",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Warp",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "WeightedLiftEx2",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Wind",
+          "upstreamProvenance": "suspected"
+        }
+      ],
+      "correctedContracts": [
+        "Warp/WarpAll left-bottom sensor bounds; invisible sensor presentation"
+      ],
+      "remainingChecks": [
+        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Native timing, collisions and complete puzzle solution for every supported party size",
+        "Presentation and retry/checkpoint behavior against native evidence"
+      ]
+    },
+    {
+      "stage": "12-3",
+      "source": "stage_plane02",
+      "definitions": [
+        "stage/stage_plane02.lua"
+      ],
+      "fidelity": "not-fully-verified",
+      "actors": [
+        {
+          "name": "Goal",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Key",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "PlaneObstacle",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "PlanePlayer",
+          "upstreamProvenance": "recovered-data"
+        }
+      ],
+      "correctedContracts": [],
+      "remainingChecks": [
+        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Native timing, collisions and complete puzzle solution for every supported party size",
+        "Presentation and retry/checkpoint behavior against native evidence"
+      ]
+    },
+    {
+      "stage": "12-4",
+      "source": "stage_auto_scroll02",
+      "definitions": [
+        "stage/stage_auto_scroll02.lua"
+      ],
+      "fidelity": "not-fully-verified",
+      "actors": [
+        {
+          "name": "Bridge",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "DeadSwitch",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Goal",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "JumpStand",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Key",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Player",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Rect",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "StepEnemy",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Switch",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Text",
+          "upstreamProvenance": "recovered-data"
+        },
+        {
+          "name": "Thunder",
+          "upstreamProvenance": "recovered-data"
+        }
+      ],
+      "correctedContracts": [],
+      "remainingChecks": [
+        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Rect anchor, collision surface and visible skirt",
+        "Native timing, collisions and complete puzzle solution for every supported party size",
+        "Presentation and retry/checkpoint behavior against native evidence"
+      ]
+    }
+  ]
+}
