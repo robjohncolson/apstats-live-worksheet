@@ -25,7 +25,7 @@ Revolute/gear identification checkpoint:
   angle difference and leaves the surviving pivot usable after body removal.
   Existing preview seesaw tilt is NOT certified by these backend tests.
 
-Seesaw actor integration evidence (not yet integrated):
+Seesaw actor evidence (native model integrated with scheduler, not campaign):
   bb5d700 selects rectangles at bcbc230, stride 16: type 0 [-300,-10,600,20],
   type 1 [-300,-10,450,20], type 2 [-150,-10,450,20]. Density and friction are
   1, body type is dynamic, gravity scale zero. Ground pivot limits are raw
@@ -33,8 +33,20 @@ Seesaw actor integration evidence (not yet integrated):
   bb5d870 reads rigid position back to actor+44 and converts angle into
   integer sprite rotation with bcbb548=10430.3779296875 (65536/2pi).
   Component vtables: bcbb410 body, bcbc2f8 pivot, bcbc338 gear. Their attach
-  hooks are bb56320, bb5dd40 and bb5dd00; pose setup must be traced before
-  replacing the current campaign seesaw heuristic.
+  hooks are bb56320, bb5dd40 and bb5dd00. bb56320 writes owner, staged actor
+  position and angle before body attachment. bb5dd40 adds actor position to
+  component+98, then uses that as ground anchor A with local anchor B zero.
+  bb932d0 confirms vector addition, not subtraction. bb563c0 forwards a
+  velocity vector to the rigid body, then bb935a0 clears that input vector.
+  Component removals detach body, pivot and gear; body removal already clears
+  joint wrappers before the later component callbacks.
+  Parent vtable bcbfae0+c8 points to bb5da90: angular velocity is float32
+  (targetAngle - currentAngle) * (1 / dt). Base seesaw uses bb5d850 instead.
+  Both POST hooks at +d8 point to bb5d870. bb5db00 receives command 12's
+  target angle payload; command routing/controller integration remains.
+  Native scene fixtures now exercise PRE -> WASM -> custom world -> POST
+  with the three plank shapes and a parent/child gear pair. Balance target
+  generation and input-only stage completion are still unverified.
 
 Rectangle rigid fixture checkpoint (bbe5c70/bbe5d30):
   Build four vertices in pixel coordinates: (x,-(y+h)), (x+w,-(y+h)),

@@ -13,6 +13,12 @@ export function createNativeRigidBody({ type = 0, shape = null, position = { x: 
   const wrapper = {
     get body() { return body; },
     get world() { return world; },
+    // bb56320 writes these staged fields before attaching the scene component.
+    setAttachmentTransform(position, nextAngle = 0) {
+      initialPosition.x = f(position.x);
+      initialPosition.y = f(position.y);
+      angle = f(nextAngle);
+    },
     attach(nextWorld) {
       if (!nextWorld || !shape || world) return false;
       body = nextWorld.createBody({ type: type === 1 ? 2 : 0,

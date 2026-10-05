@@ -1,5 +1,14 @@
 Work branch: work/pico-native-fidelity. NOT READY TO MERGE OR DEPLOY.
 
+Seesaw actor checkpoint: native-seesaw.mjs now composes the recovered body,
+pivot and gear components with the native actor scheduler and scene frame.
+Tests cover all three plank geometries, parent target-angle control, coupled
+POST pose readback, removal and replacement placement. The full suite has
+303 passing tests. This physical actor model is still outside the campaign
+factory: Balance/controller inputs, rendering, player interaction and solved
+seesaw stage routes must be integrated and verified before replacing preview
+behavior. Directly setting the target in a fixture is not a solved route.
+
 Revolute joint checkpoint: native-rigid-joint.mjs reconstructs local pixel
 anchors, zero reference angle, optional ground body, stored angle limits,
 collide-connected bit and detach/body-removal bookkeeping. Five focused
