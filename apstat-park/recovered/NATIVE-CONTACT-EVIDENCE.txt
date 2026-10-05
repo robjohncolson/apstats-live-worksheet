@@ -1,3 +1,30 @@
+CollisionActorCreator / Silent checkpoint:
+Factory bb75d1c->bb3a640; Silent bb75d6b->same ctor then+3fc=1.
+Lua bb3a730, overlapbb3aa10, createbb3aa70, snapshotsbb3a980/9c0.
+- Sensor top-left float params0/1, type0/category4. Invisible geometry.
+  Networktype27/mode0. At least5params configure child actor nameparam2,
+  absoluteXYparams3/4; remaining params forwarded as float32/string63 values.
+  Unsupported typed values become numeric0; original input slot limit32.
+- Category1 overlap fires once unless actor is a client replica. Trigger set
+  after creation. Snapshot0->nonzero creates locally; subsequent nonzero->
+  nonzero does not. Zero resets latch, allowing another rising edge.
+- Ordinary variant plays generate before actor-name/network checks; Silent
+  suppresses only that sound. Key/Goal names (bcb77d4/77d8) set descriptor+10
+  forceReplication=1 on authority. Client replicas skip their creation even
+  while applying state, but still play nonsilent sound. Ordinary children are
+  constructed on replica state transition.
+- Scene virtual58 bb7c0f0 checks scrollFlags100 then directly invokes factory;
+  no creation-table cursor, party-rule or trigger-position gate. New scene
+  spawnDynamicActor path uses the same provided actor factory. forceReplication
+  descriptor is retained for pending native network-ownership integration.
+Six behavioral tests cover actual Player spawning an enabled native Rect,
+one-shot/silent/client cases, Key/Goal distinction, Lua coercion, creation gate.
+Four original darkness01/02 2/8-party initial-assembly tests use an explicit
+deterministic shuffle-choice stream (not a claim of recovered RNG equivalence).
+Both darkness sources now have complete actor-factory coverage, bringing total
+to10/51source files. These are not input-only completed puzzles or visual parity.
+Remaining for jump05:Wind and ScrollLimitRange. Full48-stage goal unfinished.
+
 CheckPoint capture/restore checkpoint:
 Factory bb746a7->bb50710 alloc3f0, vtablebcba708. Sprite/bodybcba810
 [-16,-64,32,64], UVbcba800(.03125,.3125,.015625,.03125),depth-.4,

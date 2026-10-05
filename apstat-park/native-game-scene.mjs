@@ -94,6 +94,13 @@ export function createNativeGameScene({ stage, playerCount, createRigidWorld,
       onSpawn: (spawn, entry) => spawnActor(scene, spawn, entry) });
     scene.spawnDueActors = position => scene.creationSchedule.update(position);
   }
+  // bb7c0f0 scene virtual58: dynamic descriptors bypass table party/position
+  // gates, but the scene's actor-creation bit100 still applies.
+  scene.spawnDynamicActor = spawn => {
+    if (!(scene.scrollFlags & 0x100)) return null;
+    if (!spawnActor) throw new Error('Native dynamic creation requires an actor factory');
+    return spawnActor(scene, spawn);
+  };
 
   scene.addActor = actor => {
     actor.scene = scene;

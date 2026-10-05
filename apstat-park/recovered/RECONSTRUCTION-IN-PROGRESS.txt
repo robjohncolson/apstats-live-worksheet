@@ -1,5 +1,13 @@
 Work branch: work/pico-native-fidelity. NOT READY TO MERGE OR DEPLOY.
 
+Dynamic creator checkpoint: CollisionActorCreator and Silent now create native
+children on player contact/state replication, respecting Key/Goal authority and
+scene creation gating. Actual Player->Rect creation tested. Original darkness01/02
+initial assembly works for2/8-party configurations; factory coverage now10/51
+sources. Complete solutions, renderer and native network ownership remain open.
+Next:Wind/ScrollLimitRange to finish jump05 factory coverage, then specialized
+forms/controllers and other remaining mechanisms. Full48 fidelity NOT complete.
+
 CheckPoint checkpoint: capture and ordinary Player retry placement are now
 connected through an explicit shared scene store. Tests cover actual contact,
 reconstruction, shuffled-slot vertical stacking and scene isolation. Scene+178
