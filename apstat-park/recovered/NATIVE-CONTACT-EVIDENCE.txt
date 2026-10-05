@@ -290,3 +290,32 @@ Native body setup and actor motion checkpoint:
   sensors, acceleration, epsilon, complete map/callback sequencing and scale.
   250 total unit tests pass. Live BoundBall browser checks pass for 2/8 players,
   including a 2400-tick player-contact run with 14 bounces and no nonfinite state.
+Native actor/body attachment checkpoint:
+- native-actor-bodies.mjs ports body ownership/attachment portions of bc17170,
+  bc165b0, bc166f0 and rectangle/circle builders bc16bf0/bc16e00. Builders stop
+  at five body records. Lower-level attachment still applies side effects when
+  the array is full, matching the native order of operations.
+- Following bodies receive correction callbacks. Late creation in an already
+  inserted actor initializes position and accepted position from actor+130
+  (placement snapshot), not actor's current transform. Detached construction
+  leaves positions unchanged until placement. Attachment resets category to 0;
+  individual actor initializers assign their category afterward.
+- Replication metadata actor+88 sets body flag 0x20. Its nonzero +18 enables
+  bc1d9e0 ID allocation: first free dictionary ID starting at unsigned 0x7fff,
+  preserving explicit IDs and leaving the normal counter unchanged. Registration
+  walks the actor's body records forward. Removal detaches all recorded bodies
+  before notifying components, without destroying the records.
+- bc17d80 first writes actor position, calls actor virtual +e0, then obtains
+  bc15b90 display position and invokes component virtual +8. It passes the
+  original body position and the display position computed after the hook.
+  Sibling bodies are not synchronized during this callback.
+- bc15b90 is POSITION, not scale: actor transform XY plus actor+138 offset;
+  actor+90 bit 8 additionally subtracts scene vectors +a8 and +b0. bb93620
+  confirms addition of the negated scene terms. The JS component adapter names
+  the two arguments syncPositions(physicsPosition, displayPosition).
+- Raw bc1779c is a jump through actor virtual +e8, confirming scale correction
+  is forwarded to the actor hook without an invented default scale assignment.
+- Seven new cases exercise capacity, late creation, replication IDs, flags,
+  callback ordering, component coordinates and complete movement/world/detach.
+  This bridge is not yet a replacement for the campaign actor manager. Actor
+  manager membership and the component on-added path still need integration.

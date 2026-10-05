@@ -212,3 +212,13 @@ Native body setup and actor motion checkpoint:
 - Actor-manager ordering, actor-specific PRE/POST hooks, presentation callbacks
   and full replacement of preview body collision loops remain unfinished.
   No additional campaign stage is certified by these foundation tests alone.
+Native actor attachment checkpoint:
+- Added actor-owned body creation, registration/removal and correction callback
+  bridge, including replicated body IDs and display-position updates.
+- Focused tests exercise a constructed actor through movement, world collision,
+  actor/component correction callbacks and detachment. The native five-record
+  capacity and independent-body behavior are preserved.
+- Next: actor-manager membership/PRE/POST ordering and component on-added path,
+  then use that lifecycle to replace campaign per-family collision adapters.
+- No new stage is certified by this standalone bridge. Live runtime remains
+  at the prior BoundBall constructor/map and Thunder-pair integration boundary.
