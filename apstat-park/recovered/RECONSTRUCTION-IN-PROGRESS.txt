@@ -1,5 +1,14 @@
 Work branch: work/pico-native-fidelity. NOT READY TO MERGE OR DEPLOY.
 
+Player assembly checkpoint: native-player-actor combines normal body creation,
+input routing, command dispatch, walking/death/hidden controllers and common
+actor lifecycle. Scene-loop tests cover map landing/walking/jumping, death,
+relocation enable ordering and riding Balance connected to a rigid Seesaw.
+Presentation is an explicit adapter. Alternate forms/controllers, attachment
+carry, resize, input-component updates and network-history adapters remain
+unimplemented dependencies. This actor is not yet wired to the live campaign;
+the full 48-stage fidelity goal remains open.
+
 Player body/input checkpoint: native-player-body creates the normal native
 type3/category1 body with UP-probe flag4, priority and resize pivot; enable
 publishes component visibility before body and scheduler state. Player input

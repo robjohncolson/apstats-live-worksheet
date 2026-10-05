@@ -1,5 +1,25 @@
 Native body-pair reconstruction checkpoint
 
+Player assembly checkpoint (bb66e50/690d0/691d0/67740):
+  Normal local actor composes recovered modules through native common PRE/POST.
+  Health snapshot precedes deferred controller replacement; controller PRE
+  precedes correction-vector reset. Collision correction publishes velocity
+  before controller POST; local displacement history records at most256 entries,
+  dropping the oldest when history flag1 is set. Manager flag8 bypasses history.
+  bb67740 does not let walk1 replace animations other than0/3, nor push3 replace
+  animations above1, unless forced. Animation seek marker resets after POST.
+  bae7af0 stop sets sprite2 and snapshots actor transform; bae7ab0 resume clears2.
+  Walking command0e pending relocation resumes scheduling but keeps sprite/body
+  disabled until successful placement; normal enable uses bb67cc0 ordering.
+  bb68020 message sets a three-second timer, plays message for nonzero values;
+  local/server PRE decrements the timer after controller update.
+  Tests now use actual type3 Player bodies in a solid-tile map, command-driven
+  death and hidden controllers, and Balance carrying the assembled Player while
+  commanding a real rigid Seesaw. Missing first-run scene.sendCommand was fixed
+  in the test by connecting the actual Seesaw target, not by omitting dispatch.
+  Production rendering, forms, alternate controllers, carried attachments,
+  resize, input component updates and host history remain explicit dependencies.
+
 Player body/input checkpoint (bb6a3b0/bb67cc0/bb68830/bb68300/bb68510):
   c62d1a8 raw runtime bounds are [-16,-47,32,46], verified in
   region_7FF72C629000_M.bin. Ordinary bb6a3b0 creates type3 (map AND bodies),
