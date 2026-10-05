@@ -16,7 +16,11 @@ export function createNativePhysicsBall({ position = { x: 0, y: 0 } } = {}) {
     position: { x: f(position.x), y: f(position.y) }, velocity: { x: 0, y: 0 },
     acceleration: { x: 0, y: 0 }, renderOffset: { x: 0, y: 0 },
     renderScale: { x: 1, y: 1 }, alphaByte: 255, spriteAngle: 0,
-    onAdded(scene) { actor.scene = scene; runNativeCommonActorAdded(actor, scene); },
+    onAdded(scene) {
+      actor.scene = scene;
+      if (!actor.components.includes(component)) actor.components.push(component);
+      runNativeCommonActorAdded(actor, scene);
+    },
     onRemoved() { unregisterNativeActorBodies(actor); actor.scene = null; },
     onPre(dt) { runNativeCommonActorPre(actor, dt); },
     onPost(dt) { runNativeCommonActorPost(actor, dt); },
@@ -45,6 +49,8 @@ export function createNativePhysicsBall({ position = { x: 0, y: 0 } } = {}) {
       actor.spriteAngle = Math.trunc(f(body.getAngle() * f(10430.3779296875)));
     },
   };
-  actor.components.push(createNativeRigidBodyComponent(actor, body));
+  // bb55d80 registers this interface on insertion, after the launcher's
+  // initial consumeVelocity loop. The constructor leaves that list empty.
+  const component = createNativeRigidBodyComponent(actor, body);
   return actor;
 }

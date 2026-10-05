@@ -170,7 +170,7 @@
     "scripts/pico-laser-patches.mjs": "f425f831c73d47a5415ab3f28dcaa031347dbde3308843446076cca3f8ec5ff2",
     "apstat-park/native-laser-runtime.mjs": "bc6ece67ada49a274cff7be05cc1e0d60499b5e2cb9f58666a4746d676e290b2",
     "apstat-park/native-laser.mjs": "5779fd8b0bda5685361c044794e8e7f653e7a52745c606ede12fa7001139e688",
-    "apstat-park/native-pitcher.mjs": "c143ddb2f78b869ea7e6c82a7bf799e88e42339b5551c56981bc1522b181653c",
+    "apstat-park/native-pitcher.mjs": "bf01e0090a1f521df00a89a086a4e2f196cd4ad8a1d18ba6b8c084369f24d0af",
     "apstat-park/native-key-box.mjs": "8baeaa1f8404e8238052d0087654e1cc1f53e5797c945106dc4cfa3c6d6ef5fe",
     "scripts/pico-bound-patches.mjs": "d76fa711618ad5efa192b8c26741269cc9821b4f3fff47dd9d5bd8f19359838e",
     "apstat-park/native-bound-runtime.mjs": "1439c93438b3a54ac9ecab10417eea03a4836cd921fe94e9ece25dd65c8cd015",

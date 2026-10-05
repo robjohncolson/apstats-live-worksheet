@@ -1,5 +1,15 @@
 Work branch: work/pico-native-fidelity. NOT READY TO MERGE OR DEPLOY.
 
+PhysicsBallPitcher checkpoint: native actor adapter connects the recovered
+one-child controller to native scene insertion/removal. PhysicsBall now delays
+component registration until onAdded, preserving the launcher's empty initial
+velocity-consumer list. Scene fixtures cover solo/2/8-player parameters,
+spawn-frame physics, POST pose readback and removal/clear/replacement ordering.
+Shared pitcher stop/resume commands are corrected and the campaign rebuilt.
+323 park tests and the existing Chrome rigid checks pass. PhysicsSwitch,
+presentation and live seesaw factory replacement still remain; all 48 stages
+are not yet verified faithful.
+
 PhysicsArea checkpoint: native-physics-area.mjs reconstructs the parameter
 truncation, positive-Y rectangle and four independent rigid edge fixtures.
 The edge setter clears adjacency flags even though its caller prepared them;

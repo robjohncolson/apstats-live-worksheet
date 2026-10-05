@@ -44,3 +44,20 @@ test('BoundBall uses per-party launch magnitudes, not the primary player jump co
       Math.fround(Math.fround(params[count - 1]) * Math.fround(0.1)));
   }
 });
+
+
+test('stop and completion commands resume the same one-child lifecycle', () => {
+  const { pitcher, children } = fixture();
+  assert.equal(pitcher.receiveCommand(0x1c), 1);
+  pitcher.tick(); pitcher.tick();
+  assert.equal(children.length, 0);
+  assert.equal(pitcher.receiveCommand(0x0d, 'Key'), 1);
+  pitcher.tick(); pitcher.tick();
+  assert.equal(children.length, 1);
+  children[0].removed = true;
+  pitcher.tick();
+  assert.equal(pitcher.state.stopped, true);
+  pitcher.receiveCommand(0x0d);
+  pitcher.tick();
+  assert.equal(children.length, 2);
+});

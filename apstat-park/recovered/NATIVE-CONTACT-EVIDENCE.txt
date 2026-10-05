@@ -1,5 +1,24 @@
 Native body-pair reconstruction checkpoint
 
+PhysicsBallPitcher scene checkpoint (bb37d70/bb38130/bb383e0/bb55d80):
+  Reuses native-pitcher parameter/direction/controller reconstruction. Raw ctor
+  bb37e44..67 reads [-40,-18,54,40], creates type-3 following body (r9=1),
+  then sets body category +4 to 4. bb38130 skips its first update, holds one
+  child, tests membership at child+58, releases/clears on a later update and
+  only spawns a replacement on the next update. No interval countdown.
+  Critical insertion order: bb55c30 constructs the body interface but does not
+  register it. bb383e0 writes direction*speed to actor+118 and visits the
+  currently empty component list, then places and queues the ball. bb55d80
+  registers the rigid component in onAdded; the body therefore starts with
+  zero rigid velocity, and the actor PRE velocity is overwritten by rigid
+  position readback in POST. Native local actor adapter now preserves this.
+  Scheduler tests verify immediate spawn-frame gravity but no child PRE/POST
+  until the next frame, then actual PhysicsArea expiry and replacement order.
+  bb38210 command 1c stops updates; 0d stores a bounded target and resumes.
+  Commands return 1 for those cases, 0 for speed/scale operations.
+  This adapter is local-only; replication, launcher presentation and live
+  campaign seesaw integration remain outside this checkpoint.
+
 PhysicsArea/PhysicsRect edge checkpoint (bb56400/bb77970/bb56520):
   Constructors share the rigid wrapper/descriptor arrangement; discriminator
   is 1 for PhysicsArea and 0 for PhysicsRect. Four float parameters truncate

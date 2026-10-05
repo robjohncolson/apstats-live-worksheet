@@ -25,7 +25,13 @@ export function createNativePitcher({ spawn, partySize, createProjectile, sendCo
       else if (command === 0x23) speed = Math.fround(payload);
       else if (command === 0x21) scale = Math.fround(payload);
       else if (command === 0x2a) scale = Math.fround(1.6);
-      else if (command === 0x0d) completionTarget = typeof payload === 'string' ? payload : '';
+      else if (command === 0x1c) { stopped = true; return 1; }
+      else if (command === 0x0d) {
+        completionTarget = typeof payload === 'string' ? payload.slice(0, 31) : '';
+        stopped = false;
+        return 1;
+      }
+      return 0;
     },
     tick() {
       if (stopped) return;
