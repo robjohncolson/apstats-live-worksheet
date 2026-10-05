@@ -15,8 +15,26 @@ Revolute/gear identification checkpoint:
   JS body edge lists prepend and notification traversal survives unlinking.
   bbe7060 embeds type 6 (b2GearJointDef) at +40. bbe7250 copies two underlying
   joint handles to +68/+70. bbe7210 sets ratio +78; bb5d9e0 supplies -1.
-  Gear coupling remains unimplemented; existing preview seesaw tilt is not
-  certified by the revolute wrapper tests.
+  Gear coupling now uses pinned b2GearJoint. Stored ratio changes take effect
+  on reattachment. Connection changes while attached are ignored. Body-edge
+  notifications clear wrapper links before body-owned joint destruction.
+  Backend rejects explicit pivot destruction while its dependent gear lives,
+  rather than allowing an invalid dangling native pointer. The implemented
+  gear API accepts revolute joints; no campaign evidence yet requires a
+  prismatic gear input. Node and Chrome verify ratio -1 conserves the initial
+  angle difference and leaves the surviving pivot usable after body removal.
+  Existing preview seesaw tilt is NOT certified by these backend tests.
+
+Seesaw actor integration evidence (not yet integrated):
+  bb5d700 selects rectangles at bcbc230, stride 16: type 0 [-300,-10,600,20],
+  type 1 [-300,-10,450,20], type 2 [-150,-10,450,20]. Density and friction are
+  1, body type is dynamic, gravity scale zero. Ground pivot limits are raw
+  bcbc478=-0.1745329201221466 and bcbc470=0.1745329201221466 radians.
+  bb5d870 reads rigid position back to actor+44 and converts angle into
+  integer sprite rotation with bcbb548=10430.3779296875 (65536/2pi).
+  Component vtables: bcbb410 body, bcbc2f8 pivot, bcbc338 gear. Their attach
+  hooks are bb56320, bb5dd40 and bb5dd00; pose setup must be traced before
+  replacing the current campaign seesaw heuristic.
 
 Rectangle rigid fixture checkpoint (bbe5c70/bbe5d30):
   Build four vertices in pixel coordinates: (x,-(y+h)), (x+w,-(y+h)),

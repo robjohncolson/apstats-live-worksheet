@@ -49,6 +49,38 @@ try {
   assert.equal(rectangle.state.vy, 0);
   assert.equal(rectangle.state.awake, false);
   console.log('NATIVE RECTANGLE BROWSER PASS: cached centroid retained and inverted bounds land on floor');
+  const gearResult = await page.evaluate(async () => {
+    const { createNativeRigidWorld } = await import('/apstat-park/native-rigid-world.mjs');
+    const { createNativeRigidBody, createNativeRigidCircle } = await import('/apstat-park/native-rigid-body.mjs');
+    const { createNativeRevoluteJoint, createNativeGearJoint } = await import('/apstat-park/native-rigid-joint.mjs');
+    const world = await createNativeRigidWorld();
+    try {
+      const bodies = [.25, -.5].map(angle => {
+        const body = createNativeRigidBody({ type: 1, angle,
+          shape: createNativeRigidCircle({ radius: 20, density: 1 }) });
+        body.attach(world);
+        return body;
+      });
+      const pivots = bodies.map(body => {
+        const pivot = createNativeRevoluteJoint();
+        pivot.setBodies(null, body); pivot.attach(world);
+        return pivot;
+      });
+      const gear = createNativeGearJoint();
+      gear.setConnections(...bodies, ...pivots); gear.setRatio(-1); gear.attach(world);
+      bodies[0].setAngularVelocity(3);
+      for (let i = 0; i < 120; i++) world.step(Math.fround(1 / 60));
+      const angles = bodies.map(body => body.getAngle());
+      bodies[0].detach();
+      world.step(Math.fround(1 / 60));
+      return { angles, gearAttached: gear.isAttached(), secondPivotAttached: pivots[1].isAttached() };
+    } finally { world.dispose(); }
+  });
+  assert.ok(gearResult.angles.every(angle => angle > 1));
+  assert.ok(Math.abs(gearResult.angles[0] - gearResult.angles[1] - .75) < 1e-5);
+  assert.equal(gearResult.gearAttached, false);
+  assert.equal(gearResult.secondPivotAttached, true);
+  console.log('NATIVE GEAR BROWSER PASS: seesaw ratio coupling and body-removal lifecycle');
   console.log('RIGID WORLD BROWSER PASS: WASM loading, free fall, floor contact and revolute joint match desktop reference');
 } finally {
   await browser.close(); server.closeAllConnections();

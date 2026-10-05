@@ -15,11 +15,11 @@
     "-sENVIRONMENT=web,node",
     "-sALLOW_MEMORY_GROWTH=1",
     "-sFILESYSTEM=0",
-    "-sEXPORTED_FUNCTIONS=[\"_pico_world_create\",\"_pico_world_destroy\",\"_pico_world_step\",\"_pico_body_create\",\"_pico_body_destroy\",\"_pico_fixture_native_rectangle\",\"_pico_polygon_read\",\"_pico_fixture_box\",\"_pico_fixture_circle\",\"_pico_body_velocity\",\"_pico_body_linear_velocity\",\"_pico_body_angular_velocity\",\"_pico_body_angular_damping\",\"_pico_body_active\",\"_pico_body_transform\",\"_pico_body_read\",\"_pico_joint_revolute\",\"_pico_joint_local_revolute\",\"_pico_joint_destroy\",\"_pico_revolute_read\"]"
+    "-sEXPORTED_FUNCTIONS=[\"_pico_world_create\",\"_pico_world_destroy\",\"_pico_world_step\",\"_pico_body_create\",\"_pico_body_destroy\",\"_pico_fixture_native_rectangle\",\"_pico_polygon_read\",\"_pico_fixture_box\",\"_pico_fixture_circle\",\"_pico_body_velocity\",\"_pico_body_linear_velocity\",\"_pico_body_angular_velocity\",\"_pico_body_angular_damping\",\"_pico_body_active\",\"_pico_body_transform\",\"_pico_body_read\",\"_pico_joint_revolute\",\"_pico_joint_local_revolute\",\"_pico_joint_destroy\",\"_pico_joint_gear\",\"_pico_gear_ratio\",\"_pico_revolute_read\"]"
   ],
   "evidence": "Body, fixture and world layouts match recovered offsets; full solver parity remains unverified.",
   "hashes": {
-    "apstat-park/native-box2d-bridge.cpp": "b07d67b042813f2e71e9bc902f9fd038b7707c22a7f9adb1811e39b4a0f9e844",
+    "apstat-park/native-box2d-bridge.cpp": "51f88c3147e24be4926e7537a766eb19396b938086ace4858b4d58727608a842",
     "apstat-park/vendor/box2d-2.3.1/Box2D/Box2D.h": "2b4a0628d40274c79819315b4f0e0fd26e9398445dfb16af2a6ad4ad981fd2f2",
     "apstat-park/vendor/box2d-2.3.1/Box2D/Collision/Shapes/b2ChainShape.cpp": "27ac2393fdc9b1ae53ed99a899386e252019e32d60d9028ebad6e91f6fda550d",
     "apstat-park/vendor/box2d-2.3.1/Box2D/Collision/Shapes/b2ChainShape.h": "fc954e35a79c26e930c6ac31cbb96b6de2ce14710a1588655067b5997c3c7c34",

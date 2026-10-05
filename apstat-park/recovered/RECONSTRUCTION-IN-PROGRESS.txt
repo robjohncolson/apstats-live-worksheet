@@ -5,7 +5,10 @@ anchors, zero reference angle, optional ground body, stored angle limits,
 collide-connected bit and detach/body-removal bookkeeping. Five focused
 tests cover actual solver constraints and multiple-joint destruction.
 The seesaw connector is a Box2D gear joint (type 6), not another pivot;
-bb5d9e0 sets its ratio to -1. Gear integration remains the next joint task.
+bb5d9e0 sets its ratio to -1. Its native wrapper and backend now preserve
+that coupling, stored ratio updates and body-removal lifecycle. Four new
+tests and a Chrome gear fixture pass; the full park suite has 300 tests.
+Live actor component integration, rider loads and solved routes remain.
 
 Rigid wrapper checkpoint: native-rigid-body.mjs now implements body attachment,
 native type mapping, float32 pixel conversion, live velocity/active setters,
@@ -14,7 +17,7 @@ pinned WASM backend. Nine wrapper tests, 291 total park tests and the Chrome
 desktop-reference solver smoke pass. Rectangle polygon fixtures now preserve
 the native pixel hull, Y flip and unscaled cached centroid; Chrome also checks
 their floor contact. These wrappers are not wired into live campaign actors
-yet. General polygon construction, gear joints/contact callbacks and
+yet. General polygon construction, contact callbacks and
 rigid actor integration remain unfinished; this is not 48-stage certification.
 
 The user requested continued work until the complete 48-stage campaign is

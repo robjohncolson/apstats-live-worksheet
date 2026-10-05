@@ -137,6 +137,18 @@ b2Joint* pico_joint_local_revolute(b2World* world, b2Body* a, b2Body* b,
   return world->CreateJoint(&definition);
 }
 void pico_joint_destroy(b2World* world, b2Joint* joint) { world->DestroyJoint(joint); }
+b2Joint* pico_joint_gear(b2World* world, b2Body* a, b2Body* b, b2Joint* first, b2Joint* second,
+                         float ratio, int collide) {
+  b2GearJointDef definition;
+  definition.bodyA = a;
+  definition.bodyB = b;
+  definition.joint1 = first;
+  definition.joint2 = second;
+  definition.ratio = ratio;
+  definition.collideConnected = collide != 0;
+  return world->CreateJoint(&definition);
+}
+float pico_gear_ratio(b2GearJoint* joint) { return joint->GetRatio(); }
 float pico_revolute_read(b2RevoluteJoint* joint, int field) {
   switch (field) {
     case 0: return joint->GetLocalAnchorA().x;

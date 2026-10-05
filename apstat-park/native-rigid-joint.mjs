@@ -53,3 +53,56 @@ export function createNativeRevoluteJoint() {
   };
   return wrapper;
 }
+
+// bbe7060..bbe72f0: two existing pivot joints are coupled by a gear definition.
+// The seesaw connection at bb5d9e0 sets ratio -1, preserving their angle gap.
+export function createNativeGearJoint() {
+  let a = null, b = null, first = null, second = null;
+  let world = null, joint = null, ratio = 1;
+  const linkedBodies = [];
+  const wrapper = {
+    flags: 0,
+    get joint() { return joint; },
+    get world() { return world; },
+    isAttached() { return Boolean(world && joint); },
+    setConnections(bodyA, bodyB, jointA, jointB) { // bbe7170
+      if (wrapper.isAttached() || !bodyA || !bodyB || !jointA || !jointB) return false;
+      a = bodyA; b = bodyB; first = jointA; second = jointB;
+      return true;
+    },
+    setRatio(value) { ratio = f(value); }, // bbe7210 changes the stored definition only
+    attach(nextWorld) {
+      if (wrapper.isAttached()) return false;
+      if (!a || !b || !first || !second) return false;
+      if (!nextWorld || [a, b, first, second].some(value => value.world !== nextWorld)) {
+        throw new Error('Gear bodies and pivots must be attached to the supplied world');
+      }
+      joint = nextWorld.createGearJoint(a.body, b.body, first.joint, second.joint,
+        { ratio, collideConnected: Boolean(wrapper.flags & 1) });
+      world = nextWorld;
+      joint.userData = wrapper;
+      for (const body of [a, b]) {
+        if (linkedBodies.includes(body)) continue;
+        body.joints ??= [];
+        body.joints.unshift(wrapper);
+        linkedBodies.push(body);
+      }
+      return true;
+    },
+    detach() {
+      if (!wrapper.isAttached()) return;
+      joint.destroy();
+      wrapper.onBodyRemoved();
+    },
+    onBodyRemoved() {
+      for (const body of linkedBodies) {
+        const index = body.joints.indexOf(wrapper);
+        if (index >= 0) body.joints.splice(index, 1);
+      }
+      linkedBodies.length = 0;
+      joint = null;
+      world = null;
+    },
+  };
+  return wrapper;
+}

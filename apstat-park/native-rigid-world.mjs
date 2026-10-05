@@ -17,7 +17,7 @@ export async function createNativeRigidWorld({ gravity = { x: 0, y: 0 }, moduleO
     if (!pointer) throw new Error('Body is not live in this rigid world');
     return pointer;
   }
-  function registerJoint(pointer, a, b) {
+  function registerJoint(pointer, a, b, kind = 'revolute', dependencies = []) {
     function requireJoint() {
       requireWorld();
       if (!joints.has(joint)) throw new Error('Joint is not live in this rigid world');
@@ -25,6 +25,7 @@ export async function createNativeRigidWorld({ gravity = { x: 0, y: 0 }, moduleO
     const joint = {
       read() {
         requireJoint();
+        if (kind === 'gear') return { ratio: api._pico_gear_ratio(pointer) };
         const read = field => api._pico_revolute_read(pointer, field);
         return { anchorA: { x: read(0), y: read(1) }, anchorB: { x: read(2), y: read(3) },
           referenceAngle: read(4), angle: read(5), lower: read(6), upper: read(7),
@@ -32,11 +33,14 @@ export async function createNativeRigidWorld({ gravity = { x: 0, y: 0 }, moduleO
       },
       destroy() {
         requireJoint();
+        for (const entry of joints.values()) {
+          if (entry.dependencies.includes(joint)) throw new Error('Detach the dependent gear before its underlying joint');
+        }
         api._pico_joint_destroy(world, pointer);
         joints.delete(joint);
       },
     };
-    joints.set(joint, { pointer, a, b });
+    joints.set(joint, { pointer, a, b, kind, dependencies });
     return joint;
   }
   const result = {
@@ -110,6 +114,18 @@ export async function createNativeRigidWorld({ gravity = { x: 0, y: 0 }, moduleO
       const pointer = api._pico_joint_local_revolute(world, handle(a), handle(b),
         anchorA.x, anchorA.y, anchorB.x, anchorB.y, lower, upper, Number(limit), Number(collideConnected));
       return registerJoint(pointer, a, b);
+    },
+    createGearJoint(a, b, first, second, { ratio = 1, collideConnected = false } = {}) {
+      const bodyA = handle(a), bodyB = handle(b);
+      const one = joints.get(first), two = joints.get(second);
+      if (!one || !two || one.kind !== 'revolute' || two.kind !== 'revolute') {
+        throw new Error('Gear requires two live revolute joints from this world');
+      }
+      if (first === second || one.b !== a || two.b !== b) {
+        throw new Error('Gear bodies must match the distinct joints second bodies');
+      }
+      const pointer = api._pico_joint_gear(world, bodyA, bodyB, one.pointer, two.pointer, ratio, Number(collideConnected));
+      return registerJoint(pointer, a, b, 'gear', [first, second]);
     },
     dispose() {
       if (!world) return;
