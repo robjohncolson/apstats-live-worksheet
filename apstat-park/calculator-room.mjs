@@ -15,6 +15,7 @@ const { createSceneDissolve } = await import('./scene-transition.mjs' + V);
 const { catBodyForHue, rgbHex } = await import('./pico-rules.mjs' + V);
 const { ATLAS } = await import('./assets/pico-atlas.mjs' + V);
 const { TEAM_BLOCK, CALCULATOR_PROTOCOL } = await import('./calculator-lobby.mjs' + V);
+const { createPeerMotion } = await import('./peer-motion.mjs' + V);
 const ENTRY_WIDTH = 720;
 const LEVEL_WIDTH = ENTRY_WIDTH + WORLD.width;
 const RESET_DOOR = { x: 650, y: WORLD.floor - 48, w: 48, h: 48 };
@@ -43,6 +44,10 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   const keyQueue = [];
   let pendingPress = null, pressAt = 0;
   let participating = false, cameraX = 0;
+  const peerMotion = createPeerMotion({ name: board.username,
+    enabled: new URL(win.location.href).searchParams.get('parkRtc') === '1',
+    PeerConnection: win.RTCPeerConnection,
+    signal: message => send('calculator_rtc_signal', message) });
   let ink = '#30263b', inkAt = -Infinity;
   const controls = doc.createElement('div');
   controls.dataset.calculatorControls = '';
@@ -144,10 +149,12 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   function onMessage(event) {
     let packet;
     try { packet = JSON.parse(event.data); } catch { return; }
+    if (packet.type === 'calculator_rtc_signal') { peerMotion.receive(packet); return; }
     if (packet.type === 'calculator_lobby_state') {
       if (packet.protocol !== CALCULATOR_PROTOCOL) return;
       const reset = lobby && lobby.epoch !== packet.epoch && packet.phase === 'gathering';
       lobby = packet;
+      peerMotion.sync(packet.epoch, packet.rtcPeers);
       if (arrivalPending) {
         arrivalPending = false;
         // Shared-room arrivals used to occupy exactly the same pixel. Give
@@ -252,6 +259,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   function bind() {
     const next = getSocket();
     if (next === socket) return;
+    peerMotion.reset();
     socket?.removeEventListener('message', onMessage);
     socket = next; joinedAt = 0; receivedAt = 0;
     socket?.addEventListener('message', onMessage);
@@ -259,10 +267,11 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   function pump() {
     if (disposed || doc.hidden) return;
     bind();
+    peerMotion.publish({ x: player.x, y: player.y });
     if (performance.now() - lobbyAt >= 100) {
       lobbyAt = performance.now();
       const missionCamera = Math.max(0, Math.min(ENTRY_WIDTH, LEVEL_WIDTH - board.viewportW() / scale()));
-      send('calculator_lobby', { protocol: CALCULATOR_PROTOCOL, epoch: lobby?.epoch,
+      send('calculator_lobby', { protocol: CALCULATOR_PROTOCOL, epoch: lobby?.epoch, rtc: peerMotion.supported,
         pose: { x: player.x, y: player.y }, pushing: !!input.right && !input.left,
         ready: player.x >= ENTRY_WIDTH + 20 && cameraX >= missionCamera - 0.5 });
     }
@@ -365,7 +374,11 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     text(ctx, count + (count === 1 ? ' PUSHER' : ' PUSHERS'), blockX + 16, TEAM_BLOCK.y - 9, 10, ink, 'center');
     text(ctx, 'TEAM START', TEAM_BLOCK.dock + 16, WORLD.floor + 32, 10, ink, 'center');
     if (!participating) for (const [name, peer] of lobbyPeers) {
+      const original = { x: peer.x, y: peer.y };
+      const direct = peerMotion.position(name);
+      if (direct) { peer.x = direct.x; peer.y = direct.y; }
       peer.render(ctx); text(ctx, name.slice(0, 12), peer.x + 10, peer.y - 8, 10, ink, 'center');
+      Object.assign(peer, original);
     }
     ctx.save(); ctx.translate(ENTRY_WIDTH, 0);
     text(ctx, 'CALCULATOR TOGETHER', 28, 30, 20);
@@ -444,7 +457,15 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
       text(ctx, 'NEXT SKILL', x + w / 2, y - 24, 10, ink, 'center');
       text(ctx, 'UP TO ENTER', x + w / 2, y - 9, 7, ink, 'center');
     }
-    if (participating) for (const [name, peer] of peers) { drawCharacter(ctx, peer, name); text(ctx, name.slice(0, 12) + ' ' + (state.members.find(member => member.name === name)?.step || 0) + '/' + (level.route.length + challenge.answers.length), peer.x + 10, peer.y - 8, 10, ink, 'center'); }
+    if (participating) for (const [name, peer] of peers) {
+      const original = { x: peer.x, y: peer.y };
+      const direct = peerMotion.position(name);
+      if (direct && direct.x >= ENTRY_WIDTH && !state.failure) { peer.x = direct.x - ENTRY_WIDTH; peer.y = direct.y; }
+      drawCharacter(ctx, peer, name);
+      text(ctx, name.slice(0, 12) + ' ' + (state.members.find(member => member.name === name)?.step || 0)
+        + '/' + (level.route.length + challenge.answers.length), peer.x + 10, peer.y - 8, 10, ink, 'center');
+      Object.assign(peer, original);
+    }
     if (participating && !connected()) text(ctx, 'CONNECTING TO YOUR TEAM...', 360, 280, 14, ink, 'center');
     ctx.restore();
     drawCharacter(ctx, player, board.username);
@@ -497,6 +518,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   function dispose() {
     if (disposed) return;
     disposed = true; send('calculator_leave');
+    peerMotion.dispose();
     audio.dispose();
     clearInterval(timer); socket?.removeEventListener('message', onMessage);
     engine.canvas.removeEventListener('click', pointer, true);
@@ -514,8 +536,9 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   engine.canvas.addEventListener('click', pointer, true); doc.addEventListener('keydown', key);
   doc.addEventListener('keyup', key);
   doc.addEventListener('visibilitychange', visibility);
-  const timer = setInterval(pump, 100); pump();
+  const timer = setInterval(pump, peerMotion.supported ? 50 : 100); pump();
   return { kind: 'calculator', dispose, startMission, returnToStart, getState: () => state,
+    getNetworkStats: () => peerMotion.stats(),
     getView: () => ({ cameraX, playerX: player.x, playerY: player.y, participating, entranceX: ENTRY_WIDTH, lobby, missionId: level.id, challenge,
       resetDoor: state?.complete ? { ...RESET_DOOR } : null, lines: display.getLines() }),
     getCalculatorScreen: () => calculator.getScreen(),

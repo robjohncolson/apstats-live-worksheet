@@ -2,6 +2,7 @@
 // PARK_RELAY_ROOT may point to another curriculum_render checkout.
 // PARK_PLAYWRIGHT_MODULE may point to an installed playwright-core index.mjs.
 // PARK_BROWSER may point to an installed Chromium/Edge executable.
+// PARK_RTC_SMOKE=1 also checks the opt-in movement pilot and forced disconnect fallback.
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { createReadStream, mkdirSync } from 'node:fs';
@@ -19,6 +20,7 @@ const { chromium } = await import(process.env.PARK_PLAYWRIGHT_MODULE
   ? pathToFileURL(process.env.PARK_PLAYWRIGHT_MODULE).href : 'playwright');
 const app = path.resolve(fileURLToPath(new URL('../', import.meta.url)));
 const output = path.resolve(process.env.PARK_SMOKE_OUTPUT || 'test-results/park-campaign');
+const rtcPilot = process.env.PARK_RTC_SMOKE === '1';
 mkdirSync(output, { recursive: true });
 const registry = createClassroomRegistry(), sockets = new Map(), errors = [], packets = [];
 let hour = 0, timeOffset = 0;
@@ -75,14 +77,45 @@ try {
   const pages = [];
   for (const [user, section, role] of [['bee','PeriodB','student'],['eve','PeriodE','student'],['teacher','PeriodX','teacher']]) {
     const page = await browser.newPage({viewport:{width:900,height:1000}}); pages.push(page);
+    if (rtcPilot) await page.addInitScript(() => {
+      window.testPeers = [];
+      const NativePeer = window.RTCPeerConnection;
+      window.RTCPeerConnection = class extends NativePeer {
+        constructor(options) { super(options); window.testPeers.push(this); }
+      };
+    });
     page.on('pageerror', error => errors.push(error.message));
-    await page.goto(origin+'/?user='+user+'&section='+section+'&role='+role);
+    await page.goto(origin+'/?user='+user+'&section='+section+'&role='+role + (rtcPilot ? '&parkRtc=1' : ''));
     await page.waitForFunction(() => board.getParkScene()?.getView()?.lobby?.members.length);
   }
   await pages[2].waitForFunction(() => board.getParkScene().getView().lobby.members.length === 3);
   await pages[2].waitForFunction(() => new Set(board.getParkScene().getView().lobby.members.map(m => m.pose.x)).size === 3);
   const view = await pages[2].evaluate(() => board.getParkScene().getView());
   assert.equal(new Set(view.lobby.members.map(member => member.pose.x)).size, 3);
+  if (rtcPilot) {
+    for (const page of pages) await page.waitForFunction(() => {
+      const stats = board.getParkScene().getNetworkStats();
+      return stats.connected === 2 && stats.received > 0 && stats.rttMs.length === 2;
+    });
+    console.log('RTC connected:', await pages[2].evaluate(() => board.getParkScene().getNetworkStats()));
+    // Closing real peer connections must not remove the student or stop server motion.
+    const before = await pages[0].evaluate(() => board.getParkScene().getView().playerX);
+    await pages[0].evaluate(() => { for (const peer of testPeers) peer.close(); board._getPlayerInput().right = true; });
+    await pages[2].waitForFunction(x => board.getParkScene().getView().lobby.members.find(m => m.name === 'bee').pose.x > x + 25, before);
+    await pages[0].evaluate(() => { board._getPlayerInput().right = false; });
+    await pages[0].waitForFunction(() => board.getParkScene().getNetworkStats().fresh === 0);
+    assert.equal(await pages[0].evaluate(() => board.getParkScene().getNetworkStats().connected), 0);
+    assert.equal(await pages[2].evaluate(() => board.getParkScene().getView().lobby.members.length), 3);
+    // A browser without WebRTC still gets the complete shared lobby.
+    const fallback = await browser.newPage();
+    fallback.on('pageerror', error => errors.push(error.message));
+    await fallback.addInitScript(() => { window.RTCPeerConnection = undefined; });
+    await fallback.goto(origin + '/?user=fallback&section=PeriodB&parkRtc=1');
+    await fallback.waitForFunction(() => board.getParkScene()?.getView()?.lobby?.members.length === 4);
+    assert.equal(await fallback.evaluate(() => board.getParkScene().getNetworkStats().supported), false);
+    assert.equal(await fallback.evaluate(() => board.getParkScene().getView().lobby.rtcPeers.length), 3);
+    console.log('RTC movement, forced disconnection, and unsupported-browser WebSocket fallback passed');
+  }
   assert.deepEqual(errors, []);
   console.log('Shared B/E/teacher arrivals are connected and occupy three distinct visible positions');
   await pages[2].screenshot({path:path.join(output,'teacher-presence.png')});
