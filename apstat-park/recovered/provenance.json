@@ -132,10 +132,23 @@
         "FUN_7ff72bb679c0"
       ],
       "behavior": "Player body [-16,-47,32,46], ordinary walk 3/frame, plane 4.5/frame, native directional priority. Sprite scale uses requested size while body growth uses the native .88 ratio; reset clears visual scale. Full controller/support graph remains under audit."
+    },
+    {
+      "id": "thunder-native-pair-response",
+      "files": [
+        "src/engine/GameRuntime.ts"
+      ],
+      "evidence": [
+        "FUN_7ff72bc1e4a0",
+        "FUN_7ff72bc11be0",
+        "FUN_7ff72bc13830",
+        "FUN_7ff72bb4d330"
+      ],
+      "behavior": "Stationary active type-3 Thunder support uses native trajectory rollback, float32 actor anchors and .01 separation with a previous-position clamp. Full world ordering and recursive bodies remain separate work."
     }
   ],
   "localSources": {
-    "scripts/pico-campaign-patches.mjs": "a1b3f6ee642dd60868858b70c15f31b4adcaff2cda24479e3c29b9effa86cc2c",
+    "scripts/pico-campaign-patches.mjs": "85d6f3a641bfca927f303bcfb6e0092b6aa16b1cf7d67a2788dd6ebf2f8eba6e",
     "scripts/pico-goal-patches.mjs": "0ac45c97a1b9e5bf17d2df95b7123751d435a21e52a94a262cb6f866363ae878",
     "apstat-park/native-goals.mjs": "de2f0d8e83d66500542bdabda94330749510524b10c56b124c55f3898ab669be",
     "apstat-park/native-breakout-key.mjs": "5ca96726cc1d54bd64cb569c44850492c27789e5ff8531fc7fdf80fb1177d853",
@@ -148,7 +161,10 @@
     "scripts/pico-bound-patches.mjs": "d76fa711618ad5efa192b8c26741269cc9821b4f3fff47dd9d5bd8f19359838e",
     "apstat-park/native-bound-runtime.mjs": "4e83db2b4a6865648baf07decdb0a21038510c54526bce7113015cf8c01ae7c0",
     "apstat-park/native-bound-ball.mjs": "9a74f5dc65c9f6884ff2a11ff6286953b2c07897651dce19e425d4ee95bf4e6a",
-    "scripts/pico-player-patches.mjs": "9d713c1e0f7839bf418e8de130cb66377fdc7a4c581ec0442c7c09d0129f3603"
+    "scripts/pico-player-patches.mjs": "9d713c1e0f7839bf418e8de130cb66377fdc7a4c581ec0442c7c09d0129f3603",
+    "scripts/pico-contact-patches.mjs": "65f7b4f15c3b8eb9a17ecca216921a04103cc91f065aa36758f12fb8b3a3529e",
+    "apstat-park/native-rectangle-pair.mjs": "856635715547f93559cdafb212f5facc207a8f4b958c93fdf4367798e3057dbb",
+    "apstat-park/native-static-contact.mjs": "9ff5b6540717d9c2a88744811030b5ecbf36a57eba33e468cf34e8ebc91d463e"
   },
   "hashes": {
     "src/engine/actors/BattleBreakoutBall.ts": "90e2a60092f538c3b9fb7069955ee9689ce4dea139e02dd40fe7b63ac85bfe01",

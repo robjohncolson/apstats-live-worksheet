@@ -122,3 +122,15 @@ Player foundation corrections now integrated:
 - The input-only laser route now completes in 532 ticks after correcting
   walk speed, versus 426 with the old preview speed. Bound contact probe
   now records 14 bounces in 2400 ticks, all finite.
+
+Native contact checkpoint:
+- Reconstructed ordinary rectangle/mixed pair trajectory rollback from
+  bc1e4a0, with float32 actor anchors, previous-overlap exclusion, .01 gap
+  allocation/clamp and X-first contact deduplication. Verified the tolerance
+  and gap constants directly from raw memory data.
+- Integrated the stationary active type-3 Thunder auxiliary path. Browser
+  fixtures cover four directions, exact-edge support, no auxiliary drift
+  and disabled/guard exclusions with 2/8 players.
+- See NATIVE-CONTACT-EVIDENCE.txt for source and exact integration limits.
+  This is NOT yet the full registered-body solver. Recursive fixed bodies,
+  native map resolution and moving support propagation remain outstanding.

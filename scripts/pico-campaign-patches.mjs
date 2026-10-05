@@ -4,6 +4,7 @@ import { patchGoalUnlock } from './pico-goal-patches.mjs';
 import { patchNativeLasers } from './pico-laser-patches.mjs';
 import { patchNativeBound } from './pico-bound-patches.mjs';
 import { patchNativePlayer } from './pico-player-patches.mjs';
+import { patchNativeThunderContact } from './pico-contact-patches.mjs';
 
 export const CAMPAIGN_PATCHES = [{
   id: 'warp-sensor-origin',
@@ -45,6 +46,11 @@ export const CAMPAIGN_PATCHES = [{
   files: ['src/engine/actors/PlayerGeometry.ts', 'src/engine/actors/Player.ts', 'src/engine/GameRuntime.ts'],
   evidence: ['FUN_7ff72bb66e50', 'DAT_7ff72c62d1a8', 'FUN_7ff72bb687e0', 'FUN_7ff72bc16120', 'FUN_7ff72bb6f0e0', 'FUN_7ff72bb70860', 'FUN_7ff72bb708d0', 'FUN_7ff72bb679c0'],
   behavior: 'Player body [-16,-47,32,46], ordinary walk 3/frame, plane 4.5/frame, native directional priority. Sprite scale uses requested size while body growth uses the native .88 ratio; reset clears visual scale. Full controller/support graph remains under audit.',
+}, {
+  id: 'thunder-native-pair-response',
+  files: ['src/engine/GameRuntime.ts'],
+  evidence: ['FUN_7ff72bc1e4a0', 'FUN_7ff72bc11be0', 'FUN_7ff72bc13830', 'FUN_7ff72bb4d330'],
+  behavior: 'Stationary active type-3 Thunder support uses native trajectory rollback, float32 actor anchors and .01 separation with a previous-position clamp. Full world ordering and recursive bodies remain separate work.',
 }];
 
 // Fail the build if upstream code changes: never silently skip a correction.
@@ -81,6 +87,7 @@ export function patchCampaignSource(file, source) {
       'Rect: (spawn) => {\n      const staticRect = new StaticRect(spawn, nativeRect(spawn, this.activePlayerCount));', file);
     source = patchGoalUnlock(source, replaceOnce, file);
     source = patchNativeLasers(source, replaceOnce, file);
+    source = patchNativeThunderContact(source, replaceOnce, file);
     return patchNativeBound(source, replaceOnce, file);
   }
   if (!CAMPAIGN_PATCHES[0].files.includes(file)) return source;

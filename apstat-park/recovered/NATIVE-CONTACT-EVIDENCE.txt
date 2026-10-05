@@ -1,0 +1,69 @@
+Native body-pair reconstruction checkpoint
+
+Source: recovered/memdump/ghidra_decompiled/functions_split, read only.
+This file records the boundary of the implemented response; it does not
+certify the global solver or the entire campaign.
+
+FUN_7ff72bc1e4a0: ordinary rectangle/mixed-shape pair response
+  Actor displacement is current(+4c) minus last accepted position(+64).
+  Current world bounds come from bb70550. Each axis checks which side was
+  previously separated. Rollback fractions are clamped to [-1,0].
+  Opposing movement rewinds both trajectories by the same fraction.
+  Same-direction movement rewinds only the faster trajectory.
+  If both fractions are nonzero, reject an axis whose perpendicular
+  intervals do not meet at the rollback time (strict < rejection).
+  Candidate positions are current + displacement * rollback, float32.
+  Cancellation to a negligible correction restores the previous axis.
+  Apply +/-.01 to the selected moving body, clamped against its previous
+  position. A resting exact-edge body is not lifted away from its support.
+  No mass or equal-share overlap division occurs in this branch.
+  No valid axis: ordinary bodies restore their accepted positions.
+  Flags 2 set and 8 clear divert to recursive bc20280; NOT implemented here.
+
+FUN_7ff72bc13830: contact insertion
+  Contact records are unique by other-body ID, not by normal. The response
+  inserts X before Y, so simultaneous corner contact retains X.
+  Reciprocal-UP suppression and contact state transitions still belong to
+  the unported global registry; the pair helper does not simulate them.
+
+FUN_7ff72bc1e050: pair eligibility and iteration
+  Pair must overlap at current positions and must NOT overlap at accepted
+  positions (bc119c0 vs bc11be0). Tangency is not overlap.
+  The new helper preserves these rectangle overlap gates. It does not
+  own category masks, active/moved flags, registration order, the two solver
+  phases, rollback of the global list, or recursive fixed-body propagation.
+
+FUN_7ff72bc1da80: global pass, not yet ported
+  Snapshot body positions; restore old scales while queuing scale changes.
+  Apply map displacement to eligible bodies. Repeat pair phases 0 and 1.
+  Call world hook, resolve queued scale changes, finalize every body.
+  Finally scan registered pairs for overlap callbacks. A accepted callback
+  runs before B, without another enabled check between those two callbacks.
+  bc146c0 commits accepted positions, transform callbacks and actor/map
+  contact lifecycles; it is NOT the pair response function.
+
+Raw static constants independently read from memory-region files:
+  7ff72bc7d458: 00000034 = FLT_EPSILON = 2^-23
+  7ff72bc7d45c: 0ad7233c = +0.009999999776482582
+  7ff72bcc7dc0: 0ad723bc = -0.009999999776482582
+
+Integrated boundary:
+  Active type-3 Thunder auxiliary versus one moving Player, in the existing
+  applyClosedGateCollision call site. Thunder remains stationary. Native
+  pair math replaces generic edge clamping only for this auxiliary path.
+  The helper retains separate actor anchors and scaled local body bounds.
+  Guard/disabled-body exclusion remains at the existing runtime gate.
+  Other gates and BoundBall still use their documented preview adapters.
+
+Checks:
+  native-rectangle-pair.test.mjs: four faces, argument-order reversal,
+  resting support, head-on unequal movement, overtaking, diagonal contact,
+  perpendicular rejection, old overlap, recursive exclusion, actor anchors,
+  and final-overlap gating for a fully tunneled trajectory.
+  campaign-contact-browser-smoke.mjs: original stage_thunder02 active body,
+  all four faces plus resting support, no auxiliary drift, guard/disabled
+  exclusion, with 2 and 8 players in the rebuilt browser runtime.
+
+Still required: world registry/order; native map solver; recursive bc20280;
+both-circle bc1f1c0; moving support propagation; full actor callback timing;
+input-only complete routes for all 48 stages and supported party sizes.
