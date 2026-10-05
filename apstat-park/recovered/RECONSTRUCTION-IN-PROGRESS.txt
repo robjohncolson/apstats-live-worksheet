@@ -1,5 +1,12 @@
 Work branch: work/pico-native-fidelity. NOT READY TO MERGE OR DEPLOY.
 
+Player motion checkpoint: native-player-motion.mjs reconstructs recursive
+DOWN support, conditional airborne override, projected gravity and last-contact
+velocity correction. 333 park tests pass. These are native controller building
+blocks, not a complete Player actor. Jump/coyote/input gates, controller state,
+body attachment, contact callbacks and presentation remain to connect before
+replacing the live seesaw/player path.
+
 Seesaw stage assembly checkpoint: native-seesaw-stage.mjs consumes original
 rows and queues PhysicsSwitch/Area/Rect, parent/child seesaws, Balance and the
 launcher in source order. Child binding only finds an already-created parent.

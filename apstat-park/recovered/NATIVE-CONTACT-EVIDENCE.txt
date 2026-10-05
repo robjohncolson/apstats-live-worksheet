@@ -1,5 +1,27 @@
 Native body-pair reconstruction checkpoint
 
+Player support/motion checkpoint (bb69dd0/bb67850/bb67da0/bb6add0/bb691d0):
+  bb69dd0 returns false for null body or a DOWN map contact. It enumerates
+  matching DOWN actor contacts with bc13550 in stored order, resolving through
+  the registry. Any non-category-1 contact makes the result false; category-1
+  contacts recurse into the same test. No support returns true (airborne).
+  Raw bb69e46..52 confirms the recursive argument is the contacted body.
+  bb67850 invokes player+c48 override only if the graph result is true;
+  otherwise it preserves false. Raw return-register flow confirms semantics.
+  bb67da0 projects velocity onto player+c88, adds float32 .65 (bcb69bc), caps
+  at 19.5 (bcbdf88), and returns direction*(newProjection-oldProjection).
+  A velocity already above terminal speed therefore gets a negative delta.
+  bb6add0 replaces player+c80 with the latest collision correction. PRE
+  bb690d0 clears it after the controller; POST bb691d0 adds it to velocity
+  when player+3f8 bit8 is set, then dispatches component velocity consumers.
+  This is not a rule to zero vertical speed for every collision, nor a sum
+  of every collision correction. Controller integration remains pending.
+  Tests cover player stacks, map/non-player support, stale registry contacts,
+  wall normals, override short-circuiting, directed gravity and component order.
+  The recovered support helper has a 16-pointer stack buffer; larger output
+  is explicitly rejected rather than reproducing memory corruption. Cyclic
+  invalid graphs are guarded by a traversal limit, not silently grounded.
+
 Seesaw factory assembly checkpoint (bb72ae0 branches):
   SeesawParent allocates 938, passes integer param0 into bb77b30; its trailing
   numeric bounds are read but are not supplied to the ctor/angle controller.
