@@ -180,7 +180,7 @@
     "apstat-park/native-rectangle-pair.mjs": "856635715547f93559cdafb212f5facc207a8f4b958c93fdf4367798e3057dbb",
     "apstat-park/native-static-contact.mjs": "9ff5b6540717d9c2a88744811030b5ecbf36a57eba33e468cf34e8ebc91d463e",
     "apstat-park/native-map-collision.mjs": "1f2f701602b4ec5e89c7713e27848ed829faa55308d0a4bcff2e7d656735e09b",
-    "apstat-park/native-body.mjs": "fa046ff3fd8c6e032df8a52d61025684a117c4e1936ad033cf8f49dc8e49f04b",
+    "apstat-park/native-body.mjs": "f7411b6dfa7a345b3349de9853bc77c122757d62bc591d98e76a41badd0b1ab0",
     "apstat-park/native-actor-motion.mjs": "45f867b8a3ad3ff7df67cf122e4aa44ac49f6cd2f20cbcc4ded151eda96ae434",
     "apstat-park/native-body-support.mjs": "55a625a984342b6a684ee94d18f37b9d162e902fe117965cee7a166dbb348390",
     "apstat-park/native-body-world.mjs": "ae338cdacf59a688a00a2fabcd1f04afa78d6fb84d94c526673ece78c32e8e66",

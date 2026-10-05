@@ -4,7 +4,7 @@ const f = Math.fround;
 // bc11f30. Shape initialization and actor attachment are separate native calls.
 export function createNativeBody() {
   return {
-    id: 0, category: 0, priority: 0, flags: 0, type: 0, shape: 0,
+    id: 0, category: 0, priority: 0, flags: 0, responseFlags: 0, type: 0, shape: 0,
     actor: null, world: null,
     rawBounds: { x: 0, y: 0, width: 0, height: 0 },
     localBounds: { x: 0, y: 0, width: 0, height: 0 },

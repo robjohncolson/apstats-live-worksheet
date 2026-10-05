@@ -1,5 +1,23 @@
 Native body-pair reconstruction checkpoint
 
+Walking horizontal branch checkpoint (bb6f0e0 through bb6f36e):
+  Copy velocity; if player+3f8 bit1 is clear multiply X by float32 .98
+  (bcbea28), otherwise zero X. Test held Right (action6) before Left (5).
+  Direction input changes facing and queries its contact normal. Steering
+  writes signed speed only if bit1 is set and aggregated response bit1 is
+  clear. Mode5 bypasses scene clipping; others call bb7b700. Contact selects
+  animation3 (push), no contact animation1 (walk), regardless of steering.
+  Without direction: disabled input chooses animation5; enabled input changes
+  animations1/3/5 to0 and leaves other states (including2/7) alone.
+  bc13690 flag-output variant ORs other body+10, represented as responseFlags.
+  This is distinct from body+c (flags), body+20 (type), and body+4 (category).
+  Missing IDs still count as contact but contribute no bits. A map contact
+  only supplies the boolean fallback; it contributes no response flags.
+  Tests cover directional priority, damping, scene-clip ordering/bypass,
+  pushing versus blocked steering, aggregated flags and animation gates.
+  Input is explicitly supplied after bb68300 ownership/control filtering;
+  this helper does not yet implement those filter modes or scene clipping.
+
 Player jump checkpoint (bb6f608..bb6f8ac, bb68770, bc13690, bc15c70):
   Direct DOWN contact resets grace to float32 .07 and jump count to zero.
   With no contact, a positive old grace value is decremented by dt but still
