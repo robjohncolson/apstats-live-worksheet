@@ -1,5 +1,25 @@
 Native body-pair reconstruction checkpoint
 
+Player boundary checkpoint (bb7b700/bb7cd20/bb7ca90/bb7b610):
+  bb7cd20 follows UP category1 contacts in stored order, using actor display
+  positions and the depth64 cutoff. Missing registry bodies are ignored.
+  bb7b700 uses viewport clipping for scroll modes0/2, solo scenes, or past
+  the scroll limit; other cases bound team spread with a 32-unit margin.
+  Preserve negative-motion asymmetry and negative available space. Constants
+  bc7db94=1280, bc7d7f8=32, bcc0130=-FLT_MAX and bcbabe8=FLT_MAX verified
+  from region_7FF72BC7C000_M.bin. bb7ca90 excludes controllerKind2 players
+  with sprite bit8 clear, includes other controller kinds and actor+6b2a8.
+  bb7b610 suppresses autoscroll for controllerKind3 and network mode1 with
+  scene flag100. It limits speed by map-right minus viewport-right, permits
+  negative correction, and uses scroll flag8 to extend the right boundary.
+  bb6f0e0 tail checks actor Y strictly beyond scene+6ad08 or below negative
+  scene+6ad0c. Pending-position squared length>epsilon zeros velocity through
+  components, then acceleration. Otherwise bc11800 gates command4, fallState1
+  (bb67800, actor+414), and registry-gated scene flag2 (bb7b8a0).
+  Five new boundary tests; all 358 park tests pass. Scroll-edge bb34f30 carry
+  and live-scene wiring remain pending; these isolated ports are not a claim
+  of complete Player or campaign fidelity.
+
 Walking controller assembly checkpoint (bb6f020/bb6f0e0/bb6fa50/bb6fd20):
   Native-walk-controller composes existing steering/gravity/jump routines in
   recovered order. Frozen bit8 clears hold/jump count/bounce and bits1/2, then
