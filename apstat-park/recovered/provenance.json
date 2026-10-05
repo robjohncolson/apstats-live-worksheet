@@ -96,10 +96,27 @@
         "FUN_7ff72bb54940"
       ],
       "behavior": "LaserBallPitcher owns one native-speed projectile. Player contacts reset the named reward box and launcher speed; three actor hits release a Key. Native box/ball atlas frames and removal countdowns replace placeholders. Global contact ordering remains under audit."
+    },
+    {
+      "id": "bound-ball-reward-path",
+      "files": [
+        "src/engine/GameRuntime.ts",
+        "src/engine/sprites.ts"
+      ],
+      "evidence": [
+        "FUN_7ff72bb36d10",
+        "FUN_7ff72bb36ee0",
+        "FUN_7ff72bb37250",
+        "FUN_7ff72bb37500",
+        "FUN_7ff72bb53e10",
+        "FUN_7ff72bb54330",
+        "FUN_7ff72bc16120"
+      ],
+      "behavior": "BoundBallPitcher creates the gravity/mass-response ball; floor loss and capture use native removal timers. BallBox accepts command 11 through its narrow top sensor and publishes a Key. Preview collision separation remains an adapter, not a native solver reconstruction."
     }
   ],
   "localSources": {
-    "scripts/pico-campaign-patches.mjs": "683150c1a147b69d4d32293ab9823aeecf0ba910141e6b3d51b574e946d44aa9",
+    "scripts/pico-campaign-patches.mjs": "acb40e7de20f63a8adfc47dff8ef53298df64dc8a90af8149c6211240062fa71",
     "scripts/pico-goal-patches.mjs": "0ac45c97a1b9e5bf17d2df95b7123751d435a21e52a94a262cb6f866363ae878",
     "apstat-park/native-goals.mjs": "de2f0d8e83d66500542bdabda94330749510524b10c56b124c55f3898ab669be",
     "apstat-park/native-breakout-key.mjs": "5ca96726cc1d54bd64cb569c44850492c27789e5ff8531fc7fdf80fb1177d853",
@@ -108,7 +125,10 @@
     "apstat-park/native-laser-runtime.mjs": "bc6ece67ada49a274cff7be05cc1e0d60499b5e2cb9f58666a4746d676e290b2",
     "apstat-park/native-laser.mjs": "5779fd8b0bda5685361c044794e8e7f653e7a52745c606ede12fa7001139e688",
     "apstat-park/native-pitcher.mjs": "c143ddb2f78b869ea7e6c82a7bf799e88e42339b5551c56981bc1522b181653c",
-    "apstat-park/native-key-box.mjs": "8baeaa1f8404e8238052d0087654e1cc1f53e5797c945106dc4cfa3c6d6ef5fe"
+    "apstat-park/native-key-box.mjs": "8baeaa1f8404e8238052d0087654e1cc1f53e5797c945106dc4cfa3c6d6ef5fe",
+    "scripts/pico-bound-patches.mjs": "d76fa711618ad5efa192b8c26741269cc9821b4f3fff47dd9d5bd8f19359838e",
+    "apstat-park/native-bound-runtime.mjs": "4e83db2b4a6865648baf07decdb0a21038510c54526bce7113015cf8c01ae7c0",
+    "apstat-park/native-bound-ball.mjs": "9a74f5dc65c9f6884ff2a11ff6286953b2c07897651dce19e425d4ee95bf4e6a"
   },
   "hashes": {
     "src/engine/actors/BattleBreakoutBall.ts": "90e2a60092f538c3b9fb7069955ee9689ce4dea139e02dd40fe7b63ac85bfe01",

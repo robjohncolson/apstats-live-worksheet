@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
 import { patchGoalUnlock } from './pico-goal-patches.mjs';
 import { patchNativeLasers } from './pico-laser-patches.mjs';
+import { patchNativeBound } from './pico-bound-patches.mjs';
 
 export const CAMPAIGN_PATCHES = [{
   id: 'warp-sensor-origin',
@@ -33,6 +34,11 @@ export const CAMPAIGN_PATCHES = [{
   files: ['src/engine/GameRuntime.ts', 'src/engine/sprites.ts'],
   evidence: ['FUN_7ff72bb37d70', 'FUN_7ff72bb38130', 'FUN_7ff72bb383e0', 'FUN_7ff72bb4e6f0', 'FUN_7ff72bb4ea70', 'FUN_7ff72bb544e0', 'FUN_7ff72bb54860', 'FUN_7ff72bb54940'],
   behavior: 'LaserBallPitcher owns one native-speed projectile. Player contacts reset the named reward box and launcher speed; three actor hits release a Key. Native box/ball atlas frames and removal countdowns replace placeholders. Global contact ordering remains under audit.',
+}, {
+  id: 'bound-ball-reward-path',
+  files: ['src/engine/GameRuntime.ts', 'src/engine/sprites.ts'],
+  evidence: ['FUN_7ff72bb36d10', 'FUN_7ff72bb36ee0', 'FUN_7ff72bb37250', 'FUN_7ff72bb37500', 'FUN_7ff72bb53e10', 'FUN_7ff72bb54330', 'FUN_7ff72bc16120'],
+  behavior: 'BoundBallPitcher creates the gravity/mass-response ball; floor loss and capture use native removal timers. BallBox accepts command 11 through its narrow top sensor and publishes a Key. Preview collision separation remains an adapter, not a native solver reconstruction.',
 }];
 
 // Fail the build if upstream code changes: never silently skip a correction.
@@ -56,7 +62,9 @@ export function patchCampaignSource(file, source) {
   native_laser_box_0: [288, 480, 23, 31],
   native_laser_box_1: [320, 480, 23, 31],
   native_laser_box_2: [352, 480, 23, 31],
-  native_laser_ball: [256, 512, 12, 12],`, file);
+  native_laser_ball: [256, 512, 12, 12],
+  native_bound_ball: [272, 496, 12, 12],
+  native_bound_box: [208, 640, 24, 32],`, file);
   }
   if (file === 'src/engine/GameRuntime.ts') {
     source = patchGoalEntry(source.replaceAll('\r\n', '\n'), file);
@@ -65,7 +73,8 @@ export function patchCampaignSource(file, source) {
     source = replaceOnce(source, 'Rect: (spawn) => {\n      const staticRect = new StaticRect(spawn);',
       'Rect: (spawn) => {\n      const staticRect = new StaticRect(spawn, nativeRect(spawn, this.activePlayerCount));', file);
     source = patchGoalUnlock(source, replaceOnce, file);
-    return patchNativeLasers(source, replaceOnce, file);
+    source = patchNativeLasers(source, replaceOnce, file);
+    return patchNativeBound(source, replaceOnce, file);
   }
   if (!CAMPAIGN_PATCHES[0].files.includes(file)) return source;
   source = replaceOnce(source, 'x: spawn.x - triggerSize.width / 2,', 'x: spawn.x,', file);
@@ -114,6 +123,9 @@ function patchGoalEntry(source, file) {
   source = replaceOnce(source, 'for (const player of playersOnStandardGoal) {\n      this.goalClearedPlayers.add(player);',
     `for (const player of playersOnStandardGoal) {
       this.goalClearedPlayers.add(player);
+      // Reuse the runtime's body-disable registry so entered players no longer
+      // block teammates or load platforms. Team completion still counts them.
+      this.collisionChangePlayersCollisionOff.add(player);
       player.velocity.x = 0;
       player.velocity.y = 0;
       player.view.visible = false;`, file);

@@ -1639,10 +1639,12 @@
         }
       ],
       "correctedContracts": [
-        "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
+        "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry",
+        "BoundBall gravity/mass response and BallBox capture/reward lifecycle; preview collision adapter remains"
       ],
       "remainingChecks": [
         "Entered-player physical deactivation, dynamic reward paths and complete team solution",
+        "Native pair solver, BallBox horizontal push/support behavior and input-only puzzle solution",
         "Native timing, collisions and complete puzzle solution for every supported party size",
         "Presentation and retry/checkpoint behavior against native evidence"
       ]

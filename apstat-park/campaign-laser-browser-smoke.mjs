@@ -60,11 +60,40 @@ try {
       }
       samples.push({ party, reset, completed });
     }
+    game.load(32, 2, 34);
+    const runtime = game.runtime;
+    let solvedAt = null, keyTick = null;
+    for (let tick = 0; tick < 3500; tick++) {
+      const reward = runtime.nativeLaserBoxes[0].nativeState.state.released;
+      const key = runtime.keys[0];
+      if (reward && keyTick === null) keyTick = tick;
+      const ball = runtime.deadBallPitchers.find(p => p.spawn.actorName === 'LaserBallPitcher').nativeState?.state.child;
+      const inputs = runtime.players.map((player, index) => {
+        if (runtime.goalClearedPlayers.has(player)) return 0;
+        const x = player.rect.x + player.rect.width / 2;
+        let bits = 0;
+        if (!reward) {
+          if (ball && !ball.removed && !ball.state.remaining && ball.state.x - x > 0 && ball.state.x - x < runtime.deadBallPitchers.find(p => p.spawn.actorName === 'LaserBallPitcher').nativeState.state.speed * 14 && player.grounded) bits = 48;
+          else if (!player.grounded && player.velocity.y < 0) bits = 16;
+        } else {
+          const goal = runtime.goals[0];
+          const destination = index === 0 && !key.collected ? key.spawn.x : goal.spawn.x + (goal.opened ? 0 : 35 * (index + 1));
+          if (Math.abs(destination - x) > 8) bits = destination > x ? 2 : 1;
+          if (Math.abs(destination - x) < 25 && tick % 2 === 0) bits |= 4;
+        }
+        return bits;
+      });
+      game.step(inputs);
+      if (game.stats.cleared) { solvedAt = tick; break; }
+    }
+    const solution = { solvedAt, keyTick, players: runtime.players.map(p => ({ rect: p.rect, grounded: p.grounded })),
+      key: runtime.keys[0] && { collected: runtime.keys[0].collected, active: runtime.keys[0].active },
+      hits: runtime.nativeLaserBoxes[0].nativeState.state.hits, entered: runtime.players.map(p => runtime.goalClearedPlayers.has(p)) };
     game.dispose();
-    return samples;
+    return { samples, solution };
   });
   console.log(JSON.stringify(result));
-  for (const sample of result) {
+  for (const sample of result.samples) {
     assert.ok(sample.completed, `party ${sample.party} produces a reward key through projectile contacts`);
     assert.equal(sample.completed.hits, 3);
     assert.equal(sample.completed.keys, 1);
@@ -72,7 +101,8 @@ try {
     assert.equal(sample.completed.x, sample.completed.expectedX);
     assert.equal(sample.completed.y, sample.completed.expectedY);
   }
-  assert.deepEqual(result[0].reset, { speed: 7, hits: 0 });
+  assert.deepEqual(result.samples[0].reset, { speed: 7, hits: 0 });
+  assert.ok(result.solution.solvedAt !== null, 'input-only team route earns and delivers the key, then enters the door');
   console.log('NATIVE LASER CORRIDOR PASS: real projectile contacts, reset and three-hit reward for 2/8 players');
 } finally {
   await browser.close(); server.closeAllConnections();

@@ -31,10 +31,12 @@ const report = CAMPAIGN.map(entry => {
       ...(actors.includes('Goal') ? ['Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry'] : []),
       ...(actors.includes('BreakoutKey') ? ['Breakout reward key activation after removal of BR1..BR5 chips'] : []),
       ...(actors.includes('LaserKeyBox') ? ['Laser launcher speed/lifecycle, hit/reset commands, three-hit reward and native atlas frames'] : []),
+      ...(actors.includes('BallBox') ? ['BoundBall gravity/mass response and BallBox capture/reward lifecycle; preview collision adapter remains'] : []),
     ],
     remainingChecks: [
       ...(actors.includes('Goal') ? ['Entered-player physical deactivation, dynamic reward paths and complete team solution'] : []),
       ...(actors.includes('LaserKeyBox') ? ['Native global actor/contact phase ordering and complete player-input-only puzzle solution'] : []),
+      ...(actors.includes('BallBox') ? ['Native pair solver, BallBox horizontal push/support behavior and input-only puzzle solution'] : []),
       'Native timing, collisions and complete puzzle solution for every supported party size',
       'Presentation and retry/checkpoint behavior against native evidence',
     ],

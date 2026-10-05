@@ -24,12 +24,32 @@ Additional integrated corrections:
 - LaserBallPitcher and LaserKeyBox reward path now integrated, with native
   sprite frames. Browser tests cover 2/8-party layouts, a player-hit reset,
   and three uninterrupted projectile deliveries producing the real Key.
-  These tests reposition players as fixtures, not complete puzzle solutions.
+  Collision fixtures cover 2/8 players. An additional two-player input-only
+  route jumps all three shots, earns/carries/delivers the key and enters both
+  players through the door (426 ticks with the current preview controller).
 - Contact callback argument 3 is actor/map kind (1/0), proven by bc13c60 /
   bc14040, not a direction. Mixed circle/rectangle contacts in bc119c0 use
   strict AABB bounds; circle distance applies only to circle/circle pairs.
 
-Reconstructed helpers (BoundBall integration still outstanding):
+Further integrated work:
+- Standard goal entry now registers the avatar in the existing disabled-body
+  set. The input-only laser route exposed and verifies the fix for a hidden
+  entered player physically blocking the next player.
+- Literal BoundBallPitcher now launches the bb36d10 ball. bb37500 supplies
+  reconstructed vertical velocity, mass-50 response and party-dependent
+  restitution; bc16120 supplies half-acceleration position integration.
+- BallBox uses the native narrow top sensor, accepts command 11, and creates
+  its reward Key. Native ball/box atlas frames replace the preview graphics.
+- Bound browser coverage: 2/8-player launch and floor loss, exact two-tick
+  replacement delay, capture/reward contact fixtures, and a 2400-tick input
+  run with 47 actual player bounces and finite state. This is NOT a solved
+  input-only puzzle route.
+- IMPORTANT: Bound adapter still uses the preview tile sweep and a rectangle
+  separation adapter for player contacts. Native global solver ordering,
+  BallBox horizontal push/support behavior and exact simultaneous contacts
+  remain unverified. Do not describe this integration as full physics parity.
+
+Shared reconstructed helpers:
 - native-key-box.mjs: BallBox center tolerance 5, accepted command 11,
   reward at actor X,Y-30; LaserKeyBox three category-5 contacts with callback
   argument 3 == 1, command 37 reset, pitcher commands 21/22, 40-tick removal.
@@ -63,10 +83,12 @@ Next required integration:
 2. Native BallBox/LaserKeyBox body placement and collision adapters, reward
    Key creation, pitcher speed/reset command routing and fade/removal.
    Stage 9-1 now produces its reward through actual laser contacts. Stage
-   9-4 still cannot produce its reward until BoundBall/BallBox is integrated. DO NOT DEPLOY THIS
+   9-4 now also produces its reward via a capture fixture; its full puzzle
+   route and native collision solver parity still need verification. DO NOT DEPLOY THIS
    BRANCH until these paths work and have end-to-end puzzle tests.
-3. Remove entered players from physical/support contacts without removing
-   them from the team goal requirement. Current freezing/hiding is incomplete.
+3. Standard goal entry uses the disabled-body registry, verified by the
+   input-only two-player laser route. Audit every remaining support/contact
+   family for registry use; nonstandard goal families remain separate.
 4. Warp Y anchoring corrected with final bc119c0 proof. Remaining actor
    body/contact and phase-order contracts still need independent verification.
 5. All remaining suspected mechanics, checkpoints/retries,
@@ -88,3 +110,14 @@ Before release, update campaign protocol on client and relay together,
 run meaningful scenario tests plus full existing regressions, bump the desk
 build and inspect GitNexus detect_changes. Original main checkout retains
 unrelated dirty user work; do not stage or discard it.
+
+Additional foundational discrepancies confirmed during this slice:
+- Preview PlayerGeometry uses 26x34 with (-13,-32) origin. Native default
+  body is {-16,-47,32,46}; see c62d1a8 and Player ctor/body initialization.
+- Preview horizontal movement uses 300 px/s * .98. Native base +0x41c is
+  3 actor units/tick; bb687e0 returns that times +0x418 and bc16120 applies
+  per frame. The .98 term in bb6f0e0 is in the disabled-input momentum
+  branch, not a universal axis multiplier. Do not globally change this until
+  native movement/support/control flags and all coordinate adapters are traced.
+- Plane native multiplier is 1.5. Existing preview comments still mix the
+  unrelated Box2D meter conversion with actor-space motion.
