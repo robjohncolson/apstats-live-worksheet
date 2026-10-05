@@ -1,5 +1,13 @@
 Work branch: work/pico-native-fidelity. NOT READY TO MERGE OR DEPLOY.
 
+UpDownEnemy checkpoint: native four-phase motion and overshoot timing, sensor
+damage, appearance metadata and snapshot adapter added. Actual Player death
+and full-cycle sensor movement tested. Used by majo01/02 and ghost01, whose
+specialized player mechanics are still missing. Next:CheckPoint and dynamic
+actor creation, then specialized forms/controllers. Complete factory coverage
+remains8/51sources. Full48-stage rendering/playthrough/live integration remains
+unfinished; do not mark the goal complete or deploy this branch as faithful.
+
 Control-swap checkpoint: CollisionChangePlayer now rotates real Player input
 slots using actual character count, shuffled mapping, rearm delay and host peer
 availability. Native slot setter preserves color/shared-owner/attachment effects

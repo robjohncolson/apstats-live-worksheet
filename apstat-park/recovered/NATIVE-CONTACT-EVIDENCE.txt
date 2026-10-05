@@ -1,3 +1,25 @@
+UpDownEnemy checkpoint:
+Factory bb74467..bb7447e alloc5a0->bb6d170. Lua bb6d4b0, PRE bb6d5c0,
+overlap bb6d780. Bodyc62d260[-28,-22,56,48], type0/category7 (sensor),
+priority0. Sprite[-30,-26,60,52], UV(.3759765625,0,.029296875,.025390625),
+depth-.1,flags9. Look/root action descriptorc62ab40 points to4keys atc62aaf0:
+frames0/192/240/288 with UVX0/.03125/.0625/0, UVY0.
+- Four phases:0 wait2;1 rise over2.5 to-50;2 wait2;3 descend over2.5 to0.
+  Threshold checks PREVIOUS elapsed value, then adds float32 dt. Transition
+  resets timer and discards dt. Movement can overshoot for one frame; do not
+  clamp interpolation. Every PRE sets position=spawn+(0,offset), not velocity.
+- Continuous overlap category1 and actor virtual80 authority => cmd4 NULL.
+  Raw bb6d7b7 verifies null. No bounce/solid-platform behavior; native damage
+  controller handles repeated overlap without applying further lethal hits.
+- Lua positive integer param0 switches replication mode1->0. Networktype1f.
+  bb6d500/560 snapshot is X,Y,phase,elapsed,offset, five32-bit words. Position
+  apply does not change spawn; next PRE restores spawn-relative movement.
+Six tests include actual Player death and assembled full-cycle body syncing.
+Actor used in majo01/02 and ghost01; remaining MajorityPlayer/Controller,
+CheckPoint and Ghost still prevent full native assembly there. Factory-complete
+source count stays8/51. Renderer action playback/network history integration
+and full original-stage solutions remain outstanding.
+
 CollisionChangePlayer checkpoint:
 Factory bb75ccd..bb75cf1 alloc3f8->bb3a210, vtablebcb78e8;
 Lua bb3a300 makes top-left float rectangle type0/category4, param2 integer>0
