@@ -1,5 +1,29 @@
 Native body-pair reconstruction checkpoint
 
+Creation scheduler/Player row checkpoint (bc2a1a0/bc2a2b0/bc2a320/bb774a0):
+  native-spawn-scheduler uses source-ordered float32 camera-X triggers and
+  int32 party rules. Raw bc2a24d..265: positive1..9 requires party>=rule;
+  negative requires party<=-rule; tens/ones gives inclusive range; quotient
+  >=10 only imposes that minimum. Rejected rows advance cursor but stay
+  uncreated. Accepted rows mark created before callback. Already-created rows
+  skip even their position test. Indexed creation bypasses gates and cursor,
+  temporarily supplies packet payload. Checkpoint skip uses strict > trigger.
+  CORRECTION: bc1b830 scene flag200 invokes this creation scheduler with
+  scene virtual68 (viewPosition.x); earlier prepareHistory callback naming
+  was wrong. Native frame loop now calls spawnDueActors before actor PRE.
+  createNativeGameScene can own the scheduler using an explicit spawnActor
+  factory. Without a scheduler, active flag200 processing fails explicitly.
+  Ordinary Player rows now honor limitPlayer and cyclical input-slot mapping,
+  numeric first-parameter1 faces left via bb67620/bae78f0. Constructor manager
+  priority is1 (bb66e50 +74), corrected from implicit0 in prior assembly.
+  Slot shuffle uses ascending inclusive Fisher-Yates; bba8a90 is modulo n+1.
+  Actual native random generation remains an explicit randomInclusive adapter.
+  Tests cover original jump02's seven-player ledge and auto_scroll02's enemy
+  trigger1968, per-frame construction before PRE, indexed creation/checkpoint
+  cursor semantics, original Player rows and shared seesaw scene execution.
+  Full Player forms, checkpoint relocation, random generator, production
+  renderer/relay integration and original-stage input-only solutions remain.
+
 GameScene assembly checkpoint (bb7a9b0/bc1a070/bc1afa0/bc1bf50/bc1be20):
   native-game-scene combines recovered scheduler, custom-body/rigid worlds,
   player boundaries, timer, camera/visible columns and outcomes. Constructor

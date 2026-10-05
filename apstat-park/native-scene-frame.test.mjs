@@ -14,13 +14,13 @@ test('scene frame snapshots view and runs input, PRE, STEP, POST and presentatio
   world.flags |= 0x200;
   world.beforeFrame = dt => { events.push(['before', dt]); world.viewPosition.x = 8; };
   world.updateInputs = (dt, frame) => events.push(['input', dt, frame]);
-  world.prepareHistory = () => events.push('history');
+  world.spawnDueActors = x => events.push(['spawn', x]);
   queueNativeActor(world.actorManager, { onPre: dt => events.push(['pre', dt]), onPost: dt => events.push(['post', dt]) }, 0);
   world.onStep = dt => events.push(['step', dt]);
   world.afterActorPost = dt => events.push(['presentation', dt]);
   stepNativeSceneFrame(world);
   assert.deepEqual(world.previousViewPosition, { x: 5, y: 6 });
-  assert.deepEqual(events, [['before', NATIVE_FRAME_SECONDS], ['input', NATIVE_FRAME_SECONDS, 0n], 'history',
+  assert.deepEqual(events, [['before', NATIVE_FRAME_SECONDS], ['input', NATIVE_FRAME_SECONDS, 0n], ['spawn', 8],
     ['pre', NATIVE_FRAME_SECONDS], ['step', NATIVE_FRAME_SECONDS], ['post', NATIVE_FRAME_SECONDS], ['presentation', NATIVE_FRAME_SECONDS]]);
   assert.equal(world.frame, 1n);
   assert.equal(world.highestFrame, 1n);

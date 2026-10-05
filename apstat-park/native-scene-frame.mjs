@@ -11,7 +11,10 @@ export function stepNativeSceneFrame(scene) {
   scene.beforeFrame?.(dt); // scene virtual +28, even when inactive
   if (!scene.inputOwner) scene.updateInputs?.(dt, scene.frame);
   if (scene.flags & 0x20) {
-    if (scene.flags & 0x200) scene.prepareHistory?.();
+    if (scene.flags & 0x200) {
+      if (typeof scene.spawnDueActors !== 'function') throw new Error('Native scene frame requires creation-table scheduling');
+      scene.spawnDueActors(scene.viewPosition.x); // bc2a1a0, NOT history preparation
+    }
     runNativeActorPre(scene.actorManager, dt);
   }
   scene.onStep(dt); // scene virtual +30, called regardless of active bit

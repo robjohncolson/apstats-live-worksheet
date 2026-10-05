@@ -6,6 +6,7 @@ import { updateNativeSceneCamera, updateNativeVisibleColumns } from './native-sc
 import { updateNativeGameTimer } from './native-scene-timer.mjs';
 import { updateNativeSceneOutcomes } from './native-scene-outcomes.mjs';
 import { setNativeSceneActive } from './native-scene-activation.mjs';
+import { createNativeSpawnScheduler } from './native-spawn-scheduler.mjs';
 import { nativePlayerMovementBoundary, applyNativePlayerScrollBoundary, checkNativePlayerFallBounds } from './native-player-boundary.mjs';
 const f = Math.fround;
 
@@ -36,13 +37,28 @@ export function nativeActorNameHash(name) {
 // No preview GameRuntime solver participates in this scene's frame loop.
 export function createNativeGameScene({ stage, playerCount, createRigidWorld,
   playerInput, playSound, stageRetryEligible, notifyPlayerRelocation,
-  getTimerPeer, resolveGoalFollower, spawnDueActors }) {
+  getTimerPeer, resolveGoalFollower, spawnDueActors, spawnActor, randomInclusive }) {
+  if (spawnDueActors && spawnActor) throw new Error('Supply either native actor construction or an external creation scheduler');
+  if (stage.enableShufflePlayer && typeof randomInclusive !== 'function') {
+    throw new Error('Native player-slot shuffle requires an inclusive native random source');
+  }
+  const playerSlots = Array.from({ length: Math.min(playerCount, 10) }, (_, index) => index); // bb72960
+  if (stage.enableShufflePlayer) {
+    // bb7a9b0 uses ascending Fisher-Yates with bb9d380(i), whose upper bound
+    // is inclusive (bba8a90 takes its random word modulo i+1).
+    for (let index = 1; index < playerSlots.length; index++) {
+      const other = randomInclusive(index);
+      if (!Number.isInteger(other) || other < 0 || other > index) throw new Error('Native random source returned an invalid slot');
+      [playerSlots[index], playerSlots[other]] = [playerSlots[other], playerSlots[index]];
+    }
+  }
   const scale = f(stage.scale ?? 1);
   const bodyWorld = createNativeBodyRegistry();
   bodyWorld.map = nativeMapFromRecovered(stage.map, [3, 3, 3, 3, 1, 1, 1, 1, 1]); // bc2fc00/bcc8c40
   for (const [a, b] of COLLISION_PAIRS) bodyWorld.collisionMatrix[a * 32 + b] = 1;
   const scene = {
     flags: 0x600, frame: 0n, highestFrame: 0n, playerCount, players: [],
+    playerSlots,
     actorManager: createNativeActorManager(4), bodyWorld,
     // bc1a070 passes pixel gravity980 through bbe76d0's .01f Y conversion.
     rigidWorld: createRigidWorld({ gravity: { x: 0, y: f(980 * f(.01)) } }),
@@ -70,6 +86,12 @@ export function createNativeGameScene({ stage, playerCount, createRigidWorld,
     if (stage[option]) scene.scrollFlags |= bit;
   }
   if (scene.scrollFlags & 0x200) scene.mapFlags &= ~2;
+
+  if (spawnActor) {
+    scene.creationSchedule = createNativeSpawnScheduler({ spawns: stage.createTable ?? [], playerCount,
+      onSpawn: (spawn, entry) => spawnActor(scene, spawn, entry) });
+    scene.spawnDueActors = position => scene.creationSchedule.update(position);
+  }
 
   scene.addActor = actor => {
     actor.scene = scene;

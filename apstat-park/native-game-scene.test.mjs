@@ -189,3 +189,29 @@ test('incremental stage creation deduplicates Key and binds a previously registe
     assert.equal(child.actor.gear.isAttached(), true);
   } finally { scene.rigidWorld.dispose(); }
 });
+
+test('scene creates delayed native actors before their first PRE using camera X, independent of view offset', () => {
+  const makeRow = (trigger, actorName, x, y) => ({ raw: [trigger, 0, actorName, '', x, y], actorName, label: '', x, y });
+  const events = [];
+  const map = { width: 80, height: 24, chipSize: 32, table: Array(80 * 24).fill(1) };
+  const scene = createNativeGameScene({ stage: { map, autoScroll: 1, autoScrollSpeed: 2,
+    createTable: [makeRow(0, 'Goal', 400, 674), makeRow(4, 'Key', 220, 642)] },
+    playerCount: 2, createRigidWorld, spawnActor: (scene, spawn) => {
+      events.push([spawn.actorName, scene.frame]);
+      populateNativeSeesawActors(scene, [spawn]);
+    } });
+  try {
+    scene.viewOffset.x = 100;
+    scene.setActive(true);
+    assert.deepEqual(events, [['Goal', 0n]]);
+    scene.step(); // initial scripted-scroll target0 is cleared before auto-scroll starts
+    scene.step(); scene.step();
+    assert.equal(scene.viewPosition.x, 4);
+    assert.equal(scene.findActor('Key'), null);
+    scene.step();
+    assert.deepEqual(events, [['Goal', 0n], ['Key', 3n]]);
+    const key = scene.findActor('Key');
+    assert.deepEqual(key.stepStartPosition, { x: 220, y: 642 }, 'new actor runs PRE in its creation frame');
+    assert.equal(scene.creationSchedule.state.cursor, 2);
+  } finally { scene.rigidWorld.dispose(); }
+});

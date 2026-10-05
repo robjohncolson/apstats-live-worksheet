@@ -1,5 +1,14 @@
 Work branch: work/pico-native-fidelity. NOT READY TO MERGE OR DEPLOY.
 
+Creation scheduler checkpoint: native-spawn-scheduler handles camera triggers,
+party conditions, indexed creation and checkpoint cursor skipping. GameScene
+owns it when supplied an actor factory; the shared frame loop now correctly
+uses scene flag200 for spawning (previously mislabeled history preparation).
+Ordinary Player rows now honor party limits, slot mapping and facing, and
+Player update priority is corrected to1. Native random generation, specialized
+Player forms, checkpoint relocation and production campaign wiring remain.
+Full park suite passes430/430 tests at this checkpoint.
+
 GameScene assembly checkpoint: native-game-scene now joins the recovered
 physics, actor scheduler, player boundaries, camera, timer and outcome systems.
 An input-only synthetic Key-to-Goal course clears through this assembly; the

@@ -16,7 +16,7 @@ const f = Math.fround;
 // use explicit extension calls; absent implementations fail when exercised.
 export function createNativePlayer({ playerIndex = 0, position, presentation, extensions = {} }) {
   const actor = {
-    playerIndex, flags: 0, motionFlags: 0x1c, playerFlags: 8, networkFlags: 0,
+    playerIndex, managerPriority: 1, flags: 0, motionFlags: 0x1c, playerFlags: 8, networkFlags: 0,
     spriteFlags: 9, cameraRelative: true, bodies: [], components: [],
     velocity: { x: 0, y: 0 }, acceleration: { x: 0, y: 0 }, externalVelocity: { x: 0, y: 0 },
     collisionCorrection: { x: 0, y: 0 }, renderOffset: { x: 0, y: 0 },
