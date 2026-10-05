@@ -1,0 +1,20 @@
+Box2D 2.3.1, unmodified upstream source (46 C++ translation units).
+Upstream: https://github.com/erincatto/box2d
+Tag: v2.3.1
+Commit: 7e633c4fb86a68bf072fb8ae67ea2c060114750e
+License: License.txt; original notices retained in every source file.
+
+This source is used as a candidate for the PICO PARK rigid-body subsystem.
+Clang x64 record layouts match recovered body/fixture/world offsets, including
+fixture sizeof 0x48, body velocity +40, body userData +b0, world flags +19298,
+contact manager +192a0 and inverse previous dt +19358. This is evidence for the
+2.3.1 family, not proof that every routine in the game's build is unmodified.
+
+Project-owned bridge: ../../native-box2d-bridge.cpp
+Browser build: node scripts/build-pico-box2d.mjs <Emscripten-3.1.74-em++>
+Desktop reference: node scripts/build-pico-box2d-reference.mjs [clang++]
+WASM/reference comparison: node --test apstat-park/native-rigid-world.test.mjs
+Browser check: node apstat-park/rigid-world-browser-smoke.mjs
+
+The reference validates the bridge against upstream native C++ execution.
+It does not execute the game ROM or certify the original game's physics.

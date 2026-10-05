@@ -1,0 +1,2 @@
+# Keep the pinned upstream bytes identical to the provenance hashes.
+box2d-2.3.1/** -text

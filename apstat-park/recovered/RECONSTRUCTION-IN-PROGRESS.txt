@@ -249,3 +249,14 @@ Scene frame-order checkpoint:
 - Next: provide the actual rigid-body implementation/bridge and native camera,
   outcome and actor-family adapters. The new frame driver remains standalone;
   full campaign integration and faithful input-only completion remain open.
+Rigid-body backend checkpoint:
+- Added pinned Box2D 2.3.1 source, reproducible Emscripten 3.1.74 build,
+  117 KB WASM artifact and project-owned JS/C++ bridge. Compiled upstream
+  body/fixture/world layouts match the recovered offsets used for selection.
+- Desktop and Chrome/WASM fixtures agree for falling bodies, floor contacts
+  and a revolute joint. These establish backend operation, not ROM parity.
+- All 282 park unit tests pass. Vendored upstream files were compared byte for
+  byte, and the desktop reference build script was run successfully.
+- Next: recovered pixel-unit/body/fixture/contact wrappers, then Seesaw and
+  physical projectile adapters, plus native camera/outcome scene integration.
+- Live campaign physics remain unchanged by this isolated backend addition.

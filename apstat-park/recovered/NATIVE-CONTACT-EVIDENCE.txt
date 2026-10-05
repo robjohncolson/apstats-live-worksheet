@@ -390,3 +390,30 @@ Scene frame-order checkpoint:
   flag changes at boundaries, rigid/custom solver ordering, absent-dependency
   rejection and uint64 frame wrap. These are orchestration tests; their stub
   rigid-world callback is not a Box2D dynamics implementation or certification.
+Pinned rigid-body backend checkpoint:
+- Vendored unmodified Box2D v2.3.1 at commit
+  7e633c4fb86a68bf072fb8ae67ea2c060114750e, retaining upstream License.txt and
+  file notices. Official source: https://github.com/erincatto/box2d/tree/v2.3.1
+- Compiled x64 layouts agree with recovered bbf1430/bbf5410/bbe6740/bbf4e50:
+  body linear velocity +40, body world +58, fixture list +70, userData +b0;
+  fixture size 0x48, friction +20, restitution +24, filter +34, sensor +3a,
+  userData +40; world flags +19298, contact manager +192a0 and inv_dt0 +19358.
+  This supports the version family but does not establish exact upstream
+  identity of every routine. Earlier ENGINE_SPEC claims that the custom Player
+  is a Box2D body remain superseded by later source evidence.
+- Built all 46 upstream translation units with Emscripten 3.1.74, -O2,
+  -DNDEBUG and -ffp-contract=off. WASM is 117085 bytes at this checkpoint.
+  Generated artifact and upstream/bridge hashes are in box2d-provenance.json.
+- native-box2d-bridge.cpp and native-rigid-world.mjs expose worlds, body
+  definitions, rectangle/circle fixtures, velocity/transform, state reads and
+  revolute joints. Backend API units are meters/radians/seconds. Native actor
+  pixel conversion, contact listener/filter and fixture wrapper behavior still
+  require their own recovered adapters.
+- Independent desktop C++ scenarios (scripts/pico-box2d-reference.cpp) produce
+  box2d-reference.json. Free fall, floor contact/sleep and a hinged bar match
+  WASM within 2e-5; displayed values in this run agree to float32 precision.
+  Two independent WASM instances replay identically. Sensors and invalidated
+  world/body handles are tested. Chrome loads the actual .wasm artifact and
+  matches the same desktop reference. This oracle is upstream C++, not the ROM.
+- The backend is not yet wired to live campaign actors. No stage fidelity
+  certification follows merely from these solver/bridge tests.
