@@ -1,5 +1,24 @@
 Native body-pair reconstruction checkpoint
 
+Rect actor/factory checkpoint (bb5b820/bb5ba50/bb5bac0/bb5bb30):
+  Native Rect uses full party-adjusted bounds, bottom anchor, category6/type2,
+  actor priority2, body priority bit2 and initially cleared body enable bit1.
+  Both normal and alternate PRE enable a visible component's disabled body
+  only when bc1d3a0 reports no occupation. InvisibleRect factory hides common
+  sprite plus patch component and enables collision immediately. DarknessRect
+  sets +6e0; command2c hides its patch component without disabling collision.
+  Commande only toggles the patch component. Command13 checks its display-space
+  right edge>=0; command1c stops scheduling and snapshots the actor transform.
+  Common sprite flags and patch flags are separate (initial8, bbaa920);
+  patch grid uses32px cells, UV origin(0,.515625) and .015625 cell extents,
+  patch depth .2f. Production patch rendering is not yet assembled.
+  native-stage-actors now dispatches Player, all three Rect variants and the
+  existing Key/Goal/seesaw families. Missing actor types throw explicitly.
+  Six tests cover actual Player landing, delayed enable while occupied,
+  visibility/solid behavior, alternate PRE and unsupported-factory reporting.
+  PushBox investigation: ctorbb334f0, PREbb33890, POSTbb33b20(raw only),
+  bounds inset1px per edge/type3/category2/priority2; implementation still open.
+
 Creation scheduler/Player row checkpoint (bc2a1a0/bc2a2b0/bc2a320/bb774a0):
   native-spawn-scheduler uses source-ordered float32 camera-X triggers and
   int32 party rules. Raw bc2a24d..265: positive1..9 requires party>=rule;

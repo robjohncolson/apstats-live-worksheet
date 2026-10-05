@@ -1,5 +1,13 @@
 Work branch: work/pico-native-fidelity. NOT READY TO MERGE OR DEPLOY.
 
+Rect actor checkpoint: native-rect-actor implements delayed safe collision
+enable, invisible/darkness variants and native visibility/stop commands.
+native-stage-actors is a shared strict factory for the currently assembled
+families; missing actors produce explicit errors. Actual Player landing and
+occupied-platform behavior are tested. PushBox, Warp, switches/lifts, other
+families, production rendering and complete original-stage solutions remain.
+Full park suite passes436/436 tests at this checkpoint.
+
 Creation scheduler checkpoint: native-spawn-scheduler handles camera triggers,
 party conditions, indexed creation and checkpoint cursor skipping. GameScene
 owns it when supplied an actor factory; the shared frame loop now correctly
