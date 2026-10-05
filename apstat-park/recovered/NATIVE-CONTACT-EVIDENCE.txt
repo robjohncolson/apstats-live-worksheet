@@ -1048,3 +1048,12 @@ Pinned rigid-body backend checkpoint:
   matches the same desktop reference. This oracle is upstream C++, not the ROM.
 - The backend is not yet wired to live campaign actors. No stage fidelity
   certification follows merely from these solver/bridge tests.
+Push contact counting: bb34530 -> bb31cf0 / bc13550.
+Directions 0/1/2/3 are UP/DOWN/LEFT/RIGHT. Raw constants bcff6a8=-1,
+bcff538=1, bc7d458=2^-23, bcb69c0=-2^-23 verified from the data dump.
+Counts neighbors moving toward the queried actor, regardless of category,
+enabled bit or contact state, then recurses even through stationary actors.
+bc13550 resolves stored directional contact IDs through the registry; missing
+IDs and map contacts do not contribute. No global descendant deduplication.
+JS guards cycles and >16 neighbors as unsupported native storage states.
+Four focused tests cover these branches. Full PushBox assembly is pending.
