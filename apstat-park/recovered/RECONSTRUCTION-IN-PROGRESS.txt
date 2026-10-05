@@ -1,5 +1,22 @@
 Work branch: work/pico-native-fidelity. NOT READY TO MERGE OR DEPLOY.
 
+Ordinary Switch checkpoint: native-switch-actor implements mode0/style0,
+circular category5 overlap, delayed press/release publishing, momentary/latch
+configuration, second target, command14 cooldown bounce, rearm/input-lock
+flags, and pressed-state snapshot adapter. Shared factory now accepts Switch.
+Input-only native Player test activates a named command recorder; that recorder
+is NOT a Bridge implementation. Full suite passes468/468 tests. Bridge and
+WeightedLift remain the next missing stage_jump01 mechanisms.
+
+Bridge next-source map: factory bb72ae0 around line2422 calls bb4f630(mode0,
+param0 segment count,param4 segment size, normalized(param1,param2),param5>0).
+Size0 defaults32. Parent+518 party adjustment derives positive param3*(8-party)
+times bc7d464, integer conversion; KeyBridge sets parent+520=1. Constructor
+creates up to32 children with vtable bcba4c0; type2/category6 bodies have flag10
+and responseFlags1. Each child size is segmentSize on one axis and size+1 on
+the other according to directionY; first child gets directional art and flags2
+(also4 when param5>0). Parent vtable bcba5c0. Assembly/commands remain to trace.
+
 Warp checkpoint: shared factory now assembles Warp, WarpAll, WarpInitPos,
 and WarpAllInitPos. Tests cover sensor geometry, numeric conversion, per-entry
 offset cycling, cumulative team offsets, category-specific commands and client

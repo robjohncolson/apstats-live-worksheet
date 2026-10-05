@@ -1102,3 +1102,17 @@ Other categories and replicas in network mode1 are ignored. Raw instruction
 bb6fda5 reads Player+130 for walking command8, proving saved spawnPosition;
 the earlier current-position implementation and expectation were incorrect.
 Player relocation still controls safe placement, contact cleanup and timing.
+Ordinary Switch evidence: bb5e8c0(mode0/style0), bb5eef0 PRE, bb5f1d0
+overlap, bb5ebb0 target publishing, bb5f180 command14, bb5ed50/bb5eda0
+snapshot hooks, bb78b70 momentary flag40, bb78bc0 second target. Sensor circle
+global c62d0e0=(0,0,12), type0/category5; accepted overlap bodies require type2
+bit and category1..3. Sprite bounds[-16,-32,32,32], depth.1, UV unpressed
+(.15625,.4375) and pressed(.171875,.4375), extent.015625, spriteFlags18.
+PRE publishes command9/10 plus configured integer payload to suffix after
+"Switch" and optional second target. Press plays switch sound. Flag100 disables
+publishing; flag40 clears latch after publication; flag4 rearms via bit8.
+Overlap raises bit2; flag80 sends input-disable1a only on new press. Command14
+clears active latch and enters bit10/20 cooldown; continued contact gets
+command0(-3,-7), restarts cooldown, and renderOffset(0,-3). Replica overlap
+only applies render offset; state application updates visuals/sound separately.
+Raw bb5ff70 (+108 change hook) is debug-only noop for this ordinary class.
