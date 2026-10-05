@@ -1,5 +1,22 @@
 Native body-pair reconstruction checkpoint
 
+Seesaw factory assembly checkpoint (bb72ae0 branches):
+  SeesawParent allocates 938, passes integer param0 into bb77b30; its trailing
+  numeric bounds are read but are not supplied to the ctor/angle controller.
+  Seesaw allocates 930, passes integer param0 to bb5d420. Nonzero integer
+  param1 immediately looks up SeesawParent through bc1bc80 and calls bb5d9e0
+  only if found. Do not postpone lookup until all rows exist. PhysicsSwitch
+  uses its mode2/style0 default constructor branch. Balance uses its combined
+  name and configured span. PhysicsArea/Rect use their existing parameter hook.
+  native-seesaw-stage consumes the exported original stage rows, retains that
+  insertion order and combined names, and leaves unrelated actors to callers.
+  The stage fixture checks parent/gear attachment, platform positions, launch,
+  and identical rigid trajectories through disposal/recreation. These checks
+  cover assembly, not native Player behavior or a complete solved stage.
+  createNativeRigidWorldFactory loads one backend then creates synchronous
+  worlds with separate handle maps. Cross-world body use is rejected; disposing
+  replacement worlds does not disturb a concurrently stepped surviving world.
+
 PhysicsSwitch checkpoint (bb74f1f/bb5e8c0/bb5eef0/bb5f1d0/bb5ebb0):
   Raw factory bb74f1f..29 passes mode 2, style 0 to Switch constructor and
   applies none of the ordinary Switch parameter flags. Constructor defaults

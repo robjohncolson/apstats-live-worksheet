@@ -1,5 +1,15 @@
 Work branch: work/pico-native-fidelity. NOT READY TO MERGE OR DEPLOY.
 
+Seesaw stage assembly checkpoint: native-seesaw-stage.mjs consumes original
+rows and queues PhysicsSwitch/Area/Rect, parent/child seesaws, Balance and the
+launcher in source order. Child binding only finds an already-created parent.
+A reusable loaded backend now creates isolated worlds synchronously for stage
+reset. Tests assemble stage_seesaw01 and reproduce a 240-frame trajectory
+across resets; 329 park tests and Chrome rigid checks pass. This assembly
+still requires the Player/custom-body and rendering bridge before replacing
+the live preview path. It does not implement omitted Key/Goal/Watch actors or
+certify a player-input solution.
+
 PhysicsSwitch checkpoint: native-physics-switch.mjs implements the shipped
 local mode-2/style-0 actor. Its display-position ray latches a press; the next
 PRE updates the sprite and emits command 9 to the name suffix, with one sound.

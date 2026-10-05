@@ -4,6 +4,17 @@ import createBox2D from './recovered/box2d.mjs';
 // seconds; game-specific pixel bridges and contact listeners are separate work.
 export async function createNativeRigidWorld({ gravity = { x: 0, y: 0 }, moduleOptions = {} } = {}) {
   const api = await createBox2D(moduleOptions);
+  return createWorld(api, gravity);
+}
+
+// Load once during campaign startup; stage loads/resets remain synchronous.
+// Worlds share the WASM instance but retain separate body/joint ownership.
+export async function createNativeRigidWorldFactory({ moduleOptions = {} } = {}) {
+  const api = await createBox2D(moduleOptions);
+  return ({ gravity = { x: 0, y: 0 } } = {}) => createWorld(api, gravity);
+}
+
+function createWorld(api, gravity) {
   let world = api._pico_world_create(gravity.x, gravity.y);
   const bodies = new Map();
   const joints = new Map();
