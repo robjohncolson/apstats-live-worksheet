@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { fileURLToPath } from 'node:url';
 
 export const CAMPAIGN_PATCHES = [{
   id: 'warp-sensor-origin',
@@ -15,6 +16,11 @@ export const CAMPAIGN_PATCHES = [{
   files: ['src/engine/GameRuntime.ts'],
   evidence: ['FUN_7ff72bb33890'],
   behavior: 'In jump02, unsupported numbered boxes fall at .65 units/tick squared and settle on floors, boxes, or live cats. Other stages retain their current movement controllers.',
+}, {
+  id: 'solid-push-chains-and-segment-anchors',
+  files: ['src/engine/GameRuntime.ts', 'src/engine/actors/Bridge.ts', 'src/engine/actors/KeyGate.ts'],
+  evidence: ['FUN_7ff72bb343e0', 'FUN_7ff72bc16780', 'FUN_7ff72bb4f630', 'FUN_7ff72bb4f9d0'],
+  behavior: 'Pushes carry obstructing cats or stop at blocked chains. Gate extents follow authored segment counts. Bridge segment rectangles use local zero-origin bounds.',
 }];
 
 // Fail the build if upstream code changes: never silently skip a correction.
@@ -50,7 +56,56 @@ export function patchCampaignSource(file, source) {
       });
     } else this.view.addChild(g);`, file);
   }
+  if (file === 'src/engine/actors/KeyGate.ts') {
+    source = replaceOnce(source, '    this.rect = { x: spawn.x - 8, y: spawn.y - 32, width: 16, height: 64 };', `    const [countValue, dxValue, dyValue, sizeValue] = spawn.raw.slice(6);
+    const count = Math.max(1, Number(countValue) || 1), size = Number(sizeValue) || 32;
+    const length = Math.hypot(Number(dxValue), Number(dyValue)) || 1;
+    const dx = (Number(dxValue) || 0) / length, dy = (Number(dyValue) || 0) / length;
+    const horizontal = Math.abs(dy) <= 1.1920928955078125e-7;
+    const endX = dx * (count - 1) * size, endY = dy * (count - 1) * size;
+    this.rect = { x: spawn.x + Math.min(0, endX), y: spawn.y + Math.min(0, endY),
+      width: Math.abs(endX) + size + Number(horizontal),
+      height: Math.abs(endY) + size + Number(!horizontal) };`, file);
+    const begin = source.indexOf('    g.beginFill(0x4f8cff, 0.9);');
+    const end = source.indexOf('    this.view.addChild(g);', begin);
+    if (begin < 0 || end < begin) throw new Error('Gate artwork anchor changed');
+    return source.slice(0, begin) + `    g.beginFill(0xff864d, 1);
+    g.drawRoundedRect(this.rect.x - spawn.x, this.rect.y - spawn.y, this.rect.width, this.rect.height, 4);
+    g.endFill();
+` + source.slice(end);
+  }
+  if (file === 'src/engine/actors/Bridge.ts') {
+    source = replaceOnce(source, 'const segmentWidth = horizontalSegment ? segmentSize : segmentSize + 1;', 'const segmentWidth = horizontalSegment ? segmentSize + 1 : segmentSize;', file);
+    source = replaceOnce(source, 'const segmentHeight = horizontalSegment ? segmentSize + 1 : segmentSize;', 'const segmentHeight = horizontalSegment ? segmentSize : segmentSize + 1;', file);
+    for (const [before, after] of [
+      ['Math.min(-segmentWidth / 2, endCenterX - segmentWidth / 2)', 'Math.min(0, endCenterX)'],
+      ['Math.max(segmentWidth / 2, endCenterX + segmentWidth / 2)', 'Math.max(0, endCenterX) + segmentWidth'],
+      ['Math.min(-segmentHeight / 2, endCenterY - segmentHeight / 2)', 'Math.min(0, endCenterY)'],
+      ['Math.max(segmentHeight / 2, endCenterY + segmentHeight / 2)', 'Math.max(0, endCenterY) + segmentHeight'],
+      ['const width = horizontalSegment ? params.segmentSize : params.segmentSize + 1;', 'const width = horizontalSegment ? params.segmentSize + 1 : params.segmentSize;'],
+      ['const height = horizontalSegment ? params.segmentSize + 1 : params.segmentSize;', 'const height = horizontalSegment ? params.segmentSize : params.segmentSize + 1;'],
+      ['x: spawn.x - width / 2,', 'x: spawn.x,'], ['y: spawn.y - height / 2,', 'y: spawn.y,'],
+    ]) source = replaceOnce(source, before, after, file);
+    return source;
+  }
   if (file === 'src/engine/GameRuntime.ts') {
+    source = 'import { planBoxPush } from ' + JSON.stringify(fileURLToPath(new URL('../apstat-park/campaign-push-contacts.mjs', import.meta.url))) + ';\n' + source;
+    source = replaceOnce(source, '    const previousPushBoxRects = this.pushBoxes.map((pushBox) => ({ ...pushBox.rect }));', `    const previousPushBoxRects = this.pushBoxes.map((pushBox) => ({ ...pushBox.rect }));
+    const planPush = (previous: Rect, destination: Rect) => planBoxPush(previous, destination,
+      this.players.map(player => player.deathTimer > 0 || this.collisionChangePlayersCollisionOff.has(player) ? null : player.rect),
+      this.players.indexOf(this.player!), (rect: Rect) => pushBoxCollisionMap.rectHitsSolid(rect)
+        || previousPushBoxRects.some(box => box !== previous && rectsOverlap(rect, box)));
+    const solidPushMap = { rectHitsSolid: (rect: Rect, movement: any) =>
+      pushBoxCollisionMap.rectHitsSolid(rect, movement)
+      || (movement && planPush(movement.previousRect, rect) === null) };`, file);
+    source = replaceOnce(source, '      pushBoxCollisionMap,', '      solidPushMap,', file);
+    source = replaceOnce(source, '        this.carryPlayersWithPushedBox(previousBoxRect, currentBoxRect);', `        const contacts = planPush(previousBoxRect, currentBoxRect);
+        for (const [index, rect] of contacts || []) {
+          const player = this.players[index];
+          player.applyResolvedCollision(rect, player.velocity, player.grounded);
+        }
+        this.carryPlayersWithPushedBox(previousBoxRect, currentBoxRect);`, file);
+
     source = replaceOnce(source, '    const PUSH_BOX_GRAVITY = 980;', `    const nativeJumpBoxes = this.stage?.name === 'stage_jump02';
     const PUSH_BOX_GRAVITY = nativeJumpBoxes ? .65 * 60 * 60 : 980;`, file);
     source = replaceOnce(source, '    const PUSH_BOX_MAX_FALL_SPEED = 600;', '    const PUSH_BOX_MAX_FALL_SPEED = nativeJumpBoxes ? Infinity : 600;', file);

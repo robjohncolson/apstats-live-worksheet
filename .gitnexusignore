@@ -1,0 +1,4 @@
+# Saved browser pages and generated bundles are not editable source.
+test-results/
+apstat-park/recovered/runtime.mjs
+apstat-park/recovered/runtime.mjs.map

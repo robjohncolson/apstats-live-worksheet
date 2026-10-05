@@ -41,6 +41,21 @@
         "FUN_7ff72bb33890"
       ],
       "behavior": "In jump02, unsupported numbered boxes fall at .65 units/tick squared and settle on floors, boxes, or live cats. Other stages retain their current movement controllers."
+    },
+    {
+      "id": "solid-push-chains-and-segment-anchors",
+      "files": [
+        "src/engine/GameRuntime.ts",
+        "src/engine/actors/Bridge.ts",
+        "src/engine/actors/KeyGate.ts"
+      ],
+      "evidence": [
+        "FUN_7ff72bb343e0",
+        "FUN_7ff72bc16780",
+        "FUN_7ff72bb4f630",
+        "FUN_7ff72bb4f9d0"
+      ],
+      "behavior": "Pushes carry obstructing cats or stop at blocked chains. Gate extents follow authored segment counts. Bridge segment rectangles use local zero-origin bounds."
     }
   ],
   "hashes": {
