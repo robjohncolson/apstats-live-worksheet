@@ -12,7 +12,9 @@ function above(body) {
 // bc15c70/bc15dc0. Divide by maximum UP-chain depth (bc13430), not number of
 // riders. Commands visit direct unique contacts in stored order; each actor's
 // +90 bit16 permits propagation with another increment of the shared impulse.
-export function propagateNativeJumpImpulse(body, velocity, command = 2) {
+// includeBody selects bb348b0's entry: the contacted actor gets the first
+// share, unlike a jumping carrier which sends only to the actors above it.
+export function propagateNativeJumpImpulse(body, velocity, command = 2, includeBody = false) {
   let operations = 0;
   function guard() {
     if (++operations > 10000) throw new Error('Native jump impulse exceeded traversal limit');
@@ -26,7 +28,7 @@ export function propagateNativeJumpImpulse(body, velocity, command = 2) {
     }
     return result;
   }
-  const increment = f(f(velocity) / f(depth(body)));
+  const increment = f(f(velocity) / f(depth(body) + Number(includeBody)));
   function send(current, amount) {
     guard();
     const actor = current.actor;
@@ -41,5 +43,6 @@ export function propagateNativeJumpImpulse(body, velocity, command = 2) {
     }
     for (const next of direct) send(next, amount);
   }
-  visit(body, increment);
+  if (includeBody) send(body, increment);
+  else visit(body, increment);
 }

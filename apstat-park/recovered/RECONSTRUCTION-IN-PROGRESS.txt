@@ -1,5 +1,16 @@
 Work branch: work/pico-native-fidelity. NOT READY TO MERGE OR DEPLOY.
 
+PushBox actor checkpoint: native-push-box-actor and native-push-box-commands
+assemble ordinary PushBox motion, inset collision, relocation, local commands,
+BEGIN-contact launch distribution, replica POST flags and counter metadata.
+Shared factory now accepts PushBox. The original stage_push02 assembles all
+three blocks; input-only tests push its first block with both2 and8 players.
+That is a partial interaction test, NOT a full stage solution. Custom-shape
+PushBox variants and production rendering/network transport remain unfinished.
+Warp, switches/lifts and other missing families still prevent full campaign
+assembly. Sprite/text metadata is available but not a new production renderer.
+Full park suite passes454/454 tests at this checkpoint.
+
 Push motion checkpoint: native-push-box-motion implements bb33890, bb343e0,
 and bb34820: team thresholds, directional path clearance, shared player carry,
 gravity, external impulses and freezing. Native-player-boundary's carry now

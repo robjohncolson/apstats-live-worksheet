@@ -1070,3 +1070,20 @@ components, including intermediate reset and subsequent gravity/impulse.
 UP contact suppresses external X; grounded resets external vector unless a
 new impulse flag1 is pending. Pending Y applies once, then flag1 clears.
 Frozen flag2 resets pusher count and velocity without consuming that impulse.
+PushBox actor/commands evidence: bb334f0, bb33780, bb340f0, bb33d00,
+bb350a0, bb35210, bb348b0, raw bb33b20, bb346a0. Body type3/category2,
+priority2, sprite bottom anchor[-width/2,-height,width,height], body inset1.
+MotionFlags remain12 from base constructor. bb348b0 is BEGIN at body+1c0;
+negative normal.y with negative velocity.y sends command0 starting at the
+struck body, dividing by maximum UP depth+1. The shared impulse routine now
+has an explicit includeBody option; existing player calls retain their entry.
+Relocation probes occupancy then either restores only primary-body pose or
+sets actor/following poses, clears velocity/pending vector, preserving contacts.
+Reset8 bypasses occupancy and retains pending destination and velocity.
+Visibilitye/2c targets patch and counter only; freeze1e zeros velocity even
+when unfreezing, retaining pending external impulse. Commands0/2 choose X
+impulse sign from current horizontal velocity and apply Y unchanged.
+Patch origin(.453125,.03125), cell24px, UVcell/insets.015625. Counter32px,
+alignment2/2, depth-.5, format at bcb6770 is "%d". Draw value is max(0,
+required minus pusher count), using+410 replicated count for network mode1.
+Original-stage tests drive stage_push02 using held-left input for2/8 players.
