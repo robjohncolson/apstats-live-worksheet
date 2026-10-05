@@ -346,3 +346,27 @@ Native actor scheduler checkpoint:
   actor history snapshot hooks and complete scene loop remain to be connected.
 - Immediate removal of a still-pending actor is outside bba6600's active-ring
   contract; normal removal requests use the native bit and promotion path.
+Common actor lifecycle checkpoint:
+- native-actor-lifecycle.mjs connects scheduler virtual hooks to recovered
+  common PRE bc16120, alternate PRE bc162a0, POST bc16460 and GameScene added
+  branch bc165b0. Actor-specific hooks remain supplied by each actor family.
+- PRE zeroes display offset +138, snapshots transform XY +100 and velocity
+  +110 before virtual +c8, integrates velocity/half acceleration, synchronizes
+  following bodies, then publishes physics/display positions to components.
+- Alternate PRE increments +3a0. If actor flag 4 and actor+90 flag 0x20 are
+  set and +3a4 is at least the incremented count, it increments a second time,
+  snapshots motion, invokes +d0 and integrates/synchronizes. Otherwise only
+  +d0 runs. Unlike normal PRE, neither branch clears display offset.
+- POST invokes +d8, synchronizes bodies, writes actual XY displacement from
+  the PRE transform snapshot to +f8, updates components, clears vector +120,
+  and clears +3a0 only outside manager bit-8 mode. bb97710 confirms transform
+  subtraction and bb935d0 confirms direct vector assignment (not accumulation).
+- Added hook registers all actor bodies before component virtual +18, passing
+  the GameScene, current actor position, and zero. Actor position is reread for
+  each component, as in the native forward loop.
+- Six new tests include the combined scheduler -> common PRE -> world/map
+  correction -> contacts -> common POST path, snapshots, alternate boundaries,
+  on-added registration, component ordering and corrected frame displacement.
+- This ports the two-dimensional lifecycle used by campaign actors; the full
+  native 3D transform storage, history snapshot implementation and scene-specific
+  virtual STEP work are not claimed implemented by these wrappers.
