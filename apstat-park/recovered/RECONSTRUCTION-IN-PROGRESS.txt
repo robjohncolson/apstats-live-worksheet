@@ -1,5 +1,12 @@
 Work branch: work/pico-native-fidelity. NOT READY TO MERGE OR DEPLOY.
 
+Camera/timer checkpoint: native-scene-camera and native-scene-timer recover
+team-follow/auto/scripted/correction-only camera modes, visible map columns,
+timer pause/peer gates and expiration command. Tests assemble those callbacks
+with recovered outcomes through GameScene STEP. Production campaign wiring,
+client peer lookup, command recipients and all-stage solutions remain open.
+Full park suite passes 412/412 tests at this checkpoint.
+
 Scene outcome checkpoint: native-scene-outcomes ports team goal counting,
 clear/retry precedence, stage exemptions and height-based sprite depth.
 Actual assembled Player entry is covered; 402/402 park tests pass. Attachment

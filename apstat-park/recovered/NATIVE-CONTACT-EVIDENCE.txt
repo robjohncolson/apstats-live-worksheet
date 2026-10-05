@@ -1,5 +1,25 @@
 Native body-pair reconstruction checkpoint
 
+Camera/timer checkpoint (bb7c150/bb7bbe0/bb7ccc0):
+  Camera extrema use world X, omit only hidden kind2 Players, include anchor.
+  Raw bb7c1f6..23d confirms world position rather than display offset. Mode0
+  only records extrema. Mode1 uses team center, unclamped blend steps .05f,
+  lerp(1,.1,blend) gain and lerp(abs(delta),maxStep,blend) movement limit.
+  Blend can overshoot/oscillate. Manager bit8 suppresses following. Mode2
+  uses existing native auto-scroll gates. Scripted target (+6acec) approaches
+  by min(remaining,3)+.01, resets to -1 on the following reached-target frame.
+  Scroll80 only corrects overscroll; scroll10 suppresses reverse motion;
+  scroll8 permits unbounded forward motion. View position clamps nonnegative.
+  Visible columns truncate left/chipSize and width/chipSize, add2 columns.
+  Timer scroll200, positive remaining, manager bit8 clear; client additionally
+  requires bc2d750 peer. Float32 decrement is before both physics passes.
+  Expiry clears map bit2 and broadcasts null-target command2c/null payload
+  (raw bb7ccf4..cd08 confirms r9=0). Command recipients remain responsible
+  for their responses; timer does not invent a direct death/retry behavior.
+  Ten new tests cover modes/gates and timer -> physics -> camera/columns ->
+  outcome ordering through GameScene STEP. Production scene assembly remains
+  incomplete; client peer lookup and broadcast routing are explicit adapters.
+
 Scene outcome checkpoint (bb7bbe0/bb7c950/bb67e40):
   Goal count is door-controller kind4 players plus attachment-chain entries.
   Native tests attachment RTTI c62a103, then +430 actor RTTI c62a101; this
