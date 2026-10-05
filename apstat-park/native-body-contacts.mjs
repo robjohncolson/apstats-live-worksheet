@@ -1,5 +1,6 @@
 import { nativeBodiesOverlap } from './native-body-overlap.mjs';
 import { refreshNativePlayerUpContacts } from './native-body-support.mjs';
+import { findNativeBody } from './native-body-registry.mjs';
 const f = Math.fround;
 
 // Actor-contact lifecycle from bc13c60, after positional finalization.
@@ -13,7 +14,7 @@ export function finalizeNativeActorContacts(world, body) {
   const contacts = body.contacts ??= [];
   for (let index = 0; index < contacts.length;) {
     const contact = contacts[index];
-    const other = world.bodies.find(candidate => candidate.id === contact.bodyId);
+    const other = findNativeBody(world, contact.bodyId);
     if (!other) {
       // Missing registry entry is discarded without a synthetic END callback.
       contacts.splice(index, 1);

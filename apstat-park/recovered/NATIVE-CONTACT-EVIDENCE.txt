@@ -239,3 +239,28 @@ Standalone scale and world-pass checkpoint:
   map-correction-to-contact pass. The reconstructed world pass runs standalone;
   native actor registration and the actor PRE/POST bridge are still needed
   before replacing the existing campaign update loop.
+Native registry checkpoint (bc1d110, bc1ffa0, bc200c0):
+- native-body-registry.mjs separates ordered bodies from unsigned-ID lookup.
+  The circular native list is represented as a stable descending signed-priority
+  array. Equal-priority reattachment moves a body behind its current peers.
+- World construction enables only category 0/0 and reserves 128 dictionary
+  entries with growth disabled. bc20e60 refuses existing keys and overflow;
+  bc1ffa0 ignores that result after list insertion. Automatic IDs increment the
+  uint32 counter without searching for an unused ID. Explicit IDs do not advance
+  the counter. These details were checked directly against the recovered C.
+- bc13b50 attaches ownership even after duplicate-ID insertion rejection.
+  Attempting to detach that invalid list state throws explicitly in JS instead
+  of reproducing the native invalid-pointer dereference.
+- bc200c0 removes the list entry and dictionary key but does not clear owner;
+  bc13bb0 clears owner before invoking bc14290 contact cleanup. Thus detachment
+  does not immediately notify reciprocal contacts. The next neighbor refresh
+  silently drops the missing dictionary ID, as bc13c60 specifies.
+- Direct bc14290 cleanup while attached notifies accepted reciprocal contacts
+  only. It clears own actor contacts, active map count (+e8), and map pointer
+  (+140). It does NOT clear pending map count (+138). Constructor bc11f30
+  independently confirms these field locations.
+- Contact finalization now uses dictionary lookup when a registry is supplied;
+  older standalone list fixtures retain their list lookup adapter.
+- Seven regression cases exercise ordering/sensor dispatch, automatic-ID
+  collision, dictionary capacity, ownership sequencing and cleanup behavior.
+  This registry is not yet connected to live campaign actor construction.

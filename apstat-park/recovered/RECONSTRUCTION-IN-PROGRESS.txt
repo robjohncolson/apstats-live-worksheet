@@ -189,3 +189,13 @@ Standalone scale/world-pass checkpoint:
 - Next: stable native body registration (bc1ffa0), body descriptor setup and
   actor PRE/POST integration. ENGINE_SPEC around line 25995 identifies native
   descending signed-priority insertion with stable equal-priority chronology.
+Standalone native registration checkpoint:
+- Added stable priority registration, native ID dictionary behavior, attachment
+  and removal sequencing, and actor/map contact cleanup from recovered code.
+- Contact finalization uses the registry dictionary instead of scanning the
+  collision list when native registry state exists.
+- Seven focused cases pass. Live campaign remains at the BoundBall-map and
+  Thunder-pair boundary; full actor/body construction and PRE/POST integration
+  are still required before this framework replaces preview collision loops.
+- Next: native body descriptor initialization and actor PRE/POST attachment,
+  followed by gameplay integration and complete input-only campaign validation.
