@@ -1,3 +1,33 @@
+DeadTimer checkpoint:
+Factory bb7564c..bb75682 calls bb60c50(mode1), sets expiry action2.
+Lua bb618a0 uses numeric float32 param0+party*param1 when present; positive
+result sets current time only. Reset-value field+400 remains constructor zero.
+Bodyless, screen-fixed; art[-82,-32,164,64], UV(.3125,.421875,.0400390625,
+.015625), depth-.5; text depth-.6. Network type23/mode1 metadata retained.
+- PRE bb60e10 subtracts dt unless paused. Raw maxss atbb60e7b preserves NaN
+  (the C export incorrectly suggests zero). Expiry abs(time)<=2^-23, once.
+  Countdown below10 beeps when trunc(time-.01) integer changes; replica skips.
+  bc16ab0 gates client sound by actor flag8/historyDelay and current frame.
+- Raw bb60fe6 confirms broadcast cmd3 with NULL payload: native Player health
+  decrements and uses death controller, not zero-payload player flag10.
+  Authoritative expiry sets TIMEUPflag4 and blip. Host-owned expiry calls
+  bb0f7f0(ff,1,2,0): exposed packet kind2/channel1/command2/value0.
+  Replica marks expired only, without damage/TIMEUP/sound.
+- Commands bb61130:9 with uint32 payload adds and ceil-rounds time, bonus++,
+  font36.8; NULL pauses.10 resumes.14 sets resetValue and clears flags1/2 only.
+  POST bb610c0 accumulates TIMEUP elapsed; font=max(32,font*.98) each frame.
+- Snapshot bb61220 emits float time, low8flags into uint16, low16bonuscount.
+  Apply bb61270 beeps on offset integer boundary even above10, copies uint16
+  flags/count, pulses font on increasing count. Transport integration pending.
+- Draw bb61320 ceil(time) converts float32 to int32 (overflow INT_MIN), formats
+  minutes/seconds, integer screen position. TIME UP slides from x0 to centered
+  x=(1280/viewScale)/2 over1s; y=(720/viewScale)/2. Font/color binding remains
+  renderer work; bbc52b0 supplies current render color, not an elapsed-time fade.
+Nine tests include actual2Player expiry/death and Player->Switch->DeadTimer
+bonus routing. Missing-factory regression now uses CollisionChangePlayer.
+This adds actor coverage to4campaign sources (coin01/02,time_limit01/02),
+not their remaining mechanics or complete solutions. Full48 fidelity unfinished.
+
 UpDownLift/FallBox checkpoint:
 UpDownLift ctorbb6d980/Luabb6dac0/PREbb6db60/correctionbb6e0e0.
 - Amplitude=intparam0+intparam1*party (int32), nonzero overrides default-70.

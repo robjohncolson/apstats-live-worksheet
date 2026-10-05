@@ -1,5 +1,14 @@
 Work branch: work/pico-native-fidelity. NOT READY TO MERGE OR DEPLOY.
 
+DeadTimer checkpoint: countdown/bonuses/pause/reset/expiry, snapshot adapter
+and display layout recovered from C plus raw instructions. Actual Player tests
+verify all-player native death and Switch bonus routing. Nine new tests pass.
+Remaining next:CollisionChangePlayer and specialized player controllers,
+CheckPoint and dynamic actor creators, then remaining campaign mechanisms.
+Native renderer/network transport, saved checkpoint integration, original-stage
+solutions, golden traces and live campaign integration are still outstanding.
+This is not full48-stage parity. Keep the goal active.
+
 UpDownLift/FallBox checkpoint: native sine lift includes blocked-phase wait
 and reversal with recursive rider carry. FallBox includes .22s trigger delay,
 gravity, viewport collision culling, landing persistence and cutoff removal.
