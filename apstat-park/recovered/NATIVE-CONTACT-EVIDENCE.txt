@@ -1,5 +1,25 @@
 Native body-pair reconstruction checkpoint
 
+Player body/input checkpoint (bb6a3b0/bb67cc0/bb68830/bb68300/bb68510):
+  c62d1a8 raw runtime bounds are [-16,-47,32,46], verified in
+  region_7FF72C629000_M.bin. Ordinary bb6a3b0 creates type3 (map AND bodies),
+  priority-1 only before registration, category1 and flag4 for narrow UP probe.
+  Pivot body+44 is [0,-1], confirmed against bb4e260 scaling geometry. BEGIN
+  wrapper bb6ac30 forwards to Player virtualf8=bb69b70, then controller+30.
+  bb67cc0 toggles sprite8, forwards enabled to components, toggles primary
+  body1, then manager-gated scheduler flag1 and stop/resume callbacks.
+  bb68830 virtual80 is authority: unowned actor true; host only slot0;
+  otherwise compare playerIndex with client's local player index.
+  HELD bb68300 first gates disabled input, then debug forced RIGHT slot.
+  Non-authoritative client input checks replay bits jump40/left10/right20. Missing
+  bits only fall through to special mode3 component when its owner is local.
+  Ordinary source selection uses scene inputFlags8 replay override, then
+  mode0 system,1 AI,2..5 embedded components. PRESSED bb68510 does not use
+  remote held or debug force; it uses selected current/previous bit edges.
+  Six tests cover constructor/registration, resize pivot, enabled callback
+  order, every input mode, authority, replay override and special ownership.
+  No production Player assembly or whole-stage parity claim at this checkpoint.
+
 Player damage/command checkpoint (bb69440, raw disassembly):
   Health+420<=0, playerFlags80, or global bc1a260 suppress commands3/4/5;
   suppressed commands continue to controller dispatch. Accepted hits decrement

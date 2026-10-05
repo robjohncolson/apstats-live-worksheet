@@ -1,5 +1,12 @@
 Work branch: work/pico-native-fidelity. NOT READY TO MERGE OR DEPLOY.
 
+Player body/input checkpoint: native-player-body creates the normal native
+type3/category1 body with UP-probe flag4, priority and resize pivot; enable
+publishes component visibility before body and scheduler state. Player input
+now routes all six modes, replay override, remote held flags and ownership.
+These modules are tested but not yet assembled into a production Player actor.
+Input source updates, alternate forms, rendering and live integration remain.
+
 Player command checkpoint: native-player-command/damage implement bb69440's
 dispatcher, damage gates and deferred death, input counters, invulnerability,
 form dispatch, stop/resume and client/host damage-report fields. Tests connect
