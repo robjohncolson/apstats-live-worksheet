@@ -1,5 +1,27 @@
 Native body-pair reconstruction checkpoint
 
+Player damage/command checkpoint (bb69440, raw disassembly):
+  Health+420<=0, playerFlags80, or global bc1a260 suppress commands3/4/5;
+  suppressed commands continue to controller dispatch. Accepted hits decrement
+  health and return1. Surviving hits do not select another controller.
+  Command3 zero payload sets playerFlags10; otherwise bb67800 requests kind3
+  except client-replicated actors. Commands4/5 play hit; command4 calls
+  bc1b7f0 (scene.flags80, scene+51740=0), while5 calls global bb1b8c0.
+  bb1b8c0 is a one-time global flag10 action, not a numeric score decrement.
+  Client deaths send actor cmd3/value1, then command4 additionally sends2f
+  packed position, then targetff kind2 cmd1 (cmd4) or0 (cmd5), and clear+428.
+  Host deaths broadcast the kind2 packet then request local kind3. Transport
+  callbacks expose native field order; browser relay integration is pending.
+  Position2f packs unsigned truncated X modulo1000 and low16 truncated Y.
+  Host applies current X band plus max(current remainder, received low16),
+  sign-extends received Y and disables primary body. It does not sync bodies.
+  Dispatcher handles1f player number before damage, processes6/9/10/17,
+  input-counter1a/1b/14, manager-gated stop1c/resume1d, invulnerability27,
+  and message2b, then calls controller.receive. bb68020 is a message setter,
+  not an input-mode setter. Embedded form/message callbacks remain explicit.
+  Eight new tests include real walking command routing and damage-to-death
+  controller transition, gates, packet ordering and host position reconciliation.
+
 Death-controller checkpoint (bb6ed30/bb6eda0/bb70690/bb70740/bb69be0):
   Native player+414, exposed as fallState by the earlier boundary module, is
   the pending controller kind. bb69be0 calls old controller leave/destructor,

@@ -1,5 +1,12 @@
 Work branch: work/pico-native-fidelity. NOT READY TO MERGE OR DEPLOY.
 
+Player command checkpoint: native-player-command/damage implement bb69440's
+dispatcher, damage gates and deferred death, input counters, invulnerability,
+form dispatch, stop/resume and client/host damage-report fields. Tests connect
+commands to walking and death controllers. Network transport and embedded
+form/message components remain required scene/actor dependencies. Full Player
+construction, rendering and live campaign integration are still incomplete.
+
 Death-controller checkpoint: native-player-death.mjs implements controller
 kinds1 (hidden) and3 (death animation), plus deferred controller replacement.
 The field called fallState in earlier ports is native +414 pending controller
