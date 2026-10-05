@@ -1,5 +1,21 @@
 Work branch: work/pico-native-fidelity. NOT READY TO MERGE OR DEPLOY.
 
+MagnetPlayer/SmallBox factory checkpoint: bb72d37..72daf local branch added.
+Reuses normal Player slot/checkpoint rules, creates and queues companion before
+final Player insertion, preserves row name/facing, shifts Player texture UV Y
+by .03125 (bb678f0 changes UV, not geometry). Explicit randomFloat adapter
+required before any actor creation; fixture .5 values do not prove RNG parity.
+SmallBox bb73afb->bb333d0 shape3 shares PushBox vtable and parser. Fixed table
+bounds(-25,-48,48,48), inset body(-24,-47,46,46), motionFlag10/effective mass100.
+Original stage_magnet01 AND stage_magnet02 initialize and run10 frames with
+2 and8 players without substituting unsupported actors. SmallBox offset bounds,
+parameter handling and magnet freeze/release tested. Full suite638/638.
+This is construction/initial simulation evidence, NOT solved-stage evidence.
+Missing production renderer/network/RNG integration, specialized remaining
+controllers, original input-only full solutions and visual comparisons remain.
+Full48 goal stays active; branch not ready to merge/deploy.
+
+
 Native carried-attachment checkpoint: bc16780/bc17330 option-bearing direct
 actor carry added. bb69a20 now carries both Player attachments through that
 routine, sharing visited state; bb5a110 carries Magnet target through the same

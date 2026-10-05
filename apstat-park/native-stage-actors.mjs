@@ -1,3 +1,5 @@
+import { createNativeSmallBoxActor } from './native-small-box-actor.mjs';
+import { spawnNativeMagnetPlayerRow } from './native-magnet-spawn.mjs';
 import { spawnNativePlayerRow } from './native-player-spawn.mjs';
 import { createNativeRectActor } from './native-rect-actor.mjs';
 import { createNativeSwitchRectActor } from './native-switch-rect-actor.mjs';
@@ -32,9 +34,9 @@ import { populateNativeSeesawActors } from './native-seesaw-stage.mjs';
 // Unsupported actors must
 // remain visible as missing work; never substitute a passive preview object.
 export const NATIVE_STAGE_ACTOR_TYPES = Object.freeze([
-  'Player', 'Rect', 'InvisibleRect', 'DarknessRect', 'Key', 'BreakoutKey', 'Goal',
+  'Player', 'MagnetPlayer', 'Rect', 'InvisibleRect', 'DarknessRect', 'Key', 'BreakoutKey', 'Goal',
   'SeesawParent', 'Seesaw', 'Balance', 'PhysicsArea', 'PhysicsRect',
-  'PhysicsBallPitcher', 'PhysicsSwitch', 'PushBox',
+  'PhysicsBallPitcher', 'PhysicsSwitch', 'PushBox', 'SmallBox',
   'Warp', 'WarpAll', 'WarpInitPos', 'WarpAllInitPos',
   'Switch',
   'DeadSwitch',
@@ -60,9 +62,12 @@ export const NATIVE_STAGE_ACTOR_TYPES = Object.freeze([
   'CollisionChangePlayer',
 ]);
 
-export function spawnNativeStageActor(scene, spawn, { playerPresentation, playerExtensions } = {}) {
+export function spawnNativeStageActor(scene, spawn, { playerPresentation, playerExtensions, randomFloat } = {}) {
   // bb75806..bb75808 -> bb7730a returns null: the shipped factory skips Watch.
   if (spawn.actorName === 'Watch') return null;
+  if (spawn.actorName === 'MagnetPlayer') {
+    return spawnNativeMagnetPlayerRow(scene, spawn, { presentation: playerPresentation, extensions: playerExtensions, randomFloat });
+  }
   if (spawn.actorName === 'Player') {
     if (!playerPresentation) throw new Error('Native Player factory requires presentation callbacks');
     return spawnNativePlayerRow(scene, spawn, { presentation: playerPresentation, extensions: playerExtensions });
@@ -70,6 +75,7 @@ export function spawnNativeStageActor(scene, spawn, { playerPresentation, player
   if (['Rect', 'InvisibleRect', 'DarknessRect'].includes(spawn.actorName)) {
     return scene.addActor(createNativeRectActor({ spawn, partySize: scene.playerCount }));
   }
+  if (spawn.actorName === 'SmallBox') return scene.addActor(createNativeSmallBoxActor({ spawn }));
   if (spawn.actorName === 'PushBox') return scene.addActor(createNativePushBoxActor({ spawn }));
   if (spawn.actorName === 'SwitchRect') return scene.addActor(createNativeSwitchRectActor({ spawn }));
   if (['ColorBox', 'ForceColorBox'].includes(spawn.actorName)) {

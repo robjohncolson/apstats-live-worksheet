@@ -2,7 +2,7 @@ import { createNativePlayer } from './native-player-actor.mjs';
 
 // Ordinary local Player branch of bb72ae0 -> bb774a0, followed by bb67620.
 // AI companions and specialized Player forms remain separate factory branches.
-export function spawnNativePlayerRow(scene, spawn, { presentation, extensions = {} }) {
+export function spawnNativePlayerRow(scene, spawn, { presentation, extensions = {}, configureActor }) {
   if (spawn.actorName !== 'Player') throw new Error('Native ordinary Player factory received another actor type');
   const sequence = scene.players.length;
   if (scene.limitPlayer && sequence >= scene.playerCount) return null;
@@ -19,6 +19,7 @@ export function spawnNativePlayerRow(scene, spawn, { presentation, extensions = 
   }
   const actor = createNativePlayer({ playerIndex, position, presentation, extensions });
   actor.name = (spawn.actorName + (spawn.label ?? '')).slice(0, 31);
+  configureActor?.(actor);
   const facing = spawn.raw[6];
   if (typeof facing === 'number' && Math.trunc(Math.fround(facing)) === 1) actor.faceDirection(-1);
   scene.addPlayer(actor);
