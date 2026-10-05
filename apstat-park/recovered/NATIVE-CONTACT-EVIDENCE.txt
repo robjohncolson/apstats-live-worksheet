@@ -1,5 +1,24 @@
 Native body-pair reconstruction checkpoint
 
+Death-controller checkpoint (bb6ed30/bb6eda0/bb70690/bb70740/bb69be0):
+  Native player+414, exposed as fallState by the earlier boundary module, is
+  the pending controller kind. bb69be0 calls old controller leave/destructor,
+  clears its pointer, creates the requested kind, calls enter, publishes kind
+  at +410, then clears +414. Hidden kind1 enter publishes zero velocity,
+  hides sprite bit8, disables primary body bit1; leave restores those bits.
+  bb707c0 is a debugger thunk with no gameplay work (raw bytes verified).
+  Death kind3 initializes once: velocity0, primary body disabled, sprite bounds
+  reset via bb678f0 zero offset, animation4. Phase1 accumulates float32 dt until
+  >=1, then writes vy=-9. Phase2 adds .65/frame without a terminal-speed cap.
+  When actor world Y exceeds (720/viewScale)*4, registry eligibility sets scene
+  retry bit2 and +414 requests hidden kind1. Client-replicated actors initialize
+  the art once but then publish zero velocity without advancing local phases.
+  Constants bcb69bc=.65f, bc7db90=720f and bcff650=4f checked in raw data.
+  Five tests cover phase order, component publication, ownership, scaling,
+  visibility restoration, and a complete common PRE/POST death trajectory.
+  At 60Hz float32 dt the launch occurs on the 61st accumulated delay tick.
+  Rendering binding, damage dispatch and production Player assembly remain open.
+
 Scroll-edge carry checkpoint (bb6f0e0/bb34f30/bc17330/bc16780):
   The branch runs for scrollMode2 or scrollFlags1000. Compute original display
   X plus prepared vx minus bb7b610 autoscroll speed; if negative, subtract that

@@ -1,5 +1,13 @@
 Work branch: work/pico-native-fidelity. NOT READY TO MERGE OR DEPLOY.
 
+Death-controller checkpoint: native-player-death.mjs implements controller
+kinds1 (hidden) and3 (death animation), plus deferred controller replacement.
+The field called fallState in earlier ports is native +414 pending controller
+kind, consumed by bb69be0 before controller PRE; it is not a separate status.
+The death arc is verified through common actor PRE/POST with no teleportation.
+Full Player construction, damage command dispatch, art binding and live-stage
+integration remain incomplete. This is not proof of full campaign fidelity.
+
 Scroll-edge carry checkpoint: native-player-boundary.mjs now implements the
 walking controller's left-edge velocity correction, RIGHT/category1 contact
 carry and damage eligibility check. The native walking/Balance test scene now
