@@ -3,9 +3,10 @@ import { createNativeBalance } from './native-balance-actor.mjs';
 import { createNativePhysicsArea } from './native-physics-area.mjs';
 import { createNativePhysicsBallPitcher } from './native-physics-ball-pitcher.mjs';
 import { createNativePhysicsSwitch } from './native-physics-switch.mjs';
+import { createNativeGoalActor } from './native-goal-actor.mjs';
 import { queueNativeActor } from './native-actor-manager.mjs';
 
-// bb72ae0's rigid-puzzle factory branches. Unrelated stage actors are left to
+// bb72ae0's rigid-puzzle and Goal factory branches. Other stage actors are left to
 // the caller; they must share this scene for native custom-body interactions.
 // Lookup is immediate against earlier rows, not a second-pass reordering.
 export function populateNativeSeesawActors(scene, spawns) {
@@ -16,6 +17,9 @@ export function populateNativeSeesawActors(scene, spawns) {
     const params = spawn.raw.slice(6);
     let actor;
     switch (spawn.actorName) {
+      case 'Goal':
+        actor = createNativeGoalActor({ name, position });
+        break;
       case 'SeesawParent':
       case 'Seesaw': {
         const parent = spawn.actorName === 'SeesawParent';

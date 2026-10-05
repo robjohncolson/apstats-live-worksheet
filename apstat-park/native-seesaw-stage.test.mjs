@@ -12,7 +12,7 @@ const createWorld = await createNativeRigidWorldFactory({ moduleOptions: { wasmB
 const stages = JSON.parse(await readFile(new URL('./recovered/stages.json', import.meta.url)));
 const stage = stages.find(stage => stage.name === 'stage_seesaw01');
 function makeScene() {
-  const scene = { flags: 0x20, frame: 0n, highestFrame: 0n, viewPosition: { x: 0, y: 0 },
+  const scene = { flags: 0x20, frame: 0n, highestFrame: 0n, viewPosition: { x: 0, y: 0 }, viewOffset: { x: 0, y: 0 },
     actorManager: createNativeActorManager(1), bodyWorld: createNativeBodyRegistry(),
     playerCount: 2, rigidWorld: createWorld({ gravity: { x: 0, y: 10 } }),
     updateCamera() {}, updateOutcomes() {} };
@@ -51,16 +51,17 @@ test('original stage rows build bound seesaws, Balance, area, switch and a live 
       };
       entries = populateNativeSeesawActors(scene, stage.createTable);
       assert.deepEqual(entries.map(entry => entry.spawn.actorName),
-        ['PhysicsSwitch', 'PhysicsArea', 'SeesawParent', 'Seesaw', 'Seesaw', 'Balance', 'PhysicsBallPitcher']);
-      const parent = entries[2].actor;
+        ['PhysicsSwitch', 'Goal', 'PhysicsArea', 'SeesawParent', 'Seesaw', 'Seesaw', 'Balance', 'PhysicsBallPitcher']);
+      const parent = entries.find(entry => entry.spawn.actorName === 'SeesawParent').actor;
       assert.equal(parent.type, 1);
-      assert.deepEqual(entries[3].actor.gear.joint.read(), { ratio: -1 });
-      assert.deepEqual(entries[4].actor.gear.joint.read(), { ratio: -1 });
-      const balance = entries[5].actor;
+      for (const child of entries.filter(entry => entry.spawn.actorName === 'Seesaw')) {
+        assert.deepEqual(child.actor.gear.joint.read(), { ratio: -1 });
+      }
+      const balance = entries.find(entry => entry.spawn.actorName === 'Balance').actor;
       assert.deepEqual(balance.left.position, { x: 190, y: 604 });
       assert.deepEqual(balance.right.position, { x: 1090, y: 604 });
       for (let tick = 0; tick < 240; tick++) stepNativeSceneFrame(scene);
-      const ball = entries[6].actor.controller.state.child.actor;
+      const ball = entries.find(entry => entry.spawn.actorName === 'PhysicsBallPitcher').actor.controller.state.child.actor;
       assert.ok(ball.manager);
       assert.equal(ball.velocity.y, 3);
       assert.ok(Number.isFinite(ball.position.y));

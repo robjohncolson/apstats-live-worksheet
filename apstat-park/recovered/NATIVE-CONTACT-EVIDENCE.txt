@@ -1,5 +1,23 @@
 Native body-pair reconstruction checkpoint
 
+Goal actor checkpoint (bb52c20/bb52ec0/bb53000/bb53100/bb531d0):
+  Constructor sprite bounds [-32,-64,64,64], closed UV [.09375,.5,.046875,
+  .046875]; open changes Y UV to .5625 and plays get only before opened flag1.
+  Raw constructor descriptor starts with a flags word before bounds; decoding
+  bcbad80..bcbad9c confirms this ordering. Missing sprite resource prevents open.
+  Default sensor [-24,-32,48,32] type0/category10 follows actor. Decoded nonzero
+  sensor-extension descriptor mode1 extends upward by its integer height;
+  other modes use zero extension. Continuous overlap opens on category8 or
+  forwards category1 to Player door-entry logic. Replicated client Goal ignores
+  local overlap; replicated opened state can still open/play the one-time sound.
+  bb53100 calls common on-added before adding scene+6acf4 mapOffset to actor X;
+  body catches up in first common PRE. bb53170 is a debugger-only thunk.
+  Original seesaw assembly creates Goal second among supported rows, preserving
+  original order. Test indexing was changed to actor-name lookup; fixture now
+  supplies viewOffset required by the native camera-relative Goal transform.
+  Four Goal tests include full registered Player/Goal enter-delay-exit flow.
+  Generic network-command guarding and production rendering remain scene adapters.
+
 Door-controller checkpoint (bb531d0/bb6e990/bb6ea00/bb6eab0/bb6eb80):
   Goal bb53000 installs continuous-overlap callback at body+188, captured target
   bb531d0 at+1a8. This is not BEGIN-only: a later Up press while overlapping

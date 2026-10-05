@@ -1,5 +1,12 @@
 Work branch: work/pico-native-fidelity. NOT READY TO MERGE OR DEPLOY.
 
+Goal actor checkpoint: native-goal-actor owns the category10 overlap sensor,
+opening art/state/sound, map-offset on-added hook and local command9. Native
+stage assembly now includes Goal in original row order. An actual registered
+Player/Goal scene test enters and leaves through the recovered door controller.
+Key actor construction, team-clear processing and production campaign wiring
+remain incomplete; this checkpoint does not prove full-stage completion.
+
 Door-controller checkpoint: native-player-door implements kind4 and is connected
 to the assembled Player factory. Goal overlap requests entry on Up; entering
 hides/disables the Player and clears own actor contacts. After a one-second
