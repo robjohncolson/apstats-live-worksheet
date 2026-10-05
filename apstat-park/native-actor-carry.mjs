@@ -61,7 +61,8 @@ export function carryNativeBalanceRiders(actor, movement) {
       rider.position = { x: f(rider.position.x + delta.x), y: f(rider.position.y + delta.y) };
       syncNativeActorBodies(rider);
       rider.postResetVector = { ...delta }; // +120, cleared by common POST
-      rider.onCarried?.({ ...delta }, direction, visited); // actor virtual +f0 gets a local copy
+      rider.onCarried?.({ ...delta }, direction, visited, { syncBodies: true, compensateVelocity: false,
+        recurse: true, directionFromMovement: false, bodyIndex: 0, categoryMask: 0 }); // actor virtual +f0 gets a local copy
       carryFrom(rider);
     }
   }

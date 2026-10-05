@@ -1,3 +1,17 @@
+Native carried-attachment checkpoint: bc16780/bc17330 option-bearing direct
+actor carry added. bb69a20 now carries both Player attachments through that
+routine, sharing visited state; bb5a110 carries Magnet target through the same
+routine by default. Balance, Lift and scroll callers forward original options.
+Direct attachments bypass category masks; subsequent contact recursion honors
+mask/body index, movement-derived direction, compensation and body sync.
+Tests cover platform->Player->Magnet->held Player, duplicate contact paths,
+mutual attachment cycles, Lift axes, scroll category filtering and no-sync /
+no-recurse options. Source retains 100-pointer limit; overflow still throws
+because native address-ordered replacement has not been modeled.
+Campaign MagnetPlayer spawning, native RNG, snapshots and drawing remain
+unfinished. This removes the prior missing recursive magnet carry adapter;
+no original stage completion or production deployment claimed.
+
 Magnet companion assembly checkpoint: bb59090/59390/592d0 plus verified
 PRE/POST helpers assembled as native-magnet-actor.mjs. Priority3 category2
 sensor(20,-50,110,80), native sprite bounds/UV, owner attachment slot0,

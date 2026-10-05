@@ -1,3 +1,4 @@
+import { carryNativeActorWithOptions } from './native-carried-actor.mjs';
 import { createNativePlayerBody, setNativePlayerEnabled } from './native-player-body.mjs';
 import { nativePlayerHeld, nativePlayerPressed, nativePlayerHasInputAuthority } from './native-player-input.mjs';
 import { receiveNativePlayerCommand } from './native-player-command.mjs';
@@ -96,8 +97,14 @@ export function createNativePlayer({ playerIndex = 0, position, presentation, ex
       if (actor.scene.networkMode === 2) extensions.afterNetworkMotion(actor, dt);
     },
     onPositionResolved: (_position, delta) => recordNativePlayerCorrection(actor, delta),
-    onCarried(delta, direction, visited) {
-      if (actor.carriedAttachments.some(Boolean)) extensions.carryAttachments(actor, delta, direction, visited);
+    onCarried(delta, direction, visited, options) {
+      if (extensions.carryAttachments) {
+        extensions.carryAttachments(actor, delta, direction, visited, options);
+        return;
+      }
+      for (const attachment of actor.carriedAttachments.slice(0, 2)) {
+        if (attachment) carryNativeActorWithOptions(attachment, delta, direction, visited, options);
+      }
     },
     onCommand: (command, value) => receiveNativePlayerCommand(actor, command, value),
     handleWalkTransformCommand(state, command, value) {

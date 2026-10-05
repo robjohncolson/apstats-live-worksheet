@@ -1,3 +1,4 @@
+import { carryNativeActorWithOptions } from './native-carried-actor.mjs';
 import { createNativeActorRectangle, unregisterNativeActorBodies } from './native-actor-bodies.mjs';
 import { placeNativeActorBodies } from './native-actor-motion.mjs';
 import { runNativeCommonActorAdded, runNativeCommonActorPre, runNativeCommonActorPost } from './native-actor-lifecycle.mjs';
@@ -10,7 +11,7 @@ const f = Math.fround;
 
 // bb59090/59390/592d0. A companion owned by Player, not a replacement Player.
 // Factory wiring remains separate until carry and replication are integrated.
-export function createNativeMagnetActor({ owner, position, randomFloat, carryTarget }) {
+export function createNativeMagnetActor({ owner, position, randomFloat, carryTarget = carryNativeActorWithOptions }) {
   if (typeof randomFloat !== 'function') throw new Error('Native magnet requires its random-float adapter');
   const actor = {
     owner, isNativeMagnet: true, managerPriority: 3, networkType: 4, networkMode: 1,
@@ -48,7 +49,6 @@ export function createNativeMagnetActor({ owner, position, randomFloat, carryTar
     },
     onCarried(delta, direction, visited, options) {
       if (!actor.target) return;
-      if (!carryTarget) throw new Error('Native magnet requires the recursive carried-target adapter');
       carryTarget(actor.target, delta, direction, visited, options);
     },
   };

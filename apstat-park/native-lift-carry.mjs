@@ -27,7 +27,8 @@ export function carryNativeLiftRiders(actor, movement) {
         rider.position = { x: f(rider.position.x + delta.x), y: f(rider.position.y + delta.y) };
         syncNativeActorBodies(rider);
         rider.postResetVector = { ...delta };
-        rider.onCarried?.({ ...delta }, direction, visited);
+        rider.onCarried?.({ ...delta }, direction, visited, { syncBodies: true, compensateVelocity: false,
+          recurse: true, directionFromMovement: axis === 'x', bodyIndex: 0, categoryMask: 0 });
         carry(rider, axis === 'x' ? { x: Math.sign(delta.x), y: 0 } : direction);
       }
     }

@@ -134,7 +134,9 @@ export function carryNativeScrollNeighbors(actor, movement, directionIndex = 3,
       rider.position = { x: f(rider.position.x + displacement.x), y: f(rider.position.y + displacement.y) };
       syncNativeActorBodies(rider);
       rider.postResetVector = { ...displacement };
-      rider.onCarried?.({ ...displacement }, direction, visited);
+      rider.onCarried?.({ ...displacement }, direction, visited, { syncBodies: true,
+        compensateVelocity: compensateOpposingVelocity, recurse: true, directionFromMovement: false,
+        bodyIndex: 0, categoryMask: allCategories ? 0 : 2 });
       carryFrom(rider);
     }
   }
