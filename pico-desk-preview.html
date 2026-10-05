@@ -1,0 +1,1147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>APSTAT PARK · Pico Desk Preview</title>
+<!--
+  Pico Desk — Phase 0 sketch (PICO_DESK_SPEC.md). Static and self-contained: fictional example
+  data, no sign-in, no application-data requests (no roster client, no grade storage, no
+  Railway server). Art comes from apstat-park/assets/pico-desk.png + pico-glyphs.png, cropped
+  from the recovered PICO PARK sheets by apstat-park/assets/build-desk-atlas.mjs.
+
+  From the game: the sprites, the menu window's proportions (thick orange frame, wider top bar,
+  small ✕, white interior, rounded orange outline on the selected item) and the glyph lettering.
+  Ours, not the game's: the five-day strip, the sign's wording, the top navigation labels, the
+  plain-text lettering, and every colour not sampled from the sheets.
+-->
+<style>
+  :root {
+    --orange: #FF864D;      /* frame / floor orange, sampled from both sheets */
+    --cream: #FFFBF0;       /* signboard fill, sampled */
+    --paper: #FEFEFE;       /* menu window interior, sampled */
+    --ink: #000040;         /* the game's dark navy (✕, digit outlines), sampled */
+    --warn: #d9b400;        /* the Desk's "zero soon" border (ZERO_TINT.soon.border) */
+    --scene: #FEFEFE;
+    --plain-font: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--scene);
+    color: var(--ink);
+    font: 16px/1.35 var(--plain-font);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  button { font: inherit; color: inherit; }
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+  }
+
+  /* ── Preview controls: a grey dashed strip that is NOT part of the design ── */
+  .preview-strip {
+    background: #e9e9e9;
+    border-bottom: 2px dashed #8a8a8a;
+    padding: 0 16px;
+    color: #222;
+  }
+  .strip-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0 20px; }
+  .strip-row h1 { font-size: 17px; margin: 0; }
+  .strip-label {
+    font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+    background: #8a8a8a; color: #fff; padding: 2px 8px; border-radius: 3px;
+  }
+  .strip-link {
+    color: #0645ad; display: inline-flex; align-items: center; min-height: 44px; min-width: 44px;
+  }
+  .strip-row fieldset { border: 0; margin: 0; padding: 0; display: flex; align-items: center; gap: 0 8px; flex-wrap: wrap; }
+  .strip-row legend { float: left; font-weight: 700; margin-right: 6px; }
+  .strip-row label { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; min-width: 44px; padding: 0 4px; cursor: pointer; }
+  .example-note { font-weight: 700; }
+  .vocab summary {
+    display: inline-flex; align-items: center; min-height: 44px; padding: 0 8px; cursor: pointer;
+    font-weight: 700; border: 2px solid #8a8a8a; border-radius: 3px; background: #f6f6f6;
+  }
+  .vocab[open] { flex-basis: 100%; padding-bottom: 8px; }
+  .vocab-list { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 12px 18px; }
+  .vocab-list li { width: 150px; display: flex; flex-direction: column; align-items: center; text-align: center; }
+  .vocab-art { position: relative; height: 112px; display: flex; align-items: flex-end; justify-content: center; gap: 4px; }
+  .vocab-art .mark { position: absolute; top: 0; right: -22px; }
+  .vocab-art .zzz { position: absolute; top: 20px; right: -26px; }
+  .vocab-word { font-weight: 800; color: var(--ink); }
+  .vocab-meaning { font-size: 15px; }
+  .vocab-reserved, .vocab-note { margin: 8px 0 0; }
+  .vocab-item-b { display: flex; flex-direction: column; align-items: center; }
+  #sketch-status { margin: 0; font-style: italic; min-height: 1.35em; }
+
+  /* ── Sprites: one atlas, one integer scale, pixelated ── */
+  .sp {
+    display: inline-block;
+    background-image: url("apstat-park/assets/pico-desk.png");
+    background-repeat: no-repeat;
+    image-rendering: pixelated;
+    flex: none;
+  }
+  .flip { transform: scaleX(-1); }
+
+  /* ── Lettering: recovered glyphs (mask, so they take the text colour) or plain text ── */
+  .lettering { display: inline-flex; align-items: center; max-width: 100%; }
+  .glyph-run { display: inline-flex; flex-wrap: wrap; align-items: center; min-width: 0; }
+  .glyph-word { display: inline-flex; white-space: nowrap; }
+  .glyph {
+    display: inline-block;
+    background: currentColor;
+    -webkit-mask-image: url("apstat-park/assets/pico-glyphs.png");
+    mask-image: url("apstat-park/assets/pico-glyphs.png");
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+  }
+  /* Glyph mode: the real text stays in the page for screen readers only. */
+  body:not(.lettering-plain) .lettering-text {
+    position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden;
+    clip: rect(0 0 0 0); white-space: nowrap;
+  }
+  body.lettering-plain .glyph-run { display: none; }
+  .lettering-text { font-family: var(--plain-font); font-weight: 800; letter-spacing: .04em; white-space: nowrap; }
+  [data-size="48"] .lettering-text { font-size: 30px; }
+  [data-size="32"] .lettering-text { font-size: 20px; }
+
+  /* ── The home scene ── */
+  .scene {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 0 16px;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    flex: 1;   /* the scene fills whatever the preview strip leaves */
+  }
+  .topnav { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 28px; min-height: 48px; }
+  .topnav h2 { margin: 0; font-size: inherit; }
+  .navlist { display: flex; flex-wrap: wrap; gap: 4px 8px; list-style: none; margin: 0; padding: 0; }
+  .navbtn {
+    min-height: 44px; min-width: 44px; padding: 0 10px;
+    background: none; border: 4px solid transparent; cursor: pointer;
+  }
+  .navbtn[aria-current="page"] { border-color: var(--orange); }
+  .navbtn:hover, .navbtn:focus-visible { border-color: var(--orange); outline: none; }
+  .player { margin-left: auto; font-weight: 700; }
+
+  .week { display: flex; align-items: center; justify-content: center; gap: 4px 24px; flex-wrap: wrap; }
+  .week-title { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 28px; margin: 0; font-size: inherit; }
+  .week-page { font-size: 20px; font-weight: 700; }
+  .arrow {
+    background: none; border: 0; padding: 0; cursor: pointer;
+    min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center;
+  }
+  .arrow .is-filled { display: none; }
+  .arrow:hover .is-filled, .arrow:focus-visible .is-filled { display: inline-block; }
+  .arrow:hover .is-outline, .arrow:focus-visible .is-outline { display: none; }
+  .arrow:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+
+  /* The Do Now sign: a board drawn like the recovered signboard (2 art px orange outline, cream
+     fill, notched corners) at 2x, standing on the recovered post sprite. */
+  .sign { display: flex; flex-direction: column; align-items: center; }
+  .sign-board {
+    display: flex; align-items: center; gap: 24px;
+    width: min(960px, 100%);   /* wide enough that a warning's date line and its link share a line */
+    background: var(--cream);
+    border: 4px solid var(--orange);
+    border-radius: 4px;
+    padding: 6px 16px 6px 24px;
+  }
+  .sign-board.is-warn { border-color: var(--warn); border-width: 8px; padding: 6px 12px 6px 20px; }
+  .sign-main { flex: 1; min-width: 0; }
+  .sign-main p { margin: 0; }
+  .sign-action { font-size: 22px; font-weight: 800; display: flex; align-items: center; gap: 12px; }
+  .sign-context, .sign-when { font-size: 18px; }
+  .sign-when { display: flex; flex-wrap: wrap; align-items: center; column-gap: 12px; }
+  .sign-link {
+    background: none; border: 0; padding: 0 2px; min-height: 44px; cursor: pointer;
+    color: #0645ad; text-decoration: underline; font-size: 18px;
+    margin: -10px 0;   /* keeps the 44 px target without adding a 44 px line to the sign */
+  }
+  .sign-go {
+    flex: none; min-height: 48px; min-width: 44px; padding: 0 18px;
+    background: var(--orange); color: #fff; font-weight: 800; font-size: 18px;
+    border: 0; border-radius: 4px; cursor: pointer;
+  }
+  .sign-go:hover, .sign-go:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+  .sign-grade {
+    flex: none; min-width: 96px; min-height: 72px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background: var(--paper); border: 4px solid var(--orange); border-radius: 4px; cursor: pointer;
+  }
+  .sign-grade:hover, .sign-grade:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+  .grade-num { font-size: 40px; font-weight: 800; line-height: 1; }
+  .grade-cap { font-size: 16px; }
+
+  /* Five day positions. Each is one button: date, one mark, short name. */
+  .days {
+    list-style: none; margin: 0 auto; padding: 0;
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 8px;
+  }
+  .day-btn {
+    width: 184px; min-height: 44px;
+    display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+    background: none; border: 0; padding: 6px 4px; cursor: pointer;
+  }
+  .day-btn:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+  .day-btn:hover .day-name { text-decoration: underline; }
+  .day-date { font-weight: 800; font-size: 18px; }
+  .day-name { font-size: 18px; min-height: 1.35em; }
+  /* The stage keeps dates and names in line; today's art stands on the raised tile, so it sits
+     one tile higher than the other days. */
+  .day-stage { height: 128px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; }
+  .day-art { position: relative; width: 96px; height: 96px; display: flex; align-items: flex-end; justify-content: center; }
+  .day-art .mark { position: absolute; top: -18px; right: -30px; }
+  .day-art .continue { position: absolute; left: -44px; top: 30px; }
+  .day-art .zzz { position: absolute; top: 14px; right: -10px; }
+
+  /* Layout switch (preview control): A = doors, B = stage select. */
+  body.layout-stages .layout-a-only { display: none; }
+  body:not(.layout-stages) .layout-b-only { display: none; }
+
+  /* Layout B week picker inside the recovered window (same frame as the lesson panel), as the
+     main menu's carousel sits inside it: top bar carries the unit, body carries ◁ item ▷. The
+     game's window also has a ✕; it is left out here because the picker cannot be closed. */
+  .week-b { display: flex; justify-content: center; }
+  .win.week-win { width: auto; }
+  .week-win .win-bar { right: 12px; }
+  .win-body.week-win-body { display: flex; align-items: flex-end; gap: 4px 16px; padding: 0 16px; }
+  /* As in the main menu capture: the student's cat stands above the carousel item. */
+  .week-item { display: flex; flex-direction: column; align-items: center; }
+  .week-win-body .week-page { min-height: 44px; display: inline-flex; align-items: center; }
+  .carousel { display: inline-flex; align-items: center; gap: 8px; }
+
+  /* Layout B tiles: date, the day's mark, an orange platform line, the short name. The tile art
+     is recovered; the stage-select screen's grid, spacing and selection were never captured (the
+     runtime captures never reached that screen), so this one-row layout is our reconstruction. */
+  .tiles {
+    list-style: none; margin: 0 auto; padding: 0;
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 20px;
+  }
+  .tiles li { position: relative; }
+  .tile {
+    width: 168px;
+    display: flex; flex-direction: column; align-items: center;
+    background: none; border: 6px solid transparent; padding: 4px 4px 6px; cursor: pointer;
+  }
+  .tile:focus-visible { outline: none; }
+  .tile:focus-visible .tile-name { text-decoration: underline; }
+  .tile-date { font-weight: 800; font-size: 18px; }
+  .tile-stage { position: relative; width: 128px; height: 104px; display: flex; align-items: flex-end; justify-content: center; }
+  .tile-stage .zzz { position: absolute; top: 24px; right: 4px; }
+  /* Platform line sits at the bottom of a 32 px slot; today's raised tile fills the slot, so
+     today's mark stands one step higher. */
+  .tile-floor { height: 32px; display: flex; align-items: flex-end; }
+  .tile-name { font-size: 18px; min-height: 1.35em; margin-top: 4px; }
+  .tiles .continue { position: absolute; left: -30px; top: 88px; }
+
+  /* The floor: classroom-board content (example art only in the sketch). */
+  .floor { margin-top: auto; }
+  .floor-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; padding: 0 24px; }
+  .floor-left, .floor-right { display: flex; align-items: flex-end; gap: 16px; }
+  .park-door { position: relative; }
+  .park-door .occupancy {
+    position: absolute; left: 0; right: 0; bottom: 8px;
+    text-align: center; color: #fff; font-size: 16px; font-weight: 700;
+  }
+  .floor-band { height: 16px; background: var(--orange); }
+
+  /* ── Lesson panel: the recovered menu window, drawn at the sheet's own size (1x) ── */
+  .backdrop {
+    position: fixed; inset: 0; z-index: 10;
+    background: rgba(0, 0, 64, .45);
+    display: flex; align-items: center; justify-content: center;
+    padding: 16px; overflow: auto;
+  }
+  .backdrop[hidden] { display: none; }
+  .win {
+    position: relative; isolation: isolate;
+    width: min(620px, 100%);
+    max-height: 100%;
+    display: flex; flex-direction: column;
+    padding: 31px 12px 12px;   /* top bar 31, sides and bottom 12, as on the sheet */
+  }
+  /* The orange frame with the sheet's stepped corners (4 px steps). */
+  .win::before {
+    content: ""; position: absolute; inset: 0; z-index: -1;
+    background: var(--orange);
+    clip-path: polygon(
+      8px 0, calc(100% - 8px) 0, calc(100% - 8px) 3px, calc(100% - 4px) 3px, calc(100% - 4px) 7px, 100% 7px,
+      100% calc(100% - 8px), calc(100% - 4px) calc(100% - 8px), calc(100% - 4px) calc(100% - 4px),
+      calc(100% - 8px) calc(100% - 4px), calc(100% - 8px) 100%, 8px 100%, 8px calc(100% - 4px),
+      4px calc(100% - 4px), 4px calc(100% - 8px), 0 calc(100% - 8px), 0 7px, 4px 7px, 4px 3px, 8px 3px);
+  }
+  .win-bar {
+    position: absolute; top: 0; left: 12px; right: 44px; height: 31px;
+    display: flex; align-items: center; color: #fff;
+  }
+  .win-close {
+    position: absolute; top: 0; right: 0; width: 44px; height: 44px;
+    background: none; border: 0; padding: 0; cursor: pointer;
+  }
+  .win-close .sp { position: absolute; left: 20px; top: 11px; }
+  .win-close:focus-visible { outline: 3px solid var(--ink); outline-offset: -3px; }
+  .win-body { background: var(--paper); padding: 16px 24px 18px; overflow: auto; }
+  .panel-title { font-size: 24px; margin: 0; text-align: center; }
+  .panel-codes { margin: 2px 0 12px; text-align: center; font-size: 16px; }
+  .panel-message { font-size: 18px; text-align: center; margin: 8px 0; }
+  .actions { list-style: none; margin: 0 auto; padding: 0; width: min(340px, calc(100% - 88px)); }  /* room for the triangle */
+  .actions li { position: relative; }
+  .actions .continue { position: absolute; left: -44px; top: 50%; margin-top: -18px; }
+  /* The selection: the sheet's rounded orange outline (6 px, 2 px corner steps). */
+  .action {
+    width: 100%; min-height: 52px; margin: 2px 0;
+    display: flex; align-items: center; justify-content: center;
+    background: none; border: 6px solid transparent; cursor: pointer;
+  }
+  .action.is-selected, .tile.is-selected {
+    border-color: var(--orange);
+    clip-path: polygon(
+      4px 0, calc(100% - 4px) 0, calc(100% - 4px) 2px, calc(100% - 2px) 2px, calc(100% - 2px) 4px, 100% 4px,
+      100% calc(100% - 4px), calc(100% - 2px) calc(100% - 4px), calc(100% - 2px) calc(100% - 2px),
+      calc(100% - 4px) calc(100% - 2px), calc(100% - 4px) 100%, 4px 100%, 4px calc(100% - 2px),
+      2px calc(100% - 2px), 2px calc(100% - 4px), 0 calc(100% - 4px), 0 4px, 2px 4px, 2px 2px, 4px 2px);
+  }
+  .action:focus-visible { outline: none; }
+  .action:focus-visible .lettering { text-decoration: underline; }
+  .details { margin: 14px 0 0; padding-top: 10px; border-top: 2px solid #e4e4e4; display: grid; grid-template-columns: max-content 1fr; gap: 2px 16px; }
+  .details[hidden] { display: none; }
+  .details dt { font-weight: 700; }
+  .details dd { margin: 0; display: flex; align-items: center; gap: 8px; }
+  .panel-note { margin: 10px 0 0; min-height: 1.35em; font-style: italic; text-align: center; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .backdrop:not([hidden]) .win { animation: win-in .12s ease-out; }
+    @keyframes win-in { from { transform: scale(.96); opacity: 0; } to { transform: none; opacity: 1; } }
+  }
+  @media (max-width: 700px) {
+    .player { margin-left: 0; }
+    .week-title { order: -1; width: 100%; justify-content: center; }
+    .day-btn { width: 150px; }
+    .floor-row { flex-wrap: wrap; padding: 0; }
+  }
+</style>
+</head>
+<body class="lettering-plain layout-stages">
+
+<header class="preview-strip">
+  <div class="strip-row">
+    <span class="strip-label">Preview controls — not part of the design</span>
+    <h1>Preview · Example data</h1>
+    <a class="strip-link" href="ap_stats_roadmap_square_mode.html">Back to the Desk</a>
+    <span class="example-note">Example data: invented student, lessons and grades.</span>
+  </div>
+  <div class="strip-row">
+    <fieldset>
+      <legend>State</legend>
+      <label><input type="radio" name="state" value="caughtUp" checked> Caught up</label>
+      <label><input type="radio" name="state" value="behind"> Behind</label>
+      <label><input type="radio" name="state" value="noClass"> No class today</label>
+    </fieldset>
+    <fieldset>
+      <legend>Lettering</legend>
+      <label><input type="radio" name="lettering" value="glyphs"> Recovered glyphs</label>
+      <label><input type="radio" name="lettering" value="plain" checked> Plain text</label>
+    </fieldset>
+    <fieldset>
+      <legend>Layout</legend>
+      <label><input type="radio" name="layout" value="doors"> Doors</label>
+      <label><input type="radio" name="layout" value="stages" checked> Stage select</label>
+    </fieldset>
+    <details class="vocab" id="vocab">
+      <summary>Marker vocabulary</summary>
+      <ul class="vocab-list layout-a-only" id="vocab-list"></ul>
+      <ul class="vocab-list layout-b-only" id="vocab-list-b"></ul>
+      <p class="vocab-note layout-b-only">Doors appear only in layout A; in layout B the only doors are the park entrances on the floor.</p>
+      <p class="vocab-reserved">Reserved, not used on the week strip: the <strong>closed door</strong> (something truly
+        closed, such as a full park room) and the <strong>NEW tag</strong> (newly published content only).</p>
+    </details>
+    <p id="sketch-status" role="status" aria-live="polite"></p>
+  </div>
+</header>
+
+<main class="scene" id="home">
+  <div class="topnav">
+    <h2><span class="lettering" data-size="48" data-text="APSTAT PARK"></span></h2>
+    <nav aria-label="Main">
+      <ul class="navlist">
+        <li><button type="button" class="navbtn" aria-current="page" data-nav="TODAY"><span class="lettering" data-size="32" data-text="TODAY"></span></button></li>
+        <li><button type="button" class="navbtn" data-nav="LESSONS"><span class="lettering" data-size="32" data-text="LESSONS"></span></button></li>
+        <li><button type="button" class="navbtn" data-nav="MY GRADE"><span class="lettering" data-size="32" data-text="MY GRADE"></span></button></li>
+        <li><button type="button" class="navbtn" data-nav="OPTION"><span class="lettering" data-size="32" data-text="OPTION"></span></button></li>
+      </ul>
+    </nav>
+    <span class="player" id="player-name"></span>
+  </div>
+
+  <section class="week layout-a-only" aria-label="Week">
+    <button type="button" class="arrow" id="week-prev" aria-label="Previous week"></button>
+    <h2 class="week-title">
+      <span class="lettering" data-size="48" data-text="UNIT 2"></span>
+      <span class="lettering" data-size="48" data-text="WEEK OF OCT 5"></span>
+      <span class="week-page" id="week-page"></span>
+    </h2>
+    <button type="button" class="arrow" id="week-next" aria-label="Next week"></button>
+  </section>
+
+  <!-- Layout B week picker: the main menu's carousel (◁ item ▷ with the small outline arrows). -->
+  <section class="week-b layout-b-only" aria-label="Week (stage select)">
+    <div class="win week-win">
+      <div class="win-bar"><span class="lettering" data-size="32" data-text="UNIT 2"></span></div>
+      <div class="win-body week-win-body">
+        <span class="week-item">
+          <span class="carousel">
+          <button type="button" class="arrow" id="week-b-prev" aria-label="Previous week"></button>
+          <h2 class="week-title"><span class="lettering" data-size="48" data-text="WEEK OF OCT 5"></span></h2>
+          <button type="button" class="arrow" id="week-b-next" aria-label="Next week"></button>
+          </span>
+        </span>
+        <span class="week-page" id="week-b-page"></span>
+      </div>
+    </div>
+  </section>
+
+  <section class="sign" aria-label="Do Now">
+    <div class="sign-board" id="sign"></div>
+    <span id="sign-post"></span>
+  </section>
+
+  <ol class="days layout-a-only" id="days" aria-label="This week"></ol>
+  <ol class="tiles layout-b-only" id="tiles" aria-label="This week (stage select)"></ol>
+
+  <div class="floor" id="floor"></div>
+</main>
+
+<div class="backdrop" id="backdrop" hidden>
+  <section class="win" id="panel" role="dialog" aria-modal="true" aria-labelledby="panel-title">
+    <div class="win-bar" id="panel-bar"></div>
+    <button type="button" class="win-close" id="panel-close" aria-label="Close"></button>
+    <div class="win-body">
+      <h2 class="panel-title" id="panel-title"></h2>
+      <p class="panel-codes" id="panel-codes"></p>
+      <p class="panel-message" id="panel-message" hidden></p>
+      <ul class="actions" id="panel-actions" aria-label="Activities"></ul>
+      <dl class="details" id="panel-details"></dl>
+      <p class="panel-note" id="panel-note" role="status" aria-live="polite"></p>
+    </div>
+  </section>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  // ── Art ────────────────────────────────────────────────────────────────────
+  // Copy of DESK_ATLAS in apstat-park/assets/pico-desk-atlas.mjs (x, y, w, h only);
+  // tests/pico-desk-preview.test.js checks they agree.
+  var ATLAS_SIZE = { w: 256, h: 128 };
+  var ATLAS = {
+    doorOpen:     { x: 0,   y: 0,  w: 48, h: 48 },
+    pushBox:      { x: 48,  y: 0,  w: 48, h: 48 },
+    arrowOutline: { x: 96,  y: 0,  w: 44, h: 48 },
+    arrowFilled:  { x: 140, y: 0,  w: 44, h: 48 },
+    signPost:     { x: 184, y: 0,  w: 24, h: 19 },
+    lyingCat:     { x: 208, y: 0,  w: 31, h: 25 },
+    catBlue:      { x: 0,   y: 48, w: 20, h: 24 },
+    catPink:      { x: 20,  y: 48, w: 20, h: 24 },
+    tick:         { x: 40,  y: 48, w: 16, h: 16 },
+    bang:         { x: 56,  y: 48, w: 14, h: 14 },
+    flag:         { x: 70,  y: 48, w: 16, h: 32 },
+    triangleBlue: { x: 86,  y: 48, w: 17, h: 18 },
+    zzz:          { x: 103, y: 48, w: 20, h: 20 },
+    tileRaised:   { x: 123, y: 48, w: 48, h: 16 },
+    close:        { x: 171, y: 48, w: 12, h: 12 },
+    crown:        { x: 183, y: 48, w: 32, h: 24 },
+    signboard:    { x: 215, y: 48, w: 34, h: 40 },
+    platform:     { x: 0,   y: 88, w: 64, h: 8 },
+    question:     { x: 64,  y: 88, w: 20, h: 35 },
+    triOutRight:  { x: 84,  y: 88, w: 17, h: 18 },
+    triOutLeft:   { x: 101, y: 88, w: 17, h: 18 },
+  };
+  // Every main-sheet sprite is drawn at this one integer scale. The ✕ comes from the menu
+  // sheet, which is already at display size, so it is drawn 1x (its own size).
+  var SCALE = 2;
+  var GLYPH_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789=.-!?*+[]><:_';
+  var GLYPH_SHEET = { w: 512, h: 256, cellW: 32, cellH: 64, perRow: 16 };
+
+  // ── Dates ──────────────────────────────────────────────────────────────────
+  var DOW = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+  var MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+  var ZERO_LAG_DAYS = 13;   // a lesson's zero lands on class day + 13, as the Desk counts it
+
+  function parseIso(iso) {
+    var p = iso.split('-');
+    return new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+  }
+
+  function addDays(date, n) {
+    var d = new Date(date.getTime());
+    d.setDate(d.getDate() + n);
+    return d;
+  }
+
+  function titleCase(word) {
+    return word.charAt(0) + word.slice(1).toLowerCase();
+  }
+
+  // "Thu Oct 8"
+  function shortDate(date) {
+    return titleCase(DOW[date.getDay()]) + ' ' + titleCase(MONTHS[date.getMonth()]) + ' ' + date.getDate();
+  }
+
+  function zeroDate(day) {
+    return addDays(parseIso(day.iso), ZERO_LAG_DAYS);
+  }
+
+  // ── Example data (all invented) ────────────────────────────────────────────
+  var STUDENT = { name: 'Robin Example', period: 'B' };
+  var WEEK = { page: 6, pages: 36 };
+  var LESSONS = {
+    '2.4': { title: '2.4 Representing the Relationship Between Two Quantitative Variables', short: 'Scatterplots', codes: 'UNC-1.S, DAT-1.A' },
+    '2.6': { title: '2.6 Linear Regression Models', short: 'Regression', codes: 'DAT-1.D' },
+    '2.7': { title: '2.7 Residuals', short: 'Residuals', codes: 'DAT-1.E, DAT-1.F' },
+    '2.8': { title: '2.8 Least Squares Regression', short: 'Least squares', codes: 'DAT-1.G, DAT-1.H', calculator: 'LinReg(a+bx)' },
+    '2.9': { title: '2.9 Analyzing Departures from Linearity', short: 'Nonlinear data', codes: 'DAT-1.I, DAT-1.J' },
+  };
+
+  function lessonDay(iso, key, progress, extra) {
+    var day = { kind: 'lesson', iso: iso, key: key, progress: progress };
+    return Object.assign(day, extra || {});
+  }
+
+  // The overdue lesson in the Behind state: class day Fri Sep 25, so its zero lands Thu Oct 8.
+  // It is from an earlier week, so it is not on this week's strip; the sign opens it directly.
+  var OVERDUE = lessonDay('2026-09-25', '2.4', 'new', { warn: true, recommend: 1 });
+
+  var STATES = {
+    caughtUp: {
+      days: [
+        lessonDay('2026-10-05', '2.6', 'done'),
+        lessonDay('2026-10-06', '2.7', 'done'),
+        lessonDay('2026-10-07', '2.8', 'started', { today: true, next: true, poll: '19 of 26 answered' }),
+        // Example of a lesson with no published content yet (layout B shows it as the "?").
+        lessonDay('2026-10-08', '2.9', 'new', { double: true, unpublished: true }),
+        { kind: 'pc', iso: '2026-10-09', short: 'Unit 2 PC' },
+      ],
+      sign: { action: 'Continue your follow-along', context: '2.8 · Least Squares Regression', go: 'Open 2.8', opens: 2, grade: 91 },
+    },
+    behind: {
+      // No "continue here" triangle: the real next-up lesson is the overdue one, off this strip.
+      days: [
+        lessonDay('2026-10-05', '2.6', 'done'),
+        lessonDay('2026-10-06', '2.7', 'started'),
+        lessonDay('2026-10-07', '2.8', 'new', { today: true, poll: '19 of 26 answered' }),
+        lessonDay('2026-10-08', '2.9', 'new', { double: true }),
+        { kind: 'pc', iso: '2026-10-09', short: 'Unit 2 PC' },
+      ],
+      sign: {
+        warn: true,
+        action: 'Finish the 2.4 follow-along first',
+        context: '2.4 · Representing the Relationship Between Two Quantitative Variables',
+        when: 'Your grade drops on ' + shortDate(zeroDate(OVERDUE)) + ' unless this is finished.',
+        link: 'See all missing work',
+        go: 'Open 2.4',
+        opens: OVERDUE,
+        grade: 84,
+      },
+    },
+    noClass: {
+      days: [
+        lessonDay('2026-10-05', '2.6', 'done'),
+        lessonDay('2026-10-06', '2.7', 'started', { next: true }),
+        { kind: 'noClass', iso: '2026-10-07', today: true, short: 'NO CLASS' },
+        lessonDay('2026-10-08', '2.8', 'new'),
+        lessonDay('2026-10-09', '2.9', 'new', { double: true }),
+      ],
+      sign: { action: 'No class today', context: 'Still unfinished: 2.7 Residuals — the follow-along and the quiz.', go: 'Open 2.7', opens: 1, grade: 88 },
+    },
+  };
+
+  // The activities of one lesson, with example status for its progress.
+  function lessonActions(day) {
+    var lesson = LESSONS[day.key];
+    var due = shortDate(zeroDate(day));
+    var done = day.progress === 'done', started = day.progress === 'started';
+    var actions = [
+      { label: 'WATCH', name: 'Watch the video', status: done || started ? 'Watched' : 'Not started' },
+      { label: 'FOLLOW-ALONG', name: 'Follow-along worksheet',
+        status: done ? 'Complete' : (started ? 'In progress · 8 of 15 blanks' : 'Not started'),
+        score: done ? '94' : null, due: due },
+      { label: 'QUIZ', name: 'Quiz', status: done ? 'Taken' : 'Not taken', score: done ? '9 of 10' : null, due: due },
+    ];
+    if (lesson.calculator) {
+      actions.push({ label: 'CALCULATOR', name: 'Calculator skill', status: 'Today’s calculator skill: ' + lesson.calculator });
+    } else {
+      actions.push({ label: 'FLASHCARDS', name: 'Flashcards', status: done ? 'Played' : 'Not played', score: done ? 'Best 88%' : null, due: due });
+    }
+    return actions;
+  }
+
+  // The action the lesson panel recommends (the coloured triangle), or -1 for none.
+  function recommendedIndex(day) {
+    if (day.kind !== 'lesson') return -1;
+    if (day.recommend != null) return day.recommend;
+    if (day.progress === 'done') return -1;
+    if (day.progress === 'started') return 1;   // the follow-along is under way
+    return 0;                                    // a new lesson starts with the video
+  }
+
+  // ── Small DOM helpers ──────────────────────────────────────────────────────
+  function el(tag, className, text) {
+    var node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text != null) node.textContent = text;
+    return node;
+  }
+
+  function sprite(name, scale, extraClass) {
+    var r = ATLAS[name];
+    var s = scale || SCALE;
+    var node = el('span', 'sp sp-' + name + (extraClass ? ' ' + extraClass : ''));
+    node.setAttribute('aria-hidden', 'true');
+    node.style.width = r.w * s + 'px';
+    node.style.height = r.h * s + 'px';
+    node.style.backgroundSize = ATLAS_SIZE.w * s + 'px ' + ATLAS_SIZE.h * s + 'px';
+    node.style.backgroundPosition = (-r.x * s) + 'px ' + (-r.y * s) + 'px';
+    return node;
+  }
+
+  function glyph(ch, size) {
+    var i = GLYPH_CHARS.indexOf(ch);
+    var k = size / GLYPH_SHEET.cellH;
+    var w = GLYPH_SHEET.cellW * k;
+    var node = el('span', 'glyph');
+    node.style.width = w + 'px';
+    node.style.height = size + 'px';
+    if (i < 0) return node;   // a space or a character the sheet lacks: blank cell
+    var pos = (-(i % GLYPH_SHEET.perRow) * w) + 'px ' + (-Math.floor(i / GLYPH_SHEET.perRow) * size) + 'px';
+    var maskSize = GLYPH_SHEET.w * k + 'px ' + GLYPH_SHEET.h * k + 'px';
+    node.style.setProperty('-webkit-mask-position', pos);
+    node.style.setProperty('mask-position', pos);
+    node.style.setProperty('-webkit-mask-size', maskSize);
+    node.style.setProperty('mask-size', maskSize);
+    return node;
+  }
+
+  // Fill a .lettering element: glyphs (hidden from screen readers) + the same words as text.
+  function letter(node) {
+    var text = node.getAttribute('data-text');
+    var size = Number(node.getAttribute('data-size')) || 32;
+    node.textContent = '';
+    var run = el('span', 'glyph-run');
+    run.setAttribute('aria-hidden', 'true');
+    run.style.columnGap = size / 4 + 'px';
+    text.split(' ').forEach(function (word) {
+      if (!word) return;
+      var group = el('span', 'glyph-word');
+      word.split('').forEach(function (ch) { group.appendChild(glyph(ch, size)); });
+      run.appendChild(group);
+    });
+    node.appendChild(run);
+    node.appendChild(el('span', 'lettering-text', text));
+  }
+
+  function lettering(text, size) {
+    var node = el('span', 'lettering');
+    node.setAttribute('data-text', text);
+    node.setAttribute('data-size', String(size));
+    letter(node);
+    return node;
+  }
+
+  function sketchStatus(message) {
+    document.getElementById('sketch-status').textContent = message;
+  }
+
+  // ── Home ───────────────────────────────────────────────────────────────────
+  var currentState = 'caughtUp';
+
+  // The day the sign's button opens: an index into this week's strip, or a day object.
+  function signTarget(sign, days) {
+    if (typeof sign.opens === 'number') return days[sign.opens];
+    return sign.opens;
+  }
+
+  function renderSign(sign, days) {
+    var board = document.getElementById('sign');
+    board.textContent = '';
+    board.classList.toggle('is-warn', Boolean(sign.warn));
+
+    var main = el('div', 'sign-main');
+    var action = el('p', 'sign-action');
+    if (sign.warn) action.appendChild(sprite('bang'));
+    action.appendChild(el('span', null, sign.action));
+    main.appendChild(action);
+    main.appendChild(el('p', 'sign-context', sign.context));
+    var when = el('p', 'sign-when');
+    if (sign.when) when.appendChild(el('span', null, sign.when));
+    if (sign.link) {
+      var link = el('button', 'sign-link', sign.link);
+      link.type = 'button';
+      link.addEventListener('click', function () { sketchStatus('The missing-work list lives in MY GRADE, which is not part of the sketch.'); });
+      when.appendChild(link);
+    }
+    if (when.childNodes.length) main.appendChild(when);
+    board.appendChild(main);
+
+    var go = el('button', 'sign-go', sign.go);
+    go.type = 'button';
+    go.addEventListener('click', function () { openPanel(signTarget(sign, days), go); });
+    board.appendChild(go);
+
+    var grade = el('button', 'sign-grade');
+    grade.type = 'button';
+    grade.setAttribute('aria-label', 'Q1 grade ' + sign.grade + ', official. Open My Grade');
+    grade.appendChild(el('span', 'grade-num', String(sign.grade)));
+    grade.appendChild(el('span', 'grade-cap', 'Q1 official'));
+    grade.addEventListener('click', function () { sketchStatus('MY GRADE is not part of the sketch.'); });
+    board.appendChild(grade);
+  }
+
+  function dayLabel(day) {
+    if (day.kind === 'lesson') return LESSONS[day.key].short;
+    return day.short;
+  }
+
+  // Words for screen readers that the marks carry visually.
+  function dayStateText(day) {
+    var bits = [];
+    if (day.today) bits.push('today');
+    if (day.kind === 'pc') bits.push('Progress Check, taken in AP Classroom');
+    if (day.kind === 'noClass') bits.push('nothing scheduled');
+    if (day.unpublished) bits.push('nothing published yet');
+    if (day.progress === 'done') bits.push('complete');
+    if (day.warn) bits.push('has work that is, or is about to be, a zero');
+    if (day.next) bits.push('continue here');
+    return bits.join(', ');
+  }
+
+  function dayArt(day) {
+    var art = el('span', 'day-art');
+    if (day.kind === 'pc') art.appendChild(sprite('flag'));
+    if (day.kind === 'noClass') {
+      art.appendChild(sprite('lyingCat'));
+      art.appendChild(sprite('zzz', SCALE, 'zzz'));
+    }
+    if (day.kind === 'lesson') art.appendChild(sprite('doorOpen'));
+    if (day.progress === 'done') art.appendChild(sprite('tick', SCALE, 'mark'));
+    if (day.warn) art.appendChild(sprite('bang', SCALE, 'mark'));
+    if (day.next) art.appendChild(sprite('triangleBlue', SCALE, 'continue'));
+    return art;
+  }
+
+  function renderDays(days) {
+    var list = document.getElementById('days');
+    list.textContent = '';
+    days.forEach(function (day) {
+      var date = parseIso(day.iso);
+      var item = el('li', 'day' + (day.today ? ' is-today' : ''));
+      var btn = el('button', 'day-btn');
+      btn.type = 'button';
+      btn.appendChild(el('span', 'day-date', DOW[date.getDay()] + ' ' + date.getDate()));
+      var stage = el('span', 'day-stage');
+      stage.appendChild(dayArt(day));
+      if (day.today) stage.appendChild(sprite('tileRaised'));
+      btn.appendChild(stage);
+      btn.appendChild(el('span', 'day-name', dayLabel(day)));
+      btn.appendChild(el('span', 'sr-only', ', ' + dayStateText(day)));
+      btn.addEventListener('click', function () { openPanel(day, btn); });
+      item.appendChild(btn);
+      list.appendChild(item);
+    });
+  }
+
+  function renderWeek() {
+    document.getElementById('week-page').textContent = '(' + WEEK.page + '/' + WEEK.pages + ')';
+    var prev = document.getElementById('week-prev');
+    var next = document.getElementById('week-next');
+    prev.appendChild(sprite('arrowOutline', SCALE, 'is-outline'));
+    prev.appendChild(sprite('arrowFilled', SCALE, 'is-filled'));
+    next.appendChild(sprite('arrowOutline', SCALE, 'is-outline flip'));
+    next.appendChild(sprite('arrowFilled', SCALE, 'is-filled flip'));
+    // Layout B: the main menu carousel's small outline arrows.
+    document.getElementById('week-b-page').textContent = '(' + WEEK.page + '/' + WEEK.pages + ')';
+    var prevB = document.getElementById('week-b-prev');
+    var nextB = document.getElementById('week-b-next');
+    prevB.appendChild(sprite('triOutLeft'));
+    nextB.appendChild(sprite('triOutRight'));
+    [prev, next, prevB, nextB].forEach(function (btn) {
+      btn.addEventListener('click', function () { sketchStatus('The example data has this one week only.'); });
+    });
+  }
+
+  // ── Layout B: stage-select tiles ───────────────────────────────────────────
+  var tiles = { selected: 0 };
+
+  // The day's mark inside its tile. Nothing for a lesson not started: no door in layout B.
+  function tileMark(day) {
+    var stage = el('span', 'tile-stage');
+    if (day.kind === 'pc') stage.appendChild(sprite('flag'));
+    if (day.kind === 'workDay') stage.appendChild(sprite('pushBox'));
+    if (day.kind === 'noClass') {
+      stage.appendChild(sprite('lyingCat'));
+      stage.appendChild(sprite('zzz', SCALE, 'zzz'));
+    }
+    if (day.kind !== 'lesson') return stage;
+    if (day.unpublished) stage.appendChild(sprite('question'));
+    else if (day.warn) stage.appendChild(sprite('bang'));
+    else if (day.progress === 'done') stage.appendChild(sprite('tick'));
+    return stage;
+  }
+
+  // The tile the selection starts on: continue-here, else today, else the first.
+  function startTile(days) {
+    for (var i = 0; i < days.length; i++) {
+      if (days[i].next) return i;
+    }
+    for (var j = 0; j < days.length; j++) {
+      if (days[j].today) return j;
+    }
+    return 0;
+  }
+
+  // Selection = the orange outline. Keyboard focus, arrow keys and the mouse all move it.
+  function selectTile(index, moveFocus) {
+    var buttons = document.querySelectorAll('#tiles .tile');
+    if (!buttons.length) return;
+    tiles.selected = (index + buttons.length) % buttons.length;
+    buttons.forEach(function (btn, i) {
+      btn.classList.toggle('is-selected', i === tiles.selected);
+    });
+    if (moveFocus && document.activeElement !== buttons[tiles.selected]) buttons[tiles.selected].focus();
+  }
+
+  function renderTiles(days) {
+    var list = document.getElementById('tiles');
+    list.textContent = '';
+    days.forEach(function (day, i) {
+      var date = parseIso(day.iso);
+      var item = el('li');
+      if (day.next) item.appendChild(sprite('triangleBlue', SCALE, 'continue'));
+      var btn = el('button', 'tile');
+      btn.type = 'button';
+      btn.appendChild(el('span', 'tile-date', DOW[date.getDay()] + ' ' + date.getDate()));
+      btn.appendChild(tileMark(day));
+      var floor = el('span', 'tile-floor');
+      floor.appendChild(sprite(day.today ? 'tileRaised' : 'platform'));
+      btn.appendChild(floor);
+      btn.appendChild(el('span', 'tile-name', dayLabel(day)));
+      btn.appendChild(el('span', 'sr-only', ', ' + dayStateText(day)));
+      btn.addEventListener('click', function () { openPanel(day, btn); });
+      btn.addEventListener('focus', function () { selectTile(i, false); });
+      btn.addEventListener('mouseenter', function () { selectTile(i, true); });
+      item.appendChild(btn);
+      list.appendChild(item);
+    });
+    selectTile(startTile(days), false);
+  }
+
+  // Left / Right move the selection; Enter opens the selected tile (and stops the browser's own
+  // Enter-click, so the panel opens once).
+  function onTileKey(event) {
+    if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') {
+      event.preventDefault();
+      selectTile(tiles.selected + (event.key === 'ArrowRight' ? 1 : -1), true);
+      return;
+    }
+    if (event.key !== 'Enter') return;
+    event.preventDefault();
+    document.querySelectorAll('#tiles .tile')[tiles.selected].click();
+  }
+
+  function renderFloor() {
+    var floor = document.getElementById('floor');
+    floor.appendChild(el('p', 'sr-only', 'Classroom floor (example): two cats, the push block, and three APStat Park doors.'));
+    var row = el('div', 'floor-row');
+    row.setAttribute('aria-hidden', 'true');
+    var left = el('div', 'floor-left');
+    left.appendChild(sprite('catBlue'));
+    left.appendChild(sprite('catPink'));
+    left.appendChild(sprite('pushBox'));
+    var right = el('div', 'floor-right');
+    [3, 0, 1].forEach(function (count) {
+      var door = el('span', 'park-door');
+      door.appendChild(sprite('doorOpen'));
+      door.appendChild(el('span', 'occupancy', count + ' in'));
+      right.appendChild(door);
+    });
+    row.appendChild(left);
+    row.appendChild(right);
+    floor.appendChild(row);
+    floor.appendChild(el('div', 'floor-band'));
+  }
+
+  // ── Vocabulary strip (preview controls): every Day-vocabulary marker once ──
+  // Each entry: the sprites that make the mark, optional words drawn with it, and its meaning.
+  var VOCAB = [
+    { id: 'door', art: ['doorOpen'], meaning: 'Lesson, not finished: available (every lesson is open)' },
+    { id: 'door-tick', art: ['doorOpen'], mark: 'tick', meaning: 'Lesson finished' },
+    { id: 'door-bang', art: ['doorOpen'], mark: 'bang', meaning: 'Lesson with work that is, or is about to be, a zero' },
+    { id: 'flag', art: ['flag'], meaning: 'Progress Check, taken in AP Classroom' },
+    { id: 'work-day', art: ['pushBox'], words: 'WORK DAY', meaning: 'Catch-up day' },
+    { id: 'no-class', art: ['lyingCat'], zzz: true, words: 'NO CLASS', meaning: 'Nothing scheduled. It does not mean nothing is due' },
+    { id: 'signboard', art: ['signboard'], words: 'REVIEW', meaning: 'Review, poster, orientation, baseline, exam: opens whatever it opens today' },
+    { id: 'today', art: ['tileRaised'], meaning: 'Today: the day’s position stands on a raised floor tile' },
+    { id: 'continue', art: ['triangleBlue'], meaning: 'Continue here (in the student’s cat colour)' },
+    { id: 'crown', art: ['crown'], meaning: 'Whole week finished (says nothing about scores)' },
+  ];
+
+  // Layout B: the tile forms. `platform` draws the tile's platform line under the mark.
+  var VOCAB_B = [
+    { id: 'tile', art: [], platform: 'platform', meaning: 'Lesson, not started: available (every lesson is open)' },
+    { id: 'tile-tick', art: ['tick'], platform: 'platform', meaning: 'Lesson finished' },
+    { id: 'tile-bang', art: ['bang'], platform: 'platform', meaning: 'Lesson with work that is, or is about to be, a zero' },
+    { id: 'tile-question', art: ['question'], platform: 'platform', meaning: 'Lesson with no published content yet' },
+    { id: 'flag', art: ['flag'], platform: 'platform', meaning: 'Progress Check, taken in AP Classroom' },
+    { id: 'work-day', art: ['pushBox'], platform: 'platform', words: 'WORK DAY', meaning: 'Catch-up day' },
+    { id: 'no-class', art: ['lyingCat'], zzz: true, platform: 'platform', words: 'NO CLASS', meaning: 'Nothing scheduled. It does not mean nothing is due' },
+    { id: 'signboard', art: ['signboard'], platform: 'platform', words: 'REVIEW', meaning: 'Review, poster, orientation, baseline, exam: opens whatever it opens today' },
+    { id: 'today', art: [], platform: 'tileRaised', meaning: 'Today: the tile\u2019s platform line is the raised floor tile' },
+    { id: 'continue', art: ['triangleBlue'], meaning: 'Continue here (in the student\u2019s cat colour)' },
+    { id: 'crown', art: ['crown'], meaning: 'Whole week finished (says nothing about scores)' },
+  ];
+
+  function renderVocab(listId, entries) {
+    var list = document.getElementById(listId);
+    entries.forEach(function (entry) {
+      var item = el('li');
+      item.setAttribute('data-marker', entry.id);
+      var art = el('span', 'vocab-art');
+      entry.art.forEach(function (name) { art.appendChild(sprite(name)); });
+      if (entry.mark) art.appendChild(sprite(entry.mark, SCALE, 'mark'));
+      if (entry.zzz) art.appendChild(sprite('zzz', SCALE, 'zzz'));
+      item.appendChild(art);
+      if (entry.platform) item.appendChild(sprite(entry.platform));
+      if (entry.words) item.appendChild(el('span', 'vocab-word', entry.words));
+      item.appendChild(el('span', 'vocab-meaning', entry.meaning));
+      list.appendChild(item);
+    });
+  }
+
+  function setState(name) {
+    if (!STATES[name]) return;
+    currentState = name;
+    document.querySelector('input[name="state"][value="' + name + '"]').checked = true;
+    renderSign(STATES[name].sign, STATES[name].days);
+    renderDays(STATES[name].days);
+    renderTiles(STATES[name].days);
+    sketchStatus('');
+  }
+
+  function setLettering(mode) {
+    document.body.classList.toggle('lettering-plain', mode === 'plain');
+    document.querySelector('input[name="lettering"][value="' + mode + '"]').checked = true;
+  }
+
+  function setLayout(mode) {
+    document.body.classList.toggle('layout-stages', mode === 'stages');
+    document.querySelector('input[name="layout"][value="' + mode + '"]').checked = true;
+  }
+
+  // ── Lesson panel ───────────────────────────────────────────────────────────
+  var panel = { day: null, opener: null, selected: 0, actions: [] };
+
+  function panelTitle(day) {
+    if (day.kind === 'lesson') return LESSONS[day.key].title;
+    if (day.kind === 'pc') return 'Unit 2 Progress Check';
+    return 'No class';
+  }
+
+  function panelCodes(day) {
+    if (day.kind === 'lesson') return 'Unit 2 · ' + LESSONS[day.key].codes;
+    if (day.kind === 'pc') return 'Unit 2 · Taken in AP Classroom';
+    return 'Period ' + STUDENT.period;
+  }
+
+  function panelMessage(day) {
+    if (day.kind === 'noClass') return 'Nothing is scheduled today. It does not mean nothing is due.';
+    if (day.unpublished) return 'Nothing is published for this lesson yet.';
+    return '';
+  }
+
+  function panelActions(day) {
+    if (day.unpublished) return [];
+    if (day.kind === 'lesson') return lessonActions(day);
+    if (day.kind === 'pc') return [{ label: 'AP CLASSROOM', name: 'AP Classroom', status: 'Taken in class on ' + shortDate(parseIso(day.iso)) }];
+    return [];
+  }
+
+  // Rows that belong to the day, not to one activity: the zero warning, 2x, day grade, poll.
+  function dayRows(day) {
+    if (day.kind !== 'lesson') return [];
+    var rows = [];
+    if (day.warn) rows.push({ term: 'Zero lands', text: shortDate(zeroDate(day)), bang: true });
+    if (day.double) rows.push({ term: '2x', text: 'Double-topic day: this lesson shares its class day with another topic' });
+    rows.push({ term: 'Day grade', text: day.progress === 'done' ? '96' : 'Not graded yet' });
+    if (day.poll) rows.push({ term: 'Class poll', text: day.poll });
+    return rows;
+  }
+
+  function renderDetails() {
+    var list = document.getElementById('panel-details');
+    list.textContent = '';
+    var action = panel.actions[panel.selected];
+    var rows = [];
+    if (action) {
+      rows.push({ term: 'Status', text: action.status });
+      if (action.score) rows.push({ term: 'Score', text: action.score });
+      if (action.due) rows.push({ term: 'Due', text: action.due });
+    }
+    rows = rows.concat(dayRows(panel.day));
+    list.hidden = rows.length === 0;
+    rows.forEach(function (row) {
+      list.appendChild(el('dt', null, row.term));
+      var dd = el('dd');
+      if (row.bang) dd.appendChild(sprite('bang'));
+      dd.appendChild(el('span', null, row.text));
+      list.appendChild(dd);
+    });
+  }
+
+  // Selection = the orange outline. Keyboard focus, arrow keys and the mouse all move it.
+  function select(index, moveFocus) {
+    var buttons = document.querySelectorAll('#panel-actions .action');
+    if (!buttons.length) return;
+    panel.selected = (index + buttons.length) % buttons.length;
+    buttons.forEach(function (btn, i) {
+      btn.classList.toggle('is-selected', i === panel.selected);
+    });
+    if (moveFocus && document.activeElement !== buttons[panel.selected]) buttons[panel.selected].focus();
+    renderDetails();
+  }
+
+  function renderActions() {
+    var list = document.getElementById('panel-actions');
+    list.textContent = '';
+    var recommended = recommendedIndex(panel.day);
+    panel.actions.forEach(function (action, i) {
+      var item = el('li');
+      if (i === recommended) {
+        item.appendChild(sprite('triangleBlue', SCALE, 'continue'));
+        item.appendChild(el('span', 'sr-only', 'Recommended: '));
+      }
+      var btn = el('button', 'action');
+      btn.type = 'button';
+      btn.appendChild(lettering(action.label, 32));
+      btn.addEventListener('click', function () {
+        select(i, true);
+        document.getElementById('panel-note').textContent = 'Sketch only: the live Desk would open ' + action.name + ' here.';
+      });
+      btn.addEventListener('focus', function () { select(i, false); });
+      btn.addEventListener('mouseenter', function () { select(i, true); });
+      item.appendChild(btn);
+      list.appendChild(item);
+    });
+  }
+
+  function openPanel(day, opener) {
+    panel.day = day;
+    panel.opener = opener;
+    panel.actions = panelActions(day);
+    var recommended = recommendedIndex(day);
+    panel.selected = recommended < 0 ? 0 : recommended;
+
+    var date = parseIso(day.iso);
+    var bar = document.getElementById('panel-bar');
+    bar.textContent = '';
+    bar.appendChild(lettering(DOW[date.getDay()] + ' ' + MONTHS[date.getMonth()] + ' ' + date.getDate(), 32));
+    document.getElementById('panel-title').textContent = panelTitle(day);
+    document.getElementById('panel-codes').textContent = panelCodes(day);
+    var message = document.getElementById('panel-message');
+    message.textContent = panelMessage(day);
+    message.hidden = message.textContent === '';
+    document.getElementById('panel-note').textContent = '';
+    renderActions();
+
+    document.getElementById('backdrop').hidden = false;
+    if (panel.actions.length) {
+      select(panel.selected, true);
+      return;
+    }
+    renderDetails();
+    document.getElementById('panel-close').focus();
+  }
+
+  function closePanel() {
+    var backdrop = document.getElementById('backdrop');
+    if (backdrop.hidden) return;
+    backdrop.hidden = true;
+    if (panel.opener) panel.opener.focus();
+  }
+
+  function isPanelOpen() {
+    return !document.getElementById('backdrop').hidden;
+  }
+
+  // Esc closes; arrows move the selection; Tab stays inside the window.
+  function onPanelKey(event) {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      closePanel();
+      return;
+    }
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      event.preventDefault();
+      select(panel.selected + (event.key === 'ArrowDown' ? 1 : -1), true);
+      return;
+    }
+    if (event.key !== 'Tab') return;
+    var focusable = document.querySelectorAll('#panel button');
+    var first = focusable[0], last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); return; }
+    if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+  }
+
+  // ── Wiring ─────────────────────────────────────────────────────────────────
+  function init() {
+    document.querySelectorAll('.lettering[data-text]').forEach(letter);
+    document.getElementById('player-name').textContent = STUDENT.name + ' · Period ' + STUDENT.period;
+    document.getElementById('sign-post').appendChild(sprite('signPost'));
+    document.getElementById('panel-close').appendChild(sprite('close', 1));
+    renderWeek();
+    renderFloor();
+    renderVocab('vocab-list', VOCAB);
+    renderVocab('vocab-list-b', VOCAB_B);
+    setState('caughtUp');
+
+    document.querySelectorAll('input[name="state"]').forEach(function (input) {
+      input.addEventListener('change', function () { setState(input.value); });
+    });
+    document.querySelectorAll('input[name="lettering"]').forEach(function (input) {
+      input.addEventListener('change', function () { setLettering(input.value); });
+    });
+    document.querySelectorAll('input[name="layout"]').forEach(function (input) {
+      input.addEventListener('change', function () { setLayout(input.value); });
+    });
+    document.getElementById('tiles').addEventListener('keydown', onTileKey);
+    document.querySelectorAll('.navbtn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var name = btn.getAttribute('data-nav');
+        if (name === 'TODAY') { setState(currentState); return; }
+        sketchStatus(name + ' is not part of the sketch.');
+      });
+    });
+    document.getElementById('panel-close').addEventListener('click', closePanel);
+    document.getElementById('backdrop').addEventListener('click', function (event) {
+      if (event.target === event.currentTarget) closePanel();
+    });
+    document.addEventListener('keydown', function (event) {
+      if (!isPanelOpen()) return;
+      onPanelKey(event);
+    });
+  }
+
+  // For tests/pico-desk-preview.test.js.
+  window.PicoDeskPreview = { atlas: ATLAS, atlasSize: ATLAS_SIZE, setState: setState, setLettering: setLettering, setLayout: setLayout, closePanel: closePanel };
+
+  init();
+})();
+</script>
+</body>
+</html>
