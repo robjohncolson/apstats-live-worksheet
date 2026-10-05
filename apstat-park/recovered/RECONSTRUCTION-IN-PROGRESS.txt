@@ -1,5 +1,14 @@
 Work branch: work/pico-native-fidelity. NOT READY TO MERGE OR DEPLOY.
 
+WeightedLift checkpoint: native-weighted-lift-actor assembles ordinary,
+Ex and Ex2 lift variants using recovered load counts, movement gate, carry,
+cooldown, party-dependent travel and return speed. Tests include two native
+Players riding to the configured stop and complete stage_jump01 actor assembly
+for2/8 players. The stage's actor-family gap is closed; this is NOT an input-only
+solution or visual parity proof. Darkness/InvisibleWeightedLift are a separate
+unimplemented native class. Snapshot transport/renderer integration and other
+campaign actor families remain unfinished. Full suite passes482/482 tests.
+
 Bridge checkpoint: native-bridge-actor now assembles ordinary Bridge and
 KeyBridge parent/segment lifecycles, party-dependent starting spread, switch
 commands9/10, per-segment delay, extension/retraction, collision restore,

@@ -1133,3 +1133,20 @@ fixed-body exclusion, opposite-velocity compensation, recursive original delta.
 KeyBridge reads actual Key RTTI and carrier+408 once before issuing command9.
 Parent removal marks children20; scheduler head changes defer their cleanup
 across subsequent PRE/POST passes. Tested through normal scene scheduling.
+WeightedLift evidence: bb63cf0 ctor, bb64050 travel/arrow, bb64100 threshold,
+bb64310 PRE, bb64940 correction, bb64640 counter. Factory raw bb740fb..74390
+passes body-height extension0; ordinary/style0 vs Ex2/style1. Body type2,
+category5, flags3; ordinary bounds[-92,67,194,18], narrow[-28,67,56,18].
+Default travel-70, load/return speed1, required max(2,ceil(float32(party*.2))).
+Positive percentage config yields max(minimum-or2,ceil(float32(percent/100*party))).
+Ordinary travel adds numeric param2*party only if its integer conversion is
+nonzero; return speed adds param5*max(0,party-2). Ex variants instead add integer
+param[party+1] to travel and use numeric param2 for both movement speeds.
+PRE counts recursive UP categories1/2 (mask6), refreshes DOWN cooldown.06,
+then changes signed offset by per-frame speed. Unloaded return can be disabled.
+bc16f50 gates requested displacement against contact chains; successful moves
+carry UP neighbors using [1,0,1,0,0,0,0], identical to Balance rider carry.
+Correction updates offset from current position minus spawn. Counter is32px,
+centered X(+5 for ordinary), Y+7, max(0,required-supports), depth-.2.
+Native snapshot bb64200 additionally restores body-contact payloads and flag10;
+that transport path is not yet connected by this local actor implementation.
