@@ -1,5 +1,23 @@
 Work branch: work/pico-native-fidelity. NOT READY TO MERGE OR DEPLOY.
 
+Magnet target interaction checkpoint (not yet connected to stage factory):
+bb5a180 candidate overlap translated: category1 excluding owner OR PushBox
+RTTI c62a10f, strict normalized absY < float(sin(stored double .6981316804885864)),
+8-entry cap preserving duplicates. bb59530 stable nearest-first command1e
+acquisition and axis pull translated. Gains .03/.08 before latch, .06/.16
+after latch; thresholds X1/Y2; minimum correction2; latched owner velocity.
+Side contacts suppress X, ceiling suppresses upward Y, floor permits downward Y.
+Tests exercise actual normal Player and PushBox freeze handlers, refusal,
+equal-distance ordering, cone/capacity, latch/gains and map-contact suppression.
+Missing: companion assembly, input/toggle authority, release/mutual-grab,
+held-position geometry, POST follow/latch clearing, particles, factory/network.
+New raw evidence: vtable bcbba20 POST at bb59e50 has no split C output;
+x64 shows owner-follow transforms then clearing latch when target separation
+exceeds a constant (bc7d7f8, not yet decoded). Do not omit this POST branch.
+MagnetPlayer is deliberately still unsupported in native factory.
+Full48 goal remains active; these helpers do not prove any new stage complete.
+
+
 Lift checkpoint: bb550a0/551f0/55370/55700/55ab0 translated.
 Raw x64 confirms integer X/Y parameters plus party-scaled parameters2/3;
 speed is unrestricted float, absolute-sine and command flags are separate.
