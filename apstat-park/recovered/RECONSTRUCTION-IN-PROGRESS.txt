@@ -1,5 +1,12 @@
 Work branch: work/pico-native-fidelity. NOT READY TO MERGE OR DEPLOY.
 
+SwitchRect checkpoint: reference-counted platform activation, safe clear-space
+collision enable and release now assemble jump07. Original stage has2characters
+for both2/8 input-slot configurations with shuffle/control-swap rules. Full
+suite603/603. Snapshots, renderer, RNG parity and full-stage solutions remain
+unverified; remaining specialized controllers/mechanisms and live integration
+are still required. Full48-stage goal remains active and NOT complete.
+
 ScaleSwitch checkpoint: continuous resize now reaches the ordinary native
 Player without an absent extension. Native size clamp, collision-size ratio,
 growth carry and component correction added. Original big_and_small initializes

@@ -1,5 +1,6 @@
 import { spawnNativePlayerRow } from './native-player-spawn.mjs';
 import { createNativeRectActor } from './native-rect-actor.mjs';
+import { createNativeSwitchRectActor } from './native-switch-rect-actor.mjs';
 import { createNativePushBoxActor } from './native-push-box-actor.mjs';
 import { createNativeWarpActor } from './native-warp-actor.mjs';
 import { createNativeSwitchActor } from './native-switch-actor.mjs';
@@ -37,6 +38,7 @@ export const NATIVE_STAGE_ACTOR_TYPES = Object.freeze([
   'DeadSwitch',
   'Text',
   'ScaleSwitch',
+  'SwitchRect',
   'Bridge', 'KeyBridge', 'Gate',
   'WeightedLift', 'WeightedLiftEx', 'WeightedLiftEx2',
   'DarknessWeightedLift', 'InvisibleWeightedLift',
@@ -66,6 +68,7 @@ export function spawnNativeStageActor(scene, spawn, { playerPresentation, player
     return scene.addActor(createNativeRectActor({ spawn, partySize: scene.playerCount }));
   }
   if (spawn.actorName === 'PushBox') return scene.addActor(createNativePushBoxActor({ spawn }));
+  if (spawn.actorName === 'SwitchRect') return scene.addActor(createNativeSwitchRectActor({ spawn }));
   if (['ColorBox', 'ForceColorBox'].includes(spawn.actorName)) {
     return scene.addActor(createNativeColorBoxActor({ spawn, partySize: scene.playerCount }));
   }

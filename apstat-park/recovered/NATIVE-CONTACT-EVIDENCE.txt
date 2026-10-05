@@ -1,3 +1,23 @@
+SwitchRect checkpoint:
+Factory bb7633f..3bd uses numeric width/height only, shifts negative width left,
+and calls bb5bcb0. Constructor matches ordinary Rect geometry/patch (32px tiles,
+UV origin0,.515625,depth.2), category6/type2, disabled body flag2. Network21/mode0.
+- Added bb5bef0 clears activation count and hides main sprite/components/body.
+- Command bb5bfd0 increments signed32 counter on9, reveals on0->1;10 decrements
+  only nonzero counter and hides/disables on1->0. Extra releases do not underflow.
+  Ordinary visibility-query13,stop1c,patch-only e behavior retained.
+- PRE bb5bf60 enables a visible disabled body only after placement probe reports
+  clear. Alternate PRE is a no-op (unlike ordinary Rect). Geometry and placement
+  checks reuse recovered Rect implementation; no party dimension adjustments.
+- Snapshot bb5c140/1a0 uses common state and body snapshot; restoring patch
+  visibility from body-enabled bit remains pending native snapshot integration.
+Five tests cover occupied-space activation, reference counting, actual Player
+pressing a named Switch, negative widths, and original jump07 with2/8 input slots.
+Original jump07 contains exactly TWO Player rows and shuffled inputs regardless
+of larger party size. Fixture randomInclusive returns0 for reproducibility;
+this does not prove native RNG parity. Full suite603/603. Full input-only stage
+completion, renderer, network snapshots and campaign integration still pending.
+
 ScaleSwitch / ordinary Player resize checkpoint:
 Factory bb7504e calls bb77a30 and sets scene scrollFlags800. Subclass replaces
 base Lua parser with bb78f00: numericparam0 is per-frame size increment; keeps
