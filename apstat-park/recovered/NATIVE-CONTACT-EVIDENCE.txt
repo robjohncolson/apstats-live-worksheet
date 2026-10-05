@@ -370,3 +370,23 @@ Common actor lifecycle checkpoint:
 - This ports the two-dimensional lifecycle used by campaign actors; the full
   native 3D transform storage, history snapshot implementation and scene-specific
   virtual STEP work are not claimed implemented by these wrappers.
+Scene frame-order checkpoint:
+- native-scene-frame.mjs reconstructs bc1b830 actor-frame boundaries with
+  explicit callbacks for the remaining scene-specific work. Fixed dt is the
+  verified float32 value at bc7d790: 0.01666666753590107. View position +a8
+  is copied to +a0 before scene virtual +28. Input precedes actor PRE; scene
+  virtual +30 runs even while inactive; scene bit 0x20 is reread before POST.
+  The uint64 frame counter and its high-water value update last.
+- bb7bbe0 checks active bit once on entry, processes its gated timer path,
+  steps the separate Box2D world at +51950, then custom body world +51948,
+  then camera/visible-column and outcome processing. Box2D is NOT an action
+  queue. bbe7720 tail-calls bbf4e50; raw bbe773d..7746 sets BOTH r8d and r9d
+  to 10 (velocity/position iterations), correcting the omitted fourth argument
+  in recovered C. bbf4e50 is a separate rigid-body world implementation.
+- The frame driver requires a supplied rigidWorld.step and camera/outcome
+  callbacks. It does not provide or certify those systems by supplying no-op
+  defaults. Its scene hook contracts make remaining native work explicit.
+- Six new tests verify fixed cadence, inactive/input-owner behavior, active
+  flag changes at boundaries, rigid/custom solver ordering, absent-dependency
+  rejection and uint64 frame wrap. These are orchestration tests; their stub
+  rigid-world callback is not a Box2D dynamics implementation or certification.

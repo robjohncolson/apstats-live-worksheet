@@ -240,3 +240,12 @@ Common actor lifecycle checkpoint:
   lifecycle. The live campaign still uses its preview update loop except for
   previously integrated native paths; these wrappers are not yet bundled.
 - Full 48-stage faithful gameplay and complete input-only routes remain open.
+Scene frame-order checkpoint:
+- Added native fixed-frame orchestration connecting actor PRE, scene STEP,
+  custom body physics and POST boundaries, with active-flag rereads.
+- Confirmed the separate rigid-body world runs before custom body collisions,
+  with 10/10 iterations. The scene adapter requires that solver and explicit
+  camera/outcome processing; it never silently substitutes absent systems.
+- Next: provide the actual rigid-body implementation/bridge and native camera,
+  outcome and actor-family adapters. The new frame driver remains standalone;
+  full campaign integration and faithful input-only completion remain open.
