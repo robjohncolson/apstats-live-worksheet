@@ -1057,3 +1057,16 @@ bc13550 resolves stored directional contact IDs through the registry; missing
 IDs and map contacts do not contribute. No global descendant deduplication.
 JS guards cycles and >16 neighbors as unsupported native storage states.
 Four focused tests cover these branches. Full PushBox assembly is pending.
+Push motion evidence: bb33890, bb343e0, bb34820, bb34380, bb34c40.
+Read pico_park_module.bin PE import descriptors: IAT RVA1ec5d8 points to
+api-ms-win-crt-math-l1-1-0.dll!ceil; bc4cd1e jumps to that entry. Threshold is
+ceil(float32(float32(uint percent)/100)*float32(scene.players.length))) plus
+signed offset. Callers compare its uint32 representation, without clamping.
+Raw c61f320=1 (movement/frame), bcb69bc=float32(.65), bcb6220=[1,0,1,0];
+remaining carry options [0,0,2]. LEFT and RIGHT carries share category1 mask.
+LEFT pushers win ties. Failed map/neighbor clearance suppresses carry but
+does not clear the block velocity. Each velocity assignment notifies attached
+components, including intermediate reset and subsequent gravity/impulse.
+UP contact suppresses external X; grounded resets external vector unless a
+new impulse flag1 is pending. Pending Y applies once, then flag1 clears.
+Frozen flag2 resets pusher count and velocity without consuming that impulse.

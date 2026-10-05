@@ -1,5 +1,25 @@
 Work branch: work/pico-native-fidelity. NOT READY TO MERGE OR DEPLOY.
 
+Push motion checkpoint: native-push-box-motion implements bb33890, bb343e0,
+and bb34820: team thresholds, directional path clearance, shared player carry,
+gravity, external impulses and freezing. Native-player-boundary's carry now
+also accepts LEFT for PushBox; scrolling retains its RIGHT default. These are
+tested mechanics, not an assembled actor or a completed original-stage run.
+Next: PushBox commands/relocation, UP contact impulse, presentation and factory.
+
+Assembly research: bb33b20 POST first invokes bb35210 pending relocation.
+Remaining POST flag10 changes run ONLY when bc11800 is true (replication
+pointer present and global network mode1), and manager bit8 is clear. Do not
+mistake that helper for local authority. With pusherCount>0, inspect RIGHT then
+LEFT direct neighbors for actor flags18; otherwise preserve own flag10 only
+when velocity length is positive. Frozen or not grounded sets own flag10;
+grounded/unfrozen uses the above result. Local actors skip this flag update.
+bb348b0 is the body's BEGIN-contact callback: UP normal and upward velocity
+distribute that velocity to the contacted body's UP chain, command0, divided
+by (maximum chain depth+1); then set own velocity.y=0 with component notify.
+bc15dc0 propagation helper already underlies native-player-impulse but its
+public entry begins from the carrier, so cannot be reused unchanged here.
+
 Push contact checkpoint: native-push-box-contacts recovers bb34530's
 recursive pusher count, with registry-based directional contacts and native
 single-precision epsilon comparisons. Shared descendants count per path;
