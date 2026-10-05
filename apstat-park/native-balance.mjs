@@ -1,4 +1,5 @@
 import { countNativeContactBodies } from './native-body-contact-count.mjs';
+import { canMoveNativeActor, carryNativeBalanceRiders } from './native-actor-carry.mjs';
 const f = Math.fround;
 const EPSILON = 2 ** -23;
 const MIN_SPEED = f(.2); // bc7d858
@@ -8,6 +9,20 @@ const MAX_SLOPE = f(Math.tan(.12217304855585098)); // bcb6210 double, tan import
 // including stacks; non-player bodies are neither counted nor traversed.
 export function refreshNativeBalanceLoad(platform) {
   platform.supportCount = countNativeContactBodies(platform.body, { x: 0, y: -1 }, 2);
+}
+
+// bb31050. Position is assigned before common PRE synchronizes the platform
+// body; rider bodies are synchronized immediately by bc16780's option set.
+export function stepNativeBalancePlatform(platform) {
+  refreshNativeBalanceLoad(platform);
+  const difference = f(platform.targetOffset - platform.currentOffset);
+  if (!(Math.abs(difference) > EPSILON)) return false;
+  const delta = { x: 0, y: f(Math.min(Math.abs(difference), platform.speed) * (difference >= 0 ? 1 : -1)) };
+  if (!canMoveNativeActor(platform, delta)) return false;
+  platform.currentOffset = f(platform.currentOffset + delta.y);
+  platform.position = { x: platform.spawnPosition.x, y: f(platform.spawnPosition.y + platform.currentOffset) };
+  carryNativeBalanceRiders(platform, delta);
+  return true;
 }
 
 // bb315f0 was absent from the C export. Reconstructed from its machine code.

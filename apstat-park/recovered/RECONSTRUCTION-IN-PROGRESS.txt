@@ -1,5 +1,14 @@
 Work branch: work/pico-native-fidelity. NOT READY TO MERGE OR DEPLOY.
 
+Balance movement checkpoint: stepNativeBalancePlatform now samples loads,
+tests the recovered directional contact chain, updates its offset only when
+allowed and carries UP-connected actors with immediate body synchronization.
+Tests cover ceiling blocking, fixed-body direction checks and shared rider
+deduplication; 310 total park tests pass. The helper implements Balance's
+specific carry options. Native pointer-order overflow beyond 100 riders and
+other carry option sets remain unsupported. Factory/scene wiring and complete
+stage routes are still required.
+
 Balance checkpoint: bb315f0 is absent from the split C export; its complete
 machine-code routine now supplies native-balance.mjs. It normalizes supported
 player counts, assigns two platform target offsets and speeds, and dispatches

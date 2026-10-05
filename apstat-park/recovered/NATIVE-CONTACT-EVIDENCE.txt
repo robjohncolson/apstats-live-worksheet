@@ -1,5 +1,26 @@
 Native body-pair reconstruction checkpoint
 
+Balance platform movement checkpoint:
+  bc16f50 rejects displacement with both float32 components <= 2^-52, then
+  normalizes it using bb93760. bc13550 resolves contacts with matching normals
+  in stored order. For non-fixed contacts, bc137b0 checks active map normals
+  before recursively querying the contacted actor's body zero. Fixed flag 16
+  rejects dot(preferredDirection, normalizedMovement)>=0. Raw bc17050..17086
+  confirms the dot-product's omitted second argument is normalized movement.
+  bb31050 samples player count even when movement is rejected. When allowed,
+  currentOffset += signed min(abs(target-current), speed); actor position is
+  spawn+[0,currentOffset]. Common PRE later synchronizes the platform body.
+  bcb6220 contains ints [1,0,1,0], remaining carry options zero: synchronize
+  bodies, no velocity compensation, recurse with original UP direction, body
+  zero, no category filter. bc17330 excludes fixed flag 16 bodies.
+  bc16780 moves each unique actor, synchronizes following bodies, writes +120,
+  invokes virtual +f0 with a local displacement copy, then recurses. Native's
+  sorted 100-pointer visited container needs allocation-order modeling for
+  overflow replacement; the Balance helper explicitly rejects overflow.
+  Other option sets remain unimplemented. The gate's traversal limit rejects
+  runaway contact cycles rather than silently treating them as movable.
+  Balance child shape at c62ada0 is [-97,-7,194,14], type 2 from bb313f0.
+
 Balance controller checkpoint (raw bb315f0..bb318ef, missing C export):
   Parent vtable bcb6118+c8 points to bb315f0; children bcb6018+c8 to bb31050.
   bb315f0 skips remote actors. ratio = clamp((right.load-left.load)/(party*.5),
