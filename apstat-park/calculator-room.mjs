@@ -30,6 +30,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   const savedCamera = { ...api._camera };
   const entities = new Map(), peers = new Map(), lobbyPeers = new Map();
   let lobby = null, lobbyAt = -Infinity;
+  let arrivalPending = true;
   const display = createWorldDisplay();
   let level = DEFAULT_LEVEL, challenge = challengeFor(level);
   let calculator = win.TI84Native.create(null, { renderer: display });
@@ -94,6 +95,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   }
   function returnToStart() {
     setParticipating(false);
+    arrivalPending = true;
     Object.assign(player, { x: 65, y: WORLD.floor - 24, vx: 0, vy: 0, state: 'idle' });
     for (const key in input) input[key] = false;
   }
@@ -146,6 +148,17 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
       if (packet.protocol !== CALCULATOR_PROTOCOL) return;
       const reset = lobby && lobby.epoch !== packet.epoch && packet.phase === 'gathering';
       lobby = packet;
+      if (arrivalPending) {
+        arrivalPending = false;
+        // Shared-room arrivals used to occupy exactly the same pixel. Give
+        // idle newcomers a separate spot; never snap someone already moving.
+        if (Math.abs(player.x - 65) < 1 && !input.left && !input.right) {
+          const rank = Math.max(0, packet.members.findIndex(member => member.name === board.username));
+          const slots = Array.from({ length: 12 }, (_, i) => 65 + ((rank + i) % 12) * 26);
+          player.x = slots.find(x => !packet.members.some(member => member.name !== board.username
+            && Math.abs(member.pose.x - x) < 24 && Math.abs(member.pose.y - player.y) < 24)) ?? slots[0];
+        }
+      }
       for (const member of packet.members) {
         if (member.name === board.username) continue;
         if (!lobbyPeers.has(member.name)) lobbyPeers.set(member.name, board.createPeer(member.name, member.pose));
