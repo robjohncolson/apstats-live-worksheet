@@ -193,7 +193,8 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
         calculator = win.TI84Native.create(null, { renderer: display });
         initializeCalculator(calculator, level); applied = 0;
       }
-      if ((board.role === 'teacher' || (packet.phase === 'active' && packet.roster.includes(board.username))) && player.x >= ENTRY_WIDTH + 20) {
+      // Teacher report 2026-10-06: the teacher spectates a round only while one is active (not while students gather).
+      if (((board.role === 'teacher' && packet.phase === 'active') || (packet.phase === 'active' && packet.roster.includes(board.username))) && player.x >= ENTRY_WIDTH + 20) {
         setParticipating(true);
       }
       return;
@@ -397,7 +398,8 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     const count = lobby?.phase === 'gathering' ? lobby.pushers.length : lobby?.roster.length || 0;
     text(ctx, String(count), blockX + 16, TEAM_BLOCK.y + 21, 14, ink, 'center');
     text(ctx, count + (count === 1 ? ' PUSHER' : ' PUSHERS'), blockX + 16, TEAM_BLOCK.y - 9, 10, ink, 'center');
-    if (!participating) for (const [name, peer] of lobbyPeers) {
+    // Teacher report 2026-10-06: room classmates stay visible while participating (team members are drawn below).
+    for (const [name, peer] of lobbyPeers) if (!participating || !peers.has(name)) {
       const original = { x: peer.x, y: peer.y };
       const direct = peerMotion.position(name);
       const visual = smoothing.sample(name, direct || original, { epoch: lobby?.epoch, direct: !!direct });
