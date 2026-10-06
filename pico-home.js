@@ -226,27 +226,21 @@
     '#pico-home .floor.is-veiled #classroom-board-mount { visibility: hidden; }',
     '#pico-home .floor:not(.has-board) { height: 16px; }',
     '#pico-home .floor-band { position: absolute; left: 0; right: 0; bottom: 0; height: 16px; background: var(--orange); }',
-    /* The mode badge: at the floor's left edge, just above the floor band's top (crop) line, so it
-       never covers the room's PICO PARK label, the door or the cats. The current mode's name sits
-       in a static orange frame (the pulse belongs to the selected thing); the hint is grey text. */
-    '#pico-home .scene > .mode-badge { margin-top: auto; align-self: flex-start; margin-left: calc(50% - 50vw + 12px);',
-    '  min-height: 44px; display: inline-flex; align-items: center; gap: 0; padding: 0 12px; background: none;',
-    '  border: 0; font: inherit; font-size: 14px; font-weight: 800; letter-spacing: .04em; cursor: pointer; }',
-    '#pico-home .scene > .mode-badge + .floor { margin-top: 0; }',
-    '#pico-home .mode-badge .mode-name { padding: 4px 8px; color: var(--ink); border: 3px solid var(--orange); }',
-    '#pico-home .mode-badge .mode-hint { font-weight: 600; color: #6b6b7e; white-space: pre; }',
-    '#pico-home .mode-badge:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }',
-    /* PLAY: the student's own cat wears the pulsing outline (a ring placed over it by placeCatRing);
-       when the scene exposes no cat position, the floor band does. */
-    '#pico-home .cat-ring { position: absolute; z-index: 2; pointer-events: none; box-sizing: content-box;',
-    '  margin: -7px 0 0 -7px; padding: 4px; border: 3px solid var(--orange); }',
-    '#pico-home .floor.is-play-band { box-shadow: inset 0 0 0 4px var(--orange); }',
-    /* The board canvas is focused in PLAY only; the cat ring (or the band) is its focus mark,
-       so the browser's own focus line around the whole room is not drawn. */
-    '#pico-home #pico-floor canvas:focus { outline: none; }',
+    /* The mode hint (teacher 2026-10-06, after the badge felt busy): one faint grey line at the
+       floor's left edge, just above the floor band's top (crop) line, so it never covers the room's
+       PICO PARK label, the door or the cats. It shows only for a moment after each mode change
+       (showModeHint); it is not a control. Reduced motion: no fade, same time on screen. */
+    '#pico-home .scene > .mode-hint { margin-top: auto; align-self: flex-start; margin-left: calc(50% - 50vw + 16px);',
+    '  min-height: 20px; line-height: 20px; padding-bottom: 4px; font-size: 13px; font-weight: 600; color: #6b6b7e;',
+    '  pointer-events: none; user-select: none; opacity: 0; }',
+    '#pico-home .scene > .mode-hint + .floor { margin-top: 0; }',
+    '#pico-home .mode-hint.is-shown { opacity: 1; }',
     '@media (prefers-reduced-motion: no-preference) {',
-    '  #pico-home .cat-ring { animation: pico-select-pulse 1.2s ease-in-out infinite; }',
+    '  #pico-home .mode-hint { transition: opacity .3s ease; }',
     '}',
+    /* The board canvas is focused in PLAY only. PLAY is shown by the absence of any orange
+       outline, so the browser's own focus line around the whole room is not drawn either. */
+    '#pico-home #pico-floor canvas:focus { outline: none; }',
     /* Under the board, the floor band continues the room's floor block (which is only as wide as
        the room) to both page edges: same orange, same top edge (--pico-floor-block, layoutFloor). */
     '#pico-home .floor.has-board .floor-band { z-index: 0; height: var(--pico-floor-block, 50px); }',
@@ -1452,20 +1446,27 @@
   var GAME_KEYS = { ArrowUp: 1, ArrowDown: 1, ArrowLeft: 1, ArrowRight: 1, ' ': 1, Spacebar: 1 };
 
   // ── MENU / PLAY modes (teacher 2026-10-06, after "it kicked me out" in Preview-as-student) ──
-  // Two explicit, visible modes, shown by the badge at the floor's left edge:
+  // Two explicit modes:
   //   MENU (on load): the keyboard drives the home. Arrows / Home / End move the lesson selection,
   //     Enter opens the selected tile, Left / Right on the week picker page weeks. No game key
   //     reaches the board, and the board canvas never holds focus.
   //   PLAY: every key goes to the game untouched (arrows, numbers, Enter, Space, Tab …) except
-  //     Esc, which returns to MENU. Pico controls are blurred, the board canvas is focused, and
-  //     the student's cat wears the pulsing outline.
-  // Into PLAY: a press on the floor, the Doge PLAY button, Enter / Space on the badge, or the board
-  // expanding for a game or a whole-class moment. Back to MENU: Esc, a press on anything above
-  // the floor (that element takes the outline), or the badge. While a Pico menu, the lesson panel
-  // or a framed window is open the mode does not matter (they own their keys); closing returns
-  // to the mode that was active. Tab is never intercepted by the modes.
+  //     Esc, which returns to MENU. Pico controls are blurred and the board canvas is focused.
+  //     PLAY is shown by the ABSENCE of any orange outline (the strip keeps only its static green
+  //     selection), never by a mark on the cat.
+  // Into PLAY: a press on the floor, the Doge PLAY button, or the board expanding for a game or a
+  // whole-class moment. Back to MENU: Esc, or a press on anything above the floor (that element
+  // takes the outline). Each change shows a short faint hint above the floor (showModeHint) and is
+  // announced to screen readers. While a Pico menu, the lesson panel or a framed window is open the
+  // mode does not matter (they own their keys); closing returns to the mode that was active. Tab
+  // is never intercepted by the modes.
   var mode = 'menu';
-  var ringTimer = null;
+  var MODE_HINT_MS = 2500;
+  var MODE_HINT_TEXT = {
+    play: 'arrows move your cat · Esc for the menu',
+    menu: 'arrows pick a lesson · click the floor to play',
+  };
+  var hintTimer = null;
 
   function setMode(next, options) {
     if (next !== 'menu' && next !== 'play') return;
@@ -1473,17 +1474,31 @@
     mode = next;
     var root = byId('pico-home');
     if (root) root.setAttribute('data-pico-mode', mode);
-    renderModeBadge();
+    if (changed) showModeHint();
     if (mode === 'play') {
       cancelDwells();
       hoverHeld = null;
       if (!(options && options.keepFocus)) focusPlay();
-      startCatRing();
     } else {
-      stopCatRing();
       releaseFloorFocus(changed);
     }
     if (changed || mode === 'menu') refreshActive();
+  }
+
+  // The hint line fades in above the floor and out again after MODE_HINT_MS (CSS skips the fade
+  // under reduced motion). The polite live region names the new mode for screen readers.
+  function showModeHint() {
+    var hint = byId('pico-mode-hint');
+    var live = byId('pico-mode-live');
+    if (live) live.textContent = mode === 'play' ? 'Play mode' : 'Menu mode';
+    if (!hint) return;
+    hint.textContent = MODE_HINT_TEXT[mode];
+    hint.classList.add('is-shown');
+    if (hintTimer) clearTimeout(hintTimer);
+    hintTimer = setTimeout(function () {
+      hintTimer = null;
+      hint.classList.remove('is-shown');
+    }, MODE_HINT_MS);
   }
 
   // MENU: nothing inside the floor keeps focus (the canvas, a park door's button, a result
@@ -1513,72 +1528,11 @@
     try { canvas.focus({ preventScroll: true }); } catch (_) { canvas.focus(); }
   }
 
-  function renderModeBadge() {
-    var badge = byId('pico-mode-badge');
-    if (!badge) return;
-    var play = mode === 'play';
-    badge.setAttribute('data-mode', mode);
-    badge.setAttribute('aria-pressed', play ? 'true' : 'false');
-    badge.querySelector('.mode-name').textContent = play ? '▶ PLAY' : '☰ MENU';
-    badge.querySelector('.mode-hint').textContent = play
-      ? ' · arrows move your cat · Esc for the menu'
-      : ' · arrows pick a lesson · click the floor to play';
-  }
-
-  // The cat outline: a DOM ring over the student's own cat, placed from the calculator room's own
-  // view (getView: cameraX, playerX, playerY in room coordinates; drawn at scale min(1, w / 720)).
-  // Other scenes (the presence strip, a park level) expose no player position: the floor band
-  // wears the outline instead.
-  var CAT_SIZE = 24;
-  function placeCatRing() {
-    var ring = byId('pico-cat-ring');
-    var floor = byId('pico-floor');
-    var canvas = boardCanvas();
-    if (!ring || !floor) return;
-    var scene = parkScene();
-    var roomView = scene && scene.kind === 'calculator' && typeof scene.getView === 'function' ? scene.getView() : null;
-    if (!canvas || !roomView || typeof roomView.playerX !== 'number') {
-      ring.hidden = true;
-      floor.classList.add('is-play-band');
-      return;
-    }
-    floor.classList.remove('is-play-band');
-    var width = canvas.clientWidth || parseFloat(canvas.style.width) || ROOM_WORLD_W;
-    var scale = Math.min(1, width / ROOM_WORLD_W);
-    var top = (floor.clientHeight || parseFloat(floor.style.height) || 0) - canvasHeight(canvas);
-    ring.hidden = false;
-    ring.style.left = Math.round((roomView.playerX - Math.round(roomView.cameraX || 0)) * scale) + 'px';
-    ring.style.top = Math.round(top + roomView.playerY * scale) + 'px';
-    ring.style.width = ring.style.height = Math.round(CAT_SIZE * scale) + 'px';
-  }
-
-  function startCatRing() {
-    placeCatRing();
-    if (ringTimer || typeof window.requestAnimationFrame !== 'function') return;
-    (function frame() {
-      ringTimer = window.requestAnimationFrame(function () {
-        if (mode !== 'play') { ringTimer = null; return; }
-        placeCatRing();
-        frame();
-      });
-    })();
-  }
-
-  function stopCatRing() {
-    if (ringTimer && typeof window.cancelAnimationFrame === 'function') window.cancelAnimationFrame(ringTimer);
-    ringTimer = null;
-    var ring = byId('pico-cat-ring');
-    if (ring) ring.hidden = true;
-    var floor = byId('pico-floor');
-    if (floor) floor.classList.remove('is-play-band');
-  }
-
   // A press above the floor (nav, picker, sign, tiles) returns to MENU; a press on the floor or the
-  // Doge enters PLAY. The badge toggles on its own click.
+  // Doge enters PLAY.
   function onModePointer(event) {
     var target = event.target;
     if (!target || !target.closest || !target.closest('#pico-home')) return;
-    if (target.closest('#pico-mode-badge')) return;
     if (target.closest('#pico-menu-backdrop')) return;
     if (target.closest('#pico-floor') || target.closest('#doge-presence')) {
       if (mode !== 'play') setMode('play');
@@ -2543,10 +2497,9 @@
     '    <span id="pico-sign-post"></span>',
     '  </section>',
     '  <ol class="tiles" id="pico-tiles" aria-label="This week"></ol>',
-    '  <button type="button" class="mode-badge" id="pico-mode-badge" data-mode="menu" aria-pressed="false">',
-    '    <span class="mode-name"></span><span class="mode-hint"></span>',
-    '  </button>',
-    '  <div class="floor" id="pico-floor"><div class="floor-band"></div><div class="cat-ring" id="pico-cat-ring" hidden></div></div>',
+    '  <div class="mode-hint" id="pico-mode-hint" aria-hidden="true"></div>',
+    '  <div class="floor" id="pico-floor"><div class="floor-band"></div></div>',
+    '  <div class="sr-only" id="pico-mode-live" aria-live="polite"></div>',
     '</div>',
     '<div class="backdrop" id="pico-menu-backdrop" hidden>',
     '  <section class="win option-win" id="pico-menu" role="dialog" aria-modal="true" aria-labelledby="pico-menu-title">',
@@ -2646,8 +2599,6 @@
     });
     window.addEventListener('keydown', onCaptureKey, true);
     window.addEventListener('mousedown', onModePointer, true);
-    var badge = byId('pico-mode-badge');
-    badge.addEventListener('click', function () { setMode(mode === 'play' ? 'menu' : 'play'); });
     // Esc closes the SCHEDULE window when no Desk dialog is on top of it.
     document.addEventListener('keydown', function (event) {
       if (event.key !== 'Escape' || event.defaultPrevented) return;

@@ -8,11 +8,15 @@
  *   - MENU (default): arrows move the lesson selection, Enter opens it; no game key reaches the
  *     board and the board canvas never holds focus.
  *   - PLAY: every key goes to the game untouched except Esc (back to MENU); the canvas is focused.
- *   - into PLAY: a floor press, the Doge, the badge, a whole-class event; back: Esc, a press
- *     above the floor, the badge. Windows keep the mode they were opened in. Tab is never taken.
+ *   - into PLAY: a floor press, the Doge, a whole-class event; back: Esc, a press above the floor.
+ *     Windows keep the mode they were opened in. Tab is never taken.
+ *   - PLAY is shown by the absence of any orange outline (no ring on the cat); each change shows a
+ *     faint hint line for a moment and is announced in a polite live region. No badge.
  */
 
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { bootDesk, DESK_URL } from './journeys/harness.js';
 
 const NOW = '2026-10-07T14:00:00.000Z';
@@ -52,7 +56,6 @@ function press(win, target, key) {
 const tiles = (doc) => [...doc.querySelectorAll('#pico-tiles .tile')];
 const canvasOf = (doc) => doc.querySelector('#classroom-board-mount > canvas');
 const selectedIndex = (doc) => tiles(doc).findIndex((t) => t.classList.contains('is-selected'));
-const badgeText = (doc) => doc.getElementById('pico-mode-badge').textContent.replace(/\s+/g, ' ').trim();
 const mousedown = (win, node) => node.dispatchEvent(new win.MouseEvent('mousedown', { bubbles: true, cancelable: true }));
 
 function countOpens(win) {
@@ -63,22 +66,55 @@ function countOpens(win) {
 }
 
 describe('Pico MENU / PLAY modes', { timeout: 90_000 }, () => {
-  it('loads in MENU; the badge names both modes and the hint follows the mode', async () => {
+  it('loads in MENU with no hint; each change shows the hint for a moment and announces the mode', async () => {
     const harness = await boot();
     try {
       const { document: doc, window: win } = harness;
+      const hint = doc.getElementById('pico-mode-hint');
+      const live = doc.getElementById('pico-mode-live');
       expect(win.PicoHome.mode()).toBe('menu');
       expect(doc.getElementById('pico-home').getAttribute('data-pico-mode')).toBe('menu');
-      expect(badgeText(doc)).toBe('☰ MENU · arrows pick a lesson · click the floor to play');
-      // The badge is a real button: Enter / Space are its own click, which toggles.
-      doc.getElementById('pico-mode-badge').click();
+      // No badge, no cat ring; nothing is said or shown on load.
+      expect(doc.getElementById('pico-mode-badge')).toBeNull();
+      expect(doc.querySelector('.pico-cat-ring, .cat-ring, #pico-cat-ring')).toBeNull();
+      expect(hint.classList.contains('is-shown')).toBe(false);
+      expect(hint.textContent).toBe('');
+      expect(live.getAttribute('aria-live')).toBe('polite');
+      expect(live.textContent).toBe('');
+      // The hint is plain text, never a control.
+      expect(hint.tagName).toBe('DIV');
+      expect(hint.querySelector('button, a, [tabindex]')).toBeNull();
+
+      mousedown(win, canvasOf(doc));
       expect(win.PicoHome.mode()).toBe('play');
-      expect(badgeText(doc)).toBe('▶ PLAY · arrows move your cat · Esc for the menu');
-      doc.getElementById('pico-mode-badge').click();
+      expect(hint.classList.contains('is-shown')).toBe(true);
+      expect(hint.textContent).toBe('arrows move your cat · Esc for the menu');
+      expect(live.textContent).toBe('Play mode');
+      // PLAY: no orange outline anywhere on the home; the selected tile keeps its static green.
+      expect(doc.querySelectorAll('#pico-home .is-active')).toHaveLength(0);
+      expect(selectedIndex(doc)).toBeGreaterThanOrEqual(0);
+      await wait(2700);
+      expect(hint.classList.contains('is-shown')).toBe(false);
+
+      press(win, doc.activeElement, 'Escape');
       expect(win.PicoHome.mode()).toBe('menu');
+      expect(hint.classList.contains('is-shown')).toBe(true);
+      expect(hint.textContent).toBe('arrows pick a lesson · click the floor to play');
+      expect(live.textContent).toBe('Menu mode');
+      await wait(2700);
+      expect(hint.classList.contains('is-shown')).toBe(false);
     } finally {
       harness.teardown();
     }
+  });
+
+  it('CSS: the hint is faint, unframed, not interactive, and fades only when motion is allowed', () => {
+    const PICO = readFileSync(resolve(process.cwd(), 'pico-home.js'), 'utf8');
+    expect(PICO).toContain("'  min-height: 20px; line-height: 20px; padding-bottom: 4px; font-size: 13px; font-weight: 600; color: #6b6b7e;',");
+    expect(PICO).toContain("'  pointer-events: none; user-select: none; opacity: 0; }',");
+    expect(PICO).toContain("'  #pico-home .mode-hint { transition: opacity .3s ease; }',");
+    expect(PICO).toContain("'#pico-home #pico-floor canvas:focus { outline: none; }',");
+    expect(PICO).toContain('var MODE_HINT_MS = 2500;');
   });
 
   it('ArrowRight: MENU moves the selection (the game never sees it); PLAY leaves it untouched for the game', async () => {
@@ -128,7 +164,7 @@ describe('Pico MENU / PLAY modes', { timeout: 90_000 }, () => {
       press(win, doc.body, 'ArrowRight');
       const selected = tiles(doc)[selectedIndex(doc)];
       mousedown(win, canvasOf(doc));
-      expect(selected.classList.contains('is-active')).toBe(false);   // the cat has the outline in PLAY
+      expect(selected.classList.contains('is-active')).toBe(false);   // PLAY: no orange outline at all
       const esc = press(win, doc.activeElement, 'Escape');
       expect(esc).toEqual({ prevented: true, reached: false });
       expect(win.PicoHome.mode()).toBe('menu');
@@ -194,7 +230,7 @@ describe('Pico MENU / PLAY modes', { timeout: 90_000 }, () => {
       expect(win.PicoHome.mode()).toBe('menu');
       await harness.waitFor(() => doc.activeElement === tiles(doc)[index], { timeoutMs: 1000, message: 'focus did not return to the tile' });
 
-      // PLAY (set by the badge), the panel opened by a script click: it closes back to the game.
+      // PLAY (set directly), the panel opened by a script click: it closes back to the game.
       win.PicoHome.setMode('play');
       tiles(doc)[index].click();
       await harness.waitFor(() => doc.getElementById('resource-overlay').style.display === 'block', { message: 'the panel did not open (PLAY)' });
