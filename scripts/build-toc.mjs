@@ -41,17 +41,12 @@ for (const oldId of Object.keys(crosswalk).sort(byTopic)) {
   const m = crosswalk[oldId];
   const file = fileFor(oldId);
   if (!file) continue;                       // no worksheet for this old topic
-  const unit = m.status === 'core' ? m.newUnit : m.bonusUnit;
+  if (m.status !== 'core') continue;         // bonus ("Beyond the exam") lessons are not listed
+  const unit = m.newUnit;
   if (!unit) continue;
-  units[unit] = units[unit] || { core: {}, bonus: [] };
-  if (m.status === 'core') {
-    const t = units[unit].core[m.newTopic] = units[unit].core[m.newTopic] || { label: m.newLabel, files: [] };
-    if (!t.files.includes(file)) t.files.push(file);
-  } else {
-    const label = m.newLabel.replace(/^Beyond the Exam:\s*/i, '');
-    const b = units[unit].bonus.find((x) => x.file === file);
-    if (b) { if (!b.label.includes(label)) b.label += '; ' + label; } else units[unit].bonus.push({ file, label });
-  }
+  units[unit] = units[unit] || { core: {} };
+  const t = units[unit].core[m.newTopic] = units[unit].core[m.newTopic] || { label: m.newLabel, files: [] };
+  if (!t.files.includes(file)) t.files.push(file);
 }
 
 function linkList(files) {
@@ -67,13 +62,7 @@ for (const unit of Object.keys(units).map(Number).sort((a, b) => a - b)) {
     const t = u.core[topic];
     body += `      <li><span class="num">${esc(topic)}</span><span class="topic">${esc(t.label)}</span> ${linkList(t.files)}</li>\n`;
   }
-  body += '    </ul>\n';
-  if (u.bonus.length) {
-    body += '    <h3>Beyond the exam (bonus)</h3>\n    <ul>\n';
-    for (const b of u.bonus) body += `      <li><span class="topic">${esc(b.label)}</span> <a href="${esc(b.file)}">Follow-along</a></li>\n`;
-    body += '    </ul>\n';
-  }
-  body += '  </div>\n\n';
+  body += '    </ul>\n  </div>\n\n';
 }
 
 const tocPath = fileURLToPath(new URL('TOC.html', root));
