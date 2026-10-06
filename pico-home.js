@@ -961,9 +961,6 @@
     var muted = false;
     try { muted = Boolean(MacSFX && MacSFX.muted); } catch (_) { muted = false; }
     items.push({ label: 'SOUND: ' + (muted ? 'OFF' : 'ON'), keepOpen: true, run: function () { callDesk('_toggleSound'); } });
-    ['B', 'E'].forEach(function (p) {
-      items.push({ label: 'PERIOD ' + p, pressed: deskPeriod() === p, run: function () { callDesk('setP', [p]); } });
-    });
     items.push({ label: 'MESSAGE TEACHER', badge: badgeCount('menu-message-teacher-badge'), run: function () { callDesk('_openStudentDmModal'); } });
     items.push({ label: 'HOW GRADES WORK', run: function () { callDesk('openGradeHelp'); } });
     items.push({ label: 'START HERE', run: function () { window.open('start-here.html', '_blank', 'noopener'); } });
@@ -974,6 +971,11 @@
       items.push({ label: 'TEACHER INBOX', badge: badgeCount('menu-teacher-inbox-badge'), run: function () { callDesk('openTeacherInbox'); } });
       items.push({ label: 'DOK LADDERS', run: function () { callDesk('openApp', ['dok']); } });
       items.push({ label: 'PREVIEW AS STUDENT', run: function () { callDesk('_togglePreviewAsStudent'); } });
+      // Teacher 2026-10-06: only the teacher may switch periods — a B student sees only B's schedule
+      // (the Desk sets the period from the roster section at sign-in).
+      ['B', 'E'].forEach(function (p) {
+        items.push({ label: 'PERIOD ' + p, pressed: deskPeriod() === p, run: function () { callDesk('setP', [p]); } });
+      });
     } else if (isPreviewingAsStudent()) {
       // A teacher previewing as a student needs the way back (the Desk's own toggle).
       items.push({ head: 'TEACHER' });

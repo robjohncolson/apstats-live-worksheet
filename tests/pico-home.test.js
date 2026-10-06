@@ -438,7 +438,8 @@ describe('pico-home -- the sign mirrors the Do Now', () => {
 });
 
 describe('pico-home -- navigation and OPTION', () => {
-  const STUDENT_ITEMS = ['SIGN OUT', 'CHANGE PASSWORD', 'SOUND: ON', 'PERIOD B', 'PERIOD E', 'MESSAGE TEACHER',
+  // Teacher 2026-10-06: students never see a period switch (a B student sees only B's schedule).
+  const STUDENT_ITEMS = ['SIGN OUT', 'CHANGE PASSWORD', 'SOUND: ON', 'MESSAGE TEACHER',
     'HOW GRADES WORK', 'START HERE', 'USE ORIGINAL DESK'];
 
   function optionLabels(doc) {
@@ -589,7 +590,6 @@ describe('pico-home -- navigation and OPTION', () => {
     run('SIGN OUT'); expect(spies.signOutStudent).toHaveBeenCalled();
     run('CHANGE PASSWORD'); expect(spies.changeMyPassword).toHaveBeenCalled();
     run('SOUND: ON'); expect(spies._toggleSound).toHaveBeenCalled();
-    run('PERIOD E'); expect(spies.setP).toHaveBeenCalledWith('E');
     run('MESSAGE TEACHER'); expect(spies._openStudentDmModal).toHaveBeenCalled();
     run('HOW GRADES WORK'); expect(spies.openGradeHelp).toHaveBeenCalled();
   });
@@ -608,12 +608,18 @@ describe('pico-home -- navigation and OPTION', () => {
     loadPico(student.win);
     student.doc.querySelector('#pico-home .navbtn[data-nav="OPTION"]').click();
     expect(optionLabels(student.doc)).not.toContain('TEACHER WORKSPACE');
+    expect(optionLabels(student.doc)).not.toContain('PERIOD B');
+    expect(optionLabels(student.doc)).not.toContain('PERIOD E');
 
     const teacher = createDesk({ teacher: true });
     loadPico(teacher.win);
     teacher.doc.querySelector('#pico-home .navbtn[data-nav="OPTION"]').click();
     expect(optionLabels(teacher.doc)).toEqual(STUDENT_ITEMS.concat(
-      ['TEACHER WORKSPACE', 'TEACHER INBOX', 'DOK LADDERS', 'PREVIEW AS STUDENT']));
+      ['TEACHER WORKSPACE', 'TEACHER INBOX', 'DOK LADDERS', 'PREVIEW AS STUDENT', 'PERIOD B', 'PERIOD E']));
+    const periodE = [...teacher.doc.querySelectorAll('#pico-menu-list .action')]
+      .find((b) => b.querySelector('.action-text').textContent === 'PERIOD E');
+    periodE.click();
+    expect(teacher.spies.setP).toHaveBeenCalledWith('E');
   });
 
   it('existing badges (teacher message, teacher inbox) show on OPTION', () => {

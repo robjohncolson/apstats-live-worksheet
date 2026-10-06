@@ -347,7 +347,7 @@ the information is preserved"; a row may not be dropped without the teacher sayi
 | Calendar cell: double-click / right-click day grade | Lesson panel row |
 | Two-week grid, quarter bands, prev / today / next | LESSONS → Schedule (unchanged calendar) |
 | Countdown boxes (today, days to exam, school days, exam day) | One "days to exam" label by the week title; the rest in Schedule |
-| Period B / E toggle | OPTION (and automatic from sign-in, as now) |
+| Period B / E toggle | OPTION, **teacher only** (teacher 2026-10-06: a student sees only their own section's schedule; the period comes from the roster at sign-in) |
 | Unit Progress bar | LESSONS |
 | Info bar (session count, year, school) | Schedule |
 | Classroom board, park doors, occupancy, polls, Live Classroom overlays | The floor (**audit** each overlay) |
