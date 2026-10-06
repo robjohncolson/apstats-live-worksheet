@@ -80,8 +80,14 @@ for (const procedure of procedures) {
     assert.equal(JSON.stringify(calculator.getMatrix('[A]')), JSON.stringify(v.matrix));
   } else {
     if (id.startsWith('randint')) {
-      type(v.seed, 'seed');
-      for (const key of ['STO→', 'MATH', 'RIGHT', 'RIGHT', 'RIGHT', '1', 'ENTER', 'MATH', 'RIGHT', 'RIGHT', 'RIGHT', '8']) press(key);
+      // Teacher 2026-10-06: "enter seed = 15" told nobody HOW. Seeding is 15 → rand (type the
+      // digits, STO→, MATH ▸ PRB ▸ 1:rand, ENTER), so each step carries the trainer's own
+      // narration for this procedure instead of a bare "Choose KEY."
+      const seedSteps = procedure.steps.slice(0, 13);
+      assert.equal(seedSteps[0].key, '{seed}', id);
+      assert.equal(seedSteps[12].key, '8', id);
+      for (const key of numberKeys(v.seed)) press(key, 'Seed the random numbers: type ' + v.seed + ' (press ' + key + '), then STO→ it into rand.');
+      for (const step of seedSteps.slice(1)) press(step.key, step.narration);
     } else {
       for (const step of procedure.steps) {
         for (let i = 0; i < (step.minPresses || 1); i++) press(step.key, step.narration);
