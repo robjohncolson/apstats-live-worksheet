@@ -133,16 +133,22 @@ describe('self-signup — boot routes real Period B/E calendars', () => {
     expect(boot).toMatch(/cP=\(pp==='B'\|\|pp==='E'\)\?pp:'E'/);
   });
 
-  it('shows separate Period B/E buttons and View-menu items', () => {
+  it('shows separate Period B/E buttons and View-menu items, teacher-only (teacher 2026-10-06)', () => {
     const btnB = document.getElementById('btn-b');
     const btnE = document.getElementById('btn-e');
     expect(btnB.textContent).toBe('Period B');
     expect(btnB.getAttribute('onclick')).toContain("setP('B')");
     expect(btnE.textContent).toBe('Period E');
     expect(btnE.getAttribute('onclick')).toContain("setP('E')");
-    expect(btnE.style.display).not.toBe('none');
     expect(document.getElementById('menu-period-b').getAttribute('onclick')).toContain("setP('B')");
     expect(document.getElementById('menu-period-e').getAttribute('onclick')).toContain("setP('E')");
+    // A student never sees a period switch: every control carries .teacher-only, hidden unless
+    // updateUserRoleUI() put html.desk-teacher on (which Preview-as-student clears too).
+    expect(btnB.closest('.per-tog').classList.contains('teacher-only')).toBe(true);
+    expect(document.getElementById('menu-period-b').classList.contains('teacher-only')).toBe(true);
+    expect(document.getElementById('menu-period-e').classList.contains('teacher-only')).toBe(true);
+    expect(html).toMatch(/html:not\(\.desk-teacher\) \.teacher-only \{ display: none !important; \}/);
+    expect(html).toMatch(/classList\.toggle\('desk-teacher', \(typeof _deskIsTeacher === 'function'\) && _deskIsTeacher\(\)\)/);
   });
 
   it('a first-time device (no sign-in history) auto-opens the signup modal', () => {

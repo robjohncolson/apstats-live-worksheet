@@ -1376,6 +1376,8 @@
             #menu-identity { overflow: hidden; text-overflow: ellipsis; max-width: 14ch; }
             .menu-clock { display: none; }                     /* the OS shows a clock */
         }
+        /* Period switch (View menu + window buttons) is teacher-only — teacher 2026-10-06. */
+        html:not(.desk-teacher) .teacher-only { display: none !important; }
         @media (max-height: 820px) {
             .info-bar { display: none; }                       /* static labels */
             .per-tog { display: none; }                        /* single inert period button */
@@ -2088,8 +2090,11 @@
     </span>
     <span class="menu-item" data-menu="view">View
         <div class="menu-dropdown" id="menu-view" role="menu">
-            <div class="menu-dd-item" role="menuitem" id="menu-period-b" onclick="setP('B');closeMenus()">&#10003; Period B</div>
-            <div class="menu-dd-item" role="menuitem" id="menu-period-e" onclick="setP('E');closeMenus()">  Period E</div>
+            <!-- Teacher 2026-10-06: the period switch is teacher-only — a student sees only their own
+                 section's schedule (cP comes from the roster at sign-in). .teacher-only is shown by
+                 updateUserRoleUI() via html.desk-teacher, which Preview-as-student also clears. -->
+            <div class="menu-dd-item teacher-only" role="menuitem" id="menu-period-b" onclick="setP('B');closeMenus()">&#10003; Period B</div>
+            <div class="menu-dd-item teacher-only" role="menuitem" id="menu-period-e" onclick="setP('E');closeMenus()">  Period E</div>
             <div class="menu-dd-sep"></div>
             <div class="menu-dd-item" role="menuitem" data-sfx onclick="closeMenus();if(typeof calToday==='function')calToday()">&#128197; Jump to Today</div>
             <div class="menu-dd-item" role="menuitem" data-sfx onclick="closeMenus();if(typeof calStep==='function')calStep(-1)">&#9664; Earlier Weeks</div>
@@ -2260,7 +2265,7 @@
                 <div class="cd-box" id="cd-school"><div class="num">&mdash;</div><div class="lbl geneva">School Days</div></div>
                 <div class="cd-box cd-dark" id="cd-exam"><div class="num">&mdash;</div><div class="lbl geneva">Exam Day</div></div>
             </div>
-            <div class="per-tog chicago">
+            <div class="per-tog chicago teacher-only">
                 <button class="s7btn s7btn-default s7btn-inv" id="btn-b" onclick="setP('B')">Period B</button>
                 <button class="s7btn" id="btn-e" onclick="setP('E')">Period E</button>
             </div>
@@ -2940,10 +2945,10 @@
 <script src="js/ced2026-crosswalk.js"></script>
 <script src="js/ced2026-labels.js"></script>
 <script src="lib/qrcode.min.js"></script>
-<script src="canvas_engine.js?v=2026-10-06-e7b5"></script>
-<script src="sprite_sheet.js?v=2026-10-06-e7b5"></script>
-<script src="classroom-board.js?v=2026-10-06-e7b5"></script>
-<script src="pico-home.js?v=2026-10-06-e7b5"></script>
+<script src="canvas_engine.js?v=2026-10-06-xgq5"></script>
+<script src="sprite_sheet.js?v=2026-10-06-xgq5"></script>
+<script src="classroom-board.js?v=2026-10-06-xgq5"></script>
+<script src="pico-home.js?v=2026-10-06-xgq5"></script>
 <script src="ti84-plot.js"></script>
 <script src="activity-bridge.js"></script>
 <script src="activity-colorbox.js"></script>
@@ -7222,6 +7227,9 @@ function updateUserRoleUI() {
     if (isTeacher) localStorage.setItem('apstats_user_role', 'teacher');
     else localStorage.removeItem('apstats_user_role');
   } catch (_) {}
+  // Period switch + any other .teacher-only chrome: follows _deskIsTeacher(), which is false in
+  // Preview-as-student and view-as even for a signed-in teacher (teacher 2026-10-06).
+  try { document.documentElement.classList.toggle('desk-teacher', (typeof _deskIsTeacher === 'function') && _deskIsTeacher()); } catch (_) {}
   if (!teacherMenu) return;
   teacherMenu.style.display = isTeacher ? '' : 'none';
   // Light up the Teacher-menu "Nightly Review" unseen badge (best-effort, teacher only).
@@ -27612,7 +27620,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-10-06-e7b5';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-10-06-xgq5';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.
