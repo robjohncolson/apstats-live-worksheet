@@ -476,65 +476,59 @@ describe('pico-home -- navigation and OPTION', () => {
     btn.click();
   }
 
-  it('LESSONS lists every route; each calls the existing opener', () => {
+  it('LESSONS lists exactly SCHEDULE / REVIEW / PRACTICE; each calls the existing opener', () => {
     const { doc, win, spies } = createDesk();
     loadPico(win);
     const lessons = doc.querySelector('#pico-home .navbtn[data-nav="LESSONS"]');
     const open = () => lessons.click();
     open();
     expect(doc.getElementById('pico-menu-title').textContent).toBe('LESSONS');
-    expect(menuLabels(doc)).toEqual(['SCHEDULE', 'BULLETIN', 'REVIEW', 'THIS WEEK', 'PRACTICE']);
-    clickMenu(doc, 'BULLETIN'); expect(spies.openBulletin).toHaveBeenCalledTimes(1);
-    open(); clickMenu(doc, 'REVIEW'); expect(spies.openReview).toHaveBeenCalledTimes(1);
-    open(); clickMenu(doc, 'THIS WEEK'); expect(spies.openApp).toHaveBeenLastCalledWith('week');
+    expect(menuLabels(doc)).toEqual(['SCHEDULE', 'REVIEW', 'PRACTICE']);
+    clickMenu(doc, 'REVIEW'); expect(spies.openReview).toHaveBeenCalledTimes(1);
+    open(); clickMenu(doc, 'SCHEDULE'); expect(spies.restoreWindow).toHaveBeenCalledTimes(1);
     open(); clickMenu(doc, 'PRACTICE');
     expect(doc.getElementById('pico-menu-backdrop').hidden).toBe(false);
-    expect(menuLabels(doc)).toEqual(['TI-84 TRAINER', 'AP STATS QUIZ', 'FORMULA LAB', 'FORMULA DEFENSE',
-      'STUDY GUIDE', 'ALL WORKSHEETS', 'BACK']);
-    clickMenu(doc, 'TI-84 TRAINER'); expect(spies.openApp).toHaveBeenLastCalledWith('ti84');
+    expect(menuLabels(doc)).toEqual(['FORMULA DEFENSE', 'TI-84 TRAINER', 'ALL WORKSHEETS', 'BACK']);
     const practice = () => { open(); clickMenu(doc, 'PRACTICE'); };
-    practice(); clickMenu(doc, 'AP STATS QUIZ'); expect(spies.openApp).toHaveBeenLastCalledWith('quiz');
-    practice(); clickMenu(doc, 'FORMULA LAB'); expect(spies.openApp).toHaveBeenLastCalledWith('formulas');
-    practice(); clickMenu(doc, 'FORMULA DEFENSE');
+    clickMenu(doc, 'FORMULA DEFENSE');
     expect(spies.open).toHaveBeenLastCalledWith('https://tmux-trainer.vercel.app/#deck=ap-stats-formulas', '_blank', 'noopener');
-    practice(); clickMenu(doc, 'STUDY GUIDE');
-    expect(spies.open).toHaveBeenLastCalledWith('study_guide_diagnostic.html', '_blank', 'noopener');
+    practice(); clickMenu(doc, 'TI-84 TRAINER'); expect(spies.openApp).toHaveBeenLastCalledWith('ti84');
     practice(); clickMenu(doc, 'ALL WORKSHEETS');
     expect(spies.open).toHaveBeenLastCalledWith('TOC.html', '_blank', 'noopener');
     practice(); clickMenu(doc, 'BACK');
-    expect(menuLabels(doc)[0]).toBe('SCHEDULE');
+    expect(menuLabels(doc)).toEqual(['SCHEDULE', 'REVIEW', 'PRACTICE']);
+    // Not listed any more (their Desk openers remain for the old Desk).
+    expect(spies.openBulletin).not.toHaveBeenCalled();
+    expect(spies.openApp.mock.calls.map((c) => c[0])).not.toContain('week');
     // The same targets the Desk's Apps / Go menus use.
     expect(deskSource).toContain("window.open('https://tmux-trainer.vercel.app/#deck=ap-stats-formulas','_blank','noopener')");
-    expect(deskSource).toContain("window.open('study_guide_diagnostic.html','_blank','noopener')");
     expect(deskSource).toContain("window.open('TOC.html','_blank','noopener')");
   });
 
-  it('LESSONS badges mirror the Bulletin and Review icon badges (and the Review bob)', async () => {
+  it('the LESSONS badge mirrors only the Review icon badge (and its bob)', async () => {
     const { doc, win } = createDesk();
     loadPico(win);
     const lessonsBadge = doc.getElementById('pico-lessons-badge');
     expect(lessonsBadge.hidden).toBe(true);
-    const bulletinImg = doc.querySelector('.app-icon[data-app="bulletin"] .icon-img');
+    // A Bulletin badge no longer counts.
     const bulletinBadge = doc.createElement('span');
     bulletinBadge.className = 'bulletin-soon-badge';
     bulletinBadge.textContent = '2';
-    bulletinImg.appendChild(bulletinBadge);
+    doc.querySelector('.app-icon[data-app="bulletin"] .icon-img').appendChild(bulletinBadge);
     const reviewIcon = doc.querySelector('.app-icon[data-app="review"]');
     const reviewBadge = doc.createElement('span');
     reviewBadge.className = 'review-due-badge';
     reviewBadge.textContent = '5';
     reviewIcon.querySelector('.icon-img').appendChild(reviewBadge);
     reviewIcon.classList.add('review-has-due');
-    await new Promise((r) => setTimeout(r, 60));   // the icon observers re-render the nav
+    await new Promise((r) => setTimeout(r, 60));   // the Review icon observer re-renders the nav
     expect(lessonsBadge.hidden).toBe(false);
-    expect(lessonsBadge.textContent).toBe('7');
+    expect(lessonsBadge.textContent).toBe('5');
     expect(lessonsBadge.classList.contains('is-bobbing')).toBe(true);
     doc.querySelector('#pico-home .navbtn[data-nav="LESSONS"]').click();
     const item = (label) => [...doc.querySelectorAll('#pico-menu-list .action')].find((b) => b.querySelector('.action-text').textContent === label);
-    expect(item('BULLETIN').querySelector('.nav-badge').textContent).toBe('2');
     expect(item('REVIEW').querySelector('.nav-badge').textContent).toBe('5');
     expect(item('REVIEW').querySelector('.nav-badge').classList.contains('is-bobbing')).toBe(true);
-    expect(item('BULLETIN').querySelector('.nav-badge').classList.contains('is-bobbing')).toBe(false);
     // The bob is motion-safe only.
     expect(picoSource).toMatch(/prefers-reduced-motion: no-preference[\s\S]*?\.nav-badge\.is-bobbing/);
   });
@@ -847,7 +841,7 @@ describe('pico-home -- inside the real Desk', { timeout: 60_000 }, () => {
       expect(doc.getElementById('pico-menu-backdrop').hidden).toBe(true);
       doc.querySelector('#pico-home .navbtn[data-nav="LESSONS"]').click();
       down(doc.activeElement);
-      expect(doc.activeElement.textContent).toMatch(/^BULLETIN/);
+      expect(doc.activeElement.textContent).toMatch(/^REVIEW/);
       expect(sendActivityValue).toHaveBeenCalledTimes(1);
     } finally {
       harness.teardown();

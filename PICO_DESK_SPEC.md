@@ -351,11 +351,13 @@ the information is preserved"; a row may not be dropped without the teacher sayi
 | Unit Progress bar | LESSONS |
 | Info bar (session count, year, school) | Schedule |
 | Classroom board, park doors, occupancy, polls, Live Classroom overlays | The floor (**audit** each overlay) |
-| Doge presence menu, challenges, candy, Study Break | Click a cat; challenge alerts still reach every screen (**audit**) |
+| Doge presence menu, challenges, candy, Study Break | The Doge PLAY button at the right of the nav (teacher 2026-10-06): the Desk's own `#doge-presence` node reparented; the challenge alert lives on a body-level top layer so it is clickable over SCHEDULE and the menus |
 | My Ledger | MY GRADE |
 | Class Snapshot | Inside MY GRADE ("See the class"), as today |
-| Bulletin, Review, This Week | LESSONS, each with its existing badge |
-| TI-84 Trainer, AP Stats Quiz, Formula Lab, Formula Defense | LESSONS → Practice |
+| Bulletin, This Week | **Removed from the Pico home** (teacher 2026-10-06: students don't need This Week; the bulletin is being deprecated). Still open on the original Desk |
+| Review | LESSONS, with its badge |
+| TI-84 Trainer, Formula Defense, All Worksheets | LESSONS → PRACTICE (teacher 2026-10-06: exactly these three) |
+| AP Stats Quiz, Formula Lab, Study Guide | Not in the Pico menus; the quiz is reached from each lesson's panel |
 | Start Here, All Worksheets, Study Guide, Phone Launcher | OPTION → Help |
 | Message teacher, unread badge | OPTION → Help, with the badge shown on OPTION |
 | Sign in / out, change password, sound, install app, About | OPTION |

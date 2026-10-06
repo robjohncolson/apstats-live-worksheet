@@ -87,6 +87,30 @@
     '  @keyframes pico-badge-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(4px); } }',
     '}',
     '#pico-home .player { margin-left: auto; font-weight: 700; }',
+    /* The Doge play button (the Desk's #doge-presence, moved here): the sprite at 2x, PLAY under it,
+       a 44x44 target; its dropdown hangs below it, above the week picker. */
+    '#pico-home .doge-slot { display: inline-flex; }',
+    '#pico-home #doge-presence { position: relative; z-index: 6; display: inline-flex; flex-direction: column;',
+    '  align-items: center; justify-content: center; min-width: 44px; min-height: 44px; padding: 2px 6px;',
+    '  line-height: 1; border: 4px solid transparent; cursor: pointer; }',
+    '#pico-home #doge-presence:hover, #pico-home #doge-presence:focus-visible { border-color: var(--orange); outline: none; }',
+    '#pico-home #doge-presence.doge-active { background: none; border-color: var(--orange); }',
+    '#pico-home #doge-presence img { width: 28px; height: 28px; }',
+    '#pico-home #doge-presence .pico-doge-label { font-size: 12px; font-weight: 800; letter-spacing: .06em; margin-top: 2px; }',
+    '#pico-home #doge-presence .doge-badge { top: -2px; right: -2px; width: 18px; height: 18px; line-height: 18px; font-size: 11px; }',
+    '#pico-home #doge-presence .doge-dropdown { top: 100%; right: 0; margin-top: 4px; text-align: left; line-height: 1.35; }',
+    /* An incoming challenge: the Desk breathes doge-gold behind everything (body.challenge-waiting);
+       the Pico home covers the body, so it breathes too. Same timing; still for reduced motion. */
+    '@keyframes pico-challenge-breathe { 0%, 100% { background-color: var(--paper); } 50% { background-color: #C9A227; } }',
+    /* The challenge alert's own top layer (see hoistChallengePanel): clicks pass through except on the panel. */
+    '#pico-doge-layer { position: fixed; inset: 0; z-index: ' + 100005 + '; pointer-events: none; }',
+    '#pico-doge-layer > .doge-challenge-panel { pointer-events: auto; }',
+    /* With SCHEDULE open its dimmed backdrop covers the home, so the backdrop breathes gold too. */
+    '@keyframes pico-challenge-breathe-dim { 0%, 100% { background-color: rgba(0, 0, 64, .45); } 50% { background-color: rgba(201, 162, 39, .75); } }',
+    'html.pico-home.pico-lessons-open body.challenge-waiting #window-wrap { animation: pico-challenge-breathe-dim 1.4s ease-in-out infinite; }',
+    '@media (prefers-reduced-motion: reduce) { html.pico-home.pico-lessons-open body.challenge-waiting #window-wrap { animation: none; background-color: rgba(201, 162, 39, .6); } }',
+    'body.challenge-waiting #pico-home { animation: pico-challenge-breathe 1.4s ease-in-out infinite; }',
+    '@media (prefers-reduced-motion: reduce) { body.challenge-waiting #pico-home { animation: none; background-color: #E7CF75; } }',
     /* Week picker: the main menu carousel inside the recovered window (top bar = unit). */
     '#pico-home .week-b { display: flex; justify-content: center; }',
     '#pico-home .win { position: relative; isolation: isolate; display: flex; flex-direction: column;',
@@ -851,8 +875,8 @@
   function renderNav() {
     byId('pico-player').textContent = playerName() + ' · Period ' + deskPeriod();
     setNavBadge('pico-option-badge', optionBadgeCount(), false);
-    // LESSONS carries the Bulletin (notices soon) and Review (cards due) icon badges.
-    setNavBadge('pico-lessons-badge', bulletinBadge() + reviewBadge(), reviewBobbing());
+    // LESSONS carries the Review icon's badge (cards due) and its bob.
+    setNavBadge('pico-lessons-badge', reviewBadge(), reviewBobbing());
   }
 
   // ── Render: everything ─────────────────────────────────────────────────────
@@ -914,7 +938,7 @@
       if (wrap.style.display !== 'none') return;
       if (!document.documentElement.classList.contains('pico-lessons-open')) return;
       document.documentElement.classList.remove('pico-lessons-open');
-      if (view.lessonsOpener) view.lessonsOpener.focus();
+      if (view.lessonsOpener && !challengeHasFocus()) view.lessonsOpener.focus();
     }).observe(wrap, { attributes: true, attributeFilter: ['style'] });
   }
 
@@ -936,10 +960,6 @@
     if (!badge) return 0;
     var n = parseInt(badge.textContent, 10);
     return n > 0 ? n : 0;
-  }
-
-  function bulletinBadge() {
-    return iconBadgeCount('.app-icon[data-app="bulletin"] .bulletin-soon-badge');
   }
 
   function reviewBadge() {
@@ -984,25 +1004,22 @@
     return items;
   }
 
-  // LESSONS: the routes the desktop icons and the Apps / Go menus give today.
+  // LESSONS (teacher 2026-10-06): the schedule, Review and Practice. The Bulletin (being
+  // deprecated) and This Week are not listed; their Desk openers still exist for the old Desk.
   function lessonsItems() {
     return [
       { label: 'SCHEDULE', run: function () { showLessons(view.menuOpener); } },
-      { label: 'BULLETIN', badge: bulletinBadge(), run: function () { callDesk('openBulletin'); } },
       { label: 'REVIEW', badge: reviewBadge(), bob: reviewBobbing(), run: function () { callDesk('openReview'); } },
-      { label: 'THIS WEEK', run: function () { callDesk('openApp', ['week']); } },
       { label: 'PRACTICE', submenu: 'PRACTICE' },
     ];
   }
 
-  // LESSONS → PRACTICE: the Apps-menu trainers and the Go-menu study links.
+  // LESSONS → PRACTICE (teacher 2026-10-06): the formula deck, the TI-84 trainer and every
+  // worksheet. The quiz is reached from the lesson panel.
   function practiceItems() {
     return [
-      { label: 'TI-84 TRAINER', run: function () { callDesk('openApp', ['ti84']); } },
-      { label: 'AP STATS QUIZ', run: function () { callDesk('openApp', ['quiz']); } },
-      { label: 'FORMULA LAB', run: function () { callDesk('openApp', ['formulas']); } },
       { label: 'FORMULA DEFENSE', run: function () { window.open('https://tmux-trainer.vercel.app/#deck=ap-stats-formulas', '_blank', 'noopener'); } },
-      { label: 'STUDY GUIDE', run: function () { window.open('study_guide_diagnostic.html', '_blank', 'noopener'); } },
+      { label: 'TI-84 TRAINER', run: function () { callDesk('openApp', ['ti84']); } },
       { label: 'ALL WORKSHEETS', run: function () { window.open('TOC.html', '_blank', 'noopener'); } },
       { label: 'BACK', submenu: 'LESSONS' },
     ];
@@ -1215,7 +1232,15 @@
     return fallback;
   }
 
+  // An incoming challenge owns focus (its YES button) until it is answered: a window closing
+  // underneath never pulls focus away from it.
+  function challengeHasFocus() {
+    var layer = byId('pico-doge-layer');
+    return Boolean(layer && layer.contains(document.activeElement));
+  }
+
   function restoreFocus(ref) {
+    if (challengeHasFocus()) return;
     var target = resolveOpener(ref);
     if (target && typeof target.focus === 'function') target.focus();
   }
@@ -1950,6 +1975,7 @@
     '      <li><button type="button" class="navbtn" data-nav="OPTION" aria-haspopup="dialog">OPTION<span class="nav-badge" id="pico-option-badge" hidden></span></button></li>',
     '    </ul></nav>',
     '    <span class="player" id="pico-player"></span>',
+    '    <span class="doge-slot" id="pico-doge-slot"></span>',
     '  </div>',
     '  <section class="week-b" aria-label="Week">',
     '    <div class="win week-win">',
@@ -1990,6 +2016,51 @@
     document.head.appendChild(style);
   }
 
+  // Study Break's Doge (DogePresence): the menu bar's own #doge-presence node — sprite, presence
+  // badge, the "Online Now" / challenge dropdown and the incoming-challenge panel — moved to the
+  // right of the Pico nav, so every behaviour keeps working untouched. Flag on only; it gets a
+  // PLAY label and a keyboard handle (Enter / Space = its own onclick, DogePresence.toggle()).
+  function mountDoge() {
+    var doge = byId('doge-presence');
+    var slot = byId('pico-doge-slot');
+    if (!doge || !slot) return;
+    slot.appendChild(doge);
+    if (!doge.querySelector('.pico-doge-label')) {
+      var label = el('span', 'pico-doge-label', 'PLAY');
+      label.setAttribute('aria-hidden', 'true');
+      doge.appendChild(label);
+    }
+    doge.setAttribute('role', 'button');
+    doge.setAttribute('tabindex', '0');
+    doge.setAttribute('aria-label', 'Play Study Break — who is online, challenges and candy bets');
+    doge.addEventListener('keydown', function (event) {
+      if (event.target !== doge) return;
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      doge.click();
+    });
+    hoistChallengePanel();
+  }
+
+  // The incoming-challenge alert must sit above EVERYTHING that can be open on the Pico home: the
+  // Pico menus (inside #pico-home, z 4), the SCHEDULE window (#window-wrap, z 6), app windows
+  // (250), the lesson panel and Desk dialogs (300-350) and the name finder / QR layers (100001+).
+  // In the nav it would inherit the nav's stacking context, so the panel (only the panel; the
+  // button and its dropdown stay in the nav) lives in its own top layer on <body>. DogePresence
+  // finds it by id, so its timing, buttons and countdown are untouched.
+  var CHALLENGE_LAYER_Z = 100005;
+  function hoistChallengePanel() {
+    var panel = byId('doge-challenge-panel');
+    if (!panel) return;
+    var layer = byId('pico-doge-layer');
+    if (!layer) {
+      layer = el('div');
+      layer.id = 'pico-doge-layer';
+      document.body.appendChild(layer);
+    }
+    layer.appendChild(panel);
+  }
+
   function buildRoot() {
     var root = el('div');
     root.id = 'pico-home';
@@ -2001,6 +2072,7 @@
     byId('pico-crown').appendChild(sprite('crown'));
     byId('pico-sign-post').appendChild(sprite('signPost'));
     byId('pico-menu-close').appendChild(sprite('close', 1));
+    mountDoge();
     // The floor is the REAL board: the existing node moves here, never a second board.
     var board = byId('classroom-board-mount');
     if (board) byId('pico-floor').insertBefore(board, byId('pico-floor').firstChild);
@@ -2064,7 +2136,6 @@
       ['#menu-message-teacher-badge', { childList: true, attributes: true, attributeFilter: ['hidden'] }],
       ['#menu-teacher-inbox-badge', { childList: true, attributes: true, attributeFilter: ['hidden'] }],
       ['#cd-days', { childList: true, subtree: true, characterData: true }],
-      ['.app-icon[data-app="bulletin"]', { childList: true, subtree: true, characterData: true }],
       ['.app-icon[data-app="review"]', { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['class'] }],
     ];
     watch.forEach(function (pair) {
@@ -2308,6 +2379,7 @@
     closeMenu: closeMenu,
     rowStatus: rowStatus,
     framed: FRAMED,
+    challengeLayerZ: CHALLENGE_LAYER_Z,
     frameExempt: FRAME_EXEMPT,
     hasPollReturn: function () { return pollReturn !== null; },
     layoutFloor: layoutFloor,
