@@ -110,7 +110,7 @@ Top to bottom:
 |---|---|---|
 | Lesson, not finished | Open door | Available. Every lesson is open (the gate has returned "unlocked" for all lessons since 2026-09-10) |
 | Lesson, finished | Open door + tick | Complete |
-| Lesson with work that is, or is about to be, a zero | Open door + "!" block | Same rule as today's missing-work corner mark |
+| Lesson with work that has become a zero | Open door + "!" block | Exactly the set today's missing-work corner mark paints (`_paintZeroCells`: landed zeros). Incoming zeros are the sign's job |
 | Progress Check | Flag | Taken in AP Classroom |
 | Work Day | Push block + the words "WORK DAY" | Catch-up day |
 | Break Day / no class for this period / no school | Lying-down cat + "z z z" + the words "NO CLASS" | Nothing scheduled. It does **not** mean nothing is due |
@@ -239,6 +239,79 @@ earliest; only the teacher sees them.
 - **Ready for review when:** the page is built, the test passes, and an independent review is green.
 - **Approved when:** the teacher has looked at all three states at classroom size and says so. Only
   that approval starts Phase 1.
+
+### Phase 1 — the live home (approved 2026-10-05, teacher: "finish up to phase 3")
+
+The Phase 0 page stays as the static sketch. The live home is a **second view inside the Desk
+file**, so it calls the Desk's own functions and never re-derives a rule. Its code lives in a new
+`pico-home.js` (+ CSS inside it or a `pico-home.css`), loaded by the Desk like `classroom-board.js`
+and stamped by `scripts/bump-build.mjs` (add it to the asset list there). The Desk file change is
+a mount element, the script tag, the flag check, and one View-menu item.
+
+- **Flag, opt-in only.** `?home=park` in the URL, or localStorage `apstats-pico-home = '1'`. The
+  View menu gets `Pico Desk (live)…` which sets the flag and reloads. The Pico home's OPTION has
+  `Use Original Desk`, which clears it and reloads. Nobody's default changes. The flag check runs
+  before first paint (a class on `<html>`), so there is no flash of the System 7 chrome.
+- **When on:** the menu bar, desktop icons, and the main window are hidden (not removed: their
+  functions still run, and modals/dialogs still open on top). The Pico home root fills the page in
+  the Phase 0 stage-select layout, plain text, with no preview controls.
+- **Shared data, by reference to the Desk's own state:** the schedule (`S`, `cP`, `tdy()`), labels
+  (`cedLabel` / `groupLabel`, same text as the calendar cell), completion (`localLessonState(topic,
+  marks)` with the same marks rCal reads), next-up (the same `_nextUpTopic` rCal computes; expose
+  it rather than recomputing), today, the missing/zero set `_paintZeroCells` uses, the Do Now
+  (`renderDoNow` output), the official grade pill, teacher flag (`_deskIsTeacher`), sign-in
+  (`getStudentEmail`). If a value only exists inside rCal's closure, expose it on a small
+  `window.DeskState` object from the existing code path with a one-line assignment — do not copy
+  the computation.
+- **Week strip:** this week (Mon–Fri of today's week; before/after the school year, clamp to the
+  first/last week), five tiles per the Day vocabulary, `◁ ▷` paging over the schedule's weeks with
+  `(n/m)`, TODAY returns. Tile click/Enter calls the same handler the calendar cell calls
+  (`maybeBumpThenOpen(inf, ds)` for lessons; orientation/baseline/PC/review open what they open
+  today). In Phase 1 the resource panel that opens is the existing one, unstyled — Phase 2
+  restyles it.
+- **Sign:** the Do Now's current message, the official quarter grade, the "Open" button wired to
+  the Do Now's own primary action (`_focusTodayLessonVideo` / `_menuShowDoNow`), the "!" block when
+  the Do Now is in its zeros-soon / zeros-now state, "See all missing work" → `openWallet()`.
+  Signed out → sign-in button (`openSignInModal`). Grade unavailable → the Do Now's status text.
+- **Nav:** TODAY (this week), LESSONS (shows the existing calendar window over the home, i.e.
+  `restoreWindow()`; close returns), MY GRADE (`openWallet()`), OPTION (a Pico menu list: Sign
+  in/out, Change password, Sound, Period B/E, Message teacher, How grades work, Start Here, Use
+  Original Desk; teacher only: Teacher workspace, Teacher Inbox, DOK ladders, Preview as student).
+  Badges that exist today (teacher inbox, message) show on OPTION.
+- **Floor:** reparent the existing `#classroom-board-mount` node into the Pico floor so the board,
+  cats, park doors, and Live Classroom overlays are the real ones. Never a second board.
+- **Tests:** a jsdom test that the flag shows/hides the chrome, five tiles render from a fixture
+  schedule with the same labels the calendar gives, tile click reaches `maybeBumpThenOpen`, the sign
+  mirrors the Do Now, OPTION lists the items, and that with the flag OFF nothing about the Desk's
+  DOM changes (snapshot the menu bar + window markup before/after the script loads).
+- **Must not:** change any existing function's behaviour, touch rCal's body, add network calls the
+  Desk does not already make, or show anything to a student without the flag.
+
+### Phase 2 — lesson panel + My Grade (approved 2026-10-05)
+
+- **Lesson panel:** when the flag is on, the resource panel opens inside the recovered window
+  (title bar = day + date, ✕ + Esc close, focus returns). Its list = the lesson's real actions in the
+  order the resource panel lists them today (video, follow-along, quiz, Blooket, flashcards,
+  calculator skill, AI tutor copy), each a real link/button wired to the same handlers; the orange
+  outline is the selection, the coloured triangle the recommendation (first not-done action).
+  Details under the list: the row data the resource panel and the cell tooltip show today (status,
+  score, due date, 2x, day grade, poll results). Nothing the resource panel shows today may be
+  dropped; a row with no Pico home moves to a "More" fold at the bottom.
+- **My Grade:** `openWallet()` content rendered inside the recovered window with the home's type
+  scale (official grade large at the top, then the ledger's own sections in their existing order).
+  Wrap, don't rewrite: the ledger's DOM is produced by the existing code and restyled by CSS
+  scoped under the Pico root. Teacher's view-as behaviour unchanged.
+- **Tests:** panel lists every resource-panel action for a fixture lesson; Esc/focus; My Grade
+  renders the same text nodes with and without the flag.
+
+### Phase 3 — remaining windows (approved 2026-10-05)
+
+Every other window and dialog opened from the Pico home (Bulletin, Review, Class Snapshot, This
+Week, Study Break, Teacher workspace/inbox, chat, sign-in/sign-up, grade help, About) opens inside
+a plain Pico frame: the recovered window with the dialog's existing content unchanged inside,
+scoped CSS only (fonts, borders, buttons). No content redesign in Phase 3 — that waits for usage
+data. The System 7 `showDialog` alerts get the same frame. Tests: each opener produces a `.pico-win`
+ancestor with the flag on and none with it off.
 
 ## Usage report (runs alongside, separate build)
 

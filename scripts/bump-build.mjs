@@ -31,7 +31,7 @@ desk = desk.replace(re, `$1${stamp}$2`);
 // The old worker may still control the first navigation after a deployment.
 // Version the entry scripts too, so cache-first cannot pair new HTML with an
 // old three-door board that never imports the current calculator room.
-for (const asset of ['canvas_engine.js', 'sprite_sheet.js', 'classroom-board.js']) {
+for (const asset of ['canvas_engine.js', 'sprite_sheet.js', 'classroom-board.js', 'pico-home.js']) {
   const escaped = asset.replaceAll('.', '\\.');
   const script = new RegExp('src="' + escaped + '(?:\\?v=[^"<>]*)?"', 'g');
   const matches = desk.match(script) || [];
