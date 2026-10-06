@@ -84,6 +84,9 @@ async function boot(flagOn) {
   // jsdom has no Web Audio; Study Break's sound engine only needs an object to hold.
   harness.window.AudioContext = function () { return { state: 'running', resume() {}, currentTime: 0 }; };
   closeEverything(harness.window, harness.document);
+  // These suites check where focus goes back for a KEYBOARD user (Tab marks one); a pointer
+  // user gets nothing focused instead (tests/pico-home-keys.test.js).
+  harness.document.body.dispatchEvent(new harness.window.KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
   return harness;
 }
 

@@ -40,6 +40,11 @@ async function boot(flagOn) {
   if (typeof harness.window.closeNameFinder === 'function') harness.window.closeNameFinder();
   await harness.waitFor(() => harness.document.querySelector('#donow-grades .qpill:not(.qpill-missing) .qgrade'),
     { message: 'Do Now grade pill did not render' });
+  // These suites check where focus goes back for a KEYBOARD user (Tab marks one); a pointer
+  // user gets nothing focused instead (tests/pico-home-keys.test.js).
+  harness.document.body.dispatchEvent(new harness.window.KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
+  // Tab also suspends hover (a key was pressed); a real mouse move wakes it again, as in a browser.
+  harness.document.body.dispatchEvent(new harness.window.MouseEvent('mousemove', { bubbles: true, clientX: 1, clientY: 1 }));
   return harness;
 }
 

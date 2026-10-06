@@ -127,7 +127,7 @@ describe('Pico stage select -- outlines', { timeout: 90_000 }, () => {
     }
   });
 
-  it('keyboard arrows move the selection at once (no dwell), focus follows', async () => {
+  it('keyboard arrows never move the selection (they belong to the cat); focus stays put', async () => {
     const harness = await boot();
     try {
       const { document: doc, window: win } = harness;
@@ -136,9 +136,10 @@ describe('Pico stage select -- outlines', { timeout: 90_000 }, () => {
       list[a].focus();
       key(win, list[a], 'ArrowRight');
       const b = (a + 1) % list.length;
-      expect(list[b].classList.contains('is-selected')).toBe(true);
-      expect(doc.activeElement).toBe(list[b]);
-      expect(actives(doc)).toEqual([list[b]]);
+      expect(list[a].classList.contains('is-selected')).toBe(true);
+      expect(list[b].classList.contains('is-selected')).toBe(false);
+      expect(doc.activeElement).toBe(list[a]);
+      expect(actives(doc)).toEqual([list[a]]);
     } finally {
       harness.teardown();
     }
@@ -182,7 +183,7 @@ describe('Pico stage select -- review fixes', { timeout: 90_000 }, () => {
     }
   });
 
-  it('a key pressed during a hover dwell wins: the selection follows the key, the dwell never applies', async () => {
+  it('a key pressed during a hover dwell cancels it; the pointer stays suspended until it really moves', async () => {
     const harness = await boot();
     try {
       const { document: doc, window: win } = harness;
@@ -191,30 +192,28 @@ describe('Pico stage select -- review fixes', { timeout: 90_000 }, () => {
       const b = (a + 2) % list.length;
       list[b].dispatchEvent(new win.MouseEvent('mouseenter'));   // hover B (pointer stays there)
       await wait(60);
-      key(win, doc.activeElement, 'ArrowRight');
-      const c = (a + 1) % list.length;
-      expect(list[c].classList.contains('is-selected')).toBe(true);
+      key(win, doc.activeElement, 'ArrowRight');                 // a key (for the cat) cancels the dwell
       await wait(250);   // well past the dwell
-      expect(list[c].classList.contains('is-selected')).toBe(true);
+      expect(list[a].classList.contains('is-selected')).toBe(true);
       expect(list[b].classList.contains('is-selected')).toBe(false);
-      expect(actives(doc)).toEqual([list[c]]);
-      // The pointer never left B. A zero-delta mousemove (the page moving under a still pointer)
-      // keeps the pointer suspended: B is not selected.
-      const move = (x, y) => list[b].dispatchEvent(new win.MouseEvent('mousemove', { bubbles: true, clientX: x, clientY: y }));
-      move(40, 40);   // the first move is a real one: arms B …
-      await wait(250);
-      expect(list[b].classList.contains('is-selected')).toBe(true);   // … so B is selected without leaving
-      key(win, doc.activeElement, 'ArrowRight');                       // suspend again
-      const d = (b + 1) % list.length;
-      expect(list[d].classList.contains('is-selected')).toBe(true);
-      move(40, 40);   // zero delta: still suspended
-      await wait(250);
-      expect(list[d].classList.contains('is-selected')).toBe(true);
-      expect(list[b].classList.contains('is-selected')).toBe(false);
-      move(44, 41);   // a real move inside B: the dwell is armed as if B had just been entered
+      expect(actives(doc)).toEqual([list[a]]);
+      // The pointer never left B. The first move is a real one: it arms B as if just entered.
+      const move = (node, x, y) => node.dispatchEvent(new win.MouseEvent('mousemove', { bubbles: true, clientX: x, clientY: y }));
+      move(list[b], 40, 40);
       expect(list[b].classList.contains('is-selected')).toBe(false);   // still a dwell, not instant
       await wait(250);
       expect(list[b].classList.contains('is-selected')).toBe(true);
+      // Another key suspends the pointer again: entering a tile does not arm it, and a
+      // zero-delta mousemove (the page moving under a still pointer) does not count as a move.
+      key(win, doc.activeElement, 'ArrowRight');
+      const d = (b + 1) % list.length;
+      list[d].dispatchEvent(new win.MouseEvent('mouseenter'));
+      move(list[d], 40, 40);
+      await wait(250);
+      expect(list[d].classList.contains('is-selected')).toBe(false);
+      move(list[d], 44, 41);   // a real move inside D: armed now
+      await wait(250);
+      expect(list[d].classList.contains('is-selected')).toBe(true);
     } finally {
       harness.teardown();
     }
@@ -246,6 +245,7 @@ describe('Pico stage select -- review fixes', { timeout: 90_000 }, () => {
       const { document: doc, window: win } = harness;
       const index = win.PicoHome.days().findIndex((d) => d.kind === 'lesson');
       const original = tiles(doc)[index];
+      key(win, doc.body, 'Tab');   // a keyboard user: focus comes back to the opener on close
       original.focus();
       original.click();
       await wait(100);

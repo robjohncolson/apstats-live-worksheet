@@ -543,9 +543,10 @@ describe('pico-home -- navigation and OPTION', () => {
     expect(spies.openWallet).toHaveBeenCalledTimes(1);
   });
 
-  it('OPTION lists the student items; Esc closes it and focus returns to OPTION', () => {
+  it('OPTION lists the student items; Esc closes it and focus returns to OPTION (keyboard user)', () => {
     const { doc, win } = createDesk();
     loadPico(win);
+    doc.body.dispatchEvent(new win.KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));   // keyboard use
     const optionBtn = doc.querySelector('#pico-home .navbtn[data-nav="OPTION"]');
     optionBtn.click();
     expect(doc.getElementById('pico-menu-backdrop').hidden).toBe(false);
@@ -555,15 +556,19 @@ describe('pico-home -- navigation and OPTION', () => {
     expect(doc.activeElement).toBe(optionBtn);
   });
 
-  it('keys inside OPTION and the tiles stay there (the board document keys never see them)', () => {
+  it('keys inside OPTION stay there (the board never sees them); keys on a tile pass straight through', () => {
     const { doc, win } = createDesk();
     loadPico(win);
+    doc.body.dispatchEvent(new win.KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));   // keyboard use
     const seen = [];
     doc.addEventListener('keydown', (event) => seen.push(event.key));
     const tile = doc.querySelectorAll('#pico-tiles .tile')[0];
     tile.focus();
     tile.dispatchEvent(new win.KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
-    expect(doc.activeElement).toBe(doc.querySelectorAll('#pico-tiles .tile')[1]);
+    // No arrow navigation on the strip (teacher 2026-10-06): the key reaches the board untouched.
+    expect(doc.activeElement).toBe(tile);
+    expect(seen).toEqual(['ArrowRight']);
+    seen.length = 0;
     const optionBtn = doc.querySelector('#pico-home .navbtn[data-nav="OPTION"]');
     optionBtn.click();
     const first = doc.activeElement;

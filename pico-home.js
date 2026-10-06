@@ -226,21 +226,6 @@
     '#pico-home .floor.is-veiled #classroom-board-mount { visibility: hidden; }',
     '#pico-home .floor:not(.has-board) { height: 16px; }',
     '#pico-home .floor-band { position: absolute; left: 0; right: 0; bottom: 0; height: 16px; background: var(--orange); }',
-    /* The mode hint (teacher 2026-10-06, after the badge felt busy): one faint grey line at the
-       floor's left edge, just above the floor band's top (crop) line, so it never covers the room's
-       PICO PARK label, the door or the cats. It shows only for a moment after each mode change
-       (showModeHint); it is not a control. Reduced motion: no fade, same time on screen. */
-    '#pico-home .scene > .mode-hint { margin-top: auto; align-self: flex-start; margin-left: calc(50% - 50vw + 16px);',
-    '  min-height: 20px; line-height: 20px; padding-bottom: 4px; font-size: 13px; font-weight: 600; color: #6b6b7e;',
-    '  pointer-events: none; user-select: none; opacity: 0; }',
-    '#pico-home .scene > .mode-hint + .floor { margin-top: 0; }',
-    '#pico-home .mode-hint.is-shown { opacity: 1; }',
-    '@media (prefers-reduced-motion: no-preference) {',
-    '  #pico-home .mode-hint { transition: opacity .3s ease; }',
-    '}',
-    /* The board canvas is focused in PLAY only. PLAY is shown by the absence of any orange
-       outline, so the browser's own focus line around the whole room is not drawn either. */
-    '#pico-home #pico-floor canvas:focus { outline: none; }',
     /* Under the board, the floor band continues the room's floor block (which is only as wide as
        the room) to both page edges: same orange, same top edge (--pico-floor-block, layoutFloor). */
     '#pico-home .floor.has-board .floor-band { z-index: 0; height: var(--pico-floor-block, 50px); }',
@@ -781,7 +766,6 @@
 
   function refreshActive() {
     if (hoverHeld && !document.contains(hoverHeld)) hoverHeld = null;
-    if (mode === 'play' && !hoverHeld && !outlineTarget(document.activeElement)) { setActive(null); return; }
     setActive(hoverHeld || restingOutline());
   }
 
@@ -1013,8 +997,6 @@
     selectTile(keep, hadFocus);
   }
 
-  // (Arrow keys on the strip are handled by the MENU mode: see onMenuModeKey / moveTileSelection.)
-
   // ── Render: the sign (mirrors the Do Now card) ────────────────────────────
   function doNowLines() {
     var msg = byId('donow-msg');
@@ -1232,16 +1214,8 @@
       if (!document.documentElement.classList.contains('pico-lessons-open')) return;
       document.documentElement.classList.remove('pico-lessons-open');
       if (challengeHasFocus()) return;
-      if (mode === 'play') { focusPlay(); return; }
-      if (view.lessonsOpener) view.lessonsOpener.focus();
+      giveBackFocus(view.lessonsOpener);
     }).observe(wrap, { attributes: true, attributeFilter: ['style'] });
-  }
-
-  // The SCHEDULE window (#window-wrap, shown by LESSONS → SCHEDULE) is open.
-  function scheduleOpen() {
-    var wrap = byId('window-wrap');
-    if (!wrap || wrap.style.display === 'none') return false;
-    return document.documentElement.classList.contains('pico-lessons-open');
   }
 
   // True when a Desk dialog or app window is showing, so Esc belongs to it.
@@ -1417,8 +1391,7 @@
     if (backdrop.hidden) return;
     backdrop.hidden = true;
     if (returnFocus === false) return;
-    if (mode === 'play') { focusPlay(); return; }
-    if (view.menuOpener) view.menuOpener.focus();
+    giveBackFocus(view.menuOpener);
   }
 
   // Keys inside an open menu: Esc closes, Up/Down move the selection, Tab stays inside the
@@ -1445,113 +1418,51 @@
 
   var GAME_KEYS = { ArrowUp: 1, ArrowDown: 1, ArrowLeft: 1, ArrowRight: 1, ' ': 1, Spacebar: 1 };
 
-  // ── MENU / PLAY modes (teacher 2026-10-06, after "it kicked me out" in Preview-as-student) ──
-  // Two explicit modes:
-  //   MENU (on load): the keyboard drives the home. Arrows / Home / End move the lesson selection,
-  //     Enter opens the selected tile, Left / Right on the week picker page weeks. No game key
-  //     reaches the board, and the board canvas never holds focus.
-  //   PLAY: every key goes to the game untouched (arrows, numbers, Enter, Space, Tab …) except
-  //     Esc, which returns to MENU. Pico controls are blurred and the board canvas is focused.
-  //     PLAY is shown by the ABSENCE of any orange outline (the strip keeps only its static green
-  //     selection), never by a mark on the cat.
-  // Into PLAY: a press on the floor, the Doge PLAY button, or the board expanding for a game or a
-  // whole-class moment. Back to MENU: Esc, or a press on anything above the floor (that element
-  // takes the outline). Each change shows a short faint hint above the floor (showModeHint) and is
-  // announced to screen readers. While a Pico menu, the lesson panel or a framed window is open the
-  // mode does not matter (they own their keys); closing returns to the mode that was active. Tab
-  // is never intercepted by the modes.
-  var mode = 'menu';
-  var MODE_HINT_MS = 2500;
-  var MODE_HINT_TEXT = {
-    play: 'arrows move your cat · Esc for the menu',
-    menu: 'arrows pick a lesson · click the floor to play',
-  };
-  var hintTimer = null;
+  // ── Focus belongs to the game unless the student is on the keyboard ──────────
+  // Teacher 2026-10-06: "no keystroke input for lesson picker, all keystrokes go to the cat." The
+  // classroom board listens on the document, so any key not taken by an open Pico menu or the
+  // lesson panel reaches the cat. Pico code never leaves focus parked on a tile, nav button or
+  // menu for a student who did not get there by keyboard: Tab marks a keyboard user, a pointer
+  // press clears the mark. When a window or menu closes, a keyboard user gets focus back on its
+  // opener; anyone else gets nothing focused (the page body), so the next arrow moves the cat.
+  var keyboardUser = false;
 
-  function setMode(next, options) {
-    if (next !== 'menu' && next !== 'play') return;
-    var changed = next !== mode;
-    mode = next;
-    var root = byId('pico-home');
-    if (root) root.setAttribute('data-pico-mode', mode);
-    if (changed) showModeHint();
-    if (mode === 'play') {
-      cancelDwells();
-      hoverHeld = null;
-      if (!(options && options.keepFocus)) focusPlay();
-    } else {
-      releaseFloorFocus(changed);
-    }
-    if (changed || mode === 'menu') refreshActive();
+  function noteKeyboardUser(event) {
+    if (event.key === 'Tab') keyboardUser = true;
   }
 
-  // The hint line fades in above the floor and out again after MODE_HINT_MS (CSS skips the fade
-  // under reduced motion). The polite live region names the new mode for screen readers.
-  function showModeHint() {
-    var hint = byId('pico-mode-hint');
-    var live = byId('pico-mode-live');
-    if (live) live.textContent = mode === 'play' ? 'Play mode' : 'Menu mode';
-    if (!hint) return;
-    hint.textContent = MODE_HINT_TEXT[mode];
-    hint.classList.add('is-shown');
-    if (hintTimer) clearTimeout(hintTimer);
-    hintTimer = setTimeout(function () {
-      hintTimer = null;
-      hint.classList.remove('is-shown');
-    }, MODE_HINT_MS);
-  }
-
-  // MENU: nothing inside the floor keeps focus (the canvas, a park door's button, a result
-  // control), so no key can reach the board. Coming back from PLAY with nothing else focused,
-  // focus lands on the selected tile, which takes the outline.
-  function releaseFloorFocus(leavingPlay) {
-    var active = document.activeElement;
-    var floor = byId('pico-floor');
-    if (active && floor && floor.contains(active) && typeof active.blur === 'function') active.blur();
-    if (!leavingPlay) return;
-    if (document.activeElement && document.activeElement !== document.body) return;
-    var tile = document.querySelectorAll('#pico-tiles .tile')[view.selected];
-    if (!tile) return;
-    try { tile.focus({ preventScroll: true }); } catch (_) { tile.focus(); }
-  }
-
-  // PLAY focus: Pico controls let go, the board canvas takes the keys' focus (it is made
-  // focusable with tabindex -1 in Pico mode only; the board listens on the document either way).
-  function focusPlay() {
-    var active = document.activeElement;
-    if (active && active !== document.body && active.closest && !active.closest('#pico-floor') && typeof active.blur === 'function') {
-      active.blur();
-    }
-    var canvas = boardCanvas();
-    if (!canvas) return;
-    if (!canvas.hasAttribute('tabindex')) canvas.setAttribute('tabindex', '-1');
-    try { canvas.focus({ preventScroll: true }); } catch (_) { canvas.focus(); }
-  }
-
-  // A press above the floor (nav, picker, sign, tiles) returns to MENU; a press on the floor or the
-  // Doge enters PLAY.
-  function onModePointer(event) {
+  // Any pointer press ends keyboard use. A press on the floor also lets go of whatever Pico
+  // control holds focus, so the keys that follow reach the board.
+  function onPointerPress(event) {
+    keyboardUser = false;
     var target = event.target;
-    if (!target || !target.closest || !target.closest('#pico-home')) return;
-    if (target.closest('#pico-menu-backdrop')) return;
-    if (target.closest('#pico-floor') || target.closest('#doge-presence')) {
-      if (mode !== 'play') setMode('play');
-      else focusPlay();
+    if (!target || !target.closest || !target.closest('#pico-floor')) return;
+    var active = document.activeElement;
+    if (!active || active === document.body || !active.closest || !active.closest('#pico-home')) return;
+    if (active.closest('#pico-floor')) return;
+    if (typeof active.blur === 'function') active.blur();
+  }
+
+  // A real pointer click on a Pico button (tile, nav, week arrow, sign) would leave the browser's
+  // focus on it, and the next Space or Enter would press it again instead of reaching the cat.
+  // After the click has done its work, a button that still holds focus lets go. Keyboard
+  // activations (click detail 0) and keyboard users keep their focus.
+  function onPointerClick(event) {
+    if (keyboardUser || !event.detail) return;
+    var target = event.target;
+    var control = target && target.closest ? target.closest('#pico-home button, #pico-home [role="button"]') : null;
+    if (!control || control.closest('#pico-floor') || control.closest('#pico-menu-backdrop')) return;
+    if (document.activeElement === control) control.blur();
+  }
+
+  // After a window or menu closes: back to its opener for a keyboard user; otherwise let go.
+  function giveBackFocus(opener) {
+    if (keyboardUser && opener && typeof opener.focus === 'function' && document.contains(opener)) {
+      opener.focus();
       return;
     }
-    if (mode === 'play') setMode('menu');
-  }
-
-  // A Desk window (lesson panel, ledger, SCHEDULE, app window, dialog) or the challenge alert is
-  // up: it owns Esc and the other keys, so the modes stand aside.
-  function deskWindowOpen() {
-    if (isPanelOpen() || challengeHasFocus() || scheduleOpen()) return true;
-    var nodes = document.querySelectorAll(DESK_MODALS);
-    for (var i = 0; i < nodes.length; i += 1) {
-      if (nodes[i].closest('#pico-home')) continue;
-      if (isShown(nodes[i])) return true;
-    }
-    return false;
+    var active = document.activeElement;
+    if (active && active !== document.body && typeof active.blur === 'function') active.blur();
   }
 
   // Typing targets keep every key: inputs, textareas, selects, contenteditable, iframes.
@@ -1562,25 +1473,17 @@
   }
 
   // One capture-phase listener on window runs before every Desk key handler (window comes before
-  // document on the capture path). WHAT IT SWALLOWS (the complete list):
+  // document on the capture path). WHAT IT TAKES (the complete list; every other key, on any
+  // target, passes through untouched to the Desk and the classroom board — the week strip, the
+  // week picker and the sign have no key handling of their own; a focused tile is a plain button):
   //   1. A Pico menu (OPTION / LESSONS / PRACTICE) is open: Esc (closes it), Up / Down (move its
-  //      selection), Tab (kept inside the menu's own buttons — the menu's focus trap, not a mode),
-  //      and Enter / Space / the other arrows (stopped, so none reaches the game). Taken from the
-  //      menu itself or from the page body / the floor. A Desk dialog on top keeps its keys.
-  //   2. The lesson panel (#resource-overlay), when no Desk dialog is above it: Esc (closes it),
-  //      Up / Down (move along its list), and the other arrows / Space (stopped only).
-  //   3. PLAY mode: Esc only (back to MENU), and not while a Desk window (SCHEDULE included) is up,
-  //      since that window's own Esc closes it first. Every other key passes untouched.
-  //   4. MENU mode, from the page body or a Pico control, with no Desk window up:
-  //      Arrows / Home / End (week picker: Left / Right page the week; otherwise they move the
-  //      tile selection), Space (stopped from the game; a focused button keeps its own Space), and
-  //      Enter from the page body (opens the selected tile; a focused button keeps its own Enter).
-  //      Enter / Space on the Doge enter PLAY and pass on to the Doge. A key from a focused floor
-  //      control: Enter / Space enter PLAY; any other key lets go of the floor and is stopped.
-  // Tab is never intercepted outside an open Pico menu. Other capture listeners
-  // (onKeyboardMove, noteFloorInput) only observe.
-  var MENU_MOVE_KEYS = { ArrowUp: 1, ArrowDown: 1, ArrowLeft: 1, ArrowRight: 1, Home: 1, End: 1 };
-
+  //      selection), Tab (kept inside the menu's own buttons — its focus trap), and Enter / Space /
+  //      the other arrows (stopped, so none reaches the game). Taken from the menu itself or from
+  //      the page body / the floor. A Desk dialog on top keeps its keys.
+  //   2. The lesson panel (#resource-overlay), from inside it, when no Desk dialog is above it:
+  //      Esc (closes it), Up / Down (move along its action list), and the other arrows / Space
+  //      (stopped only).
+  // Other capture listeners (onKeyboardMove, noteFloorInput, noteKeyboardUser) only observe.
   function onCaptureKey(event) {
     var target = event.target;
     if (isEditable(target)) return;
@@ -1600,73 +1503,6 @@
       if (onPanelKey(event) || GAME_KEYS[event.key]) event.stopPropagation();
       return;
     }
-    if (mode === 'play') {
-      if (event.key !== 'Escape' || deskWindowOpen()) return;
-      event.preventDefault();
-      event.stopPropagation();
-      setMode('menu');
-      return;
-    }
-    onMenuModeKey(event, target, inPico, onPage);
-  }
-
-  function onMenuModeKey(event, target, inPico, onPage) {
-    if (!inPico && !onPage) return;
-    if (deskWindowOpen()) return;
-    var isPress = event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar';
-    // The Doge is a way into PLAY: Enter / Space switch modes first, then reach the Doge's own
-    // key handler untouched (it opens its dropdown, which keeps the focus).
-    if (isPress && target.closest && target.closest('#doge-presence')) {
-      setMode('play', { keepFocus: true });
-      return;
-    }
-    // Focus inside the floor while MENU shows (Tab reached a door button): Enter / Space on it
-    // enter PLAY and the button activates as usual; any other key lets go of the floor first and
-    // is handled as if from the page, so it never reaches the board in MENU.
-    if (inPico && target.closest('#pico-floor')) {
-      if (event.key === 'Tab' || event.key === 'Escape') return;
-      if (isPress) { setMode('play', { keepFocus: true }); return; }
-      event.stopPropagation();
-      releaseFloorFocus(false);
-      target = document.body;
-      onPage = true;
-    }
-    var onButton = !onPage && target.closest('button, a, [role="button"]');
-    if (MENU_MOVE_KEYS[event.key]) {
-      event.preventDefault();
-      event.stopPropagation();
-      if (target.closest && target.closest('.carousel')) {
-        if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') goWeek(event.key === 'ArrowRight' ? 1 : -1);
-        return;
-      }
-      moveTileSelection(event.key, target);
-      return;
-    }
-    if (event.key === ' ' || event.key === 'Spacebar') {
-      if (!onButton) event.preventDefault();
-      event.stopPropagation();
-      return;
-    }
-    if (event.key === 'Enter' && onPage) {
-      event.preventDefault();
-      event.stopPropagation();
-      var tile = document.querySelectorAll('#pico-tiles .tile')[view.selected];
-      if (tile) tile.click();
-    }
-  }
-
-  function moveTileSelection(key, target) {
-    var count = document.querySelectorAll('#pico-tiles .tile').length;
-    if (!count) return;
-    var index = view.selected;
-    if (key === 'ArrowRight' || key === 'ArrowDown') index += 1;
-    if (key === 'ArrowLeft' || key === 'ArrowUp') index -= 1;
-    if (key === 'Home') index = 0;
-    if (key === 'End') index = count - 1;
-    if ((key === 'Home' || key === 'End') && index === view.selected) return;
-    // Focus follows only when it is already on the strip; from the page body the outline moves.
-    var onStrip = Boolean(target && target.closest && target.closest('#pico-tiles'));
-    selectTile(index, onStrip);
   }
 
   // ── Phase 2: the Desk's lesson panel and ledger inside recovered Pico windows ──
@@ -1728,13 +1564,11 @@
     return Boolean(layer && layer.contains(document.activeElement));
   }
 
-  // Focus after a window closes follows the mode that was active: PLAY gives it back to the
-  // game (never to a tile, so arrows keep moving the cat); MENU returns it to the opener.
+  // Focus after a window closes: its opener for a keyboard user, nothing otherwise
+  // (giveBackFocus). An incoming challenge keeps the focus it has.
   function restoreFocus(ref) {
     if (challengeHasFocus()) return;
-    if (mode === 'play') { focusPlay(); return; }
-    var target = resolveOpener(ref);
-    if (target && typeof target.focus === 'function') target.focus();
+    giveBackFocus(resolveOpener(ref));
   }
 
   // ── Which modal is on top ───────────────────────────────────────────────────
@@ -2497,9 +2331,7 @@
     '    <span id="pico-sign-post"></span>',
     '  </section>',
     '  <ol class="tiles" id="pico-tiles" aria-label="This week"></ol>',
-    '  <div class="mode-hint" id="pico-mode-hint" aria-hidden="true"></div>',
     '  <div class="floor" id="pico-floor"><div class="floor-band"></div></div>',
-    '  <div class="sr-only" id="pico-mode-live" aria-live="polite"></div>',
     '</div>',
     '<div class="backdrop" id="pico-menu-backdrop" hidden>',
     '  <section class="win option-win" id="pico-menu" role="dialog" aria-modal="true" aria-labelledby="pico-menu-title">',
@@ -2598,7 +2430,10 @@
       if (event.target === event.currentTarget) closeMenu();
     });
     window.addEventListener('keydown', onCaptureKey, true);
-    window.addEventListener('mousedown', onModePointer, true);
+    window.addEventListener('keydown', noteKeyboardUser, true);
+    window.addEventListener('pointerdown', onPointerPress, true);
+    window.addEventListener('mousedown', onPointerPress, true);
+    window.addEventListener('click', onPointerClick);
     // Esc closes the SCHEDULE window when no Desk dialog is on top of it.
     document.addEventListener('keydown', function (event) {
       if (event.key !== 'Escape' || event.defaultPrevented) return;
@@ -2799,10 +2634,6 @@
   var scrollClaim = false;
 
   function onExpand(mount) {
-    // A game or a whole-class moment on the floor: the keys belong to it now (unless a Pico
-    // menu or window is up, which keeps its focus; the mode still flips for when it closes).
-    // The panel's own poll-results step-aside (pollReturn) is not a game: it keeps the mode.
-    if (mode !== 'play' && !pollReturn) setMode('play', { keepFocus: isMenuOpen() || deskWindowOpen() });
     scrollClaim = floorArmed;
     floorArmed = false;
     scrollMemo = null;
@@ -2958,7 +2789,6 @@
     setupFrames();
     watchFloor();
     watchOutlines();
-    setMode('menu');
     render();
   }
 
@@ -2970,8 +2800,6 @@
     closeMenu: closeMenu,
     rowStatus: rowStatus,
     framed: FRAMED,
-    mode: function () { return mode; },
-    setMode: setMode,
     outlineStats: outlineStats,
     whiteOutTiming: { fade: WHITEOUT_FADE_MS, hold: WHITEOUT_HOLD_MS, dwell: HOVER_DWELL_MS },
     challengeLayerZ: CHALLENGE_LAYER_Z,
