@@ -301,6 +301,7 @@ describe('Phase 2 -- review fixes', { timeout: 90_000 }, () => {
       const a = rows.findIndex((row) => row.contains(doc.activeElement));
       const b = (a + 1) % rows.length;
       rows[b].dispatchEvent(new win.MouseEvent('mouseenter'));
+      await new Promise((r) => setTimeout(r, 220));   // the hover dwell (160 ms)
       expect(rows[b].classList.contains('is-selected')).toBe(true);
       expect(rows[b].contains(doc.activeElement)).toBe(true);
       expect(rows[a].contains(doc.activeElement)).toBe(false);
@@ -312,11 +313,15 @@ describe('Phase 2 -- review fixes', { timeout: 90_000 }, () => {
       expect(clicked).toEqual([b]);
 
       // A secondary control inside the hovered row keeps focus (e.g. the AP Classroom fallback link).
-      const withSecondary = rows.find((row) => row.querySelectorAll('a').length > 1);
+      // The click above (recordLinkVisit) re-renders the panel; let it settle and re-read the rows.
+      await new Promise((r) => setTimeout(r, 220));
+      const withSecondary = picoRows(doc).find((row) => row.querySelectorAll('a').length > 1);
       if (withSecondary) {
         const secondary = withSecondary.querySelectorAll('a')[1];
         secondary.focus();
         withSecondary.dispatchEvent(new win.MouseEvent('mouseenter'));
+        await new Promise((r) => setTimeout(r, 220));   // the hover dwell (160 ms)
+        expect(secondary.isConnected).toBe(true);
         expect(doc.activeElement).toBe(secondary);
       }
     } finally {
@@ -487,6 +492,7 @@ describe('Phase 2 -- review fixes', { timeout: 90_000 }, () => {
       const original = control.focus;
       control.focus = function (options) { calls.push(options); return original.call(this, options); };
       rows[b].dispatchEvent(new win.MouseEvent('mouseenter'));
+      await new Promise((r) => setTimeout(r, 220));   // the hover dwell (160 ms)
       expect(calls).toEqual([{ preventScroll: true }]);
       key(win, doc.activeElement, 'ArrowUp');
       control.focus = original;

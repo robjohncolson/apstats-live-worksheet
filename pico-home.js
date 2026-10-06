@@ -53,6 +53,10 @@
   var MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
   var MONTH_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
+  // Every element that can carry the selection outline (see the Outlines CSS and setActive).
+  var PICO_FRAME_SELECTORS = ['#pico-home .tile', '#pico-home .action', '#pico-home .navbtn', '#pico-home #doge-presence',
+    'html.pico-home #resource-body .pico-row'];
+
   // ── Styles (Phase 0 sketch CSS, scoped under #pico-home) ──────────────────
   var CSS = [
     '#pico-home {',
@@ -76,8 +80,7 @@
     '#pico-home .navbtn { position: relative; min-height: 44px; min-width: 44px; padding: 0 10px;',
     '  background: none; border: 4px solid transparent; cursor: pointer;',
     '  font-size: 18px; font-weight: 800; letter-spacing: .04em; white-space: nowrap; }',
-    '#pico-home .navbtn[aria-current="page"] { border-color: var(--orange); }',
-    '#pico-home .navbtn:hover, #pico-home .navbtn:focus-visible { border-color: var(--orange); outline: none; }',
+    '#pico-home .navbtn:focus-visible { outline: none; }',
     '#pico-home .nav-badge { display: inline-block; min-width: 20px; margin-left: 6px; padding: 0 5px;',
     '  border-radius: 10px; background: #cc0000; color: #fff; font-size: 13px; line-height: 20px; text-align: center; }',
     '#pico-home .nav-badge[hidden] { display: none; }',
@@ -93,8 +96,8 @@
     '#pico-home #doge-presence { position: relative; z-index: 6; display: inline-flex; flex-direction: column;',
     '  align-items: center; justify-content: center; min-width: 44px; min-height: 44px; padding: 2px 6px;',
     '  line-height: 1; border: 4px solid transparent; cursor: pointer; }',
-    '#pico-home #doge-presence:hover, #pico-home #doge-presence:focus-visible { border-color: var(--orange); outline: none; }',
-    '#pico-home #doge-presence.doge-active { background: none; border-color: var(--orange); }',
+    '#pico-home #doge-presence:focus-visible { outline: none; }',
+    '#pico-home #doge-presence.doge-active { background: none; }',
     '#pico-home #doge-presence img { width: 28px; height: 28px; }',
     '#pico-home #doge-presence .pico-doge-label { font-size: 12px; font-weight: 800; letter-spacing: .06em; margin-top: 2px; }',
     '#pico-home #doge-presence .doge-badge { top: -2px; right: -2px; width: 18px; height: 18px; line-height: 18px; font-size: 11px; }',
@@ -177,11 +180,37 @@
     '#pico-home .tile-name { font-size: 17px; line-height: 1.3; min-height: 2.6em; margin-top: 4px; max-width: 100%;',
     '  overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }',
     '#pico-home .tiles .continue { position: absolute; left: -30px; top: 72px; }',
-    '#pico-home .tile.is-selected, #pico-home .action.is-selected { border-color: var(--orange);',
+    /* Outlines (teacher 2026-10-06: "too many orange boxes"). Exactly ONE active outline: the element
+       with focus (or the hovered one, after the hover dwell): orange, and it breathes like the game's
+       stage-select box (the frame only, transform only). Every other "current" marker — the selected
+       tile or row when focus is elsewhere, TODAY's page marker, the Doge while its menu is open — is
+       static green #3DA35D (hue ~140, across the wheel from the orange #FF864D, hue ~20, at a similar
+       weight, so the two read as a pair). The frame is a ::after with the sheet's stepped corners. */
+    '#pico-home .tile, #pico-home .action { position: relative; }',
+    '#pico-home .tile, #pico-home .action, html.pico-home #resource-body .pico-row { --frame-w: 6px; }',
+    '#pico-home .navbtn, #pico-home #doge-presence { --frame-w: 4px; }',
+    PICO_FRAME_SELECTORS.map(function (sel) { return sel + '.is-active::after'; }).join(', ') + ', ' +
+    PICO_FRAME_SELECTORS.map(function (sel) { return sel + '.pico-green::after'; }).join(', ') + ' {',
+    '  content: ""; position: absolute; inset: calc(-1 * var(--frame-w)); border: var(--frame-w) solid var(--frame-colour);',
+    '  pointer-events: none; transform-origin: 50% 50%; box-sizing: border-box;',
     '  clip-path: polygon(4px 0, calc(100% - 4px) 0, calc(100% - 4px) 2px, calc(100% - 2px) 2px, calc(100% - 2px) 4px, 100% 4px,',
     '    100% calc(100% - 4px), calc(100% - 2px) calc(100% - 4px), calc(100% - 2px) calc(100% - 2px),',
     '    calc(100% - 4px) calc(100% - 2px), calc(100% - 4px) 100%, 4px 100%, 4px calc(100% - 2px),',
     '    2px calc(100% - 2px), 2px calc(100% - 4px), 0 calc(100% - 4px), 0 4px, 2px 4px, 2px 2px, 4px 2px); }',
+    PICO_FRAME_SELECTORS.map(function (sel) { return sel + '.pico-green'; }).join(', ') + ' { --frame-colour: #3DA35D; }',
+    PICO_FRAME_SELECTORS.map(function (sel) { return sel + '.is-active'; }).join(', ') + ' { --frame-colour: var(--orange, #FF864D); }',
+    '@keyframes pico-select-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.04); } }',
+    '@media (prefers-reduced-motion: no-preference) {',
+    '  ' + PICO_FRAME_SELECTORS.map(function (sel) { return sel + '.is-active::after'; }).join(', ') +
+    ' { animation: pico-select-pulse 1.2s ease-in-out infinite; will-change: transform; }',
+    '  #pico-home.pico-whiteout .is-active::after { animation: none; }',
+    '}',
+    /* Stage select → level: the rest of the home fades to white around the chosen tile (or the sign),
+       then the lesson panel opens over the white page. pointer-events are untouched. */
+    '#pico-home .scene > *, #pico-home .tiles > li { transition: opacity 180ms ease-out; }',
+    '#pico-home.pico-whiteout .scene > :not(.tiles):not(.pico-chosen), #pico-home.pico-whiteout .tiles > li:not(.pico-chosen) {',
+    '  opacity: .08; transition-duration: 220ms; }',
+    '@media (prefers-reduced-motion: reduce) { #pico-home .scene > *, #pico-home .tiles > li { transition: none; } }',
     /* The floor: the REAL classroom board (#classroom-board-mount, reparented here) IS the page's
        bottom edge. It spans the whole page width with no box of its own (the board paints no
        background in its room; the page's white shows through), its ground line is the page's
@@ -191,10 +220,15 @@
     '#pico-home .scene > .floor { flex: none; margin-top: auto; position: relative; overflow: hidden;',
     '  width: 100vw; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); }',
     '#pico-home .floor #classroom-board-mount { position: absolute !important; left: 0; right: 0; bottom: 0;',
-    '  width: 100% !important; max-width: none !important; margin: 0 !important; }',
+    '  width: 100% !important; max-width: none !important; margin: 0 !important; z-index: 1; }',
+    /* Loading veil: until the room (or a whole-class scene) is up, the board's contents stay hidden,
+       so its cream presence strip never flashes in first; only the orange floor line shows. */
+    '#pico-home .floor.is-veiled #classroom-board-mount { visibility: hidden; }',
     '#pico-home .floor:not(.has-board) { height: 16px; }',
     '#pico-home .floor-band { position: absolute; left: 0; right: 0; bottom: 0; height: 16px; background: var(--orange); }',
-    '#pico-home .floor.has-board .floor-band { display: none; }',
+    /* Under the board, the floor band continues the room's floor block (which is only as wide as
+       the room) to both page edges: same orange, same top edge (--pico-floor-block, layoutFloor). */
+    '#pico-home .floor.has-board .floor-band { z-index: 0; height: var(--pico-floor-block, 50px); }',
     /* The board's pull-down result screen holds a width:100% chart canvas (320x160 intrinsic); at
        page width that chart alone would be ~700 px tall and push the question, stepper and close
        button out of the board. Cap the chart (2:1, centred) at 320 px or the board height minus the
@@ -268,7 +302,8 @@
     'html.pico-home .pico-frame .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;',
     '  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }',
     /* Lesson panel. */
-    'html.pico-home #resource-overlay.pico-lesson { background: rgba(0, 0, 64, .45); }',
+    /* The lesson panel sits over the whitened home (stage select → level), not a grey dim. */
+    'html.pico-home #resource-overlay.pico-lesson { background: rgba(255, 255, 255, .92); }',
     'html.pico-home #resource-overlay.pico-lesson .pico-frame { display: flex; flex-direction: column;',
     '  width: min(640px, calc(100vw - 32px)) !important;',
     '  max-width: none !important; max-height: calc(100vh - 32px); }',
@@ -284,11 +319,7 @@
     'html.pico-home #resource-body .pico-list-head .chicago { font: inherit !important; text-transform: uppercase; }',
     'html.pico-home #resource-body .pico-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px;',
     '  min-height: 52px; margin: 2px 0 !important; padding: 4px 10px; border: 6px solid transparent; }',
-    'html.pico-home #resource-body .pico-row.is-selected { border-color: var(--orange);',
-    '  clip-path: polygon(4px 0, calc(100% - 4px) 0, calc(100% - 4px) 2px, calc(100% - 2px) 2px, calc(100% - 2px) 4px, 100% 4px,',
-    '    100% calc(100% - 4px), calc(100% - 2px) calc(100% - 4px), calc(100% - 2px) calc(100% - 2px),',
-    '    calc(100% - 4px) calc(100% - 2px), calc(100% - 4px) 100%, 4px 100%, 4px calc(100% - 2px),',
-    '    2px calc(100% - 2px), 2px calc(100% - 4px), 0 calc(100% - 4px), 0 4px, 2px 4px, 2px 2px, 4px 2px); }',
+    'html.pico-home #resource-body .pico-row { position: relative; }',
     'html.pico-home #resource-body .pico-row > a { font-size: 18px; font-weight: 800; color: var(--ink) !important;',
     '  min-height: 44px; display: inline-flex; align-items: center; }',
     'html.pico-home #resource-body .pico-row a:focus-visible, html.pico-home #resource-body .pico-row button:focus-visible {',
@@ -591,8 +622,17 @@
     var c = sentinels();
     var inf = day.inf;
     if (!isClickable(inf, c)) return;
+    var chosen = opener && opener.closest ? opener.closest('li') : null;
+    // The opener's stable identity (the tile's date) is taken NOW: a re-render during the fade
+    // replaces the tile node, and a detached node no longer resolves to its date.
+    var ref = openerRef(opener);
+    whiteOutThen(chosen, function () { openDayNow(day, ref); });
+  }
+
+  function openDayNow(day, ref) {
+    var inf = day.inf;
     cancelPollReturn();
-    notePanelSource('tile', opener, day);
+    notePanelSourceRef('tile', ref, day);
     if (isLessonCell(inf) && isLocked(day)) {
       var prev = previousTopic(day);
       callDesk('_showLessonLockedDialog', [inf.t, prev, day.ds]);
@@ -601,6 +641,244 @@
     if (inf.kind === 'orientation') { callDesk('openGradeHelp'); return; }
     if (inf.kind === 'baseline') { callDesk('_openBaselineInfo'); return; }
     callDesk('maybeBumpThenOpen', [inf, day.ds]);
+  }
+
+  // ── Stage select → level (the game's level-select animation, applied to the week strip) ──
+  // The chosen tile (or the sign) stays at full strength while the rest of the home fades to white
+  // (220 ms), holds for 120 ms, then the lesson opens — 340 ms in all, inside the 350 ms budget.
+  // Reduced motion: the white state is set at once and the lesson opens straight away. One open at
+  // a time: activations during the fade are ignored. The page stays white while the panel is open
+  // and fades back in when it closes (onPanelClosed); if what opened was not the panel (a dialog,
+  // the speed bump), the white is cleared at once.
+  var WHITEOUT_FADE_MS = 220;
+  var WHITEOUT_HOLD_MS = 120;
+  var whiteOutPending = false;
+
+  function prefersReducedMotion() {
+    try { return Boolean(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches); } catch (_) { return false; }
+  }
+
+  function startWhiteOut(chosen) {
+    var root = byId('pico-home');
+    if (!root) return;
+    Array.prototype.forEach.call(root.querySelectorAll('.pico-chosen'), function (node) { node.classList.remove('pico-chosen'); });
+    if (chosen) chosen.classList.add('pico-chosen');
+    root.classList.add('pico-whiteout');
+  }
+
+  function ensureWhiteOut() {
+    var root = byId('pico-home');
+    if (root && !root.classList.contains('pico-whiteout')) startWhiteOut(null);
+  }
+
+  function clearWhiteOut() {
+    var root = byId('pico-home');
+    if (!root || !root.classList.contains('pico-whiteout')) return;
+    root.classList.remove('pico-whiteout');
+    Array.prototype.forEach.call(root.querySelectorAll('.pico-chosen'), function (node) { node.classList.remove('pico-chosen'); });
+  }
+
+  function whiteOutThen(chosen, open) {
+    if (whiteOutPending) return;
+    startWhiteOut(chosen);
+    function run() {
+      whiteOutPending = false;
+      open();
+      if (!isPanelOpen()) clearWhiteOut();
+    }
+    if (prefersReducedMotion()) { run(); return; }
+    whiteOutPending = true;
+    setTimeout(run, WHITEOUT_FADE_MS + WHITEOUT_HOLD_MS);
+  }
+
+  // ── One active outline ───────────────────────────────────────────────────────
+  // The active outline belongs to the element with focus inside the Pico home or the lesson panel;
+  // a pointer resting on a nav item or the Doge (at once) or on a tile / row (after the dwell) takes
+  // it while it stays there; otherwise the current selection (open menu row, panel row, else tile)
+  // holds it. Every other current marker is green.
+  var OUTLINE_TARGETS = '.tile, .navbtn, .action, .pico-row, #doge-presence';
+  var HOVER_DWELL_MS = 160;
+  var activeOutline = null;
+  var hoverHeld = null;
+
+  function outlineTarget(node) {
+    if (!node || node.nodeType !== 1 || !node.closest) return null;
+    var target = node.closest(OUTLINE_TARGETS);
+    if (!target) return null;
+    if (target.closest('#pico-home') || target.closest('#resource-body')) return target;
+    return null;
+  }
+
+  function restingOutline() {
+    var focused = outlineTarget(document.activeElement);
+    if (focused) return focused;
+    if (byId('pico-menu-backdrop') && !byId('pico-menu-backdrop').hidden) return document.querySelector('#pico-menu-list .action.is-selected');
+    if (isPanelOpen()) return document.querySelector('#resource-body .pico-row.is-selected');
+    return document.querySelector('#pico-tiles .tile.is-selected');
+  }
+
+  // Classes are written only when they change: classList.add / remove rewrite the class attribute
+  // even when nothing changes, and the Doge's class observer (watchOutlines) would see its own
+  // writes and loop forever.
+  function setClass(node, name, on) {
+    if (node.classList.contains(name) !== on) node.classList.toggle(name, on);
+  }
+
+  function setActive(node) {
+    if (activeOutline && activeOutline !== node) setClass(activeOutline, 'is-active', false);
+    activeOutline = node || null;
+    if (activeOutline) setClass(activeOutline, 'is-active', true);
+    paintGreens();
+  }
+
+  // Green = a current marker that is not the active one.
+  var outlineStats = { dogeCallbacks: 0, greenPaints: 0 };   // read by tests/pico-home-stage.test.js
+  var paintingGreens = false;
+  function paintGreens() {
+    if (paintingGreens) return;
+    paintingGreens = true;
+    outlineStats.greenPaints += 1;
+    try {
+      var marks = Array.prototype.slice.call(document.querySelectorAll('#pico-home .tile.is-selected, #pico-home .action.is-selected, '
+        + '#resource-body .pico-row.is-selected, #pico-home .navbtn[aria-current="page"], #pico-home #doge-presence.doge-active'));
+      var green = marks.filter(function (node) { return node !== activeOutline; });
+      Array.prototype.forEach.call(document.querySelectorAll('.pico-green'), function (node) {
+        if (green.indexOf(node) < 0) setClass(node, 'pico-green', false);
+      });
+      green.forEach(function (node) { setClass(node, 'pico-green', true); });
+    } finally {
+      paintingGreens = false;
+    }
+  }
+
+  // The Doge observer reacts only to the Doge's own open state (doge-active), never to the
+  // outline classes this file writes.
+  var lastDogeActive = null;
+  function onDogeClass() {
+    outlineStats.dogeCallbacks += 1;
+    var doge = byId('doge-presence');
+    if (!doge) return;
+    var activeNow = doge.classList.contains('doge-active');
+    if (activeNow === lastDogeActive) return;
+    lastDogeActive = activeNow;
+    paintGreens();
+  }
+
+  function refreshActive() {
+    if (hoverHeld && !document.contains(hoverHeld)) hoverHeld = null;
+    setActive(hoverHeld || restingOutline());
+  }
+
+  // Tiles and rows take the selection only after the pointer has rested HOVER_DWELL_MS; leaving
+  // first cancels it. Keyboard moves never wait, and they win: a key that moves the selection
+  // cancels every pending dwell and drops the pointer's hold until the mouse really moves again
+  // (a mouseenter caused by the page moving under a still pointer does not count). A re-render
+  // (tiles, menu rows, panel rows rebuilt) cancels pending dwells too. When a dwell fires it
+  // re-checks: the node is still in the page, the pointer is still on it, no key moved since.
+  var pendingDwells = [];
+  var keyMoves = 0;
+  var pointerSuspended = false;
+  var POINTER_MOVE_KEYS = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End', 'PageUp', 'PageDown', 'Tab'];
+
+  function cancelDwells() {
+    pendingDwells.forEach(function (timer) { clearTimeout(timer); });
+    pendingDwells = [];
+  }
+
+  function onKeyboardMove(event) {
+    if (POINTER_MOVE_KEYS.indexOf(event.key) < 0) return;
+    cancelDwells();
+    keyMoves += 1;
+    pointerSuspended = true;
+    if (!hoverHeld) return;
+    hoverHeld = null;
+    refreshActive();
+  }
+
+  // A real mouse move (a position change; a zero-delta mousemove, e.g. one a browser sends when
+  // the page moves under a still pointer, does not count) ends the suspension and arms the hover
+  // for whatever the pointer is over, as if it had just been entered (the pointer may never leave
+  // the tile it was resting on when the key was pressed).
+  var lastPointer = null;
+  var pointerArms = typeof WeakMap === 'function' ? new WeakMap() : null;
+
+  function onPointerMove(event) {
+    var x = event.clientX, y = event.clientY;
+    var moved = !lastPointer || lastPointer.x !== x || lastPointer.y !== y;
+    lastPointer = { x: x, y: y };
+    if (!moved || !pointerSuspended) return;
+    pointerSuspended = false;
+    var node = event.target && event.target.nodeType === 1 ? event.target : null;
+    for (; node && pointerArms; node = node.parentElement) {
+      var arm = pointerArms.get(node);
+      if (arm) { arm(); return; }
+    }
+  }
+
+  function hoverDwell(node, select) {
+    var timer = null;
+    var pointerOn = false;
+    function drop() {
+      if (timer === null) return;
+      clearTimeout(timer);
+      pendingDwells = pendingDwells.filter(function (t) { return t !== timer; });
+      timer = null;
+    }
+    function arm() {
+      pointerOn = true;
+      drop();
+      if (pointerSuspended) return;
+      var armedAt = keyMoves;
+      timer = setTimeout(function () {
+        pendingDwells = pendingDwells.filter(function (t) { return t !== timer; });
+        timer = null;
+        if (!node.isConnected || !pointerOn || keyMoves !== armedAt || pointerSuspended) return;
+        hoverHeld = node;
+        select();
+        refreshActive();
+      }, HOVER_DWELL_MS);
+      pendingDwells.push(timer);
+    }
+    if (pointerArms) pointerArms.set(node, arm);
+    node.addEventListener('mouseenter', arm);
+    node.addEventListener('mouseleave', function () {
+      pointerOn = false;
+      drop();
+      if (hoverHeld !== node) return;
+      hoverHeld = null;
+      refreshActive();
+    });
+  }
+
+  // Nav items and the Doge take the outline at once while the pointer is on them.
+  function hoverNow(node) {
+    function arm() {
+      if (pointerSuspended) return;
+      hoverHeld = node;
+      refreshActive();
+    }
+    if (pointerArms) pointerArms.set(node, arm);
+    node.addEventListener('mouseenter', arm);
+    node.addEventListener('mouseleave', function () { if (hoverHeld === node) { hoverHeld = null; refreshActive(); } });
+  }
+
+  function watchOutlines() {
+    document.querySelectorAll('#pico-home .navbtn').forEach(hoverNow);
+    var doge = byId('doge-presence');
+    if (doge && doge.closest('#pico-home')) hoverNow(doge);
+    document.addEventListener('focusin', refreshActive);
+    window.addEventListener('keydown', onKeyboardMove, true);
+    window.addEventListener('mousemove', onPointerMove, true);
+    document.addEventListener('focusout', function () { setTimeout(refreshActive, 0); });
+    if (typeof MutationObserver === 'function') {
+      // TODAY's page marker and the Doge menu's open state change outside our selection code.
+      new MutationObserver(paintGreens).observe(byId('pico-home'), { subtree: true, attributes: true, attributeFilter: ['aria-current'] });
+      if (doge) {
+        lastDogeActive = doge.classList.contains('doge-active');
+        new MutationObserver(onDogeClass).observe(doge, { attributes: true, attributeFilter: ['class'] });
+      }
+    }
+    refreshActive();
   }
 
   function previousTopic(day) {
@@ -685,11 +963,13 @@
     view.selected = (index + buttons.length) % buttons.length;
     buttons.forEach(function (btn, i) { btn.classList.toggle('is-selected', i === view.selected); });
     if (moveFocus && document.activeElement !== buttons[view.selected]) buttons[view.selected].focus();
+    refreshActive();
   }
 
   function renderTiles(days) {
     var list = byId('pico-tiles');
     var hadFocus = list.contains(document.activeElement);
+    cancelDwells();
     list.textContent = '';
     days.forEach(function (day, i) {
       var item = el('li');
@@ -709,7 +989,7 @@
       btn.addEventListener('dblclick', function (event) { event.preventDefault(); openDayGrade(day); });
       btn.addEventListener('contextmenu', function (event) { event.preventDefault(); openDayGrade(day); });
       btn.addEventListener('focus', function () { selectTile(i, false); });
-      btn.addEventListener('mouseenter', function () { selectTile(i, false); });
+      hoverDwell(btn, function () { selectTile(i, false); });
       item.appendChild(btn);
       list.appendChild(item);
     });
@@ -771,8 +1051,12 @@
     var todayInf = deskState().todayLessonInf;
     if (todayInf == null) { try { todayInf = _todayLessonInf; } catch (_) { todayInf = null; } }
     if (todayInf) {
-      notePanelSource('sign', byId('pico-sign-go'));
-      callDesk('_focusTodayLessonVideo');
+      var sign = document.querySelector('#pico-home .scene > .sign');
+      var ref = openerRef(byId('pico-sign-go'));   // identity now, not after the fade
+      whiteOutThen(sign, function () {
+        notePanelSourceRef('sign', ref);
+        callDesk('_focusTodayLessonVideo');
+      });
       return;
     }
     showLessons(byId('pico-sign-go'));
@@ -1042,6 +1326,7 @@
     buttons.forEach(function (btn, j) { btn.classList.toggle('is-selected', j === i); });
     view.menuSelected = i;
     if (moveFocus) buttons[i].focus();
+    refreshActive();
   }
 
   function itemBadge(item) {
@@ -1055,6 +1340,7 @@
     byId('pico-menu-title').textContent = menu.title;
     var list = byId('pico-menu-list');
     list.setAttribute('aria-label', menu.title);
+    cancelDwells();
     list.textContent = '';
     var index = 0;
     menu.items().forEach(function (item) {
@@ -1072,7 +1358,7 @@
       if (item.badge) btn.appendChild(itemBadge(item));
       btn.addEventListener('click', function () { runMenuItem(item, myIndex); });
       btn.addEventListener('focus', function () { selectMenuItem(myIndex, false); });
-      btn.addEventListener('mouseenter', function () { selectMenuItem(myIndex, false); });
+      hoverDwell(btn, function () { selectMenuItem(myIndex, false); });
       li.appendChild(btn);
       list.appendChild(li);
     });
@@ -1194,8 +1480,12 @@
   // How the panel was opened: a Pico tile (title = its weekday + date) or the sign (title = the
   // lesson label). Anything else looks the date up in the schedule.
   function notePanelSource(kind, opener, day) {
+    notePanelSourceRef(kind, openerRef(opener), day);
+  }
+
+  function notePanelSourceRef(kind, ref, day) {
     view.panel.source = { kind: kind, day: day || null };
-    view.panel.opener = openerRef(opener);
+    view.panel.opener = ref;
   }
 
   // Openers are remembered by a stable identity, not the node: renderTiles / renderSign replace
@@ -1381,6 +1671,7 @@
   function decoratePanel() {
     var body = byId('resource-body');
     if (!body || body.querySelector(':scope > .pico-lesson-list')) return false;
+    cancelDwells();   // the rows are being rebuilt
     var list = el('ol', 'pico-lesson-list');
     list.setAttribute('aria-label', 'Activities');
     var more = el('details', 'pico-more');
@@ -1448,6 +1739,7 @@
     var i = (index + rows.length) % rows.length;
     rows.forEach(function (row, j) { row.classList.toggle('is-selected', j === i); });
     view.panel.selected = i;
+    refreshActive();
     if (!moveFocus) return;
     if (rows[i].contains(document.activeElement)) return;
     if (isEditable(document.activeElement)) return;
@@ -1458,7 +1750,7 @@
   function wirePanelRows() {
     panelRows().forEach(function (row, i) {
       row.addEventListener('focusin', function () { selectPanelRow(i, false); });
-      row.addEventListener('mouseenter', function () { selectPanelRow(i, true, true); });
+      hoverDwell(row, function () { selectPanelRow(i, true, true); });
     });
   }
 
@@ -1593,6 +1885,9 @@
     var opening = !view.panel.open;
     view.panel.open = true;
     if (opening) cancelPollReturn();
+    // The page stays white behind the lesson panel however it was opened (a Desk path that opens
+    // it after a tick, the LESSONS menu); a tile / sign open has already whitened it around its pick.
+    if (opening) ensureWhiteOut();
     if (opening && !view.panel.opener) view.panel.opener = openerRef(document.activeElement);
     var fresh = decoratePanel();
     byId('pico-lesson-bar').textContent = panelTitle();
@@ -1611,6 +1906,7 @@
   }
 
   function onPanelClosed() {
+    clearWhiteOut();
     if (!view.panel.open) return;
     view.panel.open = false;
     view.panel.selected = null;
@@ -1735,6 +2031,7 @@
       var open = isWalletOpen();
       if (open && !wasOpen) {
         cancelPollReturn();
+        cancelScrollClaim();
         if (!view.walletOpener) view.walletOpener = openerRef(document.activeElement);
         renderGradeHead();
         close.focus();
@@ -1942,6 +2239,7 @@
     frameAll();
     // Any activation inside the Pico home (nav, sign, tiles) is a possible opener.
     byId('pico-home').addEventListener('click', function (event) {
+      if (event.target && event.target.closest && event.target.closest('.navbtn, .tile, .action, .sign-go, .sign-grade, #doge-presence')) cancelScrollClaim();
       var control = event.target && event.target.closest && event.target.closest('button');
       if (control && !control.closest('#pico-menu-backdrop')) notePendingOpener(openerRef(control));
     }, true);
@@ -2156,6 +2454,10 @@
   // Nothing here re-derives a rule: it only reads those signals and sizes the window onto it.
   var BOARD_FLOOR_H = 50;             // the board's floor block under the ground line (both scenes)
   var ROOM_WORLD_W = 720;             // calculator-room WORLD.width (scale = min(1, width / 720))
+  var ROOM_WORLD_FLOOR = 700;         // calculator-mission WORLD.floor: the block's top, in world px
+  // The loading veil lifts on its own after this long, so a board that never mounts the room
+  // (e.g. a teacher who cannot play the park) still shows its presence strip.
+  var VEIL_MAX_MS = 6000;
   // Tallest idle thing standing on the room's floor: the "PICO PARK" door label, drawn at
   // WORLD.floor - 70 (calculator-room.mjs drawScenery), plus a little air. The room's teaching
   // text above it (WORLD.floor - 96 and higher) is cropped while idle.
@@ -2192,8 +2494,27 @@
   }
 
   // A game, a whole-class moment, or a result is showing above the board's floor.
+  // The board's current park scene and the calculator room's own view of the local player.
+  function parkScene() {
+    try {
+      var handle = window._classroomBoardHandle;
+      return handle && typeof handle.getParkScene === 'function' ? handle.getParkScene() : null;
+    } catch (_) { return null; }
+  }
+
+  // The player stands in the calculator zone (calculator-room.mjs getView: playerX >= entranceX).
+  // While students gather there is no round yet, but the keypad and "PUSH THE BLOCK HERE TO
+  // START" are above the idle band, so the floor shows the whole room (it never scrolls for this).
+  function inCalculatorZone() {
+    var scene = parkScene();
+    if (!scene || scene.kind !== 'calculator' || typeof scene.getView !== 'function') return false;
+    var roomView = scene.getView();
+    return Boolean(roomView && typeof roomView.playerX === 'number' && roomView.playerX >= roomView.entranceX);
+  }
+
   function boardPlaying(mount) {
     if (mount.hasAttribute('data-calculator-participating') || mount.hasAttribute('data-park-active')) return true;
+    if (inCalculatorZone()) return true;
     if (resultScreenDown(mount)) return true;
     if (wholeClassBusy()) return true;
     return shownDomChild(mount, '[data-classroom-poll-votes]');
@@ -2231,8 +2552,15 @@
     if (onFloor || onPage) floorArmed = true;
   }
 
+  // The student's own game: their park / campaign door, or their calculator round. Participation
+  // counts only with real round state from the relay (the room's getState()) and never for the
+  // teacher, who spectates (teacher report 2026-10-06: walking to the keypad is not a round).
   function studentGameSignal(mount) {
-    return mount.hasAttribute('data-calculator-participating') || mount.hasAttribute('data-park-active');
+    if (mount.hasAttribute('data-park-active')) return true;
+    if (!mount.hasAttribute('data-calculator-participating')) return false;
+    if (callDesk('_deskIsTeacher') === true) return false;
+    var scene = parkScene();
+    return Boolean(scene && typeof scene.getState === 'function' && scene.getState());
   }
 
   function broadcastSignal(mount) {
@@ -2251,17 +2579,36 @@
 
   function onRootScroll() {
     if (monotonicNow() < ignoreScrollUntil) return;
+    scrollClaim = false;   // the student scrolled: a pending claim may no longer move the page
     if (scrollMemo) userScrolled = true;
   }
 
+  // Anything else the student opens (nav, tile, menu, My Grade …) ends a pending claim too.
+  function cancelScrollClaim() {
+    scrollClaim = false;
+  }
+
   // Expanding: scroll the room in only for the student's own game.
+  // The round's state arrives a moment after the room expands (join → first calculator_state), so a
+  // student-started expansion keeps its claim open until the cause is known (claimScroll).
+  var scrollClaim = false;
+
   function onExpand(mount) {
-    var root = byId('pico-home');
-    var owned = floorArmed && studentGameSignal(mount) && !broadcastSignal(mount);
+    scrollClaim = floorArmed;
     floorArmed = false;
     scrollMemo = null;
     userScrolled = false;
-    if (!root || !owned) return;
+    claimScroll(mount);
+  }
+
+  // Scroll the room in once the expansion turns out to be the student's own game (no broadcast).
+  function claimScroll(mount) {
+    var root = byId('pico-home');
+    if (!root || !scrollClaim || scrollMemo) return;
+    // A whole-class cause took over the expansion: the claim is void, not just postponed.
+    if (broadcastSignal(mount)) { scrollClaim = false; return; }
+    if (!studentGameSignal(mount)) return;
+    scrollClaim = false;
     var before = root.scrollTop;
     setRootScroll(root, root.scrollHeight);
     scrollMemo = { before: before };
@@ -2270,6 +2617,7 @@
   // Collapsing: decided BEFORE the floor shrinks (the browser clamps the scroll position as the
   // page gets shorter). Returns the position to restore, or null to leave the page alone.
   function takeScrollRestore() {
+    scrollClaim = false;
     var memo = scrollMemo;
     scrollMemo = null;
     var scrolled = userScrolled;
@@ -2282,9 +2630,34 @@
     return parseFloat(canvas.style.height) || canvas.offsetHeight || 0;
   }
 
+  // The board is showing something worth seeing: the room, a park level, or a whole-class scene.
+  function boardSceneUp(mount) {
+    if (mount.hasAttribute('data-calculator-active') || mount.hasAttribute('data-park-active')) return true;
+    return boardPlaying(mount);
+  }
+
+  // Loading veil: from the moment the board has nothing but its presence strip to show (first
+  // load, or the gap while the room remounts after a whole-class scene) until the scene is up or
+  // VEIL_MAX_MS has passed.
+  var veilSince = null;
+  function floorVeiled(mount) {
+    if (boardSceneUp(mount)) { veilSince = null; return false; }
+    if (veilSince === null) veilSince = monotonicNow();
+    return monotonicNow() - veilSince < VEIL_MAX_MS;
+  }
+
+  // The orange floor block's height at the bottom of the canvas: the room's (scaled; its top edge
+  // is WORLD.floor) or the strip's (BOARD_FLOOR_H at groundY = height - 50).
+  function floorBlockHeight(mount, canvas, roomScene) {
+    if (!roomScene) return BOARD_FLOOR_H;
+    var scale = Math.min(1, (mount.clientWidth || ROOM_WORLD_W) / ROOM_WORLD_W);
+    var block = canvasHeight(canvas) - ROOM_WORLD_FLOOR * scale;
+    return block > 0 ? block : BOARD_FLOOR_H * scale;
+  }
+
   // The idle band: floor block + the tallest idle thing, at the scene's own scale.
-  function idleBandHeight(mount) {
-    if (!mount.hasAttribute('data-calculator-active')) return STRIP_IDLE_HEADROOM + BOARD_FLOOR_H;
+  function idleBandHeight(mount, veiled) {
+    if (!veiled && !mount.hasAttribute('data-calculator-active')) return STRIP_IDLE_HEADROOM + BOARD_FLOOR_H;
     var width = mount.clientWidth || ROOM_WORLD_W;
     var scale = Math.min(1, width / ROOM_WORLD_W);
     return Math.round((ROOM_IDLE_HEADROOM + BOARD_FLOOR_H) * scale);
@@ -2302,14 +2675,20 @@
     if (canvas && !hadBoard) setTimeout(function () { window.dispatchEvent(new Event('resize')); }, 0);
     if (!canvas) {
       floor.style.height = '';
+      floor.classList.remove('is-veiled');
       view.boardPlaying = false;
       return;
     }
+    var veiled = floorVeiled(mount);
+    view.floorVeiled = veiled;
+    floor.classList.toggle('is-veiled', veiled);
+    var roomScene = veiled || mount.hasAttribute('data-calculator-active');
+    floor.style.setProperty('--pico-floor-block', floorBlockHeight(mount, canvas, roomScene) + 'px');
     var playing = boardPlaying(mount);
     var changing = playing !== Boolean(view.boardPlaying);
     // Ownership of a collapse is read before the floor shrinks.
     var restoreTo = (changing && !playing) ? takeScrollRestore() : null;
-    var height = playing ? expandedHeight(mount, canvas) : Math.min(canvasHeight(canvas), idleBandHeight(mount));
+    var height = playing ? expandedHeight(mount, canvas) : Math.min(canvasHeight(canvas), idleBandHeight(mount, veiled));
     if (floor.style.height !== height + 'px') {
       quietScroll();
       floor.style.height = height + 'px';
@@ -2354,7 +2733,8 @@
       if (document.visibilityState === 'hidden') return;   // paused while the tab is hidden
       var board = byId('classroom-board-mount');
       if (!board || !boardCanvas()) return;
-      if (boardPlaying(board) !== Boolean(view.boardPlaying)) layoutFloor();
+      if (boardPlaying(board) !== Boolean(view.boardPlaying) || floorVeiled(board) !== Boolean(view.floorVeiled)) layoutFloor();
+      else if (view.boardPlaying) claimScroll(board);   // a round's state may arrive after the expansion
     }, 300);
     layoutFloor();
   }
@@ -2368,6 +2748,7 @@
     setupMyGrade();
     setupFrames();
     watchFloor();
+    watchOutlines();
     render();
   }
 
@@ -2379,12 +2760,14 @@
     closeMenu: closeMenu,
     rowStatus: rowStatus,
     framed: FRAMED,
+    outlineStats: outlineStats,
+    whiteOutTiming: { fade: WHITEOUT_FADE_MS, hold: WHITEOUT_HOLD_MS, dwell: HOVER_DWELL_MS },
     challengeLayerZ: CHALLENGE_LAYER_Z,
     frameExempt: FRAME_EXEMPT,
     hasPollReturn: function () { return pollReturn !== null; },
     layoutFloor: layoutFloor,
     stopFloorWatch: function () { stopFloorWatch(); },
-    floorConstants: { BOARD_FLOOR_H: BOARD_FLOOR_H, ROOM_WORLD_W: ROOM_WORLD_W, ROOM_IDLE_HEADROOM: ROOM_IDLE_HEADROOM, STRIP_IDLE_HEADROOM: STRIP_IDLE_HEADROOM },
+    floorConstants: { BOARD_FLOOR_H: BOARD_FLOOR_H, ROOM_WORLD_W: ROOM_WORLD_W, ROOM_WORLD_FLOOR: ROOM_WORLD_FLOOR, VEIL_MAX_MS: VEIL_MAX_MS, ROOM_IDLE_HEADROOM: ROOM_IDLE_HEADROOM, STRIP_IDLE_HEADROOM: STRIP_IDLE_HEADROOM },
     days: function () { return view.days; },
   };
 

@@ -308,10 +308,12 @@ describe('pico-home -- the week strip', () => {
     expect(tiles[1].querySelector('.sp-triangleBlue')).not.toBeNull();  // 2.5 = next up now
   });
 
-  it('a lesson tile click reaches maybeBumpThenOpen with the calendar cell arguments', () => {
+  it('a lesson tile click reaches maybeBumpThenOpen with the calendar cell arguments', async () => {
     const { doc, win, spies } = createDesk();
     loadPico(win);
     doc.querySelectorAll('#pico-tiles .tile')[0].click();
+    // The stage-select white-out runs first (220 ms fade + 120 ms hold).
+    await new Promise((r) => setTimeout(r, 400));
     expect(spies.maybeBumpThenOpen).toHaveBeenCalledTimes(1);
     expect(spies.maybeBumpThenOpen).toHaveBeenCalledWith(win.S[0][3], 'Oct 5');
   });
@@ -388,13 +390,14 @@ describe('pico-home -- the sign mirrors the Do Now', () => {
     expect(sign.querySelector('.sign-context').textContent).toBe('Finish: 2.4 · Two variables Exit tickets are bonus (+5)');
   });
 
-  it('Open = the Do Now primary action: today\'s lesson panel when there is one', () => {
+  it('Open = the Do Now primary action: today\'s lesson panel when there is one', async () => {
     const { doc, win, spies } = createDesk();
     win.DeskState.todayLessonInf = win.S[0][3];
     loadPico(win);
     setDoNow(doc, { msg: 'Do Now: 2.4 — worksheet.' });
     win.PicoHome.render();
     doc.getElementById('pico-sign-go').click();
+    await new Promise((r) => setTimeout(r, 400));   // after the white-out
     expect(spies._focusTodayLessonVideo).toHaveBeenCalledTimes(1);
   });
 
