@@ -1,4 +1,4 @@
-# CONTINUATION PROMPT — **s46 (2026-10-02 → 10-03) IS CURRENT: read the SESSION 46 block below — the OFFICIAL QUARTER GRADE is live (Schoology override = Desk pill = My Ledger = slips, written nightly); its OPEN list is the live to-do (verify the first unattended nightly run, the full U1 PC on 10/13 B / 10/16 E, the PowerSchool check).** s45/s44 items not repeated there are done or superseded. Older blocks are history.
+# CONTINUATION PROMPT — **s47 (2026-10-05 → 10-06) IS CURRENT: read the SESSION 47 block below — the PICO DESK (Pico Park design language replacing System 7) is LIVE as an opt-in second view, Phases 0–3 + continuous floor; Phases 4–5 wait for the teacher.** Then s46 (official quarter grade) for the grading rule.
 
 > ⚠ **STALE (s33-era, 2026-07-02). The authoritative block is `## ⏭ SESSION 35` further down.** This
 > blockquote is kept for history only — its Windows `C:/Users/rober/...` paths are dead (the host moved
@@ -22,6 +22,59 @@
 > not on PATH). **NEVER broadcast a real send without explicit per-send confirmation.**
 
 ---
+
+## ⏭ SESSION 47 (2026-10-05 → 10-06, Athena laptop, Windows) — **CURRENT. Supersedes s46 below. THE PICO DESK: Phases 0–3 of `PICO_DESK_SPEC.md` shipped as an OPT-IN second view inside the Desk; the classroom board is the continuous floor. Nobody's default Desk changed.**
+
+**HEADs (all pushed):** follow-alongs `d43f87bf` (`80f5bd7f` P0 sketch · `79d2d048` P1 live home · `367de01b` P2 panel+My Grade ·
+`1f08cbe7` P3 all windows framed · `d43f87bf` continuous floor). No roster-server or cr change. Lanes: Fable 5.1 orchestrated;
+**Opus 5.5 agent implemented** (one long-lived agent, ~830k tokens); **Codex gpt-6-astra reviewed** via `Agent/runner/cross-agent.py
+--task-type review --read-only --allow-verification` (findings only survive in the runner's `result.notes` — ask Codex to put
+them in its final answer; see memory `reference_cross_agent_review_output`). Every phase: build → Fable check → Codex review →
+fix rounds → GREEN → `bump-build` + LF-normalize → rebase → `PUSH_APPROVED` + push. Memory: `project_pico_desk.md`.
+
+### What the Pico Desk is
+- **Goal (teacher):** supplant the System 7 Desk with consistent Pico Park design language, preserving every rule and every
+  piece of information, presented more digestibly. Spec `PICO_DESK_SPEC.md` (principles, day vocabulary, sign states, layout B
+  "stage select", preservation ledger, phases, teacher decisions).
+- **Decompile source:** `C:/Users/rober/Downloads/Projects/not-school/hermes/old-app/recovered/` — `lua_archive_sources/stage/*.lua`
+  (title/main menu/lobby), `tga_carved/tga_0002` (sprites), `tga_0004` (the real menu window), `tga_0000` (glyph sheet — smooth
+  gothic, caps/digits only, DROPPED from the design), `browser_port/docs/runtime-observations/` (real-game captures: main menu is a
+  carousel `◁ LOCAL PLAY MODE ▷` inside the orange window; stage select was never captured).
+- **Teacher decisions 10/5:** plain text (not glyphs); stage-select layout (tiles on platform lines, week picker = carousel in the
+  orange window, NO cat above it); ALL of the game's art may be used except the Switch logo/controller and the PICO PARK logo
+  (title = APSTAT PARK); when behind, open on THIS week centred on today (the ledger is the route to overdue work); keep the sign's
+  Open button on every state. No lock state anywhere (`_isLessonUnlocked` returns true since 9/10).
+- **Files:** `pico-desk-preview.html` (P0 static sketch, example data, View → "Pico Desk Preview…"); `pico-home.js` (P1–P3 + floor,
+  ~2.3k lines, loaded by the Desk, stamped by bump-build); atlas `apstat-park/assets/pico-desk.png` + `pico-glyphs.png` cropped by
+  `build-desk-atlas.mjs` / `pico-desk-atlas.mjs`; tests `tests/pico-desk-preview.test.js` (35), `pico-home.test.js` (43),
+  `pico-home-phase2.test.js` (17), `pico-home-phase3.test.js` (17), `pico-home-floor.test.js` (12).
+- **Flag:** `?home=park` or localStorage `apstats-pico-home='1'`; View → "Pico Desk (live)…" sets it; OPTION → "Use Original Desk"
+  clears it. Flag off = byte-identical Desk (tested before/after). Desk source touched ONLY by P1: pre-paint flag check + hide
+  styles, `#pico-home-mount`, the script tag, two View-menu items, and ONE line at the end of `rCal` exposing `window.DeskState`.
+- **Architecture = wrap, never rewrite.** Home reads the Desk's own state (S, cP, tdy, cedLabel/groupLabel, getStudentMarks,
+  calNextUpTopic, `_paintZeroCells`' set = landed zeros only, renderDoNow output, the official pill, `_deskIsTeacher`). P2 wraps
+  `#resource-overlay` (rows regrouped into the Pico list; triangle = first not-done action by the panel's own status text, pinned by
+  test) and `#app-wallet-overlay`. P3 frames 28 overlays via a `FRAMED` registry + `FRAME_EXEMPT` (challenge alert, avatar-pop,
+  big-qr). Study Break: layout-free ring, its OWN close box 44×19 (canvas is a full hit area — never cover it; spec exception).
+- **Floor:** the real `#classroom-board-mount` spans the page, no box; idle band = floor + what stands on it; expands to the room for
+  the student's own game (`data-park-active` / `data-calculator-participating`) or any whole-class event (the Desk's
+  `_lastClassroomSummary` busy fields — the board has NO DOM marker for poll/gate/activity); scroll only for the student's own game.
+- **Traps learned:** the Desk's capture-phase live-activity key handler eats menu keys → Pico handles keys in capture on `window`,
+  never for input/textarea/iframe targets; Esc must go to the TOPMOST dialog (z-index 300 test); poll result screens render under the
+  home layer → suspend the panel, cancellable return; openers restored by identity (tiles re-render); journey harness pins
+  `Date.now` → use `performance.now`; builder agents must stop their own server by PID (a blanket `taskkill python.exe` once hit
+  the long-lived Python services).
+
+### Owed / next
+- **Phase 4 (default flip) and Phase 5 (retire System 7): separate specs, teacher's call.** Usage report (feature counts, 2 weeks,
+  every entry point) needs a small roster-server endpoint — its own spec — and gates any removals.
+- Teacher to eyeball with a real student signed in: classmates' cats on the floor (relay only) and a real calculator round
+  expanding the room. Idle band shows the keypad's bottom two rows at right (one-number change to hide).
+- 2 pre-existing `park-board-height` failures (students' boards start room-sized) + GitNexus shadow freshness tests — not ours.
+- GitNexus index stale since `b538922` — run `node .gitnexus/run.cjs analyze`.
+
+---
+
 
 ## ⏭ SESSION 46 (2026-10-02 → 10-03, Athena laptop, Windows) — **CURRENT. Supersedes s45 below. ONE OFFICIAL QUARTER GRADE (teacher's rule) written into Schoology nightly and shown on the Desk; Schoology column-batch bug fixed; Desk lesson panel cleaned up; slips on the official grade.**
 
