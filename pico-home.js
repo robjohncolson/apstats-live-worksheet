@@ -188,6 +188,83 @@
     '  #pico-home .backdrop:not([hidden]) .win { animation: pico-win-in .12s ease-out; }',
     '  @keyframes pico-win-in { from { transform: scale(.96); opacity: 0; } to { transform: none; opacity: 1; } }',
     '}',
+    /* Phase 2: the Desk's own lesson panel and ledger windows in the recovered frame. Scoped to
+       html.pico-home (flag on); the Desk DOM keeps its place, ids and handlers. */
+    'html.pico-home .pico-frame {',
+    '  --orange: #FF864D; --paper: #FEFEFE; --ink: #000040;',
+    '  --plain-font: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;',
+    '  isolation: isolate; display: flex; flex-direction: column; text-align: left;',
+    '  background: none !important; border: 0 !important; outline: 0 !important; box-shadow: none !important;',
+    '  border-radius: 0 !important; padding: 31px 12px 12px !important; color: var(--ink); font: 16px/1.35 var(--plain-font);',
+    '}',
+    'html.pico-home .pico-frame::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--orange);',
+    '  clip-path: polygon(8px 0, calc(100% - 8px) 0, calc(100% - 8px) 3px, calc(100% - 4px) 3px, calc(100% - 4px) 7px, 100% 7px,',
+    '    100% calc(100% - 8px), calc(100% - 4px) calc(100% - 8px), calc(100% - 4px) calc(100% - 4px),',
+    '    calc(100% - 8px) calc(100% - 4px), calc(100% - 8px) 100%, 8px 100%, 8px calc(100% - 4px),',
+    '    4px calc(100% - 4px), 4px calc(100% - 8px), 0 calc(100% - 8px), 0 7px, 4px 7px, 4px 3px, 8px 3px); }',
+    'html.pico-home .pico-frame *, html.pico-home .pico-frame *::before { box-sizing: border-box; }',
+    'html.pico-home .pico-frame > .win-bar { position: absolute; top: 0; left: 12px; right: 44px; height: 31px;',
+    '  display: flex; align-items: center; color: #fff; font-weight: 800; letter-spacing: .04em;',
+    '  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }',
+    'html.pico-home .pico-frame > .win-close { position: absolute; top: 0; right: 0; width: 44px; height: 44px;',
+    '  background: none; border: 0; padding: 0; cursor: pointer; }',
+    'html.pico-home .pico-frame > .win-close .sp { position: absolute; left: 20px; top: 11px; }',
+    'html.pico-home .pico-frame > .win-close:focus-visible { outline: 3px solid var(--ink); outline-offset: -3px; }',
+    'html.pico-home .pico-frame .sp { display: inline-block; background-image: url("apstat-park/assets/pico-desk.png");',
+    '  background-repeat: no-repeat; image-rendering: pixelated; flex: none; }',
+    'html.pico-home .pico-frame .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;',
+    '  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }',
+    /* Lesson panel. */
+    'html.pico-home #resource-overlay.pico-lesson { background: rgba(0, 0, 64, .45); }',
+    'html.pico-home #resource-overlay.pico-lesson .pico-frame { width: min(640px, calc(100vw - 32px)) !important;',
+    '  max-width: none !important; max-height: calc(100vh - 32px); }',
+    'html.pico-home .pico-frame-body { background: var(--paper); padding: 14px 20px 16px; overflow: auto; min-height: 0; }',
+    'html.pico-home #resource-overlay.pico-lesson #resource-header { font: 800 22px/1.25 var(--plain-font) !important;',
+    '  text-align: center; border: 0 !important; margin: 0 0 8px !important; padding: 0 !important; }',
+    'html.pico-home #resource-overlay.pico-lesson #resource-body { font: 16px/1.35 var(--plain-font) !important;',
+    '  max-height: none !important; overflow: visible !important; }',
+    'html.pico-home #resource-body .pico-lesson-list { list-style: none; margin: 0; padding: 0 0 0 44px; }',
+    'html.pico-home #resource-body .pico-lesson-item { position: relative; }',
+    'html.pico-home #resource-body .pico-lesson-item > .continue { position: absolute; left: -44px; top: 50%; margin-top: -18px; }',
+    'html.pico-home #resource-body .pico-list-head { margin: 10px 0 2px; font-size: 14px; font-weight: 800; letter-spacing: .06em; }',
+    'html.pico-home #resource-body .pico-list-head .chicago { font: inherit !important; text-transform: uppercase; }',
+    'html.pico-home #resource-body .pico-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px;',
+    '  min-height: 52px; margin: 2px 0 !important; padding: 4px 10px; border: 6px solid transparent; }',
+    'html.pico-home #resource-body .pico-row.is-selected { border-color: var(--orange);',
+    '  clip-path: polygon(4px 0, calc(100% - 4px) 0, calc(100% - 4px) 2px, calc(100% - 2px) 2px, calc(100% - 2px) 4px, 100% 4px,',
+    '    100% calc(100% - 4px), calc(100% - 2px) calc(100% - 4px), calc(100% - 2px) calc(100% - 2px),',
+    '    calc(100% - 4px) calc(100% - 2px), calc(100% - 4px) 100%, 4px 100%, 4px calc(100% - 2px),',
+    '    2px calc(100% - 2px), 2px calc(100% - 4px), 0 calc(100% - 4px), 0 4px, 2px 4px, 2px 2px, 4px 2px); }',
+    'html.pico-home #resource-body .pico-row > a { font-size: 18px; font-weight: 800; color: var(--ink) !important;',
+    '  min-height: 44px; display: inline-flex; align-items: center; }',
+    'html.pico-home #resource-body .pico-row a:focus-visible, html.pico-home #resource-body .pico-row button:focus-visible {',
+    '  outline: 3px solid var(--ink); outline-offset: 2px; }',
+    'html.pico-home #resource-overlay.pico-lesson .s7btn { font: 700 15px/1.2 var(--plain-font) !important;',
+    '  min-height: 44px; min-width: 44px; padding: 4px 12px !important; }',
+    'html.pico-home #resource-body .pico-row span { font-size: 15px !important; }',
+    'html.pico-home #resource-body .pico-more { margin-top: 10px; border-top: 2px solid #e4e4e4; padding-top: 6px; }',
+    'html.pico-home #resource-body .pico-more summary { min-height: 44px; display: flex; align-items: center;',
+    '  cursor: pointer; font-weight: 800; letter-spacing: .04em; }',
+    'html.pico-home #resource-body .pico-more-body > * { margin: 4px 0; }',
+    'html.pico-home .pico-lesson-day { margin: 12px 0 0; padding-top: 10px; border-top: 2px solid #e4e4e4;',
+    '  display: grid; grid-template-columns: max-content 1fr; gap: 4px 16px; }',
+    'html.pico-home .pico-lesson-day[hidden] { display: none; }',
+    'html.pico-home .pico-lesson-day dt { font-weight: 700; }',
+    'html.pico-home .pico-lesson-day dd { margin: 0; }',
+    'html.pico-home .pico-day-btn { min-height: 44px; padding: 4px 12px; font: 700 15px/1.2 var(--plain-font);',
+    '  background: var(--paper); color: var(--ink); border: 3px solid var(--orange); border-radius: 4px; cursor: pointer; }',
+    /* My Grade: the ledger window. */
+    'html.pico-home #app-wallet-overlay.pico-mygrade { background: rgba(0, 0, 64, .45); pointer-events: auto; }',
+    'html.pico-home #app-wallet-overlay.pico-mygrade .pico-frame { width: min(760px, calc(100vw - 32px)) !important;',
+    '  height: calc(100vh - 32px); max-height: none; max-width: none; }',
+    'html.pico-home #app-wallet-overlay.pico-mygrade .game-title-bar { display: none; }',
+    'html.pico-home .pico-grade-head { background: var(--paper); text-align: center; padding: 12px 16px 4px; }',
+    'html.pico-home .pico-grade-head .grade-num { display: block; font-size: 56px; font-weight: 800; line-height: 1; }',
+    'html.pico-home .pico-grade-head .grade-cap { display: block; font-size: 18px; }',
+    'html.pico-home .pico-grade-head .grade-status { margin: 0; font-size: 18px; }',
+    'html.pico-home #app-wallet-overlay.pico-mygrade #wallet-content { background: var(--paper); border: 0; margin: 0;',
+    '  font-size: 16px; font-family: var(--plain-font); }',
+    'html.pico-home #app-wallet-overlay.pico-mygrade #wallet-content * { font-family: var(--plain-font) !important; }',
     '@media (max-width: 700px) {',
     '  #pico-home .player { margin-left: 0; }',
     '  #pico-home .tile { width: 140px; }',
@@ -421,13 +498,19 @@
   }
 
   // ── State of the view ──────────────────────────────────────────────────────
-  var view = { weekIndex: null, selected: 0, days: [], menu: null, menuOpener: null, menuSelected: 0, lessonsOpener: null };
+  var view = {
+    weekIndex: null, selected: 0, days: [], menu: null, menuOpener: null, menuSelected: 0, lessonsOpener: null,
+    panel: { open: false, source: null, opener: null, selected: null, recommended: -1 },
+    walletOpener: null,
+  };
 
   // ── Tile clicks: the same handler the calendar cell calls (rCal) ──────────
-  function openDay(day) {
+  function openDay(day, opener) {
     var c = sentinels();
     var inf = day.inf;
     if (!isClickable(inf, c)) return;
+    cancelPollReturn();
+    notePanelSource('tile', opener, day);
     if (isLessonCell(inf) && isLocked(day)) {
       var prev = previousTopic(day);
       callDesk('_showLessonLockedDialog', [inf.t, prev, day.ds]);
@@ -540,7 +623,7 @@
       var name = el('span', 'tile-name', day.label);
       name.title = day.label;
       btn.appendChild(name);
-      btn.addEventListener('click', function () { selectTile(i, false); openDay(day); });
+      btn.addEventListener('click', function () { selectTile(i, false); openDay(day, btn); });
       btn.addEventListener('dblclick', function (event) { event.preventDefault(); openDayGrade(day); });
       btn.addEventListener('contextmenu', function (event) { event.preventDefault(); openDayGrade(day); });
       btn.addEventListener('focus', function () { selectTile(i, false); });
@@ -602,9 +685,14 @@
 
   // The Do Now's own primary action: today's lesson panel when there is one, else the card.
   function signOpen() {
+    cancelPollReturn();
     var todayInf = deskState().todayLessonInf;
     if (todayInf == null) { try { todayInf = _todayLessonInf; } catch (_) { todayInf = null; } }
-    if (todayInf) { callDesk('_focusTodayLessonVideo'); return; }
+    if (todayInf) {
+      notePanelSource('sign', byId('pico-sign-go'));
+      callDesk('_focusTodayLessonVideo');
+      return;
+    }
     showLessons(byId('pico-sign-go'));
     callDesk('_menuShowDoNow');
   }
@@ -612,7 +700,7 @@
   function renderGrade(board) {
     var info = gradeInfo();
     var grade = button('sign-grade');
-    grade.addEventListener('click', function () { callDesk('openWallet'); });
+    grade.addEventListener('click', function () { view.walletOpener = { sign: 'grade' }; callDesk('openWallet'); });
     if (info && info.status) {
       grade.appendChild(el('span', 'grade-status', info.status));
       grade.setAttribute('aria-label', info.status + ' Open My Grade');
@@ -734,6 +822,7 @@
     renderWeek(weeks, days);
     renderSign();
     renderTiles(days);
+    if (isWalletOpen()) renderGradeHead();
   }
 
   var renderTimer = null;
@@ -983,8 +1072,16 @@
   // before document on the capture path). While a Pico menu is open, or focus is on the week
   // picker or the tiles, the keys are handled here and stopped, so the Desk's activity
   // handler and the classroom board never also act on them. Everything else passes through.
+  // Typing targets keep every key: inputs, textareas, selects, contenteditable, iframes.
+  function isEditable(node) {
+    if (!node || node.nodeType !== 1) return false;
+    if (node.isContentEditable) return true;
+    return /^(INPUT|TEXTAREA|SELECT|IFRAME)$/.test(node.tagName);
+  }
+
   function onCaptureKey(event) {
     var target = event.target;
+    if (isEditable(target)) return;
     var inPico = Boolean(target && target.closest && target.closest('#pico-home'));
     if (isMenuOpen()) {
       // Keys from the menu itself; Esc also when focus has fallen back to the page body.
@@ -996,6 +1093,12 @@
       if (GAME_KEYS[event.key] || event.key === 'Escape' || event.key === 'Tab') event.stopPropagation();
       return;
     }
+    if (isPanelOpen() && target && target.closest && target.closest('#resource-overlay')) {
+      // A Desk dialog stacked above the panel owns the keys: pass them through untouched.
+      if (modalAbovePanel()) return;
+      if (onPanelKey(event) || GAME_KEYS[event.key]) event.stopPropagation();
+      return;
+    }
     if (!inPico || !GAME_KEYS[event.key]) return;
     if (target.closest('#pico-tiles')) onTileKey(event);
     else if (target.closest('.carousel')) onWeekKey(event);
@@ -1003,8 +1106,562 @@
     event.stopPropagation();
   }
 
+  // ── Phase 2: the Desk's lesson panel and ledger inside recovered Pico windows ──
+  // WRAP, DON'T REWRITE. The Desk's own #resource-overlay and #app-wallet-overlay stay where
+  // they are (so their stacking order, ids and every handler are untouched). With the flag on
+  // they get a Pico frame (a title bar + ✕ added once) and CSS scoped to html.pico-home. The
+  // panel's own rows are regrouped inside #resource-body after each Desk render: one Pico list
+  // row per action, everything else in a "More" fold. Nothing is dropped and no row is rebuilt.
+
+  // How the panel was opened: a Pico tile (title = its weekday + date) or the sign (title = the
+  // lesson label). Anything else looks the date up in the schedule.
+  function notePanelSource(kind, opener, day) {
+    view.panel.source = { kind: kind, day: day || null };
+    view.panel.opener = openerRef(opener);
+  }
+
+  // Openers are remembered by a stable identity, not the node: renderTiles / renderSign replace
+  // their nodes on every Pico re-render (an async grade refresh, a Do Now update), so a saved
+  // node can be gone by the time a window closes. A tile is its date; the sign and nav buttons
+  // are their role. Anything else (e.g. a calendar cell in SCHEDULE) keeps the node itself.
+  function openerRef(node) {
+    if (!node || node.nodeType !== 1) return null;
+    var tile = node.closest('#pico-tiles .tile');
+    if (tile) {
+      var tiles = Array.prototype.slice.call(document.querySelectorAll('#pico-tiles .tile'));
+      var day = view.days[tiles.indexOf(tile)];
+      if (day) return { tile: day.date.getTime() };
+    }
+    if (node.id === 'pico-sign-go') return { sign: 'go' };
+    if (node.closest('#pico-sign .sign-grade')) return { sign: 'grade' };
+    var nav = node.closest('#pico-home .navbtn');
+    if (nav) return { nav: nav.getAttribute('data-nav') };
+    return { node: node };
+  }
+
+  function resolveOpener(ref) {
+    var fallback = document.querySelector('#pico-home .navbtn[data-nav="TODAY"]');
+    if (!ref) return fallback;
+    if (ref.tile) {
+      var index = -1;
+      view.days.forEach(function (day, i) { if (day.date.getTime() === ref.tile) index = i; });
+      return document.querySelectorAll('#pico-tiles .tile')[index] || fallback;
+    }
+    if (ref.sign === 'go') return byId('pico-sign-go') || fallback;
+    if (ref.sign === 'grade') return document.querySelector('#pico-sign .sign-grade') || fallback;
+    if (ref.nav) return document.querySelector('#pico-home .navbtn[data-nav="' + ref.nav + '"]') || fallback;
+    if (ref.node && document.contains(ref.node)) return ref.node;
+    return fallback;
+  }
+
+  function restoreFocus(ref) {
+    var target = resolveOpener(ref);
+    if (target && typeof target.focus === 'function') target.focus();
+  }
+
+  // ── Which modal is on top ───────────────────────────────────────────────────
+  // Desk dialogs that can open over the lesson panel (day grade, alerts, appeals, sign-in, the
+  // flashcard deck, app windows…). The panel owns Esc / arrows only when none of these is showing
+  // above it; otherwise the key passes through untouched to the dialog on top.
+  var DESK_MODALS = '[id$="-overlay"], [id$="-modal"], .dialog-overlay, .app-overlay, [role="dialog"][aria-modal="true"]';
+
+  function isShown(node) {
+    for (var n = node; n && n.nodeType === 1; n = n.parentElement) {
+      var style = window.getComputedStyle(n);
+      if (style.display === 'none') return false;
+    }
+    return window.getComputedStyle(node).visibility !== 'hidden';
+  }
+
+  function zIndexOf(node) {
+    var z = parseInt(window.getComputedStyle(node).zIndex, 10);
+    return isNaN(z) ? null : z;
+  }
+
+  // A shown Desk modal stacked at or above the lesson panel (unknown stacking counts as above).
+  function modalAbovePanel() {
+    var overlay = panelOverlay();
+    var panelZ = zIndexOf(overlay);
+    var nodes = document.querySelectorAll(DESK_MODALS);
+    for (var i = 0; i < nodes.length; i++) {
+      var node = nodes[i];
+      if (node === overlay || overlay.contains(node) || node.contains(overlay)) continue;
+      if (node.closest('#pico-home')) continue;
+      if (!isShown(node)) continue;
+      var z = zIndexOf(node);
+      if (z === null || panelZ === null || z >= panelZ) return node;
+    }
+    return null;
+  }
+
+  function firstFocusable(root) {
+    return root.querySelector('button:not([disabled]), a[href], input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])');
+  }
+
+  // After a panel button opens a Desk dialog: if the Desk left focus behind in the panel, move
+  // it into the dialog on top, so Esc and Tab reach that dialog first.
+  // When that dialog closes again, focus comes back to the panel button that opened it.
+  function focusDialogAbove() {
+    var returnTo = document.activeElement;
+    if (!panelOverlay().contains(returnTo)) return;
+    var modal = modalAbovePanel();
+    if (!modal) return;
+    var target = firstFocusable(modal) || modal;
+    if (!target.hasAttribute('tabindex') && !firstFocusable(modal)) target.setAttribute('tabindex', '-1');
+    target.focus();
+    var watcher = new MutationObserver(function () {
+      if (isShown(modal)) return;
+      watcher.disconnect();
+      if (!isPanelOpen()) return;
+      var active = document.activeElement;
+      if (active && active !== document.body && isShown(active)) return;
+      if (document.contains(returnTo)) returnTo.focus();
+      else selectPanelRow(view.panel.selected || 0, true);
+    });
+    watcher.observe(modal, { attributes: true, attributeFilter: ['style', 'class', 'hidden'] });
+  }
+
+  function panelOverlay() {
+    return byId('resource-overlay');
+  }
+
+  function isPanelOpen() {
+    var overlay = panelOverlay();
+    return Boolean(overlay && overlay.style.display && overlay.style.display !== 'none');
+  }
+
+  // The schedule row for the panel's day string ("Oct 5"), so the bar can name the weekday.
+  function dateForDs(ds) {
+    var rows = deskSchedule();
+    for (var i = 0; i < rows.length; i++) {
+      var date = new Date(rows[i][0], rows[i][1], rows[i][2]);
+      var label = MONTH_SHORT[date.getMonth()] + ' ' + date.getDate();
+      try { if (Array.isArray(MN)) label = MN[date.getMonth()] + ' ' + date.getDate(); } catch (_) {}
+      if (label === ds) return date;
+    }
+    return null;
+  }
+
+  function dayTitle(date) {
+    return DOW[date.getDay()] + ' ' + MONTHS[date.getMonth()] + ' ' + date.getDate();
+  }
+
+  function lastPanel() {
+    try { return _lastResourcePanel || null; } catch (_) { return null; }
+  }
+
+  function panelTitle() {
+    var source = view.panel.source || {};
+    var header = byId('resource-header');
+    var label = header ? header.textContent.trim() : '';
+    if (source.kind === 'tile' && source.day) return dayTitle(source.day.date);
+    if (source.kind === 'sign') return label;
+    var last = lastPanel();
+    var date = last ? dateForDs(last.dateStr) : null;
+    return date ? dayTitle(date) : label;
+  }
+
+  // ── Rows: which panel elements are actions, and their status ─────────────
+  function hasControl(node) {
+    if (!node || node.nodeType !== 1) return false;
+    if (node.matches('a, button, label, input')) return true;
+    return Boolean(node.querySelector('a, button, input'));
+  }
+
+  // A section = the panel's "Today's Lesson" / "Due Today" / "Assigned Today" block: a div whose
+  // first child is its small .chicago heading.
+  function isSection(node) {
+    if (!node || node.tagName !== 'DIV') return false;
+    var head = node.firstElementChild;
+    return Boolean(head && head.classList.contains('chicago') && !hasControl(head) && node.children.length > 1);
+  }
+
+  // The panel's own status for a row: 'done' (✓ Completed / flashcards ✓ done / video ✓ visited),
+  // 'todo' (a Done slot not yet done, an unvisited video), or null (no status: tutor, links).
+  function rowStatus(row) {
+    var text = row.textContent;
+    if (/✓ Completed|✓ done|✓ perfected/.test(text)) return 'done';
+    if (row.querySelector('.worksheet-done-slot, .desk-quiz-done-slot')) return 'todo';
+    if (/\bVideo \d/.test(text)) return /✓ visited/.test(text) ? 'done' : 'todo';
+    return null;
+  }
+
+  function rowControl(row) {
+    if (row.matches('a, button')) return row;
+    return row.querySelector('a[href], button:not([disabled]), a, button, input, label');
+  }
+
+  // Regroup the freshly rendered #resource-body (idempotent: once per Desk render).
+  function decoratePanel() {
+    var body = byId('resource-body');
+    if (!body || body.querySelector(':scope > .pico-lesson-list')) return false;
+    var list = el('ol', 'pico-lesson-list');
+    list.setAttribute('aria-label', 'Activities');
+    var more = el('details', 'pico-more');
+    more.appendChild(el('summary', null, 'More'));
+    var moreBody = el('div', 'pico-more-body');
+    more.appendChild(moreBody);
+
+    function addRow(row) {
+      var item = el('li', 'pico-lesson-item');
+      row.classList.add('pico-row');
+      item.appendChild(row);
+      list.appendChild(item);
+    }
+
+    Array.prototype.slice.call(body.children).forEach(function (node) {
+      if (isSection(node)) {
+        Array.prototype.slice.call(node.children).forEach(function (child, i) {
+          if (i === 0) {
+            var head = el('li', 'pico-list-head');
+            head.appendChild(child);
+            list.appendChild(head);
+            return;
+          }
+          if (hasControl(child)) addRow(child);
+          else moreBody.appendChild(child);
+        });
+        node.remove();
+        return;
+      }
+      if (hasControl(node)) { addRow(node); return; }
+      if (node.classList.contains('lesson-coach')) moreBody.appendChild(node);
+      // Anything else (the panel's own message paragraphs) stays where it is.
+    });
+
+    body.appendChild(list);
+    if (moreBody.children.length) body.appendChild(more);
+    markRecommended();
+    return true;
+  }
+
+  function panelRows() {
+    return document.querySelectorAll('#resource-body .pico-row');
+  }
+
+  // The coloured triangle: the first not-done action by the panel's own status. Never moves.
+  function markRecommended() {
+    var rows = panelRows();
+    view.panel.recommended = -1;
+    for (var i = 0; i < rows.length; i++) {
+      if (rowStatus(rows[i]) !== 'todo') continue;
+      view.panel.recommended = i;
+      var item = rows[i].parentNode;
+      item.insertBefore(sprite('triangleBlue', SCALE, 'continue'), rows[i]);
+      item.insertBefore(el('span', 'sr-only', 'Recommended: '), rows[i]);
+      return;
+    }
+  }
+
+  // The orange outline: the selection. Follows Tab / arrows / mouse. Moving the selection moves
+  // focus to the row's main control, so Enter always activates the outlined row — unless focus
+  // is already on a control inside that row (a secondary link, a Done button), which keeps it.
+  function selectPanelRow(index, moveFocus, fromPointer) {
+    var rows = panelRows();
+    if (!rows.length) return;
+    var i = (index + rows.length) % rows.length;
+    rows.forEach(function (row, j) { row.classList.toggle('is-selected', j === i); });
+    view.panel.selected = i;
+    if (!moveFocus) return;
+    if (rows[i].contains(document.activeElement)) return;
+    if (isEditable(document.activeElement)) return;
+    var control = rowControl(rows[i]);
+    if (control) control.focus(fromPointer ? { preventScroll: true } : undefined);
+  }
+
+  function wirePanelRows() {
+    panelRows().forEach(function (row, i) {
+      row.addEventListener('focusin', function () { selectPanelRow(i, false); });
+      row.addEventListener('mouseenter', function () { selectPanelRow(i, true, true); });
+    });
+  }
+
+  // "This day" details the calendar cell carries today (its aria text: date, label, due, 2x,
+  // status), the day grade (double-click / right-click on the cell) and the day's polls.
+  function renderPanelDay() {
+    var host = byId('pico-lesson-day');
+    if (!host) return;
+    host.textContent = '';
+    var last = lastPanel();
+    if (!last || !last.inf) { host.hidden = true; return; }
+    var rows = [];
+    var aria = callDesk('cellAria', [last.inf, last.dateStr]);
+    if (typeof aria === 'string' && aria) rows.push({ term: 'This day', text: aria });
+    var dayGrade = button('pico-day-btn', 'Day grade');
+    dayGrade.addEventListener('click', function () {
+      callDesk('openDayGrade', [last.dateStr]);
+      focusDialogAbove();
+    });
+    rows.push({ term: 'Day grade', node: dayGrade });
+    var polls = dayPolls(last.dateStr);
+    if (polls && polls.length && boardCanShowPolls()) {
+      var pollBtn = button('pico-day-btn', 'Class poll results (' + polls.length + ')');
+      pollBtn.setAttribute('data-poll', '1');
+      pollBtn.addEventListener('click', function () { showPollsFromPanel(polls, last); });
+      rows.push({ term: 'Class poll', node: pollBtn });
+    }
+    rows.forEach(function (row) {
+      host.appendChild(el('dt', null, row.term));
+      var dd = el('dd');
+      if (row.node) dd.appendChild(row.node);
+      else dd.textContent = row.text;
+      host.appendChild(dd);
+    });
+    host.hidden = rows.length === 0;
+  }
+
+  // The polls archived for a day: the same _pollArchive lookup the calendar's poll dot makes.
+  function dayPolls(ds) {
+    var date = dateForDs(ds);
+    if (!date) return null;
+    var key = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
+    try { return (_pollArchive && _pollArchive[key]) || null; } catch (_) { return null; }
+  }
+
+  // Same as the poll dot's click: the board's result screen. Returns false when there is no
+  // board to show it on (e.g. signed out).
+  function showPolls(polls) {
+    try {
+      if (_classroomBoardHandle && typeof _classroomBoardHandle.showResultScreen === 'function') {
+        _classroomBoardHandle.showResultScreen(polls);
+        return true;
+      }
+    } catch (_) {}
+    return false;
+  }
+
+  // The board draws its result screen inside the floor (under #pico-home), which sits below the
+  // lesson panel's layer, so the panel steps aside: close it, show the result on the board and
+  // scroll the board into view (as the calendar's poll dot does), then re-open the same lesson
+  // when the result screen is dismissed (its close button or its own 2 s timer) and put focus
+  // back on the poll button.
+  function resultScreenNode() {
+    return document.querySelector('#classroom-board-mount [data-classroom-result-screen]');
+  }
+
+  function resultScreenShown(node) {
+    return Boolean(node) && node.style.transform !== 'translateY(-100%)';
+  }
+
+  function boardCanShowPolls() {
+    try { return Boolean(_classroomBoardHandle && typeof _classroomBoardHandle.showResultScreen === 'function'); } catch (_) { return false; }
+  }
+
+  // The pending return is ONE cancellable token: { reopen, watcher, timer }. Anything else the
+  // student does before the result screen is dismissed (another panel, a tile, a nav button, My
+  // Grade, Use Original Desk) or the board going away cancels it, so a stale lesson never
+  // re-opens over what they chose next.
+  var pollReturn = null;
+
+  function cancelPollReturn() {
+    if (!pollReturn) return;
+    if (pollReturn.watcher) pollReturn.watcher.disconnect();
+    if (pollReturn.timer) clearTimeout(pollReturn.timer);
+    pollReturn = null;
+  }
+
+  function showPollsFromPanel(polls, last) {
+    cancelPollReturn();
+    var token = { reopen: { inf: last.inf, ds: last.dateStr, source: view.panel.source, opener: view.panel.opener } };
+    view.panel.stepAside = true;
+    callDesk('closeResourcePanel');
+    var screen = showPolls(polls) ? resultScreenNode() : null;
+    pollReturn = token;
+    if (!resultScreenShown(screen)) {
+      // Nothing showed: come straight back (after the close has been processed).
+      token.timer = setTimeout(function () { finishPollReturn(token); }, 0);
+      return;
+    }
+    try {
+      var mount = byId('classroom-board-mount');
+      if (mount) mount.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    } catch (_) {}
+    var closeBtn = screen.querySelector('[data-classroom-result-close]');
+    if (closeBtn) closeBtn.focus({ preventScroll: true });
+    token.watcher = new MutationObserver(function () {
+      // The board was torn down (its destroy removes the screen without a style change).
+      if (!document.contains(screen)) { cancelPollReturn(); return; }
+      if (resultScreenShown(screen)) return;
+      finishPollReturn(token);
+    });
+    token.watcher.observe(screen, { attributes: true, attributeFilter: ['style'] });
+    token.watcher.observe(document.body, { childList: true, subtree: true });
+  }
+
+  // Re-open the suspended lesson, but only if this token is still the pending one, no panel is
+  // open, and the Desk's last panel is still the suspended lesson.
+  function finishPollReturn(token) {
+    if (pollReturn !== token) return;
+    cancelPollReturn();
+    var last = lastPanel();
+    if (isPanelOpen() || !last || last.inf !== token.reopen.inf) return;
+    view.panel.source = token.reopen.source;
+    view.panel.opener = token.reopen.opener;
+    view.panel.focusPoll = true;
+    callDesk('showResourcePanel', [token.reopen.inf, token.reopen.ds]);
+  }
+
+  // After every Desk render of the panel: regroup, title, triangle, selection, day details.
+  function onPanelChange() {
+    if (!isPanelOpen()) return;
+    var opening = !view.panel.open;
+    view.panel.open = true;
+    if (opening) cancelPollReturn();
+    if (opening && !view.panel.opener) view.panel.opener = openerRef(document.activeElement);
+    var fresh = decoratePanel();
+    byId('pico-lesson-bar').textContent = panelTitle();
+    renderPanelDay();
+    if (!fresh && !opening) return;
+    wirePanelRows();
+    var focusInside = panelOverlay().contains(document.activeElement);
+    var start = view.panel.recommended >= 0 ? view.panel.recommended : 0;
+    if (!opening && typeof view.panel.selected === 'number') start = view.panel.selected;
+    if (!panelRows().length) byId('pico-lesson-close').focus();
+    else selectPanelRow(start, opening || !focusInside);
+    if (!opening || !view.panel.focusPoll) return;
+    view.panel.focusPoll = false;
+    var pollBtn = document.querySelector('#pico-lesson-day .pico-day-btn[data-poll]');
+    if (pollBtn) pollBtn.focus();
+  }
+
+  function onPanelClosed() {
+    if (!view.panel.open) return;
+    view.panel.open = false;
+    view.panel.selected = null;
+    var opener = view.panel.opener;
+    view.panel.source = null;
+    view.panel.opener = null;
+    // Stepping aside for the poll result screen: no focus restore (it goes to the result).
+    if (view.panel.stepAside) { view.panel.stepAside = false; return; }
+    // Only pull focus back when it was left in the (now hidden) panel or dropped to the page.
+    var active = document.activeElement;
+    if (active && active !== document.body && !panelOverlay().contains(active) && isShown(active)) return;
+    restoreFocus(opener);
+  }
+
+  // Keys while the lesson panel has focus: Esc closes, Up/Down move the selection.
+  function onPanelKey(event) {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      callDesk('closeResourcePanel');
+      return true;
+    }
+    if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return false;
+    event.preventDefault();
+    selectPanelRow((view.panel.selected || 0) + (event.key === 'ArrowDown' ? 1 : -1), true);
+    return true;
+  }
+
+  function setupLessonPanel() {
+    var overlay = panelOverlay();
+    if (!overlay) return;
+    var box = overlay.querySelector('.dialog-box');
+    var body = byId('resource-body');
+    if (!box || !body) return;
+    overlay.classList.add('pico-lesson');
+    box.classList.add('pico-frame');
+    box.setAttribute('role', 'dialog');
+    box.setAttribute('aria-modal', 'true');
+    box.setAttribute('aria-labelledby', 'pico-lesson-bar');
+    var bar = el('div', 'win-bar');
+    bar.id = 'pico-lesson-bar';
+    var close = button('win-close');
+    close.id = 'pico-lesson-close';
+    close.setAttribute('aria-label', 'Close');
+    close.appendChild(sprite('close', 1));
+    close.addEventListener('click', function () { callDesk('closeResourcePanel'); });
+    // The white interior holds the Desk's own header, body and OK row, unchanged.
+    var inner = el('div', 'pico-frame-body');
+    Array.prototype.slice.call(box.children).forEach(function (child) { inner.appendChild(child); });
+    var details = el('dl', 'pico-lesson-day');
+    details.id = 'pico-lesson-day';
+    details.hidden = true;
+    inner.insertBefore(details, body.nextSibling);
+    box.appendChild(bar);
+    box.appendChild(close);
+    box.appendChild(inner);
+
+    var observer = new MutationObserver(function () {
+      observer.disconnect();
+      if (isPanelOpen()) onPanelChange();
+      else onPanelClosed();
+      observe();
+    });
+    function observe() {
+      observer.observe(overlay, { attributes: true, attributeFilter: ['style'] });
+      observer.observe(body, { childList: true });
+    }
+    observe();
+  }
+
+  // ── My Grade: the Desk's ledger window in the recovered frame ─────────────
+  function walletOverlay() {
+    return byId('app-wallet-overlay');
+  }
+
+  function isWalletOpen() {
+    var overlay = walletOverlay();
+    return Boolean(overlay && overlay.style.display && overlay.style.display !== 'none');
+  }
+
+  // The official grade at the top: the same value the sign shows (the Do Now pill).
+  function renderGradeHead() {
+    var head = byId('pico-grade-head');
+    if (!head) return;
+    head.textContent = '';
+    var info = gradeInfo();
+    if (info && info.status) {
+      head.appendChild(el('p', 'grade-status', info.status));
+      return;
+    }
+    var value = info && info.value ? info.value : '—';
+    var caption = info ? (info.key + (info.official ? ' official' : '')) : 'My grade';
+    head.appendChild(el('span', 'grade-num', value));
+    head.appendChild(el('span', 'grade-cap', caption));
+  }
+
+  function setupMyGrade() {
+    var overlay = walletOverlay();
+    if (!overlay) return;
+    var win = overlay.querySelector('.app-window');
+    var content = byId('wallet-content');
+    if (!win || !content) return;
+    overlay.classList.add('pico-mygrade');
+    win.classList.add('pico-frame');
+    win.setAttribute('role', 'dialog');
+    win.setAttribute('aria-labelledby', 'pico-mygrade-bar');
+    var bar = el('div', 'win-bar', 'MY GRADE');
+    bar.id = 'pico-mygrade-bar';
+    var close = button('win-close');
+    close.id = 'pico-mygrade-close';
+    close.setAttribute('aria-label', 'Close');
+    close.appendChild(sprite('close', 1));
+    close.addEventListener('click', function () { callDesk('destroyWallet'); });
+    var head = el('div', 'pico-grade-head');
+    head.id = 'pico-grade-head';
+    head.setAttribute('aria-live', 'polite');
+    win.insertBefore(head, content);
+    win.appendChild(bar);
+    win.appendChild(close);
+
+    var wasOpen = false;
+    new MutationObserver(function () {
+      var open = isWalletOpen();
+      if (open && !wasOpen) {
+        cancelPollReturn();
+        if (!view.walletOpener) view.walletOpener = openerRef(document.activeElement);
+        renderGradeHead();
+        close.focus();
+      }
+      if (!open && wasOpen) restoreFocus(view.walletOpener);
+      if (!open) view.walletOpener = null;
+      wasOpen = open;
+    }).observe(overlay, { attributes: true, attributeFilter: ['style'] });
+  }
+
   // ── The flag ───────────────────────────────────────────────────────────────
   function useOriginalDesk() {
+    cancelPollReturn();
     try { localStorage.removeItem(FLAG_KEY); } catch (_) {}
     var url = new URL(window.location.href);
     url.searchParams.delete('home');
@@ -1086,8 +1743,9 @@
     document.querySelectorAll('#pico-home .navbtn').forEach(function (btn) {
       btn.addEventListener('click', function () {
         var name = btn.getAttribute('data-nav');
+        cancelPollReturn();
         if (name === 'TODAY') { goToday(); return; }
-        if (name === 'MY GRADE') { callDesk('openWallet'); return; }
+        if (name === 'MY GRADE') { view.walletOpener = { nav: 'MY GRADE' }; callDesk('openWallet'); return; }
         openMenu(name, btn);
       });
     });
@@ -1150,6 +1808,8 @@
     injectStyle();
     buildRoot();
     wire();
+    setupLessonPanel();
+    setupMyGrade();
     render();
   }
 
@@ -1159,6 +1819,8 @@
     atlasSize: ATLAS_SIZE,
     render: render,
     closeMenu: closeMenu,
+    rowStatus: rowStatus,
+    hasPollReturn: function () { return pollReturn !== null; },
     days: function () { return view.days; },
   };
 
