@@ -310,7 +310,9 @@ Every other window and dialog opened from the Pico home (Bulletin, Review, Class
 Week, Study Break, Teacher workspace/inbox, chat, sign-in/sign-up, grade help, About) opens inside
 a plain Pico frame: the recovered window with the dialog's existing content unchanged inside,
 scoped CSS only (fonts, borders, buttons). No content redesign in Phase 3 — that waits for usage
-data. The System 7 `showDialog` alerts get the same frame. Tests: each opener produces a `.pico-win`
+data. Study Break is the one exception to the 44×44 rule: its window geometry may not change and
+the whole canvas is a hit area, so its close target is the Desk's own close box, 44px wide by the
+title strip's height (19px), never over the canvas. The System 7 `showDialog` alerts get the same frame. Tests: each opener produces a `.pico-win`
 ancestor with the flag on and none with it off.
 
 ## Usage report (runs alongside, separate build)

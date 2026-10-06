@@ -193,18 +193,35 @@
     'html.pico-home .pico-frame {',
     '  --orange: #FF864D; --paper: #FEFEFE; --ink: #000040;',
     '  --plain-font: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;',
-    '  isolation: isolate; display: flex; flex-direction: column; text-align: left;',
-    '  background: none !important; border: 0 !important; outline: 0 !important; box-shadow: none !important;',
-    '  border-radius: 0 !important; padding: 31px 12px 12px !important; color: var(--ink); font: 16px/1.35 var(--plain-font);',
     '}',
-    'html.pico-home .pico-frame::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--orange);',
+    'html.pico-home .pico-frame:not(.game-window) { isolation: isolate; text-align: left;',
+    '  background: none !important; border: 0 !important; outline: 0 !important; box-shadow: none !important;',
+    '  border-radius: 0 !important; padding: 31px 12px 12px !important;',
+    '}',
+    /* Study Break: zero change to the window's box (padding, border, size) so the game area is
+       exactly the Desk's. The frame is a ring drawn with box-shadow (no layout), the title bar sits
+       over the System 7 title bar's own strip, and the ✕ is the window's own close box. */
+    'html.pico-home .pico-frame.game-window { box-shadow: 0 0 0 10px var(--orange) !important; }',
+    'html.pico-home .pico-frame.game-window > .win-bar { top: 1px; left: 48px; right: 48px; height: 19px; pointer-events: none;',
+    '  font-size: 13px; background: var(--orange); }',
+    /* Study Break's ✕ is its own System 7 close box (onclick="closeGame()"), restyled in place:
+       44px wide, exactly as tall as the title strip, so it never reaches the canvas below. */
+    'html.pico-home .pico-frame.game-window > .game-title-bar .close-box { left: 0; top: 0; width: 44px; height: 100%;',
+    '  margin: 0; border: 0; background: transparent; box-shadow: none; }',
+    'html.pico-home .pico-frame.game-window > .game-title-bar .close-box::after { content: ""; position: absolute; left: 16px;',
+    '  top: 50%; margin-top: -6px; width: 12px; height: 12px; background: url("apstat-park/assets/pico-desk.png") -171px -48px / 256px 128px no-repeat;',
+    '  image-rendering: pixelated; }',
+    'html.pico-home .pico-frame.game-window > .game-title-bar { background: var(--orange); }',
+    /* The Study Break window keeps its own fonts and box model (its canvas and messages are untouched). */
+    'html.pico-home .pico-frame:not(.game-window) { color: var(--ink); font: 16px/1.35 var(--plain-font); }',
+    'html.pico-home .pico-frame:not(.game-window)::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--orange);',
     '  clip-path: polygon(8px 0, calc(100% - 8px) 0, calc(100% - 8px) 3px, calc(100% - 4px) 3px, calc(100% - 4px) 7px, 100% 7px,',
     '    100% calc(100% - 8px), calc(100% - 4px) calc(100% - 8px), calc(100% - 4px) calc(100% - 4px),',
     '    calc(100% - 8px) calc(100% - 4px), calc(100% - 8px) 100%, 8px 100%, 8px calc(100% - 4px),',
     '    4px calc(100% - 4px), 4px calc(100% - 8px), 0 calc(100% - 8px), 0 7px, 4px 7px, 4px 3px, 8px 3px); }',
-    'html.pico-home .pico-frame *, html.pico-home .pico-frame *::before { box-sizing: border-box; }',
+    'html.pico-home .pico-frame:not(.game-window) *, html.pico-home .pico-frame:not(.game-window) *::before { box-sizing: border-box; }',
     'html.pico-home .pico-frame > .win-bar { position: absolute; top: 0; left: 12px; right: 44px; height: 31px;',
-    '  display: flex; align-items: center; color: #fff; font-weight: 800; letter-spacing: .04em;',
+    '  display: flex; align-items: center; color: #fff; font: 800 16px/1 var(--plain-font); letter-spacing: .04em;',
     '  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }',
     'html.pico-home .pico-frame > .win-close { position: absolute; top: 0; right: 0; width: 44px; height: 44px;',
     '  background: none; border: 0; padding: 0; cursor: pointer; }',
@@ -216,7 +233,8 @@
     '  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }',
     /* Lesson panel. */
     'html.pico-home #resource-overlay.pico-lesson { background: rgba(0, 0, 64, .45); }',
-    'html.pico-home #resource-overlay.pico-lesson .pico-frame { width: min(640px, calc(100vw - 32px)) !important;',
+    'html.pico-home #resource-overlay.pico-lesson .pico-frame { display: flex; flex-direction: column;',
+    '  width: min(640px, calc(100vw - 32px)) !important;',
     '  max-width: none !important; max-height: calc(100vh - 32px); }',
     'html.pico-home .pico-frame-body { background: var(--paper); padding: 14px 20px 16px; overflow: auto; min-height: 0; }',
     'html.pico-home #resource-overlay.pico-lesson #resource-header { font: 800 22px/1.25 var(--plain-font) !important;',
@@ -255,7 +273,8 @@
     '  background: var(--paper); color: var(--ink); border: 3px solid var(--orange); border-radius: 4px; cursor: pointer; }',
     /* My Grade: the ledger window. */
     'html.pico-home #app-wallet-overlay.pico-mygrade { background: rgba(0, 0, 64, .45); pointer-events: auto; }',
-    'html.pico-home #app-wallet-overlay.pico-mygrade .pico-frame { width: min(760px, calc(100vw - 32px)) !important;',
+    'html.pico-home #app-wallet-overlay.pico-mygrade .pico-frame { display: flex; flex-direction: column;',
+    '  width: min(760px, calc(100vw - 32px)) !important;',
     '  height: calc(100vh - 32px); max-height: none; max-width: none; }',
     'html.pico-home #app-wallet-overlay.pico-mygrade .game-title-bar { display: none; }',
     'html.pico-home .pico-grade-head { background: var(--paper); text-align: center; padding: 12px 16px 4px; }',
@@ -265,6 +284,28 @@
     'html.pico-home #app-wallet-overlay.pico-mygrade #wallet-content { background: var(--paper); border: 0; margin: 0;',
     '  font-size: 16px; font-family: var(--plain-font); }',
     'html.pico-home #app-wallet-overlay.pico-mygrade #wallet-content * { font-family: var(--plain-font) !important; }',
+    /* Phase 3: every other Desk window in the plain frame. Position, size and stacking stay the
+       Desk's; the frame adds the orange border, a paper interior and the Pico type and buttons. */
+    'html.pico-home .pico-p3:not(.game-window)::after { content: ""; position: absolute; inset: 31px 12px 12px; z-index: -1; background: var(--paper); }',
+    'html.pico-home .pico-p3:not(.app-window):not(.game-window) {',
+    '  padding: 47px 28px 28px !important; }',
+    'html.pico-home .pico-p3 > .win-close[hidden] { display: none; }',
+    /* The QR cards are not positioned by the Desk; the frame's bar and ✕ anchor to the card. */
+    'html.pico-home #verify-qr-card.pico-p3, html.pico-home #reconcile-qr-card.pico-p3, html.pico-home #guest-pass-card.pico-p3 { position: relative; }',
+    'html.pico-home .pico-p3 > .game-title-bar .title-text, html.pico-home .pico-p3 > .game-title-bar .title-stripes,',
+    'html.pico-home .pico-p3:not(.game-window) > .game-title-bar .close-box, html.pico-home .pico-p3 > .game-title-bar .collapse-box { display: none !important; }',
+    'html.pico-home .pico-p3 > .game-title-bar.pico-orig-bar-empty { display: none !important; }',
+    'html.pico-home .pico-p3.app-window > .game-title-bar { box-shadow: none; background: var(--paper); }',
+    'html.pico-home .pico-p3 .app-content { border: 0; margin: 0; }',
+    'html.pico-home .pico-p3:not(.game-window) .geneva, html.pico-home .pico-p3:not(.game-window) .chicago,',
+    'html.pico-home .pico-p3:not(.game-window) .dialog-msg { font-family: var(--plain-font) !important; }',
+    'html.pico-home .pico-p3 .dialog-msg { font-size: 15px; line-height: 1.4; }',
+    'html.pico-home .pico-p3:not(.game-window) .s7btn { font: 700 15px/1.2 var(--plain-font) !important; min-height: 40px;',
+    '  padding: 4px 14px !important; background: var(--paper); color: var(--ink); border: 3px solid var(--orange);',
+    '  border-radius: 4px; box-shadow: none; outline: 0; cursor: pointer; }',
+    'html.pico-home .pico-p3:not(.game-window) .s7btn.s7btn-default { background: var(--orange); color: #fff; }',
+    'html.pico-home .pico-p3:not(.game-window) .s7btn:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }',
+    'html.pico-home .pico-p3:not(.game-window) .s7btn[disabled] { opacity: .5; cursor: default; }',
     '@media (max-width: 700px) {',
     '  #pico-home .player { margin-left: 0; }',
     '  #pico-home .tile { width: 140px; }',
@@ -1014,7 +1055,8 @@
       selectMenuItem(index, true);
       return;
     }
-    closeMenu(false);
+    closeMenu();
+    if (view.menuOpener) notePendingOpener(openerRef(view.menuOpener));
     item.run();
   }
 
@@ -1559,7 +1601,7 @@
     var body = byId('resource-body');
     if (!box || !body) return;
     overlay.classList.add('pico-lesson');
-    box.classList.add('pico-frame');
+    box.classList.add('pico-frame', 'pico-win');
     box.setAttribute('role', 'dialog');
     box.setAttribute('aria-modal', 'true');
     box.setAttribute('aria-labelledby', 'pico-lesson-bar');
@@ -1627,7 +1669,7 @@
     var content = byId('wallet-content');
     if (!win || !content) return;
     overlay.classList.add('pico-mygrade');
-    win.classList.add('pico-frame');
+    win.classList.add('pico-frame', 'pico-win');
     win.setAttribute('role', 'dialog');
     win.setAttribute('aria-labelledby', 'pico-mygrade-bar');
     var bar = el('div', 'win-bar', 'MY GRADE');
@@ -1657,6 +1699,214 @@
       if (!open) view.walletOpener = null;
       wasOpen = open;
     }).observe(overlay, { attributes: true, attributeFilter: ['style'] });
+  }
+
+  // ── Phase 3: every other window in a plain Pico frame ───────────────────────
+  // Each Desk window / dialog keeps its content, ids, handlers, stacking and position. With the
+  // flag on it gets the recovered frame (orange frame, a title bar carrying the dialog's own
+  // title text, a ✕ that calls the dialog's own close) — added once, idempotent across the
+  // Desk's re-renders — and CSS scoped to html.pico-home (font family / base size, borders,
+  // button look). The System 7 title-bar parts the frame replaces (title text, stripes, close
+  // box, collapse box) are hidden, not removed; any other control on that bar (Study Break's
+  // mute, an app's pop-out) stays visible. The lesson panel and My Grade (Phase 2) are framed
+  // by their own setup above; the Study Break challenge alert in the menu bar is left as is.
+  //
+  // overlay id              frame box in it   title source (in the box; '' = none)   ✕ = Desk close
+  var FRAMED = [
+    { overlay: 'dialog-overlay',          box: '.dialog-box', title: '',                               close: ['closeDialog'] },            // showDialog alerts: About, lesson locked, baseline info, …
+    { overlay: 'donow-bump-overlay',      box: '.dialog-box', title: '',                               close: ['closeDoNowBump'] },
+    { overlay: 'signin-overlay',          box: '.dialog-box', title: '.dialog-msg > .chicago',         close: ['closeSignInModal'] },
+    { overlay: 'signup-overlay',          box: '.dialog-box', title: '.dialog-msg > .chicago',         close: ['_switchToSignIn'] },
+    { overlay: 'pwchange-overlay',        box: '.dialog-box', title: '#pwchange-title',                close: ['closePwChangeModal'], closable: pwChangeClosable },
+    { overlay: 'namefinder-overlay',      box: '.dialog-box', title: '',                               close: ['closeNameFinder'] },        // created by the Desk on first use
+    { overlay: 'day-grade-overlay',       box: '.dialog-box', title: '#day-grade-header',              close: ['closeDayGrade'] },
+    { overlay: 'grade-help-overlay',      box: '.dialog-box', title: '.dialog-box > .chicago',         close: ['closeGradeHelp'] },
+    { overlay: 'my-gradebook-overlay',    box: '.dialog-box', title: '#my-gradebook-title',            close: ['closeMyGradebook'] },
+    { overlay: 'my-receipts-overlay',     box: '.dialog-box', title: '.dialog-box > .chicago > span',  close: ['closeMyReceipts'] },
+    { overlay: 'bf-overlay',              box: '.dialog-box', title: '#bf-header',                     close: ['closeBlooketFlashcards'] }, // Review + flashcard decks
+    { overlay: 'student-dm-modal',        box: '.sdm-panel',  title: '#sdm-title',                     close: ['_closeStudentDmModal'] },   // Message teacher
+    { overlay: 'teacher-nudge-modal',     box: '.tnm-panel',  title: '#tnm-title',                     close: ['_closeTeacherNudgeModal'] },
+    { overlay: 'app-bulletin-overlay',    box: '.app-window', title: '.game-title-bar .title-text',    close: ['destroyBulletin'] },
+    { overlay: 'app-snapshot-overlay',    box: '.app-window', title: '.game-title-bar .title-text',    close: ['destroyApp', 'snapshot'] },
+    { overlay: 'app-week-overlay',        box: '.app-window', title: '.game-title-bar .title-text',    close: ['destroyApp', 'week'] },
+    { overlay: 'app-ti84-overlay',        box: '.app-window', title: '.game-title-bar .title-text',    close: ['destroyApp', 'ti84'] },
+    { overlay: 'app-quiz-overlay',        box: '.app-window', title: '.game-title-bar .title-text',    close: ['destroyApp', 'quiz'] },
+    { overlay: 'app-formulas-overlay',    box: '.app-window', title: '.game-title-bar .title-text',    close: ['destroyApp', 'formulas'] },
+    { overlay: 'app-dok-overlay',         box: '.app-window', title: '.game-title-bar .title-text',    close: ['destroyApp', 'dok'] },        // teacher
+    { overlay: 'app-teachertools-overlay', box: '.app-window', title: '.game-title-bar .title-text',   close: ['destroyTeacherTools'] },    // teacher workspace + inbox
+    { overlay: 'app-nightlyreview-overlay', box: '.app-window', title: '.game-title-bar .title-text',  close: ['closeNightlyReview'] },     // teacher
+    { overlay: 'app-gradecheckin-overlay', box: '.app-window', title: '.game-title-bar .title-text',   close: ['closeGradeCheckin'] },      // teacher
+    { overlay: 'app-progress-overlay',    box: '.app-window', title: '.game-title-bar .title-text',    close: ['destroyProgress'] },        // My Progress (icon parked; kept framed)
+    { overlay: 'override-gate-modal',     box: '.ogm-panel',  title: '#ogm-title',                     close: ['_hideOverrideGateModal'] }, // teacher view-as: override gate
+    { overlay: 'verify-qr-overlay',       box: '#verify-qr-card', title: 'strong',                     close: ['_escHide', 'verify-qr-overlay'] },    // teacher: Verify a Record (built on first use)
+    { overlay: 'reconcile-qr-overlay',    box: '#reconcile-qr-card', title: 'strong',                  close: ['_escHide', 'reconcile-qr-overlay'] }, // teacher: Guest Reconcile (built on first use)
+    { overlay: 'guest-pass-overlay',      box: '#guest-pass-card', title: 'strong',                    close: ['_escHide', 'guest-pass-overlay'] },   // guest pass (guests retired; kept framed)
+    { overlay: 'game-overlay',            box: '.game-window', title: '.game-title-bar .title-text',   close: ['closeGame'], ownClose: true }, // Study Break: frame only; its own close box (restyled in place) stays the ✕
+  ];
+
+  // Not framed, on purpose (each checked against the Desk's -overlay ids, role="dialog" and
+  // .dialog-box containers):
+  //   #resource-overlay, #app-wallet-overlay  framed by Phase 2 (lesson panel, My Grade)
+  //   #doge-challenge-panel                   Study Break challenge alert: stays exactly as is (pre-approved)
+  //   #challenge-dialog                       inside the Study Break window's content (never touched)
+  //   .avatar-pop                             the cat's name/candy/game popover on the floor: anchored to
+  //                                           the cat, not a modal dialog — it belongs to the board
+  //   #big-qr-overlay                         full-screen tap-to-close QR viewer; a frame would shrink the
+  //                                           code a phone has to scan
+  var FRAME_EXEMPT = ['resource-overlay', 'app-wallet-overlay', 'doge-challenge-panel', 'challenge-dialog', 'avatar-pop', 'big-qr-overlay'];
+
+  // The forced change-password dialog has no dismiss (TR2); only the voluntary one ("Cancel")
+  // gets a ✕.
+  function pwChangeClosable() {
+    var left = byId('pwchange-leftbtn');
+    return Boolean(left && left.textContent.trim() === 'Cancel');
+  }
+
+  // Parts of the System 7 title bar the frame replaces.
+  var REPLACED_BAR_PARTS = '.title-text, .title-stripes, .close-box, .collapse-box';
+
+  function frameTitle(entry, box) {
+    if (!entry.title) return '';
+    var source = box.querySelector(entry.title);
+    if (!source) return '';
+    var copy = source.cloneNode(true);
+    Array.prototype.forEach.call(copy.querySelectorAll('button, [role="button"], .close-box'), function (node) { node.remove(); });
+    return copy.textContent.replace(/\s+/g, ' ').trim();
+  }
+
+  function runFrameClose(entry) {
+    callDesk(entry.close[0], entry.close.slice(1));
+  }
+
+  // Frame one overlay (once). Returns false if the Desk has not built it yet.
+  function frameOverlay(entry) {
+    var overlay = byId(entry.overlay);
+    if (!overlay) return false;
+    var box = overlay.querySelector(entry.box);
+    if (!box) return false;
+    if (box.classList.contains('pico-win') && box.querySelector(':scope > [data-pico-bar]')) return true;
+    overlay.classList.add('pico-framed');
+    box.classList.add('pico-frame', 'pico-win', 'pico-p3');
+
+    var state = { opener: null, shown: false };
+    var bar = null;
+    var close = null;
+    // The chrome is guarded by its presence, not the class: a Desk that rebuilds the box's
+    // innerHTML (the QR cards do on every open) gets the bar and ✕ back.
+    function chromeComplete() {
+      return Boolean(bar && bar.parentNode === box && (entry.ownClose || (close && close.parentNode === box)));
+    }
+    function ensureChrome() {
+      if (!bar || bar.parentNode !== box) {
+        bar = el('div', 'win-bar');
+        bar.setAttribute('data-pico-bar', entry.overlay);
+        box.appendChild(bar);
+      }
+      // A window that keeps its own close box (Study Break) gets no frame ✕.
+      if (entry.ownClose || (close && close.parentNode === box)) return;
+      close = button('win-close');
+      close.setAttribute('aria-label', 'Close');
+      close.setAttribute('data-pico-close', entry.overlay);
+      close.appendChild(sprite('close', 1));
+      close.addEventListener('click', function (event) {
+        event.stopPropagation();
+        closeFromX();
+      });
+      box.appendChild(close);
+    }
+    // ✕: the Desk's own close, then focus to the opener (TODAY if it cannot be found).
+    function closeFromX() {
+      var opener = state.opener;
+      runFrameClose(entry);
+      if (isShown(overlay)) return;
+      state.shown = false;
+      state.opener = null;
+      restoreFocus(opener);
+    }
+    ensureChrome();
+
+    // Hide the replaced title-bar parts; hide the whole bar when nothing else is on it.
+    var oldBar = box.querySelector(':scope > .game-title-bar');
+    if (oldBar) {
+      oldBar.classList.add('pico-orig-bar');
+      var others = Array.prototype.filter.call(oldBar.children, function (child) { return !child.matches(REPLACED_BAR_PARTS); });
+      if (!others.length) oldBar.classList.add('pico-orig-bar-empty');
+    }
+
+    function refresh() {
+      ensureChrome();
+      var title = frameTitle(entry, box);
+      if (bar.textContent !== title) bar.textContent = title;   // no write when unchanged (no observer loop)
+      if (close) close.hidden = Boolean(entry.closable && !entry.closable());
+    }
+    function onVisibility() {
+      var shown = isShown(overlay);
+      if (shown === state.shown) { if (shown) refresh(); return; }
+      state.shown = shown;
+      if (shown) {
+        refresh();
+        // The opener as it was when it was activated (before the Desk moved focus into the
+        // dialog); otherwise whatever had focus outside the dialog.
+        var pending = takePendingOpener();
+        if (pending) state.opener = pending;
+        else if (!overlay.contains(document.activeElement)) state.opener = openerRef(document.activeElement);
+        return;
+      }
+      // Closed some other way: put focus back on the opener when it was left in the hidden
+      // dialog or dropped (TODAY if the opener cannot be found).
+      var active = document.activeElement;
+      var lost = !active || active === document.body || overlay.contains(active) || !isShown(active);
+      var opener = state.opener;
+      state.opener = null;
+      if (lost) restoreFocus(opener);
+    }
+    new MutationObserver(onVisibility).observe(overlay, { attributes: true, attributeFilter: ['style', 'class', 'hidden'] });
+    // Title changes and box rebuilds (chrome re-added, title re-read).
+    new MutationObserver(function () {
+      if (!chromeComplete()) refresh();
+    }).observe(box, { childList: true });
+    var titleSource = entry.title ? box.querySelector(entry.title) : null;
+    if (titleSource) new MutationObserver(refresh).observe(titleSource, { childList: true, characterData: true, subtree: true });
+    else if (entry.title) new MutationObserver(refresh).observe(box, { childList: true, subtree: true, characterData: true });
+    refresh();
+    state.shown = isShown(overlay);
+    return true;
+  }
+
+  // The Pico control that was just activated, captured before the Desk opener runs (the Desk
+  // often moves focus into its dialog synchronously). Used by the next dialog that opens within
+  // a second; then dropped so a later, Desk-initiated dialog never inherits it.
+  var pendingOpener = null;
+
+  function notePendingOpener(ref) {
+    pendingOpener = ref ? { ref: ref, at: Date.now() } : null;
+  }
+
+  function takePendingOpener() {
+    var pending = pendingOpener;
+    pendingOpener = null;
+    if (!pending || Date.now() - pending.at > 1000) return null;
+    return pending.ref;
+  }
+
+  function frameAll() {
+    FRAMED.forEach(frameOverlay);
+  }
+
+  // Overlays the Desk builds later (the name finder) are framed when they appear.
+  function setupFrames() {
+    frameAll();
+    // Any activation inside the Pico home (nav, sign, tiles) is a possible opener.
+    byId('pico-home').addEventListener('click', function (event) {
+      var control = event.target && event.target.closest && event.target.closest('button');
+      if (control && !control.closest('#pico-menu-backdrop')) notePendingOpener(openerRef(control));
+    }, true);
+    new MutationObserver(function () {
+      FRAMED.forEach(function (entry) {
+        var overlay = byId(entry.overlay);
+        if (overlay && !overlay.querySelector('.pico-win')) frameOverlay(entry);
+      });
+    }).observe(document.body, { childList: true });
   }
 
   // ── The flag ───────────────────────────────────────────────────────────────
@@ -1810,6 +2060,7 @@
     wire();
     setupLessonPanel();
     setupMyGrade();
+    setupFrames();
     render();
   }
 
@@ -1820,6 +2071,8 @@
     render: render,
     closeMenu: closeMenu,
     rowStatus: rowStatus,
+    framed: FRAMED,
+    frameExempt: FRAME_EXEMPT,
     hasPollReturn: function () { return pollReturn !== null; },
     days: function () { return view.days; },
   };
