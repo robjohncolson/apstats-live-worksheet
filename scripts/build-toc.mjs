@@ -2,6 +2,7 @@
 //   2026-crosswalk.json  — old topic → { status core|bonus, newUnit, newTopic, newLabel, bonusUnit }
 //   roadmap-data.json    — old topic → worksheet file (the registry; Supabase lesson_urls overrides
 //                          the Desk at runtime, but worksheet files never moved)
+// Only core 2026 topics are listed; bonus ("Beyond the exam") lessons are left out (teacher 2026-10-06).
 // The old 9-unit layout (2026-05-17) no longer matched what students see on the Desk, which has
 // labelled every lesson by the 2026 CED since the relabel (CALENDAR_CED2026_RELABEL_SPEC.md).
 //
