@@ -62,8 +62,10 @@ describe('Pico stage select -- outlines', { timeout: 90_000 }, () => {
     expect(PICO).toContain("'@keyframes pico-select-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.04); } }',");
     const motion = /'@media \(prefers-reduced-motion: no-preference\) \{',\n    '  ' \+ PICO_FRAME_SELECTORS\.map\(function \(sel\) \{ return sel \+ '\.is-active::after'; \}\)\.join\(', '\) \+\n    ' \{ animation: pico-select-pulse 1\.2s ease-in-out infinite; will-change: transform; \}',/;
     expect(PICO).toMatch(motion);
-    // The keyframes are used exactly once (the active rule) — never on .pico-green, .is-selected or the triangle.
-    expect(PICO.match(/animation: pico-select-pulse/g)).toHaveLength(1);
+    // The keyframes are used by the active outline and PLAY's cat ring only — never on
+    // .pico-green, .is-selected, the mode badge or the triangle.
+    expect(PICO.match(/animation: pico-select-pulse/g)).toHaveLength(2);
+    expect(PICO).toContain("'  #pico-home .cat-ring { animation: pico-select-pulse 1.2s ease-in-out infinite; }',");
     expect(PICO).toContain("' { --frame-colour: #3DA35D; }',");
   });
 
