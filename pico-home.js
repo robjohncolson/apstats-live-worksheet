@@ -58,7 +58,7 @@
     '#pico-home {',
     '  --orange: #FF864D; --cream: #FFFBF0; --paper: #FEFEFE; --ink: #000040; --warn: #d9b400;',
     '  --plain-font: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;',
-    '  position: fixed; inset: 0; z-index: 4; overflow: auto;',
+    '  position: fixed; inset: 0; z-index: 4; overflow-x: hidden; overflow-y: auto;',
     '  background: var(--paper); color: var(--ink); font: 16px/1.35 var(--plain-font);',
     '}',
     '#pico-home *, #pico-home *::before { box-sizing: border-box; }',
@@ -158,13 +158,25 @@
     '    100% calc(100% - 4px), calc(100% - 2px) calc(100% - 4px), calc(100% - 2px) calc(100% - 2px),',
     '    calc(100% - 4px) calc(100% - 2px), calc(100% - 4px) 100%, 4px 100%, 4px calc(100% - 2px),',
     '    2px calc(100% - 2px), 2px calc(100% - 4px), 0 calc(100% - 4px), 0 4px, 2px 4px, 2px 2px, 4px 2px); }',
-    /* The floor: the REAL classroom board (#classroom-board-mount, reparented here), sized to
-       the height that is left so the home fits 1366x768 without scrolling. */
-    '#pico-home .scene > .floor { flex: 1 0 0; min-height: 220px; container-type: size; display: flex;',
-    '  flex-direction: column; justify-content: flex-end; align-items: center; }',
-    '#pico-home .floor #classroom-board-mount { width: min(640px, 100%, calc((100cqh - 20px) * 0.96)) !important;',
-    '  max-width: none !important; margin: 0 auto !important; }',
-    '#pico-home .floor-band { flex: none; align-self: stretch; height: 16px; background: var(--orange); }',
+    /* The floor: the REAL classroom board (#classroom-board-mount, reparented here) IS the page's
+       bottom edge. It spans the whole page width with no box of its own (the board paints no
+       background in its room; the page's white shows through), its ground line is the page's
+       orange floor, and only the band from the floor up to the tallest idle thing standing on it
+       is shown (the rest of the room is cropped above). While a game is running the band grows to
+       the whole room (see layoutFloor). Signed out (no board yet) the Pico band is the floor. */
+    '#pico-home .scene > .floor { flex: none; margin-top: auto; position: relative; overflow: hidden;',
+    '  width: 100vw; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); }',
+    '#pico-home .floor #classroom-board-mount { position: absolute !important; left: 0; right: 0; bottom: 0;',
+    '  width: 100% !important; max-width: none !important; margin: 0 !important; }',
+    '#pico-home .floor:not(.has-board) { height: 16px; }',
+    '#pico-home .floor-band { position: absolute; left: 0; right: 0; bottom: 0; height: 16px; background: var(--orange); }',
+    '#pico-home .floor.has-board .floor-band { display: none; }',
+    /* The board's pull-down result screen holds a width:100% chart canvas (320x160 intrinsic); at
+       page width that chart alone would be ~700 px tall and push the question, stepper and close
+       button out of the board. Cap the chart (2:1, centred) at 320 px or the board height minus the
+       controls (--pico-result-chart-max, set by layoutFloor), whichever is smaller. */
+    '#pico-home #classroom-board-mount [data-classroom-result-canvas] { width: auto !important; max-width: 100%;',
+    '  height: min(320px, var(--pico-result-chart-max, 320px)) !important; margin: 0 auto; }',
     /* OPTION: the recovered menu window over a dimmed home. */
     '#pico-home .backdrop { position: fixed; inset: 0; z-index: 10; background: rgba(0, 0, 64, .45);',
     '  display: flex; align-items: center; justify-content: center; padding: 16px; overflow: auto; }',
@@ -337,6 +349,11 @@
     node.style.backgroundSize = ATLAS_SIZE.w * s + 'px ' + ATLAS_SIZE.h * s + 'px';
     node.style.backgroundPosition = (-r.x * s) + 'px ' + (-r.y * s) + 'px';
     return node;
+  }
+
+  // Elapsed-time checks use the monotonic clock (wall-clock time can jump, or be pinned in tests).
+  function monotonicNow() {
+    return (window.performance && typeof window.performance.now === 'function') ? window.performance.now() : Date.now();
   }
 
   function byId(id) {
@@ -1879,13 +1896,13 @@
   var pendingOpener = null;
 
   function notePendingOpener(ref) {
-    pendingOpener = ref ? { ref: ref, at: Date.now() } : null;
+    pendingOpener = ref ? { ref: ref, at: monotonicNow() } : null;
   }
 
   function takePendingOpener() {
     var pending = pendingOpener;
     pendingOpener = null;
-    if (!pending || Date.now() - pending.at > 1000) return null;
+    if (!pending || monotonicNow() - pending.at > 1000) return null;
     return pending.ref;
   }
 
@@ -1912,6 +1929,7 @@
   // ── The flag ───────────────────────────────────────────────────────────────
   function useOriginalDesk() {
     cancelPollReturn();
+    stopFloorWatch();
     try { localStorage.removeItem(FLAG_KEY); } catch (_) {}
     var url = new URL(window.location.href);
     url.searchParams.delete('home');
@@ -2053,6 +2071,221 @@
     });
   }
 
+  // ── The floor: the real board as the page's bottom edge ───────────────────
+  // The board (classroom-board.js) has two scenes. Signed in, a student's board mounts the
+  // calculator room straight away (apstat-park/calculator-room.mjs: world 720 x 750, floor at
+  // 700, drawn at scale min(1, width / 720), transparent, its own orange floor block 50 high).
+  // Otherwise — loading, a whole-class poll / gate / activity — it is the 220-high presence strip
+  // (groundY = height - 50; cats, the three park doors with occupancy, poll board). The board
+  // marks its own state on the mount: data-calculator-active (room mounted),
+  // data-calculator-participating (the team calculator round is running) and data-park-active
+  // (a campaign / park level is open); its poll vote buttons and result screen are DOM children.
+  // Nothing here re-derives a rule: it only reads those signals and sizes the window onto it.
+  var BOARD_FLOOR_H = 50;             // the board's floor block under the ground line (both scenes)
+  var ROOM_WORLD_W = 720;             // calculator-room WORLD.width (scale = min(1, width / 720))
+  // Tallest idle thing standing on the room's floor: the "PICO PARK" door label, drawn at
+  // WORLD.floor - 70 (calculator-room.mjs drawScenery), plus a little air. The room's teaching
+  // text above it (WORLD.floor - 96 and higher) is cropped while idle.
+  var ROOM_IDLE_HEADROOM = 88;
+  // Strip: the 32-px park doors with the occupancy line 10 px above them, and the cats.
+  var STRIP_IDLE_HEADROOM = 72;
+
+  function boardCanvas() {
+    var mount = byId('classroom-board-mount');
+    return mount ? mount.querySelector(':scope > canvas') : null;
+  }
+
+  function shownDomChild(mount, selector) {
+    var node = mount.querySelector(selector);
+    return Boolean(node && node.style.display !== 'none');
+  }
+
+  // A game (or a whole-class moment the board shows above its floor) is running.
+  // The board's whole-class state, as it reports it to the Desk (onStateChange → the Desk's
+  // _lastClassroomSummary). These are the fields of the board's own classroomBusy(): a poll from
+  // open to close (voting does not end it), an armed gate, a green light, doorways, and an
+  // activity until it is finished. The strip draws those scenes above its floor.
+  function wholeClassBusy() {
+    var summary = null;
+    try { summary = _lastClassroomSummary; } catch (_) { summary = window._lastClassroomSummary || null; }
+    if (!summary) return false;
+    return Boolean(summary.poll || (summary.gate && summary.gate.armed) || summary.greenlight || summary.doorways
+      || (summary.activity && !summary.activity.finished));
+  }
+
+  function resultScreenDown(mount) {
+    var result = mount.querySelector('[data-classroom-result-screen]');
+    return Boolean(result && result.style.transform && result.style.transform !== 'translateY(-100%)');
+  }
+
+  // A game, a whole-class moment, or a result is showing above the board's floor.
+  function boardPlaying(mount) {
+    if (mount.hasAttribute('data-calculator-participating') || mount.hasAttribute('data-park-active')) return true;
+    if (resultScreenDown(mount)) return true;
+    if (wholeClassBusy()) return true;
+    return shownDomChild(mount, '[data-classroom-poll-votes]');
+  }
+
+  // The expanded floor is the board's whole canvas. The pulled-down result screen lives inside the
+  // board's container (which clips it), so its chart is capped to leave room for the question, the
+  // stepper and the close button under it (RESULT_CONTROLS_H) — see the result-canvas CSS rule.
+  var RESULT_CONTROLS_H = 100;
+  function expandedHeight(mount, canvas) {
+    return canvasHeight(canvas);
+  }
+
+  // Scroll ownership is decided by the CAUSE of an expansion, not by timing. The page scrolls the
+  // room in only when the expansion is the student's own game — the board's
+  // data-calculator-participating (their calculator round) or data-park-active (their park /
+  // campaign door) — after the student acted on the floor (a click on the board, or a key while
+  // nothing else has focus), and only if no whole-class cause (poll, gate, green light,
+  // doorways, activity, result screen, vote buttons) is part of it. Broadcasts never scroll,
+  // whatever the student did just before.
+  var floorArmed = false;     // the student acted on the floor since the last expansion
+  var scrollMemo = null;      // { before }: where the page was when we scrolled the room in
+  var userScrolled = false;   // the student scrolled while the room was in (our own writes excluded)
+  var ignoreScrollUntil = 0;
+
+  function noteFloorInput(event) {
+    var target = event.target;
+    if (event.type === 'pointerdown' || event.type === 'mousedown') {
+      if (target && target.closest && target.closest('#pico-floor')) floorArmed = true;
+      return;
+    }
+    if (isEditable(target)) return;
+    var onFloor = Boolean(target && target.closest && target.closest('#pico-floor'));
+    var onPage = target === document.body || target === document.documentElement;
+    if (onFloor || onPage) floorArmed = true;
+  }
+
+  function studentGameSignal(mount) {
+    return mount.hasAttribute('data-calculator-participating') || mount.hasAttribute('data-park-active');
+  }
+
+  function broadcastSignal(mount) {
+    return wholeClassBusy() || resultScreenDown(mount) || shownDomChild(mount, '[data-classroom-poll-votes]');
+  }
+
+  // Our own scroll writes and floor resizes must not count as the student scrolling.
+  function quietScroll() {
+    ignoreScrollUntil = monotonicNow() + 150;
+  }
+
+  function setRootScroll(root, value) {
+    quietScroll();
+    root.scrollTop = value;
+  }
+
+  function onRootScroll() {
+    if (monotonicNow() < ignoreScrollUntil) return;
+    if (scrollMemo) userScrolled = true;
+  }
+
+  // Expanding: scroll the room in only for the student's own game.
+  function onExpand(mount) {
+    var root = byId('pico-home');
+    var owned = floorArmed && studentGameSignal(mount) && !broadcastSignal(mount);
+    floorArmed = false;
+    scrollMemo = null;
+    userScrolled = false;
+    if (!root || !owned) return;
+    var before = root.scrollTop;
+    setRootScroll(root, root.scrollHeight);
+    scrollMemo = { before: before };
+  }
+
+  // Collapsing: decided BEFORE the floor shrinks (the browser clamps the scroll position as the
+  // page gets shorter). Returns the position to restore, or null to leave the page alone.
+  function takeScrollRestore() {
+    var memo = scrollMemo;
+    scrollMemo = null;
+    var scrolled = userScrolled;
+    userScrolled = false;
+    if (!memo || scrolled) return null;
+    return memo.before;
+  }
+
+  function canvasHeight(canvas) {
+    return parseFloat(canvas.style.height) || canvas.offsetHeight || 0;
+  }
+
+  // The idle band: floor block + the tallest idle thing, at the scene's own scale.
+  function idleBandHeight(mount) {
+    if (!mount.hasAttribute('data-calculator-active')) return STRIP_IDLE_HEADROOM + BOARD_FLOOR_H;
+    var width = mount.clientWidth || ROOM_WORLD_W;
+    var scale = Math.min(1, width / ROOM_WORLD_W);
+    return Math.round((ROOM_IDLE_HEADROOM + BOARD_FLOOR_H) * scale);
+  }
+
+  function layoutFloor() {
+    var floor = byId('pico-floor');
+    var mount = byId('classroom-board-mount');
+    if (!floor || !mount) return;
+    var canvas = boardCanvas();
+    var hadBoard = floor.classList.contains('has-board');
+    floor.classList.toggle('has-board', Boolean(canvas));
+    // The board measures its container on mount and on window resize (its own hook): once it has
+    // appeared in the full-width floor, let it measure again.
+    if (canvas && !hadBoard) setTimeout(function () { window.dispatchEvent(new Event('resize')); }, 0);
+    if (!canvas) {
+      floor.style.height = '';
+      view.boardPlaying = false;
+      return;
+    }
+    var playing = boardPlaying(mount);
+    var changing = playing !== Boolean(view.boardPlaying);
+    // Ownership of a collapse is read before the floor shrinks.
+    var restoreTo = (changing && !playing) ? takeScrollRestore() : null;
+    var height = playing ? expandedHeight(mount, canvas) : Math.min(canvasHeight(canvas), idleBandHeight(mount));
+    if (floor.style.height !== height + 'px') {
+      quietScroll();
+      floor.style.height = height + 'px';
+    }
+    floor.style.setProperty('--pico-result-chart-max', Math.max(60, canvasHeight(canvas) - RESULT_CONTROLS_H) + 'px');
+    floor.classList.toggle('is-room', playing);
+    floor.setAttribute('data-floor-mode', playing ? 'room' : 'band');
+    if (!changing) return;
+    view.boardPlaying = playing;
+    if (playing) { onExpand(mount); return; }
+    var root = byId('pico-home');
+    if (root && restoreTo !== null) setRootScroll(root, restoreTo);
+  }
+
+  var floorTimer = null;
+  var floorWatchTimer = null;
+  function stopFloorWatch() {
+    if (floorWatchTimer) clearInterval(floorWatchTimer);
+    floorWatchTimer = null;
+  }
+  function scheduleFloor() {
+    if (floorTimer) return;
+    floorTimer = setTimeout(function () { floorTimer = null; layoutFloor(); }, 16);
+  }
+
+  function watchFloor() {
+    var mount = byId('classroom-board-mount');
+    if (!mount || typeof MutationObserver !== 'function') return;
+    new MutationObserver(scheduleFloor).observe(mount, {
+      childList: true, attributes: true, subtree: true,
+      attributeFilter: ['style', 'data-calculator-active', 'data-calculator-participating', 'data-park-active'],
+    });
+    window.addEventListener('resize', scheduleFloor);
+    window.addEventListener('pointerdown', noteFloorInput, true);
+    window.addEventListener('mousedown', noteFloorInput, true);
+    window.addEventListener('keydown', noteFloorInput, true);
+    // The board reports whole-class changes only to the Desk's summary (no DOM marker for an
+    // activity or a vote), so the floor checks it on a light timer and on every board mutation.
+    var root = byId('pico-home');
+    if (root) root.addEventListener('scroll', onRootScroll, { passive: true });
+    floorWatchTimer = setInterval(function () {
+      if (document.visibilityState === 'hidden') return;   // paused while the tab is hidden
+      var board = byId('classroom-board-mount');
+      if (!board || !boardCanvas()) return;
+      if (boardPlaying(board) !== Boolean(view.boardPlaying)) layoutFloor();
+    }, 300);
+    layoutFloor();
+  }
+
   function init() {
     if (byId('pico-home')) return;
     injectStyle();
@@ -2061,6 +2294,7 @@
     setupLessonPanel();
     setupMyGrade();
     setupFrames();
+    watchFloor();
     render();
   }
 
@@ -2074,6 +2308,9 @@
     framed: FRAMED,
     frameExempt: FRAME_EXEMPT,
     hasPollReturn: function () { return pollReturn !== null; },
+    layoutFloor: layoutFloor,
+    stopFloorWatch: function () { stopFloorWatch(); },
+    floorConstants: { BOARD_FLOOR_H: BOARD_FLOOR_H, ROOM_WORLD_W: ROOM_WORLD_W, ROOM_IDLE_HEADROOM: ROOM_IDLE_HEADROOM, STRIP_IDLE_HEADROOM: STRIP_IDLE_HEADROOM },
     days: function () { return view.days; },
   };
 
