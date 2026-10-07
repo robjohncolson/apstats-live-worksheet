@@ -1,7 +1,7 @@
 // Teacher 2026-10-07, three campaign rules (scripts/pico-campaign-patches.mjs):
-//   push-box-head-carry      — native rule (rewritten 2026-10-07, 'like crazy glue'): a cat holds a box like a
-//                              floor; walking out leaves it to fall; a cat cannot jump through it; only a
-//                              lift / MoveWall under the cat moves the stack (FUN_7ff72bb33890, FUN_7ff72bb6f0e0);
+//   push-box-head-carry      — a cat holds a box like a floor; a cat cannot jump through it; a lift / MoveWall
+//                              under the cat moves the stack (FUN_7ff72bb33890, FUN_7ff72bb6f0e0); a walking cat
+//                              carries it (stack-riding, campaign-stack-ride.test.mjs, retail capture);
 //   stacked-cats-weigh-lifts — a cat standing on a cat on the weighted lift counts, and rides;
 //   push-box-holds-switches  — a moved, landed push box holds a plain switch down.
 // Runs the rebuilt recovered runtime itself (pixi under jsdom, with a no-op canvas context).
@@ -57,7 +57,10 @@ function boxOnHead(box, player) {
 
 // 1-3 (stage_jump02): floor top at y 434 from x 820 on (a bottomless pit lies left of it); the box is 40 x 50.
 // x 1300 is clear of the static block at x 1032 and of the third box floating at x 1180, y 286.
-test('1-3: a box rests on a standing cat; when the cat walks away the box stays put in x and falls to the floor', () => {
+// stack-riding (retail capture og-capture-2 run B2) supersedes the earlier 'walking away leaves the box' rule:
+// a box on a walking cat rides it. It only falls when it is stopped (here by a wall at box height) and the cat
+// walks out from under it.
+test('1-3: a box rests on a standing cat and rides it when it walks; a wall stops the box, the cat walks on, the box falls', () => {
   const game = loadStage('stage_jump02');
   const [cat, other] = game.players;
   place(cat, 1300, 400); place(other, 900, 400);
@@ -65,14 +68,19 @@ test('1-3: a box rests on a standing cat; when the cat walks away the box stays 
   boxOnHead(box, cat);
   step(game, 2);
   assert.equal(box.rect.y + box.rect.height, cat.rect.y, 'the box rests on the head');
-  const boxX = box.rect.x;
+  const offset = box.rect.x - cat.rect.x;
+  step(game, 5, [RIGHT, IDLE]);
+  assert.equal(box.rect.x - cat.rect.x, offset, 'the box rides the walking cat');
+  // A wall at box height only (left-bottom anchored Rect), clear of the cat below it.
+  const wallX = box.rect.x + box.rect.width + 10, wallBottom = cat.rect.y - 4;
+  game.spawnHandlers.Rect({ raw: [0, 0, 'Rect', '', wallX, wallBottom, 20, 80], actorName: 'Rect', label: '', x: wallX, y: wallBottom });
   let fellAt = -1;
   for (let frame = 0; frame < 60; frame++) {
     step(game, 1, [RIGHT, IDLE]);
-    assert.equal(box.rect.x, boxX, 'the box never moves with the cat (frame ' + frame + ')');
+    assert.ok(box.rect.x + box.rect.width <= wallX + 1e-6, 'the wall holds the box (frame ' + frame + ')');
     if (fellAt < 0 && box.falling) fellAt = frame;
   }
-  assert.ok(cat.rect.x > boxX + box.rect.width, 'the cat walked out from under it: ' + cat.rect.x);
+  assert.ok(cat.rect.x > box.rect.x + box.rect.width, 'the cat walked out from under it: ' + cat.rect.x);
   assert.ok(fellAt >= 0, 'the box lost its support and fell');
   step(game, 60);
   assert.equal(box.falling, false, 'it landed');
@@ -184,8 +192,9 @@ test('1-3: cat on cat: the lower cat does not rise and the upper cat is not laun
   }
 });
 
-// 1-2 (stage_push02) is not jump02: cats hold boxes in every stage (native support has no category filter).
-test('1-2 (not jump02): a cat holds a box; walking away leaves it in x and it falls', () => {
+// 1-2 (stage_push02) is not jump02: cats hold boxes in every stage (native support has no category filter),
+// and the walking cat carries it (stack-riding) there too.
+test('1-2 (not jump02): a cat holds a box and carries it when it walks', () => {
   const game = loadStage('stage_push02');
   const [cat, other] = game.players;
   place(cat, 1200, 400); place(other, 100, 400);
@@ -193,12 +202,11 @@ test('1-2 (not jump02): a cat holds a box; walking away leaves it in x and it fa
   boxOnHead(box, cat);
   step(game, 2);
   assert.equal(box.rect.y + box.rect.height, cat.rect.y, 'supported by the head outside jump02');
-  const boxX = box.rect.x;
-  step(game, 40, [RIGHT, IDLE]);
-  assert.equal(box.rect.x, boxX, 'not carried horizontally');
-  step(game, 60);
-  assert.equal(box.falling, false, 'it fell and landed');
-  assert.ok(box.rect.y + box.rect.height > cat.rect.y + 1, 'it is no longer on a head');
+  const offset = box.rect.x - cat.rect.x, catX = cat.rect.x;
+  step(game, 10, [RIGHT, IDLE]);
+  assert.ok(cat.rect.x > catX + 20, 'the cat walked: ' + (cat.rect.x - catX));
+  assert.equal(box.rect.x - cat.rect.x, offset, 'carried horizontally');
+  assert.equal(box.rect.y + box.rect.height, cat.rect.y, 'still on the head');
 });
 
 test('determinism (240 frames): two runtimes with a box on a head, same inputs, identical cats and boxes', () => {

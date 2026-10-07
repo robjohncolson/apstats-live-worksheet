@@ -52,7 +52,16 @@ export const CAMPAIGN_PATCHES = [{
     'FUN_7ff72bc17330 callers (box push, lifts, plane, stretch, RouletteLift, switch motion): the normal cat update FUN_7ff72bb6f0e0 never chain-displaces, so a walking cat does not carry its head box',
     'FUN_7ff72bb6f0e0 jump: vy is set only if FUN_7ff72bb5b630(body, 0 = above, 1, 0) finds nothing above (an unfiltered FUN_7ff72bc13690 query); with something above, see head-stack-jump-impulse',
     'Carriers move stacks: lifts/MoveWalls sweep (FUN_7ff72bc16f50) and displace contacted bodies by the same delta (FUN_7ff72bb34f30 -> FUN_7ff72bc17330 -> FUN_7ff72bc16780, recursive)'],
-  behavior: 'Every stage: a cat holds a push box like a floor. Walking out from under it leaves the box in place, and it falls once unsupported. A rising cat meets a box above it at its underside (it never passes into it). What a jump press does with a body on the head is head-stack-jump-impulse. Only a carrier (WeightedLift family or MoveWall) under the cat moves the head box, by that carrier\'s own delta, transitively down the stack, with cats riding the box. Deterministic: frame-start rects, lowest player index wins.',
+  behavior: 'Every stage: a cat holds a push box like a floor; once unsupported (the carrier drops away or the box is blocked while the cat walks on) it falls. A rising cat meets a box above it at its underside (it never passes into it). What a jump press does with a body on the head is head-stack-jump-impulse; a walking cat carries its head box (stack-riding, which supersedes this entry\'s earlier "a walking cat carries nothing" reading). A carrier (WeightedLift family or MoveWall) under the cat moves the head box by that carrier\'s own delta, transitively down the stack, with cats riding the box. Deterministic: frame-start rects, lowest player index wins.',
+}, {
+  // Teacher 2026-10-07 (plays the original): "if the bottom cat moves when a cat is on top, the top cat just falls
+  // down — in the game the top cat RIDES the bottom cat's head". Confirmed by a capture of the original (1-3,
+  // og-capture-2/notes.md, runs A1/A2/B2/B3/E1/F2/G1/G2). The decompile did NOT locate the mechanism (see evidence).
+  id: 'stack-riding',
+  files: ['src/engine/GameRuntime.ts'],
+  evidence: ['Retail capture og-capture-2: a walking cat carries the cat and/or box resting on it by its exact dx in every sampled frame, from the first sample (same frame, no lag); transitive (cat / box / cat: identical deltas); a cat on a pushed box rides it 1:1; an airborne cat keeps its x; when the carrier drops off a ledge, contact breaks and the box keeps its x and falls',
+    'Decompile (og-capture-2/decomp/matrix.md): NOT found. avatar+0x140 is written only by CollisionConstraintMove (FUN_7ff72bb6e6d0); FUN_7ff72bb6f0e0 never calls FUN_7ff72bc17330; PushBox FUN_7ff72bb33890 zeroes its vx and inherits nothing. Supporting hint: FUN_7ff72bb7b700 -> FUN_7ff72bb7cd20 caps a walking cat\'s scroll-mode speed by the furthest x of the stack on top of it (recursive), which presumes the stack moves with the walker'],
+  behavior: 'Every stage: after a cat\'s own update and collisions, everything resting on its pre-move rect (cats and push boxes; not a rising cat, a falling, hopping or hop-requested box) moves sideways by the same dx in the same frame, transitively up the stack (bottom-up, breadth-first; cats by index, then boxes by index). A cat carried by a pushed box carries its own stack the same way. A rider blocked by a tile, solid or body moves only as far as it can, and the support walks out from under it. A body is displaced by riding at most once per frame (frame-wide set), and only by ONE support: of the bodies it rested on at frame start, the one with the largest horizontal overlap (ties: cats by index, then boxes by index); a rider that landed this frame rides whatever it rests on. Vertical motion is not inherited (gravity / carriers handle it). Steps over 48 units (teleports) never drag a stack. Deterministic: simulation state only.',
 }, {
   // Teacher 2026-10-07 (plays the original): "with a box on your head jumping works a little, the box bounces;
   // with a cat on your head jumping doesn't work at all". Confirmed by a capture of the original (1-3,
@@ -617,6 +626,124 @@ export function getRectLeftBottomRect(spawn: ActorSpawnDef): Rect {
       }
       box.velocityY = Math.min(PUSH_BOX_MAX_FALL_SPEED, box.velocityY + PUSH_BOX_GRAVITY * dt);`, file);
     source = replaceOnce(source, '          if (nativeJumpBoxes) {\n            // Resolve the final fraction', '          if (nativeJumpBoxes || box.hopping) {\n            // Resolve the final fraction', file);
+
+    // stack-riding (0/3): a frame-wide set, so a riding pass displaces any body at most once per frame
+    // (Codex review: a box on two walking heads was carried by both).
+    source = replaceOnce(source, '  private readonly pushBoxesOnHeads = new Set<PushBox>();',
+      '  private readonly pushBoxesOnHeads = new Set<PushBox>();\n  private readonly riddenThisFrame = new Set<Player | PushBox>();', file);
+    source = replaceOnce(source, '    this.frameStartMoveWallRects = this.moveWalls.map((moveWall) => ({ ...moveWall.rect }));',
+      '    this.frameStartMoveWallRects = this.moveWalls.map((moveWall) => ({ ...moveWall.rect }));\n    this.riddenThisFrame.clear();', file);
+    // stack-riding (1/3): after a cat's own update and collisions, what rests on it rides its sideways move.
+    source = replaceOnce(source, '      this.applyJumpStands(previousPlayerRect);\n      this.applyJumpAreas();',
+      `      this.applyJumpStands(previousPlayerRect);
+      if (!this.collisionChangePlayersCollisionOff.has(this.player)) {
+        this.rideStackOnSupport(previousPlayerRect, this.player.rect.x - previousPlayerRect.x, this.player);
+      }
+      this.applyJumpAreas();`, file);
+    // stack-riding (2/3): a cat carried by a pushed box carries its own stack the same way (transitive).
+    source = replaceOnce(source, `      player.applyResolvedCollision(
+        { ...player.rect, x: player.rect.x + deltaX, y: player.rect.y + deltaY },
+        player.velocity,
+        true,
+      );
+      this.resetPlayerIfTouchingDangerChip(player, playerIndex);`, `      if (this.riddenThisFrame.has(player)) continue;   // already displaced by a riding pass this frame
+      this.riddenThisFrame.add(player);
+      const riderBefore = { ...player.rect };
+      player.applyResolvedCollision(
+        { ...player.rect, x: player.rect.x + deltaX, y: player.rect.y + deltaY },
+        player.velocity,
+        true,
+      );
+      this.resetPlayerIfTouchingDangerChip(player, playerIndex);
+      this.rideStackOnSupport(riderBefore, player.rect.x - riderBefore.x, player);`, file);
+    // stack-riding (3/3): the column walk.
+    source = replaceOnce(source, '  private updateFallingPushBoxes(dt: number): void {', `  // stack-riding: a support that moved sideways by dx this frame carries everything resting on it (its
+  // rect before the move): cats and push boxes, transitively up the stack, by the same dx, in the same frame.
+  // Bottom-up, breadth-first; cats by index, then boxes by index. A rider that a wall, tile or body blocks
+  // moves only as far as it can (the support then walks out from under it). Airborne bodies (a rising cat,
+  // a falling or hopping box) are not resting and do not ride. Simulation state only.
+  private rideStackOnSupport(supportBefore: Rect, dx: number, support: Player | PushBox): void {
+    const MAX_RIDE_STEP = 48; // a respawn / warp teleport never drags a stack along
+    if (!this.tileMap || dx === 0 || Math.abs(dx) > MAX_RIDE_STEP) return;
+    const live = (player: Player) => player.deathTimer <= 0 && !this.deathFallPlayers.has(player)
+      && !this.collisionChangePlayersCollisionOff.has(player) && !this.activelyGuardingPlayers.has(player);
+    const solidRects: Rect[] = [
+      ...this.gates.filter((gate) => !gate.opened).map((gate) => gate.rect),
+      ...this.stationaryActiveFallBoxRects(),
+      ...this.staticRects.filter((s) => s.spawn.actorName !== 'PuzzlePredictProxy').map((s) => s.rect),
+      ...this.moveWalls.map((m) => m.rect),
+      ...this.weightedLifts.map((w) => w.rect),
+      ...this.bridges.filter((b) => !b.opened).map((b) => b.rect),
+      ...this.blinkBlocks.filter((b) => b.solid).map((b) => b.rect),
+      ...this.smallBoxes.map(smallBoxRect),
+      ...this.normalBoxes.filter((b) => !this.isLaserKeyBoxUnlocked(b)).map(normalBoxRect),
+      ...this.colorBoxes.map(colorBoxRect),
+    ];
+    const visited = new Set<Player | PushBox>([support]);
+    // One support per rider (Codex review): of the bodies the rider rested on at frame start, the one with the
+    // largest horizontal overlap; ties -> cats by index, then boxes by index. Null when the rider was not resting
+    // on any body at frame start (it landed this frame): then whichever support it rests on now carries it.
+    const startOf = (body: Player | PushBox): Rect | undefined => body instanceof PushBox
+      ? this.frameStartPushBoxRects[this.pushBoxes.indexOf(body)]
+      : this.frameStartPlayerRects[this.players.indexOf(body)];
+    const chosenSupport = (rider: Player | PushBox): Player | PushBox | null => {
+      const riderStart = startOf(rider);
+      if (!riderStart) return null;
+      let best: Player | PushBox | null = null, bestOverlap = 0;
+      for (const candidate of [...this.players, ...this.pushBoxes]) {
+        const start = candidate === rider ? undefined : startOf(candidate);
+        if (!start || !rectRestsOnSupport(riderStart, start)) continue;
+        const overlap = Math.min(riderStart.x + riderStart.width, start.x + start.width) - Math.max(riderStart.x, start.x);
+        if (overlap > bestOverlap) { best = candidate; bestOverlap = overlap; }
+      }
+      return best;
+    };
+    const ridesOn = (rider: Player | PushBox, layer: Player | PushBox) => {
+      const chosen = chosenSupport(rider);
+      return chosen === null || chosen === layer;
+    };
+    const blocked = (body: Player | PushBox, rect: Rect) => this.tileMap!.rectHitsSolid(rect)
+      || solidRects.some((solid) => rectsOverlap(rect, solid))
+      || this.pushBoxes.some((other) => other !== body && rectsOverlap(rect, other.rect))
+      || this.players.some((other) => other !== body && live(other) && rectsOverlap(rect, other.rect));
+    const slide = (body: Player | PushBox, from: Rect, delta: number): Rect => {
+      const at = (t: number) => ({ ...from, x: from.x + delta * t });
+      if (!blocked(body, at(1))) return at(1);
+      let low = 0, high = 1; // largest clear fraction
+      for (let pass = 0; pass < 20; pass += 1) {
+        const middle = (low + high) / 2;
+        if (blocked(body, at(middle))) high = middle; else low = middle;
+      }
+      return at(low);
+    };
+    let frontier: Array<{ body: Player | PushBox; before: Rect; dx: number }> = [{ body: support, before: supportBefore, dx }];
+    for (let depth = 0; depth < 16 && frontier.length; depth += 1) {
+      const next: Array<{ body: Player | PushBox; before: Rect; dx: number }> = [];
+      for (const { body: layer, before, dx: layerDx } of frontier) {
+        for (const [index, rider] of this.players.entries()) {
+          if (visited.has(rider) || this.riddenThisFrame.has(rider)) continue;
+          if (!live(rider) || rider.velocity.y < 0 || !rectRestsOnSupport(rider.rect, before) || !ridesOn(rider, layer)) continue;
+          visited.add(rider); this.riddenThisFrame.add(rider);
+          const from = { ...rider.rect };
+          rider.applyResolvedCollision(slide(rider, from, layerDx), rider.velocity, rider.grounded);
+          this.resetPlayerIfTouchingDangerChip(rider, index);
+          if (rider.rect.x !== from.x) next.push({ body: rider, before: from, dx: rider.rect.x - from.x });
+        }
+        for (const box of this.pushBoxes) {
+          if (visited.has(box) || this.riddenThisFrame.has(box)) continue;
+          if (box.falling || box.hopping || box.hopRequested || !rectRestsOnSupport(box.rect, before) || !ridesOn(box, layer)) continue;
+          visited.add(box); this.riddenThisFrame.add(box);
+          const from = { ...box.rect };
+          box.applyRect(slide(box, from, layerDx));
+          // Not a push: never joins pushBoxesMovedThisFrame (that drives the pushed-off-a-ledge gap snap).
+          if (box.rect.x !== from.x) next.push({ body: box, before: from, dx: box.rect.x - from.x });
+        }
+      }
+      frontier = next;
+    }
+  }
+
+  private updateFallingPushBoxes(dt: number): void {`, file);
     return source;
   }
   // Select by identity: prepending another patch must not disable warp recovery.
