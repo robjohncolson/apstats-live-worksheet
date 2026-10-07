@@ -79,23 +79,109 @@ test('1-3: a box rests on a standing cat; when the cat walks away the box stays 
   assert.ok(Math.abs(box.rect.y + box.rect.height - 432) < 1, 'on the floor: ' + (box.rect.y + box.rect.height));
 });
 
-test('1-3: a cat with a box on its head cannot jump through it; the box is never launched, and walking frees it', () => {
-  const game = loadStage('stage_jump02');
+// head-stack-jump-impulse, against the retail capture (og-capture/notes.md): with a box on its head the cat
+// rises 0 in every frame; the box hops 22 native units (~0.28 s), hold-independent, keeps its x, and lands
+// back with no bounce. Cats in a column pass the hand-off up; a box carrying a cat receives nothing.
+const settled = (game) => { step(game, 20); };
+function headHop(source, hold, extraInputs = () => IDLE) {
+  const game = loadStage(source);
   const [cat, other] = game.players;
-  place(cat, 1300, 400); place(other, 900, 400);
+  place(cat, 1300, 432 - cat.rect.height); place(other, 900, 432 - other.rect.height);
+  settled(game);
   const box = game.pushBoxes[0];
-  boxOnHead(box, cat);
-  step(game, 2);
-  const restBox = { ...box.rect }, restCatY = cat.rect.y;
-  step(game, 1, [JUMP, IDLE]);
-  step(game, 12, [{ ...IDLE, jump: true }, IDLE]);
-  assert.ok(Math.abs(cat.rect.y - restCatY) < 1, 'native: no jump with a body above the head: ' + cat.rect.y);
-  assert.deepEqual({ x: box.rect.x, y: box.rect.y }, { x: restBox.x, y: restBox.y }, 'the box was not launched');
-  assert.ok(cat.rect.y >= box.rect.y + box.rect.height - 0.5, 'the cat is never inside the box');
-  step(game, 40, [RIGHT, IDLE]);
-  step(game, 60);
-  assert.ok(Math.abs(box.rect.y + box.rect.height - 432) < 1, 'walked out from under: the box fell to the floor');
-  assert.equal(box.rect.x, restBox.x);
+  boxOnHead(box, cat); step(game, 5);
+  const rest = { catY: cat.rect.y, boxY: box.rect.y, boxX: box.rect.x };
+  const frames = [];
+  for (let f = 0; f < 60; f++) {
+    const press = f === 0 ? JUMP : f < hold ? { ...IDLE, jump: true } : IDLE;
+    const extra = extraInputs(f);
+    step(game, 1, [{ ...press, left: extra.left, right: extra.right }, IDLE]);
+    frames.push({ catY: cat.rect.y, catX: cat.rect.x, boxY: box.rect.y, boxX: box.rect.x, falling: box.falling });
+  }
+  return { game, cat, box, rest, frames };
+}
+
+test('1-3: jump with a box on the head: the cat never rises, the box hops 22 and lands back exactly, ~0.27 s', () => {
+  const { rest, frames, box } = headHop('stage_jump02', 1);
+  for (const [f, frame] of frames.entries()) assert.equal(frame.catY, rest.catY, 'the cat stays at its y (frame ' + f + ')');
+  const apex = rest.boxY - Math.min(...frames.map((frame) => frame.boxY));
+  assert.ok(Math.abs(apex - 22) <= 1, 'the box hops 22 native units: ' + apex);
+  const airborne = frames.filter((frame) => frame.boxY < rest.boxY - 1e-3).length;
+  assert.ok(airborne / 60 >= 0.25 && airborne / 60 <= 0.30, 'airtime ~0.28 s: ' + (airborne / 60));
+  assert.ok(Math.abs(box.rect.y - rest.boxY) < 1e-4, 'back at exactly its rest y: ' + (box.rect.y - rest.boxY));
+  assert.equal(box.rect.x, rest.boxX, 'it kept its x');
+  assert.equal(box.falling, false, 'it landed (no bounce)');
+});
+
+test('1-3: the hop is the same for a jump held 1, 10 or 40 frames (edge-triggered, no held ramp)', () => {
+  const runs = [1, 10, 40].map((hold) => JSON.stringify(headHop('stage_jump02', hold).frames));
+  assert.equal(runs[1], runs[0]);
+  assert.equal(runs[2], runs[0]);
+});
+
+// The port walks ~4.9 units a frame. Retail run P: ~140 ms of walking left ~22 native units of overlap.
+test('1-3: walking 2 frames during the hop: the box keeps its x in the air and lands off-centre on the head (~22 overlap)', () => {
+  const { rest, frames, cat, box } = headHop('stage_jump02', 1, (f) => (f < 2 ? { right: true } : {}));
+  for (const frame of frames.filter((frame) => frame.falling)) assert.equal(frame.boxX, rest.boxX, 'no horizontal inheritance in flight');
+  assert.ok(Math.abs(box.rect.y + box.rect.height - cat.rect.y) <= 0.5, 'it landed on the head');
+  const overlap = Math.min(box.rect.x + box.rect.width, cat.rect.x + cat.rect.width) - Math.max(box.rect.x, cat.rect.x);
+  assert.ok(Math.abs(overlap - 22) <= 3, 'off-centre on the head, overlap ~22: ' + overlap);
+});
+
+test('1-3: walking clear during the hop: the box comes straight down beside the cat, onto the floor', () => {
+  const { rest, cat, box } = headHop('stage_jump02', 1, (f) => (f < 8 ? { right: true } : {}));
+  assert.equal(box.rect.x, rest.boxX, 'it kept its x');
+  assert.ok(cat.rect.x >= box.rect.x + box.rect.width, 'the cat is clear of it');
+  assert.ok(Math.abs(box.rect.y + box.rect.height - 432) < 1e-3, 'it landed on the floor beside the cat');
+  assert.equal(box.falling, false);
+});
+
+test('1-3: stack cat / cat / box: the cats stay, the top box hops (retail run E)', () => {
+  const game = loadStage('stage_jump02');
+  const [a, b] = game.players;
+  place(a, 1300, 432 - a.rect.height); place(b, 1300, a.rect.y - b.rect.height);
+  settled(game);
+  const box = game.pushBoxes[0];
+  boxOnHead(box, b); step(game, 5);
+  const rest = { a: a.rect.y, b: b.rect.y, box: box.rect.y };
+  let apex = 0;
+  for (let f = 0; f < 60; f++) {
+    step(game, 1, [f === 0 ? JUMP : IDLE, IDLE]);
+    assert.equal(a.rect.y, rest.a, 'the bottom cat stays (frame ' + f + ')');
+    assert.equal(b.rect.y, rest.b, 'the middle cat stays (frame ' + f + ')');
+    apex = Math.max(apex, rest.box - box.rect.y);
+  }
+  assert.ok(Math.abs(apex - 22) <= 1, 'the top box hops 22: ' + apex);
+  assert.ok(Math.abs(box.rect.y - rest.box) < 1e-4, 'and lands back on the middle cat');
+});
+
+test('1-3: stack cat / box / cat: nothing moves (retail run M: a box carrying a cat receives nothing)', () => {
+  const game = loadStage('stage_jump02');
+  const [a, b] = game.players;
+  place(a, 1300, 432 - a.rect.height); place(b, 900, 432 - b.rect.height);
+  settled(game);
+  const box = game.pushBoxes[0];
+  boxOnHead(box, a);
+  place(b, a.rect.x, box.rect.y - b.rect.height);
+  step(game, 5);
+  const rest = { a: { ...a.rect }, b: { ...b.rect }, box: { ...box.rect } };
+  for (let f = 0; f < 60; f++) {
+    step(game, 1, [f === 0 ? JUMP : IDLE, IDLE]);
+    assert.deepEqual([a.rect.y, box.rect.y, b.rect.y], [rest.a.y, rest.box.y, rest.b.y], 'frame ' + f);
+  }
+});
+
+test('1-3: cat on cat: the lower cat does not rise and the upper cat is not launched (retail run I)', () => {
+  const game = loadStage('stage_jump02');
+  const [a, b] = game.players;
+  place(a, 1300, 432 - a.rect.height); place(b, 1300, a.rect.y - b.rect.height);
+  settled(game);
+  const rest = { a: a.rect.y, b: b.rect.y };
+  for (let f = 0; f < 40; f++) {
+    step(game, 1, [f === 0 ? JUMP : f < 20 ? { ...IDLE, jump: true } : IDLE, IDLE]);
+    assert.equal(a.rect.y, rest.a, 'the lower cat stays (frame ' + f + ')');
+    assert.equal(b.rect.y, rest.b, 'the upper cat stays (frame ' + f + ')');
+  }
 });
 
 // 1-2 (stage_push02) is not jump02: cats hold boxes in every stage (native support has no category filter).
@@ -207,18 +293,26 @@ test('10-3: the dark-room lift rises with a cat carrying a box on its head (no j
   assert.ok(Math.abs(box.rect.y + box.rect.height - a.rect.y) <= 0.5, 'the box is still on the head');
 });
 
-test('1-3: when a box rests on two cats, the cat that jumps is stopped by it and the box stays', () => {
+test('1-3: a box resting on two cats: the cat that jumps stays put and the shared box hops and lands back', () => {
   const game = loadStage('stage_jump02');
   const [a, b] = game.players;
-  place(a, 1290, 400); place(b, 1316, 400);
+  place(a, 1290, 432 - a.rect.height); place(b, 1316, 432 - b.rect.height);
+  step(game, 20);
   const box = game.pushBoxes[0];
-  box.applyRect({ ...box.rect, x: 1296, y: 350 }); box.falling = false; box.velocityY = 0; box.wasSupported = true;
-  step(game, 2);
-  step(game, 1, [IDLE, JUMP]);
-  step(game, 6, [IDLE, { ...IDLE, jump: true }]);
-  assert.ok(b.rect.y >= box.rect.y + box.rect.height - 0.5, 'cat 1 is under the box, not inside it');
-  assert.equal(box.rect.y, 350, 'the box was not lifted');
+  box.applyRect({ ...box.rect, x: 1296, y: a.rect.y - box.rect.height }); box.falling = false; box.velocityY = 0; box.wasSupported = true;
+  step(game, 5);
+  const rest = { a: a.rect.y, b: b.rect.y, box: box.rect.y };
+  let apex = 0;
+  for (let f = 0; f < 60; f++) {
+    step(game, 1, [IDLE, f === 0 ? JUMP : f < 6 ? { ...IDLE, jump: true } : IDLE]);
+    assert.equal(b.rect.y, rest.b, 'the jumping cat stays (frame ' + f + ')');
+    assert.ok(b.rect.y >= box.rect.y + box.rect.height - 0.5, 'never inside the box');
+    apex = Math.max(apex, rest.box - box.rect.y);
+  }
+  assert.ok(Math.abs(apex - 22) <= 1, 'the shared box hops 22: ' + apex);
+  assert.ok(Math.abs(box.rect.y - rest.box) < 1e-4, 'and lands back on both heads');
 });
+
 
 // Codex review (2026-10-07): a lift -> cat -> cat -> box stack lost the box carry (only the cat DIRECTLY
 // under a box was checked). The carrier is now found transitively down the frame-start support chain,
@@ -249,4 +343,65 @@ test('lift -> cat -> cat -> box: the whole stack rides the rising slab together 
   }
   assert.ok(rose > 10, 'the slab rose with the stack: ' + rose);
   assert.equal(box.falling, false);
+});
+
+// Codex review (head hop): on a RISING lift the cats move before the hand-off check, so "what is on my head"
+// is read from frame-start positions. The box hops relative to the moving stack and settles back on it.
+test('rising lift: a cat with a box on its head (via the cat it carries) presses jump: the box hops, the cats ride the slab', () => {
+  const game = loadStage('stage_weight01');
+  const lift = game.weightedLifts.find((entry) => entry.spawn.actorName === 'WeightedLift' && entry.params.travel < 0);
+  const [base, top] = game.players;
+  place(base, lift.rect.x + 19, lift.rect.y - base.rect.height);
+  place(top, base.rect.x, base.rect.y - top.rect.height);
+  const x = top.rect.x + top.rect.width / 2, y = top.rect.y;
+  game.spawnHandlers.PushBox({ raw: [0, 0, 'PushBox', '', x, y, 10, 40, 50], actorName: 'PushBox', label: '', x, y });
+  const box = game.pushBoxes.at(-1);
+  box.falling = false; box.velocityY = 0; box.wasSupported = true;
+  step(game, 10);
+  const liftBefore = lift.rect.y;
+  step(game, 1);
+  assert.ok(lift.rect.y < liftBefore, 'the lift is rising when the jump is pressed');
+  let maxGap = 0;
+  for (let frame = 0; frame < 40; frame++) {
+    step(game, 1, [frame === 0 ? JUMP : IDLE, IDLE]);
+    assert.ok(Math.abs(base.rect.y + base.rect.height - lift.rect.y) <= 0.5, 'the jumping cat stays on the slab (frame ' + frame + ')');
+    assert.ok(Math.abs(top.rect.y + top.rect.height - base.rect.y) <= 1, 'the top cat rides the base cat (frame ' + frame + ')');
+    const gap = top.rect.y - (box.rect.y + box.rect.height);
+    assert.ok(gap >= -0.5, 'the box never sinks into the top cat (frame ' + frame + ')');
+    maxGap = Math.max(maxGap, gap);
+  }
+  assert.ok(maxGap > 5, 'the box hopped off the head relative to the rising stack: ' + maxGap);
+  assert.ok(Math.abs(top.rect.y - (box.rect.y + box.rect.height)) <= 0.5, 'and it is back on the head');
+  assert.equal(box.falling, false);
+});
+
+// Codex review (head hop): a hop cut short by a low ceiling settles straight back onto the head (in contact),
+// so the next press hops again instead of starting a real cat jump into the box.
+// Headrooms found to leave the box hovering 0.4-0.9 above the head in 1-2 before the fix (and one in 1-3).
+test('low ceiling: a truncated hop settles back in contact on the head; the next press hops again; the cat never rises', () => {
+  const cases = [['stage_jump02', 0.7], ['stage_jump02', 1.5], ['stage_jump02', 10],
+    ['stage_push02', 8.34], ['stage_push02', 9.08], ['stage_push02', 16.48], ['stage_push02', 21.66]];
+  for (const [source, headroom] of cases) {
+    const game = loadStage(source);
+    const [cat, other] = game.players;
+    place(cat, source === 'stage_jump02' ? 1300 : 1200, 432 - cat.rect.height);
+    place(other, source === 'stage_jump02' ? 900 : 100, 432 - other.rect.height);
+    step(game, 20);
+    const box = source === 'stage_jump02' ? game.pushBoxes[0] : game.pushBoxes[2];
+    boxOnHead(box, cat); step(game, 5);
+    // A solid just above the box (headroom less than the box's own height): Rect rows are left-bottom anchored.
+    const cx = box.rect.x - 10, cy = box.rect.y - headroom;
+    game.spawnHandlers.Rect({ raw: [0, 0, 'Rect', '', cx, cy, box.rect.width + 20, 20], actorName: 'Rect', label: '', x: cx, y: cy });
+    const rest = { catY: cat.rect.y, boxY: box.rect.y };
+    const where = source + ' headroom ' + headroom;
+    for (const press of [1, 2]) {
+      for (let frame = 0; frame < 60; frame++) {
+        step(game, 1, [frame === 0 ? JUMP : IDLE, IDLE]);
+        assert.equal(cat.rect.y, rest.catY, where + ' press ' + press + ': the cat never rises (frame ' + frame + ')');
+        assert.ok(rest.boxY - box.rect.y <= headroom + 1e-6, where + ': the ceiling caps the hop');
+      }
+      assert.ok(Math.abs(box.rect.y - rest.boxY) < 1e-4, where + ' press ' + press + ': back in contact on the head: ' + (rest.boxY - box.rect.y));
+      assert.equal(box.falling, false, where + ' press ' + press);
+    }
+  }
 });

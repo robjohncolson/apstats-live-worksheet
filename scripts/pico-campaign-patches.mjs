@@ -50,9 +50,21 @@ export const CAMPAIGN_PATCHES = [{
   files: ['src/engine/GameRuntime.ts', 'src/engine/actors/PushBox.ts'],
   evidence: ['FUN_7ff72bb33890 (PushBox resolver: zeroes its own vx; support = any body in the cell below via FUN_7ff72bc13690, which has no category filter, so a cat holds a box; else the 0.65 settle)',
     'FUN_7ff72bc17330 callers (box push, lifts, plane, stretch, RouletteLift, switch motion): the normal cat update FUN_7ff72bb6f0e0 never chain-displaces, so a walking cat does not carry its head box',
-    'FUN_7ff72bb6f0e0 jump: vy is set only if FUN_7ff72bb5b630(body, 0 = above, 1, 0) finds nothing above; a box on the head suppresses the jump and is never launched',
+    'FUN_7ff72bb6f0e0 jump: vy is set only if FUN_7ff72bb5b630(body, 0 = above, 1, 0) finds nothing above (an unfiltered FUN_7ff72bc13690 query); with something above, see head-stack-jump-impulse',
     'Carriers move stacks: lifts/MoveWalls sweep (FUN_7ff72bc16f50) and displace contacted bodies by the same delta (FUN_7ff72bb34f30 -> FUN_7ff72bc17330 -> FUN_7ff72bc16780, recursive)'],
-  behavior: 'Every stage: a cat holds a push box like a floor. Walking out from under it leaves the box in place, and it falls once unsupported. A cat with a box on its head cannot jump through it (the box is solid; it is never launched). Only a carrier (WeightedLift family or MoveWall) under the cat moves the head box, by that carrier\'s own delta, with cats riding the box. Deterministic: frame-start rects, lowest player index wins.',
+  behavior: 'Every stage: a cat holds a push box like a floor. Walking out from under it leaves the box in place, and it falls once unsupported. A rising cat meets a box above it at its underside (it never passes into it). What a jump press does with a body on the head is head-stack-jump-impulse. Only a carrier (WeightedLift family or MoveWall) under the cat moves the head box, by that carrier\'s own delta, transitively down the stack, with cats riding the box. Deterministic: frame-start rects, lowest player index wins.',
+}, {
+  // Teacher 2026-10-07 (plays the original): "with a box on your head jumping works a little, the box bounces;
+  // with a cat on your head jumping doesn't work at all". Confirmed by a capture of the original (1-3,
+  // og-capture/notes.md, runs O/Q/R/P/U/I/E/M): the cat rises 0; a free box on the head hops 22 native units
+  // (~0.28 s, hold-independent, keeps its x, lands back with no bounce); a box carrying a cat does not move.
+  id: 'head-stack-jump-impulse',
+  files: ['src/engine/GameRuntime.ts', 'src/engine/actors/PushBox.ts'],
+  evidence: ['FUN_7ff72bb6f0e0: with a contact above (FUN_7ff72bb5b630 dir 0) the jumper\'s velocity is never set; FUN_7ff72bc15c70(player, node, GetJumpSpeed, 2) hands the jump up the column',
+    'FUN_7ff72bc15c70: v = GetJumpSpeed / FUN_7ff72bc13430(node, UP, 0xffffffff) (depth of the stack above); FUN_7ff72bc15dc0 calls each receiving owner\'s vtable +0x78 with (2, (0, v)), recursing with v + step, so the top layer gets the full speed',
+    'A player\'s +0x78 is FUN_7ff72bb69440 (setState): cats in the column change state, not velocity',
+    'Retail capture (og-capture/notes.md): box hop 22 native, airtime 0.27-0.30 s, hold 47/330/670 ms -> 34/33/33 px; stack blue/red/box: box hops, cats still; blue/box/red: nothing moves'],
+  behavior: 'Every stage: a jump press by a grounded normal cat with a cat or box resting on its head does not move the cat. The column above is walked bottom-up (breadth-first; cats by index, then boxes by index): cats pass the hand-off up (state only, no velocity); a box with anything on it receives nothing; the first free box reached gets one upward impulse, v0 = sqrt(2 G h) + G dt / 2 with h = 22 (the retail hop) and G the box gravity the port already uses for that stage, so its apex is 22 units. It keeps its x, rises under G, and lands with the exact-landing resolve on whatever is below (the head if still under it). Edge-triggered: holding jump changes nothing. Deterministic: simulation state only.',
 }, {
   // Teacher 2026-10-07: "blocks can be used to hold down buttons!" FIDELITY fix, not a desk rule: the
   // native plain-switch begin-contact accepts any body with mask bit 0x2 and category 1..3, and a
@@ -102,10 +114,12 @@ export function patchCampaignSource(file, source) {
     source = replaceOnce(source, '    // PICO PARK push boxes are white', '    this.spawnRect = { ...this.rect };\n\n    // PICO PARK push boxes are white', file);
     source = replaceOnce(source, "import { Container, Graphics, Text, TextStyle }", "import { Container, Graphics, Sprite, Text, TextStyle }", file);
     source = "import { frameTexture } from '../sprites';\n" + source;
-    // push-box-head-carry (native rewrite): a rising cat meets a box above it and stops at its underside.
-    // Native FUN_7ff72bb6f0e0 caps the jump to the headroom under the nearest body above (local_174) and
-    // does not jump at all with a body touching above (FUN_7ff72bb5b630, dir 0): a box on the head is
-    // never launched and the cat never passes into it.
+    // push-box-head-carry (native rewrite): a rising cat meets a box above it and stops at its underside;
+    // it never passes into it. (Native FUN_7ff72bb6f0e0 never sets a jump velocity while a body touches
+    // above, via the unfiltered FUN_7ff72bb5b630(body, 0, 1, 0) gate. Its local_174 is a SIDE step-up
+    // assist from contacts in directions 3 / 2, not a headroom cap, as an earlier comment wrongly said.)
+    // head-stack-jump-impulse: a box remembers a requested hop and whether it is in one.
+    source = replaceOnce(source, '  falling = false;\n', '  falling = false;\n  /** head-stack-jump-impulse: a hop handed up from the cat below, applied in the box update. */\n  hopRequested = false;\n  /** head-stack-jump-impulse: in a hop; lands with the exact-landing resolve. */\n  hopping = false;\n', file);
     source = replaceOnce(source, '    let pushDelta = 0;\n    let resolvedPlayerX = playerRect.x;', `    if (playerVelocity.y < 0 && previousPlayerRect.y >= box.y + box.height - 0.5) {
       playerRect = { ...playerRect, y: box.y + box.height };
       playerVelocityOut.y = 0;
@@ -496,6 +510,113 @@ export function getRectLeftBottomRect(spawn: ActorSpawnDef): Rect {
           }
           break;
         }`, file);
+
+    // head-stack-jump-impulse (1/4): a jump press with a body on the head hands the jump up the column.
+    source = replaceOnce(source, '      const previousPlayerRect = { ...this.player.rect };\n      const startedJump = resolvedPlayerInput.jumpPressed', `      if (resolvedPlayerInput.jumpPressed && this.player.grounded && this.player.mode === 'normal'
+        && this.handOffHeadJump(this.player)) {
+        resolvedPlayerInput = { ...resolvedPlayerInput, jump: false, jumpPressed: false };
+      }
+      const previousPlayerRect = { ...this.player.rect };
+      const startedJump = resolvedPlayerInput.jumpPressed`, file);
+    // head-stack-jump-impulse (2/4): the column walk.
+    source = replaceOnce(source, '  private updateFallingPushBoxes(dt: number): void {', `  // head-stack-jump-impulse: true when a cat or box rests on the jumper's head (the jumper then does not
+  // rise). Walks the column above bottom-up, breadth-first (cats by index, then boxes by index): cats pass
+  // the hand-off up; a box with anything on it receives nothing; the first free box gets the hop.
+  private handOffHeadJump(jumper: Player): boolean {
+    const live = (player: Player) => player.deathTimer <= 0 && !this.deathFallPlayers.has(player)
+      && !this.collisionChangePlayersCollisionOff.has(player);
+    // Frame-start rects (Codex review): a rising lift has already moved the cats this frame, but not yet
+    // their head boxes, so "what is on my head" must be read from where everything was at frame start.
+    const startRect = (body: Player | PushBox): Rect => body instanceof PushBox
+      ? (this.frameStartPushBoxRects[this.pushBoxes.indexOf(body)] ?? body.rect)
+      : (this.frameStartPlayerRects[this.players.indexOf(body)] ?? body.rect);
+    const onTop = (support: Rect): Array<Player | PushBox> => [
+      ...this.players.filter((player) => player !== jumper && live(player) && rectRestsOnSupport(startRect(player), support)),
+      ...this.pushBoxes.filter((box) => !box.falling && rectRestsOnSupport(startRect(box), support)),
+    ];
+    let frontier = onTop(startRect(jumper));
+    if (!frontier.length) return false;
+    const seen = new Set<Player | PushBox>([jumper]);
+    for (let depth = 0; depth < 16 && frontier.length; depth += 1) {
+      const next: Array<Player | PushBox> = [];
+      for (const body of frontier) {
+        if (seen.has(body)) continue;
+        seen.add(body);
+        const above = onTop(startRect(body));
+        if (body instanceof PushBox) {
+          if (above.length) continue;          // a loaded box receives nothing
+          body.hopRequested = true;
+          return true;
+        }
+        next.push(...above);                   // a cat only passes the hand-off up
+      }
+      frontier = next;
+    }
+    return true;
+  }
+
+  private updateFallingPushBoxes(dt: number): void {`, file);
+    // head-stack-jump-impulse (3/4): turn a requested hop into the one-shot upward speed (apex 22 units).
+    source = replaceOnce(source, '      const otherBoxRects = this.pushBoxes.filter((_, j) => j !== i).map((other) => other.rect);', `      if (box.hopRequested) {
+        const HEAD_HOP_HEIGHT = 22;   // retail capture: 33 screen px at the 1.5 stage scale
+        box.hopRequested = false;
+        box.velocityY = -(Math.sqrt(2 * PUSH_BOX_GRAVITY * HEAD_HOP_HEIGHT) + PUSH_BOX_GRAVITY * dt / 2);
+        box.falling = true;
+        box.hopping = true;
+        box.wasSupported = false;
+      }
+      const otherBoxRects = this.pushBoxes.filter((_, j) => j !== i).map((other) => other.rect);`, file);
+    // head-stack-jump-impulse (4/4): a hopping box is not caught by its old support while rising, rises
+    // under the same gravity, then falls and lands with the exact-landing resolve.
+    source = replaceOnce(source, '      if (supported) {\n        box.falling = false;\n        box.velocityY = 0;', `      if (supported && box.velocityY >= 0) {
+        if (box.hopping) {
+          // Codex review: the 1-unit support strip can catch a landing box with a gap still open (it then
+          // hovered up to 1 unit above the head). Close it with the exact-landing resolve, so the box is in
+          // contact again exactly at its rest y.
+          let low = 0, high = 1.002;
+          for (let pass = 0; pass < 20; pass++) {
+            const middle = (low + high) / 2;
+            if (blockedAt({ ...box.rect, y: box.rect.y + middle })) high = middle;
+            else low = middle;
+          }
+          if (low > 0) box.applyRect({ ...box.rect, y: box.rect.y + low });
+        }
+        box.hopping = false;
+        box.falling = false;
+        box.velocityY = 0;`, file);
+    source = replaceOnce(source, '      box.velocityY = Math.min(PUSH_BOX_MAX_FALL_SPEED, box.velocityY + PUSH_BOX_GRAVITY * dt);', `      if (box.velocityY < 0 && box.velocityY + PUSH_BOX_GRAVITY * dt < 0) {
+        box.velocityY += PUSH_BOX_GRAVITY * dt;
+        const rise = -box.velocityY * dt;
+        let up = 0, ceiling = false;
+        while (rise - up > 1e-6) {
+          const stepUp = Math.min(2, rise - up);
+          if (blockedAt({ ...box.rect, y: box.rect.y - up - stepUp })) { ceiling = true; break; }
+          up += stepUp;
+        }
+        if (up > 0) box.applyRect({ ...box.rect, y: box.rect.y - up });
+        if (ceiling) {
+          // Codex review: a ceiling cut the hop short. Settle straight back onto the support below with the
+          // exact-landing resolve (the retail box always returns to its rest y), so it is in contact again.
+          box.velocityY = 0;
+          let down = 0;
+          while (down < 256 && !blockedAt({ ...box.rect, y: box.rect.y + down + 2 })) down += 2;
+          if (down < 256) {
+            let low = 0, high = 2;
+            for (let pass = 0; pass < 20; pass++) {
+              const middle = (low + high) / 2;
+              if (blockedAt({ ...box.rect, y: box.rect.y + down + middle })) high = middle;
+              else low = middle;
+            }
+            box.applyRect({ ...box.rect, y: box.rect.y + down + low });
+            box.falling = false;
+            box.hopping = false;
+            box.wasSupported = true;
+          }
+        }
+        continue;
+      }
+      box.velocityY = Math.min(PUSH_BOX_MAX_FALL_SPEED, box.velocityY + PUSH_BOX_GRAVITY * dt);`, file);
+    source = replaceOnce(source, '          if (nativeJumpBoxes) {\n            // Resolve the final fraction', '          if (nativeJumpBoxes || box.hopping) {\n            // Resolve the final fraction', file);
     return source;
   }
   // Select by identity: prepending another patch must not disable warp recovery.
