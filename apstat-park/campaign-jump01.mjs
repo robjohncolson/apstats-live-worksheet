@@ -21,7 +21,8 @@ export function restoreJump01Steps(runtime) {
     // The preview's generic 64 x 14 body places it too high and too narrow.
     lift.spawn = { ...lift.spawn, y: 412.5 };
     Object.assign(lift.rect, { x: 2444, y: 403, width: 184, height: 19 });
-    lift.params.travel = -(184 + 4 * runtime.players.length);
+    lift.bodyOffsetY = -9.5;   // keeps the centred model above (spawn y 412.5)
+    // travel: the runtime's native p0 + p2*n (native-weighted-lift) is the verified -(184 + 4n).
     restoredLifts.add(lift);
   }
 }

@@ -76,7 +76,8 @@ await build({ stdin: { contents: runtimeEntry, resolveDir: source, sourcefile: '
 writeFileSync(resolve(output, 'provenance.json'), JSON.stringify({
   source: 'hermes/old-app/recovered/browser_port', campaignSource: 'lua_archive_sources/seq_setting.lua',
   stages: 48, worlds: 12, adaptations: ['seeded randomness for synchronized input replay', 'transparent map background'],
-  patches: CAMPAIGN_PATCHES, hashes,
+  // esbuild loads sources in parallel, so insertion order varies run to run: sort for a byte-stable file.
+  patches: CAMPAIGN_PATCHES, hashes: Object.fromEntries(Object.entries(hashes).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))),
 }, null, 2) + '\n');
 execFileSync(process.execPath, [resolve(root, 'scripts/audit-pico-campaign.mjs')], { stdio: 'inherit' });
 console.log('Bundled 48 original campaign stages and recovered engine (' + Object.keys(hashes).length + ' source files).');

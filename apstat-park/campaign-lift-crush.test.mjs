@@ -149,7 +149,8 @@ test('1-4: a cat jumping up into the descending slab is never left inside it (pu
   }
 });
 
-// 1-4: the WeightedLift at x 2292 (travel -192) rises with two cats and returns DOWN when they leave.
+// 1-4: the WeightedLift at row (2324, 336) (travel -192; native body x 2232..2426, y 403..421, native-weighted-lift)
+// rises with two cats to y 283 after 120 ticks and returns DOWN when they leave.
 test('1-4: the WeightedLift returning down onto a cat standing on a pillar stops on its head and resumes when it leaves', () => {
   const game = loadStage('stage_weight01');
   const lift = game.weightedLifts.find((entry) => entry.spawn.actorName === 'WeightedLift' && entry.params.travel < 0);
@@ -158,10 +159,10 @@ test('1-4: the WeightedLift returning down onto a cat standing on a pillar stops
   place(a, lift.rect.x + 19, rest - a.rect.height); place(b, a.rect.x, a.rect.y - b.rect.height);
   step(game, 120);
   assert.ok(lift.rect.y < rest - 100, 'set-up: raised');
-  // A pillar under the slab (left-bottom anchored Rect: x 2300..2340, y 330..432); a cat on it, top at 296.
-  game.spawnHandlers.Rect({ raw: [0, 0, 'Rect', '', 2300, FLOOR, 40, 102], actorName: 'Rect', label: '', x: 2300, y: FLOOR });
-  place(a, 2250, FLOOR - a.rect.height);
-  place(b, 2306, 330 - b.rect.height);
+  // A pillar under the slab (left-bottom anchored Rect: x 2300..2340, y 350..432); a cat on it, top at 316.
+  game.spawnHandlers.Rect({ raw: [0, 0, 'Rect', '', 2300, FLOOR, 40, 82], actorName: 'Rect', label: '', x: 2300, y: FLOOR });
+  place(a, 2150, FLOOR - a.rect.height);   // clear of the slab's rest position
+  place(b, 2306, 350 - b.rect.height);
   let frame = 0;
   for (; frame < 200; frame++) {
     step(game);

@@ -123,6 +123,17 @@ export const CAMPAIGN_PATCHES = [{
     'FUN_7ff72bb63cf0 (WeightedLift family): orange scale sprites (atlas (351,511,98,42) wide / (383,559,34,42) narrow); body anchor relative to the row is NOT traced, so only the colour is changed',
     'Retail capture (L4 frame 75): the MC_BWL/MC_BWC/MC_BWR ledge (stage_weight01 row 5) is #ff864d with rounded ends; no evidence was captured for MC_BH* / MC_BR* chips'],
   behavior: 'Look and size: the UpDownLift body is the native 118 x 18 (was 64 x 14) centred on its row point and drawn with its native orange atlas slab (no guide line). WeightedLift / Ex / Ex2 are drawn as solid orange rounded slabs at their existing size (was translucent light blue with a guide line); their native scale sprite and body size are left for when the anchor is traced. MC_BW* chips render stage orange (was brown); other MC_B* chips keep their colour (no evidence).',
+}, {
+  // Teacher 2026-10-07: "please study the behaviour of the other two platforms" (1-4, the WeightedLifts). Decompile
+  // study og-capture-2/wlift/decomp/wlift.md (the game was not running: no retail capture of these lifts exists).
+  id: 'native-weighted-lift',
+  files: ['src/engine/GameRuntime.ts', 'src/engine/actors/WeightedLift.ts', 'src/engine/sprites.ts'],
+  evidence: ['FUN_7ff72bc2a1a0: row column 1 is a party-size spawn filter (-4 = up to 4 players, 5 = 5 or more); the 1-4 lifts are independent (no shared label, no balance object)',
+    'FUN_7ff72bb72ae0 plain WeightedLift branch (0x7ff72bb740db..0x7ff72bb74223): FUN_7ff72bb63cf0(obj, 0.0, 0) = wide variant; travel = p0 + p2*n; FUN_7ff72bb64100(int p1, int p3) only when p1 > 0: required = max(p3 or 2, ceil(p1/100*n)); else the ctor default max(2, ceil(0.2*n)) (DAT_7ff72bc7d858); p4 > 0 disables auto-return; p5 adds p5*max(0, n-2) to the return step',
+    'FUN_7ff72bb63cf0: wide body {x-92, y+67, 194, 18}; sprite {x-93, y, 196, 84} from atlas (351,511,98,42) (sign box on a post over an orange slab)',
+    'FUN_7ff72bb64310: count = FUN_7ff72bc132c0(UP, mask 6) = cats and push boxes, recursively (a box weighs one, a box on a cat counts); fixed 1.0 per tick toward full travel when count >= required, else the return step toward 0 (if auto-return), clamped; any contact under the slab sets +0x408 = 0.06 s and nothing moves until it expires',
+    'FUN_7ff72bb64640: the sign prints "%d" = max(0, required - count) at (x+5, y+7+offset), size 32'],
+  behavior: 'Plain WeightedLift rows, every stage: body {x-92, y+67, 194, 18} (was 64 x 14 centred) drawn with the native sign-and-slab sprite and the number of bodies still needed on the sign; required = max(p3 or 2, ceil(p1/100 n)) when p1 > 0, else max(2, ceil(0.2 n)) (was floor, and p3 applied always); travel p0 + p2 n; 1 unit per tick toward full travel while loaded, else 1 + p5 max(0, n-2) per tick back to rest unless p4 > 0 (no auto-return); a cat or push box touching the slab underside freezes it 0.06 s. The weight counts cats and push boxes resting on the slab, transitively (a box on a cat now counts); n = the student party (optional teacher cats never raise the requirement). 1-1 keeps its verified 184 x 19 slab (campaign-jump01.mjs). Not modelled: the native chain test before each step (a rider pinned on a ceiling), tile contacts in the underside freeze (1-4 A sinks flush with the floor by design; whether native freezes there is open), WeightedLiftEx / Ex2 (variant mapping unverified), the sign text colour/font (not decoded: stage orange used).',
 }];
 
 // Fail the build if upstream code changes: never silently skip a correction.
@@ -144,6 +155,7 @@ export function patchCampaignSource(file, source) {
     const guideX`, `    if (spawn.actorName === 'UpDownLift') {
       // FUN_7ff72bb6d980: body {-59, -9, 118, 18}, view {-60, -10, 120, 20} from atlas (385,49,60,10).
       this.rect.x = spawn.x - 59; this.rect.y = spawn.y - 9; this.rect.width = 118; this.rect.height = 18;
+      this.bodyOffsetY = -9;
       const slab = frameTexture('updown_lift' as AtlasFrameName);
       if (slab) {
         const sprite = new Sprite(slab);
@@ -165,13 +177,50 @@ export function patchCampaignSource(file, source) {
 
     const travel = this.params?.travel ?? 0;
     const guideX`, file);
+    // native-weighted-lift: body offset below the view anchor, the sign text and the wide native body.
+    source = replaceOnce(source, "import { Container, Graphics, Sprite } from 'pixi.js';", "import { Container, Graphics, Sprite, Text } from 'pixi.js';", file);
+    source = replaceOnce(source, '  readonly rect: Rect;\n', `  readonly rect: Rect;
+  /** rect.y - view.y: centred lifts -height/2; the native wide WeightedLift body sits 67 below its row point. */
+  bodyOffsetY = 0;
+  private signText?: Text;
+  setSignNumber(count: number): void {
+    if (this.signText && this.signText.text !== String(count)) this.signText.text = String(count);
+  }
+`, file);
+    source = replaceOnce(source, `    if (spawn.actorName !== 'Lift' && !isDarknessWeightedLift) {
+      // Native lifts`, `    this.bodyOffsetY = isDarknessWeightedLift ? 0 : this.rect.y - spawn.y;
+    if (spawn.actorName === 'WeightedLift') {
+      // FUN_7ff72bb63cf0 wide variant: body {-92, 67, 194, 18}; sprite {-93, 0, 196, 84} from atlas (351,511,98,42);
+      // FUN_7ff72bb64640: the sign shows the bodies still needed at (x+5, y+7), size 32.
+      this.rect.x = spawn.x - 92; this.rect.y = spawn.y + 67; this.rect.width = 194; this.rect.height = 18;
+      this.bodyOffsetY = 67;
+      const art = frameTexture('weighted_lift_wide' as AtlasFrameName);
+      if (art) {
+        const sprite = new Sprite(art);
+        sprite.x = -93; sprite.y = 0; sprite.width = 196; sprite.height = 84;
+        this.view.addChild(sprite);
+      } else {
+        const slab = new Graphics();
+        slab.beginFill(0xff864d, 1);
+        slab.drawRoundedRect(-92, 67, 194, 18, 5);
+        slab.endFill();
+        this.view.addChild(slab);
+      }
+      this.signText = new Text('', { fontFamily: 'monospace', fontSize: 32, fontWeight: 'bold', fill: 0xff864d });
+      this.signText.anchor.set(0.5, 0);
+      this.signText.x = 5; this.signText.y = 7;
+      this.view.addChild(this.signText);
+      return;
+    }
+    if (spawn.actorName !== 'Lift' && !isDarknessWeightedLift) {
+      // Native lifts`, file);
     return replaceOnce(source, '    this.view.y = this.spawn.y + offset;\n    this.rect.y = this.view.y - LIFT_HEIGHT / 2;',
       '    this.view.y = this.spawn.y + offset;\n    this.rect.y = this.view.y - this.rect.height / 2;', file);
   }
   if (file === 'src/engine/sprites.ts') {
     const frames = Array.from({ length: 9 }, (_, i) =>
       `  push_box_${i}: [${464 + i % 3 * 16}, ${32 + Math.floor(i / 3) * 16}, 16, 16],`).join('\n');
-    return replaceOnce(source, 'export const PICO_ATLAS_FRAMES = {', 'export const PICO_ATLAS_FRAMES = {\n  door_closed: [96, 512, 48, 48],\n  updown_lift: [385, 49, 60, 10],\n  move_wall: [500, 255, 9, 130],\n' + frames, file);
+    return replaceOnce(source, 'export const PICO_ATLAS_FRAMES = {', 'export const PICO_ATLAS_FRAMES = {\n  door_closed: [96, 512, 48, 48],\n  updown_lift: [385, 49, 60, 10],\n  weighted_lift_wide: [351, 511, 98, 42],\n  move_wall: [500, 255, 9, 130],\n' + frames, file);
   }
   if (file === 'src/engine/actors/Goal.ts') {
     source = replaceOnce(source, '  readonly rect: Rect;', `  readonly rect: Rect;
@@ -538,6 +587,7 @@ export function getRectLeftBottomRect(spawn: ActorSpawnDef): Rect {
       ...this.normalBoxes.filter((normalBox) => !this.isLaserKeyBoxUnlocked(normalBox)).map(normalBoxRect),
     ].filter(rectLoadsLift)];
     const liftLoadPlayers = new Set<Player>();
+    const liftLoadBoxes = new Set<PushBox>();
     for (let supportIndex = 0; supportIndex < liftLoadSupports.length; supportIndex += 1) {
       for (const player of this.players) {
         if (liftLoadPlayers.has(player) || this.collisionChangePlayersCollisionOff.has(player)) continue;
@@ -545,8 +595,16 @@ export function getRectLeftBottomRect(spawn: ActorSpawnDef): Rect {
         liftLoadPlayers.add(player);
         liftLoadSupports.push(player.rect);
       }
+      // native-weighted-lift: a push box on a counted cat or box counts too (boxes ON the slab are counted below).
+      if (supportIndex === 0) continue;
+      for (const pushBox of this.pushBoxes) {
+        if (liftLoadBoxes.has(pushBox) || liftLoadSupports.includes(pushBox.rect)) continue;
+        if (!rectRestsOnSupport(pushBox.rect, liftLoadSupports[supportIndex])) continue;
+        liftLoadBoxes.add(pushBox);
+        liftLoadSupports.push(pushBox.rect);
+      }
     }
-    loadCount += liftLoadPlayers.size;
+    loadCount += liftLoadPlayers.size + liftLoadBoxes.size;
 `, file);
     // push-box-head-carry: a box on the cat's head rides along (carryPushBoxesOnPlayerHeads), so it
     // must not block the lift / MoveWall from moving the cat.
@@ -828,7 +886,7 @@ export function getRectLeftBottomRect(spawn: ActorSpawnDef): Rect {
     const overlapsX = (a: Rect, b: Rect) => a.x < b.x + b.width && b.x < a.x + a.width;
     const setLiftY = (lift: WeightedLift, y: number) => {
       lift.rect.y = y;
-      lift.view.y = lift.spawn.actorName === 'DarknessWeightedLift' ? y : y + lift.rect.height / 2;
+      lift.view.y = lift.spawn.actorName === 'DarknessWeightedLift' ? y : y - lift.bodyOffsetY;
       if (lift.spawn.actorName !== 'UpDownLift') this.weightedLiftOffsets.set(lift, lift.view.y - lift.spawn.y);
     };
     for (const [index, lift] of this.weightedLifts.entries()) {
@@ -945,6 +1003,106 @@ export function getRectLeftBottomRect(spawn: ActorSpawnDef): Rect {
 }
 
 function createMoveWallState(spawn: ActorSpawnDef): MoveWallState {`, file);
+
+    // native-weighted-lift (draw order): the sign, post and slab draw behind the riders (first in the actor layer,
+    // still above the tiles). The native ctor gives its sprites depth -0.1 / text -0.2 (FUN_7ff72bb63cf0 +0x6c,
+    // +0xc6, +0xcf); the renderer's sort convention is not traced, so 'behind the cats' is the sane choice.
+    source = replaceOnce(source, `      const weightedLift = new WeightedLift(spawn);
+      this.weightedLifts.push(weightedLift);
+      this.addActorView(spawn, weightedLift.view);
+    },
+    WeightedLiftEx:`, `      const weightedLift = new WeightedLift(spawn);
+      this.weightedLifts.push(weightedLift);
+      this.addActorView(spawn, weightedLift.view);
+      this.actorLayer.setChildIndex(weightedLift.view, 0);
+    },
+    WeightedLiftEx:`, file);
+    // native-weighted-lift (Codex review): the lift carries its WHOLE supported stack, as FUN_7ff72bc17330 displaces
+    // recursively UP. The weight count already includes a box on a box (or a cat on a box on a box); the old carries
+    // moved only the bottom box, so contact broke and the sign flipped 0/1. After the existing carries, every cat or
+    // push box that rested on the stack at frame start and has not moved yet gets the lift's delta (bottom-up; a tile
+    // in the way leaves it where it is).
+    source = replaceOnce(source, '    this.carryColorBoxesWithWeightedLifts(previousLiftRects);\n', `    this.carryColorBoxesWithWeightedLifts(previousLiftRects);
+    this.carryWholeStacksWithLifts();
+`, file);
+    source = replaceOnce(source, '  private updateFallingPushBoxes(dt: number): void {', `  private carryWholeStacksWithLifts(): void {
+    if (!this.tileMap) return;
+    for (const [liftIndex, lift] of this.weightedLifts.entries()) {
+      const liftStart = this.frameStartLiftRects[liftIndex];
+      if (!liftStart) continue;
+      const dy = lift.rect.y - liftStart.y;
+      if (dy === 0) continue;
+      const bodies: Array<{ start: Rect; now: () => Rect; move: (rect: Rect) => void }> = [
+        ...this.players.map((player, index) => ({ player, start: this.frameStartPlayerRects[index] }))
+          .filter(({ player, start }) => !!start && !this.collisionChangePlayersCollisionOff.has(player)
+            && player.deathTimer <= 0 && !this.deathFallPlayers.has(player))
+          .map(({ player, start }) => ({ start: start!, now: () => player.rect,
+            move: (rect: Rect) => player.applyResolvedCollision(rect, player.velocity, true) })),
+        ...this.pushBoxes.map((box, index) => ({ box, start: this.frameStartPushBoxRects[index] }))
+          .filter(({ box, start }) => !!start && !box.hopping)
+          .map(({ box, start }) => ({ start: start!, now: () => box.rect, move: (rect: Rect) => box.applyRect(rect) })),
+      ];
+      // The frame-start stack on the slab, bottom-up (breadth-first: cats by index, then boxes by index).
+      const supports: Rect[] = [liftStart];
+      const stack: typeof bodies = [];
+      for (let i = 0; i < supports.length && stack.length < bodies.length; i += 1) {
+        for (const body of bodies) {
+          if (stack.includes(body) || !rectRestsOnSupport(body.start, supports[i])) continue;
+          stack.push(body);
+          supports.push(body.start);
+        }
+      }
+      for (const body of stack) {
+        const now = body.now();
+        if (now.x !== body.start.x || now.y !== body.start.y) continue;   // already carried (or moved itself)
+        const target = { ...now, y: now.y + dy };
+        if (this.tileMap.rectHitsSolid(target)) continue;
+        body.move(target);
+      }
+    }
+  }
+
+  private updateFallingPushBoxes(dt: number): void {`, file);
+    // native-weighted-lift (GameRuntime): the plain WeightedLift threshold / travel / speeds / auto-return / freeze.
+    source = replaceOnce(source, `      const thresholdPercent = weight > 0 ? weight : WEIGHTED_LIFT_DEFAULT_THRESHOLD_PERCENT;`, `      if (lift.spawn.actorName === 'WeightedLift') {
+        // FUN_7ff72bb72ae0 + FUN_7ff72bb64100 + FUN_7ff72bb64310 (native-weighted-lift).
+        const n = this.requiredPlayerCount ?? this.players.length;
+        const flags = lift.params?.numericFlags ?? [];
+        const p3 = Math.trunc(flags[1] ?? 0);
+        const required = Math.trunc(weight) > 0
+          ? Math.max(p3 || WEIGHTED_LIFT_DEFAULT_MIN_LOAD, Math.ceil((Math.trunc(weight) / 100) * n))
+          : Math.max(2, Math.ceil(0.2 * n));
+        lift.setSignNumber(Math.max(0, required - loadCount));
+        // A cat or push box touching the slab underside freezes it for 0.06 s (body contacts only).
+        const probe = { ...lift.rect, y: lift.rect.y + 0.01 };
+        const touchedBelow = [...this.players.filter((player) => !this.collisionChangePlayersCollisionOff.has(player)
+          && player.deathTimer <= 0 && !this.deathFallPlayers.has(player)).map((player) => player.rect),
+          ...this.pushBoxes.map((box) => box.rect)]
+          .some((rect) => rect.y >= lift.rect.y + lift.rect.height - 0.5 && !rectsOverlap(lift.rect, rect) && rectsOverlap(probe, rect));
+        let cooldown = Math.fround((this.darknessWeightedLiftContactCooldowns.get(lift) ?? 0) - Math.fround(dt));
+        if (touchedBelow) cooldown = Math.fround(0.06);
+        this.darknessWeightedLiftContactCooldowns.set(lift, cooldown);
+        if (cooldown > 0) return;
+        const fullTravel = travel + (flags[0] ?? 0) * n;
+        const autoReturn = !((flags[2] ?? 0) > 0);
+        const loaded = loadCount >= required;
+        const target = loaded ? fullTravel : autoReturn ? 0 : currentOffset;
+        const stepSize = loaded ? 1 : 1 + (flags[3] ?? 0) * Math.max(0, n - 2);
+        const delta = target - currentOffset;
+        nextOffset = Math.abs(delta) <= stepSize ? target : currentOffset + Math.sign(delta) * stepSize;
+      } else {
+      const thresholdPercent = weight > 0 ? weight : WEIGHTED_LIFT_DEFAULT_THRESHOLD_PERCENT;`, file);
+    source = replaceOnce(source, `      nextOffset = Math.abs(delta) <= maxStep
+        ? targetOffset
+        : currentOffset + Math.sign(delta) * maxStep;
+    }`, `      nextOffset = Math.abs(delta) <= maxStep
+        ? targetOffset
+        : currentOffset + Math.sign(delta) * maxStep;
+      }
+    }`, file);
+    source = replaceOnce(source, `      : lift.view.y - lift.rect.height / 2;
+  }`, `      : lift.view.y + lift.bodyOffsetY;
+  }`, file);
     return source;
   }
   // Select by identity: prepending another patch must not disable warp recovery.
