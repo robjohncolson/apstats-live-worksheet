@@ -239,25 +239,37 @@ export function patchCampaignSource(file, source) {
     for (const [i, box] of this.pushBoxes.entries()) {
       const boxStart = this.frameStartPushBoxRects[i];
       if (!boxStart) continue;
-      // Lowest player index wins when a box spans two heads (stable createTable order).
-      const carrierIndex = this.players.findIndex((player, index) => (
-        canCarry(player) && !!this.frameStartPlayerRects[index]
-        && rectRestsOnSupport(boxStart, this.frameStartPlayerRects[index])));
-      if (carrierIndex < 0) continue;
+      // On a head at frame start (any cat, even one that just died): the box is a head box and
+      // falls if nothing holds it. Only a live cat can carry it.
+      const supporting = this.players.map((player, index) => index)
+        .filter((index) => !!this.frameStartPlayerRects[index] && rectRestsOnSupport(boxStart, this.frameStartPlayerRects[index]));
+      if (!supporting.length) continue;
       this.pushBoxesOnHeads.add(box);
       // Already moved this frame (push, MoveWall): never double-move.
       if (box.rect.x !== boxStart.x || box.rect.y !== boxStart.y) continue;
+      // Of the live cats under it, the one that rose the most this frame carries (a jumping cat
+      // lifts a shared box); ties go to the lowest index (stable createTable order).
+      let carrierIndex = -1;
+      for (const index of supporting) {
+        if (!canCarry(this.players[index])) continue;
+        const rise = this.players[index].rect.y - this.frameStartPlayerRects[index].y;
+        if (carrierIndex < 0 || rise < this.players[carrierIndex].rect.y - this.frameStartPlayerRects[carrierIndex].y) carrierIndex = index;
+      }
+      if (carrierIndex < 0) continue;
       const carrier = this.players[carrierIndex];
       const start = this.frameStartPlayerRects[carrierIndex];
       const dx = carrier.rect.x - start.x, dy = carrier.rect.y - start.y;
       if ((dx === 0 && dy === 0) || Math.abs(dx) > MAX_CARRY_STEP || Math.abs(dy) > MAX_CARRY_STEP) continue;
       const riders = this.players.filter((player) => player !== carrier && canCarry(player)
         && rectRestsOnSupport(player.rect, boxStart));
-      const blocked = (rect: Rect) => this.tileMap!.rectHitsSolid(rect)
+      const hitsSolid = (rect: Rect) => this.tileMap!.rectHitsSolid(rect)
         || solidRects.some((solid) => rectsOverlap(rect, solid))
         || this.pushBoxes.some((other) => other !== box && rectsOverlap(rect, other.rect))
         || this.players.some((player) => player !== carrier && !riders.includes(player)
           && canCarry(player) && rectsOverlap(rect, player.rect));
+      // The riders shift with the box, so they must clear the same way.
+      const blocked = (rect: Rect) => hitsSolid(rect) || riders.some((rider) => hitsSolid({
+        ...rider.rect, x: rider.rect.x + rect.x - box.rect.x, y: rider.rect.y + rect.y - box.rect.y }));
       const slide = (from: Rect, axis: 'x' | 'y', delta: number): Rect => {
         const at = (t: number) => ({ ...from, [axis]: from[axis] + delta * t });
         if (delta === 0) return from;
@@ -291,8 +303,8 @@ export function patchCampaignSource(file, source) {
       if (eligiblePlayerTouches(switchPad.rect)) return true;
       // Roulette stop switches stay player-only (each press spends that player's activity budget).
       if (this.roulettes.some((roulette) => roulette.stopSwitch === switchPad)) return false;
-      // A box still at its spawn never presses (stage_time_limit01 places one over a latched pad).
-      return this.pushBoxes.some((box) => !box.falling
+      // A box still at its spawn never presses (a stage may place one over a pad on purpose).
+      return this.pushBoxes.some((box) => !box.falling && box.wasSupported && !this.pushBoxesOnHeads.has(box)
         && (box.rect.x !== box.spawnRect.x || box.rect.y !== box.spawnRect.y)
         && rectsOverlap({ x: box.rect.x + 1, y: box.rect.y + 1,
           width: Math.max(0, box.rect.width - 2), height: Math.max(0, box.rect.height - 2) }, switchPad.rect));`, file);
@@ -357,6 +369,22 @@ export function patchCampaignSource(file, source) {
     }
     loadCount += liftLoadPlayers.size;
 `, file);
+    // push-box-head-carry: a box on the cat's head rides along (carryPushBoxesOnPlayerHeads), so it
+    // must not block the lift / MoveWall from moving the cat.
+    source = replaceOnce(source, `          ...this.moveWalls.map((moveWall) => moveWall.rect),
+          ...this.pushBoxes.map((pushBox) => pushBox.rect),
+          ...this.smallBoxes.map(smallBoxRect),
+          ...this.normalBoxes.map(normalBoxRect),
+          ...this.colorBoxes.map(colorBoxRect),
+          ...this.stationaryActiveFallBoxRects(),`, `          ...this.moveWalls.map((moveWall) => moveWall.rect),
+          ...this.pushBoxes.filter((pushBox) => !rectRestsOnSupport(pushBox.rect, previousPlayerRect)).map((pushBox) => pushBox.rect),
+          ...this.smallBoxes.map(smallBoxRect),
+          ...this.normalBoxes.map(normalBoxRect),
+          ...this.colorBoxes.map(colorBoxRect),
+          ...this.stationaryActiveFallBoxRects(),`, file);
+    source = replaceOnce(source, `          ...this.moveWalls.filter((_, moveWallIndex) => moveWallIndex !== index).map((blocker) => blocker.rect),
+          ...this.pushBoxes.map((pushBox) => pushBox.rect),`, `          ...this.moveWalls.filter((_, moveWallIndex) => moveWallIndex !== index).map((blocker) => blocker.rect),
+          ...this.pushBoxes.filter((pushBox) => !rectRestsOnSupport(pushBox.rect, previousPlayerRect)).map((pushBox) => pushBox.rect),`, file);
     // ...and the whole stack rides the slab, so a rising lift never shoves the upper cat off.
     source = replaceOnce(source,
       "if (lift.spawn.actorName !== 'DarknessWeightedLift' || !previousLiftRect) return supportedPlayers;",

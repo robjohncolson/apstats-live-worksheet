@@ -58,6 +58,8 @@ export async function createCampaignEngine({ onEvent = () => {} } = {}) {
     const world = runtime.world;
     const original = { x: world.x, y: world.y, scale: world.scale.x };
     const pad = (viewW - 720) / 2;   // extra page width, split evenly so the centre never moves
+    const overlayX = runtime.overlayLayer.x;
+    runtime.overlayLayer.x = overlayX + pad;   // the port's own text was laid out for 720
     if (definition.scrollable || definition.autoScroll) {
       world.scale.set(.5);
       world.x = pad - (runtime.scrollCameraState?.scroll || 0) * .5;
@@ -99,6 +101,7 @@ export async function createCampaignEngine({ onEvent = () => {} } = {}) {
     // Native camera transforms can participate in hazard bounds. Keep presentation
     // changes out of the next physics tick, including during reconnect replay.
     world.position.set(original.x, original.y); world.scale.set(original.scale);
+    runtime.overlayLayer.x = overlayX;
   }
   return { load, step, render, canvas, setViewWidth,
     setPresentation(options) { colours = options.colours; focusSlot = options.focusSlot; },

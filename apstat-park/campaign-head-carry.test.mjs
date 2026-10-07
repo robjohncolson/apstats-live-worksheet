@@ -148,3 +148,49 @@ test('1-3: a pushed box resting on a switch pad holds the switch down; the box a
   step(game, 2);
   assert.equal(pad.pressed, false, 'these pads reset when the box leaves (forceClearPressed)');
 });
+
+// Review 2026-10-07 findings (Opus adversarial pass), each reproduced before the fix.
+test('1-2: a box left on a cat that dies falls to the ground instead of floating', () => {
+  const game = loadStage('stage_push02');
+  const [cat, other] = game.players;
+  place(cat, 1200, 400); place(other, 100, 400);
+  const box = game.pushBoxes[2];
+  boxOnHead(box, cat);
+  step(game, 2);
+  const headY = box.rect.y;
+  game.startPlayerDeathSequence(cat);
+  step(game, 240);
+  assert.ok(box.rect.y > headY + 20, 'the box dropped once its cat died: ' + (box.rect.y - headY));
+});
+
+test('10-3: the dark-room lift rises with a cat carrying a box on its head (no jitter)', () => {
+  const game = loadStage('stage_darkness01');
+  const lift = game.weightedLifts[0];
+  const [a, b] = game.players;
+  const startY = lift.rect.y;
+  // The slab is 48 wide: two 26-wide cats fit only packed edge to edge; the 48-wide box spans both heads.
+  place(a, lift.rect.x, startY - a.rect.height - 6);
+  place(b, lift.rect.x + 22, startY - b.rect.height - 6);
+  const box = game.pushBoxes[0];
+  box.applyRect({ ...box.rect, x: lift.rect.x, y: startY - a.rect.height - 6 - box.rect.height });
+  box.falling = false; box.velocityY = 0; box.wasSupported = true;
+  step(game, 90);
+  // Without the fix the slab flips between 431 and 432 forever; it rises ~13 here before a ceiling stops it.
+  assert.ok(lift.rect.y < startY - 10, 'the lift rose: ' + (lift.rect.y - startY));
+  assert.ok(Math.abs(box.rect.y + box.rect.height - a.rect.y) <= 0.5, 'the box is still on the head');
+});
+
+test('1-3: when a box rests on two cats, the cat that jumps lifts it instead of passing through it', () => {
+  const game = loadStage('stage_jump02');
+  const [a, b] = game.players;
+  place(a, 1290, 400); place(b, 1316, 400);
+  const box = game.pushBoxes[0];
+  box.applyRect({ ...box.rect, x: 1296, y: 350 }); box.falling = false; box.velocityY = 0; box.wasSupported = true;
+  step(game, 2);
+  step(game, 1, [IDLE, JUMP]);
+  step(game, 6, [IDLE, { ...IDLE, jump: true }]);
+  assert.ok(b.rect.y < 400 - 5, 'cat 1 is in the air: ' + b.rect.y);
+  assert.ok(b.rect.y >= box.rect.y + box.rect.height - 0.5, 'cat 1 is under the box, not inside it: '
+    + (box.rect.y + box.rect.height - b.rect.y));
+  assert.ok(box.rect.y < 350 - 5, 'the box rose with cat 1');
+});
