@@ -184,6 +184,83 @@ describe('Pico PLAY button = the Desk Doge', { timeout: 120_000 }, () => {
     }
   });
 
+  // Teacher 2026-10-07: "flash the background gold some times and bring a dialog box up", as in the
+  // OS 7 skin. Chrome showed the Pico root breathing, but NOT the floor band, and the lesson panel's
+  // white backdrop (the white-out state) hid the gold completely. Every full-page Pico surface now
+  // breathes on the Desk's own rhythm, with a static gold for reduced motion.
+  it('the gold reaches every full-page Pico surface, on the Desk rhythm, with a static reduced-motion gold', () => {
+    const deskRhythm = DESK.match(/body\.challenge-waiting \{ animation: challenge-breathe ([\d.]+s) ease-in-out infinite; \}/);
+    expect(deskRhythm).toBeTruthy();
+    const rules = [
+      'body.challenge-waiting #pico-home { animation: pico-challenge-breathe ',
+      'body.challenge-waiting #pico-home .floor-band { animation: pico-challenge-breathe-band ',
+      'html.pico-home body.challenge-waiting #resource-overlay.pico-lesson { animation: pico-challenge-breathe-veil ',
+      'body.challenge-waiting #pico-home .backdrop, html.pico-home body.challenge-waiting #app-wallet-overlay.pico-mygrade { animation: pico-challenge-breathe-dim ',
+      'html.pico-home.pico-lessons-open body.challenge-waiting #window-wrap { animation: pico-challenge-breathe-dim ',
+    ];
+    for (const rule of rules) expect(PICO, rule).toContain(rule + deskRhythm[1] + ' ease-in-out infinite; }');
+    // Every keyframe peaks at the Desk's own gold, #C9A227 (201, 162, 39), at 50 %.
+    for (const name of ['pico-challenge-breathe', 'pico-challenge-breathe-band', 'pico-challenge-breathe-veil', 'pico-challenge-breathe-dim']) {
+      expect(PICO).toMatch(new RegExp('@keyframes ' + name + ' \\{[^\']*50% \\{ background-color: (#C9A227|rgba\\(201, 162, 39, [.\\d]+\\)); \\}'));
+    }
+    expect(DESK).toMatch(/@keyframes challenge-breathe \{[\s\S]*?50% \{ background-color: #C9A227; \}/);
+    // Reduced motion: each surface holds a still gold instead of breathing.
+    for (const selector of ['body.challenge-waiting #pico-home .floor-band', 'html.pico-home body.challenge-waiting #resource-overlay.pico-lesson',
+      'body.challenge-waiting #pico-home .backdrop, html.pico-home body.challenge-waiting #app-wallet-overlay.pico-mygrade']) {
+      expect(PICO).toMatch(new RegExp("'  " + selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ' \\{ animation: none; background-color: '));
+    }
+  });
+
+  it('with the lesson panel open (white-out), an incoming challenge is on top, YES focused, and the panel backdrop breathes gold', async () => {
+    const harness = await boot(true);
+    try {
+      const { document: doc, window: win } = harness;
+      const tile = [...doc.querySelectorAll('#pico-tiles .tile')].find((t) => !t.hasAttribute('aria-disabled'));
+      tile.click();
+      await harness.waitFor(() => doc.getElementById('resource-overlay').style.display === 'block',
+        { timeoutMs: 3000, message: 'the lesson panel did not open' });
+      expect(doc.getElementById('pico-home').classList.contains('pico-whiteout')).toBe(true);
+      win.DogePresence.onChallengeReceived('beta_fox');
+      expect(doc.body.classList.contains('challenge-waiting')).toBe(true);
+      // The rule that paints the white-out backdrop gold is in the page's own Pico stylesheet.
+      const css = [...doc.querySelectorAll('style')].map((s) => s.textContent).join('\n');
+      expect(css).toContain('html.pico-home body.challenge-waiting #resource-overlay.pico-lesson { animation: pico-challenge-breathe-veil 1.4s');
+      expect(doc.getElementById('resource-overlay').classList.contains('pico-lesson')).toBe(true);
+      assertChallengeOnTop(win, doc);   // above the panel, YES focused and working
+      win.DogePresence.clearIncomingChallenge();
+    } finally {
+      harness.teardown();
+    }
+  });
+
+  it('the gold clears after YES, after NO and after the 25 s timeout', async () => {
+    const harness = await boot(true);
+    try {
+      const { document: doc, window: win } = harness;
+      const panel = doc.getElementById('doge-challenge-panel');
+      const sent = [];
+      win.DogePresence.ws = { readyState: 1, send: (m) => sent.push(JSON.parse(m)) };
+      win.DogePresence.onChallengeReceived('beta_fox');
+      panel.querySelector('.btn-accept').click();
+      expect(doc.body.classList.contains('challenge-waiting')).toBe(false);
+      expect(sent.at(-1)).toEqual({ type: 'challenge_accept', from: 'beta_fox' });
+      win.DogePresence.onChallengeReceived('beta_fox');
+      panel.querySelector('.btn-decline').click();
+      expect(doc.body.classList.contains('challenge-waiting')).toBe(false);
+      expect(sent.at(-1)).toEqual({ type: 'challenge_decline', from: 'beta_fox' });
+      // Timeout: the Desk's own countdown (25 s) declines out loud; run its last second.
+      win.DogePresence.onChallengeReceived('beta_fox');
+      expect(win.DogePresence.incomingChallenge.countdown).toBe(25);
+      win.DogePresence.incomingChallenge.countdown = 1;
+      await harness.waitFor(() => !doc.body.classList.contains('challenge-waiting'),
+        { timeoutMs: 3000, message: 'the timeout did not clear the gold' });
+      expect(panel.style.display).toBe('none');
+      expect(sent.at(-1)).toEqual({ type: 'challenge_decline', from: 'beta_fox' });
+    } finally {
+      harness.teardown();
+    }
+  });
+
   it('a window closing under an open challenge never takes focus away from YES', async () => {
     const harness = await boot(true);
     try {

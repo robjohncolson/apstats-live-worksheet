@@ -114,6 +114,19 @@
     '@media (prefers-reduced-motion: reduce) { html.pico-home.pico-lessons-open body.challenge-waiting #window-wrap { animation: none; background-color: rgba(201, 162, 39, .6); } }',
     'body.challenge-waiting #pico-home { animation: pico-challenge-breathe 1.4s ease-in-out infinite; }',
     '@media (prefers-reduced-motion: reduce) { body.challenge-waiting #pico-home { animation: none; background-color: #E7CF75; } }',
+    /* Teacher 2026-10-07: "flash the background gold … as in the OS 7 skin" — the WHOLE visible page,
+       on the same 1.4 s rhythm: the floor's orange band, the lesson panel's white backdrop (the
+       white-out state used to hide the gold completely), and the menu / My Grade backdrops. */
+    '@keyframes pico-challenge-breathe-band { 0%, 100% { background-color: var(--orange); } 50% { background-color: #C9A227; } }',
+    'body.challenge-waiting #pico-home .floor-band { animation: pico-challenge-breathe-band 1.4s ease-in-out infinite; }',
+    '@keyframes pico-challenge-breathe-veil { 0%, 100% { background-color: rgba(255, 255, 255, .92); } 50% { background-color: rgba(201, 162, 39, .92); } }',
+    'html.pico-home body.challenge-waiting #resource-overlay.pico-lesson { animation: pico-challenge-breathe-veil 1.4s ease-in-out infinite; }',
+    'body.challenge-waiting #pico-home .backdrop, html.pico-home body.challenge-waiting #app-wallet-overlay.pico-mygrade { animation: pico-challenge-breathe-dim 1.4s ease-in-out infinite; }',
+    '@media (prefers-reduced-motion: reduce) {',
+    '  body.challenge-waiting #pico-home .floor-band { animation: none; background-color: #E7CF75; }',
+    '  html.pico-home body.challenge-waiting #resource-overlay.pico-lesson { animation: none; background-color: rgba(231, 207, 117, .92); }',
+    '  body.challenge-waiting #pico-home .backdrop, html.pico-home body.challenge-waiting #app-wallet-overlay.pico-mygrade { animation: none; background-color: rgba(201, 162, 39, .6); }',
+    '}',
     /* Week picker: the main menu carousel inside the recovered window (top bar = unit). */
     '#pico-home .week-b { display: flex; justify-content: center; }',
     '#pico-home .win { position: relative; isolation: isolate; display: flex; flex-direction: column;',
