@@ -50,11 +50,22 @@ export const CAMPAIGN_PATCHES = [{
   evidence: ['Teacher request (desk rule); mirrors carryPlayersWithPushedBox / carryPlayersWithWeightedLifts'],
   behavior: 'Every stage: a push box resting on a live cat head at frame start follows that cat frame delta (x, then y), stopping at tiles, solids, other boxes and other cats; a ceiling that stops the box stops the cat too. Cats riding the box move with it. Cats support boxes in every stage (not only jump02), and a head box left unsupported falls. A cat rising under its own head box is not a side push. Deterministic: frame-start rects, lowest player index wins.',
 }, {
-  // Teacher 2026-10-07: "blocks can be used to hold down buttons!"
+  // Teacher 2026-10-07: "blocks can be used to hold down buttons!" FIDELITY fix, not a desk rule: the
+  // native plain-switch begin-contact accepts any body with mask bit 0x2 and category 1..3, and a
+  // PushBox body is category 2 (ENGINE_SPEC's earlier "player bodies only" reading was wrong).
   id: 'push-box-holds-switches',
   files: ['src/engine/GameRuntime.ts'],
-  evidence: ['Teacher request (desk rule); PhysicsSwitch/CollisionSwitch already accept boxes natively'],
-  behavior: 'A landed push box that has moved from its spawn holds a plain Switch (and SwitchMediator pad) down like a cat, using the native 1px-inset body. Roulette stop switches, JumpSwitch, ScaleSwitch, DelaySwitch, SwitchTimer and DeadSwitch stay player-only.',
+  evidence: ['FUN_7ff72bb5f1d0 (switch begin-contact: mode != 2 requires body+0x20 & 2 and 1 <= body+0x4 <= 3)',
+    'FUN_7ff72bb340f0 (PushBox body: FUN_7ff72bc16bf0(..., 3) mask 3; body+0x4 = 2, category 2)'],
+  behavior: 'Fidelity: a landed push box that has moved from its spawn holds a plain Switch (and SwitchMediator pad) down like a cat, using the native 1px-inset body, as the native begin-contact accepts category-2 PushBox bodies. Roulette stop switches, JumpSwitch, ScaleSwitch, DelaySwitch, SwitchTimer and DeadSwitch stay player-only.',
+}, {
+  // Teacher 2026-10-07 (approved): the 1-3 square jammed a 50-tall box and a 46-tall cat; the port centred Rects.
+  id: 'rect-left-bottom-anchor',
+  files: ['src/engine/actors/StaticRect.ts', 'src/engine/GameRuntime.ts'],
+  evidence: ['FUN_7ff72bb72ae0 literal "Rect" branch (DAT_7ff72bcbf448): W = p0 + p2*k, H = p1 + p3*k; if W < 0 the origin x += W and W *= -1.0 (0x7ff72bcff6a8); FUN_7ff72bb77c10(rect, 0, H ^ 0x80000000, W, H) = local {0, -H, |W|, H} (0x7ff72bb7692b..0x7ff72bb7696b)',
+    'Origin [rsp+0x48] = row x,y (row+0x14, 0x7ff72bb72b4f) passed to the actor transform in the common tail (0x7ff72bb772f2)',
+    'FUN_7ff72bb5b820 (Rect ctor) passes that rect unchanged to FUN_7ff72bc16bf0(actor, rect, 2, 1)'],
+  behavior: 'Every stage: a literal Rect spans x from its spawn toward its signed width and y from spawn - height up to the spawn (left-bottom anchor, height upward), not centred. Other StaticRect users (MoveWall, CollisionSwitch, PuzzlePredictProxy, CollisionActorCreator) are unchanged (unverified). The 1-1 override in campaign-jump01.mjs still reassigns after load.',
 }];
 
 // Fail the build if upstream code changes: never silently skip a correction.
@@ -140,7 +151,32 @@ export function patchCampaignSource(file, source) {
     ]) source = replaceOnce(source, before, after, file);
     return source;
   }
+  if (file === 'src/engine/actors/StaticRect.ts') {
+    // rect-left-bottom-anchor: StaticRect may be given its rectangle; the literal Rect rule lives here.
+    source = replaceOnce(source, '  constructor(readonly spawn: ActorSpawnDef) {\n    this.rect = getStaticRectRect(spawn);',
+      '  constructor(readonly spawn: ActorSpawnDef, rect: Rect = getStaticRectRect(spawn)) {\n    this.rect = rect;', file);
+    return source + `
+/** Native literal Rect (FUN_7ff72bb72ae0 + FUN_7ff72bb77c10): local {0, -H, |W|, H} at the spawn, the origin
+ *  moved left by |W| when the width is negative. Downward-Y: x spawn..spawn+W (signed), y spawn-H..spawn. */
+export function getRectLeftBottomRect(spawn: ActorSpawnDef): Rect {
+  const { width, height } = findDimensionsAfterCoordinatePair(spawn.raw, spawn.x, spawn.y);
+  const signedWidth = typeof width === 'number' && Number.isFinite(width) && width !== 0 ? width : DEFAULT_STATIC_RECT_SIZE;
+  const absHeight = nonZeroFiniteAbsOrDefault(height, DEFAULT_STATIC_RECT_SIZE);
+  return {
+    x: signedWidth < 0 ? spawn.x + signedWidth : spawn.x,
+    y: spawn.y - absHeight,
+    width: Math.abs(signedWidth),
+    height: absHeight,
+  };
+}
+`;
+  }
   if (file === 'src/engine/GameRuntime.ts') {
+    // rect-left-bottom-anchor: literal Rect rows use the native left-bottom rectangle.
+    source = replaceOnce(source, "import { StaticRect } from './actors/StaticRect';",
+      "import { StaticRect, getRectLeftBottomRect } from './actors/StaticRect';", file);
+    source = replaceOnce(source, '    Rect: (spawn) => {\n      const staticRect = new StaticRect(spawn);',
+      '    Rect: (spawn) => {\n      const staticRect = new StaticRect(spawn, getRectLeftBottomRect(spawn));', file);
     source = replaceOnce(source,
       'const nowPressed = this.momentarySourceHasAnyActivationOverlap(switchPad.spawn);',
       'const nowPressed = (switchPad.pressed && !switchPad.params.forceClearPressed) || this.momentarySourceHasAnyActivationOverlap(switchPad.spawn);', file);

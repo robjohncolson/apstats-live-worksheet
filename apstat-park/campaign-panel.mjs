@@ -91,7 +91,7 @@ export function mountCampaign({ container, getSocket, board, onClose }) {
     if (disposed) return;
     bind(); if (idle) return;
     const now = performance.now();
-    if (!joined && now - lastJoin > 1000) { lastJoin = now; send('campaign_join', { protocol: 10, active: activeJoin }); }
+    if (!joined && now - lastJoin > 1000) { lastJoin = now; send('campaign_join', { protocol: 11, active: activeJoin }); }
     if (!state || !game) return;
     if (now - lastPacket > 1500) resume();
     // Keyboard edges send immediately. A blocked write must retain the jump
