@@ -44,11 +44,15 @@ export const CAMPAIGN_PATCHES = [{
   evidence: ['FUN_7ff72bb64310', 'FUN_7ff72bc132c0 (recursive DOWN contact count)', 'FUN_7ff72bc17330 (recursive carry)'],
   behavior: 'WeightedLift/Ex/Ex2 count every cat in the contact stack resting on the slab (directly, on another cat, or on a box), transitively, and carry the whole stack with the slab, as DarknessWeightedLift already did. Thresholds unchanged (optional teacher cats still add weight but never raise the requirement). Deterministic: rect geometry in player-index order.',
 }, {
-  // Teacher 2026-10-07: "boxes can stay on top of the cat's head when the cat moves around (same dynamic as another cat on top)."
+  // Teacher 2026-10-07: "the box is stuck to the cat's head like crazy glue — it should be something you can
+  // jump and move off the head". Rewritten to the native rule (was: the box copied every cat move).
   id: 'push-box-head-carry',
   files: ['src/engine/GameRuntime.ts', 'src/engine/actors/PushBox.ts'],
-  evidence: ['Teacher request (desk rule); mirrors carryPlayersWithPushedBox / carryPlayersWithWeightedLifts'],
-  behavior: 'Every stage: a push box resting on a live cat head at frame start follows that cat frame delta (x, then y), stopping at tiles, solids, other boxes and other cats; a ceiling that stops the box stops the cat too. Cats riding the box move with it. Cats support boxes in every stage (not only jump02), and a head box left unsupported falls. A cat rising under its own head box is not a side push. Deterministic: frame-start rects, lowest player index wins.',
+  evidence: ['FUN_7ff72bb33890 (PushBox resolver: zeroes its own vx; support = any body in the cell below via FUN_7ff72bc13690, which has no category filter, so a cat holds a box; else the 0.65 settle)',
+    'FUN_7ff72bc17330 callers (box push, lifts, plane, stretch, RouletteLift, switch motion): the normal cat update FUN_7ff72bb6f0e0 never chain-displaces, so a walking cat does not carry its head box',
+    'FUN_7ff72bb6f0e0 jump: vy is set only if FUN_7ff72bb5b630(body, 0 = above, 1, 0) finds nothing above; a box on the head suppresses the jump and is never launched',
+    'Carriers move stacks: lifts/MoveWalls sweep (FUN_7ff72bc16f50) and displace contacted bodies by the same delta (FUN_7ff72bb34f30 -> FUN_7ff72bc17330 -> FUN_7ff72bc16780, recursive)'],
+  behavior: 'Every stage: a cat holds a push box like a floor. Walking out from under it leaves the box in place, and it falls once unsupported. A cat with a box on its head cannot jump through it (the box is solid; it is never launched). Only a carrier (WeightedLift family or MoveWall) under the cat moves the head box, by that carrier\'s own delta, with cats riding the box. Deterministic: frame-start rects, lowest player index wins.',
 }, {
   // Teacher 2026-10-07: "blocks can be used to hold down buttons!" FIDELITY fix, not a desk rule: the
   // native plain-switch begin-contact accepts any body with mask bit 0x2 and category 1..3, and a
@@ -98,10 +102,19 @@ export function patchCampaignSource(file, source) {
     source = replaceOnce(source, '    // PICO PARK push boxes are white', '    this.spawnRect = { ...this.rect };\n\n    // PICO PARK push boxes are white', file);
     source = replaceOnce(source, "import { Container, Graphics, Text, TextStyle }", "import { Container, Graphics, Sprite, Text, TextStyle }", file);
     source = "import { frameTexture } from '../sprites';\n" + source;
-    // push-box-head-carry: a cat rising out from under the box on its head is not a side push;
-    // GameRuntime.carryPushBoxesOnPlayerHeads lifts the box after the player pass.
-    source = replaceOnce(source, '    const previousPlayerBottom = previousPlayerRect.y + previousPlayerRect.height;', `    if (playerVelocity.y < 0 && Math.abs(previousPlayerRect.y - (box.y + box.height)) <= 0.5) continue;
-    const previousPlayerBottom = previousPlayerRect.y + previousPlayerRect.height;`, file);
+    // push-box-head-carry (native rewrite): a rising cat meets a box above it and stops at its underside.
+    // Native FUN_7ff72bb6f0e0 caps the jump to the headroom under the nearest body above (local_174) and
+    // does not jump at all with a body touching above (FUN_7ff72bb5b630, dir 0): a box on the head is
+    // never launched and the cat never passes into it.
+    source = replaceOnce(source, '    let pushDelta = 0;\n    let resolvedPlayerX = playerRect.x;', `    if (playerVelocity.y < 0 && previousPlayerRect.y >= box.y + box.height - 0.5) {
+      playerRect = { ...playerRect, y: box.y + box.height };
+      playerVelocityOut.y = 0;
+      blocked = true;
+      continue;
+    }
+
+    let pushDelta = 0;
+    let resolvedPlayerX = playerRect.x;`, file);
     return replaceOnce(source, '    this.view.addChild(g);', `    const cornerX = Math.min(24, resolvedWidth / 2);
     const cornerY = Math.min(24, resolvedHeight / 2);
     const widths = [cornerX, resolvedWidth - 2 * cornerX, cornerX];
@@ -246,14 +259,19 @@ export function getRectLeftBottomRect(spawn: ActorSpawnDef): Rect {
     source = replaceOnce(source, '  private readonly pushBoxesMovedThisFrame = new Set<PushBox>();', `  private readonly pushBoxesMovedThisFrame = new Set<PushBox>();
   private frameStartPlayerRects: Rect[] = [];
   private frameStartPushBoxRects: Rect[] = [];
+  private frameStartLiftRects: Rect[] = [];
+  private frameStartMoveWallRects: Rect[] = [];
   private readonly pushBoxesOnHeads = new Set<PushBox>();`, file);
     source = replaceOnce(source, '    const previousLiftRects = this.weightedLifts.map((lift) => ({ ...lift.rect }));', `    this.frameStartPlayerRects = this.players.map((player) => ({ ...player.rect }));
     this.frameStartPushBoxRects = this.pushBoxes.map((box) => ({ ...box.rect }));
+    this.frameStartLiftRects = this.weightedLifts.map((lift) => ({ ...lift.rect }));
+    this.frameStartMoveWallRects = this.moveWalls.map((moveWall) => ({ ...moveWall.rect }));
     const previousLiftRects = this.weightedLifts.map((lift) => ({ ...lift.rect }));`, file);
     source = replaceOnce(source, '    this.updateFallingPushBoxes(clampedDt);', `    this.carryPushBoxesOnPlayerHeads();
     this.updateFallingPushBoxes(clampedDt);`, file);
-    source = replaceOnce(source, '  private updateFallingPushBoxes(dt: number): void {', `  // push-box-head-carry: a box resting on a live cat's head at frame start follows that cat's
-  // frame delta (x, then y), the way carryPlayersWithPushedBox moves riders of a pushed box.
+    source = replaceOnce(source, '  private updateFallingPushBoxes(dt: number): void {', `  // push-box-head-carry (native rewrite): a box resting on a live cat's head at frame start is a head
+  // box (it falls once unsupported). It moves only when a CARRIER under that cat moved this frame
+  // (native lifts / MoveWalls displace the whole stack; a walking or jumping cat carries nothing).
   private carryPushBoxesOnPlayerHeads(): void {
     this.pushBoxesOnHeads.clear();
     if (!this.tileMap || this.pushBoxes.length === 0) return;
@@ -272,7 +290,11 @@ export function getRectLeftBottomRect(spawn: ActorSpawnDef): Rect {
       ...this.normalBoxes.filter((b) => !this.isLaserKeyBoxUnlocked(b)).map(normalBoxRect),
       ...this.colorBoxes.map(colorBoxRect),
     ];
-    for (const [i, box] of this.pushBoxes.entries()) {
+    // Stacks bottom-up (frame-start y, lowest first; ties by index): a lower head box moves before one above it.
+    const order = this.pushBoxes.map((_, index) => index).sort((a, b) =>
+      ((this.frameStartPushBoxRects[b]?.y ?? 0) - (this.frameStartPushBoxRects[a]?.y ?? 0)) || a - b);
+    for (const i of order) {
+      const box = this.pushBoxes[i]!;   // (distinct text: the sky-respawn anchor must stay unique)
       const boxStart = this.frameStartPushBoxRects[i];
       if (!boxStart) continue;
       // On a head at frame start (any cat, even one that just died): the box is a head box and
@@ -283,19 +305,50 @@ export function getRectLeftBottomRect(spawn: ActorSpawnDef): Rect {
       this.pushBoxesOnHeads.add(box);
       // Already moved this frame (push, MoveWall): never double-move.
       if (box.rect.x !== boxStart.x || box.rect.y !== boxStart.y) continue;
-      // Of the live cats under it, the one that rose the most this frame carries (a jumping cat
-      // lifts a shared box); ties go to the lowest index (stable createTable order).
-      let carrierIndex = -1;
+      // The head box moves only by the delta of a carrier (lift or MoveWall) that the cat under it
+      // stood on at frame start and that moved this frame. Lowest cat index, lifts before walls.
+      // Transitive (native recursive displacement, FUN_7ff72bc17330 / FUN_7ff72bc16780): walk DOWN the
+      // frame-start support chain (cat -> cat / box -> ... -> lift or MoveWall) and use the carrier's delta.
+      // Visited-set guarded and depth-capped; candidates in fixed order (carriers, then cats by index,
+      // then boxes by index), so every client resolves the same chain.
+      const moved = [
+        ...this.weightedLifts.map((lift, i) => [this.frameStartLiftRects[i], lift.rect] as const),
+        ...this.moveWalls.map((moveWall, i) => [this.frameStartMoveWallRects[i], moveWall.rect] as const),
+      ];
+      const carrierUnder = (feet: Rect, visited: Set<Rect>, depth: number): { dx: number; dy: number } | null => {
+        for (const [startRect, nowRect] of moved) {
+          if (!startRect || !rectRestsOnSupport(feet, startRect)) continue;
+          const dx = nowRect.x - startRect.x, dy = nowRect.y - startRect.y;
+          if (dx !== 0 || dy !== 0) return { dx, dy };
+        }
+        if (depth >= 16) return null;
+        const below = [
+          ...this.frameStartPlayerRects.filter((_, i) => canCarry(this.players[i])),
+          ...this.frameStartPushBoxRects,
+        ];
+        for (const support of below) {
+          if (!support || visited.has(support) || !rectRestsOnSupport(feet, support)) continue;
+          visited.add(support);
+          const delta = carrierUnder(support, visited, depth + 1);
+          if (delta) return delta;
+        }
+        return null;
+      };
+      const carrierDelta = (index: number): { dx: number; dy: number } | null => {
+        const feet = this.frameStartPlayerRects[index];
+        return carrierUnder(feet, new Set<Rect>([feet, boxStart]), 0);
+      };
+      let carrierIndex = -1, dx = 0, dy = 0;
       for (const index of supporting) {
         if (!canCarry(this.players[index])) continue;
-        const rise = this.players[index].rect.y - this.frameStartPlayerRects[index].y;
-        if (carrierIndex < 0 || rise < this.players[carrierIndex].rect.y - this.frameStartPlayerRects[carrierIndex].y) carrierIndex = index;
+        const delta = carrierDelta(index);
+        if (!delta) continue;
+        carrierIndex = index; dx = delta.dx; dy = delta.dy;
+        break;
       }
       if (carrierIndex < 0) continue;
       const carrier = this.players[carrierIndex];
-      const start = this.frameStartPlayerRects[carrierIndex];
-      const dx = carrier.rect.x - start.x, dy = carrier.rect.y - start.y;
-      if ((dx === 0 && dy === 0) || Math.abs(dx) > MAX_CARRY_STEP || Math.abs(dy) > MAX_CARRY_STEP) continue;
+      if (Math.abs(dx) > MAX_CARRY_STEP || Math.abs(dy) > MAX_CARRY_STEP) continue;
       const riders = this.players.filter((player) => player !== carrier && canCarry(player)
         && rectRestsOnSupport(player.rect, boxStart));
       const hitsSolid = (rect: Rect) => this.tileMap!.rectHitsSolid(rect)
