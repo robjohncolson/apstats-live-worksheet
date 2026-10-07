@@ -1,5 +1,5 @@
 // Local-only smoke (teacher 2026-10-07, retail capture og-capture-2/notes.md run L4): in the real browser engine,
-// 1-4, a cat stands on the floor under the UpDownLift. The lift comes down, stops on its head, holds ~63 ticks
+// 1-4, a cat stands on the floor under the UpDownLift. The lift comes down, stops on its head, holds ~68 ticks
 // (the time its sine path spends below the head) and rises again; the cat never moves, is never inside the lift
 // and is never hurt (recovered patch 'descending-lift-stops-on-bodies'). Needs Playwright: PARK_PLAYWRIGHT_MODULE
 // may point to an installed playwright-core index.mjs and PARK_BROWSER to a Chromium/Edge/Chrome executable.
@@ -43,7 +43,6 @@ try {
     game.load(campaignStages.findIndex(stage => stage.source === 'stage_weight01'), 2, 100);
     const runtime = game.runtime, [other, cat] = runtime.players;
     const lift = runtime.weightedLifts.find(entry => entry.spawn.actorName === 'UpDownLift');
-    runtime.moveWalls.splice(0);   // 1-4's sliding wall reaches x 900 at ~frame 260; isolate the lift
     const place = (player, x, y) => player.applyResolvedCollision({ ...player.rect, x, y }, { x: 0, y: 0 }, true);
     place(other, 820, 432 - other.rect.height); place(cat, 900, 432 - cat.rect.height);
     game.render();
@@ -79,7 +78,7 @@ try {
   }
   assert.equal(approach.at(-1).liftBottom, start.cat.y, 'the lift stopped on the head');
   const held = rows.filter(r => r.liftBottom === start.cat.y).length;
-  assert.ok(held >= 55 && held <= 70, 'held ~63 ticks: ' + held);
+  assert.ok(held >= 64 && held <= 72, 'held ~68 ticks: ' + held);
   assert.ok(after.at(-1).liftY < approach.at(-1).liftY - 20, 'and rose again');
   assert.deepEqual(errors, []);
   writeFileSync(path.join(output, 'lift-stop.json'), JSON.stringify({ start, rows }, null, 2));

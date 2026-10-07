@@ -104,6 +104,25 @@ export const CAMPAIGN_PATCHES = [{
     'FUN_7ff72bb64310 (WeightedLift family): a contact under the slab freezes it (+0x408 = 0.06 s)',
     'FUN_7ff72bc1e050 / FUN_7ff72bc1e4a0: a remaining overlap is rolled back to the time of impact; the lift (node flag 2) is not pushed, the other body is'],
   behavior: 'Every stage: a WeightedLift / Ex / Ex2 / DarknessWeightedLift / UpDownLift moving DOWN onto a live cat or a resting push box that stands on something (tile, solid, lift, box or cat) stops exactly in contact with its top and never moves into it (the stack on the slab gets the shortened delta). An UpDownLift then holds at that height until its own sine path rises back above it (equivalent to the native wait + phase mirror for a symmetric path), even if the body leaves. A weighted lift resumes from where it stopped. A body under the slab that stands on nothing (mid-air) is pushed down to the slab underside instead. No crush, no damage. Not modelled: the 0.06 s WeightedLift freeze after contact ends, and its freeze of upward motion while something touches its underside; base Lift and RouletteLift unchanged. Deterministic: frame-start lift rects, bodies in index order.',
+}, {
+  // Teacher 2026-10-07 (1-4 side by side with the original): "the platforms aren't orange like the real one, and the
+  // moving door/wall is HUGE". Retail frames og-capture-2 (c04, L1-L4) vs the port at the same scale/framing
+  // (og-capture-2/look14). Decompile: og-capture-2/look14/decomp/look.md.
+  id: 'native-movewall',
+  files: ['src/engine/GameRuntime.ts'],
+  evidence: ['Factory call at 0x7ff72bb74904: FUN_7ff72bb664e0(this, trunc(p0), trunc(p1), p2 > 0 ? p2 : -1.0); no party-size term',
+    'FUN_7ff72bb664e0: travel = a (|a| <= 1.19e-7 -> 50); sensor width = b (~0 -> 50); height c (< 0 -> 260); body {-8, -c+1, 16, c-2} (category 4, flag 0x10); view {-9, -c, 18, c} from atlas (500,255,9,130) = solid #ff864d; sensor {min(b,0)+10, -c+1, |b|, c-2}, moving with the wall',
+    'FUN_7ff72bb66be0 (sensor begin-contact): state := 2, timer := 0 only if the other body has category != 0, state < 2 and timer >= 1.5 s; the wall spawns in state 0, which never moves on its own',
+    'FUN_7ff72bb667e0: slide sign(travel)*2 per tick until |offset| > |travel|, wait 1.5 s, return sign(travel)*-1.5 per tick until offset*travel <= 0, snap 0, wait 1.5 s, then cycle (the port constants already match)',
+    'Retail 1-4: both cats stayed on the floor, outside the sensor band (y 49..239), and the wall never moved; the orange block right of the UpDownLift is the row-5 MC_BW* ledge, not the wall'],
+  behavior: 'Every stage: a MoveWall row {x, y, p0, p1, p2} is a 16-wide pillar standing on (x, y): body x-8..x+8, y-c+1..y-1 with c = p2 (260 when p2 <= 0), drawn with the native orange bar; p0 is its travel, p1 its sensor width. It waits idle until a live cat or push box begins touching its sensor (x + min(p1,0) + 10, width |p1|, the body height band, moving with the wall) at least 1.5 s after load; then it runs the existing slide / wait / return / wait cycle. Not modelled: undoing a slide step when the native chain test fails (the port keeps its existing shove).',
+}, {
+  id: 'native-lift-and-ledge-look',
+  files: ['src/engine/actors/WeightedLift.ts', 'src/engine/sprites.ts', 'src/engine/picoStyle.ts'],
+  evidence: ['FUN_7ff72bb6d980 (UpDownLift ctor): view {-60, -10, 120, 20} from atlas (385,49,60,10) = solid #ff864d; body {-59, -9, 118, 18}; retail capture L4: slab 173 x 23 screen px = 115 x 15 native, orange',
+    'FUN_7ff72bb63cf0 (WeightedLift family): orange scale sprites (atlas (351,511,98,42) wide / (383,559,34,42) narrow); body anchor relative to the row is NOT traced, so only the colour is changed',
+    'Retail capture (L4 frame 75): the MC_BWL/MC_BWC/MC_BWR ledge (stage_weight01 row 5) is #ff864d with rounded ends; no evidence was captured for MC_BH* / MC_BR* chips'],
+  behavior: 'Look and size: the UpDownLift body is the native 118 x 18 (was 64 x 14) centred on its row point and drawn with its native orange atlas slab (no guide line). WeightedLift / Ex / Ex2 are drawn as solid orange rounded slabs at their existing size (was translucent light blue with a guide line); their native scale sprite and body size are left for when the anchor is traced. MC_BW* chips render stage orange (was brown); other MC_B* chips keep their colour (no evidence).',
 }];
 
 // Fail the build if upstream code changes: never silently skip a correction.
@@ -114,10 +133,45 @@ function replaceOnce(source, before, after, file) {
 
 export function patchCampaignSource(file, source) {
   source = source.replaceAll('\r\n', '\n');
+  if (file === 'src/engine/picoStyle.ts') {
+    // native-lift-and-ledge-look: the MC_BW* ledge is stage orange in the original (retail capture, 1-4).
+    return replaceOnce(source, "  if (chip.startsWith('MC_B')) return 0xb0784f;",
+      "  if (chip.startsWith('MC_BW')) return PICO_PLATFORM;\n  if (chip.startsWith('MC_B')) return 0xb0784f;", file);
+  }
+  if (file === 'src/engine/actors/WeightedLift.ts') {
+    // native-lift-and-ledge-look: UpDownLift = native 118 x 18 body + orange atlas slab; weighted lifts orange.
+    source = replaceOnce(source, `    const travel = this.params?.travel ?? 0;
+    const guideX`, `    if (spawn.actorName === 'UpDownLift') {
+      // FUN_7ff72bb6d980: body {-59, -9, 118, 18}, view {-60, -10, 120, 20} from atlas (385,49,60,10).
+      this.rect.x = spawn.x - 59; this.rect.y = spawn.y - 9; this.rect.width = 118; this.rect.height = 18;
+      const slab = frameTexture('updown_lift' as AtlasFrameName);
+      if (slab) {
+        const sprite = new Sprite(slab);
+        sprite.x = -60; sprite.y = -10; sprite.width = 120; sprite.height = 20;
+        this.view.addChild(sprite);
+        return;
+      }
+    }
+    if (spawn.actorName !== 'Lift' && !isDarknessWeightedLift) {
+      // Native lifts are stage orange (#ff864d), never the old translucent blue debug look.
+      const slab = new Graphics();
+      slab.beginFill(0xff864d, 1);
+      slab.drawRoundedRect(this.rect.x - spawn.x, this.rect.y - spawn.y, this.rect.width, this.rect.height,
+        Math.round(Math.min(this.rect.width, this.rect.height) * 0.28));
+      slab.endFill();
+      this.view.addChild(slab);
+      return;
+    }
+
+    const travel = this.params?.travel ?? 0;
+    const guideX`, file);
+    return replaceOnce(source, '    this.view.y = this.spawn.y + offset;\n    this.rect.y = this.view.y - LIFT_HEIGHT / 2;',
+      '    this.view.y = this.spawn.y + offset;\n    this.rect.y = this.view.y - this.rect.height / 2;', file);
+  }
   if (file === 'src/engine/sprites.ts') {
     const frames = Array.from({ length: 9 }, (_, i) =>
       `  push_box_${i}: [${464 + i % 3 * 16}, ${32 + Math.floor(i / 3) * 16}, 16, 16],`).join('\n');
-    return replaceOnce(source, 'export const PICO_ATLAS_FRAMES = {', 'export const PICO_ATLAS_FRAMES = {\n  door_closed: [96, 512, 48, 48],\n' + frames, file);
+    return replaceOnce(source, 'export const PICO_ATLAS_FRAMES = {', 'export const PICO_ATLAS_FRAMES = {\n  door_closed: [96, 512, 48, 48],\n  updown_lift: [385, 49, 60, 10],\n  move_wall: [500, 255, 9, 130],\n' + frames, file);
   }
   if (file === 'src/engine/actors/Goal.ts') {
     source = replaceOnce(source, '  readonly rect: Rect;', `  readonly rect: Rect;
@@ -834,6 +888,63 @@ export function getRectLeftBottomRect(spawn: ActorSpawnDef): Rect {
   }
 
   private updateFallingPushBoxes(dt: number): void {`, file);
+
+    // native-movewall (1/4): the row decodes to a 16-wide pillar, its travel and its sensor.
+    source = replaceOnce(source, '      const moveWall = new StaticRect(spawn);', `      const moveWall = new StaticRect(spawn, nativeMoveWall(spawn).body);
+      // Native view {-9, -c, 18, c} from atlas (500,255,9,130), relative to the body's top-left (x-8, y-c+1).
+      const wallArt = frameTexture('move_wall' as any);
+      if (wallArt) {
+        moveWall.view.removeChildren();
+        const bar = new Sprite(wallArt);
+        bar.x = -1; bar.y = -1; bar.width = 18; bar.height = moveWall.rect.height + 2;
+        moveWall.view.addChild(bar);
+      }`, file);
+    // native-movewall (2/4): it spawns idle (native state 0); only its sensor starts it.
+    source = replaceOnce(source, '    phase: 1,\n    timer: 0,\n    offsetX: 0,', '    phase: 0,\n    timer: 0,\n    offsetX: 0,', file);
+    // native-movewall (3/4): sensor begin-contact (a live cat or push box newly touching it, timer >= 1.5 s).
+    source = replaceOnce(source, `      state.timer = Math.min(MOVE_WALL_TIMER_CAP_SECONDS, state.timer + dt);
+      if (state.phase === 1) {`, `      state.timer = Math.min(MOVE_WALL_TIMER_CAP_SECONDS, state.timer + dt);
+      const native = nativeMoveWall(moveWall.spawn);
+      const sensor = { ...native.sensor, x: native.sensor.x + state.offsetX };
+      const touching = new Set<object>([
+        ...this.players.filter((player) => player.deathTimer <= 0 && !this.deathFallPlayers.has(player)
+          && !this.collisionChangePlayersCollisionOff.has(player) && rectsOverlap(player.rect, sensor)),
+        ...this.pushBoxes.filter((box) => rectsOverlap(box.rect, sensor)),
+      ]);
+      const before = this.moveWallSensorContacts[index] ?? new Set<object>();
+      const began = [...touching].some((body) => !before.has(body));
+      this.moveWallSensorContacts[index] = touching;
+      if (began && state.phase < 2 && state.timer >= MOVE_WALL_WAIT_SECONDS) {
+        state.phase = 2;
+        state.timer = 0;
+      }
+      if (state.phase === 0) {
+        // idle until the sensor is touched
+      } else if (state.phase === 1) {`, file);
+    source = replaceOnce(source, `      const baseX = moveWall.spawn.x - moveWall.rect.width / 2;
+      const baseY = moveWall.spawn.y - moveWall.rect.height / 2;`, `      const baseX = native.body.x;
+      const baseY = native.body.y;`, file);
+    source = replaceOnce(source, '  private readonly upDownLiftHolds = new Map<WeightedLift, number>();',
+      '  private readonly upDownLiftHolds = new Map<WeightedLift, number>();\n  private moveWallSensorContacts: Array<Set<object>> = [];', file);
+    // native-movewall (4/4): the decoder (FUN_7ff72bb664e0 via the factory call at 0x7ff72bb74904).
+    source = replaceOnce(source, 'function createMoveWallState(spawn: ActorSpawnDef): MoveWallState {', `export function nativeMoveWall(spawn: ActorSpawnDef): { body: Rect; sensor: Rect; travel: number } {
+  const at = spawn.raw.findIndex((value, index) => value === spawn.x && spawn.raw[index + 1] === spawn.y);
+  const read = (offset: number) => {
+    const value = at >= 0 ? spawn.raw[at + offset] : undefined;
+    return typeof value === 'number' && Number.isFinite(value) ? value : 0;
+  };
+  const a = Math.trunc(read(2)), b = Math.trunc(read(3)), p2 = read(4);
+  const travel = Math.abs(a) <= 1.1920928955078125e-7 ? 50 : a;
+  const sensorWidth = Math.abs(b) <= 1.1920928955078125e-7 ? 50 : b;
+  const c = p2 > 0 ? p2 : 260;
+  return {
+    body: { x: spawn.x - 8, y: spawn.y - c + 1, width: 16, height: c - 2 },
+    sensor: { x: spawn.x + Math.min(sensorWidth, 0) + 10, y: spawn.y - c + 1, width: Math.abs(sensorWidth), height: c - 2 },
+    travel,
+  };
+}
+
+function createMoveWallState(spawn: ActorSpawnDef): MoveWallState {`, file);
     return source;
   }
   // Select by identity: prepending another patch must not disable warp recovery.

@@ -50,16 +50,14 @@ function step(game, frames = 1, inputs = [IDLE, IDLE]) {
   for (let i = 0; i < frames; i++) game.update(1 / 60, inputs[0], inputs);
 }
 function place(player, x, y) { player.applyResolvedCollision({ ...player.rect, x, y }, { x: 0, y: 0 }, true); }
-// 1-4's MoveWall (row [MoveWall, 1496, 240, -459, -483, 192]) starts sliding left at ~frame 100 and shoves every
-// cat near x 900 sideways from ~frame 260 (carryPlayersWithMoveWalls), independent of the lift. Take it out of the
-// simulation so these tests isolate the lift.
-function withoutMoveWall(game) { game.moveWalls.splice(0); return game; }
 const inside = (a, b) => a.x < b.x + b.width - 1e-6 && b.x < a.x + a.width - 1e-6
   && a.y < b.y + b.height - 1e-6 && b.y < a.y + a.height - 1e-6;
 
-// 1-4: the UpDownLift (x 917, travel -70) swings over open floor; its lowest underside is 413, a floor cat's top 398.
+// 1-4: the UpDownLift (x 917, travel -70; native 118 x 18 body, native-lift-and-ledge-look) swings over open floor;
+// its lowest underside is 336 + 70 + 9 = 415, a floor cat's top 398. (The native MoveWall stays idle: no cat here
+// touches its sensor, native-movewall.)
 function underUpDownLift() {
-  const game = withoutMoveWall(loadStage('stage_weight01'));
+  const game = loadStage('stage_weight01');
   const lift = game.weightedLifts.find((entry) => entry.spawn.actorName === 'UpDownLift');
   const [other, cat] = game.players;
   place(other, 820, FLOOR - other.rect.height);   // near, so the scroll camera never pulls the pair together
@@ -83,9 +81,11 @@ test('1-4 (L4): the UpDownLift comes down onto a standing cat, stops on its head
     if (frame > 0 && ys[frame] === ys[frame - 1]) held += 1;
   }
   assert.equal(lowestBottom, cat.rect.y, 'it stops exactly on the head');
-  // One pass in 400 frames (5 s = 300-frame period, first contact ~frame 188). The hold is the time the sine path
-  // spends below the head: (2/w) acos(1 - d/A) with d = 15 (413 - 398), A = 70, w = 2pi/5 -> 1.06 s = 63.6 frames.
-  const expected = 2 / (2 * Math.PI / 5) * Math.acos(1 - 15 / 70) * 60;
+  // One pass in 400 frames (5 s = 300-frame period). The hold is the time the sine path spends below the head:
+  // (2/w) acos(1 - d/A) with d = lowest underside - head (415 - 398 = 17), A = 70, w = 2pi/5 -> 1.13 s = 68 frames.
+  // (Retail: d = 415 - 386 for its 46-tall cat = 29 -> 1.50 s; captured 1.48 s.)
+  const d = 336 + 70 + lift.rect.height / 2 - cat.rect.y;
+  const expected = 2 / (2 * Math.PI / 5) * Math.acos(1 - d / 70) * 60;
   assert.ok(Math.abs(contactFrames - expected) <= 2, 'held on the head ~' + expected.toFixed(1) + ' frames: ' + contactFrames);
   const peaks = ys.filter((y, i) => i > 0 && i < ys.length - 1 && y < ys[i - 1] && y <= ys[i + 1]);
   assert.ok(peaks.length >= 1 && peaks.every((y) => Math.abs(y - peaks[0]) < 1e-6), 'peaks unchanged (no phase drift): ' + peaks);
@@ -97,7 +97,7 @@ test('1-4: the hold is the native mirror: the lift goes back up even if the cat 
   while (lift.rect.y + lift.rect.height !== cat.rect.y && frame < 400) { step(game); frame += 1; }
   assert.ok(frame < 400, 'the lift reached the head');
   const holdY = lift.rect.y;
-  step(game, 10, [IDLE, RIGHT]);   // the cat walks out from under it
+  step(game, 20, [IDLE, RIGHT]);   // the cat walks out from under the 118-wide slab
   assert.ok(cat.rect.x >= lift.rect.x + lift.rect.width - 1e-6, 'the cat left: ' + cat.rect.x);
   let lowest = holdY;
   for (let f = 0; f < 120; f++) { step(game); lowest = Math.max(lowest, lift.rect.y); }
@@ -105,7 +105,7 @@ test('1-4: the hold is the native mirror: the lift goes back up even if the cat 
 });
 
 test('1-4: a cat riding ON TOP of the descending UpDownLift rides down with it (feet on the slab every frame)', () => {
-  const game = withoutMoveWall(loadStage('stage_weight01'));
+  const game = loadStage('stage_weight01');
   const lift = game.weightedLifts.find((entry) => entry.spawn.actorName === 'UpDownLift');
   const [rider, other] = game.players;
   place(other, 820, FLOOR - other.rect.height);
