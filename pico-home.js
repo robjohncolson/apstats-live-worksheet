@@ -229,6 +229,8 @@
     /* Under the board, the floor band continues the room's floor block (which is only as wide as
        the room) to both page edges: same orange, same top edge (--pico-floor-block, layoutFloor). */
     '#pico-home .floor.has-board .floor-band { z-index: 0; height: var(--pico-floor-block, 50px); }',
+    /* A park/campaign level is its own scene (pits, platforms): no band behind it. */
+    '#pico-home .floor.is-level .floor-band { display: none; }',
     /* The board's pull-down result screen holds a width:100% chart canvas (320x160 intrinsic); at
        page width that chart alone would be ~700 px tall and push the question, stepper and close
        button out of the board. Cap the chart (2:1, centred) at 320 px or the board height minus the
@@ -2735,6 +2737,9 @@
     }
     floor.style.setProperty('--pico-result-chart-max', Math.max(60, canvasHeight(canvas) - RESULT_CONTROLS_H) + 'px');
     floor.classList.toggle('is-room', playing);
+    // Teacher 2026-10-07: a park/campaign level draws its own ground with pits; the page-wide
+    // orange band under the transparent canvas was showing through every gap as solid ground.
+    floor.classList.toggle('is-level', mount.hasAttribute('data-park-active'));
     floor.setAttribute('data-floor-mode', playing ? 'room' : 'band');
     if (!changing) return;
     view.boardPlaying = playing;

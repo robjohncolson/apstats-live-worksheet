@@ -141,9 +141,14 @@ describe('Pico floor = the real board', { timeout: 120_000 }, () => {
       mount.setAttribute('data-park-active', '');
       await settle();
       expect(floor.dataset.floorMode).toBe('room');
+      // Teacher 2026-10-07: a level draws its own ground with pits — the page-wide orange band
+      // must not show through the gaps, so it is off while a level is active.
+      expect(floor.classList.contains('is-level')).toBe(true);
+      expect(PICO).toContain("'#pico-home .floor.is-level .floor-band { display: none; }',");
       mount.removeAttribute('data-park-active');
       await settle();
       expect(floor.dataset.floorMode).toBe('band');
+      expect(floor.classList.contains('is-level')).toBe(false);
       // A poll result screen (pulled down at the top of the board) shows the whole room too.
       handle.showResultScreen([{ question: 'Q?', options: ['A', 'B'], tally: [1, 2] }]);
       await settle();
