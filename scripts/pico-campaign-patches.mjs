@@ -31,6 +31,12 @@ export const CAMPAIGN_PATCHES = [{
   files: ['src/engine/GameRuntime.ts', 'src/engine/actors/Bridge.ts', 'src/engine/actors/KeyGate.ts'],
   evidence: ['FUN_7ff72bb343e0', 'FUN_7ff72bc16780', 'FUN_7ff72bb4f630', 'FUN_7ff72bb4f9d0'],
   behavior: 'Pushes carry obstructing cats or stop at blocked chains. Gate extents follow authored segment counts. Bridge segment rectangles use local zero-origin bounds.',
+}, {
+  // Teacher 2026-10-07 (campaign 1-2): a block pushed off a ledge never came back.
+  id: 'push-box-sky-respawn',
+  files: ['src/engine/actors/PushBox.ts', 'src/engine/GameRuntime.ts'],
+  evidence: ['Teacher observation of shipped PICO PARK (no recovered native handler yet)', 'FUN_7ff72bb6f0e0 (shared bottom kill-line)'],
+  behavior: 'Every stage: a push box whose top passes the bottom kill-line that fails players returns to its spawn x, falling from rest, and drops back onto its origin. It starts just above the top of the screen, or, when map tiles overhang the origin, from just under the lowest overhang. While that start overlaps a cat or another box, the box waits parked at the kill line (off-screen, at rest) and retries each frame. Deterministic (map tiles and frame state only).',
 }];
 
 // Fail the build if upstream code changes: never silently skip a correction.
@@ -58,6 +64,9 @@ export function patchCampaignSource(file, source) {
     return replaceOnce(source, "const texture = frameTexture('door_black');", "const texture = frameTexture('door_closed');", file);
   }
   if (file === 'src/engine/actors/PushBox.ts') {
+    // push-box-sky-respawn: remember the spawn rectangle (feet-anchored, set at stage load).
+    source = replaceOnce(source, '  rect: Rect;\n', '  rect: Rect;\n  /** Where the stage placed this box; it returns here from the sky after a fall. */\n  readonly spawnRect: Rect;\n', file);
+    source = replaceOnce(source, '    // PICO PARK push boxes are white', '    this.spawnRect = { ...this.rect };\n\n    // PICO PARK push boxes are white', file);
     source = replaceOnce(source, "import { Container, Graphics, Text, TextStyle }", "import { Container, Graphics, Sprite, Text, TextStyle }", file);
     source = "import { frameTexture } from '../sprites';\n" + source;
     return replaceOnce(source, '    this.view.addChild(g);', `    const cornerX = Math.min(24, resolvedWidth / 2);
@@ -183,6 +192,34 @@ export function patchCampaignSource(file, source) {
       const heads = nativeJumpBoxes ? this.players.filter(player => player.deathTimer <= 0
         && player.rect.y >= box.rect.y + box.rect.height - .001).map(player => player.rect) : [];
       otherBoxRects.push(...heads);`, file);
+    // push-box-sky-respawn: past the players' bottom kill-line, the box returns from the sky.
+    source = replaceOnce(source, '      const box = this.pushBoxes[i];\n', `      const box = this.pushBoxes[i];
+      if (this.scrollCameraConfig && isBelowFailWindow(box.rect.y, this.scrollCameraConfig)) {
+        // Drop from just above the screen, or from under the lowest overhang above the origin
+        // (map tiles only, so every client computes the same start).
+        let dropY = box.spawnRect.y;
+        while (dropY > -box.rect.height && !this.tileMap.rectHitsSolid({ ...box.spawnRect, y: Math.max(-box.rect.height, dropY - 8) })) {
+          dropY = Math.max(-box.rect.height, dropY - 8);
+        }
+        const start = { ...box.rect, x: box.spawnRect.x, y: dropY };
+        // Never return into a cat or another box: park at the kill line (off-screen, at rest) and
+        // retry this same check next frame until the start is clear (simulation state only).
+        const occupied = this.players.some((player) => rectsOverlap(start, player.rect))
+          || this.pushBoxes.some((other) => other !== box && rectsOverlap(start, other.rect));
+        if (occupied) {
+          box.applyRect({ ...box.rect, y: this.scrollCameraConfig.failWindow });
+          box.falling = false;
+          box.velocityY = 0;
+          box.wasSupported = false;
+          continue;
+        }
+        box.applyRect(start);
+        box.falling = true;
+        box.velocityY = 0;
+        box.wasSupported = false;
+        continue;
+      }
+`, file);
     source = replaceOnce(source, '        x: box.rect.x + box.rect.width / 2 - 2,', '        x: nativeJumpBoxes ? box.rect.x + .001 : box.rect.x + box.rect.width / 2 - 2,', file);
     source = replaceOnce(source, '        width: 4,\n        height: 1,', '        width: nativeJumpBoxes ? box.rect.width - .002 : 4,\n        height: 1,', file);
     source = replaceOnce(source, '      if (!box.falling) {', `      if (nativeJumpBoxes && !supported) box.falling = true;
