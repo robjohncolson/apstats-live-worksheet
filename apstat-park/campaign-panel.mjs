@@ -15,20 +15,17 @@ export function mountCampaign({ container, getSocket, board, onClose }) {
   let bits = 0, buddy = 0, sentBits = -1, sentBuddy = -1, frame = null;
   let clearActive = false, soundClear = false, loadingState = null, hiddenTimer = null;
   let idle = false, activeJoin = false;
-  let paintedFrame = -1, paintedEpoch = null, paintedHelpers = null;
+  let paintedFrame = -1, paintedEpoch = null, paintedHelpers = null, paintedWidth = 0;
   const held = new Set();
   const replay = createCampaignReplay(inputs => game.step(inputs));
-  // Teacher 2026-10-07: the level was anchored to the left of the page-wide canvas. Scale the
-  // 720 x 750 world to the page width (exact fit, aspect kept), capped so it never grows taller
-  // than the window, never smaller than before (min(1, width / 720)), and centre it. Render-only:
-  // levels are keyboard-driven and the exit door is tested in game coordinates.
-  const WORLD_W = 720, WORLD_H = 750;
-  const scale = () => {
-    const byWidth = board.viewportW() / WORLD_W;
-    const byHeight = (win.innerHeight || WORLD_H) / WORLD_H;
-    return Math.min(byWidth, Math.max(1, byHeight));
-  };
-  const offsetX = () => Math.max(0, (board.viewportW() - WORLD_W * scale()) / 2);
+  // Teacher 2026-10-07: "no resizing of the game stage from the main — just widen and keep the
+  // centre." The stage keeps its native scale (min(1, width / 720), never scaled up). A wider page
+  // widens the drawn world to the page, split evenly left and right so the centre never moves.
+  // Render-only: levels are keyboard-driven and the exit door is tested in game coordinates.
+  const WORLD_W = 720;
+  const scale = () => Math.min(1, board.viewportW() / WORLD_W);
+  const viewW = () => Math.max(WORLD_W, Math.round(board.viewportW() / scale()));
+  const pad = () => (viewW() - WORLD_W) / 2;
   const entities = new Map();
   container.setAttribute('data-park-active', '');
   const status = doc.createElement('span'); status.setAttribute('role', 'status'); status.setAttribute('data-campaign-status', '');
@@ -158,37 +155,40 @@ export function mountCampaign({ container, getSocket, board, onClose }) {
       ctx.drawImage(board.transitionFrame, 0, 0, ctx.canvas.width, ctx.canvas.height);
       ctx.restore(); status.textContent = 'Loading PICO PARK campaign'; return;
     }
-    // Teacher 2026-10-07: CSS px -> device px (the board canvas is sized width * dpr), then centre and fit.
+    // CSS px -> device px (the board canvas is sized width * dpr); the world is never scaled up.
     const dpr = win.devicePixelRatio || 1;
-    ctx.save(); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.translate(offsetX(), 0); ctx.scale(scale(), scale());
-    ctx.imageSmoothingEnabled = false;   // keep the pixel art crisp when scaled up
+    ctx.save(); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.scale(scale(), scale());
+    ctx.imageSmoothingEnabled = false;
     const entry = CAMPAIGN[state?.stageIndex || 0];
-    frame = clear.sample(clearActive, state?.epoch, performance.now(), 720, 750);
+    const width = viewW(), left = pad();
+    frame = clear.sample(clearActive, state?.epoch, performance.now(), width, 750);
     if (frame) ctx.filter = frame.filter;
     // Reuse the last engine bitmap on high-refresh displays or while waiting
     // for a relay frame. Scene fades and the CLEAR banner still animate below.
-    if (game && state && (paintedFrame !== replay.frame || paintedEpoch !== state.epoch || paintedHelpers !== state.helpers)) {
-      game.render(); paintedFrame = replay.frame; paintedEpoch = state.epoch; paintedHelpers = state.helpers;
+    game?.setViewWidth?.(width);
+    if (game && state && (paintedFrame !== replay.frame || paintedEpoch !== state.epoch || paintedHelpers !== state.helpers
+      || paintedWidth !== width)) {
+      game.render(); paintedFrame = replay.frame; paintedEpoch = state.epoch; paintedHelpers = state.helpers; paintedWidth = width;
     }
     // Same orange floor edge and exit doorway as the calculator room.
-    if (!game || !state) { ctx.fillStyle = '#ff864d'; ctx.fillRect(0, 700, 720, 50); }
+    if (!game || !state) { ctx.fillStyle = '#ff864d'; ctx.fillRect(0, 700, width, 50); }
     const atlas = board.atlas?.();
-    const doorX = 30 + (game?.getView().projection.x || 0);
+    const doorX = 30 + (game && state ? game.getView().projection.x : left);
     if (atlas) ctx.drawImage(atlas, 96, 0, 48, 48, doorX, 660, 40, 40);
     else { ctx.fillStyle = '#493d48'; ctx.fillRect(doorX, 660, 40, 40); }
     pixelText(ctx, 'ESC TO LEAVE', doorX - 6, 649, 7);
     // Door scenery sits behind cats, as it does in the calculator and old 1-1.
     if (game && state) ctx.drawImage(game.canvas, 0, 0);
-    pixelText(ctx, 'PICO PARK ' + entry.world + '-' + entry.stage + '  /  48', 28, 30, 14);
-    pixelText(ctx, entry.title, 28, 52, 14);
+    pixelText(ctx, 'PICO PARK ' + entry.world + '-' + entry.stage + '  /  48', 28 + left, 30, 14);
+    pixelText(ctx, entry.title, 28 + left, 52, 14);
     let message = error || (idle ? 'INACTIVE. PRESS A GAME KEY TO REJOIN.' : !game ? 'LOADING PICO PARK...' : !joined ? 'RECONNECTING TO YOUR TEAM...'
       : state?.phase === 'waiting' ? 'GATHERING YOUR TEAM...'
       : state && !state.roster.includes(board.username) && !(state.helpers || []).includes(board.username) ? 'JOINING NEXT STAGE. TEAM CAN PRESS R TO RESTART.'
       : replay.received - replay.frame > 120 ? 'CATCHING UP WITH YOUR TEAM...'
       : clearActive ? 'NEXT STAGE...' : state?.roster.length === 1
         ? 'SOLO: ARROWS + SPACE / WASD + F.  R TO RETRY.' : 'ARROWS + SPACE. UP TO ENTER DOORS. R TO RETRY.');
-    pixelText(ctx, message, 28, 74, 7);
-    if (state) pixelText(ctx, state.roster.join(' + ').slice(0, 96), 28, 91, 7);
+    pixelText(ctx, message, 28 + left, 74, 7);
+    if (state) pixelText(ctx, state.roster.join(' + ').slice(0, 96), 28 + left, 91, 7);
     status.textContent = entry.world + '-' + entry.stage + ' ' + entry.title + '. ' + message;
     ctx.filter = 'none'; clear.render(ctx, frame); ctx.restore();
     dissolve.render(ctx);
@@ -217,5 +217,5 @@ export function mountCampaign({ container, getSocket, board, onClose }) {
   }).catch(cause => { error = 'Could not load PICO PARK. Reload to try again.'; console.error(cause); });
   return { kind: 'campaign', dispose, getGame: () => game,
     getView: () => ({ ...state, frame: replay.frame, received: replay.received, clear: frame, ...game?.getView(),
-      presentation: { scale: scale(), offsetX: offsetX() } }) };   // teacher 2026-10-07: for tests / smokes
+      presentation: { scale: scale(), viewW: viewW(), pad: pad() } }) };   // for tests / smokes
 }

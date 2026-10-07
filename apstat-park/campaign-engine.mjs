@@ -16,6 +16,15 @@ export async function createCampaignEngine({ onEvent = () => {} } = {}) {
     resolution: 1, autoStart: false, preserveDrawingBuffer: true });
   let runtime = null, stats = {}, seed = 1, definition = null, floor = 432;
   let projection = { x: 0, y: 0, scale: .5 };
+  // Teacher 2026-10-07: never rescale the stage for the page. A wider page shows MORE world at the
+  // same scale, centred where the 720-wide column used to be. Render surface only: the simulation
+  // keeps its 720 viewport (loadStage) so every client replays identically.
+  let viewW = 720;
+  function setViewWidth(width) {
+    const next = Math.max(720, Math.round(width));
+    if (next === viewW) return;
+    viewW = next; canvas.width = viewW; app.renderer.resize(viewW, 750);
+  }
   let jump01 = false, ticks = 0, colours = [], focusSlot = 0;
   let syncHelpers = () => {};
   function load(stageIndex, partySize, nextSeed) {
@@ -48,27 +57,29 @@ export async function createCampaignEngine({ onEvent = () => {} } = {}) {
     if (!runtime) return;
     const world = runtime.world;
     const original = { x: world.x, y: world.y, scale: world.scale.x };
+    const pad = (viewW - 720) / 2;   // extra page width, split evenly so the centre never moves
     if (definition.scrollable || definition.autoScroll) {
       world.scale.set(.5);
-      world.x = -(runtime.scrollCameraState?.scroll || 0) * .5;
+      world.x = pad - (runtime.scrollCameraState?.scroll || 0) * .5;
       world.y = 700 - floor * .5;
       if (jump01) {
         const local = runtime.players.find((_, index) => runtime.playerInputSlots[index] === focusSlot) || runtime.players[0];
         const centre = (local.rect.x + local.rect.width / 2) / 2;
-        world.x = -Math.max(0, Math.min(definition.map.width * definition.map.chipSize / 2 - 720, centre - 360));
+        const mapW = definition.map.width * definition.map.chipSize / 2;
+        world.x = mapW <= viewW ? (viewW - mapW) / 2 : -Math.max(0, Math.min(mapW - viewW, centre - viewW / 2));
       }
     } else {
       // Fixed-screen puzzles fit entirely above the common floor line.
       const size = Math.min(.5, 680 / (definition.map.width * definition.map.chipSize),
         610 / (definition.map.height * definition.map.chipSize));
       world.scale.set(size);
-      world.x = (720 - definition.map.width * definition.map.chipSize * size) / 2;
+      world.x = (viewW - definition.map.width * definition.map.chipSize * size) / 2;
       world.y = 700 - (definition.map.height - 1) * definition.map.chipSize * size;
     }
     projection = { x: world.x, y: world.y, scale: world.scale.x };
     // The desk owns the CLEAR celebration; suppress the port's debug instructions.
     runtime.overlayLayer.visible = !stats.cleared;
-    ctx.clearRect(0, 0, 720, 750);
+    ctx.clearRect(0, 0, viewW, 750);
     const hidden = jump01 ? [runtime.tileLayer, ...runtime.staticRects.map(actor => actor.view),
       ...runtime.weightedLifts.map(actor => actor.view), ...runtime.goals.map(actor => actor.view),
       ...runtime.warps.map(actor => actor.view), ...runtime.players.map(player => player.view)] : [];
@@ -89,10 +100,10 @@ export async function createCampaignEngine({ onEvent = () => {} } = {}) {
     // changes out of the next physics tick, including during reconnect replay.
     world.position.set(original.x, original.y); world.scale.set(original.scale);
   }
-  return { load, step, render, canvas,
+  return { load, step, render, canvas, setViewWidth,
     setPresentation(options) { colours = options.colours; focusSlot = options.focusSlot; },
     get runtime() { return runtime; }, get stats() { return stats; },
-    getView: () => ({ stats, projection: { ...projection }, players: (runtime?.players || []).map(player => ({ ...player.rect })),
+    getView: () => ({ stats, projection: { ...projection }, viewW, players: (runtime?.players || []).map(player => ({ ...player.rect })),
       screenPlayers: (runtime?.players || []).map(player => ({
         x: (player.rect.x + player.rect.width / 2) * projection.scale + projection.x,
         feet: (player.rect.y + player.rect.height) * projection.scale + projection.y,

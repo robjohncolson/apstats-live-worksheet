@@ -1,6 +1,6 @@
-// Teacher 2026-10-07: "the level is anchored to the left; stretch it across the bottom of the
-// screen (or centre it)". The campaign scales its 720 x 750 world to the page width, capped by
-// the window height, never below the old min(1, width / 720), and centres what is left over.
+// Teacher 2026-10-07 (second request, supersedes the fit): "no resizing of the game stage from the
+// main -- just widen and keep the centre". The campaign keeps its native scale (min(1, width / 720),
+// never scaled up); a wider page widens the drawn world, split evenly so the centre never moves.
 // Mounts the real campaign panel in jsdom with a recording canvas context.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -42,36 +42,40 @@ function mount({ width, innerHeight, dpr = 1 }) {
   return { panel, ctx, heights, container };
 }
 
-test('a wide page: the level is scaled up to fit the window height and centred', (t) => {
+test('a wide page: native scale, the world widens to the page and stays centred', (t) => {
   const { panel, ctx, heights, container } = mount({ width: 1366, innerHeight: 900 });
   t.after(() => panel.dispose());
   assert.equal(container.hasAttribute('data-park-active'), true);
-  const { scale, offsetX } = panel.getView().presentation;
-  assert.equal(scale, 1.2);                       // min(1366 / 720, max(1, 900 / 750))
-  assert.equal(offsetX, (1366 - 720 * 1.2) / 2);  // centred
+  const { scale, viewW, pad } = panel.getView().presentation;
+  assert.equal(scale, 1);                         // never scaled up for a tall window
+  assert.equal(viewW, 1366);                      // the whole page width is world
+  assert.equal(pad, (1366 - 720) / 2);            // split evenly: the old column stays centred
   const calls = ctx.calls.map(([name, ...args]) => [name, args]);
   const at = calls.findIndex(([name, args]) => name === 'setTransform' && args[0] === 1 && args[3] === 1);
   assert.ok(at >= 0, 'device transform set');
-  assert.deepEqual(calls[at + 1], ['translate', [offsetX, 0]]);
-  assert.deepEqual(calls[at + 2], ['scale', [1.2, 1.2]]);
-  assert.equal(heights.at(-1), 900);              // board height = 750 * scale
+  assert.deepEqual(calls[at + 1], ['scale', [1, 1]]);
+  assert.ok(!calls.some(([name]) => name === 'translate'), 'no offset: the world itself is wider');
+  assert.equal(heights.at(-1), 750);              // board height = native 750
+  const floor = calls.find(([name, args]) => name === 'fillRect' && args[1] === 700);
+  assert.deepEqual(floor, ['fillRect', [0, 700, 1366, 50]]);   // loading floor spans the page
 });
 
-test('a narrow page keeps the old fit (min(1, width / 720)) with no offset', (t) => {
+test('a narrow page keeps the old fit (min(1, width / 720)) and no extra width', (t) => {
   const { panel, heights } = mount({ width: 600, innerHeight: 900 });
   t.after(() => panel.dispose());
-  const { scale, offsetX } = panel.getView().presentation;
+  const { scale, viewW, pad } = panel.getView().presentation;
   assert.equal(scale, 600 / 720);
-  assert.equal(offsetX, 0);
+  assert.equal(viewW, 720);
+  assert.equal(pad, 0);
   assert.equal(heights.at(-1), Math.round(750 * 600 / 720));
 });
 
-test('a short window never shrinks the level below the old scale; it is centred instead', (t) => {
+test('a short window changes nothing: scale is never derived from the window height', (t) => {
   const { panel } = mount({ width: 1366, innerHeight: 600 });
   t.after(() => panel.dispose());
-  const { scale, offsetX } = panel.getView().presentation;
+  const { scale, viewW } = panel.getView().presentation;
   assert.equal(scale, 1);
-  assert.equal(offsetX, (1366 - 720) / 2);
+  assert.equal(viewW, 1366);
 });
 
 test('high-DPI: the level is drawn in CSS pixels (device transform includes the pixel ratio)', (t) => {

@@ -37,6 +37,24 @@ export const CAMPAIGN_PATCHES = [{
   files: ['src/engine/actors/PushBox.ts', 'src/engine/GameRuntime.ts'],
   evidence: ['Teacher observation of shipped PICO PARK (no recovered native handler yet)', 'FUN_7ff72bb6f0e0 (shared bottom kill-line)'],
   behavior: 'Every stage: a push box whose top passes the bottom kill-line that fails players returns to its spawn x, falling from rest, and drops back onto its origin. It starts just above the top of the screen, or, when map tiles overhang the origin, from just under the lowest overhang. While that start overlaps a cat or another box, the box waits parked at the kill line (off-screen, at rest) and retries each frame. Deterministic (map tiles and frame state only).',
+}, {
+  // Teacher 2026-10-07: "the escalator should still count the cat even when stacked."
+  id: 'stacked-cats-weigh-lifts',
+  files: ['src/engine/GameRuntime.ts'],
+  evidence: ['FUN_7ff72bb64310', 'FUN_7ff72bc132c0 (recursive DOWN contact count)', 'FUN_7ff72bc17330 (recursive carry)'],
+  behavior: 'WeightedLift/Ex/Ex2 count every cat in the contact stack resting on the slab (directly, on another cat, or on a box), transitively, and carry the whole stack with the slab, as DarknessWeightedLift already did. Thresholds unchanged (optional teacher cats still add weight but never raise the requirement). Deterministic: rect geometry in player-index order.',
+}, {
+  // Teacher 2026-10-07: "boxes can stay on top of the cat's head when the cat moves around (same dynamic as another cat on top)."
+  id: 'push-box-head-carry',
+  files: ['src/engine/GameRuntime.ts', 'src/engine/actors/PushBox.ts'],
+  evidence: ['Teacher request (desk rule); mirrors carryPlayersWithPushedBox / carryPlayersWithWeightedLifts'],
+  behavior: 'Every stage: a push box resting on a live cat head at frame start follows that cat frame delta (x, then y), stopping at tiles, solids, other boxes and other cats; a ceiling that stops the box stops the cat too. Cats riding the box move with it. Cats support boxes in every stage (not only jump02), and a head box left unsupported falls. A cat rising under its own head box is not a side push. Deterministic: frame-start rects, lowest player index wins.',
+}, {
+  // Teacher 2026-10-07: "blocks can be used to hold down buttons!"
+  id: 'push-box-holds-switches',
+  files: ['src/engine/GameRuntime.ts'],
+  evidence: ['Teacher request (desk rule); PhysicsSwitch/CollisionSwitch already accept boxes natively'],
+  behavior: 'A landed push box that has moved from its spawn holds a plain Switch (and SwitchMediator pad) down like a cat, using the native 1px-inset body. Roulette stop switches, JumpSwitch, ScaleSwitch, DelaySwitch, SwitchTimer and DeadSwitch stay player-only.',
 }];
 
 // Fail the build if upstream code changes: never silently skip a correction.
@@ -69,6 +87,10 @@ export function patchCampaignSource(file, source) {
     source = replaceOnce(source, '    // PICO PARK push boxes are white', '    this.spawnRect = { ...this.rect };\n\n    // PICO PARK push boxes are white', file);
     source = replaceOnce(source, "import { Container, Graphics, Text, TextStyle }", "import { Container, Graphics, Sprite, Text, TextStyle }", file);
     source = "import { frameTexture } from '../sprites';\n" + source;
+    // push-box-head-carry: a cat rising out from under the box on its head is not a side push;
+    // GameRuntime.carryPushBoxesOnPlayerHeads lifts the box after the player pass.
+    source = replaceOnce(source, '    const previousPlayerBottom = previousPlayerRect.y + previousPlayerRect.height;', `    if (playerVelocity.y < 0 && Math.abs(previousPlayerRect.y - (box.y + box.height)) <= 0.5) continue;
+    const previousPlayerBottom = previousPlayerRect.y + previousPlayerRect.height;`, file);
     return replaceOnce(source, '    this.view.addChild(g);', `    const cornerX = Math.min(24, resolvedWidth / 2);
     const cornerY = Math.min(24, resolvedHeight / 2);
     const widths = [cornerX, resolvedWidth - 2 * cornerX, cornerX];
@@ -184,13 +206,104 @@ export function patchCampaignSource(file, source) {
         }
         this.carryPlayersWithPushedBox(previousBoxRect, currentBoxRect);`, file);
 
+    // push-box-head-carry: frame-start rects (simulation state only) + boxes that began the frame on a head.
+    source = replaceOnce(source, '  private readonly pushBoxesMovedThisFrame = new Set<PushBox>();', `  private readonly pushBoxesMovedThisFrame = new Set<PushBox>();
+  private frameStartPlayerRects: Rect[] = [];
+  private frameStartPushBoxRects: Rect[] = [];
+  private readonly pushBoxesOnHeads = new Set<PushBox>();`, file);
+    source = replaceOnce(source, '    const previousLiftRects = this.weightedLifts.map((lift) => ({ ...lift.rect }));', `    this.frameStartPlayerRects = this.players.map((player) => ({ ...player.rect }));
+    this.frameStartPushBoxRects = this.pushBoxes.map((box) => ({ ...box.rect }));
+    const previousLiftRects = this.weightedLifts.map((lift) => ({ ...lift.rect }));`, file);
+    source = replaceOnce(source, '    this.updateFallingPushBoxes(clampedDt);', `    this.carryPushBoxesOnPlayerHeads();
+    this.updateFallingPushBoxes(clampedDt);`, file);
+    source = replaceOnce(source, '  private updateFallingPushBoxes(dt: number): void {', `  // push-box-head-carry: a box resting on a live cat's head at frame start follows that cat's
+  // frame delta (x, then y), the way carryPlayersWithPushedBox moves riders of a pushed box.
+  private carryPushBoxesOnPlayerHeads(): void {
+    this.pushBoxesOnHeads.clear();
+    if (!this.tileMap || this.pushBoxes.length === 0) return;
+    const MAX_CARRY_STEP = 48; // a respawn / warp teleport detaches the box instead of dragging it
+    const canCarry = (player: Player) => player.deathTimer <= 0 && !this.deathFallPlayers.has(player)
+      && !this.collisionChangePlayersCollisionOff.has(player);
+    const solidRects: Rect[] = [
+      ...this.gates.filter((gate) => !gate.opened).map((gate) => gate.rect),
+      ...this.stationaryActiveFallBoxRects(),
+      ...this.staticRects.filter((s) => s.spawn.actorName !== 'PuzzlePredictProxy').map((s) => s.rect),
+      ...this.moveWalls.map((m) => m.rect),
+      ...this.weightedLifts.map((w) => w.rect),
+      ...this.bridges.filter((b) => !b.opened).map((b) => b.rect),
+      ...this.blinkBlocks.filter((b) => b.solid).map((b) => b.rect),
+      ...this.smallBoxes.map(smallBoxRect),
+      ...this.normalBoxes.filter((b) => !this.isLaserKeyBoxUnlocked(b)).map(normalBoxRect),
+      ...this.colorBoxes.map(colorBoxRect),
+    ];
+    for (const [i, box] of this.pushBoxes.entries()) {
+      const boxStart = this.frameStartPushBoxRects[i];
+      if (!boxStart) continue;
+      // Lowest player index wins when a box spans two heads (stable createTable order).
+      const carrierIndex = this.players.findIndex((player, index) => (
+        canCarry(player) && !!this.frameStartPlayerRects[index]
+        && rectRestsOnSupport(boxStart, this.frameStartPlayerRects[index])));
+      if (carrierIndex < 0) continue;
+      this.pushBoxesOnHeads.add(box);
+      // Already moved this frame (push, MoveWall): never double-move.
+      if (box.rect.x !== boxStart.x || box.rect.y !== boxStart.y) continue;
+      const carrier = this.players[carrierIndex];
+      const start = this.frameStartPlayerRects[carrierIndex];
+      const dx = carrier.rect.x - start.x, dy = carrier.rect.y - start.y;
+      if ((dx === 0 && dy === 0) || Math.abs(dx) > MAX_CARRY_STEP || Math.abs(dy) > MAX_CARRY_STEP) continue;
+      const riders = this.players.filter((player) => player !== carrier && canCarry(player)
+        && rectRestsOnSupport(player.rect, boxStart));
+      const blocked = (rect: Rect) => this.tileMap!.rectHitsSolid(rect)
+        || solidRects.some((solid) => rectsOverlap(rect, solid))
+        || this.pushBoxes.some((other) => other !== box && rectsOverlap(rect, other.rect))
+        || this.players.some((player) => player !== carrier && !riders.includes(player)
+          && canCarry(player) && rectsOverlap(rect, player.rect));
+      const slide = (from: Rect, axis: 'x' | 'y', delta: number): Rect => {
+        const at = (t: number) => ({ ...from, [axis]: from[axis] + delta * t });
+        if (delta === 0) return from;
+        if (!blocked(at(1))) return at(1);
+        let low = 0, high = 1; // largest clear fraction, as in the jump02 settle
+        for (let pass = 0; pass < 20; pass += 1) {
+          const middle = (low + high) / 2;
+          if (blocked(at(middle))) high = middle; else low = middle;
+        }
+        return at(low);
+      };
+      const previous = { ...box.rect };
+      const next = slide(slide(previous, 'x', dx), 'y', dy);
+      box.applyRect(next);
+      if (dy < 0 && next.y > previous.y + dy + 1e-6) {
+        // A ceiling stopped the box: it stops the cat's head too (the cameFromBelow rule).
+        carrier.applyResolvedCollision({ ...carrier.rect, y: next.y + next.height },
+          { ...carrier.velocity, y: 0 }, carrier.grounded);
+      }
+      for (const rider of riders) {
+        rider.applyResolvedCollision({ ...rider.rect, x: rider.rect.x + next.x - previous.x,
+          y: rider.rect.y + next.y - previous.y }, rider.velocity, true);
+        this.resetPlayerIfTouchingDangerChip(rider, this.players.indexOf(rider));
+      }
+    }
+  }
+
+  private updateFallingPushBoxes(dt: number): void {`, file);
+    // push-box-holds-switches: a landed, moved push box presses a plain Switch pad like a cat.
+    source = replaceOnce(source, '      return switchPad !== undefined && eligiblePlayerTouches(switchPad.rect);', `      if (switchPad === undefined) return false;
+      if (eligiblePlayerTouches(switchPad.rect)) return true;
+      // Roulette stop switches stay player-only (each press spends that player's activity budget).
+      if (this.roulettes.some((roulette) => roulette.stopSwitch === switchPad)) return false;
+      // A box still at its spawn never presses (stage_time_limit01 places one over a latched pad).
+      return this.pushBoxes.some((box) => !box.falling
+        && (box.rect.x !== box.spawnRect.x || box.rect.y !== box.spawnRect.y)
+        && rectsOverlap({ x: box.rect.x + 1, y: box.rect.y + 1,
+          width: Math.max(0, box.rect.width - 2), height: Math.max(0, box.rect.height - 2) }, switchPad.rect));`, file);
     source = replaceOnce(source, '    const PUSH_BOX_GRAVITY = 980;', `    const nativeJumpBoxes = this.stage?.name === 'stage_jump02';
     const PUSH_BOX_GRAVITY = nativeJumpBoxes ? .65 * 60 * 60 : 980;`, file);
     source = replaceOnce(source, '    const PUSH_BOX_MAX_FALL_SPEED = 600;', '    const PUSH_BOX_MAX_FALL_SPEED = nativeJumpBoxes ? Infinity : 600;', file);
     source = replaceOnce(source, '      const otherBoxRects = this.pushBoxes.filter((_, j) => j !== i).map((other) => other.rect);', `      const otherBoxRects = this.pushBoxes.filter((_, j) => j !== i).map((other) => other.rect);
-      // Only cats below the box support it; side contact must not suspend a fall.
-      const heads = nativeJumpBoxes ? this.players.filter(player => player.deathTimer <= 0
-        && player.rect.y >= box.rect.y + box.rect.height - .001).map(player => player.rect) : [];
+      // Only live cats below the box support it (every stage since push-box-head-carry); side contact must not suspend a fall.
+      const heads = this.players.filter(player => player.deathTimer <= 0 && !this.deathFallPlayers.has(player)
+        && !this.collisionChangePlayersCollisionOff.has(player)
+        && player.rect.y >= box.rect.y + box.rect.height - .001).map(player => player.rect);
       otherBoxRects.push(...heads);`, file);
     // push-box-sky-respawn: past the players' bottom kill-line, the box returns from the sky.
     source = replaceOnce(source, '      const box = this.pushBoxes[i];\n', `      const box = this.pushBoxes[i];
@@ -220,9 +333,37 @@ export function patchCampaignSource(file, source) {
         continue;
       }
 `, file);
+    // stacked-cats-weigh-lifts: a cat on a cat (or box) on the slab weighs the lift, transitively.
+    source = replaceOnce(source, `    let loadCount = 0;
+    for (const player of this.players) {
+      if (!this.collisionChangePlayersCollisionOff.has(player) && rectLoadsLift(player.rect)) {
+        loadCount += 1;
+      }
+    }
+`, `    let loadCount = 0;
+    const liftLoadSupports: Rect[] = [lift.rect, ...[
+      ...this.pushBoxes.map((pushBox) => pushBox.rect),
+      ...this.smallBoxes.map(smallBoxRect),
+      ...this.normalBoxes.filter((normalBox) => !this.isLaserKeyBoxUnlocked(normalBox)).map(normalBoxRect),
+    ].filter(rectLoadsLift)];
+    const liftLoadPlayers = new Set<Player>();
+    for (let supportIndex = 0; supportIndex < liftLoadSupports.length; supportIndex += 1) {
+      for (const player of this.players) {
+        if (liftLoadPlayers.has(player) || this.collisionChangePlayersCollisionOff.has(player)) continue;
+        if (!rectRestsOnSupport(player.rect, liftLoadSupports[supportIndex])) continue;
+        liftLoadPlayers.add(player);
+        liftLoadSupports.push(player.rect);
+      }
+    }
+    loadCount += liftLoadPlayers.size;
+`, file);
+    // ...and the whole stack rides the slab, so a rising lift never shoves the upper cat off.
+    source = replaceOnce(source,
+      "if (lift.spawn.actorName !== 'DarknessWeightedLift' || !previousLiftRect) return supportedPlayers;",
+      "if (!['WeightedLift', 'WeightedLiftEx', 'WeightedLiftEx2', 'DarknessWeightedLift'].includes(lift.spawn.actorName) || !previousLiftRect) return supportedPlayers;", file);
     source = replaceOnce(source, '        x: box.rect.x + box.rect.width / 2 - 2,', '        x: nativeJumpBoxes ? box.rect.x + .001 : box.rect.x + box.rect.width / 2 - 2,', file);
     source = replaceOnce(source, '        width: 4,\n        height: 1,', '        width: nativeJumpBoxes ? box.rect.width - .002 : 4,\n        height: 1,', file);
-    source = replaceOnce(source, '      if (!box.falling) {', `      if (nativeJumpBoxes && !supported) box.falling = true;
+    source = replaceOnce(source, '      if (!box.falling) {', `      if ((nativeJumpBoxes || this.pushBoxesOnHeads.has(box)) && !supported) box.falling = true;
       if (!box.falling) {`, file);
     source = replaceOnce(source, '        if (blockedAt({ ...box.rect, y: box.rect.y + moved + step })) break;', `        if (blockedAt({ ...box.rect, y: box.rect.y + moved + step })) {
           if (nativeJumpBoxes) {
