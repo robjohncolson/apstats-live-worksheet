@@ -94,8 +94,8 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   Object.assign(api._camera, { enabled: false, x: 0 });
   function scale() { return Math.min(1, board.viewportW() / WORLD.width); }
   function campaignUnlocked() {
-    const holders = lobby?.campaignKeyHolders || [];
-    return board.role === 'teacher' ? holders.length > 0 : holders.includes(board.username);
+    // Teacher decision 2026-10-06: one rule for everyone, the teacher included: you hold your own key.
+    return (lobby?.campaignKeyHolders || []).includes(board.username);
   }
   function clock() { return performance.now() + clockOffset; }
   function localPose() { return { x: player.x - ENTRY_WIDTH, y: player.y }; }
@@ -193,8 +193,8 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
         calculator = win.TI84Native.create(null, { renderer: display });
         initializeCalculator(calculator, level); applied = 0;
       }
-      // Teacher report 2026-10-06: the teacher spectates a round only while one is active (not while students gather).
-      if (((board.role === 'teacher' && packet.phase === 'active') || (packet.phase === 'active' && packet.roster.includes(board.username))) && player.x >= ENTRY_WIDTH + 20) {
+      // Teacher decision 2026-10-06: the teacher plays as a peer: participate only from the roster (no spectate branch).
+      if (packet.phase === 'active' && packet.roster.includes(board.username) && player.x >= ENTRY_WIDTH + 20) {
         setParticipating(true);
       }
       return;
@@ -280,7 +280,8 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     bind();
     peerMotion.publish({ x: player.x, y: player.y });
     const missionCamera = Math.max(0, Math.min(ENTRY_WIDTH, LEVEL_WIDTH - board.viewportW() / scale()));
-    const pushing = board.role !== 'teacher' && !!input.right && !input.left;
+    // Teacher decision 2026-10-06: the teacher can push the team block.
+    const pushing = !!input.right && !input.left;
     updates.publish('lobby', { protocol: CALCULATOR_PROTOCOL, epoch: lobby?.epoch, rtc: peerMotion.supported ? 2 : false,
       rtcGeneration: peerMotion.connectionGeneration(),
       pose: { x: player.x, y: player.y }, pushing,

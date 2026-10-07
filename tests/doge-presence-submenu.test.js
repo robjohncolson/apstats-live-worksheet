@@ -490,3 +490,43 @@ describe('D. DogePresence — presence heartbeat (avatar-vs-list agreement)', ()
     expect(clears).toBeGreaterThanOrEqual(3); // onopen re-arm + onclose + onerror
   });
 });
+
+// ── E. Teacher decision 2026-10-06: no barriers between Period B and Period E ──────
+describe('E. Cross-period presence (B sees E, can challenge them)', () => {
+  it('a Period B student sees a Period E student online and can challenge them from the menu', () => {
+    const { D, calls, dd } = loadDoge({ teacher: false });
+    // The relay presence feed is class-wide (no section filter); a snapshot lists B and E alike.
+    D.handleMessage({ type: 'presence_snapshot', users: ['Me_Self', 'eve_periodE', 'bee_periodB'],
+      locations: { eve_periodE: { surface: 'desk', lesson: null, onDesk: true } } });
+    D.renderDropdown();
+    expect(dd()).toContain('eve_periodE');
+    expect(dd()).toContain('bee_periodB');
+    D.toggleRow('eve_periodE');
+    expect(dd()).toContain('Challenge to Study Break');
+    D.challengeFromMenu('eve_periodE');
+    expect(calls.challenge).toContainEqual({ type: 'game_challenge', target: 'eve_periodE' });
+  });
+
+  it('the relay challenge handler has no section/period check (presence is keyed by username only)', () => {
+    const start = crServer.indexOf("case 'game_challenge': {");
+    const end = crServer.indexOf("case 'challenge_decline': {", start);
+    const handlers = crServer.slice(start, end);
+    expect(start).toBeGreaterThan(0);
+    expect(/section|period/i.test(handlers)).toBe(false);
+  });
+
+  it('DeskRoster resolves real names for BOTH periods (+ PeriodX), not just the viewer\'s own', async () => {
+    const fetched = [];
+    const rosters = { PeriodB: [{ username: 'bee', realName: 'Bee B' }], PeriodE: [{ username: 'eve', realName: 'Eve E' }], PeriodX: [] };
+    const sandbox = {
+      window: { ROSTER_SERVICE_URL: null, rosterClient: { current: () => ({ username: 'bee', section: 'PeriodB', role: 'student' }) } },
+      _fetchSectionRoster: async (s) => { fetched.push(s); return rosters[s] || []; },
+      String, Promise, console,
+    };
+    createContext(sandbox);
+    runInContext('this.DeskRoster = (' + objLiteral(html, 'const DeskRoster = {') + ');', sandbox);
+    await sandbox.DeskRoster.load();
+    expect(fetched).toEqual(['PeriodB', 'PeriodE', 'PeriodX']);
+    expect(sandbox.DeskRoster.realName('eve')).toBe('Eve E');
+  });
+});

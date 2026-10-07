@@ -41,7 +41,7 @@ function mountRoom(role, username) {
     engine.sceneEntities.get('calculator-room').render(fakeContext(canvas));
     return drawn.slice();
   };
-  return { panel, deliver, draw, container };
+  return { panel, deliver, draw, container, socket, board };
 }
 
 const lobby = (phase, roster = []) => ({ type: 'calculator_lobby_state', protocol: CALCULATOR_PROTOCOL, epoch: 'e1',
@@ -61,12 +61,46 @@ test('a teacher at the keypad while students gather does not join a round (no pa
   assert.ok(drawn.includes('beta_fox') && drawn.includes('gamma_owl'), 'classmates drawn: ' + drawn.join(','));
 });
 
-test('a teacher still spectates an active round', (t) => {
+// Teacher decision 2026-10-06: the teacher plays as a full peer — no spectate branch, no push ban,
+// one campaign-key rule for everyone.
+test('a teacher off the roster does not join an active round; on the roster they participate', (t) => {
   const { panel, deliver } = mountRoom('teacher', 'teach');
   t.after(() => panel.dispose());
   panel.startMission();
   deliver(lobby('active', ['beta_fox']));
-  assert.equal(panel.getView().participating, true);
+  assert.equal(panel.getView().participating, false, 'no teacher-only spectate branch');
+  deliver({ ...lobby('active', ['beta_fox', 'teach']), epoch: 'e1' });
+  assert.equal(panel.getView().participating, true, 'the teacher on the roster participates like a student');
+});
+
+test('a teacher pushing right sends pushing: true, exactly like a student', async (t) => {
+  for (const [role, username] of [['teacher', 'teach'], ['student', 'alpha']]) {
+    const { panel, deliver, socket, board } = mountRoom(role, username);
+    t.after(() => panel.dispose());
+    deliver(lobby('gathering'));
+    board.input.right = true;
+    await new Promise((resolve) => setTimeout(resolve, 250));
+    const pushes = socket.sent.filter((m) => m.type === 'calculator_lobby' && m.pushing === true);
+    assert.ok(pushes.length > 0, role + ' sent a push: ' + JSON.stringify(socket.sent.map((m) => [m.type, m.pushing])));
+    board.input.right = false;
+  }
+});
+
+test('campaignUnlocked has one rule: only your own key counts, for teacher and student alike', (t) => {
+  for (const [role, username] of [['teacher', 'teach'], ['student', 'alpha']]) {
+    const { panel, deliver } = mountRoom(role, username);
+    t.after(() => panel.dispose());
+    deliver({ ...lobby('gathering'), campaignKeyHolders: ['beta_fox'] });
+    assert.equal(panel.getView().campaignUnlocked, false, role + ': someone else holding a key does not unlock');
+    deliver({ ...lobby('gathering'), campaignKeyHolders: ['beta_fox', username] });
+    assert.equal(panel.getView().campaignUnlocked, true, role + ': your own key unlocks');
+  }
+});
+
+test('the calculator room has no role branches left (no teacher-only draw, push or unlock path)', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('./calculator-room.mjs', import.meta.url), 'utf8');
+  assert.equal(/board\.role|role\s*[!=]==?\s*'teacher'/.test(source), false);
 });
 
 test('while participating, classmates outside the team stay visible; team members are not drawn twice', (t) => {
