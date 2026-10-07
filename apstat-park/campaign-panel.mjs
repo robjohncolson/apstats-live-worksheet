@@ -6,6 +6,7 @@ const { createSceneDissolve } = await import('./scene-transition.mjs' + V);
 const { createPicoAudio } = await import('./pico-audio.mjs' + V);
 const { pixelText } = await import('./pixel-text.mjs' + V);
 const { catBodyForHue, rgbHex } = await import('./pico-rules.mjs' + V);
+const { createStageSelect, stageStates, choiceFor, startCursor, stageAt, moveCursor, describe } = await import('./campaign-select.mjs' + V);
 
 export function mountCampaign({ container, getSocket, board, onClose }) {
   const doc = container.ownerDocument, win = doc.defaultView;
@@ -17,6 +18,12 @@ export function mountCampaign({ container, getSocket, board, onClose }) {
   let idle = false, activeJoin = false;
   let paintedFrame = -1, paintedEpoch = null, paintedHelpers = null, paintedWidth = 0;
   const held = new Set();
+  // Teacher 2026-10-07: the door opens on the STAGE SELECT. The relay decides what may start
+  // (campaign_progress); a choice is sent as campaign_join {stage} or campaign_open_stage {stage}.
+  const select = createStageSelect(doc);
+  let selecting = true, progress = null, chosenStage = null, pending = null, cursor = null;
+  let selectMessage = '', lastSelect = -Infinity;
+  const rejected = new Map();   // stage -> its state when the relay refused it (greyed until that changes)
   const replay = createCampaignReplay(inputs => game.step(inputs));
   // Teacher 2026-10-07: "no resizing of the game stage from the main — just widen and keep the
   // centre." The stage keeps its native scale (min(1, width / 720), never scaled up). A wider page
@@ -37,8 +44,61 @@ export function mountCampaign({ container, getSocket, board, onClose }) {
   let dissolve = createSceneDissolve(board.transitionFrame);
   function send(type, data = {}) {
     if (socket?.readyState !== 1 || socket.bufferedAmount > 8192) return false;
-    socket.send(JSON.stringify({ type, epoch: state?.epoch, ...data }));
+    // The chosen stage rides on every join (also a reconnect's), so the relay places us on it.
+    const stage = type === 'campaign_join' && chosenStage != null ? { stage: chosenStage } : {};
+    socket.send(JSON.stringify({ type, epoch: state?.epoch, ...data, ...stage }));
     return true;
+  }
+  function states() { return stageStates(progress, board.username); }
+  // Authoritative progress arrived: a refusal stays greyed only while its stage is in the same
+  // state as when it was refused. Once the state moves on, the entry is gone for good, so a later
+  // return to that state is a fresh, choosable stage.
+  function reconcileRejected() {
+    const current = states();
+    for (const [stage, refusedIn] of rejected) if (current[stage]?.state !== refusedIn) rejected.delete(stage);
+  }
+  function showSelect(message = '') {
+    selecting = true; selectMessage = message; lastSelect = -Infinity;
+    for (const key of Object.keys(board.input)) board.input[key] = false;
+    held.clear(); bits = 0; buddy = 0;
+  }
+  function choose(stage) {
+    const entry = states()[stage];
+    const choice = progress && choiceFor(entry);
+    if (!choice || pending || rejected.get(stage) === entry.state) return;
+    selectMessage = '';
+    if (choice.type === 'campaign_open_stage') {
+      if (send('campaign_open_stage', { stage })) pending = { kind: 'open', stage };
+      return;
+    }
+    // The join itself goes through the regular join line in pump().
+    pending = { kind: 'join', stage, state: entry.state };
+    chosenStage = stage; selecting = false; joined = false; lastJoin = -Infinity;
+    pump();
+  }
+  function selectKey(event) {
+    if (event.type !== 'keydown') return;
+    const key = event.key;
+    if (key === 'Escape') { event.preventDefault(); dispose(); return; }
+    if (key === 'Enter' || key === ' ') { event.preventDefault(); if (!event.repeat && cursor != null) choose(cursor); return; }
+    if (!key.startsWith('Arrow')) return;
+    event.preventDefault();
+    cursor = moveCursor(cursor ?? 0, key);
+  }
+  function pointerStage(event) {
+    const rect = board.engine.canvas.getBoundingClientRect();
+    return stageAt((event.clientX - rect.left) / scale(), (event.clientY - rect.top) / scale(), pad());
+  }
+  function selectClick(event) {
+    if (!selecting) return;
+    const stage = pointerStage(event);
+    if (stage < 0) return;
+    event.preventDefault(); cursor = stage; choose(stage);
+  }
+  function selectHover(event) {
+    if (!selecting) return;
+    const stage = pointerStage(event);
+    if (stage >= 0) cursor = stage;
   }
   function resume() {
     if (performance.now() - lastResume < 500) return;
@@ -75,9 +135,28 @@ export function mountCampaign({ container, getSocket, board, onClose }) {
     if (!packet.type?.startsWith('campaign_')) return;
     lastPacket = performance.now(); error = '';
     if (packet.type === 'campaign_idle') { idle = true; joined = false; activeJoin = false; blur(); return; }
+    if (packet.type === 'campaign_progress') {
+      progress = packet; reconcileRejected(); if (pending?.kind === 'open') pending = null;
+      if (cursor == null) cursor = startCursor(states());
+      return;
+    }
+    if (packet.type === 'campaign_error' && pending) {
+      // The relay refused a choice: grey that stage out and stay on (or return to) the select.
+      if (pending.kind === 'join') { rejected.set(pending.stage, pending.state); chosenStage = state?.stageIndex ?? null; joined = false; }
+      pending = null; showSelect(packet.message); return;
+    }
     if (packet.type === 'campaign_error') { error = packet.message; joined = false; return; }
     if (packet.type === 'campaign_helpers' && packet.epoch === state?.epoch) { state.helpers = packet.helpers; present(state); return; }
-    if (packet.type === 'campaign_state') { joined = true; idle = false; activeJoin = false; start(packet); return; }
+    if (packet.type === 'campaign_state') {
+      joined = true; idle = false; activeJoin = false;
+      // The team cleared into a locked stage: everyone is back at the stage select.
+      if (packet.phase === 'select') {
+        if (packet.progress) { progress = { ...packet.progress, team: { stageIndex: packet.stageIndex, phase: 'select', roster: packet.roster } }; reconcileRejected(); }
+        if (!selecting) showSelect(packet.reason || '');
+        if (cursor == null) cursor = startCursor(states());
+      } else { selecting = false; pending = null; chosenStage = packet.stageIndex; selectMessage = ''; }
+      start(packet); return;
+    }
     if (packet.epoch !== state?.epoch) { joined = false; return; }
     if (packet.type === 'campaign_frames' && !replay.accept(packet)) resume();
     if (packet.type === 'campaign_clear') clearActive = true;
@@ -91,7 +170,9 @@ export function mountCampaign({ container, getSocket, board, onClose }) {
     if (disposed) return;
     bind(); if (idle) return;
     const now = performance.now();
-    if (!joined && now - lastJoin > 1000) { lastJoin = now; send('campaign_join', { protocol: 14, active: activeJoin }); }
+    if (selecting && now - lastSelect > 1000 && send('campaign_select')) lastSelect = now;
+    if (selecting && !joined) return;   // nobody joins a team until a stage is chosen
+    if (!joined && now - lastJoin > 1000) { lastJoin = now; send('campaign_join', { protocol: 15, active: activeJoin }); }
     if (!state || !game) return;
     if (now - lastPacket > 1500) resume();
     // Keyboard edges send immediately. A blocked write must retain the jump
@@ -108,6 +189,7 @@ export function mountCampaign({ container, getSocket, board, onClose }) {
   }
   function keyboard(event) {
     if (event.target?.closest?.('input,textarea,select,[contenteditable="true"]')) return;
+    if (selecting) { selectKey(event); return; }
     const down = event.type === 'keydown', key = event.key.toLowerCase();
     if (key === 'escape' && down) { event.preventDefault(); dispose(); return; }
     if (key === 'r' && down && !event.repeat) { event.preventDefault(); send('campaign_retry'); return; }
@@ -149,7 +231,22 @@ export function mountCampaign({ container, getSocket, board, onClose }) {
     }
     if (clearActive && !soundClear) { audio.clear(); soundClear = true; }
   }
+  function renderSelect(ctx) {
+    const dpr = win.devicePixelRatio || 1;
+    ctx.save(); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.scale(scale(), scale());
+    ctx.imageSmoothingEnabled = false;
+    const width = viewW(), left = pad();
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, width, 700);
+    ctx.fillStyle = '#ff864d'; ctx.fillRect(0, 700, width, 50);
+    if (cursor == null && progress) cursor = startCursor(states());
+    const { info } = select.render(ctx, { progress, username: board.username, cursor: cursor ?? 0, rejected, left,
+      message: selectMessage || error });
+    status.textContent = 'Stage select. ' + info;
+    ctx.restore();
+    dissolve.render(ctx);
+  }
   function render(ctx) {
+    if (selecting) { renderSelect(ctx); return; }
     if ((!game || !state) && board.transitionFrame && !error) {
       ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.drawImage(board.transitionFrame, 0, 0, ctx.canvas.width, ctx.canvas.height);
@@ -199,6 +296,7 @@ export function mountCampaign({ container, getSocket, board, onClose }) {
     socket?.removeEventListener('message', onMessage);
     doc.removeEventListener('keydown', keyboard); doc.removeEventListener('keyup', keyboard); win.removeEventListener('blur', blur);
     doc.removeEventListener('visibilitychange', visibility);
+    board.engine.canvas.removeEventListener('click', selectClick, true); board.engine.canvas.removeEventListener('mousemove', selectHover);
     if (board.engine.sceneEntities === entities) board.engine.sceneEntities = null;
     for (const key of Object.keys(board.input)) board.input[key] = false;
     status.remove(); container.removeAttribute('data-park-active'); onClose();
@@ -207,6 +305,7 @@ export function mountCampaign({ container, getSocket, board, onClose }) {
   board.setBoardHeight?.(Math.round(750 * scale()));
   doc.addEventListener('keydown', keyboard); doc.addEventListener('keyup', keyboard); win.addEventListener('blur', blur);
   doc.addEventListener('visibilitychange', visibility);
+  board.engine.canvas.addEventListener('click', selectClick, true); board.engine.canvas.addEventListener('mousemove', selectHover);
   const timer = setInterval(pump, 16); pump();
   import('./campaign-engine.mjs' + V).then(module => module.createCampaignEngine({ onEvent(event) {
     if (!game || replay.received - replay.frame > 120 || event.type === 'clear') return;
@@ -216,6 +315,8 @@ export function mountCampaign({ container, getSocket, board, onClose }) {
     game = next; if (loadingState) { const packet = loadingState; loadingState = null; start(packet); }
   }).catch(cause => { error = 'Could not load PICO PARK. Reload to try again.'; console.error(cause); });
   return { kind: 'campaign', dispose, getGame: () => game,
+    getSelect: () => ({ selecting, cursor, progress, pending, chosenStage, message: selectMessage,
+      rejected: [...rejected.keys()], states: states(), info: cursor == null ? '' : describe(states()[cursor], states()) }),
     getView: () => ({ ...state, frame: replay.frame, received: replay.received, clear: frame, ...game?.getView(),
       presentation: { scale: scale(), viewW: viewW(), pad: pad() } }) };   // for tests / smokes
 }

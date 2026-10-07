@@ -388,3 +388,22 @@ the information is preserved"; a row may not be dropped without the teacher sayi
 
 Settled 2026-10-05: the grade stays always visible on the sign (a "hide my grade" preference, if
 ever added, applies to everyone equally); the preview link sits in the View menu for students too.
+
+## Campaign keys as a spendable count (teacher 2026-10-07)
+
+Supersedes "a key is a permanent door unlock". Rules:
+
+1. **A key is a counter.** Every roster member of a completed calculator team round earns **+1 key**. Keys
+   are per student, persisted (relay Supabase), shown as a **gold number above the cat's head** (the
+   unspent count), visible to everyone in the park.
+2. **Levels open for the whole room.** 1-1 starts open. At the campaign door a level select (the game's
+   `STAGE SELECT (n/48)` form) lists every stage. A stage is **selectable to start from** when it is open
+   for the room AND every participant present has cleared it (so a group never skips a level someone has
+   not done) — plus the next not-yet-open stage can be **opened by spending one key** from any present
+   player who has one; opening is permanent for the room and consumes the key. Only the next stage in
+   sequence can be opened, never further ahead.
+3. **Example:** everyone present has cleared 1-1; one player holds two keys → they spend one, 1-2 opens for
+   the room, the group may start at 1-2. Nobody can start at 1-3 until 1-2 is open and cleared by all present.
+4. **Persistence** (relay Supabase, migration 0005): per-student key count (unspent), per-student cleared
+   stages, per-room open stages. Memory stays the hot path; DB is the truth across restarts.
+5. **Teacher** is a peer: earns, spends and clears like a student.

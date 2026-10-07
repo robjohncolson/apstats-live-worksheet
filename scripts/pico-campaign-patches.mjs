@@ -91,6 +91,19 @@ export const CAMPAIGN_PATCHES = [{
     'Origin [rsp+0x48] = row x,y (row+0x14, 0x7ff72bb72b4f) passed to the actor transform in the common tail (0x7ff72bb772f2)',
     'FUN_7ff72bb5b820 (Rect ctor) passes that rect unchanged to FUN_7ff72bc16bf0(actor, rect, 2, 1)'],
   behavior: 'Every stage: a literal Rect spans x from its spawn toward its signed width and y from spawn - height up to the spawn (left-bottom anchor, height upward), not centred. Other StaticRect users (MoveWall, CollisionSwitch, PuzzlePredictProxy, CollisionActorCreator) are unchanged (unverified). The 1-1 override in campaign-jump01.mjs still reassigns after load.',
+}, {
+  // Teacher 2026-10-07: "if a platform (elevator/lift) comes down on top of a cat's head, the cat stays stuck in the
+  // platform until I reload". Retail capture (og-capture-2/notes.md run L4, stage_weight01 UpDownLift): the slab comes
+  // down onto a cat standing on the floor, STOPS on its head (no push, no damage), holds ~1.5 s, then rises on its
+  // normal schedule; the next peak is the same height as before (no lasting phase offset).
+  id: 'descending-lift-stops-on-bodies',
+  files: ['src/engine/GameRuntime.ts'],
+  evidence: ['Retail capture og-capture-2 L4: lift underside stops at the cat top (screen 577 vs cat 581, sprite margin), held 2.84 s -> 4.32 s, then follows its sine path upward; cat y unchanged throughout',
+    'FUN_7ff72bc16f50 (chain test): fails when a body touching the slab in its motion direction touches a tile in that direction (FUN_7ff72bc137b0) or its own chain fails; FUN_7ff72bc17330 is only ever called with direction UP: no lift pushes a body down; no crush / damage path from body overlap',
+    'FUN_7ff72bb6db60 (UpDownLift): blocked -> +0x3f8 |= 1, hold, wait +0x410 ~ the time its sine path spends past the obstacle, then mirror the phase (back up)',
+    'FUN_7ff72bb64310 (WeightedLift family): a contact under the slab freezes it (+0x408 = 0.06 s)',
+    'FUN_7ff72bc1e050 / FUN_7ff72bc1e4a0: a remaining overlap is rolled back to the time of impact; the lift (node flag 2) is not pushed, the other body is'],
+  behavior: 'Every stage: a WeightedLift / Ex / Ex2 / DarknessWeightedLift / UpDownLift moving DOWN onto a live cat or a resting push box that stands on something (tile, solid, lift, box or cat) stops exactly in contact with its top and never moves into it (the stack on the slab gets the shortened delta). An UpDownLift then holds at that height until its own sine path rises back above it (equivalent to the native wait + phase mirror for a symmetric path), even if the body leaves. A weighted lift resumes from where it stopped. A body under the slab that stands on nothing (mid-air) is pushed down to the slab underside instead. No crush, no damage. Not modelled: the 0.06 s WeightedLift freeze after contact ends, and its freeze of upward motion while something touches its underside; base Lift and RouletteLift unchanged. Deterministic: frame-start lift rects, bodies in index order.',
 }];
 
 // Fail the build if upstream code changes: never silently skip a correction.
@@ -740,6 +753,83 @@ export function getRectLeftBottomRect(spawn: ActorSpawnDef): Rect {
         }
       }
       frontier = next;
+    }
+  }
+
+  private updateFallingPushBoxes(dt: number): void {`, file);
+
+    // descending-lift-stops-on-bodies (1/2): the hold latch per UpDownLift (the y it holds at).
+    source = replaceOnce(source, '  private readonly weightedLiftOffsets = new WeakMap<WeightedLift, number>();',
+      '  private readonly weightedLiftOffsets = new WeakMap<WeightedLift, number>();\n  private readonly upDownLiftHolds = new Map<WeightedLift, number>();', file);
+    // descending-lift-stops-on-bodies (2/2): right after the lifts move, before anything rides them.
+    source = replaceOnce(source, '    this.updateWeightedLifts(clampedDt);\n', `    this.updateWeightedLifts(clampedDt);
+    this.stopDescendingLiftsOnBodies(previousLiftRects);
+`, file);
+    source = replaceOnce(source, '  private updateFallingPushBoxes(dt: number): void {', `  // descending-lift-stops-on-bodies: a lift moving down onto a body that stands on something stops on its top.
+  private stopDescendingLiftsOnBodies(previousLiftRects: readonly Rect[]): void {
+    if (!this.tileMap) return;
+    const FAMILY = ['WeightedLift', 'WeightedLiftEx', 'WeightedLiftEx2', 'DarknessWeightedLift', 'UpDownLift'];
+    const live = (player: Player) => player.deathTimer <= 0 && !this.deathFallPlayers.has(player)
+      && !this.collisionChangePlayersCollisionOff.has(player);
+    const overlapsX = (a: Rect, b: Rect) => a.x < b.x + b.width && b.x < a.x + a.width;
+    const setLiftY = (lift: WeightedLift, y: number) => {
+      lift.rect.y = y;
+      lift.view.y = lift.spawn.actorName === 'DarknessWeightedLift' ? y : y + lift.rect.height / 2;
+      if (lift.spawn.actorName !== 'UpDownLift') this.weightedLiftOffsets.set(lift, lift.view.y - lift.spawn.y);
+    };
+    for (const [index, lift] of this.weightedLifts.entries()) {
+      if (!FAMILY.includes(lift.spawn.actorName)) continue;
+      const previous = previousLiftRects[index];
+      if (!previous) continue;
+      // An UpDownLift that stopped on a body holds there until its own path rises back above that height.
+      const hold = this.upDownLiftHolds.get(lift);
+      if (hold !== undefined) {
+        if (lift.rect.y > hold) setLiftY(lift, hold);
+        else this.upDownLiftHolds.delete(lift);
+      }
+      if (lift.rect.y <= previous.y) continue;   // not moving down this frame
+      const previousBottom = previous.y + previous.height;
+      const solids: Rect[] = [
+        ...this.staticRects.filter((s) => s.spawn.actorName !== 'PuzzlePredictProxy').map((s) => s.rect),
+        ...this.gates.filter((gate) => !gate.opened).map((gate) => gate.rect),
+        ...this.bridges.filter((bridge) => !bridge.opened).map((bridge) => bridge.rect),
+        ...this.moveWalls.map((moveWall) => moveWall.rect),
+        ...this.weightedLifts.filter((other) => other !== lift).map((other) => other.rect),
+        ...this.blinkBlocks.filter((block) => block.solid).map((block) => block.rect),
+        ...this.stationaryActiveFallBoxRects(),
+      ];
+      const bodies: Array<{ rect: Rect; player?: Player; box?: PushBox }> = [
+        ...this.players.filter(live).map((player) => ({ rect: player.rect, player })),
+        ...this.pushBoxes.filter((box) => !box.falling && !box.hopping).map((box) => ({ rect: box.rect, box })),
+      ];
+      // Native chain test: the body below blocks only when it stands on something.
+      const standsOnSomething = (rect: Rect) => {
+        const strip = { x: rect.x + 0.001, y: rect.y + rect.height, width: rect.width - 0.002, height: 0.5 };
+        return this.tileMap!.rectHitsSolid(strip)
+          || solids.some((solid) => rectsOverlap(strip, solid))
+          || bodies.some((other) => other.rect !== rect && rectsOverlap(strip, other.rect));
+      };
+      const below = bodies.filter(({ rect }) => overlapsX(rect, lift.rect)
+        && rect.y >= previousBottom - 0.5 && rect.y < lift.rect.y + lift.rect.height);
+      const blockers = below.filter(({ rect }) => standsOnSomething(rect));
+      if (blockers.length) {
+        const stopY = Math.max(previous.y, Math.min(...blockers.map(({ rect }) => rect.y)) - lift.rect.height);
+        if (stopY < lift.rect.y) {
+          setLiftY(lift, stopY);
+          if (lift.spawn.actorName === 'UpDownLift') this.upDownLiftHolds.set(lift, stopY);
+        }
+      }
+      // A body in mid-air under the slab is pushed down to its underside (never left inside it).
+      const liftBottom = lift.rect.y + lift.rect.height;
+      for (const { rect, player, box } of below) {
+        if (rect.y >= liftBottom) continue;
+        if (player) {
+          player.applyResolvedCollision({ ...player.rect, y: liftBottom },
+            { ...player.velocity, y: Math.max(0, player.velocity.y) }, false);
+        } else if (box) {
+          box.applyRect({ ...box.rect, y: liftBottom });
+        }
+      }
     }
   }
 

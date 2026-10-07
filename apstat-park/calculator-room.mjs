@@ -94,8 +94,21 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   Object.assign(api._camera, { enabled: false, x: 0 });
   function scale() { return Math.min(1, board.viewportW() / WORLD.width); }
   function campaignUnlocked() {
-    // Teacher decision 2026-10-06: one rule for everyone, the teacher included: you hold your own key.
+    // Teacher 2026-10-07: keys are a spendable count and no longer gate the door (1-1 is always
+    // startable; keys open later stages). A relay that sends campaignOpen has that rule.
+    if (Array.isArray(lobby?.campaignOpen)) return true;
+    // Older relay: one rule for everyone, the teacher included: you hold your own key.
     return (lobby?.campaignKeyHolders || []).includes(board.username);
+  }
+  // Teacher 2026-10-07: every cat in the park wears its unspent key count, in gold, above its name.
+  const KEY_GOLD = '#C9A227';
+  function keyCount(name) {
+    const count = lobby?.campaignKeys?.[name];
+    return Number.isInteger(count) && count > 0 ? count : 0;
+  }
+  function drawKeyCount(ctx, name, x, y) {
+    const count = keyCount(name);
+    if (count) text(ctx, String(count), x, y, 14, KEY_GOLD, 'center');
   }
   function clock() { return performance.now() + clockOffset; }
   function localPose() { return { x: player.x - ENTRY_WIDTH, y: player.y }; }
@@ -354,7 +367,8 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     ctx.closePath(); ctx.fill();
   }
   function drawScenery(ctx, atlas) {
-    const unlocked = campaignUnlocked();
+    // 'count' (keys are a count, door open) / 'holder' (older relay, own key) / false: also the cache key.
+    const unlocked = campaignUnlocked() && (Array.isArray(lobby?.campaignOpen) ? 'count' : 'holder');
     if (!scenery || sceneryInk !== ink || sceneryAtlas !== atlas || sceneryReady !== art.ready || sceneryUnlocked !== unlocked) {
       scenery ||= doc.createElement('canvas');
       scenery.width = LEVEL_WIDTH; scenery.height = WORLD.height;
@@ -372,7 +386,8 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
       if (atlas) paint.drawImage(atlas, unlocked ? 96 : 48, 0, 48, 48, 30, WORLD.floor - 40, 40, 40);
       else { paint.fillStyle = '#493d48'; paint.fillRect(30, WORLD.floor - 40, 40, 40); }
       text(paint, 'PICO PARK', 24, WORLD.floor - 70, 14);
-      text(paint, unlocked ? 'KEY EARNED - UP TO ENTER' : 'FINISH A CALCULATOR ACTIVITY TO EARN A KEY', 24, WORLD.floor - 49, 7);
+      text(paint, !unlocked ? 'FINISH A CALCULATOR ACTIVITY TO EARN A KEY'
+        : unlocked === 'count' ? 'UP TO ENTER . KEYS OPEN NEW STAGES' : 'KEY EARNED - UP TO ENTER', 24, WORLD.floor - 49, 7);
       text(paint, 'TEAM START', TEAM_BLOCK.dock + 16, WORLD.floor + 32, 10, ink, 'center');
       sceneryInk = ink; sceneryAtlas = atlas; sceneryReady = art.ready; sceneryUnlocked = unlocked;
     }
@@ -406,6 +421,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
       const visual = smoothing.sample(name, direct || original, { epoch: lobby?.epoch, direct: !!direct });
       peer.x = visual.x; peer.y = visual.y;
       peer.render(ctx); text(ctx, name.slice(0, 12), peer.x + 10, peer.y - 8, 10, ink, 'center');
+      drawKeyCount(ctx, name, peer.x + 10, peer.y - 20);
       Object.assign(peer, original);
     }
     ctx.save(); ctx.translate(ENTRY_WIDTH, 0);
@@ -495,16 +511,19 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
       drawCharacter(ctx, peer, name);
       text(ctx, name.slice(0, 12) + ' ' + (state.members.find(member => member.name === name)?.step || 0)
         + '/' + (level.route.length + challenge.answers.length), peer.x + 10, peer.y - 8, 10, ink, 'center');
+      drawKeyCount(ctx, name, peer.x + 10, peer.y - 20);
       Object.assign(peer, original);
     }
     if (participating && !connected()) text(ctx, 'CONNECTING TO YOUR TEAM...', 360, 280, 14, ink, 'center');
     ctx.restore();
     drawCharacter(ctx, player, board.username);
-    if (campaignUnlocked() && atlas) {
+    // An older relay has no counts: keep its key sprite for a holder.
+    if (!lobby?.campaignKeys && campaignUnlocked() && atlas) {
       const key = ATLAS.key;
       ctx.drawImage(atlas, key.x, key.y, key.w, key.h, player.x + 19, player.y - 18, key.w, key.h);
     }
     text(ctx, 'YOU', player.x + 10, player.y - 8, 10, ink, 'center');
+    drawKeyCount(ctx, board.username, player.x + 10, player.y - 20);
     ctx.restore();
   }
   function drawCharacter(ctx, character, name) {
@@ -575,6 +594,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   return { kind: 'calculator', dispose, startMission, returnToStart, getState: () => state,
     getNetworkStats: () => peerMotion.stats(),
     getView: () => ({ cameraX, playerX: player.x, playerY: player.y, participating, campaignUnlocked: campaignUnlocked(), entranceX: ENTRY_WIDTH, lobby, missionId: level.id, challenge,
+      keyCounts: Object.fromEntries([board.username, ...lobbyPeers.keys(), ...peers.keys()].map(name => [name, keyCount(name)])),
       resetDoor: state?.complete ? { ...RESET_DOOR } : null, lines: display.getLines() }),
     getCalculatorScreen: () => calculator.getScreen(),
     getKeyboard: () => {
