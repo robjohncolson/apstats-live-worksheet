@@ -987,7 +987,12 @@
       var name = el('span', 'tile-name', day.label);
       name.title = day.label;
       btn.appendChild(name);
-      btn.addEventListener('click', function () { selectTile(i, false); openDay(day, btn); });
+      btn.addEventListener('click', function (event) {
+        // Teacher report 2026-10-07: during a game, no tile opens from a stale-focus key press.
+        if (!activationAllowed(event, btn)) { refuseActivation(btn); return; }
+        selectTile(i, false);
+        openDay(day, btn);
+      });
       btn.addEventListener('dblclick', function (event) { event.preventDefault(); openDayGrade(day); });
       btn.addEventListener('contextmenu', function (event) { event.preventDefault(); openDayGrade(day); });
       btn.addEventListener('focus', function () { selectTile(i, false); });
@@ -1039,7 +1044,10 @@
   }
 
   // The Do Now's own primary action: today's lesson panel when there is one, else the card.
-  function signOpen() {
+  function signOpen(event) {
+    // Teacher report 2026-10-07: during a game, the sign opens only from a real click or a Tab-reached Enter.
+    var go = byId('pico-sign-go');
+    if (!activationAllowed(event, go)) { refuseActivation(go); return; }
     cancelPollReturn();
     var todayInf = deskState().todayLessonInf;
     if (todayInf == null) { try { todayInf = _todayLessonInf; } catch (_) { todayInf = null; } }
@@ -1430,13 +1438,50 @@
   var keyboardUser = false;
 
   function noteKeyboardUser(event) {
-    if (event.key === 'Tab') keyboardUser = true;
+    if (event.key !== 'Tab') return;
+    keyboardUser = true;
+    tabArmed = true;
+  }
+
+  // Teacher report 2026-10-07: "the playing area went white and the Tue Oct 6 lesson card opened
+  // unprompted" — a Space (jump) / Enter during a level activated a Pico button that held stale
+  // focus. While a game runs, a tile or the sign opens only from a real pointer click
+  // (isTrusted, detail > 0) or a keyboard activation of a control the student reached with Tab.
+  var tabArmed = false;     // a Tab was pressed; the next focusin is the control it reached
+  var tabReached = null;    // the control the last Tab landed on
+
+  function noteTabFocus(event) {
+    if (!tabArmed) return;
+    tabArmed = false;
+    tabReached = event.target;
+  }
+
+  function gameActive() {
+    var mount = byId('classroom-board-mount');
+    if (!mount) return false;
+    return mount.hasAttribute('data-park-active') || mount.hasAttribute('data-calculator-participating');
+  }
+
+  function activationAllowed(event, control) {
+    if (!gameActive()) return true;
+    if (event && event.isTrusted && event.detail > 0) return true;
+    // A keyboard user (a Tab was pressed and no pointer since) activating the control that holds
+    // focus. Identity is by keyboard use, not by node: a re-render replaces the tile the Tab landed
+    // on and keyboard focus restore moves to its replacement (Codex review 2026-10-07).
+    return Boolean(control && keyboardUser && document.activeElement === control);
+  }
+
+  // A refused activation also lets go of the stale focus, so the next key reaches the cat.
+  function refuseActivation(control) {
+    if (control && document.activeElement === control && typeof control.blur === 'function') control.blur();
   }
 
   // Any pointer press ends keyboard use. A press on the floor also lets go of whatever Pico
   // control holds focus, so the keys that follow reach the board.
   function onPointerPress(event) {
     keyboardUser = false;
+    tabArmed = false;     // teacher report 2026-10-07: a pointer press ends Tab-reached focus
+    tabReached = null;
     var target = event.target;
     if (!target || !target.closest || !target.closest('#pico-floor')) return;
     var active = document.activeElement;
@@ -1771,7 +1816,7 @@
   // The orange outline: the selection. Follows Tab / arrows / mouse. Moving the selection moves
   // focus to the row's main control, so Enter always activates the outlined row — unless focus
   // is already on a control inside that row (a secondary link, a Done button), which keeps it.
-  function selectPanelRow(index, moveFocus, fromPointer) {
+  function selectPanelRow(index, moveFocus) {
     var rows = panelRows();
     if (!rows.length) return;
     var i = (index + rows.length) % rows.length;
@@ -1782,13 +1827,15 @@
     if (rows[i].contains(document.activeElement)) return;
     if (isEditable(document.activeElement)) return;
     var control = rowControl(rows[i]);
-    if (control) control.focus(fromPointer ? { preventScroll: true } : undefined);
+    // Teacher report 2026-10-07: only keyboard moves reach here (hover never focuses).
+    if (control) control.focus();
   }
 
   function wirePanelRows() {
     panelRows().forEach(function (row, i) {
       row.addEventListener('focusin', function () { selectPanelRow(i, false); });
-      hoverDwell(row, function () { selectPanelRow(i, true, true); });
+      // Teacher report 2026-10-07: hover is VISUAL ONLY (outline + selection), never focus.
+      hoverDwell(row, function () { selectPanelRow(i, false); });
     });
   }
 
@@ -2433,6 +2480,7 @@
     });
     window.addEventListener('keydown', onCaptureKey, true);
     window.addEventListener('keydown', noteKeyboardUser, true);
+    document.addEventListener('focusin', noteTabFocus, true);   // teacher report 2026-10-07
     window.addEventListener('pointerdown', onPointerPress, true);
     window.addEventListener('mousedown', onPointerPress, true);
     window.addEventListener('click', onPointerClick);
@@ -2595,12 +2643,12 @@
   }
 
   // The student's own game: their park / campaign door, or their calculator round. Participation
-  // counts only with real round state from the relay (the room's getState()) and never for the
-  // teacher, who spectates (teacher report 2026-10-06: walking to the keypad is not a round).
+  // counts only with real round state from the relay (the room's getState()); walking to the keypad
+  // is not a round (teacher report 2026-10-06). Teacher decision 2026-10-06: the teacher plays as a
+  // full peer, so a teacher on the roster gets the same scroll-in as a student (no teacher branch).
   function studentGameSignal(mount) {
     if (mount.hasAttribute('data-park-active')) return true;
     if (!mount.hasAttribute('data-calculator-participating')) return false;
-    if (callDesk('_deskIsTeacher') === true) return false;
     var scene = parkScene();
     return Boolean(scene && typeof scene.getState === 'function' && scene.getState());
   }

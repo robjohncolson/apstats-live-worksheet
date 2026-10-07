@@ -297,7 +297,9 @@ describe('Phase 2 -- review fixes', { timeout: 90_000 }, () => {
     }
   });
 
-  it('hovering a row moves focus to its main control, so Enter activates the outlined row', async () => {
+  // Teacher report 2026-10-07: hover is VISUAL ONLY. A hovered row takes the outline and the
+  // selection, but focus (and so the browser's Enter) stays where the keyboard put it.
+  it('hovering a row outlines it but never moves focus; Enter still activates the focused row', async () => {
     const harness = await boot(true);
     try {
       const { document: doc, window: win } = harness;
@@ -305,17 +307,19 @@ describe('Phase 2 -- review fixes', { timeout: 90_000 }, () => {
       const rows = picoRows(doc);
       const a = rows.findIndex((row) => row.contains(doc.activeElement));
       const b = (a + 1) % rows.length;
+      const focusedBefore = doc.activeElement;
       rows[b].dispatchEvent(new win.MouseEvent('mouseenter'));
       await new Promise((r) => setTimeout(r, 220));   // the hover dwell (160 ms)
       expect(rows[b].classList.contains('is-selected')).toBe(true);
-      expect(rows[b].contains(doc.activeElement)).toBe(true);
-      expect(rows[a].contains(doc.activeElement)).toBe(false);
-      // The browser's Enter activates the focused control: row B's, never row A's.
+      expect(rows[b].classList.contains('is-active')).toBe(true);
+      expect(doc.activeElement).toBe(focusedBefore);
+      expect(rows[b].contains(doc.activeElement)).toBe(false);
+      // The browser's Enter activates the focused control: row A's, never the hovered row B's.
       const clicked = [];
       rows.forEach((row, i) => row.addEventListener('click', (e) => { clicked.push(i); e.preventDefault(); }));
       key(win, doc.activeElement, 'Enter');
       doc.activeElement.click();   // jsdom has no Enter activation; this is the browser's default action
-      expect(clicked).toEqual([b]);
+      expect(clicked).toEqual([a]);
 
       // A secondary control inside the hovered row keeps focus (e.g. the AP Classroom fallback link).
       // The click above (recordLinkVisit) re-renders the panel; let it settle and re-read the rows.
@@ -485,7 +489,8 @@ describe('Phase 2 -- review fixes', { timeout: 90_000 }, () => {
     }
   });
 
-  it('a hovered row takes focus without scrolling the panel (keyboard moves still scroll)', async () => {
+  // Teacher report 2026-10-07: a hovered row never takes focus (hover is visual only).
+  it('a hovered row makes no focus call at all (keyboard moves still focus and scroll)', async () => {
     const harness = await boot(true);
     try {
       const { document: doc, window: win } = harness;
@@ -498,7 +503,7 @@ describe('Phase 2 -- review fixes', { timeout: 90_000 }, () => {
       control.focus = function (options) { calls.push(options); return original.call(this, options); };
       rows[b].dispatchEvent(new win.MouseEvent('mouseenter'));
       await new Promise((r) => setTimeout(r, 220));   // the hover dwell (160 ms)
-      expect(calls).toEqual([{ preventScroll: true }]);
+      expect(calls).toEqual([]);
       key(win, doc.activeElement, 'ArrowUp');
       control.focus = original;
       const backCalls = [];

@@ -278,3 +278,114 @@ describe('Pico keys: every key goes to the cat', { timeout: 90_000 }, () => {
     }
   });
 });
+
+// Teacher report 2026-10-07: "the playing area went white and the Tue Oct 6 lesson card opened
+// unprompted" while playing. Hover is VISUAL ONLY (never focus), and while a game runs a tile or
+// the sign opens only from a real pointer click or a Tab-reached keyboard activation.
+describe('Pico hover never focuses; a game never opens a lesson from a stale key', { timeout: 90_000 }, () => {
+  it('hovering a tile for 200 ms outlines it but leaves focus on the page; nav and Doge hover never focus', async () => {
+    const harness = await boot();
+    try {
+      const { document: doc, window: win } = harness;
+      const list = tiles(doc);
+      const b = (selectedIndex(doc) + 1) % list.length;
+      pointer(win, list[b], 'mouseenter');
+      await wait(200);
+      expect(list[b].classList.contains('is-selected')).toBe(true);
+      expect(list[b].classList.contains('is-active')).toBe(true);
+      expect(doc.activeElement).toBe(doc.body);
+      pointer(win, list[b], 'mouseleave');
+      for (const node of [doc.querySelector('#pico-home .navbtn'), doc.getElementById('doge-presence')]) {
+        pointer(win, node, 'mouseenter');
+        await wait(200);
+        expect(node.classList.contains('is-active')).toBe(true);
+        expect(doc.activeElement).toBe(doc.body);
+        pointer(win, node, 'mouseleave');
+      }
+    } finally {
+      harness.teardown();
+    }
+  });
+
+  it('during a level: Space on the page with a tile outlined opens nothing', async () => {
+    const harness = await boot();
+    try {
+      const { document: doc, window: win } = harness;
+      doc.getElementById('classroom-board-mount').setAttribute('data-park-active', '');
+      const opens = countOpens(win);
+      const tile = lessonTile(win, doc);
+      pointer(win, tile, 'mouseenter');
+      await wait(200);
+      expect(tile.classList.contains('is-active')).toBe(true);
+      press(win, doc.body, ' ');
+      press(win, doc.body, 'Enter');
+      await wait(450);
+      expect(opens.length).toBe(0);
+      expect(panelShown(doc)).toBe(false);
+      expect(doc.getElementById('pico-home').classList.contains('pico-whiteout')).toBe(false);
+    } finally {
+      harness.teardown();
+    }
+  });
+
+  it('during a level: a key activation of a tile holding stale (non-Tab) focus is refused and lets go of focus', async () => {
+    const harness = await boot();
+    try {
+      const { document: doc, window: win } = harness;
+      doc.getElementById('classroom-board-mount').setAttribute('data-park-active', '');
+      const opens = countOpens(win);
+      const tile = lessonTile(win, doc);
+      tile.focus();   // stale focus (not reached by Tab)
+      // The browser's Space / Enter default action on a focused button: a click with detail 0.
+      tile.dispatchEvent(new win.MouseEvent('click', { bubbles: true, cancelable: true, detail: 0 }));
+      await wait(450);
+      expect(opens.length).toBe(0);
+      expect(doc.getElementById('pico-home').classList.contains('pico-whiteout')).toBe(false);
+      expect(doc.activeElement).toBe(doc.body);
+    } finally {
+      harness.teardown();
+    }
+  });
+
+  it('during a level: Tab onto a tile, then Enter, opens it', async () => {
+    const harness = await boot();
+    try {
+      const { document: doc, window: win } = harness;
+      doc.getElementById('classroom-board-mount').setAttribute('data-park-active', '');
+      const opens = countOpens(win);
+      const tile = lessonTile(win, doc);
+      press(win, doc.body, 'Tab');
+      tile.focus();   // where the browser's Tab lands
+      tile.dispatchEvent(new win.MouseEvent('click', { bubbles: true, cancelable: true, detail: 0 }));
+      await harness.waitFor(() => opens.length > 0, { timeoutMs: 2000, message: 'the Tab-reached tile did not open' });
+      expect(opens.length).toBe(1);
+    } finally {
+      harness.teardown();
+    }
+  });
+
+  // Codex review 2026-10-07: a re-render replaced the Tab-focused tile; keyboard focus restore moved
+  // to the replacement, but eligibility was pinned to the detached node and Enter was refused.
+  it('during a level: a re-render after Tab keeps the keyboard activation eligible', async () => {
+    const harness = await boot();
+    try {
+      const { document: doc, window: win } = harness;
+      doc.getElementById('classroom-board-mount').setAttribute('data-park-active', '');
+      const opens = countOpens(win);
+      const before = lessonTile(win, doc);
+      press(win, doc.body, 'Tab');
+      before.focus();
+      win.PicoHome.render();
+      const after = lessonTile(win, doc);
+      expect(after).not.toBe(before);
+      expect(doc.contains(before)).toBe(false);
+      after.focus();   // keyboard focus restore lands on the replacement
+      after.dispatchEvent(new win.MouseEvent('click', { bubbles: true, cancelable: true, detail: 0 }));
+      await harness.waitFor(() => opens.length > 0, { timeoutMs: 2000, message: 'the re-rendered tile did not open' });
+      expect(opens.length).toBe(1);
+      expect(doc.activeElement === doc.body).toBe(false);
+    } finally {
+      harness.teardown();
+    }
+  });
+});

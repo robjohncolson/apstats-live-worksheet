@@ -18,7 +18,17 @@ export function mountCampaign({ container, getSocket, board, onClose }) {
   let paintedFrame = -1, paintedEpoch = null, paintedHelpers = null;
   const held = new Set();
   const replay = createCampaignReplay(inputs => game.step(inputs));
-  const scale = () => Math.min(1, board.viewportW() / 720);
+  // Teacher 2026-10-07: the level was anchored to the left of the page-wide canvas. Scale the
+  // 720 x 750 world to the page width (exact fit, aspect kept), capped so it never grows taller
+  // than the window, never smaller than before (min(1, width / 720)), and centre it. Render-only:
+  // levels are keyboard-driven and the exit door is tested in game coordinates.
+  const WORLD_W = 720, WORLD_H = 750;
+  const scale = () => {
+    const byWidth = board.viewportW() / WORLD_W;
+    const byHeight = (win.innerHeight || WORLD_H) / WORLD_H;
+    return Math.min(byWidth, Math.max(1, byHeight));
+  };
+  const offsetX = () => Math.max(0, (board.viewportW() - WORLD_W * scale()) / 2);
   const entities = new Map();
   container.setAttribute('data-park-active', '');
   const status = doc.createElement('span'); status.setAttribute('role', 'status'); status.setAttribute('data-campaign-status', '');
@@ -148,7 +158,10 @@ export function mountCampaign({ container, getSocket, board, onClose }) {
       ctx.drawImage(board.transitionFrame, 0, 0, ctx.canvas.width, ctx.canvas.height);
       ctx.restore(); status.textContent = 'Loading PICO PARK campaign'; return;
     }
-    ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.scale(scale(), scale());
+    // Teacher 2026-10-07: CSS px -> device px (the board canvas is sized width * dpr), then centre and fit.
+    const dpr = win.devicePixelRatio || 1;
+    ctx.save(); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.translate(offsetX(), 0); ctx.scale(scale(), scale());
+    ctx.imageSmoothingEnabled = false;   // keep the pixel art crisp when scaled up
     const entry = CAMPAIGN[state?.stageIndex || 0];
     frame = clear.sample(clearActive, state?.epoch, performance.now(), 720, 750);
     if (frame) ctx.filter = frame.filter;
@@ -203,5 +216,6 @@ export function mountCampaign({ container, getSocket, board, onClose }) {
     game = next; if (loadingState) { const packet = loadingState; loadingState = null; start(packet); }
   }).catch(cause => { error = 'Could not load PICO PARK. Reload to try again.'; console.error(cause); });
   return { kind: 'campaign', dispose, getGame: () => game,
-    getView: () => ({ ...state, frame: replay.frame, received: replay.received, clear: frame, ...game?.getView() }) };
+    getView: () => ({ ...state, frame: replay.frame, received: replay.received, clear: frame, ...game?.getView(),
+      presentation: { scale: scale(), offsetX: offsetX() } }) };   // teacher 2026-10-07: for tests / smokes
 }
