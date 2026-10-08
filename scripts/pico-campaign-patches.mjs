@@ -444,6 +444,46 @@ export const CAMPAIGN_PATCHES = [{
     'Push: FUN_7ff72bb33890 (PushBox / BigBox / NormalBox / SmallBox, 0x7ff72bb33971) and ColorBox FUN_7ff72bb3b5e0 (0x7ff72bb3b690) set the box vx = +-1.0 (DAT_7ff72c61f320) per tick when enough bodies with vx > 0 press its face; the pusher keeps vx = 3 and the world sweep stops it at the box face, so it advances 1 per tick with the box',
     'Retail capture og-capture-2: walk 0.22..0.28 screen px/ms (/1.5 = 2.5..3.1 per tick), constant from the first sample, dead stop on release; E1 push: box -13 -> +31 screen px over 203..688 ms = 1.01 per tick, the pusher at the same rate'],
   behavior: 'Every stage: cats walk at the native 3 per tick (180 / s; was 4.9 per tick, 294 / s, the 0.98 decay misread as an input scale), on the ground and in the air, with no travel on the jump takeoff tick; a pushed box (every push-box family, ColorBox included) moves at most 1 per tick in total however many cats push it (one budget per box per frame), and every pusher stays flush against it (was: the box moved by the pusher\'s whole step, ~4.9). The collision-off cat and the MoveWall opposing-intent check use the same 3 per tick sideways. Not changed: ice sliding (native ice not decoded), rope coasting (the 0.98 decay after a rope yank), the box-against-box chain rule (native may block a box that meets another box; flagged, not changed).',
+}, {
+  // Batch 11 (decoded spec b11/spec-breakout.md): native breakout family (8-2, 8-4, 9-3), port fix 1 + 6.
+  id: 'breakout-paddle-dome',
+  files: ['src/engine/actors/BreakoutBall.ts', 'src/engine/sprites.ts', 'src/engine/GameRuntime.ts'],
+  evidence: ['Paddle = separate head actor FUN_7ff72bb6b070(ctrl, avatar, 0, 1) -> FUN_7ff72bb6b720: body FUN_7ff72bc16e00(ctrl, DAT_7ff72c62d1c0 = circle {0, 0, r 25}, 2), category 3, mass 100; update FUN_7ff72bb6b250 places it at the avatar position + (0, -34) * scaleY (DAT_7ff72c62d1d0[0]) every tick: a dome centred 34 above the feet, top 12 above the head',
+    'Ball contact FUN_7ff72bae64f0 (n from the ball toward the other body): accepted when approaching; other mass >= 100 -> v_n\' = 2(d.n) - v.n with d = the other body\'s displacement this tick (+0xf8, FUN_7ff72bc16460), renormalised to 4 * scale; |v\'|^2 <= 1.19e-7 (DAT_7ff72bc7d458) -> v = -n + (0, 0.05) (DAT_7ff72bc7d460). Against the circle n is radial through the paddle centre',
+    'Ball vs ball (both mass 1.0, ctor FUN_7ff72bae5cf0): the same contact function, plain elastic exchange along n',
+    'Views: paddle {-25, -26, 50, 26} (DAT_7ff72c62d200[0]) from atlas (288, 464, 24, 12) (DAT_7ff72c61f570[0]); ball {-12, -12, 24, 24} from atlas (256, 512, 12, 12) player-bound / (272, 496, 12, 12)'],
+  behavior: 'Breakout stages (8-2, 8-4, 9-3): every BreakoutPlayer carries a paddle dome, a circle of radius 25 centred 34 above its feet (12 above its head), that moves with the cat. A ball touching the dome bounces along the radial normal: hit left of the paddle centre goes left, right goes right, dead centre goes straight up; a resting ball touched by a cat launches along the dome normal at 4 per tick. The cat box stays a second contact surface with the same response (was: the box only, so every hit came off an axis-aligned face). Balls now bounce off each other (equal-mass exchange of the normal components; a ball left with no speed leaves along -n). The paddle and ball use their native atlas frames. Not modelled: the native positional separation of overlapping bodies (the port changes headings only, as before); ball-ball contact is resolved once per frame, not per native sub-tick.',
+}, {
+  id: 'breakout-ball-per-row',
+  files: ['src/engine/GameRuntime.ts'],
+  evidence: ['BreakoutPlayer factory FUN_7ff72bb72ae0 (0x7ff72bb73113) ALWAYS allocates the ball first, FUN_7ff72bae5cf0(0x4f8, 0) at row + (0, -120) (DAT_7ff72bcb74d8), then the avatar FUN_7ff72bb774a0(mode 0, arg5 = 1); the ball death callback (+0x4b0, LAB_7ff72bb786c0) is bound to that avatar',
+    'When the party limit drops the avatar (0x7ff72bb7333f) the ball is still created and bound to the LAST spawned player (FUN_7ff72bb78650), whose ball count +0x420 is incremented; the avatar ctor FUN_7ff72bb66e50 starts +0x420 at 1'],
+  behavior: 'Breakout stages: every active BreakoutPlayer row makes its ball, even when the party is smaller than the row count; the ball of a row with no cat belongs to the last cat spawned, which owns one more ball. 8-2 / 8-4 at party 2: 4 balls (P1 owns 1, P2 owns 3); party 4: one each; party 8: 8 balls. 9-3 always has 8 balls: party 2 P2 owns 7, party 4 P4 owns 5, party 8 one each. Was: one ball per spawned cat (2 balls at party 2).',
+}, {
+  id: 'breakout-loss-and-fail',
+  files: ['src/engine/GameRuntime.ts'],
+  evidence: ['Lost ball: FUN_7ff72bae64f0 stops it on a top-face (n.y == 1) hit of any tile but BLK / BWL / BWC / BWR (unchanged in the port), 180-tick timer +0x4a8; at 0 it calls the owner callback LAB_7ff72bb786c0 -> avatar FUN_7ff72bb69440 cmd 3 and is removed',
+    'FUN_7ff72bb69440 cmd 3: skipped if the scene is resolved; else +0x420 -= 1; at 0 the player gets flag +0x3f8 |= 0x10 (out). The cat does NOT die',
+    'Stage fail FUN_7ff72bb7bbe0: while scene flag 0x40 is clear and not everyone is in the goal, if EVERY player is out (flag 0x10) the stage fails and restarts (scene flag |= 2)'],
+  behavior: 'Breakout stages: each cat counts its balls (1 + the extra balls of party-limited rows); a lost ball takes one from its owner and a cat at 0 is out (it keeps walking and jumping). When every student cat is out and the key has not appeared, the stage restarts from its start (bricks, balls and cats; teacher cats are kept). 9-3 has no BreakoutKey, so the rule stays armed the whole stage. Was: losses were recorded and never read (losing every ball left the stage unwinnable with no restart). Not modelled: the native "or in state 1" alternative of the fail test (state 1 not identified).',
+}, {
+  id: 'breakout-key-hidden-until-clear',
+  files: ['src/engine/GameRuntime.ts'],
+  evidence: ['BreakoutKey row (0x7ff72bb7457a) builds the ordinary Key class FUN_7ff72bb64f20(0x558, 1), type 1, no params, and starts it hidden: FUN_7ff72bb65240(this, 0) turns its sensor and view off',
+    'Key update FUN_7ff72bb65430 state 0: FUN_7ff72bc30790(map) = any tile 30..34 (MC_BR1..BR5) left anywhere; when none remains it activates at its spawn point as a normal 32 x 56 Key and sets scene flag 0x40 (disarms the lost-balls fail FUN_7ff72bb7bbe0)',
+    'Then an ordinary Key: hangs at home, carried on touch, opens the Goal by the existing key / goal rule'],
+  behavior: 'Breakout stages 8-2 / 8-4: the BreakoutKey is an ordinary Key, hidden and untouchable until no MC_BR1..BR5 brick is left anywhere on the map; then it appears at its spawn point, is carried like any key and opens the Goal (enter with UP); its appearance disarms the lost-balls restart. Was: a 24 x 24 pickup visible from frame 0 whose collection did nothing (the Goal never opened).',
+}, {
+  id: 'breakout-syncarea-inert',
+  files: ['src/engine/GameRuntime.ts'],
+  evidence: ['BreakoutSyncArea FUN_7ff72bb778c0 only drives online sync chunks (FUN_7ff72bae82a0); offline it has no body, no view and no clear rule'],
+  behavior: 'Breakout stages: the BreakoutSyncArea row creates nothing (was: an invented 72 x 48 box at the map corner that cleared the stage when every cat stood in it).',
+}, {
+  // Codex batch-11 must-fix: broken bricks stayed broken across a restart / a second load of the same stage.
+  id: 'stage-map-private-copy',
+  files: ['src/engine/GameRuntime.ts'],
+  evidence: ['Native rebuilds the stage (and its map grid from the Lua table, FUN_7ff72bc27dc0) on every load and every fail restart, so chips a ball destroyed (FUN_7ff72bae7be0) are back on the next attempt; the shared stage data is never written'],
+  behavior: 'Every stage: each load (and each breakout restart, which reloads) plays on its own copy of the map chip table; breaking chips (bricks, breakable chips) changes only that copy. Was: the runtime wrote into the shared stage table, so bricks broken on one attempt stayed gone on the restart and on every later load of that stage in the same session (a second 9-3 run stalled at frame 171).',
 }];
 
 // Fail the build if upstream code changes: never silently skip a correction.
@@ -604,7 +644,69 @@ export function patchCampaignSource(file, source) {
   if (file === 'src/engine/actors/BreakoutBall.ts') {
     // native-player-body: the browser rect IS the native {-16, -47, 32, 46} body now; no adapter offset.
     source = replaceOnce(source, 'const NATIVE_PLAYER_CONTACT_OFFSET_FROM_BROWSER_X = -3;', 'const NATIVE_PLAYER_CONTACT_OFFSET_FROM_BROWSER_X = 0;', file);
-    return replaceOnce(source, 'const NATIVE_PLAYER_CONTACT_OFFSET_FROM_BROWSER_Y = -15;', 'const NATIVE_PLAYER_CONTACT_OFFSET_FROM_BROWSER_Y = 0;', file);
+    source = replaceOnce(source, 'const NATIVE_PLAYER_CONTACT_OFFSET_FROM_BROWSER_Y = -15;', 'const NATIVE_PLAYER_CONTACT_OFFSET_FROM_BROWSER_Y = 0;', file);
+    // breakout-paddle-dome: the head actor's r 25 circle at the row point + (0, -34) (FUN_7ff72bb6b720 / FUN_7ff72bb6b250).
+    source = replaceOnce(source, "import { Container, Graphics } from 'pixi.js';", "import { Container, Graphics, Sprite } from 'pixi.js';\nimport { frameTexture } from '../sprites';", file);
+    source = replaceOnce(source, 'const NATIVE_PLAYER_CONTACT_MASS = 100;\n', `const NATIVE_PLAYER_CONTACT_MASS = 100;
+// breakout-paddle-dome: FUN_7ff72bb6b720 body = circle r 25 (DAT_7ff72c62d1c0), placed by FUN_7ff72bb6b250 at the
+// avatar row point + (0, -34) (DAT_7ff72c62d1d0). The row point is the cat body {-16, -47, 32, 46} origin.
+export const BREAKOUT_PADDLE_RADIUS = 25;
+export const BREAKOUT_PADDLE_OFFSET_Y = -34;
+export function breakoutPaddleCenter(playerRect: Rect): Vector2 {
+  return { x: playerRect.x + 16, y: playerRect.y + 47 + BREAKOUT_PADDLE_OFFSET_Y };
+}
+`, file);
+    // breakout-paddle-dome: only BreakoutPlayer avatars carry the head actor (the runtime says which).
+    source = replaceOnce(source, '  tryApplyPlayerContact(previousPlayerRect: Rect, currentPlayerRect: Rect): boolean {',
+      '  tryApplyPlayerContact(previousPlayerRect: Rect, currentPlayerRect: Rect, hasPaddleDome = false): boolean {', file);
+    source = replaceOnce(source, `    const normal = mixedBodyContactNormal(
+      this.playerContactFrameStartRect,
+      this.rect,
+      previousContactRect,
+      currentContactRect,
+    );
+    if (!normal) return false;
+`, `    // breakout-paddle-dome: the dome (radial normal through the paddle centre) first; the cat box is a second
+    // surface with the same mass-100 response.
+    const domeNormal = hasPaddleDome ? breakoutPaddleDomeNormal(this.center, currentContactRect) : undefined;
+    if (domeNormal && this.applyHeavyBodyContact(domeNormal, previousContactRect, currentContactRect)) return true;
+    const normal = mixedBodyContactNormal(
+      this.playerContactFrameStartRect,
+      this.rect,
+      previousContactRect,
+      currentContactRect,
+    );
+    if (!normal) return false;
+    return this.applyHeavyBodyContact(normal, previousContactRect, currentContactRect);
+  }
+
+  /** FUN_7ff72bae64f0 against a mass-100 body (the cat box or its paddle dome); n points from the ball to the body. */
+  private applyHeavyBodyContact(normal: Vector2, previousContactRect: Rect, currentContactRect: Rect): boolean {
+`, file);
+    source = replaceOnce(source, '    this.view.addChild(this.body);\n', `    this.view.addChild(this.body);
+    // breakout-paddle-dome: native ball frames, view {-12, -12, 24, 24} (base BreakoutBall only).
+    const ballTexture = new.target === BreakoutBall ? frameTexture((owner ? 'breakout_ball' : 'breakout_ball_free') as any) : undefined;
+    if (ballTexture) {
+      const sprite = new Sprite(ballTexture);
+      sprite.anchor.set(0.5);
+      sprite.width = BREAKOUT_BALL_DIAMETER;
+      sprite.height = BREAKOUT_BALL_DIAMETER;
+      this.view.addChild(sprite);
+      this.body.visible = false;
+    }
+`, file);
+    source += `
+/** breakout-paddle-dome: n from the ball centre to the paddle centre while the circles overlap. */
+function breakoutPaddleDomeNormal(ballCenter: Vector2, playerRect: Rect): Vector2 | undefined {
+  const paddle = breakoutPaddleCenter(playerRect);
+  const dx = paddle.x - ballCenter.x;
+  const dy = paddle.y - ballCenter.y;
+  const distance = Math.hypot(dx, dy);
+  if (distance === 0 || distance >= BREAKOUT_PADDLE_RADIUS + BREAKOUT_BALL_RADIUS) return undefined;
+  return { x: dx / distance, y: dy / distance };
+}
+`;
+    return source;
   }
   if (file === 'src/engine/picoStyle.ts') {
     // native-lift-and-ledge-look: the MC_BW* ledge is stage orange in the original (retail capture, 1-4).
@@ -715,7 +817,10 @@ export function patchCampaignSource(file, source) {
   if (file === 'src/engine/sprites.ts') {
     const frames = Array.from({ length: 9 }, (_, i) =>
       `  push_box_${i}: [${464 + i % 3 * 16}, ${32 + Math.floor(i / 3) * 16}, 16, 16],`).join('\n');
-    return replaceOnce(source, 'export const PICO_ATLAS_FRAMES = {', 'export const PICO_ATLAS_FRAMES = {\n  door_closed: [96, 512, 48, 48],\n  updown_lift: [385, 49, 60, 10],\n  weighted_lift_wide: [351, 511, 98, 42],\n  weighted_lift_narrow: [383, 559, 34, 42],\n  thunder_0: [160, 400, 32, 32],\n  thunder_1: [192, 400, 32, 32],\n  thunder_cap: [192, 436, 16, 4],\n  step_enemy: [358, 8, 25, 14],\n  updown_enemy: [385, 0, 30, 26],\n  move_wall: [500, 255, 9, 130],\n' + frames, file);
+    source = replaceOnce(source, 'export const PICO_ATLAS_FRAMES = {', 'export const PICO_ATLAS_FRAMES = {\n  door_closed: [96, 512, 48, 48],\n  updown_lift: [385, 49, 60, 10],\n  weighted_lift_wide: [351, 511, 98, 42],\n  weighted_lift_narrow: [383, 559, 34, 42],\n  thunder_0: [160, 400, 32, 32],\n  thunder_1: [192, 400, 32, 32],\n  thunder_cap: [192, 436, 16, 4],\n  step_enemy: [358, 8, 25, 14],\n  updown_enemy: [385, 0, 30, 26],\n  move_wall: [500, 255, 9, 130],\n' + frames, file);
+    // breakout-paddle-dome: paddle (DAT_7ff72c61f570[0]) and ball atlas frames (player-bound / free).
+    source = replaceOnce(source, 'export const PICO_ATLAS_FRAMES = {', 'export const PICO_ATLAS_FRAMES = {\n  breakout_paddle: [288, 464, 24, 12],\n  breakout_ball: [256, 512, 12, 12],\n  breakout_ball_free: [272, 496, 12, 12],', file);
+    return source;
   }
   if (file === 'src/engine/actors/Goal.ts') {
     source = replaceOnce(source, '  readonly rect: Rect;', `  readonly rect: Rect;
@@ -4161,6 +4266,230 @@ const NATIVE_WALK_SPEED = 3 * 60;
   }
 
   private firstUnsupportedPushBoxX(`, file);
+    // breakout-paddle-dome: paddle views; ball-ball contact after every ball has moved.
+    source = replaceOnce(source, '  private breakoutLostPlayers = new Set<Player>();\n', `  private breakoutLostPlayers = new Set<Player>();
+  /** breakout-paddle-dome: the head actor view of each BreakoutPlayer (FUN_7ff72bb6b070). */
+  private breakoutPaddleViews = new Map<Player, Sprite>();
+`, file);
+    source = replaceOnce(source, '    this.breakoutLostPlayers.clear();\n', `    this.breakoutLostPlayers.clear();
+    this.breakoutPaddleViews.clear();
+`, file);
+    source = replaceOnce(source, '    if (breakoutBallMapChanged) this.redrawTiles();\n', `    if (breakoutBallMapChanged) this.redrawTiles();
+    this.collideBreakoutBalls();
+`, file);
+    source = replaceOnce(source, '      ball.tryApplyPlayerContact(previousPlayerRect, player.rect);\n',
+      '      ball.tryApplyPlayerContact(previousPlayerRect, player.rect, this.breakoutBallCounts.has(player));\n', file);
+    source = replaceOnce(source, '    this.updateGhosts(ghostPreKeyTarget);\n', `    this.layoutBreakoutPaddles();
+    this.updateGhosts(ghostPreKeyTarget);
+`, file);
+    source = replaceOnce(source, '  private addBattleBreakoutBall(spawn: ActorSpawnDef): void {\n', `  /** breakout-paddle-dome: equal-mass balls exchange their normal speed components when they touch while approaching. */
+  private collideBreakoutBalls(): void {
+    const balls = this.breakoutBalls.filter((ball) => ball.lossCountdownTicks === 0 && !ball.removalRequested);
+    const minimumDistance = BREAKOUT_BALL_RADIUS * 2;
+    for (let i = 0; i < balls.length; i += 1) {
+      for (let j = i + 1; j < balls.length; j += 1) {
+        const a = balls[i];
+        const b = balls[j];
+        const dx = b.center.x - a.center.x;
+        const dy = b.center.y - a.center.y;
+        const distance = Math.hypot(dx, dy);
+        if (distance === 0 || distance >= minimumDistance) continue;
+        const nx = dx / distance;
+        const ny = dy / distance;
+        const aNormal = a.velocity.x * nx + a.velocity.y * ny;
+        const bNormal = b.velocity.x * nx + b.velocity.y * ny;
+        if (aNormal - bNormal <= 0) continue;
+        a.velocity.x = Math.fround(a.velocity.x + (bNormal - aNormal) * nx);
+        a.velocity.y = Math.fround(a.velocity.y + (bNormal - aNormal) * ny);
+        b.velocity.x = Math.fround(b.velocity.x + (aNormal - bNormal) * nx);
+        b.velocity.y = Math.fround(b.velocity.y + (aNormal - bNormal) * ny);
+        // FUN_7ff72bae64f0 fallback: a ball left with no heading leaves along -n (+ (0, 0.05)).
+        if (a.velocity.x * a.velocity.x + a.velocity.y * a.velocity.y <= 1.1920928955078125e-7) {
+          a.velocity.x = Math.fround(-nx);
+          a.velocity.y = Math.fround(-ny + 0.05);
+        }
+        if (b.velocity.x * b.velocity.x + b.velocity.y * b.velocity.y <= 1.1920928955078125e-7) {
+          b.velocity.x = Math.fround(nx);
+          b.velocity.y = Math.fround(ny + 0.05);
+        }
+      }
+    }
+  }
+
+  /** breakout-paddle-dome: the paddle view {-25, -26, 50, 26} sits on the dome centre, the row point + (0, -34). */
+  private layoutBreakoutPaddles(): void {
+    for (const [player, view] of this.breakoutPaddleViews) {
+      const center = breakoutPaddleCenter(player.rect);
+      view.x = center.x;
+      view.y = center.y;
+    }
+  }
+
+  private addBattleBreakoutBall(spawn: ActorSpawnDef): void {
+`, file);
+    source = replaceOnce(source, "import { BREAKOUT_BALL_SPAWN_OFFSET_Y, BreakoutBall } from './actors/BreakoutBall';",
+      "import { BREAKOUT_BALL_RADIUS, BREAKOUT_BALL_SPAWN_OFFSET_Y, BreakoutBall, breakoutPaddleCenter } from './actors/BreakoutBall';", file);
+    // breakout-ball-per-row: every BreakoutPlayer row makes its ball; a party-limited row's ball goes to the last cat.
+    source = replaceOnce(source, '  private breakoutLostPlayers = new Set<Player>();\n', `  private breakoutLostPlayers = new Set<Player>();
+  /** breakout-ball-per-row: balls bound to each BreakoutPlayer (avatar +0x420, 1 from the ctor). */
+  private breakoutBallCounts = new Map<Player, number>();
+`, file);
+    source = replaceOnce(source, '    this.breakoutLostPlayers.clear();\n', `    this.breakoutLostPlayers.clear();
+    this.breakoutBallCounts.clear();
+`, file);
+    source = replaceOnce(source, `      const ball = new BreakoutBall(
+        spawn.x,
+        spawn.y + BREAKOUT_BALL_SPAWN_OFFSET_Y,
+        player,
+      );
+      this.breakoutBalls.push(ball);
+      this.actorLayer.addChild(ball.view);
+`, `      this.addBreakoutBallForRow(spawn, player);
+      this.breakoutBallCounts.set(player, 1);
+      const paddleTexture = frameTexture('breakout_paddle' as any);
+      if (paddleTexture) {
+        const paddle = new Sprite(paddleTexture);
+        paddle.anchor.set(0.5, 1);
+        paddle.width = 50;
+        paddle.height = 26;
+        const center = breakoutPaddleCenter(player.rect);
+        paddle.x = center.x;
+        paddle.y = center.y;
+        this.breakoutPaddleViews.set(player, paddle);
+        this.actorLayer.addChild(paddle);
+      }
+`, file);
+    source = replaceOnce(source, `        this.addBattleBreakoutBall(spawn);
+      }
+      if (suppressRuntimePlayer) continue;
+`, `        this.addBattleBreakoutBall(spawn);
+      }
+      if (suppressRuntimePlayer && spawn.actorName === 'BreakoutPlayer' && this.players.length > 0) {
+        // breakout-ball-per-row: FUN_7ff72bb72ae0 0x7ff72bb7333f -> FUN_7ff72bb78650 (last spawned player, +0x420 += 1).
+        const owner = this.players[this.players.length - 1];
+        this.addBreakoutBallForRow(spawn, owner);
+        this.breakoutBallCounts.set(owner, (this.breakoutBallCounts.get(owner) ?? 0) + 1);
+      }
+      if (suppressRuntimePlayer) continue;
+`, file);
+    source = replaceOnce(source, '  private addBattleBreakoutBall(spawn: ActorSpawnDef): void {\n', `  /** breakout-ball-per-row: the row's ball at row + (0, -120), bound to its owner's callback. */
+  private addBreakoutBallForRow(spawn: ActorSpawnDef, owner: Player): void {
+    const ball = new BreakoutBall(spawn.x, spawn.y + BREAKOUT_BALL_SPAWN_OFFSET_Y, owner);
+    this.breakoutBalls.push(ball);
+    this.actorLayer.addChild(ball.view);
+  }
+
+  private addBattleBreakoutBall(spawn: ActorSpawnDef): void {
+`, file);
+    // breakout-loss-and-fail: owner count -1 per lost ball, out at 0; everyone out and no key yet -> restart.
+    source = replaceOnce(source, `    if (owner && ownerIndex >= 0) {
+      this.breakoutLostPlayers.add(owner);
+      // Stage post-update FUN_7ff72bb7bbe0 later consumes the native bit, but
+      // its generic clear/fail result producer has additional gates and stays
+      // deliberately unmodeled here.
+    }
+`, `    if (owner && ownerIndex >= 0 && !this.cleared) {
+      // breakout-loss-and-fail: FUN_7ff72bb69440 cmd 3: +0x420 -= 1; at 0 flag 0x10 (out). The cat lives on.
+      const ballsLeft = (this.breakoutBallCounts.get(owner) ?? 1) - 1;
+      this.breakoutBallCounts.set(owner, ballsLeft);
+      if (ballsLeft <= 0) this.breakoutLostPlayers.add(owner);
+    }
+`, file);
+    source = replaceOnce(source, '    this.collideBreakoutBalls();\n', `    this.collideBreakoutBalls();
+    if (this.breakoutEveryoneOut()) {
+      this.restartBreakoutStage();
+      return;
+    }
+`, file);
+    source = replaceOnce(source, '  private addBattleBreakoutBall(spawn: ActorSpawnDef): void {\n', `  /** breakout-loss-and-fail: FUN_7ff72bb7bbe0 while scene flag 0x40 (key appeared) is clear: every student cat out. */
+  private breakoutEveryoneOut(): boolean {
+    if (this.breakoutBallCounts.size === 0 || this.breakoutKeyAppeared || this.cleared) return false;
+    const students = this.players.filter((player) => !player.parkHelper);
+    return students.length > 0 && students.every((player) => this.breakoutLostPlayers.has(player));
+  }
+
+  /** breakout-loss-and-fail: the stage restarts (scene flag 2); Desk teacher cats are put back at their spawns. */
+  private restartBreakoutStage(): void {
+    const helpers = this.players
+      .map((player, index) => ({ player, slot: this.playerInputSlots[index] ?? index, spawn: this.playerSpawns[index] }))
+      .filter(({ player }) => player.parkHelper);
+    this.resetStage();
+    for (const { player, slot, spawn } of helpers) {
+      const at = spawn ?? this.playerSpawn;
+      player.reset(at.x, at.y);
+      this.players.push(player);
+      this.playerSpawns.push({ x: at.x, y: at.y });
+      this.playerInputSlots.push(slot);
+      this.actorLayer.addChild(player.view);
+    }
+    this.emitStats();
+  }
+
+  private addBattleBreakoutBall(spawn: ActorSpawnDef): void {
+`, file);
+    // breakout-key-hidden-until-clear: an ordinary Key, hidden until no MC_BR1..BR5 is left; its appearance = flag 0x40.
+    source = replaceOnce(source, '  private breakoutLostPlayers = new Set<Player>();\n', `  private breakoutLostPlayers = new Set<Player>();
+  /** breakout-key-hidden-until-clear: BreakoutKeys still hidden, and scene flag 0x40 (a key appeared). */
+  private breakoutHiddenKeys: Key[] = [];
+  private breakoutKeyAppeared = false;
+`, file);
+    source = replaceOnce(source, '    this.breakoutLostPlayers.clear();\n', `    this.breakoutLostPlayers.clear();
+    this.breakoutHiddenKeys = [];
+    this.breakoutKeyAppeared = false;
+`, file);
+    source = replaceOnce(source, `    BreakoutKey: (spawn) => {
+      const breakoutKey = new BreakoutKey(spawn);
+      this.breakoutKeys.push(breakoutKey);
+      this.actorLayer.addChild(breakoutKey.view);
+    },
+`, `    BreakoutKey: (spawn) => {
+      // breakout-key-hidden-until-clear: FUN_7ff72bb64f20(0x558, 1) + FUN_7ff72bb65240(this, 0): a hidden ordinary Key.
+      const key = new Key(spawn);
+      key.active = false;
+      key.view.visible = false;
+      this.keys.push(key);
+      this.breakoutHiddenKeys.push(key);
+      this.actorLayer.addChild(key.view);
+    },
+`, file);
+    source = replaceOnce(source, '    this.collideBreakoutBalls();\n', `    this.collideBreakoutBalls();
+    this.revealBreakoutKeysWhenBricksGone();
+`, file);
+    source = replaceOnce(source, '  private addBattleBreakoutBall(spawn: ActorSpawnDef): void {\n', `  /** breakout-key-hidden-until-clear: Key PRE FUN_7ff72bb65430 state 0 polls FUN_7ff72bc30790 (any chip 30..34 left). */
+  private revealBreakoutKeysWhenBricksGone(): void {
+    if (this.breakoutHiddenKeys.length === 0 || !this.tileMap) return;
+    const bricks = new Set(['MC_BR1', 'MC_BR2', 'MC_BR3', 'MC_BR4', 'MC_BR5']);
+    const { width, height } = this.tileMap.map;
+    for (let tileY = 0; tileY < height; tileY += 1) {
+      for (let tileX = 0; tileX < width; tileX += 1) {
+        if (bricks.has(this.tileMap.chipAt(tileX, tileY))) return;
+      }
+    }
+    for (const key of this.breakoutHiddenKeys) key.activate();
+    this.breakoutHiddenKeys = [];
+    this.breakoutKeyAppeared = true;
+    this.refreshKeyGoalViews();
+  }
+
+  private addBattleBreakoutBall(spawn: ActorSpawnDef): void {
+`, file);
+    // breakout-syncarea-inert: FUN_7ff72bb778c0 is online-only; offline it has no body and no clear rule.
+    source = replaceOnce(source, `    BreakoutSyncArea: (spawn) => {
+      const breakoutSyncArea = breakoutSyncAreaFromSpawn(spawn);
+      this.breakoutSyncAreas.push(breakoutSyncArea);
+      this.addActorView(spawn, breakoutSyncArea.view);
+    },
+`, `    BreakoutSyncArea: () => {
+      // breakout-syncarea-inert: online sync only (FUN_7ff72bae82a0); nothing offline.
+    },
+`, file);
+    // stage-map-private-copy: play on a private copy of the chip table, never the shared stage data.
+    source = replaceOnce(source, `    const resolvedStage = paintActiveMapRects(mapVariantStage, activePartyCount);
+    this.stage = resolvedStage;
+    this.tileMap = new TileMap(resolvedStage.map);`, `    const paintedStage = paintActiveMapRects(mapVariantStage, activePartyCount);
+    const resolvedStage = { ...paintedStage, map: { ...paintedStage.map, table: [...paintedStage.map.table] } };
+    this.stage = resolvedStage;
+    this.tileMap = new TileMap(resolvedStage.map);`, file);
     source += `
 /** A copy of a stage row at a new point; raw x / y follow, because param parsers find their params after them. */
 function spawnMovedTo(spawn: ActorSpawnDef, x: number, y: number): ActorSpawnDef {

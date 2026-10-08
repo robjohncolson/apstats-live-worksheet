@@ -719,6 +719,76 @@
         "Retail capture og-capture-2: walk 0.22..0.28 screen px/ms (/1.5 = 2.5..3.1 per tick), constant from the first sample, dead stop on release; E1 push: box -13 -> +31 screen px over 203..688 ms = 1.01 per tick, the pusher at the same rate"
       ],
       "behavior": "Every stage: cats walk at the native 3 per tick (180 / s; was 4.9 per tick, 294 / s, the 0.98 decay misread as an input scale), on the ground and in the air, with no travel on the jump takeoff tick; a pushed box (every push-box family, ColorBox included) moves at most 1 per tick in total however many cats push it (one budget per box per frame), and every pusher stays flush against it (was: the box moved by the pusher's whole step, ~4.9). The collision-off cat and the MoveWall opposing-intent check use the same 3 per tick sideways. Not changed: ice sliding (native ice not decoded), rope coasting (the 0.98 decay after a rope yank), the box-against-box chain rule (native may block a box that meets another box; flagged, not changed)."
+    },
+    {
+      "id": "breakout-paddle-dome",
+      "files": [
+        "src/engine/actors/BreakoutBall.ts",
+        "src/engine/sprites.ts",
+        "src/engine/GameRuntime.ts"
+      ],
+      "evidence": [
+        "Paddle = separate head actor FUN_7ff72bb6b070(ctrl, avatar, 0, 1) -> FUN_7ff72bb6b720: body FUN_7ff72bc16e00(ctrl, DAT_7ff72c62d1c0 = circle {0, 0, r 25}, 2), category 3, mass 100; update FUN_7ff72bb6b250 places it at the avatar position + (0, -34) * scaleY (DAT_7ff72c62d1d0[0]) every tick: a dome centred 34 above the feet, top 12 above the head",
+        "Ball contact FUN_7ff72bae64f0 (n from the ball toward the other body): accepted when approaching; other mass >= 100 -> v_n' = 2(d.n) - v.n with d = the other body's displacement this tick (+0xf8, FUN_7ff72bc16460), renormalised to 4 * scale; |v'|^2 <= 1.19e-7 (DAT_7ff72bc7d458) -> v = -n + (0, 0.05) (DAT_7ff72bc7d460). Against the circle n is radial through the paddle centre",
+        "Ball vs ball (both mass 1.0, ctor FUN_7ff72bae5cf0): the same contact function, plain elastic exchange along n",
+        "Views: paddle {-25, -26, 50, 26} (DAT_7ff72c62d200[0]) from atlas (288, 464, 24, 12) (DAT_7ff72c61f570[0]); ball {-12, -12, 24, 24} from atlas (256, 512, 12, 12) player-bound / (272, 496, 12, 12)"
+      ],
+      "behavior": "Breakout stages (8-2, 8-4, 9-3): every BreakoutPlayer carries a paddle dome, a circle of radius 25 centred 34 above its feet (12 above its head), that moves with the cat. A ball touching the dome bounces along the radial normal: hit left of the paddle centre goes left, right goes right, dead centre goes straight up; a resting ball touched by a cat launches along the dome normal at 4 per tick. The cat box stays a second contact surface with the same response (was: the box only, so every hit came off an axis-aligned face). Balls now bounce off each other (equal-mass exchange of the normal components; a ball left with no speed leaves along -n). The paddle and ball use their native atlas frames. Not modelled: the native positional separation of overlapping bodies (the port changes headings only, as before); ball-ball contact is resolved once per frame, not per native sub-tick."
+    },
+    {
+      "id": "breakout-ball-per-row",
+      "files": [
+        "src/engine/GameRuntime.ts"
+      ],
+      "evidence": [
+        "BreakoutPlayer factory FUN_7ff72bb72ae0 (0x7ff72bb73113) ALWAYS allocates the ball first, FUN_7ff72bae5cf0(0x4f8, 0) at row + (0, -120) (DAT_7ff72bcb74d8), then the avatar FUN_7ff72bb774a0(mode 0, arg5 = 1); the ball death callback (+0x4b0, LAB_7ff72bb786c0) is bound to that avatar",
+        "When the party limit drops the avatar (0x7ff72bb7333f) the ball is still created and bound to the LAST spawned player (FUN_7ff72bb78650), whose ball count +0x420 is incremented; the avatar ctor FUN_7ff72bb66e50 starts +0x420 at 1"
+      ],
+      "behavior": "Breakout stages: every active BreakoutPlayer row makes its ball, even when the party is smaller than the row count; the ball of a row with no cat belongs to the last cat spawned, which owns one more ball. 8-2 / 8-4 at party 2: 4 balls (P1 owns 1, P2 owns 3); party 4: one each; party 8: 8 balls. 9-3 always has 8 balls: party 2 P2 owns 7, party 4 P4 owns 5, party 8 one each. Was: one ball per spawned cat (2 balls at party 2)."
+    },
+    {
+      "id": "breakout-loss-and-fail",
+      "files": [
+        "src/engine/GameRuntime.ts"
+      ],
+      "evidence": [
+        "Lost ball: FUN_7ff72bae64f0 stops it on a top-face (n.y == 1) hit of any tile but BLK / BWL / BWC / BWR (unchanged in the port), 180-tick timer +0x4a8; at 0 it calls the owner callback LAB_7ff72bb786c0 -> avatar FUN_7ff72bb69440 cmd 3 and is removed",
+        "FUN_7ff72bb69440 cmd 3: skipped if the scene is resolved; else +0x420 -= 1; at 0 the player gets flag +0x3f8 |= 0x10 (out). The cat does NOT die",
+        "Stage fail FUN_7ff72bb7bbe0: while scene flag 0x40 is clear and not everyone is in the goal, if EVERY player is out (flag 0x10) the stage fails and restarts (scene flag |= 2)"
+      ],
+      "behavior": "Breakout stages: each cat counts its balls (1 + the extra balls of party-limited rows); a lost ball takes one from its owner and a cat at 0 is out (it keeps walking and jumping). When every student cat is out and the key has not appeared, the stage restarts from its start (bricks, balls and cats; teacher cats are kept). 9-3 has no BreakoutKey, so the rule stays armed the whole stage. Was: losses were recorded and never read (losing every ball left the stage unwinnable with no restart). Not modelled: the native \"or in state 1\" alternative of the fail test (state 1 not identified)."
+    },
+    {
+      "id": "breakout-key-hidden-until-clear",
+      "files": [
+        "src/engine/GameRuntime.ts"
+      ],
+      "evidence": [
+        "BreakoutKey row (0x7ff72bb7457a) builds the ordinary Key class FUN_7ff72bb64f20(0x558, 1), type 1, no params, and starts it hidden: FUN_7ff72bb65240(this, 0) turns its sensor and view off",
+        "Key update FUN_7ff72bb65430 state 0: FUN_7ff72bc30790(map) = any tile 30..34 (MC_BR1..BR5) left anywhere; when none remains it activates at its spawn point as a normal 32 x 56 Key and sets scene flag 0x40 (disarms the lost-balls fail FUN_7ff72bb7bbe0)",
+        "Then an ordinary Key: hangs at home, carried on touch, opens the Goal by the existing key / goal rule"
+      ],
+      "behavior": "Breakout stages 8-2 / 8-4: the BreakoutKey is an ordinary Key, hidden and untouchable until no MC_BR1..BR5 brick is left anywhere on the map; then it appears at its spawn point, is carried like any key and opens the Goal (enter with UP); its appearance disarms the lost-balls restart. Was: a 24 x 24 pickup visible from frame 0 whose collection did nothing (the Goal never opened)."
+    },
+    {
+      "id": "breakout-syncarea-inert",
+      "files": [
+        "src/engine/GameRuntime.ts"
+      ],
+      "evidence": [
+        "BreakoutSyncArea FUN_7ff72bb778c0 only drives online sync chunks (FUN_7ff72bae82a0); offline it has no body, no view and no clear rule"
+      ],
+      "behavior": "Breakout stages: the BreakoutSyncArea row creates nothing (was: an invented 72 x 48 box at the map corner that cleared the stage when every cat stood in it)."
+    },
+    {
+      "id": "stage-map-private-copy",
+      "files": [
+        "src/engine/GameRuntime.ts"
+      ],
+      "evidence": [
+        "Native rebuilds the stage (and its map grid from the Lua table, FUN_7ff72bc27dc0) on every load and every fail restart, so chips a ball destroyed (FUN_7ff72bae7be0) are back on the next attempt; the shared stage data is never written"
+      ],
+      "behavior": "Every stage: each load (and each breakout restart, which reloads) plays on its own copy of the map chip table; breaking chips (bricks, breakable chips) changes only that copy. Was: the runtime wrote into the shared stage table, so bricks broken on one attempt stayed gone on the restart and on every later load of that stage in the same session (a second 9-3 run stalled at frame 171)."
     }
   ],
   "hashes": {
@@ -729,7 +799,6 @@
     "src/engine/actors/BlinkBlock.ts": "b6c9113974103a8c0c13d582cd4a9a120d1fc2e08e1692cc819b82895a2878d1",
     "src/engine/actors/BowwowEnemy.ts": "27ecc25a1cbcd6816065b974e992601207903e3a23d6854a420c2e2e993c0746",
     "src/engine/actors/BreakoutBall.ts": "5cc9f5bb39e5d876c0402135fb246da9d0de1b72a46f92b6740ed6384e0602ee",
-    "src/engine/actors/BreakoutKey.ts": "ea71caebe1eed6b9aa74fb77ea799b404d027328194ff294068f5d9e52d74abc",
     "src/engine/actors/Bridge.ts": "f53a98f65a8f8a5a396d5c946baccf5c9971c7350f29e3326c3dd4f34c8a6774",
     "src/engine/actors/CheckPoint.ts": "6ee715c1db943f5a1bf486346f110bf9dadc91765610634b5e87d02c08056ca7",
     "src/engine/actors/Coin.ts": "55606d0696c7db6b052a82fabc983db8e09085cffa976dd21507419ec6cebf99",

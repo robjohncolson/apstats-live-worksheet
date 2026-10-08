@@ -2,8 +2,8 @@
   "note": "Written by re-running every campaign-solve solver (party 2 unless a row says otherwise). campaign-solvability.test.mjs asserts the SOLVED rows.",
   "recorded": "2026-10-08",
   "counts": {
-    "SOLVED": 36,
-    "SKIPPED-UNIMPLEMENTED": 12
+    "SOLVED": 39,
+    "SKIPPED-UNIMPLEMENTED": 9
   },
   "stages": [
     {
@@ -242,9 +242,9 @@
       "tag": "8-2",
       "source": "stage_breakout01",
       "title": "RETRO GAME",
-      "status": "SKIPPED-UNIMPLEMENTED",
+      "status": "SOLVED",
       "party": 2,
-      "reason": "BreakoutPlayer (audit: Misread -- one ball per row), BreakoutSyncArea (audit: Misread -- made-up clear) and BreakoutKey (audit: Misread+unimpl -- visible from frame 0, never carried); batch 21 breakout-key-and-balls."
+      "frames": 5196
     },
     {
       "tag": "8-3",
@@ -258,9 +258,9 @@
       "tag": "8-4",
       "source": "stage_breakout02",
       "title": "RETRO GAME",
-      "status": "SKIPPED-UNIMPLEMENTED",
+      "status": "SOLVED",
       "party": 2,
-      "reason": "BreakoutPlayer / BreakoutSyncArea / BreakoutKey (audit: Misread / Misread+unimpl; batch 21 breakout-key-and-balls)."
+      "frames": 2316
     },
     {
       "tag": "9-1",
@@ -282,9 +282,9 @@
       "tag": "9-3",
       "source": "stage_breakout03",
       "title": "BALL PARK",
-      "status": "SKIPPED-UNIMPLEMENTED",
+      "status": "SOLVED",
       "party": 2,
-      "reason": "BreakoutPlayer (audit: Misread -- one ball per row, 9-3 party 4: 8 vs 4) and BreakoutSyncArea (audit: Misread); batch 21 breakout-key-and-balls."
+      "frames": 9876
     },
     {
       "tag": "9-4",
