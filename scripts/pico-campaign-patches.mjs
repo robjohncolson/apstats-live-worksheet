@@ -15,7 +15,7 @@ export const CAMPAIGN_PATCHES = [{
   id: 'warp-sensor-origin',
   files: ['src/engine/actors/Warp.ts', 'src/engine/actors/WarpAll.ts'],
   evidence: ['FUN_7ff72bb62ec0', 'FUN_7ff72bc12370', 'FUN_7ff72bc17170'],
-  behavior: 'Local [0,0,width,height] sensor translated to the actor; downward-Y stage coordinates use a left/bottom anchor. Sensors have no visible artwork.',
+  behavior: 'Local [0,0,width,height] sensor translated to the actor (top-left at the row point since warp-sensor-top-left; this entry first read it as a left/bottom anchor). Sensors have no visible artwork.',
 }, {
   id: 'push-box-native-art',
   files: ['src/engine/actors/PushBox.ts', 'src/engine/sprites.ts'],
@@ -351,6 +351,63 @@ export const CAMPAIGN_PATCHES = [{
   evidence: ['FUN_7ff72bb64310 (WeightedLift update) counts its load with FUN_7ff72bc132c0(body, up, recursive, mask 6) over the slab\'s own support contacts and carries exactly that contact set with FUN_7ff72bc17330 (recursive, one visited set): what counts is what rides, and a stack rides only through the body under it',
     'Browser adaptation: a body is taken as supported by the slab when the centre of its feet is over the slab (a narrow Ex2 slab still carries a cat wider than it); a body only touching the slab corner while standing on a ledge is not on the slab'],
   behavior: 'Weighted lifts (every family): a cat or box counts toward a lift, and is carried by it, only when the centre of its feet is over the slab; the cats and boxes on its head count and ride through it. A push box on a cat\'s head is carried by a lift only when that cat itself was carried (moved by the lift\'s delta this frame). Was: a cat touching the slab by 1 unit while stopped by a ledge counted (the lift moved) and its head boxes were moved by the lift into the stopped cat (2-4 lift edge).',
+}, {
+  // Fidelity audit 2026-10-08 batch 8 (solvability harness: 5-2 / 5-4 SKIPPED, MultiPlayer Unimpl).
+  id: 'multi-jump-relay',
+  files: ['src/engine/actors/Player.ts', 'src/engine/GameRuntime.ts'],
+  evidence: ['Factory 0x7ff72bb735d3 -> 0x7ff72bb76f17: MultiPlayer is ONE normal avatar (FUN_7ff72bb66e50) shared by the whole party; p1 (int) -> avatar+0xc90 = jumps per airtime (5-2: 2, 5-4: 10; < 1 = unlimited); p0 = facing',
+    'FUN_7ff72bb68290(av, -5.1, 3.0): +0x3f8 |= 2 (air jumps allowed), input source 3, relay component +0x17e0 (FUN_7ff72bb58c40) with jump speed -5.1 and move speed 3.0 (the ordinary 300 px/s, FUN_7ff72bb687e0 reads +0x195c); then +0x3f8 |= 4 (turn passing)',
+    'Relay FUN_7ff72bb58db0 every frame: turn slot +0x178 (starts at the avatar spawn input slot), holder slot +0x174 (-1); only a JUMP press edge from the turn slot counts (FUN_7ff72bc18f10(inp, 2, +0x178)) and makes holder = turn (even while the previous jumper still holds); LEFT / RIGHT / DOWN are read from the holder OR the turn slot (FUN_7ff72bb59000), nobody else controls anything; the holder releasing JUMP -> holder = -1; landing (cmd 0x17, FUN_7ff72bb58d60) also resets the holder',
+    'Jump rule FUN_7ff72bb6f0e0: ground contact -> ctrl+0x18 = 0; flag 2 skips the ground / coyote test; a jump starts on the press edge when (c90 < 1 || ctrl+0x18 < c90) and no JumpArea launch is pending; each jump ctrl+0x18++ (the ground jump counts), sets vy = -5.1 and runs the 13-frame hold boost read from the holder (already rising faster than -5.1: vy kept, no boost); then FUN_7ff72bb67670(av, (+0x400 + 1) % n), n = party size, recolours the cat to palette[turn]; a head already touching a ceiling uses the count but does not pass the turn; landing does not reset the turn',
+    'HUD FUN_7ff72bb702d0: draws remaining = c90 - ctrl+0x18 above the cat (y - 96)',
+    'Command 9 with input source 3 doubles c90 (0x7ff72bb699ca..db); a Switch whose target is actorName + label (5-2: two "MultiPlayer1" pads) sends it on its press edge: 2 -> 4 -> 8'],
+  behavior: 'MultiPlayer (5-2, 5-4): one cat shared by the party, played as a jump relay. The cat may jump in mid air up to its jumps-per-airtime count (5-2: 2, doubled by each "MultiPlayer1" switch to 4 and 8; 5-4: 10; reset on touching ground); only the player whose turn it is can start a jump, and every jump passes the turn to the next player (round robin over the party, the cat recolours to that player). The player who pressed jump holds the hold-boost; walking is controlled by that holder and by the turn player together. A remaining-jumps number floats above the cat. Was: whoever held jump took all input, nobody else could even walk, and only one ground jump per airtime.',
+}, {
+  // Fidelity audit 2026-10-08 batch 8 (5-2's pits were uncovered: the port centred the JumpArea sensors).
+  id: 'jumparea-top-left',
+  files: ['src/engine/actors/JumpArea.ts', 'src/engine/actors/Player.ts', 'src/engine/GameRuntime.ts'],
+  evidence: ['JumpArea setParams FUN_7ff72bb361a0: sensor {0, 0, p0, p1} -- the top-left corner at the row point (the port centred it)',
+    'Begin-contact only (FUN_7ff72bb36340) sends command 0 with (p2, p3)',
+    'Player strategy FUN_7ff72bb6fd20 ignores command 0 while the hold counter ctrl+0x14 != 0 (frames 1..13 of a jump); otherwise FUN_7ff72bb6f0e0 sets vy = p3 once on the next update (jumping blocked that frame) and overrides vx with p2 every frame until landing (steering ignored)'],
+  behavior: 'JumpArea (5-2): the launch sensor hangs from its row point (top-left corner), so the five areas sit under the three pits as nets that throw a fallen cat back up and out (vy -18 per tick, vx -4 / -8 / -12 per tick until it lands). A cat entering the area during the first 13 frames of a held jump is not launched. Was: centred on the row point (half of every pit uncovered) and the launch speed was replaced by steering on the next frame.',
+}, {
+  // Fidelity audit 2026-10-08 batch 8 (solvability harness: 5-1 / 5-3 SKIPPED, MajorityPlayer Unimpl).
+  id: 'majority-player',
+  files: ['src/engine/GameRuntime.ts'],
+  evidence: ['Factory branch 0x7ff72bb736e3: FUN_7ff72bb774a0(ctx, pos, scene, mode 4) spawns ONE normal avatar on the first slot (spawned-player counter 1, no per-player controller); n = numPlayers (DAT_7ff72c629fa8+0xcc08) = party size; ratio = clamp(ceil(0.7f * n) / n, 0.1, 1.0) (0.7 DAT_7ff72bcb77b0, ceil import 0x7ff72bc7c5d8, clamp FUN_7ff72bae6bf0; n == 0 -> 1.0 DAT_7ff72bcff538)',
+    'FUN_7ff72bb68220(avatar, n, ratio): vote block +0x1530 (FUN_7ff72bb7fec0), input source +0x1528 = 1, body colour +0x378 = 0xffbfffdf (neutral)',
+    'Tally FUN_7ff72bb7ffa0 every tick before physics (from FUN_7ff72bb690d0): prev = cur; for buttons 0..11 count slots p < n holding b (FUN_7ff72bc18c90); bit set when (prev clear and frac >= ratio) or (prev set and frac >= 0.5 * ratio) (DAT_7ff72bcff4fc); progress = clear: min(frac / ratio, 1), set: min((frac - r/2) / (r/2), 1)',
+    'press = cur & ~prev (FUN_7ff72bb80150), release = prev & ~cur (FUN_7ff72bb801a0), held = cur (FUN_7ff72bb80110); the avatar readers FUN_7ff72bb68300 / 68510 / 68640 take the source-1 path (voted bits only); buttons 2 jump, 3 up, 4 down, 5 left, 6 right; right is checked before left (FUN_7ff72bb6f0e0)',
+    'MajorityController (branch 0x7ff72bb747d3, ctor FUN_7ff72bb65df0, player p0 via FUN_7ff72bb78680) is HUD only: FUN_7ff72bb65f80 copies progress of [3, 4, 5, 6, 2]; draw FUN_7ff72bb660c0: pad {-82, 0, 164, 84}, per value > 0 an orange 0xffff864d bar from the bottom; bars up (-54, 12.5, 28, 16), down (-54, 52.5, 28, 16), left (-69.5, 28.5, 16, 24), right (-29.5, 28.5, 16, 24), jump (24.5, 20.5, 43, 40)',
+    'Nothing majority-specific in goal / key / respawn: the single cat is the whole roster (its door entry clears the stage); the port\'s floor(n / 2) + 1 goal rule has no native source'],
+  behavior: 'MajorityPlayer (5-1, 5-3): one neutral-coloured cat shared by the party, steered by a vote. Every tick each button (jump, up, down, left, right) is counted over the party\'s n input slots (a missing player abstains): it turns on when at least ceil(0.7 n) players hold it (2 of 2, 3 of 3, 3 of 4, 6 of 8) and stays on while at least half that ratio still hold it (1 of 2, 2 of 3, 2 of 4, 3 of 8); presses may be staggered. The cat sees only the voted buttons (a jump starts on the vote\'s rising edge, the hold boost reads the held vote; right beats left). The MajorityController is a screen-fixed pad drawing five orange progress bars. Was: one player (or anyone) drove the cat with no vote, a debug box for the pad, and an invented majority door rule.',
+}, {
+  // Fidelity audit 2026-10-08 batch 8 (12-1: the JumpSwitch only moved non-PushBox boxes and opened gates).
+  id: 'jumpswitch-launch',
+  files: ['src/engine/GameRuntime.ts'],
+  evidence: ['Ctor FUN_7ff72bb778f0: base Switch type 0 (FUN_7ff72bb5e8c0), bit 0x40 (momentary), no 0x100; vtable 7ff72bcbf6b0 +0x60 FUN_7ff72bb78cb0 stores (p0, p1) at +0x430 (12-1: (0, -9))',
+    'Pressed by any body with fixture flag +0x20 & 2 and category 1-3 (cat, push box) overlapping the radius-12 sensor circle (FUN_7ff72bb5f1d0); the jump button plays no part',
+    'FUN_7ff72bb5eef0: rising edge -> SE "switch" + fire (+0x108 = FUN_7ff72bb5f410); 0x40 clears pressed at the end of each update, so it fires once per new overlap and again after release + re-press',
+    'Fire FUN_7ff72bb5f410 (0x7ff72bb5f4d8..f524): target by name (FUN_7ff72bc1bc80, "PushBox1"), else the toucher; a player (actor+0x70 == 1) gets command 1 with (0, p1), anything else command 0 with (p0, p1); the base fire\'s 9 / 10 to the target is ignored by a box',
+    'PushBox receiver (vtable 7ff72bcb68c0 +0x98 FUN_7ff72bb33d00) cmd 0: +0x7e8 = (|x| * sign(vx), y), flag 1; FUN_7ff72bb33890: vy = launch.y with no rider check (hop 9, 8.35, ... apex ~66.9 after 14 ticks)'],
+  behavior: 'JumpSwitch (12-1): a momentary pad pressed by any live cat or push box within 12 of its point (no jump press needed); each new press launches its labelled target ("PushBox1": the push box hops 9 per tick up, ~67 high, even with a cat on it; a named cat would be launched straight up), or the toucher when no target matches, and it fires again after release and re-press. It opens no gates, bridges or stopwatches. Was: only a cat pressing jump on it, once per stage, opening gates and moving only the legacy normal / small / colour boxes (never PushBox 1).',
+}, {
+  // Fidelity audit 2026-10-08 batch 8 (11-4: the DelaySwitch fired at once and never reset).
+  id: 'delayswitch-countdown',
+  files: ['src/engine/GameRuntime.ts'],
+  evidence: ['Ctor FUN_7ff72bb5f6d0: type 0, latched (no 0x40), bit 0x100 (the press itself sends nothing), +0x74 = 2; vtable 7ff72bcbc808 +0x60 FUN_7ff72bb5f960: delay = p0 (11-4: 10) at +0x434',
+    'Update FUN_7ff72bb5f9c0: the press edge sets the countdown +0x430 = delay; while > 0 subtract dt; at <= 0 fire the label target with 9 (on, value +0x3fc) via FUN_7ff72bb5ebb0 once, set bit 4, zero the countdown; the base update clears pressed (bit 8): an empty pad pops up (0x100 suppresses the off message) and a body still on it is pressed again at once (fires every delay seconds)',
+    'Draw FUN_7ff72bb5fa80: while counting, "%d" of (int)(t + 0.99) (DAT_7ff72bcbc918) at (x, y - 75) (DAT_7ff72bcbc91c), size 0x20, centred',
+    'Pressers: cats and push boxes (the Switch contact categories)'],
+  behavior: 'DelaySwitch (11-4): a press by a cat or push box starts a countdown of p0 seconds (10 on 11-4) drawn as a whole-second number above the pad; at zero it sends its "on" once (11-4: starts Lift 1) and pops up, and if something is still on it the countdown restarts at once; it never sends "off" and no longer counts as a latched opener holding gates or lifts. Was: it fired the moment it was touched (by the current cat only), stayed down forever, and showed no countdown.',
+}, {
+  // Fidelity audit 2026-10-08 batch 8 (5-1: the third Warp, row y 480 / h 96, covered the floor in front of the door).
+  id: 'warp-sensor-top-left',
+  files: ['src/engine/actors/Warp.ts', 'src/engine/actors/WarpAll.ts'],
+  evidence: ['Warp ctor FUN_7ff72bb62ec0 builds its sensor with FUN_7ff72bc16bf0(actor, {0, 0, p0, p1}, 0, 1) -> FUN_7ff72bc12370, which stores the rect as given (x, y, w, h at +0x28..+0x34) -- the same call and the same {0, 0, w, h} form as the JumpArea sensor FUN_7ff72bb361a0 (jumparea-top-left: top-left at the row point)',
+    'The engine rects are y-down top-left: the JumpStand body {-16, -34, 32, 34} (DAT_7ff72bcbd960) is the block standing ON its row point, from y - 34 to y',
+    'Stage data: 5-1 stage_majo01 Warps at rows y 576 / 576 / 480 with h 96 on a 480-high map: top-left puts all three just below the map (pit catchers); a bottom anchor put the third one over the floor x 2256..2352 in front of the door (any cat walking to the door was warped back)'],
+  behavior: 'Warp / WarpAll sensors hang down from their row point (top-left corner at the row x / y, w x h below it), like JumpArea. Was: the bottom-left reading of warp-sensor-origin (the sensor rose h above the row point), which on 5-1 turned the floor before the door into a warp.',
 }];
 
 // Fail the build if upstream code changes: never silently skip a correction.
@@ -424,6 +481,53 @@ export function patchCampaignSource(file, source) {
       this.jumpPhase = 1;
       this.jumpCoyoteTimer = 0;
     } else if`, file);
+    // multi-jump-relay: MultiPlayer air jumps (avatar +0x3f8 flag 2) up to +0xc90 per airtime (FUN_7ff72bb6f0e0).
+    source = replaceOnce(source, '  pendingLaunchY: number | null = null;\n', `  pendingLaunchY: number | null = null;
+  /** multi-jump-relay: MultiPlayer air jumps (+0x3f8 flag 2), jumps per airtime (+0xc90, < 1 = unlimited), airtime counter (ctrl+0x18). */
+  airJumps = false;
+  maxJumps = 0;
+  jumpsUsed = 0;
+  /** multi-jump-relay: set by update when a jump started, and when that jump's head was blocked (the runtime clears both). */
+  jumpStarted = false;
+  jumpHeadBlocked = false;
+  /** jumparea-top-left: horizontal speed forced by a JumpArea launch until landing (per second; null = steering). */
+  lockedVx: number | null = null;
+`, file);
+    source = replaceOnce(source, '    const canStartJump = wasGrounded || this.jumpCoyoteTimer > 0;\n', `    // multi-jump-relay: ground contact resets the airtime counter; flag 2 skips the ground / coyote test.
+    if (wasGrounded) this.jumpsUsed = 0;
+    const canStartJump = this.airJumps
+      ? this.maxJumps < 1 || this.jumpsUsed < this.maxJumps
+      : wasGrounded || this.jumpCoyoteTimer > 0;
+    // jumparea-top-left: a launch overrides steering until the cat lands.
+    if (wasGrounded && this.pendingLaunchY === null) this.lockedVx = null;
+    if (this.lockedVx !== null) this.velocity.x = this.lockedVx;
+`, file);
+    source = replaceOnce(source, `    const result = moveRectWithTileCollisions(tileMap, this.rect, {
+      x: this.velocity.x * dt,
+      y: this.velocity.y * dt,
+    }, wasGrounded);
+`, `    if (startsJump) {
+      this.jumpStarted = true;
+      this.jumpsUsed += 1;
+    }
+    const result = moveRectWithTileCollisions(tileMap, this.rect, {
+      x: this.velocity.x * dt,
+      y: this.velocity.y * dt,
+    }, wasGrounded);
+    if (startsJump && this.velocity.y < 0 && result.velocity.y === 0) this.jumpHeadBlocked = true;
+`, file);
+    source = replaceOnce(source, '    this.grounded = result.grounded || remainsTileSupported;\n', `    this.grounded = result.grounded || remainsTileSupported;
+    if (this.grounded) {
+      this.jumpsUsed = 0;
+      this.lockedVx = null;
+    }
+`, file);
+    source = replaceOnce(source, '    this.jumpCoyoteTimer = 0;\n    this.deathTimer = 0;\n', `    this.jumpCoyoteTimer = 0;
+    this.deathTimer = 0;
+    this.jumpsUsed = 0;
+    this.lockedVx = null;
+    this.pendingLaunchY = null;
+`, file);
     return source;
   }
   if (file === 'src/engine/physics.ts') {
@@ -1367,6 +1471,16 @@ import { frameTexture } from '../sprites';
     this.velocity = result.velocity;
     this.syncView();
   }`, file);
+  }
+  if (file === 'src/engine/actors/JumpArea.ts') {
+    // jumparea-top-left: FUN_7ff72bb361a0 sensor {0, 0, p0, p1} -- the top-left corner at the row point.
+    source = replaceOnce(source, `      x: spawn.x - this.params.width / 2,
+      y: spawn.y - this.params.height / 2,`, `      x: spawn.x,
+      y: spawn.y,`, file);
+    source = replaceOnce(source, '    g.drawRoundedRect(-this.params.width / 2, -this.params.height / 2, this.params.width, this.params.height, 6);',
+      '    g.drawRoundedRect(0, 0, this.params.width, this.params.height, 6);', file);
+    source = replaceOnce(source, '    g.drawRect(-10, -2, 20, 4);', '    g.drawRect(this.params.width / 2 - 10, this.params.height / 2 - 2, 20, 4);', file);
+    return source;
   }
   if (file === 'src/engine/GameRuntime.ts') {
     // optional-teacher-cats: a leaving helper cat is removed with every retained reference to it.
@@ -3304,6 +3418,534 @@ function feetOnSlab(rect: Rect, slab: Rect): boolean {
     && centre >= slab.x && centre <= slab.x + slab.width;
 }
 `;
+    // multi-jump-relay: the relay component (+0x17e0) per MultiPlayer.
+    source = replaceOnce(source, '  private multiPlayerActiveInputSlots = new Map<Player, number>();\n', `  private multiPlayerActiveInputSlots = new Map<Player, number>();
+  /** multi-jump-relay: turn slot (+0x178), holder slot (+0x174, -1 = none), party size n, switch target name, HUD. */
+  private multiRelay = new Map<Player, {
+    turnSlot: number;
+    holderSlot: number;
+    partyN: number;
+    targetName: string;
+    wasGrounded: boolean;
+    hud: Text;
+  }>();
+`, file);
+    source = replaceOnce(source, '    this.multiPlayerActiveInputSlots.clear();\n    this.currentPlayerIndex = 0;\n', `    this.multiPlayerActiveInputSlots.clear();
+    this.multiRelay.clear();
+    this.currentPlayerIndex = 0;
+`, file);
+    source = replaceOnce(source, `    if (spawn.actorName === 'MultiPlayer') {
+      this.multiPlayers.add(player);
+    }
+`, `    if (spawn.actorName === 'MultiPlayer') {
+      this.multiPlayers.add(player);
+      this.createMultiPlayerRelay(player, spawn, inputSlot);
+    }
+`, file);
+    source = replaceOnce(source, `  private resolveMultiPlayerInput(
+    input: InputState,
+    playerInputs: readonly InputState[] | undefined,
+    player: Player,
+  ): InputState {
+    if (!playerInputs || playerInputs.length === 0) return input;
+
+    const activeSlot = this.multiPlayerActiveInputSlots.get(player);
+    if (activeSlot !== undefined) {
+      const activeInput = playerInputs[activeSlot];
+      if (activeInput && inputStateHoldsMultiPlayerLatch(activeInput)) return activeInput;
+      this.multiPlayerActiveInputSlots.delete(player);
+    }
+
+    const nextSlot = playerInputs.findIndex(inputStateHoldsMultiPlayerLatch);
+    if (nextSlot >= 0) {
+      this.multiPlayerActiveInputSlots.set(player, nextSlot);
+      return playerInputs[nextSlot] ?? NEUTRAL_INPUT;
+    }
+
+    return NEUTRAL_INPUT;
+  }
+`, `  // multi-jump-relay: relay FUN_7ff72bb58db0. Only a jump press from the turn slot counts and takes the hold;
+  // steering (FUN_7ff72bb59000) is the holder's OR the turn slot's; the hold boost is the holder's jump button.
+  private resolveMultiPlayerInput(
+    input: InputState,
+    playerInputs: readonly InputState[] | undefined,
+    player: Player,
+  ): InputState {
+    const relay = this.multiRelay.get(player);
+    if (!relay) return input;
+    const inputs = playerInputs && playerInputs.length > 0 ? playerInputs : [input];
+    const turnInput = inputs[relay.turnSlot] ?? NEUTRAL_INPUT;
+    if (turnInput.jumpPressed) relay.holderSlot = relay.turnSlot;
+    let holderInput = relay.holderSlot >= 0 ? inputs[relay.holderSlot] : undefined;
+    if (relay.holderSlot >= 0 && !holderInput?.jump && !holderInput?.jumpPressed) {
+      relay.holderSlot = -1;
+      holderInput = undefined;
+    }
+    this.multiPlayerActiveInputSlots.set(player, relay.holderSlot >= 0 ? relay.holderSlot : relay.turnSlot);
+    const either = (key: 'left' | 'right' | 'up' | 'down' | 'resetPressed') => !!(turnInput[key] || holderInput?.[key]);
+    // The merged mask keeps both bits; FUN_7ff72bb6f0e0 tests RIGHT (6) before LEFT (5), so right wins a conflict.
+    return {
+      ...NEUTRAL_INPUT,
+      left: either('left') && !either('right'),
+      right: either('right'),
+      up: either('up'),
+      down: either('down'),
+      jump: !!holderInput?.jump,
+      jumpPressed: !!turnInput.jumpPressed,
+      resetPressed: either('resetPressed'),
+    };
+  }
+
+  // multi-jump-relay: factory 0x7ff72bb76f17 -- p1 = jumps per airtime (+0xc90); the turn starts at the spawn slot.
+  private createMultiPlayerRelay(player: Player, spawn: ActorSpawnDef, inputSlot: number): void {
+    const at = spawn.raw.findIndex((value, index) => value === spawn.x && spawn.raw[index + 1] === spawn.y);
+    const maxJumps = at >= 0 ? Number(spawn.raw[at + 3]) : Number.NaN;
+    player.airJumps = true;
+    player.maxJumps = Number.isFinite(maxJumps) ? Math.trunc(maxJumps) : 0;
+    const hud = new Text('', new TextStyle({
+      fill: 0xffffff,
+      fontSize: 28,
+      fontWeight: '700',
+      stroke: 0x000000,
+      strokeThickness: 5,
+    }));
+    hud.anchor.set(0.5);
+    this.actorLayer.addChild(hud);
+    this.multiRelay.set(player, {
+      turnSlot: inputSlot,
+      holderSlot: -1,
+      partyN: Math.max(1, Math.trunc(this.nativePartyCount())),
+      targetName: 'MultiPlayer' + spawn.label.trim(),
+      wasGrounded: false,
+      hud,
+    });
+    this.updateMultiPlayerHud(player);
+  }
+
+  // multi-jump-relay: after the avatar update -- landing (cmd 0x17) drops the holder; a jump whose head was not
+  // blocked passes the turn to (turn + 1) % n and recolours the cat (FUN_7ff72bb67670).
+  private passMultiPlayerTurn(player: Player): void {
+    const relay = this.multiRelay.get(player);
+    if (!relay) return;
+    if (!relay.wasGrounded && player.grounded) relay.holderSlot = -1;
+    relay.wasGrounded = player.grounded;
+    if (player.jumpStarted && !player.jumpHeadBlocked) {
+      relay.turnSlot = (relay.turnSlot + 1) % relay.partyN;
+      player.setBodyColor(PLAYER_BODY_COLORS[relay.turnSlot] ?? DEFAULT_PLAYER_BODY_COLOR);
+    }
+    this.updateMultiPlayerHud(player);
+  }
+
+  // multi-jump-relay: HUD FUN_7ff72bb702d0 -- remaining = c90 - counter, drawn 96 above the cat.
+  private updateMultiPlayerHud(player: Player): void {
+    const relay = this.multiRelay.get(player);
+    if (!relay) return;
+    relay.hud.visible = player.maxJumps >= 1;
+    relay.hud.text = String(Math.max(0, player.maxJumps - player.jumpsUsed));
+    relay.hud.x = player.rect.x + player.rect.width / 2;
+    relay.hud.y = player.rect.y + player.rect.height - 96;
+  }
+
+  // multi-jump-relay: command 9 with input source 3 doubles c90 (0x7ff72bb699ca..db); a Switch targets the cat by
+  // actorName + label ("MultiPlayer1").
+  private doubleMultiPlayerJumps(switchSpawn: ActorSpawnDef): void {
+    const target = switchSpawn.label.trim();
+    for (const [player, relay] of this.multiRelay) {
+      if (relay.targetName === target) player.maxJumps *= 2;
+    }
+  }
+`, file);
+    source = replaceOnce(source, `      const previousHorizontalVelocity = this.player.velocity.x;
+      const wasRisingBeforeUpdate = this.player.velocity.y < 0;
+`, `      const previousHorizontalVelocity = this.player.velocity.x;
+      const wasRisingBeforeUpdate = this.player.velocity.y < 0;
+      this.player.jumpStarted = false;
+      this.player.jumpHeadBlocked = false;
+`, file);
+    source = replaceOnce(source, '      this.applyIceChipSlide(clampedDt, activePlayerInput, previousHorizontalVelocity);\n', `      this.applyIceChipSlide(clampedDt, activePlayerInput, previousHorizontalVelocity);
+      this.passMultiPlayerTurn(this.player);
+`, file);
+    source = replaceOnce(source, `        switchPad.press();
+        this.onEvent?.({ type: 'switch', playerIndex: this.inputSlotForPlainSwitchActivation(switchPad) });
+`, `        switchPad.press();
+        this.doubleMultiPlayerJumps(switchPad.spawn);
+        this.onEvent?.({ type: 'switch', playerIndex: this.inputSlotForPlainSwitchActivation(switchPad) });
+`, file);
+    // jumparea-top-left: begin-contact cmd 0 (FUN_7ff72bb36340), dropped during the hold ramp (FUN_7ff72bb6fd20);
+    // the next update sets vy = p3 once and vx = p2 until landing (FUN_7ff72bb6f0e0).
+    source = replaceOnce(source, `      if (!launched) {
+        this.player.applyResolvedCollision(this.player.rect, getJumpAreaVelocity(jumpArea), false);
+        launched = true;
+      }
+`, `      if (!launched && this.player.jumpPhase === 0) {
+        const velocity = getJumpAreaVelocity(jumpArea);
+        this.player.pendingLaunchY = velocity.y;
+        this.player.lockedVx = velocity.x;
+        launched = true;
+      }
+`, file);
+    // majority-player: state reset with the stage; the vote is stepped once per frame before any input reader.
+    source = replaceOnce(source, '  private hasMajorityController = false;\n', `  private hasMajorityController = false;
+  /** majority-player: the shared cat (vote block +0x1530), its vote {n, ratio, cur, prev, progress} and the HUD pad. */
+  private majorityPlayers = new Set<Player>();
+  private majorityVote: { n: number; ratio: number; cur: number; prev: number; progress: number[] } | null = null;
+  private majorityHud: { spawn: ActorSpawnDef; view: Graphics } | null = null;
+`, file);
+    source = replaceOnce(source, `    this.hasMajorityController = false;
+    this.breakoutKeys = [];
+`, `    this.hasMajorityController = false;
+    this.majorityPlayers.clear();
+    this.majorityVote = null;
+    this.majorityHud = null;
+    this.breakoutKeys = [];
+`, file);
+    source = replaceOnce(source, `    MajorityController: (spawn) => {
+      this.hasMajorityController = true;
+      this.addActorView(spawn, drawDebugActor(spawn));
+    },
+`, `    MajorityController: (spawn) => {
+      // majority-player: ctor FUN_7ff72bb65df0 -- HUD only (the pad with five progress bars), no body.
+      this.hasMajorityController = true;
+      const view = new Graphics();
+      this.majorityHud = { spawn, view };
+      this.actorLayer.addChild(view);
+    },
+`, file);
+    source = replaceOnce(source, `    if (spawn.actorName === 'MajorityPlayer') {
+      this.hasMajorityController = true;
+    }
+`, `    if (spawn.actorName === 'MajorityPlayer') {
+      this.createMajorityVote(player);
+    }
+`, file);
+    source = replaceOnce(source, '    if (!this.tileMap || this.players.length === 0 || this.cleared) return;\n', `    if (!this.tileMap || this.players.length === 0 || this.cleared) return;
+    this.stepMajorityVote(input, playerInputs);
+`, file);
+    source = replaceOnce(source, `  private resolvePlayerInput(
+    input: InputState,
+    playerInputs: readonly InputState[] | undefined,
+    activePlayerCount: number,
+    playerIndex: number,
+    playerInputSlot: number,
+  ): InputState {
+`, `  private resolvePlayerInput(
+    input: InputState,
+    playerInputs: readonly InputState[] | undefined,
+    activePlayerCount: number,
+    playerIndex: number,
+    playerInputSlot: number,
+  ): InputState {
+    const majorityCat = this.players[playerIndex];
+    if (majorityCat && this.majorityPlayers.has(majorityCat)) return this.resolveMajorityInput(input, playerInputs);
+`, file);
+    source = replaceOnce(source, `    const requiredGoalPlayerCount = this.hasMajorityController
+      ? Math.floor(goalEligiblePlayers.length / 2) + 1
+      : goalEligiblePlayers.length;
+`, `    // majority-player: no majority goal rule natively (the one shared cat is the whole roster).
+    const requiredGoalPlayerCount = goalEligiblePlayers.length;
+`, file);
+    source = replaceOnce(source, '    this.layoutCamera();\n    // Recovered-data: Ghost vtable POST slot', `    this.layoutCamera();
+    this.drawMajorityHud();
+    // Recovered-data: Ghost vtable POST slot`, file);
+    source = replaceOnce(source, '  // multi-jump-relay: relay FUN_7ff72bb58db0.', `  // majority-player: FUN_7ff72bb774a0 mode 4 + FUN_7ff72bb68220(avatar, n, ratio). n = party size (DAT_7ff72c629fa8+0xcc08),
+  // ratio = clamp(ceil(0.7f * n) / n, 0.1, 1.0); input source 1; body colour 0xffbfffdf (neutral).
+  private createMajorityVote(player: Player): void {
+    const n = Math.min(10, Math.max(1, Math.trunc(this.nativePartyCount())));
+    const ratio = Math.min(1, Math.max(0.1, Math.fround(Math.ceil(Math.fround(Math.fround(0.7) * n)) / n)));
+    this.majorityPlayers.add(player);
+    this.majorityVote = { n, ratio, cur: 0, prev: 0, progress: [0, 0, 0, 0, 0] };
+    player.setBodyColor(0xbfffdf);
+  }
+
+  // majority-player: tally FUN_7ff72bb7ffa0, once per tick before the avatar reads input. For each button, count the
+  // slots p < n holding it (a missing slot abstains); set when (clear and frac >= ratio) or (set and frac >= ratio / 2).
+  // Bits: 2 jump, 3 up, 4 down, 5 left, 6 right. Progress (HUD) = clear: frac / ratio; set: (frac - r/2) / (r/2).
+  private stepMajorityVote(input: InputState, playerInputs: readonly InputState[] | undefined): void {
+    const vote = this.majorityVote;
+    if (!vote) return;
+    const inputs = playerInputs && playerInputs.length > 0 ? playerInputs : [input];
+    const holds: Array<(slot: InputState) => boolean> = [];
+    holds[2] = (slot) => !!(slot.jump || slot.jumpPressed);
+    holds[3] = (slot) => !!slot.up;
+    holds[4] = (slot) => !!slot.down;
+    holds[5] = (slot) => !!slot.left;
+    holds[6] = (slot) => !!slot.right;
+    vote.prev = vote.cur;
+    vote.cur = 0;
+    const keep = Math.fround(vote.ratio * 0.5);
+    const progress: number[] = [];
+    for (let bit = 2; bit <= 6; bit += 1) {
+      let count = 0;
+      for (let slot = 0; slot < vote.n; slot += 1) {
+        const slotInput = inputs[slot];
+        if (slotInput && holds[bit](slotInput)) count += 1;
+      }
+      const frac = Math.fround(count / vote.n);
+      const wasSet = (vote.prev & (1 << bit)) !== 0;
+      const set = wasSet ? frac >= keep : frac >= vote.ratio;
+      if (set) vote.cur |= 1 << bit;
+      progress[bit] = wasSet ? Math.max(0, Math.min((frac - keep) / keep, 1)) : Math.min(frac / vote.ratio, 1);
+    }
+    // FUN_7ff72bb65f80 copies buttons [3, 4, 5, 6, 2] (up, down, left, right, jump).
+    vote.progress = [progress[3], progress[4], progress[5], progress[6], progress[2]];
+  }
+
+  // majority-player: the avatar reads only the voted bits (source 1): held = cur, press = cur & ~prev; right is
+  // checked before left (FUN_7ff72bb6f0e0), so right wins a double vote.
+  private resolveMajorityInput(input: InputState, playerInputs: readonly InputState[] | undefined): InputState {
+    const vote = this.majorityVote;
+    if (!vote) return input;
+    const held = (bit: number) => (vote.cur & (1 << bit)) !== 0;
+    const pressed = (bit: number) => held(bit) && (vote.prev & (1 << bit)) === 0;
+    const inputs = playerInputs && playerInputs.length > 0 ? playerInputs : [input];
+    return {
+      ...NEUTRAL_INPUT,
+      left: held(5) && !held(6),
+      right: held(6),
+      up: held(3),
+      down: held(4),
+      jump: held(2),
+      jumpPressed: pressed(2),
+      resetPressed: !!input.resetPressed || inputs.some((slot) => !!slot?.resetPressed),
+    };
+  }
+
+  // majority-player: MajorityController draw FUN_7ff72bb660c0 -- the pad {-82, 0, 164, 84} at the row point (screen
+  // fixed: the row x is WINDOW_WIDTH / (2 * scale)); each progress > 0 fills an orange 0xff864d bar from the bottom.
+  private drawMajorityHud(): void {
+    const hud = this.majorityHud;
+    if (!hud) return;
+    const progress = this.majorityVote?.progress ?? [0, 0, 0, 0, 0];
+    const left = this.scrollCameraConfig?.mode ? this.scrollCameraState.scroll : 0;
+    const g = hud.view;
+    g.x = left + hud.spawn.x;
+    g.y = hud.spawn.y;
+    g.clear();
+    g.beginFill(0x2b2b2b, 0.55);
+    g.lineStyle(3, 0x3a2418, 0.9);
+    g.drawRoundedRect(-82, 0, 164, 84, 14);
+    g.endFill();
+    // up, down, left, right, jump
+    const rects = [[-54, 12.5, 28, 16], [-54, 52.5, 28, 16], [-69.5, 28.5, 16, 24], [-29.5, 28.5, 16, 24], [24.5, 20.5, 43, 40]];
+    rects.forEach(([x, y, w, h], index) => {
+      g.lineStyle(2, 0xffffff, 0.8);
+      g.beginFill(0xffffff, 0.2);
+      g.drawRect(x, y, w, h);
+      g.endFill();
+      const p = progress[index] ?? 0;
+      if (p <= 0) return;
+      g.lineStyle(0);
+      g.beginFill(0xff864d, 1);
+      g.drawRect(x, y + h - h * p, w, h * p);
+      g.endFill();
+    });
+  }
+
+  // multi-jump-relay: relay FUN_7ff72bb58db0.`, file);
+    // jumpswitch-launch: a momentary pad (bit 0x40) pressed by any cat or push box; the edge launches its labelled target.
+    source = replaceOnce(source, '  private readonly pressedJumpSwitches = new Set<JumpSwitch>();\n', `  private readonly pressedJumpSwitches = new Set<JumpSwitch>();
+  /** jumpswitch-launch: pads overlapped last tick (press edges) and box launches for the push-box pass (+0x7e8). */
+  private jumpSwitchesOccupied = new Set<JumpSwitch>();
+  private pendingSwitchBoxLaunches = new Map<PushBox, { x: number; y: number }>();
+`, file);
+    source = replaceOnce(source, '    this.pressedJumpSwitches.clear();\n', `    this.pressedJumpSwitches.clear();
+    this.jumpSwitchesOccupied.clear();
+    this.pendingSwitchBoxLaunches.clear();
+`, file);
+    source = replaceOnce(source, '      this.pressJumpSwitches(resolvedPlayerInput);\n', ``, file);
+    source = replaceOnce(source, `    this.carryPushBoxesOnPlayerHeads();
+    this.updateFallingPushBoxes(clampedDt);
+`, `    this.updateJumpSwitches();
+    this.updateDelaySwitches(clampedDt);
+    this.carryPushBoxesOnPlayerHeads();
+    this.updateFallingPushBoxes(clampedDt);
+`, file);
+    source = replaceOnce(source, '      const otherBoxRects = this.pushBoxes.filter((_, j) => j !== i).map((other) => other.rect);\n', `      {
+        // jumpswitch-launch: FUN_7ff72bb33890 -- vy = launch (the first tick moves the full p1), no rider check.
+        const launch = this.pendingSwitchBoxLaunches.get(box);
+        if (launch) {
+          this.pendingSwitchBoxLaunches.delete(box);
+          box.launchX = launch.x;
+          box.velocityY = launch.y - PUSH_BOX_GRAVITY * dt;
+          box.falling = true;
+          box.hopping = true;
+          box.wasSupported = false;
+        }
+      }
+      const otherBoxRects = this.pushBoxes.filter((_, j) => j !== i).map((other) => other.rect);
+`, file);
+    source = replaceOnce(source, '  private pressJumpSwitches(input: InputState): void {\n', `  // jumpswitch-launch: ctor FUN_7ff72bb778f0 (type 0, momentary 0x40). Sensor: radius 12 at the row point
+  // (FUN_7ff72bb5f1d0), any cat or push box. The press edge (FUN_7ff72bb5eef0) fires FUN_7ff72bb5f410: the target named
+  // by the label (else the toucher); a cat gets command 1 (vy = p1), anything else command 0 (vx = |p0| * sign(vx),
+  // vy = p1). No gate / bridge / stopwatch message (the base fire's 9 / 10 to the box is ignored by it).
+  private updateJumpSwitches(): void {
+    for (const jumpSwitch of this.jumpSwitches) {
+      const sensor = { x: jumpSwitch.spawn.x - 12, y: jumpSwitch.spawn.y - 12, width: 24, height: 24 };
+      const cat = this.players.find((player) => player.deathTimer <= 0 && !this.deathFallPlayers.has(player)
+        && !this.collisionChangePlayersCollisionOff.has(player) && rectsOverlap(player.rect, sensor));
+      const box = cat ? undefined : this.pushBoxes.find((pushBox) => rectsOverlap(pushBox.rect, sensor));
+      const occupied = !!(cat || box);
+      const wasOccupied = this.jumpSwitchesOccupied.has(jumpSwitch);
+      jumpSwitch.view.alpha = occupied ? 0.55 : 1;
+      jumpSwitch.view.scale.y = occupied ? 0.65 : 1;
+      if (!occupied) {
+        this.jumpSwitchesOccupied.delete(jumpSwitch);
+        continue;
+      }
+      this.jumpSwitchesOccupied.add(jumpSwitch);
+      if (wasOccupied) continue;
+      const toucherIndex = cat ? this.players.indexOf(cat) : -1;
+      this.onEvent?.({
+        type: 'switch',
+        playerIndex: toucherIndex >= 0 ? this.playerInputSlots[toucherIndex] ?? toucherIndex : this.currentInputPlayerIndex(),
+      });
+      const name = jumpSwitch.spawn.label.trim();
+      const named = (spawn: ActorSpawnDef | undefined) => !!spawn && name !== '' && spawn.actorName + spawn.label.trim() === name;
+      const targetBoxes = this.pushBoxes.filter((pushBox) => named(pushBox.spawn));
+      const targetCats = this.players.filter((_, index) => {
+        const row = this.stage?.createTable.find((spawn) => spawn.x === this.playerSpawns[index]?.x
+          && spawn.y === this.playerSpawns[index]?.y && runtimePlayerActorNames.has(spawn.actorName));
+        return named(row);
+      });
+      const launchCats = targetBoxes.length + targetCats.length > 0 ? targetCats : cat ? [cat] : [];
+      const launchBoxes = targetBoxes.length + targetCats.length > 0 ? targetBoxes : box ? [box] : [];
+      const vx = jumpSwitch.params.state * 60;
+      const vy = jumpSwitch.params.impulse * 60;
+      for (const target of launchCats) target.pendingLaunchY = vy;
+      for (const target of launchBoxes) {
+        const start = this.frameStartPushBoxRects[this.pushBoxes.indexOf(target)];
+        const movedLeft = !!start && target.rect.x < start.x;
+        this.pendingSwitchBoxLaunches.set(target, { x: Math.abs(vx) * (movedLeft ? -1 : 1), y: vy });
+      }
+    }
+  }
+
+  // jumpswitch-launch: the old player-only jump-press path, no longer called.
+  private pressJumpSwitches(input: InputState): void {
+`, file);
+    // delayswitch-countdown: a press starts a p0-second countdown; the on fan-out fires once at zero, then the pad pops up.
+    source = replaceOnce(source, '  private delaySwitches: DelaySwitch[] = [];\n', `  private delaySwitches: DelaySwitch[] = [];
+  /** delayswitch-countdown: seconds left per pressed DelaySwitch (+0x430) and its countdown label. */
+  private delaySwitchCountdowns = new Map<DelaySwitch, number>();
+  private delaySwitchLabels = new Map<DelaySwitch, Text>();
+`, file);
+    source = replaceOnce(source, '    this.delaySwitches = [];\n', `    this.delaySwitches = [];
+    this.delaySwitchCountdowns.clear();
+    this.delaySwitchLabels.clear();
+`, file);
+    source = replaceOnce(source, `    for (const delaySwitch of this.delaySwitches) {
+      if (delaySwitch.pressed || !this.delaySwitchHasActivationOverlap(delaySwitch)) continue;
+      delaySwitch.press();
+      this.onEvent?.({ type: 'switch', playerIndex: this.currentInputPlayerIndex() });
+      for (const gate of this.gates) {
+        if (!gate.opened && shouldOpenGateForSwitch(delaySwitch.spawn, gate.spawn)) {
+          gate.open();
+        }
+      }
+      for (const bridge of this.bridges) {
+        if (!bridge.opened && shouldOpenGateForSwitch(delaySwitch.spawn, bridge.spawn)) {
+          bridge.open();
+        }
+      }
+      this.openTrafficLightsForSwitch(delaySwitch.spawn);
+      this.activateBaseLiftsForSwitch(delaySwitch.spawn);
+      for (const stopWatch of this.stopWatches) {
+        if (!stopWatch.activated && shouldActivateStopWatchForSwitch(delaySwitch.spawn, stopWatch.spawn)) {
+          stopWatch.activate();
+        }
+      }
+      this.disableDeadTimersForSwitch(delaySwitch.spawn);
+      this.pressSwitchMediatorsForSwitch(delaySwitch.spawn);
+      this.relayNativeDelaySwitchMediatorCommand(delaySwitch);
+    }
+`, ``, file);
+    source = replaceOnce(source, `  private delaySwitchHasActivationOverlap(delaySwitch: DelaySwitch): boolean {
+    return !this.collisionChangePlayersCollisionOff.has(this.player!)
+      && !this.activelyGuardingPlayers.has(this.player!)
+      && rectsOverlap(this.player!.rect, delaySwitch.rect);
+  }
+`, `  // delayswitch-countdown: pressed by any live cat or push box on the pad.
+  private delaySwitchHasActivationOverlap(delaySwitch: DelaySwitch): boolean {
+    return this.players.some((player) => player.deathTimer <= 0 && !this.deathFallPlayers.has(player)
+        && !this.collisionChangePlayersCollisionOff.has(player) && !this.activelyGuardingPlayers.has(player)
+        && rectsOverlap(player.rect, delaySwitch.rect))
+      || this.pushBoxes.some((box) => rectsOverlap(box.rect, delaySwitch.rect));
+  }
+
+  // delayswitch-countdown: ctor FUN_7ff72bb5f6d0 (latched, 0x100: the press sends nothing), delay p0 (+0x434).
+  // Press edge: countdown = p0 s. Update FUN_7ff72bb5f9c0: subtract dt; at <= 0 fire the label target once (9 = on,
+  // FUN_7ff72bb5ebb0) and release; a body still on it presses it again (every p0 s). Never sends off.
+  // Label "%d" of (int)(t + 0.99) at (x, y - 75), size 32, centred, while counting.
+  private updateDelaySwitches(dt: number): void {
+    for (const delaySwitch of this.delaySwitches) {
+      const label = this.delaySwitchLabel(delaySwitch);
+      if (!delaySwitch.pressed) {
+        label.visible = false;
+        if (!this.delaySwitchHasActivationOverlap(delaySwitch)) continue;
+        delaySwitch.press();
+        this.delaySwitchCountdowns.set(delaySwitch, delaySwitch.params.delay);
+        this.onEvent?.({ type: 'switch', playerIndex: this.currentInputPlayerIndex() });
+      } else {
+        const left = (this.delaySwitchCountdowns.get(delaySwitch) ?? 0) - dt;
+        this.delaySwitchCountdowns.set(delaySwitch, left);
+        if (left <= 0) {
+          this.fireDelaySwitch(delaySwitch);
+          this.delaySwitchCountdowns.set(delaySwitch, 0);
+          delaySwitch.pressed = false;
+          delaySwitch.view.alpha = 1;
+          delaySwitch.view.scale.y = 1;
+          label.visible = false;
+          continue;
+        }
+      }
+      const seconds = this.delaySwitchCountdowns.get(delaySwitch) ?? 0;
+      label.text = String(Math.trunc(seconds + 0.99));
+      label.visible = true;
+    }
+  }
+
+  private delaySwitchLabel(delaySwitch: DelaySwitch): Text {
+    let label = this.delaySwitchLabels.get(delaySwitch);
+    if (label) return label;
+    label = new Text('', new TextStyle({ fill: 0xffffff, fontSize: 32, fontWeight: '700', stroke: 0x000000, strokeThickness: 5 }));
+    label.anchor.set(0.5);
+    label.x = delaySwitch.spawn.x;
+    label.y = delaySwitch.spawn.y - 75;
+    label.visible = false;
+    this.actorLayer.addChild(label);
+    this.delaySwitchLabels.set(delaySwitch, label);
+    return label;
+  }
+
+  // delayswitch-countdown: the on fan-out (was run at once on the press).
+  private fireDelaySwitch(delaySwitch: DelaySwitch): void {
+    for (const gate of this.gates) {
+      if (!gate.opened && shouldOpenGateForSwitch(delaySwitch.spawn, gate.spawn)) {
+        gate.open();
+      }
+    }
+    for (const bridge of this.bridges) {
+      if (!bridge.opened && shouldOpenGateForSwitch(delaySwitch.spawn, bridge.spawn)) {
+        bridge.open();
+      }
+    }
+    this.openTrafficLightsForSwitch(delaySwitch.spawn);
+    this.activateBaseLiftsForSwitch(delaySwitch.spawn);
+    for (const stopWatch of this.stopWatches) {
+      if (!stopWatch.activated && shouldActivateStopWatchForSwitch(delaySwitch.spawn, stopWatch.spawn)) {
+        stopWatch.activate();
+      }
+    }
+    this.disableDeadTimersForSwitch(delaySwitch.spawn);
+    this.pressSwitchMediatorsForSwitch(delaySwitch.spawn);
+    this.relayNativeDelaySwitchMediatorCommand(delaySwitch);
+  }
+`, file);
+    source = replaceOnce(source, '    if (this.delaySwitches.some((s) => s.pressed && shouldOpenGateForSwitch(s.spawn, targetSpawn))) return true;\n', ``, file);
+    source = replaceOnce(source, '    if (this.delaySwitches.some((s) => s.pressed && shouldOpenTrafficLightForSwitch(s.spawn, targetSpawn))) return true;\n', ``, file);
+    source = replaceOnce(source, '    if (this.delaySwitches.some((s) => s.pressed && shouldDisableDeadTimerForSwitch(s.spawn, deadTimerSpawn))) return true;\n', ``, file);
+    source = replaceOnce(source, '    if (this.delaySwitches.some((s) => s.pressed && shouldActivateStopWatchForSwitch(s.spawn, stopWatchSpawn))) return true;\n', ``, file);
+    source = replaceOnce(source, '    if (this.delaySwitches.some((delaySwitch) => delaySwitch.pressed && holdsMediator(delaySwitch.spawn))) return true;\n', ``, file);
     source += `
 /** A copy of a stage row at a new point; raw x / y follow, because param parsers find their params after them. */
 function spawnMovedTo(spawn: ActorSpawnDef, x: number, y: number): ActorSpawnDef {
@@ -3323,6 +3965,7 @@ function spawnMovedTo(spawn: ActorSpawnDef, x: number, y: number): ActorSpawnDef
   // Select by identity: prepending another patch must not disable warp recovery.
   if (!CAMPAIGN_PATCHES.find(patch => patch.id === 'warp-sensor-origin').files.includes(file)) return source;
   source = replaceOnce(source, 'x: spawn.x - triggerSize.width / 2,', 'x: spawn.x,', file);
-  source = replaceOnce(source, 'y: spawn.y - triggerSize.height / 2,', 'y: spawn.y - triggerSize.height,', file);
+  // warp-sensor-top-left: {0, 0, w, h} hangs DOWN from the row point (y-down, like JumpArea / JumpStand bodies).
+  source = replaceOnce(source, 'y: spawn.y - triggerSize.height / 2,', 'y: spawn.y,', file);
   return replaceOnce(source, 'this.view.addChild(g);', 'this.view.addChild(g);\n    this.view.visible = false;', file);
 }

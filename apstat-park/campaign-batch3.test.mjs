@@ -214,7 +214,8 @@ test('11-4 Lift is 118 x 18 and a cat riding it travels sideways with the 1488-u
   place(b, 552 - 16, 290 - b.rect.height);
   let maxDx = 0, maxGap = 0;
   const startX = a.rect.x;
-  for (let i = 0; i < 160; i++) {
+  // delayswitch-countdown: the pad starts the lift only after its 10 s countdown (600 frames).
+  for (let i = 0; i < 160 + 600; i++) {
     const liftX = lift.rect.x;
     step(game, 1, idle(2));
     if (a.deathTimer > 0) break;

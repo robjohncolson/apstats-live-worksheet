@@ -211,8 +211,8 @@ test('every stage at parties 2/4/8: no cat inside a wall / lift / bridge / gate 
     }
   }
   const unique = [...new Set(problems.map((line) => line.replace(/ f\d+ /, ' ')))];
-  // Known, separately scheduled misreads (fidelity audit batches): 5-2 / 5-4 MultiPlayer control (batch 19: the port
-  // latches the one cat to whoever holds jump) and 9-2's SeesawParent decoded as a 365 x 915 wall (batch 23).
-  const KNOWN = /^stage_(multijump01|multijump02|seesaw01) /;
+  // Known, separately scheduled misread (fidelity audit batch 23): 9-2's SeesawParent decoded as a 365 x 915 wall.
+  // (5-2 / 5-4 MultiPlayer control left this list in batch 8: multi-jump-relay.)
+  const KNOWN = /^stage_seesaw01 /;
   assert.deepEqual(unique.filter((line) => !KNOWN.test(line)), []);
 });

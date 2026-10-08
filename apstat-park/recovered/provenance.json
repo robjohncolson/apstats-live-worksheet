@@ -44,7 +44,7 @@
         "FUN_7ff72bc12370",
         "FUN_7ff72bc17170"
       ],
-      "behavior": "Local [0,0,width,height] sensor translated to the actor; downward-Y stage coordinates use a left/bottom anchor. Sensors have no visible artwork."
+      "behavior": "Local [0,0,width,height] sensor translated to the actor (top-left at the row point since warp-sensor-top-left; this entry first read it as a left/bottom anchor). Sensors have no visible artwork."
     },
     {
       "id": "push-box-native-art",
@@ -575,6 +575,91 @@
         "Browser adaptation: a body is taken as supported by the slab when the centre of its feet is over the slab (a narrow Ex2 slab still carries a cat wider than it); a body only touching the slab corner while standing on a ledge is not on the slab"
       ],
       "behavior": "Weighted lifts (every family): a cat or box counts toward a lift, and is carried by it, only when the centre of its feet is over the slab; the cats and boxes on its head count and ride through it. A push box on a cat's head is carried by a lift only when that cat itself was carried (moved by the lift's delta this frame). Was: a cat touching the slab by 1 unit while stopped by a ledge counted (the lift moved) and its head boxes were moved by the lift into the stopped cat (2-4 lift edge)."
+    },
+    {
+      "id": "multi-jump-relay",
+      "files": [
+        "src/engine/actors/Player.ts",
+        "src/engine/GameRuntime.ts"
+      ],
+      "evidence": [
+        "Factory 0x7ff72bb735d3 -> 0x7ff72bb76f17: MultiPlayer is ONE normal avatar (FUN_7ff72bb66e50) shared by the whole party; p1 (int) -> avatar+0xc90 = jumps per airtime (5-2: 2, 5-4: 10; < 1 = unlimited); p0 = facing",
+        "FUN_7ff72bb68290(av, -5.1, 3.0): +0x3f8 |= 2 (air jumps allowed), input source 3, relay component +0x17e0 (FUN_7ff72bb58c40) with jump speed -5.1 and move speed 3.0 (the ordinary 300 px/s, FUN_7ff72bb687e0 reads +0x195c); then +0x3f8 |= 4 (turn passing)",
+        "Relay FUN_7ff72bb58db0 every frame: turn slot +0x178 (starts at the avatar spawn input slot), holder slot +0x174 (-1); only a JUMP press edge from the turn slot counts (FUN_7ff72bc18f10(inp, 2, +0x178)) and makes holder = turn (even while the previous jumper still holds); LEFT / RIGHT / DOWN are read from the holder OR the turn slot (FUN_7ff72bb59000), nobody else controls anything; the holder releasing JUMP -> holder = -1; landing (cmd 0x17, FUN_7ff72bb58d60) also resets the holder",
+        "Jump rule FUN_7ff72bb6f0e0: ground contact -> ctrl+0x18 = 0; flag 2 skips the ground / coyote test; a jump starts on the press edge when (c90 < 1 || ctrl+0x18 < c90) and no JumpArea launch is pending; each jump ctrl+0x18++ (the ground jump counts), sets vy = -5.1 and runs the 13-frame hold boost read from the holder (already rising faster than -5.1: vy kept, no boost); then FUN_7ff72bb67670(av, (+0x400 + 1) % n), n = party size, recolours the cat to palette[turn]; a head already touching a ceiling uses the count but does not pass the turn; landing does not reset the turn",
+        "HUD FUN_7ff72bb702d0: draws remaining = c90 - ctrl+0x18 above the cat (y - 96)",
+        "Command 9 with input source 3 doubles c90 (0x7ff72bb699ca..db); a Switch whose target is actorName + label (5-2: two \"MultiPlayer1\" pads) sends it on its press edge: 2 -> 4 -> 8"
+      ],
+      "behavior": "MultiPlayer (5-2, 5-4): one cat shared by the party, played as a jump relay. The cat may jump in mid air up to its jumps-per-airtime count (5-2: 2, doubled by each \"MultiPlayer1\" switch to 4 and 8; 5-4: 10; reset on touching ground); only the player whose turn it is can start a jump, and every jump passes the turn to the next player (round robin over the party, the cat recolours to that player). The player who pressed jump holds the hold-boost; walking is controlled by that holder and by the turn player together. A remaining-jumps number floats above the cat. Was: whoever held jump took all input, nobody else could even walk, and only one ground jump per airtime."
+    },
+    {
+      "id": "jumparea-top-left",
+      "files": [
+        "src/engine/actors/JumpArea.ts",
+        "src/engine/actors/Player.ts",
+        "src/engine/GameRuntime.ts"
+      ],
+      "evidence": [
+        "JumpArea setParams FUN_7ff72bb361a0: sensor {0, 0, p0, p1} -- the top-left corner at the row point (the port centred it)",
+        "Begin-contact only (FUN_7ff72bb36340) sends command 0 with (p2, p3)",
+        "Player strategy FUN_7ff72bb6fd20 ignores command 0 while the hold counter ctrl+0x14 != 0 (frames 1..13 of a jump); otherwise FUN_7ff72bb6f0e0 sets vy = p3 once on the next update (jumping blocked that frame) and overrides vx with p2 every frame until landing (steering ignored)"
+      ],
+      "behavior": "JumpArea (5-2): the launch sensor hangs from its row point (top-left corner), so the five areas sit under the three pits as nets that throw a fallen cat back up and out (vy -18 per tick, vx -4 / -8 / -12 per tick until it lands). A cat entering the area during the first 13 frames of a held jump is not launched. Was: centred on the row point (half of every pit uncovered) and the launch speed was replaced by steering on the next frame."
+    },
+    {
+      "id": "majority-player",
+      "files": [
+        "src/engine/GameRuntime.ts"
+      ],
+      "evidence": [
+        "Factory branch 0x7ff72bb736e3: FUN_7ff72bb774a0(ctx, pos, scene, mode 4) spawns ONE normal avatar on the first slot (spawned-player counter 1, no per-player controller); n = numPlayers (DAT_7ff72c629fa8+0xcc08) = party size; ratio = clamp(ceil(0.7f * n) / n, 0.1, 1.0) (0.7 DAT_7ff72bcb77b0, ceil import 0x7ff72bc7c5d8, clamp FUN_7ff72bae6bf0; n == 0 -> 1.0 DAT_7ff72bcff538)",
+        "FUN_7ff72bb68220(avatar, n, ratio): vote block +0x1530 (FUN_7ff72bb7fec0), input source +0x1528 = 1, body colour +0x378 = 0xffbfffdf (neutral)",
+        "Tally FUN_7ff72bb7ffa0 every tick before physics (from FUN_7ff72bb690d0): prev = cur; for buttons 0..11 count slots p < n holding b (FUN_7ff72bc18c90); bit set when (prev clear and frac >= ratio) or (prev set and frac >= 0.5 * ratio) (DAT_7ff72bcff4fc); progress = clear: min(frac / ratio, 1), set: min((frac - r/2) / (r/2), 1)",
+        "press = cur & ~prev (FUN_7ff72bb80150), release = prev & ~cur (FUN_7ff72bb801a0), held = cur (FUN_7ff72bb80110); the avatar readers FUN_7ff72bb68300 / 68510 / 68640 take the source-1 path (voted bits only); buttons 2 jump, 3 up, 4 down, 5 left, 6 right; right is checked before left (FUN_7ff72bb6f0e0)",
+        "MajorityController (branch 0x7ff72bb747d3, ctor FUN_7ff72bb65df0, player p0 via FUN_7ff72bb78680) is HUD only: FUN_7ff72bb65f80 copies progress of [3, 4, 5, 6, 2]; draw FUN_7ff72bb660c0: pad {-82, 0, 164, 84}, per value > 0 an orange 0xffff864d bar from the bottom; bars up (-54, 12.5, 28, 16), down (-54, 52.5, 28, 16), left (-69.5, 28.5, 16, 24), right (-29.5, 28.5, 16, 24), jump (24.5, 20.5, 43, 40)",
+        "Nothing majority-specific in goal / key / respawn: the single cat is the whole roster (its door entry clears the stage); the port's floor(n / 2) + 1 goal rule has no native source"
+      ],
+      "behavior": "MajorityPlayer (5-1, 5-3): one neutral-coloured cat shared by the party, steered by a vote. Every tick each button (jump, up, down, left, right) is counted over the party's n input slots (a missing player abstains): it turns on when at least ceil(0.7 n) players hold it (2 of 2, 3 of 3, 3 of 4, 6 of 8) and stays on while at least half that ratio still hold it (1 of 2, 2 of 3, 2 of 4, 3 of 8); presses may be staggered. The cat sees only the voted buttons (a jump starts on the vote's rising edge, the hold boost reads the held vote; right beats left). The MajorityController is a screen-fixed pad drawing five orange progress bars. Was: one player (or anyone) drove the cat with no vote, a debug box for the pad, and an invented majority door rule."
+    },
+    {
+      "id": "jumpswitch-launch",
+      "files": [
+        "src/engine/GameRuntime.ts"
+      ],
+      "evidence": [
+        "Ctor FUN_7ff72bb778f0: base Switch type 0 (FUN_7ff72bb5e8c0), bit 0x40 (momentary), no 0x100; vtable 7ff72bcbf6b0 +0x60 FUN_7ff72bb78cb0 stores (p0, p1) at +0x430 (12-1: (0, -9))",
+        "Pressed by any body with fixture flag +0x20 & 2 and category 1-3 (cat, push box) overlapping the radius-12 sensor circle (FUN_7ff72bb5f1d0); the jump button plays no part",
+        "FUN_7ff72bb5eef0: rising edge -> SE \"switch\" + fire (+0x108 = FUN_7ff72bb5f410); 0x40 clears pressed at the end of each update, so it fires once per new overlap and again after release + re-press",
+        "Fire FUN_7ff72bb5f410 (0x7ff72bb5f4d8..f524): target by name (FUN_7ff72bc1bc80, \"PushBox1\"), else the toucher; a player (actor+0x70 == 1) gets command 1 with (0, p1), anything else command 0 with (p0, p1); the base fire's 9 / 10 to the target is ignored by a box",
+        "PushBox receiver (vtable 7ff72bcb68c0 +0x98 FUN_7ff72bb33d00) cmd 0: +0x7e8 = (|x| * sign(vx), y), flag 1; FUN_7ff72bb33890: vy = launch.y with no rider check (hop 9, 8.35, ... apex ~66.9 after 14 ticks)"
+      ],
+      "behavior": "JumpSwitch (12-1): a momentary pad pressed by any live cat or push box within 12 of its point (no jump press needed); each new press launches its labelled target (\"PushBox1\": the push box hops 9 per tick up, ~67 high, even with a cat on it; a named cat would be launched straight up), or the toucher when no target matches, and it fires again after release and re-press. It opens no gates, bridges or stopwatches. Was: only a cat pressing jump on it, once per stage, opening gates and moving only the legacy normal / small / colour boxes (never PushBox 1)."
+    },
+    {
+      "id": "delayswitch-countdown",
+      "files": [
+        "src/engine/GameRuntime.ts"
+      ],
+      "evidence": [
+        "Ctor FUN_7ff72bb5f6d0: type 0, latched (no 0x40), bit 0x100 (the press itself sends nothing), +0x74 = 2; vtable 7ff72bcbc808 +0x60 FUN_7ff72bb5f960: delay = p0 (11-4: 10) at +0x434",
+        "Update FUN_7ff72bb5f9c0: the press edge sets the countdown +0x430 = delay; while > 0 subtract dt; at <= 0 fire the label target with 9 (on, value +0x3fc) via FUN_7ff72bb5ebb0 once, set bit 4, zero the countdown; the base update clears pressed (bit 8): an empty pad pops up (0x100 suppresses the off message) and a body still on it is pressed again at once (fires every delay seconds)",
+        "Draw FUN_7ff72bb5fa80: while counting, \"%d\" of (int)(t + 0.99) (DAT_7ff72bcbc918) at (x, y - 75) (DAT_7ff72bcbc91c), size 0x20, centred",
+        "Pressers: cats and push boxes (the Switch contact categories)"
+      ],
+      "behavior": "DelaySwitch (11-4): a press by a cat or push box starts a countdown of p0 seconds (10 on 11-4) drawn as a whole-second number above the pad; at zero it sends its \"on\" once (11-4: starts Lift 1) and pops up, and if something is still on it the countdown restarts at once; it never sends \"off\" and no longer counts as a latched opener holding gates or lifts. Was: it fired the moment it was touched (by the current cat only), stayed down forever, and showed no countdown."
+    },
+    {
+      "id": "warp-sensor-top-left",
+      "files": [
+        "src/engine/actors/Warp.ts",
+        "src/engine/actors/WarpAll.ts"
+      ],
+      "evidence": [
+        "Warp ctor FUN_7ff72bb62ec0 builds its sensor with FUN_7ff72bc16bf0(actor, {0, 0, p0, p1}, 0, 1) -> FUN_7ff72bc12370, which stores the rect as given (x, y, w, h at +0x28..+0x34) -- the same call and the same {0, 0, w, h} form as the JumpArea sensor FUN_7ff72bb361a0 (jumparea-top-left: top-left at the row point)",
+        "The engine rects are y-down top-left: the JumpStand body {-16, -34, 32, 34} (DAT_7ff72bcbd960) is the block standing ON its row point, from y - 34 to y",
+        "Stage data: 5-1 stage_majo01 Warps at rows y 576 / 576 / 480 with h 96 on a 480-high map: top-left puts all three just below the map (pit catchers); a bottom anchor put the third one over the floor x 2256..2352 in front of the door (any cat walking to the door was warped back)"
+      ],
+      "behavior": "Warp / WarpAll sensors hang down from their row point (top-left corner at the row x / y, w x h below it), like JumpArea. Was: the bottom-left reading of warp-sensor-origin (the sensor rose h above the row point), which on 5-1 turned the floor before the door into a warp."
     }
   ],
   "hashes": {

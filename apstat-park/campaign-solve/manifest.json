@@ -2,9 +2,9 @@
   "note": "Written by re-running every campaign-solve solver (party 2 unless a row says otherwise). campaign-solvability.test.mjs asserts the SOLVED rows.",
   "recorded": "2026-10-08",
   "counts": {
-    "SOLVED": 28,
-    "SKIPPED-UNIMPLEMENTED": 16,
-    "BLOCKED": 4
+    "SOLVED": 32,
+    "BLOCKED": 4,
+    "SKIPPED-UNIMPLEMENTED": 12
   },
   "stages": [
     {
@@ -29,7 +29,7 @@
       "title": "HELLO PICO PARK",
       "status": "SOLVED",
       "party": 2,
-      "frames": 1311
+      "frames": 1317
     },
     {
       "tag": "1-4",
@@ -139,33 +139,33 @@
       "tag": "5-1",
       "source": "stage_majo01",
       "title": "ALL FOR ONE",
-      "status": "SKIPPED-UNIMPLEMENTED",
+      "status": "SOLVED",
       "party": 2,
-      "reason": "MajorityPlayer / MajorityController (audit: Unimpl -- no vote, port debug box and a made-up goal rule; batch 18 majority-vote)."
+      "frames": 1714
     },
     {
       "tag": "5-2",
       "source": "stage_multijump01",
       "title": "ALL FOR ONE",
-      "status": "SKIPPED-UNIMPLEMENTED",
+      "status": "SOLVED",
       "party": 2,
-      "reason": "MultiPlayer (audit: Unimpl -- one ground jump instead of the 2/10-jump relay; batch 19 multi-jump-relay) and JumpArea (audit: Misread -- centred instead of top-left, pits uncovered; batch 13 jumparea-top-left)."
+      "frames": 668
     },
     {
       "tag": "5-3",
       "source": "stage_majo02",
       "title": "ALL FOR ONE",
-      "status": "SKIPPED-UNIMPLEMENTED",
+      "status": "SOLVED",
       "party": 2,
-      "reason": "MajorityPlayer / MajorityController (audit: Unimpl; batch 18 majority-vote)."
+      "frames": 1133
     },
     {
       "tag": "5-4",
       "source": "stage_multijump02",
       "title": "ALL FOR ONE",
-      "status": "SKIPPED-UNIMPLEMENTED",
+      "status": "SOLVED",
       "party": 2,
-      "reason": "MultiPlayer (audit: Unimpl; batch 19 multi-jump-relay) and Thunder (audit: Misread; batch 6 thunder-beam)."
+      "frames": 502
     },
     {
       "tag": "6-1",
@@ -347,9 +347,9 @@
       "reason": "Pit x 672..864 under the ceiling slab x 816+ (bottom y 288): no cat reaches the east floor (best landing centre ~844 at feet 432, needs >= 848), and Bridge 2 that spans the pit is switched from the far side -- pit: cat 1 (riding cat 0 off the block edge, walking on its head) reached feet y 432 at centre x 844.1; landing on the east floor (x 864) needs centre >= 848. Under the ceiling slab (x 816+, bottom 288) a cat needs feet >= 334, so its fall apex must be below ~y 298 -- lower than the block top (288) -- and a carried cat cannot jump from a falling carrier after the ~4-tick coyote window",
       "cats": [
         {
-          "x": 560,
-          "y": -95,
-          "feet": -49,
+          "x": 791.8,
+          "y": 436.1,
+          "feet": 482.1,
           "grounded": false,
           "dead": false
         },
@@ -417,7 +417,7 @@
       "status": "BLOCKED",
       "party": 2,
       "frame": 19,
-      "reason": "party 2 cannot get the plain cat above the lower Thunder band (y 286..290). Rect 1 is 81.3 above the floor, max jump rise 78.6, a cat with a rider cannot jump, and the only shield is the guard's LEFT plank (protects x >= guard.x-15). Cat 1 can reach the PushBox once the guard shoves it off Rect 1 (it lands on the floor, top 336; a cat on it has y 290, touching but not in the band) by walking off the guard's head. From there it needs the guard on Rect 1 to its left: the guard stands at x >= 636 (lip), so cat 1 must clear the guard's head (256.4) -- reach from the box top is 336 - 78.57 = 257.4, 1.0 short -- and landing on Rect 1 left of the guard puts it in the beam. Guard on the dropped box (head 290): cat 1 needs 93.7 rise from the floor, or 0 rise from the guard's right, where the wall leaves no room. A guard jumping on the floor keeps its plank in the band only ~20 frames per jump (guard y 297..259..297), with ~12-frame gaps; the walk from the ledge to the pillar is ~40+ frames. JumpSwitch \"PushBox1\" (x 132..168) registers the press (pressedJumpSwitches, alpha .55) but its vy -9 impulse is applied only to normalBoxes, so PushBox 1 never launches (stays y 254.4); even native, the switch is ~470 px from the ledge and the guard (the only shield) would have to be the presser. Needs a larger party (native 8). -- cat 1 jumping in place on the floor dies in the lower Thunder band",
+      "reason": "party 2 cannot get the plain cat above the lower Thunder band (y 286..290). Rect 1 is 81.3 above the floor, max jump rise 78.6, a cat with a rider cannot jump, and the only shield is the guard's LEFT plank (protects x >= guard.x-15). Cat 1 can reach the PushBox once the guard shoves it off Rect 1 (it lands on the floor, top 336; a cat on it has y 290, touching but not in the band) by walking off the guard's head. From there it needs the guard on Rect 1 to its left: the guard stands at x >= 636 (lip), so cat 1 must clear the guard's head (256.4) -- reach from the box top is 336 - 78.57 = 257.4, 1.0 short -- and landing on Rect 1 left of the guard puts it in the beam. Guard on the dropped box (head 290): cat 1 needs 93.7 rise from the floor, or 0 rise from the guard's right, where the wall leaves no room. A guard jumping on the floor keeps its plank in the band only ~20 frames per jump (guard y 297..259..297), with ~12-frame gaps; the walk from the ledge to the pillar is ~40+ frames. JumpSwitch \"PushBox1\" (pad 150, 384; jumpswitch-launch) now launches PushBox 1 natively on every new press by any cat or box (9 per tick, apex ~67, riders included), but that does not open a route at party 2 or 3 (party 3 tried: presser + guard + rider). A plain cat is shielded only on the guard's head or to its right while the guard stands in the band window (feet 279..343: on the floor box or Rect 1), and the box always lands at x 592..640 (27.2 left to the Rect 1 face, too narrow for a cat), so no plain cat can stand right of a boxed guard; from the floor a hop onto the box (rise >= 48) enters the band (hold 4: rise 44.7 safe, hold 5: 50.6 dies) and a guard + rider stack cannot form above the floor (the guard's head is 94 up). A box hop with a rider passes the band unshielded (the guard on the rider leaves its window after ~2 ticks of the ~7 the rider spends in the band). The last plain cat on the floor therefore never gets up (Rect 1 is 81.3 high, max rise 78.57). Needs a larger party (native 8). -- cat 1 jumping in place on the floor dies in the lower Thunder band",
       "cats": [
         {
           "x": 234,

@@ -102,12 +102,16 @@ export function createApi(run, { budget = 6000, party, onFrame } = {}) {
     if (isCleared(run)) return;
     if (frame >= budget) block('frame budget ' + budget + ' exhausted');
     const slots = game.playerInputSlots || [];
-    const inputs = cats.map(() => IDLE);
-    for (let i = 0; i < cats.length; i++) {
+    // One shared cat for the whole party (5-2 / 5-4 MultiPlayer): specs beyond the cats are the other players' input
+    // slots, in slot order (the relay reads every player's buttons).
+    const players = Math.max(cats.length, n);
+    const inputs = Array.from({ length: players }, () => IDLE);
+    for (let i = 0; i < players; i++) {
+      if (i >= cats.length && slots.slice(0, cats.length).includes(i)) continue;
       const spec = input(specs[i]);
       const pressed = spec.jump && !jumpHeld[i];
       jumpHeld[i] = spec.jump;
-      inputs[slots[i] ?? i] = { ...spec, jumpPressed: spec.jumpPressed || pressed };
+      inputs[i < cats.length ? (slots[i] ?? i) : i] = { ...spec, jumpPressed: spec.jumpPressed || pressed };
     }
     run.tick(inputs);
     frame++;

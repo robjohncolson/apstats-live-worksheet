@@ -93,7 +93,8 @@ try {
     for (const player of game.runtime.players) {
       Object.assign(player.rect, { x: 897, y: 490 }); player.velocity.y = 200;
     }
-    game.step([0, 0]);
+    // warp-sensor-top-left (batch 8): the pit sensor hangs below its row point, so the pair falls into it first.
+    for (let tick = 0; tick < 60 && events.filter(event => event.type === 'warp').length < 2; tick++) game.step([0, 0]);
     const pair = game.runtime.players.map(player => ({ x: player.rect.x + 16, y: player.rect.y + 47 }));
     for (let tick = 0; tick < 120; tick++) game.step([0, 0]);
     const settled = game.runtime.players.map(player => ({ x: player.rect.x + 16, feet: player.rect.y + player.rect.height }));

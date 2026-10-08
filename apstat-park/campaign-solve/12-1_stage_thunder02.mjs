@@ -32,9 +32,14 @@ export default {
     'landing on Rect 1 left of the guard puts it in the beam. Guard on the dropped box (head 290): cat 1 needs 93.7 rise from the floor, ' +
     'or 0 rise from the guard\'s right, where the wall leaves no room. A guard jumping on the floor keeps its plank in the band only ~20 ' +
     'frames per jump (guard y 297..259..297), with ~12-frame gaps; the walk from the ledge to the pillar is ~40+ frames. ' +
-    'JumpSwitch "PushBox1" (x 132..168) registers the press (pressedJumpSwitches, alpha .55) but its vy -9 impulse is applied only to ' +
-    'normalBoxes, so PushBox 1 never launches (stays y 254.4); even native, the switch is ~470 px from the ledge and the guard (the only shield) ' +
-    'would have to be the presser. Needs a larger party (native 8).',
+    'JumpSwitch "PushBox1" (pad 150, 384; jumpswitch-launch) now launches PushBox 1 natively on every new press by any cat or box ' +
+    '(9 per tick, apex ~67, riders included), but that does not open a route at party 2 or 3 (party 3 tried: presser + guard + rider). ' +
+    'A plain cat is shielded only on the guard\'s head or to its right while the guard stands in the band window (feet 279..343: on the ' +
+    'floor box or Rect 1), and the box always lands at x 592..640 (27.2 left to the Rect 1 face, too narrow for a cat), so no plain cat can ' +
+    'stand right of a boxed guard; from the floor a hop onto the box (rise >= 48) enters the band (hold 4: rise 44.7 safe, hold 5: 50.6 dies) ' +
+    'and a guard + rider stack cannot form above the floor (the guard\'s head is 94 up). A box hop with a rider passes the band unshielded ' +
+    '(the guard on the rider leaves its window after ~2 ticks of the ~7 the rider spends in the band). The last plain cat on the floor ' +
+    'therefore never gets up (Rect 1 is 81.3 high, max rise 78.57). Needs a larger party (native 8).',
   async solve(stage, api) {
     const { cats, wait, hold, block } = api;
     wait(5);

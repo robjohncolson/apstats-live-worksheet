@@ -35,7 +35,8 @@ try {
           game.render();
           for (const sensor of [...game.runtime.warps, ...game.runtime.warpAlls]) {
             samples.push({ index, count, tick, actor: sensor.spawn.actorName,
-              actual: sensor.rect, expected: { x: sensor.spawn.x, y: sensor.spawn.y - sensor.triggerSize.height,
+              actual: sensor.rect, expected: { x: sensor.spawn.x, y: sensor.spawn.y,   // warp-sensor-top-left (batch 8)
+
                 width: sensor.triggerSize.width, height: sensor.triggerSize.height }, visible: sensor.view.visible });
           }
         }
