@@ -13,10 +13,14 @@
 // the roof; cat 1 drops down the east shaft onto the one-chip floor (steered to centre 1080 -- holding right past
 // 1104 falls into the void), then cat 0. West along the corridor (under the column gap) to the step. One cat's jump
 // rises only ~79 (step 384 -> feet ~305), short of the ledge (288), so: cat 0 onto the step (centre 360), cat 1 onto
-// the step at its east edge (centre 414), cat 0 climbs onto cat 1's head and jumps east onto the ledge. Cat 0 walks
-// east; once the rope (310) is taut it drags cat 1 off the step into the column face, the blocked sideways pull
-// turns upward and hauls cat 1 up the face onto the ledge. Both enter (the key passes between cats on touch; either
+// the step at its east edge (centre 414 -> carried to 440), cat 0 climbs onto cat 1's head and jumps east onto the
+// ledge. Cat 0 walks east; cat 1 jumps east as the rope (310) goes taut, meets the column face in the air, the
+// blocked sideways pull turns upward and hauls cat 1 up the face onto the ledge. Both enter (the key passes between cats on touch; either
 // carrier opens the door).
+// Native 3/tick (batch 10): the rope alone now drags cat 1 off the step UNDER the column (gap 384..432). Cat 1 jumps
+// east (holding right) once cat 0 is HAUL_JUMP_DX ahead, so the taut rope meets it in the air at the column face.
+const HAUL_JUMP_DX = 288;   // measured window 270..305 (below: dragged under the column; above: never hauled up)
+
 export default {
   party: 2,
   budget: 4000,
@@ -42,16 +46,24 @@ export default {
     api.walkTo([0, 1], [500, 470], { max: 600 });
     // Both onto the step: cat 0 at 360, cat 1 at its east edge (414); cat 0 on cat 1's head jumps onto the ledge.
     api.jumpTo(0, 360);
+    api.walkTo(0, 360, { tol: 2 });   // native 3/tick: the hop lands short (~418), so walk on to make room
     api.jumpTo(1, 414);
     api.walkTo(1, 414, { tol: 1 });
     api.climbOnto(0, 1);
+    // Native 3/tick: from the head a jump covers ~95 to the ledge top, so cat 1 carries cat 0 to the step's very edge
+    // (centre 440, cat x 424: 8 over the step) and cat 0 edges to the front of the head before jumping.
+    api.walkTo(1, 440, { tol: 1, others: { 0: {} } });
+    api.until(() => cats[0].rect.x >= cats[1].rect.x + 22, [{ right: true }], 20, 'cat 0 could not edge on the head');
     api.jumpTo(0, 580, { holdJump: 20 });
     if (api.feetY(cats[0]) > 289) api.block('cat 0 on cat 1\'s head could not jump onto the ledge');
     // Cat 0 walks east on the ledge; the taut rope hauls cat 1 off the step and up the column face onto the ledge.
-    api.until(() => cats[1].grounded && api.feetY(cats[1]) < 290, () => {
+    let jumpAt = -1;
+    api.until(() => cats[1].grounded && api.feetY(cats[1]) < 290, (f) => {
       if (api.feetY(cats[1]) > 440) api.block('cat 1 was dragged under the column instead of up its face');
-      return [{ right: true }, {}];
-    }, 200, () => 'cat 0 on the ledge could not haul cat 1 up (cat 1 at ' + JSON.stringify(api.snapshot()[1]) + ')');
+      if (jumpAt < 0 && cats[0].rect.x - cats[1].rect.x >= HAUL_JUMP_DX) jumpAt = f;
+      const jumping = jumpAt >= 0;
+      return [{ right: true }, jumping ? { right: true, jump: f - jumpAt < 14 } : {}];
+    }, 300, () => 'cat 0 on the ledge could not haul cat 1 up (cat 1 at ' + JSON.stringify(api.snapshot()[1]) + ')');
     api.enterGoal();
   },
 };

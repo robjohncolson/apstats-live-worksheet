@@ -704,6 +704,21 @@
         "Port: a cat falling onto a platform that rose this frame ends up to one tick of lift travel inside its top; resolveClosedGateCollision sees a previous bottom below the new top (not a landing) and restores the previous rect every frame (10-2 RouletteLift: feet 378.2 vs top 378.0, frozen with vy 0, never grounded)"
       ],
       "behavior": "Every lift (WeightedLift family and RouletteLift): a cat that was above a lift top within 2 units last frame and now overlaps it is set on the top and grounded, unless standing there would put it into a chip or block above (then it is not moved) (was: a cat landing on a platform rising under it ended 0.2 inside it, could neither walk nor jump and kept the lift counting a rider for good: 10-2 roulette lifts)."
+    },
+    {
+      "id": "native-walk-and-push-speed",
+      "files": [
+        "src/engine/actors/Player.ts",
+        "src/engine/actors/PushBox.ts",
+        "src/engine/GameRuntime.ts"
+      ],
+      "evidence": [
+        "Walk: the avatar ctor writes 3.0 at +0x41c (0x7ff72bb66efa); FUN_7ff72bb687e0 returns +0x41c * +0x418 (0x7ff72bb687fc..68804, +0x418 = 1.0 unless message 0x22 scales it); FUN_7ff72bb6f0e0 sets vx = +-3 per tick on a held direction (input masks 0x20 / 0x10), instantly, the same in the air; the 0.98 (DAT_7ff72bcbea28, 0x7ff72bb6f1de) only decays PRIOR momentum while avatar+0x3f8 bit 0 is clear (a rope yank), it is not an input scale",
+        "Jump: the takeoff tick integrates (0, J) (xmm8 cleared at 0x7ff72bb6f1c1): no horizontal travel on the jump tick, +-3 again from the next tick",
+        "Push: FUN_7ff72bb33890 (PushBox / BigBox / NormalBox / SmallBox, 0x7ff72bb33971) and ColorBox FUN_7ff72bb3b5e0 (0x7ff72bb3b690) set the box vx = +-1.0 (DAT_7ff72c61f320) per tick when enough bodies with vx > 0 press its face; the pusher keeps vx = 3 and the world sweep stops it at the box face, so it advances 1 per tick with the box",
+        "Retail capture og-capture-2: walk 0.22..0.28 screen px/ms (/1.5 = 2.5..3.1 per tick), constant from the first sample, dead stop on release; E1 push: box -13 -> +31 screen px over 203..688 ms = 1.01 per tick, the pusher at the same rate"
+      ],
+      "behavior": "Every stage: cats walk at the native 3 per tick (180 / s; was 4.9 per tick, 294 / s, the 0.98 decay misread as an input scale), on the ground and in the air, with no travel on the jump takeoff tick; a pushed box (every push-box family, ColorBox included) moves at most 1 per tick in total however many cats push it (one budget per box per frame), and every pusher stays flush against it (was: the box moved by the pusher's whole step, ~4.9). The collision-off cat and the MoveWall opposing-intent check use the same 3 per tick sideways. Not changed: ice sliding (native ice not decoded), rope coasting (the 0.98 decay after a rope yank), the box-against-box chain rule (native may block a box that meets another box; flagged, not changed)."
     }
   ],
   "hashes": {

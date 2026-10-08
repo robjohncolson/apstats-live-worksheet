@@ -11,7 +11,7 @@
 // the floor and both enter the door.
 export default {
   party: 2,
-  budget: 5000,
+  budget: 8000,   // native 1/tick pushes (batch 10)
   async solve(stage, api) {
     const { cats, game } = api;
     const box8 = game.pushBoxes.find((box) => box.spawn.label === '8');
@@ -21,7 +21,9 @@ export default {
     api.hold((f) => [{}, { jump: f < 2, right: f >= 2 && f < 30 }], 30);
     api.until(() => cats[1].grounded && api.feetY(cats[1]) < box8.rect.y + 2, [], 200, 'cat 1 did not warp back onto box 8');
     api.wait(5);
-    // From the box top (feet ~336) up the five steps to the platform (top 96).
+    // From the box top (feet ~336) up the five steps to the platform (top 96). At the native 3/tick a jump covers
+    // ~80 to the first step's top, so cat 1 first edges to the box's right edge (box 388..428 -> cat x ~420).
+    api.walkTo(1, 436, { tol: 1 });
     for (const x of [536, 584, 632, 680, 728]) api.jumpTo(1, x);
     api.walkTo(1, 1060);   // over the bridge switch (912) and through the key (1040..1072)
     if (api.carrierOfKey() !== 1) api.block('cat 1 walked the platform without picking up the key');
@@ -29,14 +31,15 @@ export default {
     // steps back left under the hop, so box 8 lands on the bridge in front of it, clear of the low first step.
     api.until(() => game.bridges[0].rect.x <= 410, [], 400, 'the floor bridge did not extend');
     api.walkTo(0, 470, { tol: 2 });
-    api.hold((f) => [{ jump: f < 2, left: f >= 2 && f < 12 }], 30);
+    // The hop lasts ~20 ticks; at 3/tick cat 0 needs >= 13 ticks of walking to clear the 40-wide box (16 ticks: x 454 -> 406).
+    api.hold((f) => [{ jump: f < 2, left: f >= 2 && f < 18 }], 30);
     api.wait(10);
     if (box8.rect.y + box8.rect.height < 431 || box8.rect.x < cats[0].rect.x + 30) {
       api.block('box 8 did not land on the bridge in front of cat 0: ' + JSON.stringify(box8.rect));
     }
     // Push the line box 8 / box 4 / box 6 onto the switches; cat 0 stops at x 1408 (cat, then each 40-wide box,
     // overlapping one pad each).
-    api.until(() => cats[0].rect.x >= 1408, [{ right: true }], 900, 'the box line did not reach the switches');
+    api.until(() => cats[0].rect.x >= 1408, [{ right: true }], 2000, 'the box line did not reach the switches');
     const pressed = () => game.switches.filter((pad) => pad.spawn.label === 'SwitchMediator').every((pad) => pad.pressed);
     api.wait(3);
     if (!pressed()) api.block('cat 0 + boxes 8/4/6 do not hold all four SwitchMediator pads: ' +

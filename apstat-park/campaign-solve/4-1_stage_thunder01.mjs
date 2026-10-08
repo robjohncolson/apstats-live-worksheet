@@ -54,7 +54,7 @@ export default {
 
     // Stack for the DOWN beams: cat 1 on cat 0's head, cat 0 walks under all 17 beams.
     climbOnto(1, 0);
-    walkTo(0, 2484, { max: 400 });
+    walkTo(0, 2484, { max: 900 });   // native 3 px/tick: ~1200 px at 3/tick = ~400 frames + slack
     land();
     guard('beam corridor');
 

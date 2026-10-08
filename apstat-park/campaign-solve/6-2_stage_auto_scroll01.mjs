@@ -40,6 +40,9 @@ export default {
     // 1. Lift (both cats), block, stone, second block, down to the floor west of the stair.
     api.walkTo([0, 1], [540, 580]);
     api.jumpTo([0, 1], [700, 780]);
+    // Ride up at the lift's east end (814): its top stops 4.6 below the block (192), a step a walk does not climb, and
+    // a 3 px/tick jump from mid-lift falls back onto the sinking lift.
+    api.walkTo([0, 1], [754, 792], { tol: 2 });
     api.until(() => lift.rect.y <= 197.5, [], 600, 'the lift did not rise with both cats');
     api.jumpTo([0, 1], [860, 920]);
     for (const i of [1, 0]) {

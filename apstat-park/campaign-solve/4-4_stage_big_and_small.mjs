@@ -24,10 +24,11 @@ export default {
     // Shrink both on the 576 pad; hop over the 768 grow pad.
     api.walkTo(1, 576);
     api.until(() => grower.rect.height < 19, [], 200, 'cat 1 did not shrink on the 576 pad');
-    api.walkTo(1, 700); api.jumpTo(1, 860);
+    // Take off close to the pad (small cat 12.8 wide, pad 750..786): at native 3 px/tick a jump covers only ~75 px.
+    api.walkTo(1, 728); api.jumpTo(1, 860); api.walkTo(1, 900);   // clear of cat 0's landing spot
     api.walkTo(0, 576);
     api.until(() => rider.rect.height < 19, [], 200, 'cat 0 did not shrink on the 576 pad');
-    api.walkTo(0, 690); api.jumpTo(0, 820);
+    api.walkTo(0, 728); api.jumpTo(0, 820);
     // Crawl under the Rect wall (1008..1056, gap 408..432).
     api.walkTo([0, 1], [1300, 1430], { max: 900 });
     // Cat 0 climbs onto small cat 1's head; cat 1 grows to full size on the 1488 pad, lifting cat 0.

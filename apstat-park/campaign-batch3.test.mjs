@@ -83,7 +83,8 @@ test('7-2: the SmallBox falls to the floor; one cat pushes it; the NormalBox nee
   // One cat on the Rect, left of the SmallBox, walks right into it.
   place(a, small.rect.x - a.rect.width - 2, 264 - a.rect.height); place(b, 3000, 432 - b.rect.height);
   const smallX = small.rect.x;
-  step(game, 20, [RIGHT, IDLE]);
+  // Native push speed: a pushed box moves at most 1/tick (was the 4.9/tick walk), so 40 frames -> ~38 px.
+  step(game, 40, [RIGHT, IDLE]);
   assert.ok(small.rect.x > smallX + 20, 'one cat pushes the SmallBox (ceil(0.1 * 2) = 1): ' + (small.rect.x - smallX));
   // NormalBox: one cat alone cannot, two cats together can.
   place(a, normal.rect.x - a.rect.width - 1, 432 - a.rect.height); place(b, 3150, 432 - b.rect.height);
@@ -383,8 +384,10 @@ test('box line into a one-chip gap: the front box tips into it, the boxes never 
     const [first, second] = twoBoxesOnFloor(game, 1300);
     place(a, 1300 - a.rect.width - 1, 432 - a.rect.height); place(b, 900, 432 - b.rect.height);
     let fell = false;
-    for (let frame = 0; frame < 60; frame++) {
-      step(game, 1, [frame < 25 ? RIGHT : IDLE, IDLE]);
+    // Native push speed 1/tick (was 4.9/tick for 25 frames): push 60 frames (~60 px: the front box tips over the
+    // pit at ~50 px, the back box stays on the floor), then settle.
+    for (let frame = 0; frame < 100; frame++) {
+      step(game, 1, [frame < 60 ? RIGHT : IDLE, IDLE]);
       assert.ok(noBoxOverlap(game), 'boxes overlap at frame ' + frame);
       assert.ok(noCatInBox(game), 'a cat is inside a box at frame ' + frame);
       if (second.rect.y + second.rect.height > 432 + 4) fell = true;
@@ -416,7 +419,8 @@ test('box line: the front box pushed onto a switch pad presses it', () => {
   const [a, b] = game.players;
   const [first, second] = twoBoxesOnFloor(game, 1290);
   place(a, 1290 - a.rect.width - 1, 432 - a.rect.height); place(b, 900, 432 - b.rect.height);
-  for (let frame = 0; frame < 40 && second.rect.x < 1380; frame++) step(game, 1, [RIGHT, IDLE]);
+  // Native push speed 1/tick (was 4.9): ~50 px of travel needs ~50 frames, cap 120.
+  for (let frame = 0; frame < 120 && second.rect.x < 1380; frame++) step(game, 1, [RIGHT, IDLE]);
   step(game, 3, idle(2));
   assert.ok(second.rect.x >= 1380 && second.rect.x < 1416, 'the front box is over the pad: ' + second.rect.x);
   assert.ok(noBoxOverlap(game) && noCatInBox(game));

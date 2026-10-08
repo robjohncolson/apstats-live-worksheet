@@ -5,13 +5,15 @@
 // float over the bridge (x 1488 / 1872 / 2256, y 240..288): their undersides are 2 above a walking cat's head
 // (bridge cat 290..336), so a cat on the bridge passes under them but nothing standing on its head does. The Key
 // sits on the first stone (1496, 173..229), reachable only by standing on that stone.
-// FallBox rules that shape the route: a box arms when a body rests on it and drops 14 frames later; a walking cat
-// (4.9/frame) clears each box in time, but a cat walking behind another one falls (it would need to trail by
-// < ~20 px, and cats are 32 wide); boxes outside the camera view are not solid, and the camera only scrolls as far
-// as the trailing cat allows, so the party has to cross as one body.
-// Route: both cats onto the left block; cat 0 climbs onto cat 1's head; cat 1 walks the bridge at full speed with
-// cat 0 riding (rider steers to stay centred). ~55 px before each stone the rider jumps (14-frame hold, still
-// moving right at the carrier's speed): it lands on the stone, runs off its right edge and drops back onto cat 1's
+// FallBox rules that shape the route: a box arms when a body rests on it and drops ~14 frames later; a cat walking at
+// the native 3/tick still crosses the bridge (measured batch 10: a lone walker stays at feet 336 from 1008 to the
+// edge of the camera view; the box it leaves drops behind it), but a cat walking behind another one lands on
+// already-armed boxes; boxes outside the camera view are not solid (a lone walker 800+ ahead of its partner falls at
+// x ~1564), and the camera only scrolls as far as the trailing cat allows, so the party has to cross as one body.
+// Route: both cats onto the left block (hopping bump then block); cat 0 climbs onto cat 1's head; cat 1 walks the
+// bridge at full speed with cat 0 riding (rider steers to stay centred). ~55 px before each stone the rider jumps
+// (14-frame hold; airborne it moves 3/tick, level with the carrier): it lands on the stone, runs off its right edge
+// and drops back onto cat 1's
 // head. Stone 1 gives the key. At stone 3 the rider stays up and runs on to the right block and the floor; cat 1
 // walks off the last FallBox onto the right block, then both go to the door.
 // The FallBox -> Rect step at x 2304 relies on the runtime setting a cat back on the body it stands on before any
@@ -23,9 +25,11 @@ export default {
     const { cats } = api;
     const rider = cats[0], carrier = cats[1];   // cat 1 spawns in front
     // Up the bump onto the left block, cat 1 at its right end, cat 0 behind it; then cat 0 onto cat 1's head.
+    // (At the native 3/tick one jump no longer spans floor -> bump -> block, so each cat hops step by step.)
     api.walkTo([0, 1], [760, 800]);
-    api.jumpTo(1, 890); api.jumpTo(1, 985);
-    api.jumpTo(0, 890); api.jumpTo(0, 930);
+    api.walkTo(1, 985, { hop: true, tol: 2 });
+    api.walkTo(0, 929, { hop: true, tol: 2 });
+    api.land();
     api.climbOnto(0, 1);
     // The bridge: the carrier walks at full speed; the rider stays centred and jumps over each stepping stone.
     const STONES = [1488, 1872, 2256];

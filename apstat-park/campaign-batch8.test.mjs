@@ -183,7 +183,7 @@ test('steering is the holder OR the turn player; anyone else moves nothing (part
   for (let i = 0; i < 10; i++) frame({ 1: { right: true } });
   assert.equal(cat.rect.x, x, 'slot 1 cannot either');
   for (let i = 0; i < 10; i++) frame({ 0: { right: true } });
-  assert.ok(cat.rect.x > x + 40, 'the turn player walks it');
+  assert.ok(cat.rect.x > x + 25, 'the turn player walks it: ' + (cat.rect.x - x));   // 10 x 3/tick native walk = 30 (was 4.9/tick, > 40)
   frame({ 0: { jump: true } });   // turn -> 1, holder 0
   assert.equal(relay.turnSlot, 1);
   x = cat.rect.x;

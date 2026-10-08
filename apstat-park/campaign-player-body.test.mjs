@@ -66,7 +66,8 @@ test('1-1: a spawned cat settles onto the 432 floor without entering it, and can
   const walker = game.players[1];   // cat 1 has open floor to its right (cat 0 is right behind cat 1)
   const x0 = walker.rect.x;
   step(game, 10, [IDLE, RIGHT]);
-  assert.ok(walker.rect.x > x0 + 40, 'walks (no floor-rest inset needed): ' + (walker.rect.x - x0));
+  // 10 frames x 3/tick native walk = 30 (was 4.9/tick, > 40).
+  assert.ok(walker.rect.x > x0 + 25, 'walks (no floor-rest inset needed): ' + (walker.rect.x - x0));
   const top0 = cat.rect.y;
   step(game, 1, [JUMP, IDLE]);
   step(game, 10, [{ ...IDLE, jump: true }, IDLE]);

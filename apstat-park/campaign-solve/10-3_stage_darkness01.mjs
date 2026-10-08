@@ -12,6 +12,9 @@
 // trigger; each cat bounces off the JumpStand east onto DarknessWeightedLift 2 (720..816, top 48), which sinks 144
 // under both (the slab ignores map chips) and the riders land on the row-144 chips in the door slot (744..792,
 // 112..144); enterGoal then takes both in.
+// Native speeds (batch 10: walk 3/tick, push 1/tick): PushBox 1 comes to rest at x 67, so the push runs until the
+// key is held and the Goal exists; a cat walking off the 192 floor now drops short of the stand and hops onto it from
+// the 240 floor; a launch may land on the col-14 wall top (level with lift 2) and walks on east.
 
 export default {
   party: 2,
@@ -46,7 +49,9 @@ export default {
     // PushBox 1 (48x192) spawns floating at (312, -48) and drops at frame 0 onto the 192 floor (312..360, top 0); both
     // cats push it west to the wall (it stops a push step short of x 48), walking through the Key (it appears at 144,
     // 144) and the far-west trigger (124.8..158.4), which creates the Goal (768, 144) and a JumpStand (552, 240).
-    api.walkTo([0, 1], [125, 160], { stall: 30 });
+    // Push (1 px/tick) until a cat holds the key and the trigger has made the Goal (the box comes to rest at x 67).
+    api.until(() => api.carrierOfKey() >= 0 && game.goals.length > 0 && game.jumpStands.length > 0,
+      [{ left: true }, { left: true }], 600, 'pushing PushBox 1 west did not reach the key and the far-west trigger');
     if (api.carrierOfKey() < 0) api.block('nobody picked up the key at (144, 144)');
     if (game.goals.length === 0 || game.jumpStands.length === 0) api.block('the far-west trigger did not create the Goal / JumpStand');
     api.walkTo([0, 1], [500, 540], { hop: true });
@@ -56,7 +61,7 @@ export default {
     // from the stand top counts as the launch.
     const stand = game.jumpStands[0];
     const launch = (i, x) => {
-      let left = false, onStand = false;
+      let left = false, onStand = false, hopF = 0;
       api.until(() => left && cats[i].grounded, () => {
         const cat = cats[i];
         if (cat.grounded && Math.abs(api.feetY(cat) - stand.rect.y) < 2 && cat.rect.x < stand.rect.x + stand.rect.width && cat.rect.x + cat.rect.width > stand.rect.x) onStand = true;
@@ -66,6 +71,12 @@ export default {
         // Rise over the stand, then cross the wall (top 48) only while well above it.
         const target = !left ? 552 : api.feetY(cats[i]) < 20 || cx > 700 ? x : 552;
         specs[i] = Math.abs(cx - target) <= 3 ? {} : cx < target ? { right: true } : { left: true };
+        // At 3 px/tick a cat walking off the 192 floor drops short of the stand (onto the 240 floor at its west face):
+        // it hops onto the stand top from there.
+        if (hopF > 16 && cat.grounded) hopF = 0;
+        if (hopF > 0) hopF++;
+        else if (!onStand && cat.grounded && api.feetY(cat) > stand.rect.y + 10) hopF = 1;
+        if (hopF > 0 && hopF < 16) specs[i].jump = true;
         return specs;
       }, 300, `cat ${i} could not ride the JumpStand onto lift 2`);
     };
@@ -75,6 +86,8 @@ export default {
     api.walkTo(1, 795);
     api.jumpTo(0, 440);   // back up onto the 192 floor, then walk east off its edge onto the stand
     launch(0, 750);
+    // A 3 px/tick launch can land on the col-14 wall top (672..720, top 48, level with the raised slab): walk on east.
+    if (Math.abs(api.feetY(cats[0]) - 48) < 2 && cats[0].rect.x < lift2.rect.x - 4) api.walkTo(0, 750, { tol: 3, max: 120 });
     // Both on lift 2 (2 bodies): it sinks (travel +144) and should carry them down into the door slot under it
     // (744..792, 112..144; the slot floor is the row-144 chips).
     const onLift = (cat) => Math.abs(api.feetY(cat) - lift2.rect.y) < 1.5 && cat.rect.x >= lift2.rect.x - 4;

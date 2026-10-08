@@ -5,7 +5,9 @@
 // then one flight: along the ceiling through the key (1424..1456, y 68..124), down under the hanging block
 // (x 1536..1872, bottom y 240: feet kept below ~380 so the head never reaches the cavity beam), and up onto the goal
 // floor (x >= 2064, top y 288). Every input is a player's buttons: the turn player presses jump for 14 frames, both
-// players steer.
+// players steer. Jump budget at 3 px/tick (10 per airtime, 9 used): relay late (feet ~165, just under the key bottom
+// + cat height) along the ceiling to the key (3 jumps), free-fall, then long low hops at feet ~430 (the floor Thunder
+// is at 454) under the hanging block, and two apex relays (feet 330) up onto the goal floor.
 
 const HOLD = 14;
 
@@ -71,7 +73,7 @@ export default {
     fly(1100, (x) => (x < 990 ? 130 : Infinity), 980, 'pit 1');
     // Key along the ceiling, down under the hanging block, up onto the goal floor (top 288 from x 2064).
     walk(1230);
-    fly(2150, (x) => (x < 1470 ? 120 : x < 1880 ? 380 : x < 2080 ? 270 : Infinity), 2070, 'key and pit 2');
+    fly(2150, (x) => (x < 1440 ? 165 : x < 1900 ? 430 : x < 2080 ? 330 : Infinity), 2070, 'key and pit 2');
     if (api.carrierOfKey() !== 0) api.block('the cat missed the key');
     let f = 0;
     const gx = game.goals[0].rect.x + game.goals[0].rect.width / 2;

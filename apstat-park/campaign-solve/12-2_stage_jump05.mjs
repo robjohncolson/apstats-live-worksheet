@@ -8,6 +8,9 @@
 // the slab rises (both hold east against the wind); at the top cat 0 jumps from the head into the key and lands
 // back on the head; both drop off the slab west (the slab sinks back once the party leaves), cross the gap and walk
 // home to the door with the wind behind them.
+// Native speeds (batch 10, walk 3/tick, ~1.2 inside the wind band): the launch reach is ~90-100 px, so each cat hops
+// onto the stand's east end from its west face, cat 1 stands on the slab's west half (centre ~1693) so cat 0 reaches
+// its head, and a cat that comes down east of the stand hops back over it.
 export default {
   party: 2,
   budget: 4000,
@@ -19,26 +22,30 @@ export default {
     const cx = api.centreX;
     const steer = (cat, x, tol = 2) => { const d = x - cx(cat); return Math.abs(d) <= tol ? {} : d > 0 ? { right: true } : { left: true }; };
 
-    // Bounce one cat off the jump stand (1544..1576): jump onto it from the west, then steer to targetX().
+    // Bounce one cat off the jump stand (1544..1576): hop onto it from its west face, landing on its EAST end
+    // (centre STAND_LAND_X), then steer to targetX(). At 3 px/tick (and ~1.2 inside the west-blowing wind band
+    // 290..306) a launch carries a cat only ~90-100 px east, so every pixel of take-off counts; the stand launches on
+    // the first resting tick, so the landing spot on its top is the take-off spot.
+    const STAND_LAND_X = 1586;
     function bounce(i, targetX, isDone, label) {
       const cat = cats[i];
       let launched = false, f = 0;
       api.until(isDone, () => {
         if (cat.velocity.y < -500) launched = true;
         const specs = [{}, {}];
-        specs[i] = { jump: f < 14, ...steer(cat, launched ? targetX() : 1560) };
+        specs[i] = { jump: f < 14, ...steer(cat, launched ? targetX() : STAND_LAND_X) };
         f++;
         return specs;
       }, 140, label);
     }
 
     // East along the floor (cat 1 leads), stopping short of the jump stand.
-    api.walkTo([0, 1], [1420, 1490], { max: 900 });
+    api.walkTo([0, 1], [1420, 1522], { max: 900 });
     // Cat 1 bounces onto the slab (1676..1732, top 403).
     const onSlab = (cat) => cat.grounded && Math.abs(api.feetY(cat) - lift.rect.y) < 1.5 && cx(cat) > lift.rect.x && cx(cat) < lift.rect.x + lift.rect.width;
-    bounce(bottom, () => 1702, () => onSlab(cats[bottom]), 'cat 1 did not bounce from the jump stand onto the WeightedLiftEx2 slab');
+    bounce(bottom, () => 1693, () => onSlab(cats[bottom]), 'cat 1 did not bounce from the jump stand onto the WeightedLiftEx2 slab');
     // Cat 0 follows and lands on cat 1's head.
-    api.walkTo(top, 1490);
+    api.walkTo(top, 1522);
     const onHead = () => cats[top].grounded && Math.abs(api.feetY(cats[top]) - cats[bottom].rect.y) < 1.5;
     bounce(top, () => cx(cats[bottom]) + 4, onHead, 'cat 0 did not bounce onto the head of cat 1 on the slab');
     // The slab rises 192 (0.5 per tick); both lean east against the west-blowing wind band.
@@ -55,9 +62,18 @@ export default {
     }, 120, 'cat 0 did not land again after the key jump');
     if (api.carrierOfKey() < 0) api.block('cat 0 jumped from the head on the raised slab but missed the key');
     // Down: cat 0 steps west off the head and the slab, then cat 1 follows; both land west of the gap.
-    api.until(() => cats.every((cat) => cat.grounded && api.feetY(cat) > 430 && cx(cat) < 1580), () => [
-      { left: true }, cats[top].grounded && api.feetY(cats[top]) > 430 ? { left: true } : {},
-    ], 400, 'the party did not get back down west of the gap');
+    // At 3 px/tick a cat stepping off the raised slab can land on the floor EAST of the jump stand (x ~1576) against
+    // its solid east face: it then hops onto the stand (which bounces it west over it).
+    const hop = [0, 0], lastX = cats.map((cat) => cat.rect.x);
+    api.until(() => cats.every((cat) => cat.grounded && api.feetY(cat) > 430 && cx(cat) < 1530), () => cats.map((cat, i) => {
+      const go = i === top || (cats[top].grounded && api.feetY(cats[top]) > 430);
+      const stuck = go && cat.grounded && api.feetY(cat) > 430 && Math.abs(cat.rect.x - lastX[i]) < 0.01 && cx(cat) >= 1530;
+      lastX[i] = cat.rect.x;
+      if (stuck && hop[i] === 0) hop[i] = 16;
+      const jump = hop[i] > 2;
+      if (hop[i] > 0) hop[i]--;
+      return go ? { left: true, jump } : {};
+    }), 600, 'the party did not get back down west of the gap');
     // Home: west along the floor to the door at x 144.
     api.walkTo([0, 1], [400, 460], { max: 900 });
     api.enterGoal();

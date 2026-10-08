@@ -435,6 +435,15 @@ export const CAMPAIGN_PATCHES = [{
   evidence: ['A lift platform is a moving body: the world step resolves its contact with a cat landing on it and the lift carries its riders up with FUN_7ff72bc17330 (the same rider carry as every lift family); natively a rider is never left inside a rising platform',
     'Port: a cat falling onto a platform that rose this frame ends up to one tick of lift travel inside its top; resolveClosedGateCollision sees a previous bottom below the new top (not a landing) and restores the previous rect every frame (10-2 RouletteLift: feet 378.2 vs top 378.0, frozen with vy 0, never grounded)'],
   behavior: 'Every lift (WeightedLift family and RouletteLift): a cat that was above a lift top within 2 units last frame and now overlaps it is set on the top and grounded, unless standing there would put it into a chip or block above (then it is not moved) (was: a cat landing on a platform rising under it ended 0.2 inside it, could neither walk nor jump and kept the lift counting a rider for good: 10-2 roulette lifts).',
+}, {
+  // Batch 10 (coordinator + Codex disassembly; retail capture og-capture-2): native walk and push speeds.
+  id: 'native-walk-and-push-speed',
+  files: ['src/engine/actors/Player.ts', 'src/engine/actors/PushBox.ts', 'src/engine/GameRuntime.ts'],
+  evidence: ['Walk: the avatar ctor writes 3.0 at +0x41c (0x7ff72bb66efa); FUN_7ff72bb687e0 returns +0x41c * +0x418 (0x7ff72bb687fc..68804, +0x418 = 1.0 unless message 0x22 scales it); FUN_7ff72bb6f0e0 sets vx = +-3 per tick on a held direction (input masks 0x20 / 0x10), instantly, the same in the air; the 0.98 (DAT_7ff72bcbea28, 0x7ff72bb6f1de) only decays PRIOR momentum while avatar+0x3f8 bit 0 is clear (a rope yank), it is not an input scale',
+    'Jump: the takeoff tick integrates (0, J) (xmm8 cleared at 0x7ff72bb6f1c1): no horizontal travel on the jump tick, +-3 again from the next tick',
+    'Push: FUN_7ff72bb33890 (PushBox / BigBox / NormalBox / SmallBox, 0x7ff72bb33971) and ColorBox FUN_7ff72bb3b5e0 (0x7ff72bb3b690) set the box vx = +-1.0 (DAT_7ff72c61f320) per tick when enough bodies with vx > 0 press its face; the pusher keeps vx = 3 and the world sweep stops it at the box face, so it advances 1 per tick with the box',
+    'Retail capture og-capture-2: walk 0.22..0.28 screen px/ms (/1.5 = 2.5..3.1 per tick), constant from the first sample, dead stop on release; E1 push: box -13 -> +31 screen px over 203..688 ms = 1.01 per tick, the pusher at the same rate'],
+  behavior: 'Every stage: cats walk at the native 3 per tick (180 / s; was 4.9 per tick, 294 / s, the 0.98 decay misread as an input scale), on the ground and in the air, with no travel on the jump takeoff tick; a pushed box (every push-box family, ColorBox included) moves at most 1 per tick in total however many cats push it (one budget per box per frame), and every pusher stays flush against it (was: the box moved by the pusher\'s whole step, ~4.9). The collision-off cat and the MoveWall opposing-intent check use the same 3 per tick sideways. Not changed: ice sliding (native ice not decoded), rope coasting (the 0.98 decay after a rope yank), the box-against-box chain rule (native may block a box that meets another box; flagged, not changed).',
 }];
 
 // Fail the build if upstream code changes: never silently skip a correction.
@@ -566,6 +575,18 @@ export function patchCampaignSource(file, source) {
       this.jumpCoyoteTimer = JUMP_COYOTE_SECONDS;
     } else {`, file);
     source = replaceOnce(source, '      : wasGrounded || this.jumpCoyoteTimer > 0;', '      : wasGrounded || this.bodySupportContact || this.jumpCoyoteTimer > 0;', file);
+    // native-walk-and-push-speed: walk 3 per tick (FUN_7ff72bb687e0 = 3.0 * 1.0); the 0.98 is a momentum decay, not a scale.
+    source = replaceOnce(source, 'const MOVE_SPEED = 300;', 'const MOVE_SPEED = 3 * 60;', file);
+    source = replaceOnce(source, 'const MOVE_AXIS_SCALE = 0.98;', 'const MOVE_AXIS_SCALE = 1;', file);
+    // native-walk-and-push-speed: the takeoff tick integrates (0, J): no horizontal travel on the jump tick.
+    source = replaceOnce(source, `    if (startsJump) {
+      this.jumpStarted = true;
+      this.jumpsUsed += 1;
+    }`, `    if (startsJump) {
+      this.jumpStarted = true;
+      this.jumpsUsed += 1;
+      this.velocity.x = 0;
+    }`, file);
     return source;
   }
   if (file === 'src/engine/physics.ts') {
@@ -810,6 +831,17 @@ function planPushBoxLine(
 `;
     // jumpstand-launch: the sideways part of a stand launch, applied while airborne with nothing on top (per second).
     source = replaceOnce(source, '  velocityY = 0;\n', '  velocityY = 0;\n  launchX = 0;\n', file);
+    // native-walk-and-push-speed: a moved box leaves its pusher flush against its new face.
+    source = replaceOnce(source, `    if (followers) {
+      boxRects[i] = destination;
+      for (const [index, rect] of followers) boxRects[index] = rect;
+      movedBoxIndex = i;
+    }`, `    if (followers) {
+      boxRects[i] = destination;
+      for (const [index, rect] of followers) boxRects[index] = rect;
+      movedBoxIndex = i;
+      resolvedPlayerX = flushPlayerX;
+    }`, file);
     // pushbox-general-fall: the runtime may stop a push step where the box first loses all support (native 1 per tick).
     source = replaceOnce(source, `  canMoveBox?: (index: number, sign: number, chain?: { lead: number; bodies: number }) => boolean,
 ): PushBoxCollisionResult {`, `  canMoveBox?: (index: number, sign: number, chain?: { lead: number; bodies: number }) => boolean,
@@ -818,6 +850,8 @@ function planPushBoxLine(
     source = replaceOnce(source, `    const destination = { ...box, x: box.x + pushDelta };
     const destinationHitsSolid = map.rectHitsSolid(destination, {`, `    const unlimited = { ...box, x: box.x + pushDelta };
     const destination = limitPush ? limitPush(i, box, unlimited) : unlimited;
+    // native-walk-and-push-speed: the pusher is stopped by the box face where the box ends this tick.
+    const flushPlayerX = pushDelta > 0 ? destination.x - playerRect.width : destination.x + destination.width;
     const destinationHitsSolid = map.rectHitsSolid(destination, {`, file);
     return source;
   }
@@ -4055,6 +4089,78 @@ function feetOnSlab(rect: Rect, slab: Rect): boolean {
       }
     }
     const result = resolveWeightedLiftPlayerCollision(`, file);
+    // native-walk-and-push-speed: a pushed box moves at most 1 per tick (FUN_7ff72bb33890 vx = +-1.0).
+    source = replaceOnce(source, `      (index, from, to) => {
+        const firstFreeX = this.firstUnsupportedPushBoxX(index, from, to);`, `      (index, from, toUncapped) => {
+        // One budget per box per frame: the box's own update moves it at most 1 per tick whatever the pusher count.
+        const pushedBox = this.pushBoxes[index];
+        const maxStep = Math.max(0, 60 * this.currentFrameDt - (pushedBox ? this.pushBoxStepThisFrame.get(pushedBox) ?? 0 : 0));
+        const to = Math.abs(toUncapped.x - from.x) <= maxStep ? toUncapped
+          : { ...toUncapped, x: from.x + Math.sign(toUncapped.x - from.x) * maxStep };
+        const firstFreeX = this.firstUnsupportedPushBoxX(index, from, to);`, file);
+    source = replaceOnce(source, `    const clampedDt = Math.min(dt, 1 / 20);`, `    const clampedDt = Math.min(dt, 1 / 20);
+    this.currentFrameDt = clampedDt;
+    this.pushBoxStepThisFrame.clear();`, file);
+    // native-walk-and-push-speed: the distance each box has been pushed this frame (shared by all its pushers).
+    source = replaceOnce(source, `      for (const index of movedIndices) {
+        this.carryPlayersWithPushedBox(previousPushBoxRects[index], result.boxRects[index]);
+        this.pushBoxesMovedThisFrame.add(this.pushBoxes[index]);
+      }`, `      for (const index of movedIndices) {
+        this.carryPlayersWithPushedBox(previousPushBoxRects[index], result.boxRects[index]);
+        this.pushBoxesMovedThisFrame.add(this.pushBoxes[index]);
+        const pushed = this.pushBoxes[index];
+        if (pushed) {
+          const step = Math.abs(result.boxRects[index].x - previousPushBoxRects[index].x);
+          this.pushBoxStepThisFrame.set(pushed, (this.pushBoxStepThisFrame.get(pushed) ?? 0) + step);
+        }
+      }`, file);
+    source = replaceOnce(source, `  private rouletteLifts: RouletteLift[] = [];`, `  private rouletteLifts: RouletteLift[] = [];
+  /** native-walk-and-push-speed: this frame's dt (the push cap is 1 per tick). */
+  private currentFrameDt = 1 / 60;
+  /** native-walk-and-push-speed: how far each box has been pushed this frame (budget 1 per tick per box). */
+  private readonly pushBoxStepThisFrame = new Map<PushBox, number>();`, file);
+    // native-walk-and-push-speed: the collision-off cat and the MoveWall intent walk 3 per tick sideways too.
+    source = replaceOnce(source, `      x: horizontalDirection * COLLISION_OFF_PLAYER_MOVE_AXIS_SCALE * COLLISION_OFF_PLAYER_MOVE_SPEED,`, `      x: horizontalDirection * NATIVE_WALK_SPEED,`, file);
+    source = replaceOnce(source, `          const intendedDeltaX = inputDirection
+            * COLLISION_OFF_PLAYER_MOVE_AXIS_SCALE
+            * COLLISION_OFF_PLAYER_MOVE_SPEED
+            * dt;`, `          const intendedDeltaX = inputDirection * NATIVE_WALK_SPEED * dt;`, file);
+    source += `
+/** native-walk-and-push-speed: the native walk, 3 units per tick (FUN_7ff72bb687e0). */
+const NATIVE_WALK_SPEED = 3 * 60;
+`;
+    // native-walk-and-push-speed: pushers behind a pusher close the box's step (native moves every body in one world
+    // step, so a cat pushing a cat that pushes a box stays flush; the per-cat loop left it one step behind).
+    source = replaceOnce(source, `    this.applyThundersAfterMotion(activePlayers, thunderContactIndexes);`, `    this.closePushChainGaps(activePlayers);
+    this.applyThundersAfterMotion(activePlayers, thunderContactIndexes);`, file);
+    source = replaceOnce(source, `  private firstUnsupportedPushBoxX(`, `  /** native-walk-and-push-speed: a cat pushing (intent) into a cat or a box that moved this frame closes the gap. */
+  private closePushChainGaps(activePlayers: readonly Player[]): void {
+    if (this.pushBoxStepThisFrame.size === 0 || !this.tileMap) return;
+    for (let pass = 0; pass < activePlayers.length; pass += 1) {
+      let moved = false;
+      activePlayers.forEach((cat, index) => {
+        const dir = Math.sign(this.framePushIntentX[index] ?? 0);
+        if (dir === 0 || cat.deathTimer > 0 || this.collisionChangePlayersCollisionOff.has(cat)) return;
+        const fronts = [
+          ...activePlayers.filter((other, j) => other !== cat && Math.sign(this.framePushIntentX[j] ?? 0) === dir).map((other) => other.rect),
+          ...[...this.pushBoxStepThisFrame.keys()].map((box) => box.rect),
+        ];
+        for (const front of fronts) {
+          if (!(front.y < cat.rect.y + cat.rect.height && front.y + front.height > cat.rect.y)) continue;
+          const gap = dir > 0 ? front.x - (cat.rect.x + cat.rect.width) : cat.rect.x - (front.x + front.width);
+          if (!(gap > 1e-6 && gap <= 1.0001)) continue;
+          const target = { ...cat.rect, x: cat.rect.x + dir * gap };
+          if (this.tileMap!.rectHitsSolid(target)) continue;
+          cat.applyResolvedCollision(target, cat.velocity, cat.grounded);
+          moved = true;
+          break;
+        }
+      });
+      if (!moved) break;
+    }
+  }
+
+  private firstUnsupportedPushBoxX(`, file);
     source += `
 /** A copy of a stage row at a new point; raw x / y follow, because param parsers find their params after them. */
 function spawnMovedTo(spawn: ActorSpawnDef, x: number, y: number): ActorSpawnDef {

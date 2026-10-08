@@ -130,11 +130,11 @@ test('1-3: the hop is the same for a jump held 1, 10 or 40 frames (edge-triggere
   assert.equal(runs[2], runs[0]);
 });
 
-// The port walks ~4.9 units a frame. Retail run P: ~140 ms of walking left ~22 native units of overlap.
-// native-player-body: overlap = 32/2 + 40/2 - 3 x 4.9 = 21.3 for the native 32-wide cat (the 26-wide cat
-// reached ~22 in 2 frames: 13 + 20 - 9.8 = 23.2; 2 frames now leave 26.2).
-test('1-3: walking 3 frames during the hop: the box keeps its x in the air and lands off-centre on the head (~22 overlap)', () => {
-  const { rest, frames, cat, box } = headHop('stage_jump02', 1, (f) => (f < 3 ? { right: true } : {}));
+// Retail run P: a short walk during the hop left ~22 native units of overlap. native-walk-and-push-speed: the cat
+// walks the native 3/tick (was 4.9), so overlap = 32/2 + 40/2 - 5 x 3 = 21 after 5 frames (was 3 frames x 4.9 = 21.3;
+// 3 frames now leave 27).
+test('1-3: walking 5 frames during the hop: the box keeps its x in the air and lands off-centre on the head (~22 overlap)', () => {
+  const { rest, frames, cat, box } = headHop('stage_jump02', 1, (f) => (f < 5 ? { right: true } : {}));
   for (const frame of frames.filter((frame) => frame.falling)) assert.equal(frame.boxX, rest.boxX, 'no horizontal inheritance in flight');
   assert.ok(Math.abs(box.rect.y + box.rect.height - cat.rect.y) <= 0.5, 'it landed on the head');
   const overlap = Math.min(box.rect.x + box.rect.width, cat.rect.x + cat.rect.width) - Math.max(box.rect.x, cat.rect.x);
@@ -142,7 +142,8 @@ test('1-3: walking 3 frames during the hop: the box keeps its x in the air and l
 });
 
 test('1-3: walking clear during the hop: the box comes straight down beside the cat, onto the floor', () => {
-  const { rest, cat, box } = headHop('stage_jump02', 1, (f) => (f < 8 ? { right: true } : {}));
+  // Clearing the 40-wide box from the centred 32-wide cat takes 36: 13 frames x 3/tick native walk (was 8 x 4.9).
+  const { rest, cat, box } = headHop('stage_jump02', 1, (f) => (f < 13 ? { right: true } : {}));
   assert.equal(box.rect.x, rest.boxX, 'it kept its x');
   assert.ok(cat.rect.x >= box.rect.x + box.rect.width, 'the cat is clear of it');
   assert.ok(Math.abs(box.rect.y + box.rect.height - 432) < 1e-3, 'it landed on the floor beside the cat');

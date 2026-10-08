@@ -191,7 +191,8 @@ test('1-3 (E1): a cat on a pushed box rides it 1:1', () => {
   step(game, 5);
   const offset = rider.rect.x - box.rect.x;
   const start = box.rect.x;
-  for (let frame = 0; frame < 30; frame++) {
+  // Native push speed: the box moves at most 1/tick (was the 4.9/tick walk), so push 45 frames for > 30 of travel.
+  for (let frame = 0; frame < 45; frame++) {
     step(game, 1, [RIGHT, IDLE]);
     assert.equal(rider.rect.x - box.rect.x, offset, 'frame ' + frame);
   }

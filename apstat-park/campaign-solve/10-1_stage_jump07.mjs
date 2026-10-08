@@ -9,6 +9,8 @@
 // holds the inside step switch while cat 0 climbs and slips through the closing gate (it closes at 1/tick).
 // Note: at party 2 the runtime binds cat i to input slot playerInputSlots[i] ([1, 0] here); the driver places
 // each cat's buttons in its slot.
+// Native speeds (batch 10, walk 3/tick): a full-hold jump covers ~115 px back to take-off height, so the FallBox pit
+// hops start from the ledge lip with full holds, and cat 1 hops up SwitchRect 7 from its face.
 
 export default {
   party: 2,
@@ -67,21 +69,25 @@ export default {
     // (0.22 s after a body lands on top) and while falling, but only inside the camera view. Middle box 2280..2328
     // (top 336), low boxes 2232..2280 and 2328..2376 (top 384). Cat 1 lands on the middle box and jumps on to the far
     // ledge (2400.., top 336) before it drops; cat 0 follows box-to-box over the low pair.
-    const hopVia = (who, xs, label, { pit = false } = {}) => {
+    // hold = jump-hold frames (20 = a full-height jump, the longest airtime at 3 px/tick).
+    const hopVia = (who, xs, label, { pit = false, hold = 14 } = {}) => {
       for (const x of xs) {
         let f = 0, left = false;
         api.until(() => left && cats[who].grounded, () => {
           if (!cats[who].grounded) left = true;
           const specs = [{}, {}];
-          specs[who] = { jump: f++ < 14, ...steer(cats[who], x, 2) };
+          specs[who] = { jump: f++ < hold, ...steer(cats[who], x, 2) };
           return specs;
         }, 150, `${label}: cat ${who} jumping to x ${x}`);
         if (pit && api.feetY(cats[who]) > 390) api.block(`${label}: cat ${who} fell into the FallBox pit near x ${Math.round(api.centreX(cats[who]))}`);
       }
     };
-    api.walkTo([0, 1], [2120, 2185], { tol: 3 });
-    hopVia(1, [2304, 2440], 'middle FallBox', { pit: true });
-    hopVia(0, [2256, 2352, 2420], 'low FallBoxes', { pit: true });
+    // At 3 px/tick a full jump covers ~115 px back to its take-off height: cat 1 takes off from the ledge lip (centre
+    // 2200), lands on the middle box's east half (centre 2310) and jumps on at once (full hold) to the far ledge.
+    api.walkTo([0, 1], [2120, 2200], { tol: 3 });
+    hopVia(1, [2310, 2440], 'middle FallBox', { pit: true, hold: 20 });
+    api.walkTo(1, 2500, { tol: 3 });   // clear the ledge lip for cat 0's landing
+    hopVia(0, [2256, 2352, 2420], 'low FallBoxes', { pit: true, hold: 20 });
     // On east: the 336 ledge (2400..2544) steps down to 384 (2544..2592) and the 432 floor, over the ScaleSwitches.
     api.walkTo([0, 1], [3336, 3500], { tol: 2, max: 600 });
     // Door room (block 3696.., top 336; ceiling to 144) behind Gate 1 (3744..3774, nine 30-high segments: opening
@@ -91,6 +97,7 @@ export default {
     const gate = game.gates[0];
     const step7 = game.switchRects.find((rect) => rect.spawn.label === '7');
     api.until(() => step7.collisionPublished, [{}, {}], 30, 'cat 0 on the 3320 switch did not raise SwitchRect 7');
+    api.walkTo(1, 3615, { tol: 3 });   // a 3 px/tick hop from 3500 falls short of the step: start at its face
     hopVia(1, [3672, 3718], 'up SwitchRect 7');
     if (api.feetY(cats[1]) > 337) api.block('cat 1 did not reach the door-room block top (336) west of Gate 1');
     // Cat 0 opens the gate and stays until it is fully retracted.

@@ -1,5 +1,5 @@
 // 10-2 TWO PLAYERS (stage_jump04).
-// The map (party 2, cats 32x46, walk/air speed 4.9 per tick, gravity 0.65 per tick^2, a held jump rises ~79):
+// The map (party 2, cats 32x46, native walk/air speed 3 per tick, gravity 0.65 per tick^2, a held jump rises ~79):
 // - Spawn floor y 432 (x 48..672). A 144-tall block (x 384..672, top 288) stands between the spawn and the rest.
 //   On top: the Bridge "1" switch (x 464..496). Bridge 1 is a head-push bridge: while the switch is held it grows a
 //   64-wide step out of the block's WEST face (x 320..384, top 360) and shoves a cat standing there west.
@@ -26,20 +26,24 @@
 // 2. Cat 0 stands on the Bridge 1 switch (x ~480); the step grows and shoves cat 1 to x ~304; cat 1 hops onto the
 //    step (feet 360) and then onto the block.
 // 3. Pit: cat 1 rides cat 0's head; cat 0 walks east off the block edge (holding right); cat 1 jumps off the FALLING
-//    carrier 21 ticks after it leaves the edge (rider feet ~391, already under the slab) holding right and lands on
-//    the east floor at centre ~927. Cat 0 falls into the Warp and reappears on the block top.
+//    carrier JUMP_AT (24) ticks after it leaves the edge (the rider is carried east at 3/tick; it jumps from below
+//    the floor line, apexes under the slab at feet ~374) holding right and lands on the east floor lip (centre ~859).
+//    Cat 0 falls into the Warp and reappears on the block top.
 // 4. Cat 1 stands on the Bridge 2 switch (x 960); cat 0 walks off the block onto Bridge 2 and across under the slab.
 // 5. JumpStand: cat 1 hops onto the stand; while launched it steers to x ~1360 (clear of the floating block) and,
 //    once its feet are above y 240, onto the floating block (feet 240). Cat 0 hops onto the stand and keeps bouncing.
 //    Cat 1 jumps right off the floating block ~6 ticks before cat 0's second launch and lands on cat 0's head near
-//    its apex (feet ~217), then jumps off it (any body contact below allows a jump) holding right: apex feet ~138,
-//    clears the pillar top (192) and lands on the far floor (x ~1659).
+//    its apex (feet ~217), then jumps off it (any body contact below allows a jump) holding right: at 3 px/tick it
+//    lands on the pillar top (192) and walks east off it to the far floor.
 // 6. Cat 1 walks back onto the Gate switch; the Gate sinks; cat 0 steps off the stand and walks under the pillar.
 // 7. RouletteLifts: cat 1 on lift 2, cat 0 on lift 1; they bump the triggers on roulette 0 in the order
 //    L1, L2, L1, L2, L1 (lift 1 to round 3), then cat 0 jumps right off lift 1 to the Key, and both cats go over
 //    lift 2 to the door. A rider falls back onto its RISING platform after each bump (land-on-rising-lift).
 
-const JUMP_AT = 21;            // pit: rider jumps this many ticks after the carrier leaves the block edge
+// Pit: rider jumps this many ticks after the carrier leaves the block edge. Batch 10 (walk 3/tick): the window is
+// 23..26 (re-derived by sweep; 21 at the old 4.9/tick): earlier, the rider's head meets the slab (feet < 334 past
+// x 784) and it drops into the pit; later, it falls below the floor before reaching x 832. Middle of the window.
+const JUMP_AT = 24;
 const STAND_X = 1416;          // JumpStand centre
 const BLOCK_TOP = 240;         // floating block x 1296..1344, top y 240
 const RELAY_LEAD = 6;          // cat 1 leaves the floating block this many ticks before cat 0's second launch
@@ -94,7 +98,7 @@ export default {
       api.step([{ right: t < 26 }, { jump: t >= JUMP_AT && t < JUMP_AT + 16, right: t >= JUMP_AT }]);
       if (t > JUMP_AT + 2 && cats[1].grounded) break;
     }
-    if (!(cats[1].grounded && feet(cats[1]) >= 431 && cx(cats[1]) > 864)) {
+    if (!(cats[1].grounded && feet(cats[1]) >= 431 && cats[1].rect.x + cats[1].rect.width > 864)) {
       api.block(`pit: cat 1 did not land on the east floor (centre ${cx(cats[1]).toFixed(1)}, feet ${feet(cats[1]).toFixed(1)})`);
     }
     api.land();
@@ -149,6 +153,10 @@ export default {
       api.step([b, a]);
       if (relay === 2 && f > onAt + 3 && A.grounded) break;
     }
+    // At 3 px/tick the relay arc tops out over the pillar and the cat may land on its top (1488..1536, top 192):
+    // it then just walks east off it to the far floor.
+    const onPillar = A.grounded && Math.abs(feet(A) - 192) < 1 && A.rect.x + A.rect.width > 1488 && A.rect.x < 1536;
+    if (onPillar) { api.walkTo(1, 1580, { tol: 3, max: 120 }); api.land(1); }
     if (!(A.grounded && cx(A) > 1552 && feet(A) >= 431)) {
       api.block(`cat 1 did not clear the pillar (centre ${cx(A).toFixed(1)}, feet ${feet(A).toFixed(1)})`);
     }

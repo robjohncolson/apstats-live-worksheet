@@ -19,9 +19,11 @@
 // walks under it and jumps -- its head stops on the slab bottom (336) inside the hanging key (~303..359) while the
 // slab keeps it off the ghost body (bottom ~288). Cat 0 keeps facing the ghost while cat 1 takes the key up the
 // stairs, then cat 1 faces it while cat 0 follows; both enter.
+// Native speeds (batch 10, walk 3/tick): the cats hold the raised lift until the StepEnemy has turned east past the
+// plateau landing, and cross the red block one per UpDownEnemy low phase (a crossing takes ~80 of its 122 frames).
 export default {
   party: 2,
-  budget: 3200,
+  budget: 5000,
   async solve(stage, api) {
     const { cats, game } = api;
     const lift = game.weightedLifts[0];
@@ -45,6 +47,12 @@ export default {
     api.jumpTo(0, 840); faceGhost(0);
     alive('boarding the lift');
     api.until(() => lift.rect.y <= lift.spawn.y - 120, [], 400, 'the lift did not rise with both cats');
+    // The StepEnemy patrols the plateau (1008..1488 bumps) at 1/tick; at native walk speed the cats reach the top
+    // while it is still walking west over the landing spot (1010..1060). Wait on the raised lift (it stays up while
+    // both ride) until it has turned at the west bump and walked east past x 1120.
+    let seX = stepEnemy.rect.x;
+    api.until(() => { const east = stepEnemy.rect.x > seX; seX = stepEnemy.rect.x; return east && seX > 1120; }, [], 900,
+      'the StepEnemy never cleared the plateau landing');
     // Off the lift's east end onto the plateau (top 288), one at a time.
     api.walkTo(1, 1060, { hop: true, max: 200 }); faceGhost(1);
     api.walkTo(0, 1010, { hop: true, max: 200 }); faceGhost(0);
@@ -75,6 +83,8 @@ export default {
     const move = (i, x, opts = {}) => { api.walkTo(i, x, { hop: true, max: 400, ...opts }); faceGhost(i); alive(`cat ${i} to x ${x}`); };
     whilePopperLow();
     move(1, 2110);
+    // At 3 px/tick one crossing (~80 ticks) uses most of a 122-frame low phase: cat 0 waits for the next one.
+    whilePopperLow();
     move(0, 2060);
     // Up the steps (2304 top 240, 2352 top 192) onto the hut roof (2400..2592, top 144); then down the east step
     // (2592..2640, top 192) to the slab (2640..3072, top 288) east of the hut.

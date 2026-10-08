@@ -22,12 +22,29 @@ export default {
       api.until(() => still > 20, () => { still = Math.abs(lift.rect.y - last) < 1e-6 ? still + 1 : 0; last = lift.rect.y; return []; },
         600, label + ' did not stop rising');
     };
-    // Off a topped-out slab: cat 1 jumps to the block first; cat 0 steps to the slab's east end (it sinks only
-    // 0.5 per tick once a cat leaves) and follows.
+    // Off a topped-out slab: both cats move up to its east end (cat 1 overhanging the edge by ~13). Jumps start at the
+    // slab's east edge: slab 3 tops out at 325.5 (37.5 below the ledge, 90 from it) and a 3 px/tick jump that rises
+    // 37.5 and comes back down to the ledge covers only ~90. The slab sinks 0.5 per tick once a cat leaves, so cat 0
+    // follows at once: it steps up to the edge 6 ticks after cat 1 took off and jumps the moment it gets there, ~15
+    // ticks (45 px) behind cat 1, which walks on east to clear the landing spot.
     const hopOff = (lift, x) => {
-      api.jumpTo(1, x + 60);
-      api.walkTo(0, lift.rect.x + lift.rect.width - 18, { tol: 3 });
-      api.jumpTo(0, x + 10);
+      const east = lift.rect.x + lift.rect.width;
+      const [c0, c1] = cats;
+      api.walkTo([0, 1], [east - 37, east - 3], { tol: 2 });
+      let f = 0, takeoff = -1, left0 = false, left1 = false;
+      api.until(() => f > 2 && left0 && left1 && c0.grounded && c1.grounded, () => {
+        if (!c0.grounded) left0 = true;
+        if (!c1.grounded) left1 = true;
+        const s = [{}, {}];
+        s[1] = { jump: f < 14, ...(api.centreX(c1) < x + 100 ? { right: true } : {}) };
+        if (f >= 6) {
+          if (takeoff < 0 && api.centreX(c0) >= east - 4.5) takeoff = f;
+          s[0] = takeoff < 0 ? { right: true } : { jump: f - takeoff < 14, ...(api.centreX(c0) < x + 30 ? { right: true } : {}) };
+        }
+        f++;
+        return s;
+      }, 240, 'both cats off the slab onto the block at ' + x);
+      if (cats.some((cat) => api.feetY(cat) > 289)) api.block('a cat missed the block at ' + x);
     };
     ride(lifts[0], 'slab 1');
     hopOff(lifts[0], 960);    // block 1 (960..1200, top 288)

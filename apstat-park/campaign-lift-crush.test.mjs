@@ -97,7 +97,8 @@ test('1-4: the hold is the native mirror: the lift goes back up even if the cat 
   while (lift.rect.y + lift.rect.height !== cat.rect.y && frame < 400) { step(game); frame += 1; }
   assert.ok(frame < 400, 'the lift reached the head');
   const holdY = lift.rect.y;
-  step(game, 20, [IDLE, RIGHT]);   // the cat walks out from under the 118-wide slab
+  // The cat walks out from under the 118-wide slab: ~76 px at the native 3/tick walk = 26 frames (was 20 x 4.9).
+  step(game, 30, [IDLE, RIGHT]);
   assert.ok(cat.rect.x >= lift.rect.x + lift.rect.width - 1e-6, 'the cat left: ' + cat.rect.x);
   let lowest = holdY;
   for (let f = 0; f < 120; f++) { step(game); lowest = Math.max(lowest, lift.rect.y); }
@@ -169,7 +170,9 @@ test('1-4: the WeightedLift returning down onto a cat standing on a pillar stops
     assert.ok(!inside(b.rect, lift.rect), 'never inside (frame ' + frame + ')');
   }
   assert.equal(lift.rect.y + lift.rect.height, b.rect.y, 'it stopped on the head');
-  for (let f = 0; f < 30; f++) step(game, 1, [IDLE, RIGHT]);   // walk off the pillar's far side
+  // Walk off the pillar's far side and out from under the slab (x >= 2426, 120 px): 50 frames x 3/tick native walk
+  // = 150 (was 30 x 4.9 = 147); 30 frames now end on the floor under the slab, which then stops on the head.
+  for (let f = 0; f < 50; f++) step(game, 1, [IDLE, RIGHT]);
   step(game, 200);
   assert.ok(Math.abs(lift.rect.y - rest) < 1e-6, 'it resumed and returned to rest: ' + lift.rect.y);
 });

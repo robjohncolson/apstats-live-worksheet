@@ -28,7 +28,12 @@ export default {
     api.walkTo([0, 1], [1230, 1275]);
     api.jumpTo(1, 1416);
     api.climbOnto(0, 1, { from: 1278 });
+    // Native 3/tick: a head jump covers ~135, so cat 1 first carries cat 0 to the stone's east edge (centre 1430, the
+    // rider moves with it) and cat 0 edges to the front of the head before jumping for the block (1536).
+    api.walkTo(1, 1430, { tol: 1, others: { 0: {} } });
+    api.until(() => cats[0].rect.x >= cats[1].rect.x + 20, [{ right: true }], 20, 'cat 0 could not edge on the head');
     api.jumpTo(0, 1600);
+    api.walkTo(1, 1452, { tol: 1 });   // stone's east edge (cat x 1436, 8 over the stone) before its own jump
     api.jumpTo(1, 1556);
     // East end of the block (1968): cat 0 stands at the edge, cat 1 climbs onto its head and jumps onto the bar.
     api.walkTo([0, 1], [1945, 1880], { tol: 2 });

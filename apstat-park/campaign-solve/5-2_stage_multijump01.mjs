@@ -6,6 +6,9 @@
 // Route: relay over pit 1 (2 jumps), press switch 1 (4 jumps), relay over pit 2, press switch 2 (8 jumps), then one
 // long relay flight across the big pit through the key (2352, 192) up onto the goal ledge (top y 96, x >= 2640).
 // Every input is a player's buttons: the relay player presses jump for 14 frames, both players steer.
+// At the native 3 px/tick a level jump covers ~100, so pit 1 (192 wide, 2 jumps) needs the first jump from the very
+// edge and the relay jump as late as possible (feet ~428, just above the ledge level). The big pit flight stays at
+// feet ~230 until past the key (bottom 220) -- a low arc, otherwise the cat passes above it -- then climbs.
 
 const HOLD = 14;
 
@@ -67,8 +70,8 @@ export default {
     }
 
     // Pit 1 (816..1008): two jumps.
-    walk(780);
-    fly(1100, () => 380, 1010, 'pit 1');
+    walk(828);
+    fly(1100, () => 428, 1010, 'pit 1');
     // Switch 1 (1200): 2 -> 4 jumps.
     walk(1200);
     if (cat.maxJumps !== 4) api.block('switch 1 did not double the jumps (' + cat.maxJumps + ')');
@@ -80,7 +83,7 @@ export default {
     if (cat.maxJumps !== 8) api.block('switch 2 did not double the jumps (' + cat.maxJumps + ')');
     // The big pit: rise through the key, then up over the goal ledge (top y 96 from x 2640).
     walk(2040);
-    fly(2736, (x) => (x < 2300 ? 240 : 60), 2650, 'big pit');
+    fly(2736, (x) => (x < 2380 ? 230 : 60), 2650, 'big pit');
     if (api.carrierOfKey() !== 0) api.block('the cat missed the key');
     // Into the door: both players walk to it and tap UP.
     let f = 0;

@@ -29,6 +29,7 @@ const result = await page.evaluate(() => {
   runtime.gates = []; runtime.bridges = [];
   runtime.tileMap.rectHitsSolid = () => false;
   function push(sign, pinned = false) {
+    runtime.pushBoxStepThisFrame?.clear();   // each direct call is its own frame (the push budget is per box per frame)
     box.applyRect({x: 300, y: 382, width: 40, height: 50});
     other.rect = {x: sign > 0 ? 340 : 260, y: 390, width: 40, height: 42};
     const previous = {x: sign > 0 ? 260 : 340, y: 390, width: 40, height: 42};
@@ -42,17 +43,20 @@ const result = await page.evaluate(() => {
   runtime.tileMap.rectHitsSolid = () => false;
   runtime.bridges = [bridge]; other.rect.x = 900;
   box.applyRect({x: 400, y: 382, width: 40, height: 50});
-  for (let step = 0; step < 20; step++) {
+  // native-walk-and-push-speed (batch 10): a box moves at most 1 per tick, so 40 one-tick pushes (was 20 x 2).
+  for (let step = 0; step < 40; step++) {
     const previous = {x: box.rect.x - 40, y: 390, width: 40, height: 42};
     player.rect = {...previous, x: previous.x + 2}; player.velocity = {x: 120, y: 0};
+    runtime.pushBoxStepThisFrame?.clear();
     runtime.applyPushBoxes(previous);
   }
   return {gates, bridgeRect, right, left, pinnedRight, pinnedLeft, crossedBridge: box.rect.x};
 });
 assert(result.gates.every(rect => rect.y === -24 && rect.height === 151 && rect.width === 30));
 assert.deepEqual(result.bridgeRect, {x: 406, y: 432, width: 441, height: 20});
-assert.deepEqual(result.right, {box: 302, cat: 342});
-assert.deepEqual(result.left, {box: 298, cat: 258});
+// A 2-unit push step moves the box the native 1 per tick (was the whole 2).
+assert.deepEqual(result.right, {box: 301, cat: 341});
+assert.deepEqual(result.left, {box: 299, cat: 259});
 assert.deepEqual(result.pinnedRight, {box: 300, cat: 340});
 assert.deepEqual(result.pinnedLeft, {box: 300, cat: 260});
 assert.equal(result.crossedBridge, 440);

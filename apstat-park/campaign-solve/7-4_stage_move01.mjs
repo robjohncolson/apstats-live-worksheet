@@ -6,6 +6,9 @@
 // Route: move in short bursts and stand still to recharge; jump each StepEnemy; each cat jumps off the JumpStand
 // onto the block; both push the box east off the block into the gap, where it lands as a step; drop onto the box
 // (through the key), up the far side, down the steps to the door.
+// Native speeds (batch 10, walk 3/tick): a full meter is ~600 px of walking and a jump ~0.23 of it. The cats rest on
+// the west bump (962..1008, top 384) until the two StepEnemies between the bumps walk west 100+ apart, then meet
+// them head-on one at a time; they rest only grounded, under 0.4, keeping a jump in reserve.
 export default {
   party: 2,
   budget: 6000,
@@ -19,36 +22,63 @@ export default {
     };
     const rest = () => api.until(() => meter.energy >= 0.999, [], 200, 'the meter did not refill');
     // Walk the listed cats east to their x, jumping any StepEnemy ahead and any step; rest when the meter runs low.
+    // At the native 3 px/tick a full meter (200 moving ticks) covers ~600 px and a jump costs ~0.23, so the cats rest
+    // (all grounded) once the meter is under REST_AT, keeping a reserve to jump an enemy that walks up to a resting
+    // cat (it is jumped toward, i.e. over its back).
+    const REST_AT = 0.4;
     function travel(targets, label) {
       const who = Object.keys(targets).map(Number);
       const jumpLeft = [0, 0];
+      const jumpDir = [0, 0];
       const lastX = cats.map((cat) => cat.rect.x);
+      const pushed = [false, false];   // the cat held a direction last tick (only then is "no x change" a wall)
       let resting = false;
       api.until(() => who.every((i) => Math.abs(api.centreX(cats[i]) - targets[i]) < 4 && cats[i].grounded), () => {
         alive(label);
         const grounded = cats.every((cat) => cat.grounded);
-        if (meter.energy < 0.25 && grounded) resting = true;
+        if (meter.energy < REST_AT && grounded && jumpLeft.every((j) => j === 0)) resting = true;
         if (resting && meter.energy >= 0.999) resting = false;
-        if (resting) return [{}, {}];
         const specs = [{}, {}];
         for (const i of who) {
           const cat = cats[i];
           const dx = targets[i] - api.centreX(cat);
-          const ahead = enemies.some((enemy) => {
-            const gap = dx > 0 ? enemy.rect.x - (cat.rect.x + 32) : cat.rect.x - (enemy.rect.x + enemy.rect.width);
-            return gap > -20 && gap < 45 && Math.abs(enemy.rect.y + enemy.rect.height - api.feetY(cat)) < 30;
+          // The nearest same-level enemy within 45 of the cat's front/back.
+          const threat = enemies.find((enemy) => {
+            if (Math.abs(enemy.rect.y + enemy.rect.height - api.feetY(cat)) >= 30) return false;
+            const ahead = enemy.rect.x - (cat.rect.x + 32), behind = cat.rect.x - (enemy.rect.x + enemy.rect.width);
+            return resting ? (ahead > -10 && ahead < 30) || (behind > -10 && behind < 30) : dx > 0 ? ahead > -20 && ahead < 45 : behind > -20 && behind < 45;
           });
-          const stuck = Math.abs(cat.rect.x - lastX[i]) < 0.01 && Math.abs(dx) >= 4;
+          const stuck = !resting && pushed[i] && cat.grounded && Math.abs(cat.rect.x - lastX[i]) < 0.01 && Math.abs(dx) >= 4;
           lastX[i] = cat.rect.x;
-          if (cat.grounded && jumpLeft[i] === 0 && (ahead || stuck)) jumpLeft[i] = 16;
-          specs[i] = { ...(Math.abs(dx) < 4 ? {} : dx > 0 ? { right: true } : { left: true }), jump: jumpLeft[i] > 0 };
+          if (cat.grounded && jumpLeft[i] === 0 && (threat || stuck)) {
+            jumpLeft[i] = 16;
+            jumpDir[i] = threat ? Math.sign(threat.rect.x + threat.rect.width / 2 - api.centreX(cat)) || 1 : Math.sign(dx);
+          }
+          const airborne = jumpLeft[i] > 0 || !cat.grounded;
+          const dir = airborne ? jumpDir[i] : resting || Math.abs(dx) < 4 ? 0 : Math.sign(dx);
+          specs[i] = { ...(dir > 0 ? { right: true } : dir < 0 ? { left: true } : {}), jump: jumpLeft[i] > 0 };
+          pushed[i] = dir !== 0;
           if (jumpLeft[i] > 0) jumpLeft[i]--;
+          if (cat.grounded && jumpLeft[i] === 0) jumpDir[i] = Math.sign(dx);
         }
         return specs;
-      }, 1500, label);
+      }, 3000, label);
       rest();
     }
     rest();
+    // The two StepEnemies between the bumps (1008..1488) bounce at 1/tick and keep crossing each other; a 3 px/tick
+    // jump (~44 ticks, ~132 px) cannot clear two of them bunched together. Wait on top of the west bump (962..1008,
+    // top 384, out of their reach) until both walk WEST, 100+ apart (centres): the cats then meet them head-on one at
+    // a time (closing 4/tick), landing in the gap between them. The western enemy (spawn 888) falls into the floor pit.
+    travel({ 0: 978, 1: 1012 }, 'to the west bump');
+    const zone = enemies.filter((enemy) => enemy.rect.x > 1000);
+    let prev = zone.map((enemy) => enemy.rect.x);
+    api.until(() => {
+      const west = zone.every((enemy, k) => enemy.rect.x < prev[k]);
+      prev = zone.map((enemy) => enemy.rect.x);
+      const xs = prev.slice().sort((a, b) => a - b);
+      return west && xs[0] > 1150 && xs[1] - xs[0] >= 100 && meter.energy >= 0.999;
+    }, [], 2000, 'the StepEnemies never spread out walking west');
     travel({ 0: 1700, 1: 1760 }, 'along the floor past the StepEnemies');
     // The JumpStand (1808..1840) is a solid 32x34 block (top 398): each cat walks up to its west face, hops onto its
     // top (resting there is the launch, straight up), then steers east onto the block.

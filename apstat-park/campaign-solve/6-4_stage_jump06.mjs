@@ -1,7 +1,9 @@
 // 6-4 PUSH OR JUMP (stage_jump06).
 // The puzzle: a long floor with seven DeadSwitch pads ("DON'T PUSH!": a cat touching one is sent back to spawn)
 // to jump over, a one-chip step at x 1344, and the Key hanging over the raised floor (bottom 218 at party 2: out of reach of one
-// cat's jump, so the cats stack under it). Route: walk east hopping each pad and the step; under the key cat 1
+// cat's jump, so the cats stack under it). A 3 px/tick leap (rise 3 ticks, then east) clears a 36-wide pad only from
+// right beside it (~90 of travel), so the cats take each pad one after the other from 30 west of it, the first one
+// walking on to clear the landing spot. Route: walk east hopping each pad and the step; under the key cat 1
 // stands still, cat 0 climbs onto its head and jumps through the key; hop the last pads and enter the door.
 export default {
   party: 2,
@@ -28,6 +30,9 @@ export default {
       const xs = []; xs[lead] = pad.rect.x - 30; xs[back] = pad.rect.x - 70;
       api.walkTo([0, 1], xs, { tol: 2 });
       leap(lead, pad.rect.x + 124);
+      // A 3 px/tick leap clears a pad only from close by (~90 of travel): the lead walks on, the back cat steps up.
+      const ys = []; ys[lead] = pad.rect.x + 124; ys[back] = pad.rect.x - 30;
+      api.walkTo([0, 1], ys, { tol: 2 });
       leap(back, pad.rect.x + 84);
     };
     api.walkTo([0, 1], [700, 760]);
@@ -41,6 +46,7 @@ export default {
       api.hold(specs, 6);
       api.jumpTo(i, 1480 + (i === 1 ? 40 : 0));
       check();
+      if (i === 1) api.walkTo(1, 1530, { tol: 2 });   // out of cat 0's landing spot
     }
     for (const pad of pads.slice(2, 4)) hopPad(pad);
     // Pads 5 (2190..2226) and 6 (2334..2370): the key (2264..2296, bottom 218) hangs between them.
@@ -52,17 +58,19 @@ export default {
     if (api.carrierOfKey() !== 0) api.block('cat 0 jumping from the head of cat 1 missed the key');
     api.land();
     check();
-    // Cat 0 (the carrier, on cat 1's head) leaps pad 6 first and leads to the door.
-    if (Math.abs(api.feetY(cats[0]) - cats[1].rect.y) < 2) leap(0, pads[5].rect.x + 124);
-    else api.block('cat 0 did not land back on the head of cat 1 after the key');
-    api.walkTo(0, pads[6].rect.x - 30, { tol: 2 });
-    leap(1, pads[5].rect.x + 66);
+    // Cat 0 (the key carrier, on cat 1's head) leaps pad 6 first and leads to the door. Cat 1 first carries it up to
+    // pad 6 (right edge 8 short): from the head a 3 px/tick leap covers ~100, not the ~105 from under the key.
+    if (Math.abs(api.feetY(cats[0]) - cats[1].rect.y) >= 2) api.block('cat 0 did not land back on the head of cat 1 after the key');
+    api.walkTo(1, pads[5].rect.x - 24, { tol: 1 });
+    leap(0, pads[5].rect.x + 124);
     // Cat 0 (the carrier) leaps pad 7, opens the door and enters before cat 1 follows: if cat 1 lands touching the
     // carried key it takes it (steal rule) and the order at the door breaks.
-    api.walkTo(1, pads[6].rect.x - 78, { tol: 3 });
+    api.walkTo(0, pads[6].rect.x - 30, { tol: 2 });
     leap(0, pads[6].rect.x + 124);
     api.enterOne(0);
     check();
+    leap(1, pads[5].rect.x + 66);
+    api.walkTo(1, pads[6].rect.x - 30, { tol: 2 });
     leap(1, pads[6].rect.x + 84);
     api.enterGoal();
     check();

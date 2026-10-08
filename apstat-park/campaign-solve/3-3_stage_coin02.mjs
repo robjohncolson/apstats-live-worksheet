@@ -8,9 +8,14 @@
 // both of its coins. Small pegs (top 256) stand at x 160 / 288 / 416 / 544 / 704 / 832 / 960 / 1088; two BlinkBlocks
 // (top 161, solid about 1 s in 2) sit beside the middle pegs; high platforms (top 128, x 192..416 and 864..1088)
 // carry 8 coins; 5 more hang at y 138..162 (two at each wall, one in the middle).
-// Route: cat 1 jumps from its peg onto cat 0's head (peg 544), onto the west BlinkBlock, along the west platforms
-// (4 coins) and back over the BlinkBlock to peg 544; meanwhile cat 0 hops over to peg 704. Cat 1 jumps onto cat 0's
-// head again, onto the east BlinkBlock, along the east platforms (4 coins), down to peg 1088, leaps east through the
+// Native 3 px/tick: a jump covers ~75 px, so a cat cannot jump between the pegs 544 and 704 (160 apart). The way to
+// a partner's head: drop off the peg to the middle floor (576..704, no stands), walk flush against the side of the
+// stand under the partner's peg, hop onto that stand's outer edge exactly in the 33-wide gap between the peg and the
+// BlinkBlock (west: x 512 on stand 534; east: x 736 on stand 714), ride the launch straight up and step sideways
+// onto the partner's head on the way down (apex feet ~197 < head 210).
+// Route: cat 1 reaches cat 0's head (peg 544) that way, onto the west BlinkBlock, along the west platforms
+// (4 coins) and back over the BlinkBlock to peg 544; meanwhile cat 0 drops east and bounces onto peg 704. Cat 1 reaches
+// cat 0's head again (east gap), onto the east BlinkBlock, along the east platforms (4 coins), down to peg 1088, leaps east through the
 // two wall coins and bounces the east columns, landing on the middle floor. Cat 0 leaps west from peg 704 through
 // the middle coin, bounces the west columns, lands on peg 160, leaps west through the two west wall coins, bounces
 // back east and comes down the middle column (no stand under it) onto the middle floor. The Key appears; cat 1 hops
@@ -82,6 +87,36 @@ export default {
               if (st.f++ > 120) api.block(`cat ${i} was not launched by the JumpStand at ${arg}`);
               return { jump: st.f < 17, ...dir(cat, arg) };
             }
+            if (kind === 'drop') {   // walk off the peg in direction arg (+1 / -1) down to the middle floor
+              if (st.air && cat.grounded) { next(); continue; }
+              if (!cat.grounded) st.air = true;
+              if (st.f++ > 120) api.block(`cat ${i} did not drop off its peg: ${JSON.stringify(api.snapshot()[i])}`);
+              return st.air ? {} : arg > 0 ? { right: true } : { left: true };
+            }
+            if (kind === 'standhop') {
+              // [standhop, sideX, landX]: walk along the floor until flush against the stand's side (rect.x sideX), hop
+              // (steer only once the feet are above the stand top 640) and stop steering at rect.x landX, so the cat
+              // lands on the stand's edge in the 33-wide gap between a peg and a BlinkBlock and rises straight
+              // through it (west gap 511..544: landX 512; east gap 736..769: landX 736). Done once launched.
+              const [, sideX, landX] = program[st.step];
+              if (st.high && feet(cat) < 560) { next(); continue; }
+              if (st.f++ > 240) api.block(`cat ${i} could not hop onto the stand edge at ${landX}: ${JSON.stringify(api.snapshot()[i])}`);
+              if (!st.high) {
+                if (Math.abs(cat.rect.x - sideX) > 0.01 && cat.grounded && !st.air) return sideX > cat.rect.x ? { right: true } : { left: true };
+                st.air = true; st.high = true; st.f = 0;
+              }
+              const steer = feet(cat) < 639 && Math.abs(cat.rect.x - landX) > 0.5 ? (landX > cat.rect.x ? { right: true } : { left: true }) : {};
+              return { jump: st.f < 16, ...steer };
+            }
+            if (kind === 'headdrop') {   // launched beside cat arg's head: step over it on the way down and land on it
+              const other = cats[arg];
+              if (cat.grounded && st.f > 2) {
+                if (Math.abs(feet(cat) - other.rect.y) > 2) api.block(`cat ${i} missed the head of cat ${arg}: ${JSON.stringify(api.snapshot())}`);
+                next(); continue;
+              }
+              if (st.f++ > 160) api.block(`cat ${i} stuck in ${JSON.stringify(program[st.step])}`);
+              return cat.velocity.y > 0 && feet(cat) < other.rect.y - 1 ? dir(cat, cx(other), 4) : {};
+            }
             if (kind === 'peg') {    // steer a bounce onto the peg at x
               if (cat.grounded && feet(cat) < 260) { next(); continue; }
               if (st.f++ > 200) api.block(`cat ${i} could not land on the peg at ${arg}: ${JSON.stringify(api.snapshot()[i])}`);
@@ -113,28 +148,36 @@ export default {
     // --------------------------------------------------------------------------------------------------------------
     // 0. Both land on their pegs (cat 0 on 544..576, cat 1 on 704..736).
     run([[['land']], [['land']]], 60, 'landing');
-    // 1. Cat 1 jumps from its peg onto cat 0's head; up onto the west BlinkBlock; along the west platforms and back
-    //    over the BlinkBlock to peg 544. Cat 0 hops over to peg 704 once cat 1 has left its head.
+    // 1. Cat 1 gets onto cat 0's head (peg 544): the pegs are 160 apart and a jump at native 3 px/tick covers only
+    //    ~75 px, so cat 1 drops west off its peg to the middle floor, hops onto the edge of the stand 534..566 at
+    //    x 512 (in the 33-wide gap between the west BlinkBlock 481..511 and the peg 544..576), rides its launch
+    //    straight up and steps east onto cat 0's head on the way down (bounce apex feet ~197 < head 210). Then up
+    //    onto the west BlinkBlock, along the west platforms and back over the BlinkBlock to peg 544. Cat 0, once cat 1
+    //    has left its head, drops east to the middle floor and the same way (stand 714..746 edge at x 736, gap 736..769)
+    //    bounces up and lands on peg 704.
     run([
-      [['wait', () => cats[1].rect.x < 470], ['jump', 720]],
-      [['onto', 0], ['solid', west], ['jump', 494], ['jump', 400], ['walk', 336], ['jump', 270], ['walk', 206],
+      [['wait', () => cats[1].grounded && feet(cats[1]) < 170], ['drop', 1], ['standhop', 682, 736], ['peg', 720]],
+      [['drop', -1], ['standhop', 566, 512], ['headdrop', 0], ['solid', west], ['jump', 494], ['jump', 400], ['walk', 336], ['jump', 270], ['walk', 206],
         ['walk', 270], ['jump', 336], ['walk', 400], ['solid', west], ['jump', 494], ['jump', 560]],
     ], 900, 'west platforms');
-    // 2. Cat 1 onto cat 0's head (peg 704), onto the east BlinkBlock, along the east platforms, off their east end onto
+    // 2. Cat 1 onto cat 0's head (peg 704: drop east off peg 544, stand-edge hop at x 736, step west onto the head),
+    //    onto the east BlinkBlock, along the east platforms, off their east end onto
     //    peg 1088, then a leap east through the two wall coins (1154 / 1218, y 138..162) down onto the stands, and the
     //    east columns. Cat 0, once its head is free, leaps west through the middle coin (628..652) and bounces the
     //    west columns, ending on peg 160 with a leap west through the two west wall coins.
     // A stand bounce now peaks above the pegs (feet ~197 < peg top 256), so a column cat that overlaps a peg's edge
     // can land on its top: the east columns under the coins at 690 / 818 / 946 / 1074 sit 4 west of the coin centre
     // to clear the pegs at 704 / 832 / 960 / 1088 (the cat still overlaps each 24-wide coin).
-    const eastColumns = [1202, 1138, 1070, 1010, 942, 882, 814, 754, 686].map((x) => ['bounce', x]);
+    // The first east column sits at 1210 (8 east of the coin centre): at native 3 px/tick the leap from peg 1088 only
+    // reaches the 1166 wall coin, and this bounce's apex (body 151..197) takes the 1230 wall coin (1218..1242).
+    const eastColumns = [1210, 1138, 1070, 1010, 942, 882, 814, 754, 686].map((x) => ['bounce', x]);
     const westColumns = [562, 498, 434, 370, 306, 242, 178, 114, 50].map((x) => ['bounce', x]);
     run([
       [['wait', () => cats[1].grounded && feet(cats[1]) < 170], ['wait', headFree(0)], ['jump', 516], ['walk', 515],
         ...westColumns, ['peg', 176], ['walk', 176], ['leap', 20],
         // back east over the stands and down the middle column (614..638: rows 398 / 558) onto the middle floor
         ['bounce', 222], ['bounce', 380], ['bounce', 515], ['bounce', 630], ['land']],
-      [['onto', 0], ['solid', east], ['jump', 786], ['jump', 880], ['walk', 944], ['jump', 1010], ['walk', 1112],
+      [['drop', 1], ['standhop', 682, 736], ['headdrop', 0], ['solid', east], ['jump', 786], ['jump', 880], ['walk', 944], ['jump', 1010], ['walk', 1112],
         ['land'], ['walk', 1104], ['leap', 1260], ...eastColumns, ['land']],
     ], 1600, 'east platforms and columns');
     if (coinsLeft().length) api.block(`${coinsLeft().length} coins left: ${listLeft()}`);

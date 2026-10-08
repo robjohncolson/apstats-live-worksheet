@@ -15,6 +15,9 @@
 // Notes: the route's later legs are paced by the light (waitForGreen), so the total frame count is set by the light
 // cycle, not by leg 1. The NormalBox -> ledge jump (72 up, peak 78) only works holding west from the box's west end,
 // sliding up the ledge face.
+// Native speeds (batch 10: walk 3/tick, push 1/tick): the NormalBox push (~762 units) outlasts one green, so it is
+// paused through the red; a single jump cannot clear the 48-tall SmallBox on the ledge (cat lands on its top and walks
+// off its west side); both box -> ledge jumps start from the NormalBox's west end.
 export default {
   party: 2,
   budget: 6000,
@@ -51,7 +54,7 @@ export default {
     }, 400, 'the cats could not get past the StepEnemy');
     alive('past the StepEnemy');
     // Up the stairs (tops 336 / 288 / 240) and over the pit (1344..1440) to the floor; stop at x ~1700.
-    api.walkTo([0, 1], [1300, 1260], { hop: true, max: 300 });
+    api.walkTo([0, 1], [1270, 1310], { hop: true, max: 400 });   // cat 1 (ahead) stands clear of the step edge so cat 0 never hops into its overhang
     alive('stairs');
     api.walkTo([0, 1], [1740, 1690], { hop: true, max: 300 });
     alive('pit');
@@ -69,7 +72,10 @@ export default {
     // Leg 3: push the NormalBox (3312..3408, needs both cats) east to the wall (x 4176).
     waitForGreen(9);
     const normal = game.pushBoxes.find((box) => box.spawn.actorName === 'NormalBox');
-    api.until(() => normal.rect.x + normal.rect.width >= 4170, [{ right: true }, { right: true }], 600, 'the NormalBox did not reach the east wall');
+    // At the native 1 px/tick push the 762-unit push outlasts one green (12 s = 720 ticks): push only while the light
+    // is green with > 0.25 s left, stand still through the red, and resume on the next green.
+    api.until(() => normal.rect.x + normal.rect.width >= 4170,
+      () => (!red() && light.remaining > 0.25 ? [{ right: true }, { right: true }] : []), 2400, 'the NormalBox did not reach the east wall');
     alive('pushing the NormalBox');
     // Leg 4: climb. Both cats are in the gap between the ledge (ends 4008) and the box: cat 1 (west) is the step,
     // cat 0 (east) climbs it, then the box, then the ledge.
@@ -77,14 +83,25 @@ export default {
     api.walkTo(1, 4024, { tol: 2 });
     api.climbOnto(0, 1, { from: api.centreX(cats[0]) });
     api.jumpTo(0, normal.rect.x + 40);
-    api.jumpTo(0, 3960);
+    // At 3 px/tick a jump covers ~87 before falling back below the ledge top: start from the box's west end and hold
+    // west (the cat slides up the ledge face, then steps over its top).
+    api.walkTo(0, normal.rect.x + 4, { tol: 1 });
+    let up0 = false;
+    api.until(() => up0 && cats[0].grounded, (f) => {
+      if (!cats[0].grounded) up0 = true;
+      return [{ jump: f < 16, left: true }, {}];
+    }, 90, 'cat 0 could not jump from the NormalBox onto the ledge');
     alive('climbing to the ledge');
     if (Math.abs(api.feetY(cats[0]) - 264) > 2) api.block('cat 0 did not reach the door ledge');
     // Leg 5: cat 1 steps west under the ledge; cat 0 hops west over the SmallBox and pushes it east off the ledge.
     waitForGreen(7);
     const small = game.pushBoxes.find((box) => box.spawn.actorName === 'SmallBox');
     api.walkTo(1, 3850, { max: 200 });
-    api.jumpTo(0, small.rect.x - 50);
+    // A 3 px/tick jump cannot clear the 48-tall box in one hop: land on its top, then walk off its west side.
+    api.jumpTo(0, small.rect.x + 24);
+    if (Math.abs(api.feetY(cats[0]) - small.rect.y) > 2) api.block('cat 0 missed the SmallBox top');
+    api.walkTo(0, small.rect.x - 30);
+    api.land(0);
     // Push only until the box is wholly past the ledge end (4008): it then drops straight into the 68-wide gap.
     api.until(() => small.rect.x > 4010, [{ right: true }, {}], 200, 'cat 0 could not push the SmallBox to the ledge end');
     api.until(() => small.rect.y + small.rect.height > 431 && !small.falling, [], 120, 'the SmallBox did not drop into the gap');
@@ -98,6 +115,7 @@ export default {
     api.jumpTo(1, game.pushBoxes.find((box) => box.spawn.actorName === 'NormalBox').rect.x + 40);
     // Ledge top is 72 above the box (a full jump peaks 78 up): jump from the box's west end holding west; the cat
     // slides up the ledge face and steps onto it near the top of the jump.
+    api.walkTo(1, game.pushBoxes.find((box) => box.spawn.actorName === 'NormalBox').rect.x + 4, { tol: 1 });
     let up = false;
     api.until(() => up && cats[1].grounded, (f) => {
       if (!cats[1].grounded) up = true;

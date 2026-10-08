@@ -20,12 +20,13 @@
 //
 // Route:
 // 1. Cat 1 stands at the wall (x 635.2); the guard climbs its head, jumps onto the 4.8-px lip and onto the box,
-//    walks right onto Rect 1 and pushes the box left off the ledge (it is pushed while falling and lands x 592..640,
-//    top 336). Cat 1 waits at x ~500 meanwhile.
+//    walks right onto Rect 1 and pushes the box left off the ledge at 1 px/tick (it drops straight down once wholly
+//    past the lip and lands x 609..657, top 336). Cat 1 waits at x ~500 meanwhile.
 // 2. The guard drops to the floor and hops over cat 1 to stand on its left.
 // 3. Sync jump: both jump on the same frame (hold 14); cat 1 steers onto the floor box (it lands at feet 336, out
 //    of the band; the box is nudged to x ~602), the guard lands back on the floor.
-// 4. The guard jumps right toward the box; once its feet are <= 342 (shield on) cat 1 jumps from the box onto
+// 4. Cat 1 moves to the box's east end, the guard to its west face (a 3 px/tick jump cannot reach the box from
+//    further out); the guard jumps onto the box; once its feet are <= 342 (shield on) cat 1 jumps from the box onto
 //    Rect 1. The guard lands on the vacated box (feet 336, shield on), so cat 1 walks along Rect 1 shielded,
 //    climbs onto the pillar (out of the band; right of the pillar the beam is cut).
 // 5. The guard jumps onto Rect 1, onto the pillar's left part, onto cat 1's head (feet 208.4) and jumps for the key
@@ -54,7 +55,7 @@ export default {
     land();
     walkTo(1, 500);
     land();
-    until(() => box.rect.y >= 335.9 && cats[0].grounded, [{ left: true }, {}], 80, 'the guard could not push the box off Rect 1');
+    until(() => box.rect.y >= 335.9 && cats[0].grounded, [{ left: true }, {}], 200, 'the guard could not push the box off Rect 1');   // 1 px/tick push (batch 10)
     land();
     guard('box drop');
 
@@ -78,11 +79,19 @@ export default {
     if (Math.abs(feetY(cats[1]) - box.rect.y) > 1) block('cat 1 missed the floor box (feet ' + feetY(cats[1]) + ')');
 
     // 4. Guard jumps toward the box; cat 1 leaves for Rect 1 once the shield is up; the guard lands on the box.
+    // At 3 px/tick the guard cannot jump from the floor onto the box from afar: cat 1 moves to the box's east end
+    // (clear of the guard's head), the guard walks up to the box's west face and jumps straight onto it.
+    const boxMid = box.rect.x + box.rect.width / 2;
+    walkTo(1, box.rect.x + box.rect.width - 16, { tol: 1 });
+    walkTo(0, box.rect.x - 16, { tol: 1 });
+    land();
+    guard('lining up under the box');
     let start = -1;
-    for (let f = 0; f < 70; f++) {
+    for (let f = 0; f < 90; f++) {
       if (start < 0 && feetY(cats[0]) <= 342) start = f;
       const k = start < 0 ? -1 : f - start;
-      step([{ jump: f < 14, ...toward(0, 612) }, start < 0 ? {} : { jump: k < 14, ...toward(1, 720) }]);
+      step([{ jump: f < 14, ...(feetY(cats[0]) < box.rect.y - 1 || centreX(cats[0]) > box.rect.x ? toward(0, boxMid) : {}) },
+        start < 0 ? {} : { jump: k < 14, ...toward(1, 720) }]);
       if (f > 10 && cats[0].grounded && cats[1].grounded) break;
     }
     land();

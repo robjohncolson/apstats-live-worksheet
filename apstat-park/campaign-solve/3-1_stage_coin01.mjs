@@ -12,6 +12,9 @@
 // upper-east floor and sweep it the same way (ending with cat 0's leap west through the last over-pit coin). Then
 // the lower floor: cat 0 sweeps the west half, cat 1 the east half; the Key appears; a cat jumps for it from the
 // pyramid top; both enter the door.
+// Native 3 px/tick: the climbs between the pyramid's 288 tier and the upper floors (48 up, 96 across) only work from
+// the tier's end (the jump is >= 48 up only from tick 8 to 27, dx 24..81); the route clears at ~frame 3400 of the
+// 3900-frame (65 s) DeadTimer.
 // NOTE: this stage maps cat 0 to input slot 1 and cat 1 to slot 0 (Player row "1" faces left, p0 = 1); the driver
 // places each cat's buttons in its slot, so specs here are in cat order.
 export default {
@@ -83,6 +86,9 @@ export default {
     walk(1, 990);
     land(1);
     walk(1, 850, { hop: true });
+    // Native 3 px/tick: a jump is >= 48 up only from tick 8 (dx 24) to tick 27 (dx 81), so take off with the left
+    // edge in 784..801 (centre ~808, still on the 816..912 tier) to clear the upper floor's edge at 720.
+    walk(1, 808, { tol: 2 });
     jumpTo(1, 700);
     if (feet(B) > 241) api.block('cat 1 did not get back up onto the upper-west floor: ' + JSON.stringify(api.snapshot()[1]));
     // 2. Upper-west: cat 0 climbs onto cat 1 at the pit edge, then the sweep west.
@@ -105,8 +111,11 @@ export default {
     climbOnto();
     for (const x of [864, 900, 828]) stackJumpAt(x);
     // 4. Up to the upper-east floor (edge 1008): cat 0 jumps off the head first, then cat 1.
-    walk(1, 896, { tol: 2 });
+    // Native 3 px/tick: take off from the tier's east end (centre ~922, right edge in 927..944) so the jump is
+    // >= 48 up when it crosses the upper floor's edge at 1008 (mirror of step 1).
+    walk(1, 922, { tol: 2 });
     jumpTo(0, 1100);
+    walk(0, 1110);   // out of cat 1's landing spot at the edge
     jumpTo(1, 1030);
     walk(1, 1026, { tol: 2 });
     climbOnto();

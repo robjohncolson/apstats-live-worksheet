@@ -137,9 +137,11 @@ test('2-2: a cat walks between a FallBox body and the level block beside it, bot
     let k = 0;
     while (walker.rect.x < box.body.x + 4 && k < 20) { step(game, 1, holdFor(game, 0, { right: true })); k += 1; }
     assert.ok(walker.rect.x >= box.body.x + 4, `p${party}: walked onto the box (x ${walker.rect.x})`);
-    // FallBox -> Rect: straight back onto the left block before the box drops.
+    // FallBox -> Rect: straight back onto the left block. At the native 3/tick walk (was 4.9) the round trip (on 4 past
+    // the body edge, back ~38) outlasts the 14-frame hold: the box drops while the cat already overlaps the block, so
+    // it stays standing on the block. Budget 12 -> 16 frames.
     k = 0;
-    while (walker.rect.x + walker.rect.width > 1008 && k < 12) { step(game, 1, holdFor(game, 0, { left: true })); k += 1; }
+    while (walker.rect.x + walker.rect.width > 1008 && k < 16) { step(game, 1, holdFor(game, 0, { left: true })); k += 1; }
     assert.ok(walker.rect.x + walker.rect.width <= 1008, `p${party}: walked back onto the Rect (right edge ${walker.rect.x + walker.rect.width})`);
     assert.ok(close(walker.rect.y + walker.rect.height, top, 1e-6) && walker.grounded, `p${party}: standing on the block`);
   }

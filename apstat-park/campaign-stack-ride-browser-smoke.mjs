@@ -79,7 +79,8 @@ try {
     assert.equal(row.topY, start.top.y, 'the top cat stays on the head (tick ' + i + ')');
     assert.equal(row.boxFalling, false, 'the box stays on the head (tick ' + i + ')');
   }
-  assert.ok(right.at(-1).bottomX - start.bottom.x > 80, 'the bottom cat walked right: ' + (right.at(-1).bottomX - start.bottom.x));
+  // 24 ticks at the native 3 per tick = 72 (was 4.9 per tick, ~118).
+  assert.ok(right.at(-1).bottomX - start.bottom.x > 60, 'the bottom cat walked right: ' + (right.at(-1).bottomX - start.bottom.x));
   for (const row of jump) assert.equal(row.topY, start.top.y, 'a jump press with a stack on the head: the cats stay');
   const hop = start.box.y - Math.min(...jump.map(row => row.boxY));
   assert.ok(Math.abs(hop - 22) <= 1, 'and the free top box hops 22: ' + hop);

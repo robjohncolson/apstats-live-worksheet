@@ -89,7 +89,14 @@ export default {
     // East along the top: created stones (240..288 and 336..384, top 48) -> blocks at 432 / 528 / 624 / 672 (top 48)
     // -> drop onto the big block (top 96) at the door (744..792).
     // Lift 2 sinks back as soon as one cat leaves it, so cat 1 jumps for the first stone while cat 0 jumps on.
-    api.jumpTo(0, 264);
+    // At 3 px/tick cat 1 cannot reach stone 1 from the lift's west half: it walks to the lift's east edge (centre 176)
+    // while cat 0 jumps to stone 1, then both jump on together (the lift sinks 1/tick under cat 1 alone meanwhile).
+    const steerTo = (cat, x) => (Math.abs(api.centreX(cat) - x) <= 2 ? {} : api.centreX(cat) < x ? { right: true } : { left: true });
+    let f0 = 0, up0 = false;
+    api.until(() => up0 && cats[0].grounded, () => {
+      if (!cats[0].grounded) up0 = true;
+      return [{ jump: f0++ < 14, ...steerTo(cats[0], 264) }, steerTo(cats[1], 176)];
+    }, 150, 'cat 0 could not jump onto stone 1');
     api.jumpTo([0, 1], [365, 264]);
     api.jumpTo(0, 456);
     api.jumpTo(1, 360);

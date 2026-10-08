@@ -76,11 +76,14 @@ function retainedReferences(game, removed) {
 test('11-3 (gun02, party 2): P1 picks up the teacher cat, the teacher leaves, P1 keeps shooting: no throw, no stale hold', () => {
   // Reproduced crash (Codex review): P2 walks left out of the line of fire, the teacher steps right, P1 turns left
   // and shoots at frame 80 (the teacher is held), the teacher leaves at 100, P1 shoots at 130/160/190.
+  // native-walk-and-push-speed: the cats walk 3/tick (was 4.9), so the steps are longer to land the old spacing
+  // (P1 ~140, teacher ~190 after the ice slide; with the old 2 / 6 frames the teacher stays inside the 10x10 launch
+  // probe and the shot is refused): P1 2 -> 7 frames, the teacher 6 -> 13 frames.
   const shots = new Set([80, 130, 160, 190]);
   const { game, removed, teacherWasHeld } = play('stage_gun02', 2, (frame) => [
-    (frame >= 60 && frame < 62 ? 2 : 0) | (shots.has(frame) ? 48 : 0),
+    (frame >= 60 && frame < 67 ? 2 : 0) | (shots.has(frame) ? 48 : 0),
     frame < 50 ? 2 : 0,
-    frame < 100 ? 128 | (frame >= 20 && frame < 26 ? 2 : 0) : 0,
+    frame < 100 ? 128 | (frame >= 20 && frame < 33 ? 2 : 0) : 0,
   ], 300);
   assert.equal(teacherWasHeld, true, 'set-up: the gun held the teacher cat before it left');
   assert.equal(removed.size, 1, 'the teacher left');
