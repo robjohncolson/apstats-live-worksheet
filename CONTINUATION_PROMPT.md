@@ -1,4 +1,4 @@
-# CONTINUATION PROMPT — **s47 (2026-10-05 → 10-06) IS CURRENT: read the SESSION 47 block below — the PICO DESK (Pico Park design language replacing System 7) is LIVE as an opt-in second view, Phases 0–3 + continuous floor; Phases 4–5 wait for the teacher.** Then s46 (official quarter grade) for the grading rule.
+# CONTINUATION PROMPT — **s48 (2026-10-07 → 10-08) IS CURRENT: read the SESSION 48 block below — APSTAT PARK CAMPAIGN FIDELITY: all 48 Pico Park stages play to clear under native rules, verified by scripted solvers in the test suite (protocol 31).** Then s47 (Pico Desk) and s46 (official quarter grade).
 
 > ⚠ **STALE (s33-era, 2026-07-02). The authoritative block is `## ⏭ SESSION 35` further down.** This
 > blockquote is kept for history only — its Windows `C:/Users/rober/...` paths are dead (the host moved
@@ -23,7 +23,31 @@
 
 ---
 
-## ⏭ SESSION 47 (2026-10-05 → 10-06, Athena laptop, Windows) — **CURRENT. Supersedes s46 below. THE PICO DESK: Phases 0–3 of `PICO_DESK_SPEC.md` shipped as an OPT-IN second view inside the Desk; the classroom board is the continuous floor. Nobody's default Desk changed.**
+## ⏭ SESSION 48 (2026-10-07 → 10-08 overnight, Athena laptop, Windows) — **CURRENT. Supersedes s47 below. APSTAT PARK CAMPAIGN FIDELITY: 14 batches, protocol 18 → 31, every one of the 48 Pico Park stages now plays to STAGE CLEAR by a scripted solver in the test suite.**
+
+**HEADs (all pushed):** follow-alongs `9f493575` · cr relay `d5ea964` (protocol 31). Lanes as s47: Fable orchestrated, ONE Opus 5.5 agent built every batch,
+Codex astra reviewed each (prompts `state/park-batch{2..14}-codex-review-prompt.md`), must-fixes closed before every push. Teacher's standing order:
+"faithful behaviour replication — look at the decompile"; "go across all levels and make sure all the puzzles can be played out correctly".
+
+### What shipped (one line each; evidence = `scripts/pico-campaign-patches.mjs` entries with FUN_ citations)
+- **Harness:** `apstat-park/campaign-solve/` one input-only solver per stage + `manifest.json` + `campaign-solvability.test.mjs` — **48/48 SOLVED**,
+  every SOLVED stage must keep clearing (gate in `npm run test:park`, 538 tests). Also the all-stage sweep: no cat inside a mover, no frozen cat.
+- **1-4 freeze (teacher report):** MoveWall native step rollback (FUN_7ff72bb667e0 / chain test FUN_7ff72bc16f50); scripted 1-4 playthrough = test.
+- **Native speeds:** walk **3 px/tick** (port had 4.9 — 0.98 decay misread as a multiplier), push **1 px/tick** shared per box; retail capture agrees.
+- **Decided (no longer parked):** Warp sensors are top-left `{0,0,w,h}` (5-1 unsolvable otherwise; Codex confirmed from the disassembly).
+- **Systems added:** goal/door/Rect/key party terms; push-box variants, colour boxes, box-pushes-box; Ex/Ex2 lifts; folded bridges, animated gates; swept
+  Thunder beam + guard planks; native enemies; rope (DistanceConstraint); jump stands; grow-pad carry; world 5 majority vote + multi-jump relay;
+  breakout (8-2/8-4/9-3) + private stage maps; world 9 pitchers/key boxes; **9-2 seesaw on real Box2D (planck 1.5.0 pinned, bundled)** — the native
+  seesaw IS Box2D (b2World::Step(1/60,10,10)); **world 11 warp gun + magnet on a new ACTION button: X/K main, G buddy** (native bit 11; wire bits
+  64 held / 256 pressed, old packets unchanged); **8-1/8-3 = co-op Tetris** — the ".puzzle" string was a Lua table path, never a missing file.
+- **Still inferred / undecoded (listed in the patch entries):** ice sliding; the 0.98 coast after a rope yank; puzzle draw order + cell art; held-cat
+  camera; StepEnemy reversal on bodies; Bowwow art; box-on-box riding (capture proves cat-on-box only). Stale smokes: head-box (expects no ride),
+  presentation (calculator scene) — both pre-existing.
+- **Not touched:** roster-server; Pico Desk Phases 4–5 (teacher's call); candy gifts cross-period.
+- **Rules learned:** one protocol bump per batch, both repos; `npm run test:park` both; never `git stash` in the shared tree (throwaway worktree for
+  HEAD comparisons); fidelity claims need FUN_ citations or a retail capture; a stage is never "hacked" to pass — record BLOCKED with the mechanic.
+
+## ⏭ SESSION 47 (2026-10-05 → 10-06, Athena laptop, Windows) — superseded by s48 above. THE PICO DESK: Phases 0–3 of `PICO_DESK_SPEC.md` shipped as an OPT-IN second view inside the Desk; the classroom board is the continuous floor. Nobody's default Desk changed.**
 
 **HEADs (all pushed):** follow-alongs `d43f87bf` (`80f5bd7f` P0 sketch · `79d2d048` P1 live home · `367de01b` P2 panel+My Grade ·
 `1f08cbe7` P3 all windows framed · `d43f87bf` continuous floor). No roster-server or cr change. Lanes: Fable 5.1 orchestrated;
