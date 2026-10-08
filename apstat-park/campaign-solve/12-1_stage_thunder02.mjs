@@ -1,51 +1,110 @@
 // 12-1 LAST PARK (stage_thunder02). Party 2 = cat 0 GuardPlayer DIR_LEFT (6x60 plank at x-15, y-7..y+53) and
-// cat 1 plain Player. Input slots are swapped ([1, 0]); step() handles that.
+// cat 1 plain Player. Input slots are swapped ([1, 0]); step() handles that. No largeParty variant: larger parties
+// only add plain cats (still one guard), so party 2 is the minimum and the route below clears it.
 //
 // Map (all numbers measured in the runtime):
-// - Floor y 384 from x 48 to 672 (cats stand feet 383.7, body y 337.7..383.7). Rect 1 is a ledge from x 667.2 with
-//   top y 302.4 (81.3 above the floor). Rect 2 is a pillar x 864..912, top 254.4. PushBox 1 rests on Rect 1 at
-//   x 672..720 (top 254.4). Key x 872..904, y 58..114 above the pillar; door x 1128 on Rect 1.
-// - Thunder (lower) fires RIGHT from (48, 288): band y 286..290, runs to the first blocker in the band (PushBox at
-//   x 672 while it sits on Rect 1, else the pillar at 864, or a guard plank). Thunder (upper) band y 156..160, x 48..1312.
-//   Each emitter is also a 32x32 solid block at its spawn (left wall).
-// - Max jump rise is 78.57 (any hold >= 14 frames); a cat with anything on its head cannot jump (handOffHeadJump hands the
-//   press to the rider). A cat on the floor that rises more than ~47.7 enters the lower band and dies on the 2nd frame
-//   (cat 1 jumping in place at x 284 dies at y 282).
-// - The guard is immune to both RIGHT beams: its LEFT plank always sits in the band whenever its body does, and the
-//   beam is cut at the plank's x. It protects another cat only if that cat is at x >= guard.x - 15, i.e. on its head
-//   or to its right, and only while the guard's feet are in (279, 343): on Rect 1, on a dropped PushBox (top 336), or on
-//   a floor cat's head.
-// - Getting the guard up: cat 1 stands at the wall (x 635.2), the guard climbs onto its head and jumps onto the 4.8-px lip of
-//   Rect 1 (x 640, beside the box), then onto the box and down its right side. Pushing the box left drops it to the floor
-//   (one probe: lands x 592..640, top 336).
+// - Floor y 384 from x 48 to 667.2 (cats stand feet 383.7). Rect 1 is a ledge from x 667.2, top y 302.4 (81.3 above
+//   the floor; max jump rise is 78.57, so a plain cat needs a step). Rect 2 is a pillar x 864..912, top 254.4.
+//   PushBox 1 drops at frame 0 onto Rect 1 at x 672..720 (top 254.4). Key x 872..904, y 58..114 above the pillar;
+//   door x 1128..1176 on Rect 1.
+// - Thunder (lower) fires RIGHT from x 48, band y 286..290, cut at the first blocker in the band (PushBox while it is
+//   on Rect 1, the pillar at 864, or the guard plank). A plain cat is in it whenever its feet are in (286, 336):
+//   any hop from the floor that rises more than 47.7, standing on Rect 1 left of the pillar, or standing on the box.
+//   Death needs 2 consecutive frames in the band. Thunder (upper) band y 156..160, x 48..1312: a plain cat must
+//   never jump from pillar/box-top height (feet 254.4).
+// - Guard shield: the plank cuts the beam at guard.x - 15 whenever the guard's feet are in (279, 343). It is on a
+//   cat's head, the floor box (top 336), Rect 1 -- or simply mid-jump from the floor with rise >= 40.7.
+// - SYNCHRONIZED-JUMP SHIELD (the key): a plain cat to the RIGHT of the guard that jumps on the same frame from the
+//   same floor has the same rise every frame; it is in the band only while rise > 47.7, and then the guard's rise
+//   is > 40.7 too, so the plank covers it the whole time.
 //
-// BLOCKED at party 2 (see `blocker`). Nothing here needs a runtime fix to be judged unsolvable: cat 1 must climb
-// 81.3 to Rect 1 (or onto the box/guard) through the lower band, and every way up fails by geometry.
+// Route:
+// 1. Cat 1 stands at the wall (x 635.2); the guard climbs its head, jumps onto the 4.8-px lip and onto the box,
+//    walks right onto Rect 1 and pushes the box left off the ledge (it is pushed while falling and lands x 592..640,
+//    top 336). Cat 1 waits at x ~500 meanwhile.
+// 2. The guard drops to the floor and hops over cat 1 to stand on its left.
+// 3. Sync jump: both jump on the same frame (hold 14); cat 1 steers onto the floor box (it lands at feet 336, out
+//    of the band; the box is nudged to x ~602), the guard lands back on the floor.
+// 4. The guard jumps right toward the box; once its feet are <= 342 (shield on) cat 1 jumps from the box onto
+//    Rect 1. The guard lands on the vacated box (feet 336, shield on), so cat 1 walks along Rect 1 shielded,
+//    climbs onto the pillar (out of the band; right of the pillar the beam is cut).
+// 5. The guard jumps onto Rect 1, onto the pillar's left part, onto cat 1's head (feet 208.4) and jumps for the key
+//    (it is immune to the upper band). Both walk to the door.
 export default {
   party: 2,
-  budget: 400,
-  blocker: 'party 2 cannot get the plain cat above the lower Thunder band (y 286..290). Rect 1 is 81.3 above the floor, ' +
-    'max jump rise 78.6, a cat with a rider cannot jump, and the only shield is the guard\'s LEFT plank (protects x >= guard.x-15). ' +
-    'Cat 1 can reach the PushBox once the guard shoves it off Rect 1 (it lands on the floor, top 336; a cat on it has y 290, touching ' +
-    'but not in the band) by walking off the guard\'s head. From there it needs the guard on Rect 1 to its left: the guard stands at ' +
-    'x >= 636 (lip), so cat 1 must clear the guard\'s head (256.4) -- reach from the box top is 336 - 78.57 = 257.4, 1.0 short -- and ' +
-    'landing on Rect 1 left of the guard puts it in the beam. Guard on the dropped box (head 290): cat 1 needs 93.7 rise from the floor, ' +
-    'or 0 rise from the guard\'s right, where the wall leaves no room. A guard jumping on the floor keeps its plank in the band only ~20 ' +
-    'frames per jump (guard y 297..259..297), with ~12-frame gaps; the walk from the ledge to the pillar is ~40+ frames. ' +
-    'JumpSwitch "PushBox1" (pad 150, 384; jumpswitch-launch) now launches PushBox 1 natively on every new press by any cat or box ' +
-    '(9 per tick, apex ~67, riders included), but that does not open a route at party 2 or 3 (party 3 tried: presser + guard + rider). ' +
-    'A plain cat is shielded only on the guard\'s head or to its right while the guard stands in the band window (feet 279..343: on the ' +
-    'floor box or Rect 1), and the box always lands at x 592..640 (27.2 left to the Rect 1 face, too narrow for a cat), so no plain cat can ' +
-    'stand right of a boxed guard; from the floor a hop onto the box (rise >= 48) enters the band (hold 4: rise 44.7 safe, hold 5: 50.6 dies) ' +
-    'and a guard + rider stack cannot form above the floor (the guard\'s head is 94 up). A box hop with a rider passes the band unshielded ' +
-    '(the guard on the rider leaves its window after ~2 ticks of the ~7 the rider spends in the band). The last plain cat on the floor ' +
-    'therefore never gets up (Rect 1 is 81.3 high, max rise 78.57). Needs a larger party (native 8).',
+  budget: 1500,
   async solve(stage, api) {
-    const { cats, wait, hold, block } = api;
+    const { game, cats, wait, walkTo, climbOnto, jumpTo, land, step, until, enterGoal, block, centreX, feetY } = api;
+    const box = game.pushBoxes[0];
+    const dead = () => cats.some((cat) => (cat.deathTimer || 0) > 0);
+    const guard = (label) => { if (dead()) block(label + ': a cat died (thunder)'); };
+    const toward = (c, x, tol = 2) => {
+      const dx = x - centreX(cats[c]);
+      return Math.abs(dx) <= tol ? {} : dx > 0 ? { right: true } : { left: true };
+    };
+
+    // 1. Guard up via cat 1 at the wall, then shove the box off the ledge.
     wait(5);
-    // Demonstrate the band: cat 1 jumps in place on the floor and dies in the lower beam.
-    hold((f) => [{}, { jump: f < 20 }], 14);
-    const died = (cats[1].deathTimer || 0) > 0;
-    block('cat 1 jumping in place on the floor ' + (died ? 'dies in the lower Thunder band' : 'survived (band check changed?)'));
+    walkTo(1, 651.2);
+    land();
+    climbOnto(0, 1);
+    jumpTo(0, 660, { holdJump: 14 });
+    jumpTo(0, 720, { holdJump: 14 });
+    walkTo(0, 820);
+    land();
+    walkTo(1, 500);
+    land();
+    until(() => box.rect.y >= 335.9 && cats[0].grounded, [{ left: true }, {}], 80, 'the guard could not push the box off Rect 1');
+    land();
+    guard('box drop');
+
+    // 2. Guard to the floor, over cat 1, onto its left.
+    walkTo(0, 580);
+    land();
+    jumpTo(0, 420, { holdJump: 14 });
+    land();
+    walkTo(1, 556);
+    walkTo(0, 500);
+    land();
+    guard('reorder');
+
+    // 3. Synchronized jump: cat 1 onto the floor box, shielded by the rising guard on its left.
+    for (let f = 0; f < 60; f++) {
+      step([{ jump: f < 14 }, { jump: f < 14, ...toward(1, 616) }]);
+      if (f > 3 && cats[0].grounded && cats[1].grounded) break;
+    }
+    land();
+    guard('sync jump onto the box');
+    if (Math.abs(feetY(cats[1]) - box.rect.y) > 1) block('cat 1 missed the floor box (feet ' + feetY(cats[1]) + ')');
+
+    // 4. Guard jumps toward the box; cat 1 leaves for Rect 1 once the shield is up; the guard lands on the box.
+    let start = -1;
+    for (let f = 0; f < 70; f++) {
+      if (start < 0 && feetY(cats[0]) <= 342) start = f;
+      const k = start < 0 ? -1 : f - start;
+      step([{ jump: f < 14, ...toward(0, 612) }, start < 0 ? {} : { jump: k < 14, ...toward(1, 720) }]);
+      if (f > 10 && cats[0].grounded && cats[1].grounded) break;
+    }
+    land();
+    guard('box to Rect 1');
+    if (feetY(cats[1]) > 303) block('cat 1 did not reach Rect 1');
+    walkTo(1, 840);
+    jumpTo(1, 896, { holdJump: 14 });
+    land();
+    guard('walk to the pillar');
+
+    // 5. Guard up to the pillar, onto cat 1's head, key, door.
+    jumpTo(0, 700, { holdJump: 14 });
+    land();
+    walkTo(0, 820);
+    land();
+    jumpTo(0, 864, { holdJump: 14 });
+    land();
+    climbOnto(0, 1, { from: 864 });
+    until(() => (game.carriedKeys || []).length > 0, (f) => [{ jump: f < 20, ...toward(0, 888) }, {}], 80,
+      'the guard could not reach the key');
+    land();
+    guard('key');
+    enterGoal();
   },
 };

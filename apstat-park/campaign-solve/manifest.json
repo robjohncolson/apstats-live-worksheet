@@ -2,8 +2,7 @@
   "note": "Written by re-running every campaign-solve solver (party 2 unless a row says otherwise). campaign-solvability.test.mjs asserts the SOLVED rows.",
   "recorded": "2026-10-08",
   "counts": {
-    "SOLVED": 32,
-    "BLOCKED": 4,
+    "SOLVED": 36,
     "SKIPPED-UNIMPLEMENTED": 12
   },
   "stages": [
@@ -53,7 +52,7 @@
       "title": "GO TOGETHER",
       "status": "SOLVED",
       "party": 2,
-      "frames": 717
+      "frames": 723
     },
     {
       "tag": "2-3",
@@ -69,7 +68,7 @@
       "title": "GO TOGETHER",
       "status": "SOLVED",
       "party": 2,
-      "frames": 1191
+      "frames": 1193
     },
     {
       "tag": "3-1",
@@ -171,51 +170,17 @@
       "tag": "6-1",
       "source": "stage_push01",
       "title": "PUSH OR JUMP",
-      "status": "BLOCKED",
+      "status": "SOLVED",
       "party": 2,
-      "frame": 608,
-      "reason": "UNSOLVED (structural, party 2..4): goal tower top 71 is 377 above the only floor (448) and 480 east of the last ledge (Rect 2016..2208, top 112); jump rise 78.6 / running jump 124 across; a loaded cat cannot jump and boxes never rise (only a 22 head-hop), so no box support >= 298.4 tall (>= 6 boxes) can be built at the tower base and the last cat can never climb; a human tower needs 7 cats under the climber",
-      "cats": [
-        {
-          "x": 880.9,
-          "y": 241.4,
-          "feet": 287.4,
-          "grounded": true,
-          "dead": false
-        },
-        {
-          "x": 912.9,
-          "y": 241.6,
-          "feet": 287.6,
-          "grounded": true,
-          "dead": false
-        }
-      ]
+      "frames": 2151
     },
     {
       "tag": "6-2",
       "source": "stage_auto_scroll01",
       "title": "PUSH OR JUMP",
-      "status": "BLOCKED",
+      "status": "SOLVED",
       "party": 2,
-      "frame": 1082,
-      "reason": "UNSOLVED (party 2): goal block (2448, top 144) is 288 above the floor; after cycle 1 the tower top (box 7, 2054.6..2160.6, top 96) is 287 short (jump reach ~190); every east move (push cycle, floor push of box 0, pushed-box carry) leaves its operator east of the west-facing treads or under the stack (a loaded cat cannot jump), so the last cat cannot climb; colours 0,1,0,1 make cycles 1 and 3 both need cat 1",
-      "cats": [
-        {
-          "x": 2094.6,
-          "y": 50,
-          "feet": 96,
-          "grounded": true,
-          "dead": false
-        },
-        {
-          "x": 2066.7,
-          "y": 385.9,
-          "feet": 431.9,
-          "grounded": true,
-          "dead": false
-        }
-      ]
+      "frames": 1522
     },
     {
       "tag": "6-3",
@@ -341,26 +306,9 @@
       "tag": "10-2",
       "source": "stage_jump04",
       "title": "TWO PLAYERS",
-      "status": "BLOCKED",
+      "status": "SOLVED",
       "party": 2,
-      "frame": 382,
-      "reason": "Pit x 672..864 under the ceiling slab x 816+ (bottom y 288): no cat reaches the east floor (best landing centre ~844 at feet 432, needs >= 848), and Bridge 2 that spans the pit is switched from the far side -- pit: cat 1 (riding cat 0 off the block edge, walking on its head) reached feet y 432 at centre x 844.1; landing on the east floor (x 864) needs centre >= 848. Under the ceiling slab (x 816+, bottom 288) a cat needs feet >= 334, so its fall apex must be below ~y 298 -- lower than the block top (288) -- and a carried cat cannot jump from a falling carrier after the ~4-tick coyote window",
-      "cats": [
-        {
-          "x": 791.8,
-          "y": 436.1,
-          "feet": 482.1,
-          "grounded": false,
-          "dead": false
-        },
-        {
-          "x": 828.1,
-          "y": 390.1,
-          "feet": 436.1,
-          "grounded": false,
-          "dead": false
-        }
-      ]
+      "frames": 1864
     },
     {
       "tag": "10-3",
@@ -414,26 +362,9 @@
       "tag": "12-1",
       "source": "stage_thunder02",
       "title": "LAST PARK",
-      "status": "BLOCKED",
+      "status": "SOLVED",
       "party": 2,
-      "frame": 19,
-      "reason": "party 2 cannot get the plain cat above the lower Thunder band (y 286..290). Rect 1 is 81.3 above the floor, max jump rise 78.6, a cat with a rider cannot jump, and the only shield is the guard's LEFT plank (protects x >= guard.x-15). Cat 1 can reach the PushBox once the guard shoves it off Rect 1 (it lands on the floor, top 336; a cat on it has y 290, touching but not in the band) by walking off the guard's head. From there it needs the guard on Rect 1 to its left: the guard stands at x >= 636 (lip), so cat 1 must clear the guard's head (256.4) -- reach from the box top is 336 - 78.57 = 257.4, 1.0 short -- and landing on Rect 1 left of the guard puts it in the beam. Guard on the dropped box (head 290): cat 1 needs 93.7 rise from the floor, or 0 rise from the guard's right, where the wall leaves no room. A guard jumping on the floor keeps its plank in the band only ~20 frames per jump (guard y 297..259..297), with ~12-frame gaps; the walk from the ledge to the pillar is ~40+ frames. JumpSwitch \"PushBox1\" (pad 150, 384; jumpswitch-launch) now launches PushBox 1 natively on every new press by any cat or box (9 per tick, apex ~67, riders included), but that does not open a route at party 2 or 3 (party 3 tried: presser + guard + rider). A plain cat is shielded only on the guard's head or to its right while the guard stands in the band window (feet 279..343: on the floor box or Rect 1), and the box always lands at x 592..640 (27.2 left to the Rect 1 face, too narrow for a cat), so no plain cat can stand right of a boxed guard; from the floor a hop onto the box (rise >= 48) enters the band (hold 4: rise 44.7 safe, hold 5: 50.6 dies) and a guard + rider stack cannot form above the floor (the guard's head is 94 up). A box hop with a rider passes the band unshielded (the guard on the rider leaves its window after ~2 ticks of the ~7 the rider spends in the band). The last plain cat on the floor therefore never gets up (Rect 1 is 81.3 high, max rise 78.57). Needs a larger party (native 8). -- cat 1 jumping in place on the floor dies in the lower Thunder band",
-      "cats": [
-        {
-          "x": 234,
-          "y": 337.7,
-          "feet": 383.7,
-          "grounded": true,
-          "dead": false
-        },
-        {
-          "x": 284,
-          "y": 282,
-          "feet": 328,
-          "grounded": false,
-          "dead": true
-        }
-      ]
+      "frames": 766
     },
     {
       "tag": "12-2",

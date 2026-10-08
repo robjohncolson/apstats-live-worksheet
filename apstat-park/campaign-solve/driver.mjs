@@ -363,6 +363,8 @@ export async function solveAll({ only } = {}) {
     const result = await runSolver(stage, solver);
     const row = { tag: stage.tag, source: stage.source, title: stage.title, status: result.status, party: result.party };
     if (result.status === 'SOLVED') row.frames = result.frames;
+    // A stage that natively needs more cats records the smallest party that clears it; partyNote says why smaller fail.
+    if (solver.partyNote) row.partyNote = solver.partyNote;
     if (result.status === 'BLOCKED') {
       row.frame = result.details?.frame ?? result.frames;
       row.reason = result.reason;

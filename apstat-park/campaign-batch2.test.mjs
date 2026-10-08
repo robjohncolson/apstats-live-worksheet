@@ -213,11 +213,12 @@ const colorRect = (box) => {
 // colorbox-colour-push (batch 3) makes ColorBox rows push boxes, so their rect is the push box rect (bottom-centred).
 const colorPushBoxes = (game) => game.pushBoxes.filter((box) => box.spawn.actorName === 'ColorBox');
 test('6-1 / 6-2 ColorBox rects stand on their row point; the stage row is never mutated', () => {
+  // colorbox-native-body (batch 9): the collision body is the drawn rect {-w/2, -h, w, h} inset 2 on every side.
   const push01 = load('stage_push01', 4);
   const first = colorPushBoxes(push01).find((box) => box.spawn.raw[4] === 576);
-  assert.deepEqual(rectOf(first), { x: 552, y: 384, width: 48, height: 48 });
+  assert.deepEqual(rectOf(first), { x: 554, y: 386, width: 44, height: 44 });
   const big = colorPushBoxes(push01).find((box) => box.spawn.raw[4] === 1344);
-  assert.deepEqual(rectOf(big), { x: 1313, y: 370, width: 62, height: 62 });
+  assert.deepEqual(rectOf(big), { x: 1315, y: 372, width: 58, height: 58 });
   const row = runtime.stages.find((entry) => entry.source === 'stage_push01').data.createTable.find((r) => r.actorName === 'ColorBox');
   assert.deepEqual([row.x, row.y], [576, 432], 'the row keeps its Lua point');
   const autoScroll = load('stage_auto_scroll01', 4);
@@ -226,8 +227,8 @@ test('6-1 / 6-2 ColorBox rects stand on their row point; the stage row is never 
   assert.equal(colorPushBoxes(autoScroll).length, rows.length);
   colorPushBoxes(autoScroll).forEach((box, i) => {
     const rect = rectOf(box);
-    assert.ok(Math.abs(rect.y + rect.height - rows[i].y) < 1e-9 && Math.abs(rect.x + rect.width / 2 - rows[i].x) < 1e-9,
-      'bottom-centre on the row point: ' + JSON.stringify(rect) + ' row ' + rows[i].x + ',' + rows[i].y);
+    assert.ok(Math.abs(rect.y + rect.height + 2 - rows[i].y) < 1e-9 && Math.abs(rect.x + rect.width / 2 - rows[i].x) < 1e-9,
+      'drawn box bottom-centre on the row point, body inset 2: ' + JSON.stringify(rect) + ' row ' + rows[i].x + ',' + rows[i].y);
   });
 });
 

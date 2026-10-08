@@ -408,6 +408,33 @@ export const CAMPAIGN_PATCHES = [{
     'The engine rects are y-down top-left: the JumpStand body {-16, -34, 32, 34} (DAT_7ff72bcbd960) is the block standing ON its row point, from y - 34 to y',
     'Stage data: 5-1 stage_majo01 Warps at rows y 576 / 576 / 480 with h 96 on a 480-high map: top-left puts all three just below the map (pit catchers); a bottom anchor put the third one over the floor x 2256..2352 in front of the door (any cat walking to the door was warped back)'],
   behavior: 'Warp / WarpAll sensors hang down from their row point (top-left corner at the row x / y, w x h below it), like JumpArea. Was: the bottom-left reading of warp-sensor-origin (the sensor rose h above the row point), which on 5-1 turned the floor before the door into a warp.',
+}, {
+  // Fidelity audit 2026-10-08 batch 9 (10-2 BLOCKED: a cat cannot jump off a falling partner).
+  id: 'jump-off-body-contact',
+  files: ['src/engine/actors/Player.ts', 'src/engine/GameRuntime.ts'],
+  evidence: ['FUN_7ff72bb6f0e0 lines 220-237: a jump press is accepted on ANY contact below - chip or body - found by FUN_7ff72bc13690(body, DOWN, 1, 0); the 0.07 s coyote timer only covers having no contact at all',
+    'FUN_7ff72bb67850 -> FUN_7ff72bb69dd0: a cat falls when it has no chip below and every body below it is a falling cat, so a rider falls with its carrier on the same tick, still touching it, and may jump off it at any point of the fall'],
+  behavior: 'Every stage: a cat resting on another cat (or a push box) may jump even while that support is itself falling or moving (was: only while grounded or within the 0.07 s coyote time, so a rider on a falling partner could jump only in the first ~4 ticks of the fall). A cat landing on a falling cat takes its fall speed, so the two fall together still touching (native: the rider is unsupported and falls under the same gravity; was: the landing zeroed the rider speed and the carrier dropped away). This is how 10-2\'s pit under the slab is crossed: the carrier walks off the block with the rider on its head and the rider jumps from it mid-fall.',
+}, {
+  // Fidelity audit 2026-10-08 batch 9 (6-1, 6-2 BLOCKED: a pushed box slid out from under its stack).
+  id: 'pushed-box-carries-stack',
+  files: ['src/engine/GameRuntime.ts'],
+  evidence: ['Retail capture og-capture-2 (E1): a CAT resting on a pushed box rides it (box-on-box carry is not shown by the capture; it is inferred from the 6-1 / 6-2 designs below; the native code path was not located: FUN_7ff72bb34f30 -> FUN_7ff72bc17330 only shoves the LEADING side of a push, and the ColorBox update FUN_7ff72bb3b5e0 only sets its own vx)',
+    'stage_push01.lua (6-1) builds a pyramid of six ColorBoxes ("階段作り", stair building: widths 62..32, heights 62..52) dropped onto a box pushed along the floor, and stage_auto_scroll01.lua (6-2) a leaning stair of 8 ColorBoxes pushed by its bottom box: both need the stack to ride the pushed box'],
+  behavior: 'Every stage: when a push moves a box, the boxes and cats resting on it ride along by the same step (through the same stack-riding pass as a walking cat, one support per rider, never into a solid). Was: only cats on the pushed box were carried; boxes on it stayed put and the stack fell apart as the bottom box slid out (6-1 pyramid, 6-2 leaning stair).',
+}, {
+  // Fidelity audit 2026-10-08 batch 9 (6-1: the five-box stack hit the Rect underside at 160 by 2 units).
+  id: 'colorbox-native-body',
+  files: ['src/engine/GameRuntime.ts'],
+  evidence: ['ColorBox body FUN_7ff72bb3c0c0: the collision body is the drawn rect shrunk 2 on every side (PushBox is shrunk 1, FUN_7ff72bb340f0); each box therefore adds h - 4 to a stack'],
+  behavior: 'ColorBox push boxes (6-1, 6-2 and every colour stage): the collision rect is the drawn box inset 2 on every side (the drawing keeps its full size, so a resting box overlaps the floor by 2 and neighbours show 4 units of seam). 6-1\'s five-box stack now tops out at 178 and passes under Rect 2016..2208 (underside 160) with 18 to spare; 6-2\'s leaning stair settles to the native 8 x 44. Was: the full drawn rect (the 6-1 stack hit that Rect by 2).',
+}, {
+  // Fidelity audit 2026-10-08 batch 9 (10-2 BLOCKED: a cat landing on a rising RouletteLift froze inside it).
+  id: 'land-on-rising-lift',
+  files: ['src/engine/GameRuntime.ts'],
+  evidence: ['A lift platform is a moving body: the world step resolves its contact with a cat landing on it and the lift carries its riders up with FUN_7ff72bc17330 (the same rider carry as every lift family); natively a rider is never left inside a rising platform',
+    'Port: a cat falling onto a platform that rose this frame ends up to one tick of lift travel inside its top; resolveClosedGateCollision sees a previous bottom below the new top (not a landing) and restores the previous rect every frame (10-2 RouletteLift: feet 378.2 vs top 378.0, frozen with vy 0, never grounded)'],
+  behavior: 'Every lift (WeightedLift family and RouletteLift): a cat that was above a lift top within 2 units last frame and now overlaps it is set on the top and grounded, unless standing there would put it into a chip or block above (then it is not moved) (was: a cat landing on a platform rising under it ended 0.2 inside it, could neither walk nor jump and kept the lift counting a rider for good: 10-2 roulette lifts).',
 }];
 
 // Fail the build if upstream code changes: never silently skip a correction.
@@ -456,6 +483,10 @@ export function patchCampaignSource(file, source) {
 `, file);
     // jumpstand-launch: the runtime reads the hold-ramp counter (a stand launch is refused while it runs).
     source = replaceOnce(source, '  private jumpPhase = 0;', '  jumpPhase = 0;', file);
+    // jump-off-body-contact: any contact below (a cat or box, even a falling one) allows a jump (FUN_7ff72bb6f0e0).
+    source = replaceOnce(source, '  jumpPhase = 0;', `  jumpPhase = 0;
+  /** jump-off-body-contact: set by the runtime each frame when this cat rests on another cat or a push box. */
+  bodySupportContact = false;`, file);
     source = replaceOnce(source, `    const startsJump = input.jumpPressed && canStartJump;
     if (startsJump) {
       this.velocity.y = this.getJumpSpeed();
@@ -528,6 +559,13 @@ export function patchCampaignSource(file, source) {
     this.lockedVx = null;
     this.pendingLaunchY = null;
 `, file);
+    // jump-off-body-contact: a body below counts as ground for the jump gate and refreshes the coyote time.
+    source = replaceOnce(source, `    if (wasGrounded) {
+      this.jumpCoyoteTimer = JUMP_COYOTE_SECONDS;
+    } else {`, `    if (wasGrounded || this.bodySupportContact) {
+      this.jumpCoyoteTimer = JUMP_COYOTE_SECONDS;
+    } else {`, file);
+    source = replaceOnce(source, '      : wasGrounded || this.jumpCoyoteTimer > 0;', '      : wasGrounded || this.bodySupportContact || this.jumpCoyoteTimer > 0;', file);
     return source;
   }
   if (file === 'src/engine/physics.ts') {
@@ -3946,6 +3984,77 @@ function feetOnSlab(rect: Rect, slab: Rect): boolean {
     source = replaceOnce(source, '    if (this.delaySwitches.some((s) => s.pressed && shouldDisableDeadTimerForSwitch(s.spawn, deadTimerSpawn))) return true;\n', ``, file);
     source = replaceOnce(source, '    if (this.delaySwitches.some((s) => s.pressed && shouldActivateStopWatchForSwitch(s.spawn, stopWatchSpawn))) return true;\n', ``, file);
     source = replaceOnce(source, '    if (this.delaySwitches.some((delaySwitch) => delaySwitch.pressed && holdsMediator(delaySwitch.spawn))) return true;\n', ``, file);
+    // jump-off-body-contact: a cat landing on a falling cat falls with it (native: a body is unsupported when every body
+    // under it is a falling cat, FUN_7ff72bb67850 / FUN_7ff72bb69dd0), so the two stay touching through the fall.
+    source = replaceOnce(source, `      } else if (cameFromAbove) {
+        nextRect.y = otherRect.y - playerRect.height;
+        nextVelocity.y = 0;
+        nextGrounded = true;
+      } else if (cameFromBelow) {
+        nextRect.y = otherRect.y + otherRect.height;
+        nextVelocity.y = 0;
+      } else {
+        const pushLeft = playerRect.x + playerRect.width - otherRect.x;`, `      } else if (cameFromAbove) {
+        nextRect.y = otherRect.y - playerRect.height;
+        nextVelocity.y = otherPlayer.grounded ? 0 : Math.max(0, otherPlayer.velocity.y);
+        nextGrounded = true;
+      } else if (cameFromBelow) {
+        nextRect.y = otherRect.y + otherRect.height;
+        nextVelocity.y = 0;
+      } else {
+        const pushLeft = playerRect.x + playerRect.width - otherRect.x;`, file);
+    // jump-off-body-contact: before each cat's update, note a cat or push box directly under it (FUN_7ff72bc13690).
+    source = replaceOnce(source, `      this.player.jumpStarted = false;
+      this.player.jumpHeadBlocked = false;`, `      this.player.jumpStarted = false;
+      this.player.jumpHeadBlocked = false;
+      {
+        // Contacts from the last step (frame-start rects), as native reads the body's contact list.
+        const cat = this.player;
+        const catStart = this.frameStartPlayerRects[this.players.indexOf(cat)] ?? cat.rect;
+        cat.bodySupportContact = !this.collisionChangePlayersCollisionOff.has(cat) && (
+          this.players.some((other, j) => other !== cat && other.deathTimer <= 0 && !this.deathFallPlayers.has(other)
+            && !this.collisionChangePlayersCollisionOff.has(other)
+            && rectRestsOnSupport(catStart, this.frameStartPlayerRects[j] ?? other.rect))
+          || this.pushBoxes.some((box, j) => rectRestsOnSupport(catStart, this.frameStartPushBoxRects[j] ?? box.rect)));
+      }`, file);
+    // pushed-box-carries-stack: what rests on a pushed box rides it like a walking cat's stack.
+    source = replaceOnce(source, `      for (const index of movedIndices) {
+        this.carryPlayersWithPushedBox(previousPushBoxRects[index], result.boxRects[index]);
+        this.pushBoxesMovedThisFrame.add(this.pushBoxes[index]);
+      }`, `      for (const index of movedIndices) {
+        this.carryPlayersWithPushedBox(previousPushBoxRects[index], result.boxRects[index]);
+        this.pushBoxesMovedThisFrame.add(this.pushBoxes[index]);
+      }
+      for (const index of movedIndices) {
+        const box = this.pushBoxes[index];
+        if (box) this.rideStackOnSupport(previousPushBoxRects[index], result.boxRects[index].x - previousPushBoxRects[index].x, box);
+      }`, file);
+    // colorbox-native-body: the ColorBox body is the drawn rect inset 2 (FUN_7ff72bb3c0c0); the drawing stays full size.
+    source = replaceOnce(source, `    g.drawRoundedRect(0, 0, width, height, Math.min(8, width / 4, height / 4));
+    g.endFill();
+    pushBox.view.addChild(g);`, `    g.drawRoundedRect(-2, -2, width, height, Math.min(8, width / 4, height / 4));
+    g.endFill();
+    pushBox.view.addChild(g);
+    const body = { x: pushBox.rect.x + 2, y: pushBox.rect.y + 2, width: width - 4, height: height - 4 };
+    pushBox.applyRect(body);
+    (pushBox as { spawnRect: Rect }).spawnRect = { ...body };`, file);
+    // land-on-rising-lift: a cat just above a lift top last frame and inside it now is standing on it.
+    source = replaceOnce(source, `    this.dispatchRouletteLiftTriggerBeginContacts(previousPlayerRect);
+    const result = resolveWeightedLiftPlayerCollision(`, `    this.dispatchRouletteLiftTriggerBeginContacts(previousPlayerRect);
+    {
+      const cat = this.player;
+      const previousBottom = previousPlayerRect.y + previousPlayerRect.height;
+      const tops = [...this.weightedLifts.map((lift) => lift.rect), ...this.rouletteLifts.flatMap((lift) => lift.bodyRects)];
+      for (const top of tops) {
+        if (cat.velocity.y < 0 || !rectsOverlap(cat.rect, top)) continue;
+        if (previousBottom > top.y + 2) continue;
+        const seated = { ...cat.rect, y: top.y - cat.rect.height };
+        // Never into a chip or solid above (batch 4: a lift never carries a rider into a solid).
+        if (this.tileMap?.rectHitsSolid(seated) || this.staticRects.some((block) => rectsOverlap(seated, block.rect))) continue;
+        cat.applyResolvedCollision(seated, { ...cat.velocity, y: 0 }, true);
+      }
+    }
+    const result = resolveWeightedLiftPlayerCollision(`, file);
     source += `
 /** A copy of a stage row at a new point; raw x / y follow, because param parsers find their params after them. */
 function spawnMovedTo(spawn: ActorSpawnDef, x: number, y: number): ActorSpawnDef {
