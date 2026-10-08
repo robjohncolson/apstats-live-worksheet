@@ -53,7 +53,9 @@ describe('Pico PLAY button = the Desk Doge', { timeout: 120_000 }, () => {
       // Sprite at 2x (14 -> 28), a 44x44 target, positioned so the dropdown hangs from it.
       expect(PICO).toContain("'#pico-home #doge-presence img { width: 28px; height: 28px; }',");
       expect(PICO).toMatch(/#pico-home #doge-presence \{ position: relative; z-index: 6;[^']*',\n\s*'  align-items: center; justify-content: center; min-width: 44px; min-height: 44px;/);
-      expect(PICO).toContain("'#pico-home #doge-presence .doge-dropdown { top: 100%;");
+      // Teacher 2026-10-08: the System 7 dropdown is never shown; PLAY opens the Pico window
+      // (tests/pico-home-doge-menu.test.js).
+      expect(PICO).toContain("'html.pico-home #doge-dropdown, html.pico-home #doge-dropdown.show { display: none !important; }',");
     } finally {
       harness.teardown();
     }
@@ -75,7 +77,7 @@ describe('Pico PLAY button = the Desk Doge', { timeout: 120_000 }, () => {
     }
   });
 
-  it('the real dropdown opens under it (DogePresence.openDropdown)', async () => {
+  it('the Desk dropdown state still drives it: DogePresence.openDropdown shows the Pico PLAY window', async () => {
     const harness = await boot(true);
     try {
       const { document: doc, window: win } = harness;
@@ -84,8 +86,10 @@ describe('Pico PLAY button = the Desk Doge', { timeout: 120_000 }, () => {
       expect(dropdown.classList.contains('show')).toBe(true);
       expect(doc.getElementById('doge-presence').classList.contains('doge-active')).toBe(true);
       expect(dropdown.closest('#pico-home')).toBeTruthy();
+      expect(doc.getElementById('pico-doge-backdrop').hidden).toBe(false);
       win.DogePresence.closeDropdown();
       expect(dropdown.classList.contains('show')).toBe(false);
+      expect(doc.getElementById('pico-doge-backdrop').hidden).toBe(true);
     } finally {
       harness.teardown();
     }

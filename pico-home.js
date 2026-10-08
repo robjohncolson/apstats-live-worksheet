@@ -101,13 +101,68 @@
     '#pico-home #doge-presence img { width: 28px; height: 28px; }',
     '#pico-home #doge-presence .pico-doge-label { font-size: 12px; font-weight: 800; letter-spacing: .06em; margin-top: 2px; }',
     '#pico-home #doge-presence .doge-badge { top: -2px; right: -2px; width: 18px; height: 18px; line-height: 18px; font-size: 11px; }',
-    '#pico-home #doge-presence .doge-dropdown { top: 100%; right: 0; margin-top: 4px; text-align: left; line-height: 1.35; }',
+    /* Teacher 2026-10-08: "the menu system for the dogecoin icon should be in the pico park style".
+       The Desk's System 7 dropdown (#doge-dropdown) still opens and closes with the Desk's own
+       state, but it is never shown here: the Pico PLAY window (renderDogeMenu) presents the same
+       DogePresence state instead. The Desk's short status flash ("Challenging …") gets plain text
+       on a Pico board. */
+    'html.pico-home #doge-dropdown, html.pico-home #doge-dropdown.show { display: none !important; }',
+    '#pico-home #doge-presence .doge-flash { top: 100%; right: 0; margin-top: 6px; padding: 6px 12px; background: var(--cream);',
+    '  border: 3px solid var(--orange); border-radius: 4px; box-shadow: none; color: var(--ink);',
+    '  font-family: var(--plain-font); font-size: 15px; font-weight: 700; line-height: 1.3; }',
+    /* PLAY window: the recovered menu window (same frame as OPTION), one list. */
+    '#pico-home .doge-win { width: min(500px, 100%); max-height: calc(100vh - 32px); }',
+    '#pico-home .doge-win .win-body { padding: 10px 16px 14px; }',
+    '#pico-home .pico-doge-self { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 16px; }',
+    '#pico-home .pico-doge-peer { justify-content: flex-start; gap: 10px; padding: 0 10px; text-align: left; letter-spacing: 0; }',
+    '#pico-home .pico-doge-who { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;',
+    '  font-size: 18px; font-weight: 800; }',
+    '#pico-home .pico-doge-user { font-size: 14px; font-weight: 400; opacity: .7; }',
+    '#pico-home .pico-doge-you { font-size: 14px; font-weight: 400; font-style: italic; opacity: .7; }',
+    '#pico-home .pico-doge-guest { font-size: 14px; font-weight: 800; color: #cc0000; }',
+    '#pico-home .pico-doge-chip { flex: none; padding: 2px 10px; font-size: 14px; font-weight: 400; letter-spacing: 0;',
+    '  background: var(--cream); border: 2px solid #c8c8c8; border-radius: 4px; }',
+    '#pico-home .pico-doge-chip.is-desk { font-weight: 800; border-color: var(--ink); }',
+    '#pico-home .pico-doge-chip.is-unknown { background: none; border-color: transparent; }',
+    '#pico-home .pico-doge-caret { flex: none; width: 1em; text-align: center; font-size: 16px; }',
+    '#pico-home .pico-doge-acts { list-style: none; margin: 0 0 8px 32px; padding: 0; }',
+    '#pico-home .pico-doge-where { margin: 4px 0 2px; font-size: 16px; }',
+    '#pico-home .pico-doge-acts .action { font-size: 16px; min-height: 44px; justify-content: flex-start; padding: 0 10px; }',
+    '#pico-home .pico-doge-acts .action:disabled { opacity: .45; cursor: default; }',
+    '#pico-home .pico-doge-note { margin: 10px 0; text-align: center; font-size: 16px; }',
     /* An incoming challenge: the Desk breathes doge-gold behind everything (body.challenge-waiting);
        the Pico home covers the body, so it breathes too. Same timing; still for reduced motion. */
     '@keyframes pico-challenge-breathe { 0%, 100% { background-color: var(--paper); } 50% { background-color: #C9A227; } }',
     /* The challenge alert's own top layer (see hoistChallengePanel): clicks pass through except on the panel. */
     '#pico-doge-layer { position: fixed; inset: 0; z-index: ' + 100005 + '; pointer-events: none; }',
     '#pico-doge-layer > .doge-challenge-panel { pointer-events: auto; }',
+    /* The challenge alert in the recovered window (teacher 2026-10-08): the Desk's own panel, its
+       content, ids and buttons untouched; only its look changes. Orange stepped frame, the title
+       ("Challenge!") on the orange top bar, paper interior, plain text, orange YES and an
+       orange-outlined NO. Scoped to the Pico top layer, so the original Desk's alert is unchanged. */
+    '#pico-doge-layer { --orange: #FF864D; --paper: #FEFEFE; --ink: #000040;',
+    '  --plain-font: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }',
+    '#pico-doge-layer > #doge-challenge-panel { isolation: isolate; width: min(400px, calc(100vw - 32px)); padding: 43px 24px 24px;',
+    '  background: none; border: 0; box-shadow: none; color: var(--ink); font-family: var(--plain-font); font-size: 16px; }',
+    '#pico-doge-layer > #doge-challenge-panel::before { content: ""; position: absolute; inset: 0; z-index: -2; background: var(--orange);',
+    '  clip-path: polygon(8px 0, calc(100% - 8px) 0, calc(100% - 8px) 3px, calc(100% - 4px) 3px, calc(100% - 4px) 7px, 100% 7px,',
+    '    100% calc(100% - 8px), calc(100% - 4px) calc(100% - 8px), calc(100% - 4px) calc(100% - 4px),',
+    '    calc(100% - 8px) calc(100% - 4px), calc(100% - 8px) 100%, 8px 100%, 8px calc(100% - 4px),',
+    '    4px calc(100% - 4px), 4px calc(100% - 8px), 0 calc(100% - 8px), 0 7px, 4px 7px, 4px 3px, 8px 3px); }',
+    '#pico-doge-layer > #doge-challenge-panel::after { content: ""; position: absolute; inset: 31px 12px 12px; z-index: -1; background: var(--paper); }',
+    '#pico-doge-layer > #doge-challenge-panel .challenge-title { position: absolute; top: 0; left: 12px; right: 12px; height: 31px;',
+    '  display: flex; align-items: center; margin: 0; padding: 0; background: none; border: 0; color: #fff;',
+    '  font-family: var(--plain-font); font-size: 16px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }',
+    '#pico-doge-layer > #doge-challenge-panel .challenge-who { padding: 0; font-family: var(--plain-font); font-size: 20px; font-weight: 800; line-height: 1.3; }',
+    '#pico-doge-layer > #doge-challenge-panel .challenge-stake { margin-top: 6px; color: var(--ink); font-family: var(--plain-font); font-size: 15px; }',
+    '#pico-doge-layer > #doge-challenge-panel .challenge-timer { margin: 10px 0 4px; font-family: var(--plain-font); font-size: 32px; font-weight: 800; }',
+    '#pico-doge-layer > #doge-challenge-panel .challenge-btns { gap: 12px; padding: 0; margin-top: 10px; }',
+    '#pico-doge-layer > #doge-challenge-panel .challenge-btns button { min-height: 48px; background: var(--paper); color: var(--ink);',
+    '  border: 4px solid var(--orange); border-radius: 4px; box-shadow: none;',
+    '  font-family: var(--plain-font); font-size: 18px; font-weight: 800; letter-spacing: .04em; }',
+    '#pico-doge-layer > #doge-challenge-panel .challenge-btns .btn-accept { background: var(--orange); color: #fff; }',
+    '#pico-doge-layer > #doge-challenge-panel .challenge-btns button:active { transform: none; }',
+    '#pico-doge-layer > #doge-challenge-panel .challenge-btns button:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }',
     /* With SCHEDULE open its dimmed backdrop covers the home, so the backdrop breathes gold too. */
     '@keyframes pico-challenge-breathe-dim { 0%, 100% { background-color: rgba(0, 0, 64, .45); } 50% { background-color: rgba(201, 162, 39, .75); } }',
     'html.pico-home.pico-lessons-open body.challenge-waiting #window-wrap { animation: pico-challenge-breathe-dim 1.4s ease-in-out infinite; }',
@@ -629,7 +684,7 @@
   var view = {
     weekIndex: null, selected: 0, days: [], menu: null, menuOpener: null, menuSelected: 0, lessonsOpener: null,
     panel: { open: false, source: null, opener: null, selected: null, recommended: -1 },
-    walletOpener: null,
+    walletOpener: null, dogeSelected: null,
   };
 
   // ── Tile clicks: the same handler the calendar cell calls (rCal) ──────────
@@ -727,6 +782,7 @@
   function restingOutline() {
     var focused = outlineTarget(document.activeElement);
     if (focused) return focused;
+    if (dogeMenuOpen()) return document.querySelector('#pico-doge-list .action.is-selected');
     if (byId('pico-menu-backdrop') && !byId('pico-menu-backdrop').hidden) return document.querySelector('#pico-menu-list .action.is-selected');
     if (isPanelOpen()) return document.querySelector('#resource-body .pico-row.is-selected');
     return document.querySelector('#pico-tiles .tile.is-selected');
@@ -1511,7 +1567,7 @@
     if (keyboardUser || !event.detail) return;
     var target = event.target;
     var control = target && target.closest ? target.closest('#pico-home button, #pico-home [role="button"]') : null;
-    if (!control || control.closest('#pico-floor') || control.closest('#pico-menu-backdrop')) return;
+    if (!control || control.closest('#pico-floor') || control.closest('#pico-menu-backdrop') || control.closest('#pico-doge-backdrop')) return;
     if (document.activeElement === control) control.blur();
   }
 
@@ -1540,6 +1596,8 @@
   //      selection), Tab (kept inside the menu's own buttons — its focus trap), and Enter / Space /
   //      the other arrows (stopped, so none reaches the game). Taken from the menu itself or from
   //      the page body / the floor. A Desk dialog on top keeps its keys.
+  //   1b. The PLAY window (the Doge's Online Now list) is open: the same keys as a Pico menu
+  //      (Esc closes it through the Desk's DogePresence.closeDropdown).
   //   2. The lesson panel (#resource-overlay), from inside it, when no Desk dialog is above it:
   //      Esc (closes it), Up / Down (move along its action list), and the other arrows / Space
   //      (stopped only).
@@ -1549,6 +1607,14 @@
     if (isEditable(target)) return;
     var inPico = Boolean(target && target.closest && target.closest('#pico-home'));
     var onPage = !target || target === document || target === document.body || target === document.documentElement;
+    if (dogeMenuOpen()) {
+      var inDoge = inPico && Boolean(target.closest('#pico-doge-backdrop'));
+      var looseDoge = onPage || Boolean(target.closest && (target.closest('#pico-floor') || target.closest('#doge-presence')));
+      if (!inDoge && !looseDoge) return;
+      onDogeMenuKey(event);
+      if (GAME_KEYS[event.key] || event.key === 'Escape' || event.key === 'Tab' || event.key === 'Enter') event.stopPropagation();
+      return;
+    }
     if (isMenuOpen()) {
       var inMenu = inPico && Boolean(target.closest('#pico-menu-backdrop'));
       var loose = onPage || Boolean(target.closest && target.closest('#pico-floor'));
@@ -2148,7 +2214,7 @@
   // button look). The System 7 title-bar parts the frame replaces (title text, stripes, close
   // box, collapse box) are hidden, not removed; any other control on that bar (Study Break's
   // mute, an app's pop-out) stays visible. The lesson panel and My Grade (Phase 2) are framed
-  // by their own setup above; the Study Break challenge alert in the menu bar is left as is.
+  // by their own setup above; the Study Break challenge alert is styled on its own top layer.
   //
   // overlay id              frame box in it   title source (in the box; '' = none)   ✕ = Desk close
   var FRAMED = [
@@ -2186,7 +2252,8 @@
   // Not framed, on purpose (each checked against the Desk's -overlay ids, role="dialog" and
   // .dialog-box containers):
   //   #resource-overlay, #app-wallet-overlay  framed by Phase 2 (lesson panel, My Grade)
-  //   #doge-challenge-panel                   Study Break challenge alert: stays exactly as is (pre-approved)
+  //   #doge-challenge-panel                   Study Break challenge alert: on its own top layer, drawn in the
+  //                                           recovered frame by CSS scoped to #pico-doge-layer (not a .pico-win)
   //   #challenge-dialog                       inside the Study Break window's content (never touched)
   //   .avatar-pop                             the cat's name/candy/game popover on the floor: anchored to
   //                                           the cat, not a modal dialog — it belongs to the board
@@ -2339,7 +2406,7 @@
     byId('pico-home').addEventListener('click', function (event) {
       if (event.target && event.target.closest && event.target.closest('.navbtn, .tile, .action, .sign-go, .sign-grade, #doge-presence')) cancelScrollClaim();
       var control = event.target && event.target.closest && event.target.closest('button');
-      if (control && !control.closest('#pico-menu-backdrop')) notePendingOpener(openerRef(control));
+      if (control && !control.closest('#pico-menu-backdrop') && !control.closest('#pico-doge-backdrop')) notePendingOpener(openerRef(control));
     }, true);
     new MutationObserver(function () {
       FRAMED.forEach(function (entry) {
@@ -2402,6 +2469,13 @@
     '    <div class="win-body"><ul class="actions" id="pico-menu-list"></ul></div>',
     '  </section>',
     '</div>',
+    '<div class="backdrop" id="pico-doge-backdrop" hidden>',
+    '  <section class="win doge-win" id="pico-doge-menu" role="dialog" aria-modal="true" aria-labelledby="pico-doge-title">',
+    '    <div class="win-bar" id="pico-doge-title">PLAY</div>',
+    '    <button type="button" class="win-close" id="pico-doge-close" aria-label="Close"></button>',
+    '    <div class="win-body"><ul class="actions" id="pico-doge-list" aria-label="Online now"></ul></div>',
+    '  </section>',
+    '</div>',
   ].join('\n');
 
   function injectStyle() {
@@ -2413,7 +2487,7 @@
   }
 
   // Study Break's Doge (DogePresence): the menu bar's own #doge-presence node — sprite, presence
-  // badge, the "Online Now" / challenge dropdown and the incoming-challenge panel — moved to the
+  // badge, the (hidden) System 7 dropdown and the incoming-challenge panel — moved to the
   // right of the Pico nav, so every behaviour keeps working untouched. Flag on only; it gets a
   // PLAY label and a keyboard handle (Enter / Space = its own onclick, DogePresence.toggle()).
   function mountDoge() {
@@ -2428,6 +2502,7 @@
     }
     doge.setAttribute('role', 'button');
     doge.setAttribute('tabindex', '0');
+    doge.setAttribute('aria-haspopup', 'dialog');
     doge.setAttribute('aria-label', 'Play Study Break — who is online, challenges and candy bets');
     doge.addEventListener('keydown', function (event) {
       if (event.target !== doge) return;
@@ -2455,6 +2530,321 @@
       document.body.appendChild(layer);
     }
     layer.appendChild(panel);
+  }
+
+  // ── PLAY: the Doge's "Online Now" menu in the recovered window ──────────────
+  // Teacher 2026-10-08: "the menu system for the dogecoin icon should be in the pico park style".
+  // WRAP, DON'T REWRITE. The Desk's DogePresence keeps every piece of state and behaviour: who is
+  // online (players, locations, connected), which row is open (expandedRow), whether the menu is
+  // open (dropdownOpen), presence polling, the challenge, candy and message actions. Its
+  // openDropdown / closeDropdown / renderDropdown are wrapped (original first, then this window is
+  // synced), so every path that opens, closes or refreshes the System 7 dropdown drives this
+  // window instead; the System 7 dropdown itself is hidden by CSS. Each button calls the same
+  // DogePresence method the System 7 menu item calls. Names come from the UNTRUSTED presence feed:
+  // textContent only, never HTML.
+  function doge() {
+    return window.DogePresence || null;
+  }
+
+  function dogeMenuOpen() {
+    var backdrop = byId('pico-doge-backdrop');
+    return Boolean(backdrop && !backdrop.hidden);
+  }
+
+  // Call a DogePresence method by name at click time (so the Desk's own, or a test's spy, runs).
+  function callDoge(name, args) {
+    var dp = doge();
+    if (!dp || typeof dp[name] !== 'function') return undefined;
+    try { return dp[name].apply(dp, args || []); } catch (_) { return undefined; }
+  }
+
+  function deskRoster() {
+    try { return typeof DeskRoster !== 'undefined' ? DeskRoster : (window.DeskRoster || null); } catch (_) { return window.DeskRoster || null; }
+  }
+
+  function rosterCall(name, user) {
+    var roster = deskRoster();
+    if (!roster || typeof roster[name] !== 'function') return '';
+    try { return roster[name](user); } catch (_) { return ''; }
+  }
+
+  // The Desk's own HTML fragments (location chip, where-line), read as text through the inert parser.
+  function deskFragmentText(html) {
+    var box = parser.createElement('div');
+    box.innerHTML = typeof html === 'string' ? html : '';
+    return box.textContent.replace(/\s+/g, ' ').trim();
+  }
+
+  // Name, then the username small (same as the Desk row); "?" for a name not on the roster.
+  function dogeWho(user, isSelf) {
+    var who = el('span', 'pico-doge-who');
+    var real = rosterCall('realName', user);
+    if (real) {
+      who.appendChild(document.createTextNode(real + ' '));
+      who.appendChild(el('span', 'pico-doge-user', user));
+    } else {
+      who.appendChild(document.createTextNode(String(user)));
+      if (!isSelf && rosterCall('isGuest', user)) {
+        var guest = el('span', 'pico-doge-guest', ' ?');
+        guest.title = 'Not signed in to the roster';
+        who.appendChild(guest);
+      }
+    }
+    if (isSelf) who.appendChild(el('span', 'pico-doge-you', ' (you)'));
+    return who;
+  }
+
+  // The Desk's location chip text (coarse for students, the lesson for the teacher).
+  function dogeChip(loc, teacher) {
+    var dp = doge();
+    var text = deskFragmentText(dp && typeof dp._locationChip === 'function' ? dp._locationChip(loc, teacher) : '');
+    var chip = el('span', 'pico-doge-chip', text);
+    if (!loc || !loc.surface) chip.classList.add('is-unknown');
+    else if (loc.onDesk) chip.classList.add('is-desk');
+    return chip;
+  }
+
+  function dogeAction(label, key, run) {
+    var btn = button('action', null);
+    btn.appendChild(el('span', 'action-text', label));
+    btn.setAttribute('data-pico-doge-key', key);
+    btn.addEventListener('click', function (event) {
+      event.stopPropagation();
+      run();
+    });
+    return btn;
+  }
+
+  // An action that leaves the menu for another window: the window's opener is the PLAY button.
+  function runDogeAndLeave(run) {
+    var playButton = byId('doge-presence');
+    run();
+    if (playButton) notePendingOpener(openerRef(playButton));
+  }
+
+  function dogeNote(text) {
+    var li = el('li');
+    li.appendChild(el('p', 'pico-doge-note', text));
+    return li;
+  }
+
+  // The per-player actions, in the Desk submenu's order: where they are, challenge (Desk only),
+  // message (teacher), send candy.
+  function dogePeerActions(user, loc, teacher) {
+    var dp = doge();
+    var acts = el('ul', 'pico-doge-acts');
+    var where = el('li');
+    var whereHtml = dp && typeof dp._whereSentence === 'function' ? dp._whereSentence(loc, teacher) : '';
+    where.appendChild(el('p', 'pico-doge-where', deskFragmentText(whereHtml)));
+    acts.appendChild(where);
+
+    var challenge = el('li');
+    if (loc && loc.onDesk) {
+      challenge.appendChild(dogeAction('CHALLENGE TO STUDY BREAK', 'challenge:' + user, function () {
+        callDoge('challengeFromMenu', [user]);
+      }));
+    } else {
+      var off = dogeAction('CHALLENGE (DESK ONLY)', 'challenge:' + user, function () {});
+      off.disabled = true;
+      off.title = "Only works when they're on the Desk";
+      challenge.appendChild(off);
+    }
+    acts.appendChild(challenge);
+
+    if (teacher) {
+      var message = el('li');
+      message.appendChild(dogeAction('MESSAGE', 'message:' + user, function () {
+        runDogeAndLeave(function () { callDoge('messageFromMenu', [user]); });
+      }));
+      acts.appendChild(message);
+    }
+
+    var candy = el('li');
+    candy.appendChild(dogeAction('SEND CANDY', 'candy:' + user, function () {
+      runDogeAndLeave(function () { callDoge('candyFromMenu', [user]); });
+    }));
+    acts.appendChild(candy);
+    return acts;
+  }
+
+  function dogePeerRow(user, teacher) {
+    var dp = doge();
+    var li = el('li');
+    var loc = dp._locationFor(user);
+    var expanded = dp.expandedRow === user;
+    var row = button('action pico-doge-peer', null);
+    row.setAttribute('data-pico-doge-key', 'peer:' + user);
+    row.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+    row.appendChild(dogeWho(user, false));
+    row.appendChild(dogeChip(loc, teacher));
+    var caret = el('span', 'pico-doge-caret', expanded ? '▾' : '▸');
+    caret.setAttribute('aria-hidden', 'true');
+    row.appendChild(caret);
+    row.addEventListener('click', function (event) {
+      event.stopPropagation();
+      callDoge('toggleRow', [user]);
+    });
+    li.appendChild(row);
+    if (expanded) li.appendChild(dogePeerActions(user, loc, teacher));
+    return li;
+  }
+
+  // The Desk dropdown's footer items, same conditions and same calls.
+  function dogeFooter(list) {
+    var dp = doge();
+    var items = [];
+    if (/^guest_/i.test(String(dp.getUsername()))) items.push({ label: 'MY GUEST PASS', key: 'guest-pass', open: 'openGuestPass' });
+    if (callDesk('_isTeacher') === true) items.push({ label: 'GUEST RECONCILE', key: 'reconcile', open: 'openReconcileQR' });
+    items.push({ label: 'STUDY BREAK', key: 'study-break', open: 'openGame' });
+    var head = el('li');
+    head.appendChild(el('p', 'option-head', 'GAMES'));
+    list.appendChild(head);
+    items.forEach(function (item) {
+      var li = el('li');
+      li.appendChild(dogeAction(item.label, item.key, function () {
+        runDogeAndLeave(function () {
+          callDoge('closeDropdown');
+          callDesk(item.open);
+        });
+      }));
+      list.appendChild(li);
+    });
+  }
+
+  function dogeButtons() {
+    return Array.prototype.filter.call(document.querySelectorAll('#pico-doge-list .action'), function (btn) { return !btn.disabled; });
+  }
+
+  function selectDogeItem(index, moveFocus) {
+    var buttons = dogeButtons();
+    if (!buttons.length) return;
+    var i = (index + buttons.length) % buttons.length;
+    Array.prototype.forEach.call(document.querySelectorAll('#pico-doge-list .action'), function (btn) {
+      btn.classList.toggle('is-selected', btn === buttons[i]);
+    });
+    view.dogeSelected = buttons[i].getAttribute('data-pico-doge-key');
+    if (moveFocus) buttons[i].focus();
+    refreshActive();
+  }
+
+  function dogeIndexOfKey(key) {
+    var buttons = dogeButtons();
+    for (var i = 0; i < buttons.length; i++) if (buttons[i].getAttribute('data-pico-doge-key') === key) return i;
+    return -1;
+  }
+
+  function renderDogeMenu() {
+    var dp = doge();
+    var list = byId('pico-doge-list');
+    if (!dp || !list) return;
+    var focused = document.activeElement && list.contains(document.activeElement)
+      ? document.activeElement.getAttribute('data-pico-doge-key') : null;
+    cancelDwells();
+    list.textContent = '';
+    var title = 'PLAY';
+    if (!dp.connected) {
+      list.appendChild(dogeNote('Connecting...'));
+    } else {
+      var teacher = isTeacher();
+      var me = dp.getUsername();
+      var peers = dp._peers();
+      title = 'ONLINE NOW (' + (peers.length + 1) + ')';
+      var self = el('li', 'pico-doge-self');
+      self.appendChild(dogeWho(me, true));
+      self.appendChild(dogeChip(dp._locationFor(me) || { surface: 'desk', lesson: null, onDesk: true }, teacher));
+      list.appendChild(self);
+      peers.forEach(function (user) { list.appendChild(dogePeerRow(user, teacher)); });
+      if (!peers.length) list.appendChild(dogeNote('No classmates online yet'));
+    }
+    dogeFooter(list);
+    byId('pico-doge-title').textContent = title;
+    Array.prototype.forEach.call(list.querySelectorAll('.action'), function (btn) {
+      btn.addEventListener('focus', function () {
+        if (btn.disabled) return;
+        selectDogeItem(dogeIndexOfKey(btn.getAttribute('data-pico-doge-key')), false);
+      });
+      hoverDwell(btn, function () {
+        if (btn.disabled) return;
+        selectDogeItem(dogeIndexOfKey(btn.getAttribute('data-pico-doge-key')), false);
+      });
+    });
+    // Keep the selection (and focus, if it was in the list) on the same item across a re-render.
+    var keep = dogeIndexOfKey(focused || view.dogeSelected);
+    selectDogeItem(keep < 0 ? 0 : keep, Boolean(focused));
+  }
+
+  // Open / close / refresh, following the Desk's own dropdownOpen.
+  var dogeWasOpen = false;
+  function syncDogeMenu() {
+    var dp = doge();
+    var backdrop = byId('pico-doge-backdrop');
+    if (!dp || !backdrop) return;
+    var open = Boolean(dp.dropdownOpen);
+    if (open) renderDogeMenu();
+    if (open === dogeWasOpen) return;
+    dogeWasOpen = open;
+    backdrop.hidden = !open;
+    if (open) {
+      view.dogeSelected = null;
+      selectDogeItem(0, true);
+      return;
+    }
+    view.dogeSelected = null;
+    refreshActive();
+    if (challengeHasFocus()) return;
+    var active = document.activeElement;
+    var lost = !active || active === document.body || backdrop.contains(active);
+    if (lost) giveBackFocus(byId('doge-presence'));
+  }
+
+  function onDogeMenuKey(event) {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      callDoge('closeDropdown');
+      return;
+    }
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      event.preventDefault();
+      var current = dogeIndexOfKey(view.dogeSelected);
+      selectDogeItem((current < 0 ? 0 : current) + (event.key === 'ArrowDown' ? 1 : -1), true);
+      return;
+    }
+    if (event.key !== 'Tab') return;
+    var focusable = Array.prototype.filter.call(byId('pico-doge-menu').querySelectorAll('button'), function (btn) { return !btn.disabled; });
+    var first = focusable[0];
+    var last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); return; }
+    if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+  }
+
+  function setupDogeMenu() {
+    var dp = doge();
+    var backdrop = byId('pico-doge-backdrop');
+    if (!dp || !backdrop) return;
+    byId('pico-doge-close').appendChild(sprite('close', 1));
+    byId('pico-doge-close').addEventListener('click', function (event) {
+      event.stopPropagation();
+      callDoge('closeDropdown');
+    });
+    backdrop.addEventListener('click', function (event) {
+      if (event.target === event.currentTarget) callDoge('closeDropdown');
+    });
+    // The Desk closes its dropdown on any mousedown outside #doge-presence; this window is outside
+    // it, so a press inside the window must not reach that document listener.
+    byId('pico-doge-menu').addEventListener('mousedown', function (event) { event.stopPropagation(); });
+    if (!dp._picoWrapped) {
+      ['openDropdown', 'closeDropdown', 'renderDropdown'].forEach(function (name) {
+        var original = dp[name];
+        if (typeof original !== 'function') return;
+        dp[name] = function () {
+          var result = original.apply(this, arguments);
+          syncDogeMenu();
+          return result;
+        };
+      });
+      dp._picoWrapped = true;
+    }
+    syncDogeMenu();
   }
 
   function buildRoot() {
@@ -2853,6 +3243,7 @@
     setupLessonPanel();
     setupMyGrade();
     setupFrames();
+    setupDogeMenu();
     watchFloor();
     watchOutlines();
     render();
