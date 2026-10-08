@@ -31,7 +31,7 @@ export function createLiveDb() {
 // ── Thin wrapper (accepts any Supabase-compatible client) ─────────────────────
 
 export function createDb(client) {
-  return { insertRoster, findByUsername, findByStudentId, findTeacherUsername, getRoleByStudentId, getSpriteHueByStudentId, getSchoologyUidMap, updatePassword, updateStudent, setRosterStatus, deleteRoster, deletePeerAnswers, updateSpriteHue, updateSchoologyUid, listRoster, getDogeAccount, listDogeAccounts, upsertDogeAccount, ensureDogeAccount, updateDogeField, setDogeAddressProposal, listDogeAddressProposals, approveDogeAddressProposal, rejectDogeAddressProposal, storeWalletCustody, getWalletCustody, auditWalletKeyReveal, deleteWalletCustody, listWalletCustody, insertDogeLedger, listDogeLedger, dogeSpend, updateDogeChain, dogeGift, dogeMark, dogeGiveBack, dogeSell, dogeCoinFlows, dogeGiftedSince, tetrisBetOpen, tetrisBetResolve, tetrisBetRefund, listStaleBets, listSettledBets, upsertReviewMark, listReviewMarksByStudents, listReviewMarksByStudent, reviewAward, snapshotQuarter, listQuarterSnapshot, addTrustedIssuer, listTrustedIssuers, revokeTrustedIssuer, findStudentKey, insertStudentKey, listStudentKeys, listStudentKeysByStudent, revokeStudentKey, insertSubmissionArchive, listSubmissionArchive };
+  return { insertRoster, findByUsername, findByStudentId, findTeacherUsername, getRoleByStudentId, getSpriteHueByStudentId, getSchoologyUidMap, updatePassword, updateStudent, setRosterStatus, deleteRoster, deletePeerAnswers, updateSpriteHue, updateSchoologyUid, listRoster, getDogeAccount, listDogeAccounts, upsertDogeAccount, ensureDogeAccount, updateDogeField, setDogeAddressProposal, listDogeAddressProposals, approveDogeAddressProposal, rejectDogeAddressProposal, storeWalletCustody, getWalletCustody, auditWalletKeyReveal, deleteWalletCustody, listWalletCustody, insertDogeLedger, listDogeLedger, dogeSpend, updateDogeChain, dogeGift, dogeMark, dogeGiveBack, dogeSell, dogeCoinFlows, dogeGiftedSince, parkKeyBuy, parkKeyGranted, parkKeyRefund, getKeyPurchase, listKeyPurchases, listPendingKeyPurchases, tetrisBetOpen, tetrisBetResolve, tetrisBetRefund, listStaleBets, listSettledBets, upsertReviewMark, listReviewMarksByStudents, listReviewMarksByStudent, reviewAward, snapshotQuarter, listQuarterSnapshot, addTrustedIssuer, listTrustedIssuers, revokeTrustedIssuer, findStudentKey, insertStudentKey, listStudentKeys, listStudentKeysByStudent, revokeStudentKey, insertSubmissionArchive, listSubmissionArchive };
 
   // Phase 6: look up a single roster row by student_id -- used by /grade to
   // resolve the student's section, and by the Console routes (P3 nudges,
@@ -483,6 +483,39 @@ export function createDb(client) {
   async function dogeGiftedSince(studentId, sinceIso) {
     return client.from('doge_ledger').select('candy_delta')
       .eq('student_id', studentId).eq('kind', 'gift_out').gte('ts', sinceIso);
+  }
+  // ── Pico Park keys bought with candy (migration 0039) ────────────────────────
+  // Atomic buy under the account row lock. data = jsonb { status: 'bought' | 'insufficient',
+  // receipt_id, price, seq, account }.
+  async function parkKeyBuy(params) {
+    return client.rpc('park_key_buy', params);
+  }
+  // The relay confirmed the key. data = the purchase row.
+  async function parkKeyGranted(receiptId) {
+    return client.rpc('park_key_granted', { p_receipt: receiptId });
+  }
+  // The grant failed: void the purchase and restore the candy (no-op when granted / voided).
+  // data = the buyer's account row.
+  async function parkKeyRefund(receiptId) {
+    return client.rpc('park_key_refund', { p_receipt: receiptId });
+  }
+  async function getKeyPurchase(receiptId) {
+    return client.from('park_key_purchases').select('*').eq('receipt_id', receiptId).maybeSingle();
+  }
+  // Every purchase by one student (small: a handful a day), newest first.
+  async function listKeyPurchases(studentId) {
+    return client.from('park_key_purchases')
+      .select('receipt_id, school_day, seq, price, purchased_at, granted_at, voided_at')
+      .eq('student_id', studentId).order('purchased_at', { ascending: false });
+  }
+  // Purchases whose key the relay has not confirmed (neither granted nor voided), oldest first.
+  // studentId null = everyone (teacher list / background reconcile).
+  async function listPendingKeyPurchases(studentId) {
+    let query = client.from('park_key_purchases')
+      .select('receipt_id, student_id, school_day, seq, price, purchased_at')
+      .is('granted_at', null).is('voided_at', null);
+    if (studentId) query = query.eq('student_id', studentId);
+    return query.order('purchased_at', { ascending: true }).limit(200);
   }
   // ── Study Break stakes (migration 0024) ──────────────────────────────────────
   // Atomic escrow of BOTH players' stakes (both-or-neither). Returns { data, error }

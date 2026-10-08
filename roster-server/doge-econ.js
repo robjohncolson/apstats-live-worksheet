@@ -18,6 +18,19 @@ export const MIN_MATERIALIZE_DOGE = 5;    // in-app DOGE only goes ON-CHAIN once
 export const DAILY_GIFT_CAP = 20;         // max candy a kid can gift OUT per rolling 24h (anti-farming/coercion; DOGE_GIFTING_SPEC §8)
 export const SELL_HOLD_HOURS = 24;        // DOGE → candy cash-out: coins must be held ≥ this many hours (SELL_DOGE_SPEC; anti-churn "overnight hold")
 
+// Pico Park campaign key bought with candy (PICO_DESK_SPEC "Candy economy", item 8): the n-th key
+// (1-based) bought on a school day costs F(n+4) = 5, 8, 13, 21, 34, 55, ... The SQL twin is
+// park_key_price() in migration 0039, which is what actually charges.
+export function keyPrice(n) {
+  let a = 5, b = 8;
+  for (let i = 1; i < Math.max(1, Math.floor(n)); i++) {
+    const next = a + b;
+    a = b;
+    b = next;
+  }
+  return a;
+}
+
 export function effortPointsFor(source, itemId) {
   if (source === 'bonus' || source === 'bonus_applied') return 0;
   if (source === 'quiz_verdict' || source === 'quiz_answer') return 0;

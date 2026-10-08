@@ -468,11 +468,11 @@ describe('DOGE wallet — candy gifting (kid → kid)', () => {
     expect(r.status).toBe(404);
     expect(r.body.error).toMatch(/unknown classmate/);
   });
-  it('rejects gifting across sections', async () => {
+  it('gifts across periods (PICO_DESK_SPEC candy economy item 6: B → E)', async () => {
     const ctx = start({ ledgers: { s1: quizRows(36) }, roster: [{ student_id: 's1', section: 'PeriodB', username: 'sender_one' }, { student_id: B, section: 'PeriodE', username: 'recip_bee' }] });
     const r = await req(ctx, 'POST', '/wallet/gift', { token: 'tok:s1', body: { toUsername: 'recip_bee', candy: 2 } });
-    expect(r.status).toBe(404);
-    expect(r.body.error).toMatch(/not in your class/);
+    expect(r.status).toBe(200);
+    expect(ctx.acc.get(B).candy_gifted_in).toBe(2);
   });
   it('enforces the rolling daily gift cap (20/day)', async () => {
     const ctx = start({ ledgers: { s1: quizRows(200) }, roster: sameSection });   // plenty of candy
@@ -507,17 +507,18 @@ describe('DOGE wallet — candy gifting (kid → kid)', () => {
     expect(b.status).toBe(200);
     expect(b.body.candyConverted).toBeCloseTo(5, 6);
   });
-  it('rejects gifting the TEACHER account (same section, role=teacher)', async () => {
-    const ctx = start({ ledgers: { s1: quizRows(36) }, roster: [{ student_id: 's1', section: 'PeriodX', username: 'sender_one' }, { student_id: 't1', section: 'PeriodX', username: 'teach', role: 'teacher' }] });
+  it('the TEACHER may receive a gift (item 6), from any period', async () => {
+    const ctx = start({ ledgers: { s1: quizRows(36) }, roster: [{ student_id: 's1', section: 'PeriodB', username: 'sender_one' }, { student_id: 't1', section: 'PeriodX', username: 'teach', role: 'teacher' }] });
     const r = await req(ctx, 'POST', '/wallet/gift', { token: 'tok:s1', body: { toUsername: 'teach', candy: 2 } });
-    expect(r.status).toBe(400);
-    expect(r.body.error).toMatch(/classmate/);
+    expect(r.status).toBe(200);
+    expect(r.body.candyBalance).toBeCloseTo(8, 6);
+    expect(ctx.acc.get('t1').candy_gifted_in).toBe(2);
   });
   it('rejects gifting an archived student', async () => {
     const ctx = start({ ledgers: { s1: quizRows(36) }, roster: [{ student_id: 's1', section: 'PeriodB', username: 'sender_one' }, { student_id: B, section: 'PeriodB', username: 'recip_bee', status: 'archived' }] });
     const r = await req(ctx, 'POST', '/wallet/gift', { token: 'tok:s1', body: { toUsername: 'recip_bee', candy: 2 } });
     expect(r.status).toBe(400);
-    expect(r.body.error).toMatch(/classmate/);
+    expect(r.body.error).toMatch(/active player/);
   });
   it('honors GIFTING_ENABLED falsey spellings (0/off/no), not just "false"', async () => {
     for (const v of ['0', 'off', 'no', 'FALSE']) {

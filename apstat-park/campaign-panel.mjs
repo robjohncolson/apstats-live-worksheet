@@ -6,9 +6,11 @@ const { createSceneDissolve } = await import('./scene-transition.mjs' + V);
 const { createPicoAudio } = await import('./pico-audio.mjs' + V);
 const { pixelText } = await import('./pixel-text.mjs' + V);
 const { catBodyForHue, rgbHex } = await import('./pico-rules.mjs' + V);
-const { createStageSelect, stageStates, choiceFor, startCursor, stageAt, moveCursor, describe } = await import('./campaign-select.mjs' + V);
+const { createStageSelect, stageStates, choiceFor, startCursor, stageAt, moveCursor, describe, onBuyButton, keyShopView } = await import('./campaign-select.mjs' + V);
+const { createKeyShop } = await import('./key-shop.mjs' + V);
 
-export function mountCampaign({ container, getSocket, board, onClose }) {
+// keyShop: optional (tests); defaults to the candy wallet on roster-server (key-shop.mjs).
+export function mountCampaign({ container, getSocket, board, onClose, keyShop = null }) {
   const doc = container.ownerDocument, win = doc.defaultView;
   const audio = createPicoAudio(win), clear = createStageClear();
   let game = null, disposed = false, socket = null, joined = false, state = null, error = '';
@@ -24,6 +26,9 @@ export function mountCampaign({ container, getSocket, board, onClose }) {
   let selecting = true, progress = null, chosenStage = null, pending = null, cursor = null;
   let selectMessage = '', lastSelect = -Infinity;
   const rejected = new Map();   // stage -> its state when the relay refused it (greyed until that changes)
+  // Teacher 2026-10-08 (PICO_DESK_SPEC "Candy economy"): BUY KEY beside YOUR KEYS, mouse only.
+  const shop = keyShop || createKeyShop({ win });
+  let hoverBuy = false;
   const replay = createCampaignReplay(inputs => game.step(inputs));
   // Teacher 2026-10-07: "no resizing of the game stage from the main — just widen and keep the
   // centre." The stage keeps its native scale (min(1, width / 720), never scaled up). A wider page
@@ -89,14 +94,27 @@ export function mountCampaign({ container, getSocket, board, onClose }) {
     const rect = board.engine.canvas.getBoundingClientRect();
     return stageAt((event.clientX - rect.left) / scale(), (event.clientY - rect.top) / scale(), pad());
   }
+  function pointerWorld(event) {
+    const rect = board.engine.canvas.getBoundingClientRect();
+    return { x: (event.clientX - rect.left) / scale(), y: (event.clientY - rect.top) / scale() };
+  }
+  // A bought key reaches YOUR KEYS through the relay's campaign_progress: ask for it right away.
+  function buyKey() {
+    if (!keyShopView(shop.state).enabled) return;
+    shop.buy().then(bought => { if (bought && !disposed) lastSelect = -Infinity; });
+  }
   function selectClick(event) {
     if (!selecting) return;
+    const point = pointerWorld(event);
+    if (onBuyButton(point.x, point.y, pad())) { event.preventDefault(); buyKey(); return; }
     const stage = pointerStage(event);
     if (stage < 0) return;
     event.preventDefault(); cursor = stage; choose(stage);
   }
   function selectHover(event) {
     if (!selecting) return;
+    const point = pointerWorld(event);
+    hoverBuy = onBuyButton(point.x, point.y, pad());
     const stage = pointerStage(event);
     if (stage >= 0) cursor = stage;
   }
@@ -171,6 +189,7 @@ export function mountCampaign({ container, getSocket, board, onClose }) {
     bind(); if (idle) return;
     const now = performance.now();
     if (selecting && now - lastSelect > 1000 && send('campaign_select')) lastSelect = now;
+    if (selecting) shop.tick();
     if (selecting && !joined) return;   // nobody joins a team until a stage is chosen
     if (!joined && now - lastJoin > 1000) { lastJoin = now; send('campaign_join', { protocol: 31, active: activeJoin }); }
     if (!state || !game) return;
@@ -235,6 +254,12 @@ export function mountCampaign({ container, getSocket, board, onClose }) {
     }
     if (clearActive && !soundClear) { audio.clear(); soundClear = true; }
   }
+  // The screen-reader line for the BUY KEY button ("BUY KEY · 5 🍬").
+  function buyStatus(buy) {
+    if (!buy || buy.price == null) return '';
+    const keys = progress?.keys?.[board.username] || 0;
+    return ' Your keys: ' + keys + '. BUY KEY · ' + buy.price + ' 🍬' + (buy.enabled ? '.' : ' (' + buy.reason.toLowerCase() + ')');
+  }
   function renderSelect(ctx) {
     const dpr = win.devicePixelRatio || 1;
     ctx.save(); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.scale(scale(), scale());
@@ -243,9 +268,9 @@ export function mountCampaign({ container, getSocket, board, onClose }) {
     ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, width, 700);
     ctx.fillStyle = '#ff864d'; ctx.fillRect(0, 700, width, 50);
     if (cursor == null && progress) cursor = startCursor(states());
-    const { info } = select.render(ctx, { progress, username: board.username, cursor: cursor ?? 0, rejected, left,
-      message: selectMessage || error });
-    status.textContent = 'Stage select. ' + info;
+    const { info, shop: buy } = select.render(ctx, { progress, username: board.username, cursor: cursor ?? 0, rejected, left,
+      message: selectMessage || error, shop: shop.state, hoverBuy });
+    status.textContent = 'Stage select. ' + info + buyStatus(buy);
     ctx.restore();
     dissolve.render(ctx);
   }
@@ -319,7 +344,7 @@ export function mountCampaign({ container, getSocket, board, onClose }) {
     game = next; if (loadingState) { const packet = loadingState; loadingState = null; start(packet); }
   }).catch(cause => { error = 'Could not load PICO PARK. Reload to try again.'; console.error(cause); });
   return { kind: 'campaign', dispose, getGame: () => game,
-    getSelect: () => ({ selecting, cursor, progress, pending, chosenStage, message: selectMessage,
+    getSelect: () => ({ selecting, cursor, progress, pending, chosenStage, message: selectMessage, shop: keyShopView(shop.state),
       rejected: [...rejected.keys()], states: states(), info: cursor == null ? '' : describe(states()[cursor], states()) }),
     getView: () => ({ ...state, frame: replay.frame, received: replay.received, clear: frame, ...game?.getView(),
       presentation: { scale: scale(), viewW: viewW(), pad: pad() } }) };   // for tests / smokes

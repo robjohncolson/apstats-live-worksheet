@@ -407,3 +407,25 @@ Supersedes "a key is a permanent door unlock". Rules:
 4. **Persistence** (relay Supabase, migration 0005): per-student key count (unspent), per-student cleared
    stages, per-room open stages. Memory stays the hot path; DB is the truth across restarts.
 5. **Teacher** is a peer: earns, spends and clears like a student.
+
+### Candy economy (teacher 2026-10-08: "I like the idea of an economy between the students")
+
+6. **Candy gifts cross period.** `/wallet/gift` no longer requires the same section; any active roster member
+   (PeriodB, PeriodE, X) can gift any other, and the **teacher may receive** gifts (the teacher still earns no
+   effort candy). The daily gift-out cap and the `GIFTING_ENABLED` kill-switch stay.
+7. **Keys can be bought with candy.** A bought key is identical to an earned one: same gold number, no colour,
+   no mark — "a key is a key". Any student (or the teacher) may buy any number per day.
+8. **Price rises Fibonacci-style within a day and resets daily.** The n-th key bought on a given school day
+   costs the n-th term of **5, 8, 13, 21, 34, 55, …** (F(n+4) in candy). The day boundary is the school's
+   local calendar day (America/New_York, the same day the Desk and ledger use). The price shown is always
+   the price of the NEXT key.
+9. **Where it lives.** Candy is roster-server's (`doge-wallet.js`); keys are the relay's (`park_campaign_wallet`).
+   The purchase is roster-server's `POST /wallet/buy-key`: it computes today's price from its own purchase
+   ledger (new table `park_key_purchases`: student_id, purchased_at, price, receipt_id), debits the candy
+   atomically under the same row lock as gifts, then grants the key by a server-to-server call to the relay
+   (`POST /park/campaign/keys/grant`, shared secret `PARK_KEY_GRANT_SECRET` on both Railway services,
+   idempotent on receipt_id). If the grant fails the candy is refunded and the purchase row voided; a grant
+   that succeeded but whose reply was lost is reconciled by retrying the same receipt_id (idempotent).
+10. **UI.** In the park's STAGE SELECT / key display, a "BUY KEY · 5 🍬" button (price live) next to the gold
+    count; disabled with the reason when candy is short. The wallet window lists purchases as "Key (−5)".
+11. **Kill-switch** `KEY_PURCHASE_ENABLED` (default on), same spelling rules as `GIFTING_ENABLED`.

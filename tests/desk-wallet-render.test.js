@@ -175,3 +175,22 @@ describe('Candy & DOGE panel — Details ledger reconciles with EXACT values', (
       .toBeCloseTo(w.candyGiftedOut + w.candyConverted + w.candyMaterialized + w.candyOwed, 6);
   });
 });
+
+describe('Candy & DOGE panel — Pico Park keys bought with candy (PICO_DESK_SPEC candy economy)', () => {
+  it('splits key spending out of "Gifted away" and lists each purchase as "Key (−price)"', () => {
+    const w = mockW({ candyGiftedOut: 16, candyKeySpent: 13, history: [
+      { kind: 'key_buy', candy_delta: -8, ts: '2026-10-08T15:00:00Z' },
+      { kind: 'key_refund', candy_delta: 5, ts: '2026-10-08T14:01:00Z' },
+      { kind: 'key_buy', candy_delta: -5, ts: '2026-10-08T14:00:00Z' },
+      { kind: 'gift_out', candy_delta: -3, ts: '2026-10-07T14:00:00Z' },
+    ] });
+    const box = render(w);
+    [...box.querySelectorAll('span')].find((s) => /Details/.test(s.textContent)).click();
+    const rows = [...box.querySelectorAll('.geneva')].map((r) => r.textContent);
+    expect(rows).toContain('Gifted away🍬 −3');
+    expect(rows).toContain('Park keys bought🍬 −13');
+    expect(box.textContent).toContain('PARK KEYS');
+    expect(rows.filter((r) => r.startsWith('Key (−'))).toEqual([expect.stringMatching(/^Key \(−8\)/), expect.stringMatching(/^Key \(−5\)/)]);
+    expect(rows.some((r) => r.startsWith('Key refunded (+5)'))).toBe(true);
+  });
+});

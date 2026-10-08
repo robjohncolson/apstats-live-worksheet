@@ -11,8 +11,10 @@
 import { requirePayoutTeacher, requireTeacher } from './teacher-auth.js';
 import {
   computeEffort, candyPerDoge, dogeFromCandy, candyFromDoge,
-  MIN_MATERIALIZE_DOGE, DAILY_GIFT_CAP, SELL_HOLD_HOURS,
+  MIN_MATERIALIZE_DOGE, DAILY_GIFT_CAP, SELL_HOLD_HOURS, keyPrice,
 } from './doge-econ.js';
+import { PHASE3_CONFIG } from './grade-config.js';
+import { todayInTz } from './lesson-grade.js';
 import { fetchChainBalance as defaultChainFetch, detectNetwork, DOGE_MAIN_RE } from './doge-chain.js';
 import { mountWalletCustody } from './wallet-custody.js';
 
@@ -81,6 +83,60 @@ function walletProposalPayoutNotProvisioned(res) {
     ok: false,
     error: 'wallet address approval requires the payout rail (run migration 0032 before 0033)',
   });
+}
+
+// ── Pico Park keys bought with candy (PICO_DESK_SPEC "Candy economy", items 7-11) ──
+// Migration 0039 not run yet → its table / RPCs are missing. Checked BEFORE isDogeMissing,
+// whose generic codes would otherwise report it as "run migration 0019".
+function isKeyPurchaseMissing(e) {
+  if (!e) return false;
+  const code = String(e.code || '');
+  const msg = String(e.message || '').toLowerCase();
+  const missingCode = ['42P01', '42883', 'PGRST202', 'PGRST205'].includes(code);
+  return missingCode && msg.includes('park_key');
+}
+function keyPurchaseNotProvisioned(res) {
+  return res.status(503).json({ ok: false, error: 'key buying not provisioned (run migration 0039)' });
+}
+// Kill-switch (default ON), same falsey spellings as GIFTING_ENABLED.
+const keyPurchaseOff = () => ['false', '0', 'no', 'off'].includes(
+  String(process.env.KEY_PURCHASE_ENABLED || 'true').trim().toLowerCase());
+const parkRelayUrl = () => String(process.env.PARK_RELAY_URL || 'https://curriculumrender-production.up.railway.app')
+  .trim().replace(/\/+$/, '');
+const parkGrantSecret = () => String(process.env.PARK_KEY_GRANT_SECRET || '').trim();
+const GRANT_TIMEOUT_MS = 8000;
+
+// Server-to-server grant on the relay (idempotent on receiptId there). Three outcomes:
+//   granted  the relay answered 2xx { ok: true }                          → stamp granted
+//   refused  the relay answered 4xx { rejected: true } (it granted nothing) → refund
+//   pending  anything else: network error, timeout, truncated body, 5xx. The relay MAY have
+//            committed the key, so the candy stays debited and the receipt is retried later.
+// Never refund on "pending": a refund after a lost-but-committed grant gives a free key.
+async function relayGrantKey(payload) {
+  const secret = parkGrantSecret();
+  // Nothing was sent, so nothing can have been granted.
+  if (!secret) return { outcome: 'refused', error: 'PARK_KEY_GRANT_SECRET is not set' };
+  let response;
+  let body;
+  try {
+    response = await fetch(parkRelayUrl() + '/park/campaign/keys/grant', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-park-grant-secret': secret },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(GRANT_TIMEOUT_MS),
+    });
+    body = await response.json();
+  } catch (error) {
+    return { outcome: 'pending', error: (error && error.message) || String(error) };
+  }
+  return classifyGrantReply(response.status, body);
+}
+
+export function classifyGrantReply(status, body) {
+  if (status >= 200 && status < 300 && body && body.ok === true) return { outcome: 'granted', keys: num(body.keys) };
+  const error = 'relay ' + status + ': ' + ((body && body.error) || 'no body');
+  if (status >= 400 && status < 500 && body && body.rejected === true) return { outcome: 'refused', error };
+  return { outcome: 'pending', error };
 }
 
 const STUDENT_WALLET_TRUE = new Set(['true', '1', 'yes', 'on']);
@@ -173,10 +229,15 @@ async function getDogePrice() {
   return _price.usd; // may be null if never fetched
 }
 
-export function mountDogeWallet(app, { db, ledgerDb, verifyToken, getPrice, fetchChainBalance }) {
+export function mountDogeWallet(app, { db, ledgerDb, verifyToken, getPrice, fetchChainBalance, grantKey, now }) {
   mountWalletCustody(app, { db });
   const priceFn = getPrice || getDogePrice;            // injectable for tests
   const chainFetch = fetchChainBalance || defaultChainFetch;   // watch-only; injectable for tests
+  const grantKeyFn = grantKey || relayGrantKey;        // relay key grant; injectable for tests
+  const clock = now || (() => Date.now());             // injectable for the day-boundary tests
+  const schoolDay = () => todayInTz(PHASE3_CONFIG.schoolTz, clock());
+  // Buying needs the relay secret (or an injected grant) — otherwise every buy would refund.
+  const keyGrantConfigured = () => Boolean(grantKey) || Boolean(parkGrantSecret());
   const sidOf = (req) => { const t = extractToken(req); try { return t ? verifyToken(t) : null; } catch (_) { return null; } };
 
   // Resolve roster student_ids for an optional ?section= filter. Always resolves
@@ -287,8 +348,11 @@ export function mountDogeWallet(app, { db, ledgerDb, verifyToken, getPrice, fetc
     try { const h = await db.listDogeLedger(sid, 50); history = (h && h.data) || []; } catch (_) {}
     // In-app DOGE the kid can cash back to candy now (matured ≥ overnight; SELL_DOGE_SPEC).
     const sellableDoge = bal.dogeBalance > 1e-9 ? await maturedSellable(sid, accRes.data) : 0;
+    // Settle any key purchase still pending for this student (idempotent relay retry).
+    if (!keyPurchaseOff() && keyGrantConfigured()) await reconcileKeyPurchases(sid);
+    const keyShop = await keyStatus(sid);
     return res.json({
-      ok: true, ...bal, studentWalletOnboardingEligible,
+      ok: true, ...bal, ...keyShop, studentWalletOnboardingEligible,
       dogeUsd: price, candyPerDoge: price ? candyPerDoge(price) : null,
       minBuyCandy: 0,            // no buy minimum (s16): any positive candy converts to a fraction of a DOGE
       minMaterializeDoge: MIN_MATERIALIZE_DOGE, sellableDoge, history,
@@ -431,11 +495,14 @@ export function mountDogeWallet(app, { db, ledgerDb, verifyToken, getPrice, fetc
     });
   });
 
-  // ── POST /wallet/gift ── send candy to a classmate (free in-app ledger move) ──
+  // ── POST /wallet/gift ── send candy to another player (free in-app ledger move) ──
   // Custodial within the app, so a transfer is just a guarded debit+credit — no
-  // on-chain tx, no fee. Guardrails: whole candy, same section, not self, rolling
+  // on-chain tx, no fee. Guardrails: whole candy, active recipient, not self, rolling
   // 24h cap, teacher kill-switch. The earned/effort metric is untouched (a gift
   // moves SPENDABLE candy, not earned credit). DOGE_GIFTING_SPEC.
+  // Teacher 2026-10-08 (PICO_DESK_SPEC "Candy economy", item 6): gifts cross period
+  // (any active roster member, PeriodB / PeriodE / X) and the teacher may RECEIVE
+  // gifts (the teacher still earns no effort candy).
   app.post('/wallet/gift', async (req, res) => {
     // Kill-switch (default ON). Accept the common falsey spellings so an emergency
     // class-wide disable can't silently fail on GIFTING_ENABLED=0/FALSE/no/off.
@@ -459,15 +526,11 @@ export function mountDogeWallet(app, { db, ledgerDb, verifyToken, getPrice, fetc
     if (!themRes || !themRes.data) return res.status(404).json({ ok: false, error: 'unknown classmate' });
     const toStudentId = themRes.data.student_id;
     if (toStudentId === sid) return res.status(400).json({ ok: false, error: "can't gift yourself" });
-    // Only an active student is a valid recipient — never the teacher account
-    // (which self-signs into the same section) nor an archived row.
-    if (themRes.data.role === 'teacher' || (themRes.data.status && themRes.data.status !== 'active')) {
-      return res.status(400).json({ ok: false, error: 'can only gift a classmate' });
+    // Any ACTIVE roster member is a valid recipient (either period, or the teacher);
+    // never an archived row.
+    if (themRes.data.status && themRes.data.status !== 'active') {
+      return res.status(400).json({ ok: false, error: 'can only gift an active player' });
     }
-    // Same-section only (a classroom economy, not school-wide).
-    const meRes = await db.findByStudentId(sid);
-    if (!meRes || meRes.error || !meRes.data) return res.status(500).json({ ok: false, error: 'Database error' });
-    if (meRes.data.section !== themRes.data.section) return res.status(404).json({ ok: false, error: 'not in your class' });
     // Rolling 24h cap on candy gifted OUT (anti-farming/coercion). The JS check
     // gives a friendly 429 in the common case; the SAME cap is re-enforced inside
     // doge_gift() under a row lock (p_cap), so a concurrent burst can't exceed it.
@@ -482,6 +545,219 @@ export function mountDogeWallet(app, { db, ledgerDb, verifyToken, getPrice, fetc
     if (r.error) { if (isDogeMissing(r.error)) return notProvisioned(res); console.error('POST /wallet/gift:', r.error); return res.status(500).json({ ok: false, error: 'Database error' }); }
     if (!r.data || !r.data.student_id) return res.status(400).json({ ok: false, error: 'not enough candy' });
     return res.json({ ok: true, ...deriveBalances(earned, r.data), giftedTo: themRes.data.real_name || toUsername });
+  });
+
+  // ── Pico Park keys bought with candy (PICO_DESK_SPEC "Candy economy", items 7-11) ──
+  // The key-shop numbers GET /wallet and POST /wallet/buy-key report:
+  //   keyPrice        the price of the NEXT key today (5, 8, 13, 21, ...; resets each school day)
+  //   keysBoughtToday live (not refunded) purchases on today's America/New_York calendar day
+  //   candyKeySpent   all candy spent on keys (already inside candyGiftedOut; see migration 0039)
+  //   keyPurchaseEnabled / keyPurchaseOffReason  whether the BUY button works, and why not
+  // Before migration 0039 the purchase list is missing: buying is reported off.
+  function keyOffReason() {
+    if (keyPurchaseOff()) return 'key buying is turned off';
+    if (!keyGrantConfigured()) return 'key buying is not set up yet';
+    return null;
+  }
+  async function keyStatus(sid) {
+    let rows = null;
+    if (typeof db.listKeyPurchases === 'function') {
+      try {
+        const r = await db.listKeyPurchases(sid);
+        if (r && !r.error) rows = r.data || [];
+      } catch (_) { /* treated as not provisioned */ }
+    }
+    if (!rows) {
+      return { keyPrice: null, keysBoughtToday: 0, keysPending: 0, candyKeySpent: 0,
+        keyPurchaseEnabled: false, keyPurchaseOffReason: keyOffReason() || 'key buying is not set up yet' };
+    }
+    const today = schoolDay();
+    const live = rows.filter((p) => !p.voided_at);
+    const boughtToday = live.filter((p) => String(p.school_day || '').slice(0, 10) === today).length;
+    const offReason = keyOffReason();
+    return {
+      keyPrice: keyPrice(boughtToday + 1),
+      keysBoughtToday: boughtToday,
+      // Paid for, but the relay has not confirmed the key yet (candy held; retried automatically).
+      keysPending: live.filter((p) => !p.granted_at).length,
+      candyKeySpent: live.reduce((sum, p) => sum + num(p.price), 0),
+      keyPurchaseEnabled: !offReason,
+      keyPurchaseOffReason: offReason,
+    };
+  }
+
+  // Ask the relay for the key. One retry when the outcome is indeterminate (the reply may have been
+  // lost; the relay is idempotent on receiptId, so a retry never grants twice).
+  async function grantWithRetry(payload) {
+    const first = await grantKeyFn(payload);
+    if (first.outcome !== 'pending') return first;
+    return grantKeyFn(payload);
+  }
+
+  function grantPayload(me, receiptId) {
+    return { studentId: me.student_id, receiptId, username: me.login_username, section: me.section,
+      role: me.role === 'teacher' ? 'teacher' : 'student' };
+  }
+
+  // Drive one purchase to its next state. Returns { outcome, keys, account }:
+  //   granted  stamped granted_at                 refused  voided + candy refunded (account = refunded row)
+  //   pending  left as is (candy stays debited; retried by reconcileKeyPurchases)
+  //   stuck    the relay refused but the refund failed (teacher reconciles by hand)
+  async function resolvePurchase(me, purchase) {
+    const receiptId = purchase.receipt_id;
+    const grant = await grantWithRetry(grantPayload(me, receiptId));
+    if (grant.outcome === 'granted') {
+      const stamped = await db.parkKeyGranted(receiptId);
+      if (stamped && stamped.error) console.error('park key granted_at not stamped:', receiptId, stamped.error);
+      return { outcome: 'granted', keys: grant.keys };
+    }
+    if (grant.outcome === 'pending') {
+      console.error('park key grant indeterminate; candy held, will retry', receiptId, grant.error);
+      return { outcome: 'pending' };
+    }
+    console.error('park key grant refused by the relay; refunding', receiptId, grant.error);
+    const refund = await db.parkKeyRefund(receiptId);
+    if (refund.error || !refund.data || !refund.data.student_id) {
+      console.error('park key REFUND FAILED — reconcile receipt', receiptId, refund.error);
+      return { outcome: 'stuck' };
+    }
+    return { outcome: 'refused', account: refund.data };
+  }
+
+  // Retry every pending purchase (neither granted nor voided) of one student, or of everyone
+  // (studentId null). Idempotent; best-effort. Returns the pending rows it could not settle.
+  async function reconcileKeyPurchases(studentId) {
+    if (typeof db.listPendingKeyPurchases !== 'function') return [];
+    let rows = [];
+    try {
+      const r = await db.listPendingKeyPurchases(studentId);
+      if (!r || r.error) return [];
+      rows = r.data || [];
+    } catch (_) { return []; }
+    const left = [];
+    for (const purchase of rows) {
+      const meRes = await db.findByStudentId(purchase.student_id);
+      const me = meRes && meRes.data;
+      if (!me || !me.login_username || !me.section) { left.push(purchase); continue; }
+      const result = await resolvePurchase(me, purchase);
+      if (result.outcome === 'pending' || result.outcome === 'stuck') left.push(purchase);
+    }
+    return left;
+  }
+  // Background reconcile so a held purchase settles even if the buyer never comes back.
+  // Skipped under test (like the bet sweep); unref'd so it never blocks shutdown.
+  if (typeof setInterval === 'function' && process.env.NODE_ENV !== 'test') {
+    const _keyTimer = setInterval(() => { reconcileKeyPurchases(null).catch(() => {}); }, 2 * 60000);
+    if (_keyTimer && _keyTimer.unref) _keyTimer.unref();
+  }
+
+  // Answer the buyer for one purchase. `account` is the buyer's row after the debit.
+  async function settleKeyPurchase(res, me, earned, purchase, account) {
+    const receiptId = purchase.receipt_id;
+    const price = num(purchase.price);
+    const result = await resolvePurchase(me, purchase);
+    if (result.outcome === 'granted') {
+      const shop = await keyStatus(me.student_id);
+      return res.json({ ok: true, ...deriveBalances(earned, account), ...shop, receiptId, price, parkKeys: result.keys });
+    }
+    if (result.outcome === 'pending') {
+      const shop = await keyStatus(me.student_id);
+      return res.status(202).json({ ok: true, pending: true, ...deriveBalances(earned, account), ...shop, receiptId, price,
+        message: 'your key is on its way — the candy is held until the park confirms' });
+    }
+    if (result.outcome === 'stuck') {
+      return res.status(502).json({ ok: false, error: 'the park did not take the key — ask your teacher (receipt ' + receiptId + ')',
+        refunded: false, receiptId });
+    }
+    return res.status(502).json({ ok: false, error: 'the park did not take the key — your candy was given back',
+      refunded: true, receiptId, ...deriveBalances(earned, result.account) });
+  }
+
+  // Retry the grant of an earlier purchase: body { receiptId }. Safe to repeat.
+  async function retryKeyPurchase(res, me, receiptId) {
+    if (badId(receiptId)) return res.status(404).json({ ok: false, error: 'no such purchase' });
+    const p = await db.getKeyPurchase(receiptId);
+    if (p && p.error) {
+      if (isKeyPurchaseMissing(p.error)) return keyPurchaseNotProvisioned(res);
+      return res.status(500).json({ ok: false, error: 'Database error' });
+    }
+    const purchase = p && p.data;
+    if (!purchase || purchase.student_id !== me.student_id) return res.status(404).json({ ok: false, error: 'no such purchase' });
+    if (purchase.voided_at) return res.status(409).json({ ok: false, error: 'that purchase was refunded', refunded: true, receiptId });
+    const { earned, accRes } = await loadState(me.student_id);
+    if (accRes.error) return res.status(500).json({ ok: false, error: 'Database error' });
+    if (purchase.granted_at) {
+      const shop = await keyStatus(me.student_id);
+      return res.json({ ok: true, alreadyGranted: true, ...deriveBalances(earned, accRes.data), ...shop,
+        receiptId, price: num(purchase.price) });
+    }
+    return settleKeyPurchase(res, me, earned, purchase, accRes.data);
+  }
+
+  // ── teacher: purchases whose key is still pending (candy held, relay not yet confirmed) ──
+  // GET lists them; POST retries them all now. Optional ?section= scope on the list.
+  app.get('/class/key-purchases/pending', async (req, res) => {
+    if (!await requireTeacher(req, db)) return res.status(401).json({ ok: false, error: 'forbidden' });
+    if (typeof db.listPendingKeyPurchases !== 'function') return keyPurchaseNotProvisioned(res);
+    const r = await db.listPendingKeyPurchases(null);
+    if (r && r.error) {
+      if (isKeyPurchaseMissing(r.error)) return keyPurchaseNotProvisioned(res);
+      return res.status(500).json({ ok: false, error: 'Database error' });
+    }
+    const section = (req.query.section && String(req.query.section).trim()) || null;
+    let rows = (r && r.data) || [];
+    if (section) {
+      const ids = await sectionIds(section);
+      if (ids && ids.error) return res.status(500).json({ ok: false, error: 'Database error' });
+      rows = rows.filter((p) => ids.includes(p.student_id));
+    }
+    return res.json({ ok: true, pending: rows.map((p) => ({ receiptId: p.receipt_id, studentId: p.student_id,
+      price: num(p.price), schoolDay: p.school_day, purchasedAt: p.purchased_at })) });
+  });
+  app.post('/class/key-purchases/reconcile', async (req, res) => {
+    if (!await requireTeacher(req, db)) return res.status(401).json({ ok: false, error: 'forbidden' });
+    const left = await reconcileKeyPurchases(null);
+    return res.json({ ok: true, stillPending: left.map((p) => p.receipt_id) });
+  });
+
+  // ── POST /wallet/buy-key ── buy one Pico Park campaign key with candy ──────────
+  // Body {} buys the next key at today's price. Body { receiptId } retries the grant of an
+  // earlier purchase (idempotent). Flow: atomic debit + purchase row (park_key_buy, under the
+  // account row lock) → relay grant → 200 granted; 202 pending when the relay's answer is
+  // indeterminate (candy stays held, retried later); refund + 502 ONLY on a definitive refusal.
+  app.post('/wallet/buy-key', async (req, res) => {
+    const offReason = keyOffReason();
+    if (keyPurchaseOff()) return res.status(403).json({ ok: false, error: offReason });
+    const sid = sidOf(req);
+    if (!sid) return res.status(401).json({ ok: false, error: 'forbidden' });
+    if (offReason) return res.status(503).json({ ok: false, error: offReason });
+
+    const meRes = await db.findByStudentId(sid);
+    if (meRes && meRes.error) return res.status(500).json({ ok: false, error: 'Database error' });
+    const me = meRes && meRes.data;
+    if (!me || (me.status && me.status !== 'active') || !me.login_username || !me.section) {
+      return res.status(403).json({ ok: false, error: 'forbidden' });
+    }
+
+    const retryReceipt = req.body && req.body.receiptId;
+    if (retryReceipt != null) return retryKeyPurchase(res, me, String(retryReceipt).trim());
+
+    // The teacher earns no effort candy: they buy with candy received (item 6) or won.
+    const earned = await earnedCandyOf(sid);
+    const r = await db.parkKeyBuy({ p_sid: sid, p_earned: earned.candy, p_day: schoolDay() });
+    if (r.error) {
+      if (isKeyPurchaseMissing(r.error)) return keyPurchaseNotProvisioned(res);
+      if (isDogeMissing(r.error)) return notProvisioned(res);
+      console.error('POST /wallet/buy-key:', r.error);
+      return res.status(500).json({ ok: false, error: 'Database error' });
+    }
+    const buy = r.data;
+    if (!buy || buy.status !== 'bought' || !buy.receipt_id) {
+      const price = buy ? num(buy.price) : null;
+      return res.status(400).json({ ok: false, error: 'not enough candy' + (price ? ' (the next key costs ' + price + ')' : ''),
+        keyPrice: price });
+    }
+    return settleKeyPurchase(res, me, earned, buy, buy.account);
   });
 
   // ── Study Break stakes (STUDY_BREAK_STAKES_SPEC) ───────────────────────────

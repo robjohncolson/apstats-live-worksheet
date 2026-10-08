@@ -180,3 +180,177 @@ test('a refusal is reconciled by later progress: cleared -> refused -> waiting -
   assert.equal(m.socket.sent.length, sent + 1);
   assert.deepEqual([m.socket.sent.at(-1).type, m.socket.sent.at(-1).stage], ['campaign_join', 1]);
 });
+
+// ── BUY KEY (teacher 2026-10-08, PICO_DESK_SPEC "Candy economy", item 10) ──────────────────────────
+const { keyShopView, onBuyButton, buyButtonRect } = await import('./campaign-select.mjs');
+const { createKeyShop } = await import('./key-shop.mjs');
+
+const WALLET = { ok: true, candyBalance: 12.4, keyPrice: 8, keysBoughtToday: 1, keyPurchaseEnabled: true, keyPurchaseOffReason: null };
+
+test('the BUY KEY button shows the live price, and why it is disabled', () => {
+  assert.deepEqual(keyShopView({ wallet: WALLET }), { enabled: true, price: 8, label: 'BUY KEY · 8',
+    caption: 'YOU HAVE 12 CANDY', reason: 'CLICK BUY KEY: 1 KEY FOR 8 CANDY. EACH KEY TODAY COSTS MORE.' });
+  const short = keyShopView({ wallet: { ...WALLET, candyBalance: 7.9 } });
+  assert.equal(short.enabled, false);
+  assert.equal(short.caption, 'NEED 8, YOU HAVE 7');
+  const off = keyShopView({ wallet: { ...WALLET, keyPurchaseEnabled: false, keyPurchaseOffReason: 'key buying is turned off' } });
+  assert.equal(off.enabled, false);
+  assert.equal(off.caption, 'KEY BUYING IS TURNED OFF');
+  assert.equal(keyShopView({ wallet: WALLET, busy: true }).enabled, false, 'one purchase at a time');
+  assert.equal(keyShopView({ wallet: null }).enabled, false);
+  const button = buyButtonRect(100);
+  assert.equal(onBuyButton(button.x + 2, button.y + 2, 100), true);
+  assert.equal(onBuyButton(button.x - 2, button.y + 2, 100), false);
+  assert.ok(button.y + button.h < tileRect(0).y, 'the button sits above the stage grid');
+});
+
+function fakeShop(wallet) {
+  const shop = { state: { wallet, loading: false, busy: false, message: '', error: false }, buys: 0, ticks: 0,
+    tick() { this.ticks++; }, refresh: async () => {},
+    async buy() { this.buys++; this.state.message = 'KEY BOUGHT FOR 8 CANDY'; return true; } };
+  return shop;
+}
+
+function mountWithShop(shop) {
+  const container = win.document.createElement('div');
+  win.document.body.appendChild(container);
+  const canvas = win.document.createElement('canvas');
+  canvas.getBoundingClientRect = () => ({ left: 0, top: 0, width: 720, height: 750 });
+  const listeners = [];
+  const socket = { readyState: 1, bufferedAmount: 0, sent: [], send(data) { this.sent.push(JSON.parse(data)); },
+    addEventListener(type, fn) { if (type === 'message') listeners.push(fn); }, removeEventListener() {} };
+  const engine = { canvas, sceneEntities: null };
+  const board = { engine, input: {}, username: 'me', viewportW: () => 720, setBoardHeight: noop, atlas: () => null,
+    transitionFrame: null, createPeer: () => ({ hue: 0 }) };
+  const panel = mountCampaign({ container, getSocket: () => socket, board, onClose: noop, keyShop: shop });
+  const deliver = packet => listeners.forEach(fn => fn({ data: JSON.stringify(packet) }));
+  const click = (x, y) => canvas.dispatchEvent(new win.MouseEvent('click', { clientX: x, clientY: y, bubbles: true }));
+  const render = () => engine.sceneEntities?.get('campaign').render(fakeContext(canvas));
+  return { panel, socket, deliver, click, render, container };
+}
+
+test('a click on BUY KEY buys one key (mouse only); the count comes from the relay', async (t) => {
+  const shop = fakeShop(WALLET);
+  const m = mountWithShop(shop);
+  t.after(() => m.panel.dispose());
+  m.deliver(PROGRESS);
+  assert.ok(shop.ticks >= 1, 'the price is refreshed while the select is open');
+  m.render();
+  assert.match(m.container.querySelector('[data-campaign-status]').textContent, /Your keys: 2\. BUY KEY · 8 🍬\./);
+  const sentBefore = m.socket.sent.length;
+  const button = buyButtonRect(0);
+  m.click(button.x + 5, button.y + 5);
+  assert.equal(shop.buys, 1);
+  assert.equal(m.socket.sent.length, sentBefore, 'the click is not a stage choice');
+  await new Promise(resolve => setImmediate(resolve));
+  await new Promise(resolve => setTimeout(resolve, 30));   // pump re-asks the relay for progress
+  assert.equal(m.socket.sent.at(-1).type, 'campaign_select');
+  m.deliver({ ...PROGRESS, keys: { me: 3 } });
+  assert.equal(m.panel.getSelect().progress.keys.me, 3);
+  m.render();
+  assert.match(m.container.querySelector('[data-campaign-status]').textContent, /Your keys: 3/);
+});
+
+test('a disabled BUY KEY does nothing when clicked, and Enter never buys', (t) => {
+  const shop = fakeShop({ ...WALLET, candyBalance: 3 });
+  const m = mountWithShop(shop);
+  t.after(() => m.panel.dispose());
+  m.deliver(PROGRESS);
+  const button = buyButtonRect(0);
+  m.click(button.x + 5, button.y + 5);
+  assert.equal(shop.buys, 0);
+  assert.equal(m.panel.getSelect().shop.caption, 'NEED 8, YOU HAVE 3');
+  win.document.dispatchEvent(new win.KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+  assert.equal(shop.buys, 0);
+});
+
+function fakeFetch(routes) {
+  const calls = [];
+  const fetchImpl = async (url, init = {}) => {
+    calls.push({ url, init });
+    const path = new URL(url).pathname;
+    const [status, body] = routes[path]?.(init, calls) || [404, {}];
+    return { ok: status >= 200 && status < 300, status, json: async () => body };
+  };
+  return { fetchImpl, calls };
+}
+const shopWin = { rosterClient: { token: () => 'TOK' }, ROSTER_SERVICE_URL: 'https://roster.test/' };
+
+test('key shop: reads GET /wallet with the roster token; a 503 wallet is "not turned on"', async () => {
+  const f = fakeFetch({ '/wallet': () => [200, WALLET] });
+  const shop = createKeyShop({ win: shopWin, fetchImpl: f.fetchImpl });
+  await shop.refresh();
+  assert.equal(f.calls[0].url, 'https://roster.test/wallet');
+  assert.equal(f.calls[0].init.headers.Authorization, 'Bearer TOK');
+  assert.equal(shop.state.wallet.keyPrice, 8);
+  const off = createKeyShop({ win: shopWin, fetchImpl: fakeFetch({ '/wallet': () => [503, {}] }).fetchImpl });
+  await off.refresh();
+  assert.equal(keyShopView(off.state).enabled, false);
+  assert.match(keyShopView(off.state).caption, /NOT TURNED ON/);
+  const signedOut = createKeyShop({ win: {}, fetchImpl: () => { throw new Error('no fetch when signed out'); } });
+  await signedOut.refresh();
+  assert.equal(signedOut.state.wallet, null);
+});
+
+test('key shop: a buy posts /wallet/buy-key; success takes the new price, a refund shows the reason', async () => {
+  let price = 8;
+  const f = fakeFetch({
+    '/wallet': () => [200, { ...WALLET, keyPrice: price }],
+    '/wallet/buy-key': () => { price = 13; return [200, { ok: true, price: 8, keyPrice: 13, candyBalance: 4.4, keyPurchaseEnabled: true }]; },
+  });
+  const shop = createKeyShop({ win: shopWin, fetchImpl: f.fetchImpl });
+  await shop.refresh();
+  assert.equal(await shop.buy(), true);
+  assert.equal(f.calls[1].init.method, 'POST');
+  assert.equal(shop.state.message, 'KEY BOUGHT FOR 8 CANDY');
+  assert.equal(shop.state.wallet.keyPrice, 13);
+  const refused = createKeyShop({ win: shopWin, fetchImpl: fakeFetch({
+    '/wallet': () => [200, WALLET],
+    '/wallet/buy-key': () => [502, { ok: false, refunded: true, error: 'the park did not take the key — your candy was given back' }],
+  }).fetchImpl });
+  await refused.refresh();
+  assert.equal(await refused.buy(), false);
+  assert.equal(refused.state.error, true);
+  assert.match(refused.state.message, /candy was given back/);
+});
+
+test('key shop: a refresh that started before a buy cannot overwrite the new price (8 stays 8, not 5)', async () => {
+  let releaseOld;
+  let walletCalls = 0;
+  const fetchImpl = async (url, init = {}) => {
+    const path = new URL(url).pathname;
+    if (path === '/wallet/buy-key') {
+      return { ok: true, status: 200, json: async () => ({ ok: true, price: 5, keyPrice: 8, candyBalance: 7, keyPurchaseEnabled: true }) };
+    }
+    walletCalls++;
+    if (walletCalls === 1) {   // the slow, stale read: started before the buy, answers after it
+      await new Promise(resolve => { releaseOld = resolve; });
+      return { ok: true, status: 200, json: async () => ({ ...WALLET, keyPrice: 5, candyBalance: 12 }) };
+    }
+    return { ok: true, status: 200, json: async () => ({ ...WALLET, keyPrice: 8, candyBalance: 7 }) };
+  };
+  const shop = createKeyShop({ win: shopWin, fetchImpl });
+  shop.state.wallet = { ...WALLET, keyPrice: 5, candyBalance: 12 };
+  const stale = shop.refresh();
+  assert.equal(keyShopView(shop.state).enabled, false, 'disabled while a price check is in flight');
+  assert.equal(await shop.buy(), true);
+  await new Promise(resolve => setImmediate(resolve));
+  releaseOld();
+  await stale;
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(shop.state.wallet.keyPrice, 8);
+  assert.equal(shop.state.wallet.candyBalance, 7);
+  assert.equal(shop.state.loading, false);
+  assert.equal(keyShopView(shop.state).enabled, false, '7 candy is short of the 8 for the next key');
+});
+
+test('key shop: a 202 pending purchase is reported as on its way, candy held', async () => {
+  const shop = createKeyShop({ win: shopWin, fetchImpl: fakeFetch({
+    '/wallet': () => [200, { ...WALLET, keyPrice: 8, keysPending: 1 }],
+    '/wallet/buy-key': () => [202, { ok: true, pending: true, price: 5, keyPrice: 8, candyBalance: 7, keyPurchaseEnabled: true }],
+  }).fetchImpl });
+  await shop.refresh();
+  assert.equal(await shop.buy(), true);
+  assert.match(shop.state.message, /KEY ON ITS WAY\. YOUR 5 CANDY IS HELD/);
+  assert.equal(shop.state.error, false);
+});

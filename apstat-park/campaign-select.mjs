@@ -105,6 +105,48 @@ export function describe(entry, states) {
   return next ? 'OPEN ' + next.label + ' FIRST' : 'LOCKED';
 }
 
+// ── BUY KEY (teacher 2026-10-08, PICO_DESK_SPEC "Candy economy", item 10) ──────────────────────────
+// A button beside YOUR KEYS that buys one key with candy. Mouse only (no key binding), like the rest
+// of the park panel's extras. The button shows the live price of the NEXT key; a bought key arrives
+// from the relay and is counted in YOUR KEYS like any earned one.
+export const BUY_BUTTON = { x: 200, y: 50, w: 196, h: 26 };
+
+export function buyButtonRect(left = 0) {
+  return { ...BUY_BUTTON, x: left + BUY_BUTTON.x };
+}
+
+export function onBuyButton(x, y, left = 0) {
+  const button = buyButtonRect(left);
+  return x >= button.x && x < button.x + button.w && y >= button.y && y < button.y + button.h;
+}
+
+// shop: key-shop.mjs state { wallet, loading, busy }. Returns what the button draws:
+//   enabled  whether a click buys        label    'BUY KEY · <price>'
+//   caption  a short line beside it      reason   the full sentence (status line / hover)
+export function keyShopView(shop) {
+  const wallet = shop?.wallet;
+  if (!wallet) {
+    const caption = shop?.loading ? 'CHECKING YOUR CANDY...' : 'SIGN IN TO BUY KEYS';
+    return { enabled: false, price: null, label: 'BUY KEY', caption, reason: caption };
+  }
+  if (!wallet.keyPurchaseEnabled || wallet.keyPrice == null) {
+    const why = String(wallet.keyPurchaseOffReason || 'key buying is not set up yet').toUpperCase();
+    return { enabled: false, price: null, label: 'BUY KEY', caption: why.slice(0, 40), reason: why };
+  }
+  const price = wallet.keyPrice;
+  const candy = Math.floor((wallet.candyBalance || 0) + 1e-9);
+  const label = 'BUY KEY · ' + price;
+  if (shop.busy) return { enabled: false, price, label, caption: 'BUYING...', reason: 'BUYING A KEY...' };
+  // A price check in flight may change the price: no buying on a number that is about to move.
+  if (shop.loading) return { enabled: false, price, label, caption: 'CHECKING THE PRICE...', reason: 'CHECKING THE PRICE...' };
+  if (candy < price) {
+    return { enabled: false, price, label, caption: 'NEED ' + price + ', YOU HAVE ' + candy,
+      reason: 'YOU NEED ' + price + ' CANDY FOR THE NEXT KEY. YOU HAVE ' + candy + '.' };
+  }
+  return { enabled: true, price, label, caption: 'YOU HAVE ' + candy + ' CANDY',
+    reason: 'CLICK BUY KEY: 1 KEY FOR ' + price + ' CANDY. EACH KEY TODAY COSTS MORE.' };
+}
+
 export function createStageSelect(doc) {
   let atlas = null, atlasReady = false;
   try {
@@ -164,13 +206,37 @@ export function createStageSelect(doc) {
     if (selected) outline(ctx, { x: tile.x - 4, y: tile.y - 4, w: tile.w + 8, h: tile.h + 8 }, ORANGE);
   }
 
+  // A small pixel wrapped candy (the pixel font has no emoji).
+  function candyMark(ctx, x, y, colour) {
+    ctx.fillStyle = colour;
+    ctx.fillRect(x + 4, y + 2, 8, 6);
+    ctx.fillRect(x, y, 3, 3); ctx.fillRect(x, y + 7, 3, 3); ctx.fillRect(x + 2, y + 3, 2, 4);
+    ctx.fillRect(x + 13, y, 3, 3); ctx.fillRect(x + 13, y + 7, 3, 3); ctx.fillRect(x + 12, y + 3, 2, 4);
+  }
+
+  function drawBuyButton(ctx, view, left) {
+    const button = buyButtonRect(left);
+    ctx.save();
+    ctx.fillStyle = view.enabled ? KEY_GOLD : '#e4dfe8';
+    ctx.fillRect(button.x, button.y, button.w, button.h);
+    ctx.restore();
+    outline(ctx, button, view.enabled ? '#8a6d10' : MUTED);
+    const text = view.enabled ? '#ffffff' : MUTED;
+    pixelText(ctx, view.label, button.x + 12, button.y + 20, 14, text);
+    if (view.price != null) candyMark(ctx, button.x + button.w - 26, button.y + 8, text);
+    pixelText(ctx, view.caption, button.x + button.w + 10, button.y + 17, 7, view.enabled ? INK : MUTED);
+  }
+
   // left: the world's left edge of the 720-wide column. Never translates the context.
-  function render(ctx, { progress, username, cursor, rejected, message, left = 0 }) {
+  // shop: the key shop state (key-shop.mjs), or null to hide the BUY KEY button.
+  function render(ctx, { progress, username, cursor, rejected, message, left = 0, shop = null, hoverBuy = false }) {
     const states = stageStates(progress, username);
     const mine = states.filter(entry => entry.clearedByYou).length;
     pixelText(ctx, 'STAGE SELECT (' + mine + '/' + STAGE_COUNT + ')', left + 28, 40, 21, INK);
     const keys = progress?.keys?.[username] || 0;
     pixelText(ctx, 'YOUR KEYS: ' + keys, left + 28, 70, 14, keys ? KEY_GOLD : MUTED);
+    const shopView = shop ? keyShopView(shop) : null;
+    if (shopView) drawBuyButton(ctx, shopView, left);
     if (progress?.team) pixelText(ctx, 'YOUR TEAM: ' + stageLabel(progress.team.stageIndex) + '  ' + (progress.team.roster || []).join(' + ').slice(0, 60),
       left + 28, 92, 7, INK);
     if (!progress) pixelText(ctx, 'LOADING STAGES...', left + 28, 92, 7, INK);
@@ -178,11 +244,13 @@ export function createStageSelect(doc) {
       drawTile(ctx, entry, tileRect(entry.stage, left), { selected: entry.stage === cursor,
         greyed: rejected?.get(entry.stage) === entry.state });
     }
-    const info = describe(states[cursor], states);
+    const info = hoverBuy && shopView ? shopView.reason : describe(states[cursor], states);
     pixelText(ctx, info.slice(0, 100), left + 28, 630, 7, INK);
+    const shopNote = shop?.message ? String(shop.message) : '';
     if (message) pixelText(ctx, String(message).slice(0, 100), left + 28, 646, 7, '#c0392b');
+    else if (shopNote) pixelText(ctx, shopNote.slice(0, 100), left + 28, 646, 7, shop.error ? '#c0392b' : '#479b67');
     pixelText(ctx, 'ARROWS MOVE . ENTER CHOOSES . ESC BACK TO THE PARK', left + 28, 664, 7, INK);
-    return { states, info };
+    return { states, info, shop: shopView };
   }
 
   return { render, ready: () => atlasReady };
