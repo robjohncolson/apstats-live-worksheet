@@ -204,6 +204,11 @@ test('every stage at parties 2/4/8: no cat inside a wall / lift / bridge / gate 
           const blocked = tm.rectHitsSolid(probe) || now.some(([, rect]) => overlaps(probe, rect))
             || otherSolids().some((rect) => overlaps(probe, rect))
             || game.players.some((other, j) => j !== i && overlaps(probe, other.rect));
+          // The 8-1 / 8-3 puzzle freezes every cat's buttons until it is won (puzzle-tetris, batch 14): only the
+          // movement check is skipped for them; the inside-a-solid checks above still run.
+          const puzzleFrozen = (entry.source === 'stage_switch_puzzle01' || entry.source === 'stage_switch_puzzle02')
+            && game.puzzle && !game.puzzle.won;
+          if (puzzleFrozen) { frozenRun[i] = 0; return; }
           frozenRun[i] = cat.rect.x === before[i].x && !blocked ? frozenRun[i] + 1 : 0;
           if (frozenRun[i] === 20) problems.push(`${entry.source} p${party} f${frame} cat ${i} frozen at ${Math.round(cat.rect.x)},${Math.round(cat.rect.y)}`);
         });

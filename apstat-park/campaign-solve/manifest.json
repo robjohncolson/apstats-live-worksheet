@@ -2,8 +2,7 @@
   "note": "Written by re-running every campaign-solve solver (party 2 unless a row says otherwise). campaign-solvability.test.mjs asserts the SOLVED rows.",
   "recorded": "2026-10-08",
   "counts": {
-    "SOLVED": 46,
-    "SKIPPED-UNIMPLEMENTED": 2
+    "SOLVED": 48
   },
   "stages": [
     {
@@ -234,9 +233,9 @@
       "tag": "8-1",
       "source": "stage_switch_puzzle01",
       "title": "RETRO GAME",
-      "status": "SKIPPED-UNIMPLEMENTED",
+      "status": "SOLVED",
       "party": 2,
-      "reason": "Puzzle (audit: Unimpl -- sub-stage not simulated; batch 27 puzzle-substage, research first) and PuzzlePredictProxy (audit: Misread -- port solid 32x32 proxies as a win sensor)."
+      "frames": 1317
     },
     {
       "tag": "8-2",
@@ -250,9 +249,9 @@
       "tag": "8-3",
       "source": "stage_switch_puzzle02",
       "title": "RETRO GAME",
-      "status": "SKIPPED-UNIMPLEMENTED",
+      "status": "SOLVED",
       "party": 2,
-      "reason": "Puzzle (audit: Unimpl; batch 27 puzzle-substage) and PuzzlePredictProxy (audit: Misread)."
+      "frames": 1395
     },
     {
       "tag": "8-4",

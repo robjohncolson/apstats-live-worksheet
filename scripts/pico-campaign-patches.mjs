@@ -579,6 +579,42 @@ export const CAMPAIGN_PATCHES = [{
     'Shared targets: command 0x1e handlers FUN_7ff72bb33d00 (box: set / clear +0x400 bit 2, velocity 0, return 1) and FUN_7ff72bb6fd20 (cat) accept unconditionally; FUN_7ff72bb5a180 filters by class, field, angle and the cap of 8, not by holder; each aux keeps its own +0x518 and pulls every update',
     'Port (b12 snapshot): 2745-2747 MagnetPlayer only joined magnetPlayers; 241-242 / 7798-7825 a MoveEnergy pull (radius 112) and collect radius 56 with no caller and no native source'],
   behavior: '11-2 / 11-4: each MagnetPlayer carries a magnet (drawn at cat + (+-20, -10), mirrored by facing). While its action button is HELD the magnet field is {x + 40, y - 60, 110, 80} in front of the cat (x / y = centre x / feet y; facing left {x - 150, ...}). Field list: other live cats and box-family push boxes (PushBox, Normal / Small / Tall / Big Box; not ColorBox) touching the field with |normalize(target - cat).y| < 0.909, at most 8. With nothing held the nearest (squared distance, ties in list order) is grabbed, even one another magnet already holds: then both magnets pull it, each in its own update (MagnetPlayer order), each moving it once; the held state is one flag on the target, so either magnet letting go unfreezes it (a box falls again, a cat gets its buttons and gravity back) while the other keeps pulling it. A held cat ignores its buttons and has no gravity (its own update is skipped; it is still a body for keys, Thunder, cats standing on it); a held box neither falls nor is pushed. The holder cannot turn while it holds (it walks backwards). Each tick, after the cats moved, the target is pulled toward the hold point (its origin at the holder\'s feet level, near edge 30 in front): d = hold - (target + vOwner) with vOwner the holder\'s motion this tick once locked, gains (0.03, 0.08) unlocked / (0.06, 0.16) locked, |dx| > 1 -> sign * max(2, gx |dx|) else dx, y the same with threshold 2, both snapped -> locked; v.x = 0 when the target touches a wall on that side, v.y < 0 -> 0 under a ceiling (map OR a solid actor body: Rect, gate, bridge, lift, wall, blink block, FallBox, jump stand, box, live cat); the target then moves once by vOwner + v swept against the map and then those bodies, stopping flush at contact (no second move). A blocked pull keeps the lock (only the > 32 distance unlocks). A locked target more than 32 from the hold point unlocks. Letting go, the holder dying, or the target leaving the field list releases: the target velocity is zeroed (it drops straight down), a cat gets gravity back, the holder can turn. A helper cat that leaves is released first. The invented MoveEnergy pull / collect radius is deleted. Not modelled: the repeating magnet sound (0.6 s); the field list order among cats and boxes beyond distance (cats first, then boxes); lift carry of a locked target is by the holder\'s displacement.',
+}, {
+  // Batch 14 (decoded spec b14/spec-puzzle.md): 8-1 / 8-3 native co-op Tetris. Data: scripts/export-pico-campaign.py.
+  id: 'puzzle-stage-data',
+  files: ['src/engine/types.ts'],
+  evidence: ['The Puzzle row p0 "stage_switch_puzzleNN.puzzle" is a Lua dotted path resolved by FUN_7ff72bbd8bf0 (getglobal + getfield), called from FUN_7ff72bb4be20 via FUN_7ff72bbd8e60: the sub-stage table lives in the same stage .lua file (stage_switch_puzzle01.lua lines 85-300)',
+    'Map loader FUN_7ff72bc27dc0 reads width / height / offsetX / offsetY / chipSize / variable / table; Lua index k -> x = k // height, y = k % height (column-major, one source line per column); variable != 0 -> table[party] (Lua 1-based)',
+    'Puzzle map loader FUN_7ff72bb17090 -> FUN_7ff72bb16920 (judge x / y / w / h, infoX, infoY) + fallTimeDefault (+0x258) / fallTimeFloorDefault (+0x25c) / fallTimeTable (+0x2a8 count, +0x2ac + 8i threshold, +0x2b0 + 8i time)',
+    'Port (b13 snapshot): convert_stage_lua.py kept only puzzle.createTable; types.ts PuzzleDef { createTable } (the map, judge, info and fall tables were dropped)'],
+  behavior: 'Every stage with a puzzle sub-stage (8-1, 8-3; also the unused endless stage): the bundled stage data now carries stage.puzzle.map = {width, height, chipSize, variable, offsetX / offsetY when present, judge {x, y, w, h}, infoX, infoY, fallTimeDefault / fallTimeFloorDefault when present, fallTimeTable rows [threshold, t(party 2) .. t(party 8)] (Lua row[party], 1-based), table (the default grid), variants {4, 6, 8} and variantByPlayerCount (index = party - 1)}. Grids are chip names, row-major (the Lua tables are column-major, transposed like stage.map). The Block rows stay in stage.puzzle.createTable. The exporter (follow-alongs scripts/export-pico-campaign.py) reads the Lua with the recovered converter\'s own parsers; the hermes tree is untouched. PuzzleDef gains the optional map field (PuzzleMapDef).',
+}, {
+  id: 'puzzle-proxies-netcode-only',
+  files: ['src/engine/GameRuntime.ts'],
+  evidence: ['PuzzlePredictProxy (class 0x2a) rows {"PuzzlePredictProxy", n, 0, 0, "PuzzleMain", "BlockN"}: netcode prediction of remote Blocks only; no body, no view (puzzle_8-1_8-3.json predict_proxies)',
+    'Blocks are sub-stage actors: FUN_7ff72bb181b0 creates them inside PuzzleTetrisStage (FUN_7ff72bb17f80) from puzzle.createTable, Tetris ctor FUN_7ff72bb142d0, grid cells, never a main-stage body',
+    'Port (b13 snapshot): GameRuntime 1114 a 32 x 32 StaticRect per proxy (8 orange squares at the origin, solid in every unfiltered collision list); 1421 every Block a PushBox at its grid coordinates read as pixels; 1785 the puzzle createTable spawned into the main stage; 2243 / 11695 checkPuzzlePredictProxies cleared the stage when every proxy was occupied (bypassing Key / Goal)'],
+  behavior: '8-1 / 8-3: the PuzzlePredictProxy rows create nothing (no body, no view); the Block rows are no longer spawned into the main stage as push boxes (they are the Puzzle sub-stage pieces, see puzzle-tetris); the invented proxy-occupancy instant clear is deleted (the stage clears only through the ordinary Key and Goal).',
+}, {
+  id: 'puzzle-tetris',
+  files: ['src/engine/GameRuntime.ts'],
+  evidence: ['RNG: one global subtractive generator DAT_7ff72c62f7b0 (uint32 a[1..55]): seed FUN_7ff72bba81c0 (a[55] = s, mj = s, mk = 1, a[21i mod 55] = mk, mk = mj - mk, mj = a[ii]; 3 refills; index 55), refill FUN_7ff72bba8840 (a[i] -= a[i + 31] for i 1..24, a[i] -= a[i - 24] for 25..55), draw FUN_7ff72bba8a90 / FUN_7ff72bb9d380 (n == 0 -> 0, else a[++index] % (n + 1), refill at > 55); piece pick FUN_7ff72bb14810 / 148c0 / 14420: below(count - 1), one redraw if not spawnable; mode 1 table DAT_7ff72c62a330 = L (0,0),(0,1),(1,0) / I (-1,0),(0,0),(1,0): 1 draw per piece. Seed: stage start FUN_7ff72bb27b50 case 0 -> FUN_7ff72bb28f60 -> FUN_7ff72bb9d2f0(stage + 0x24b80) = the host clock (FUN_7ff72bba4b30) shared in the session block; % 2 makes the sequence depend on the seed parity only',
+    'Blocks FUN_7ff72bb181b0 / FUN_7ff72bb12610: spawn cell = the createTable (x, y), idx = int(p0) % 10, colour = the cat colour slot of idx, active (0x40) iff idx < party (clamped >= 2); init FUN_7ff72bb14420: next = draw, then current = next, next = draw (2 draws per Block, inactive ones too, createTable order); attach FUN_7ff72bb12b60 writes the first piece, fall timer = fallTime * 1.0',
+    'Update FUN_7ff72bb128d0: BLOCKED (0x10) -> retry FUN_7ff72bb146e0 only; grounded = the shape one row down is blocked by a non-falling cell (FUN_7ff72bb135c0 out flag); JUMP press edge (FUN_7ff72bc28ce0) rotates, LEFT (5) / RIGHT (6) / DOWN (4) use the auto-repeat bit (FUN_7ff72bb137f0 -> FUN_7ff72bc28c10), left wins; DOWN while grounded is ignored when lockTimer >= max(ft, floor) - 0.12 (DAT_7ff72bc819a8), else it drops (and so locks at once on the ground); fall / lock timers -= dt; fall <= 0 -> drop; grounded without a soft drop: no gravity, the drop (lock) waits until lockTimer - dt <= 0; any drop resets fall = ft * 1.0, lock = max(ft, floor)',
+    'Move FUN_7ff72bb13130: erase own cells; rotate (x, y) -> (-y, x) tested at the current position (no wall kick); x += dx if free; drop: free -> y + 1, blocked by a non-falling cell -> cells 0x24 + colour and vtable +0xb0 FUN_7ff72bb14530 in the same tick, blocked by a falling cell -> stay; then cells 0x1a + colour. Collision FUN_7ff72bc281c0: coordinates clamped; codes 0 / 1 free, 2..25 solid (DAT_7ff72bcc8a30), 26..55 solid (DAT_7ff72bc81e10)',
+    'Respawn FUN_7ff72bb14530: the just-locked shape (rotation reset, FUN_7ff72bb12bf0) is tested at the spawn cell (FUN_7ff72bb127b0); fits -> erase, FUN_7ff72bb148c0 (current = next, one new draw), the new piece written untested; else flag 0x10 (BLOCKED); retry FUN_7ff72bb146e0 places the same shape again, no draw',
+    'Repeat source: the Block reads bridge record +0xc (FUN_7ff72bb137f0 -> FUN_7ff72bc28c10), written by FUN_7ff72bc28fc0 from the keyboard state (FUN_7ff72bc18dd0 -> FUN_7ff72bbd33c0, bit 0 of the per-key byte kept by FUN_7ff72bbd2ce0); its mark-repeating-on-press branch only drives the virtual random-input pads (ctor FUN_7ff72bc29780, update FUN_7ff72bc29870; gate bridge +0x10 = 0 from FUN_7ff72bc28960), never player input. Strict timer > threshold, remainder carried (timer -= threshold), dt in ms: at 60 Hz a held key fires on ticks 0, 8, 12, 15, 19, 23, 27 ...',
+    'Repeat: device rule FUN_7ff72bbd2ce0: fire on the press, then when held time > DAT_7ff72c61fb30 (FUN_7ff72bbd58f0; 134 ms offline, set by the map loader FUN_7ff72bb17090 from DAT_7ff72bc82150), then every DAT_7ff72c61fb34 = 66 ms (FUN_7ff72bbd5950), the excess carried',
+    'Map update FUN_7ff72bb172e0 / FUN_7ff72bb17530: rows judge.y + h - 1 .. 0, full = every judge cell 0x24..0x2d; shift copy with the r - shift >= 1 and sticky terrain-source rules; n > 0: lines += n, each Block FUN_7ff72bb145d0 (y + n, erase, test at y + n - 1: free -> original y), then every fallTimeTable row with threshold <= lines sets fallTime. Judge narrowing FUN_7ff72bb16920: the first run of empty cells in row judge.y',
+    'FUN_7ff72bb180f0 (after the Blocks): every active Block BLOCKED -> sub flag 8 -> Puzzle update sets +0x3f8 | 1 and FUN_7ff72bb60000 main stage +0xc |= 2 (the fail / restart flag); target != 0 && lines >= target -> flag 4 -> Puzzle stops ticking (+0x3f8 | 1), FUN_7ff72bb60030 message 9 to "Key" (FUN_7ff72bb65700 shows the hidden Key) and broadcast 0x1b. Setup FUN_7ff72bb4c420 broadcasts 0x1a; player FUN_7ff72bb69440: 0x1a -> +0x430 -= 1, 0x1b -> +0x430 += 1 (max +0x42c); FUN_7ff72bb68510 / 68640 read no input while +0x430 == 0'],
+  behavior: '8-1 / 8-3: the Puzzle row runs the native co-op Tetris sub-stage. Grid: the party\'s table (4 for party 2-4, 6 for 5-6, 8 for 7-8), judge narrowed to the well (table4 x 19 w 15, table6 x 15 w 23, table8 x 11 w 31; rows 8..21). One Block per createTable row, active iff its player index (row p0) < party, in its bay at (x, 5); a Block is steered by input slot = its player index and drawn in that cat\'s colour. Pieces: the native generator (L / I trominoes), seeded from ONE draw of the runtime\'s seeded random at puzzle setup (RNG decision: native seeds from the host clock per stage start and only the seed parity matters for these pieces; the port seeds per stage attempt from the relay-seeded picoRandom stream, so the seed is in the journal and replays identically; a fail restart reloads and draws a new seed); 16 init draws (2 per Block x 8 in createTable order), then 1 per successful respawn in lock order. Controls: JUMP press = rotate clockwise (no wall kick), LEFT / RIGHT / DOWN fire on the press, after 134 ms held, then every 66 ms (each Block keeps its own held state, the wire has no edges for them); DOWN drops a row (locks at once when grounded, except during the 0.12 s grace after landing). Gravity: one row per fallTime (fallTimeTable by party and lines: 8-1 0.6 / 0.4 / 0.3 s at party 2 from 0 / 3 / 6 lines, 8-3 0.2 / 0.1 s from 0 / 5 lines); on the ground the piece locks after max(fallTime, 0.5) s (moves and rotations do not reset it); other players\' falling pieces block but are not ground. Lock -> respawn in the same tick (the locked shape is tested at the spawn cell; the new piece is written untested); a Block that cannot respawn is BLOCKED and retries every tick. Line clear exactly per FUN_7ff72bb17530 (landed cells only; the bay separators make columns right of the first separator clear instead of shift across rows 4-7; falling pieces keep their y unless the y + n - 1 test fails). The counter shows lines still needed (target 10). Every active Block blocked -> the stage restarts (the breakout restart path). 10 lines -> the puzzle stops (still drawn, "OK"), the hidden Key appears (Key.activate + refreshKeyGoalViews) and the cats get their buttons back; from setup until then every cat is frozen (visible, physics on, buttons ignored: the Roulette activity credit model). Readable state: game.puzzle {grid (row-major codes: 1 empty, 2..25 terrain, 26 + c falling, 36 + c landed), width, height, chips, judge, blocks [{label, player, colour, active, piece (0 L, 1 I), next, x, y, rotation, shape, cells(), blocked, spawnX, spawnY, fallTimer, lockTimer}], linesCleared, linesNeeded, target, won, failed, seed, fallTime(), lockDelay(), cellAt(x, y), previewPieces(n)}; GameRuntime.puzzlePieceSequence(seed, n) is the pure generator. Inferred / untraced: the win is checked before the fail when both happen in one tick; the lock timer starts at 0; the repeat clock is 1000 / 60 ms per tick; whether native re-seeds on a fail restart.',
+}, {
+  id: 'puzzle-tetris-draw',
+  files: ['src/engine/GameRuntime.ts'],
+  evidence: ['Sub-stage origin = the Puzzle actor position (FUN_7ff72bb4c0b0 tail: FUN_7ff72bc15b90 -> translate sub + 0x20 + 0x50, scale 1); cells drawn at (x * 24, y * 24) size 24 (FUN_7ff72bb16bd0, offsetX / Y absent), codes >= 2, UV DAT_7ff72c62a390[code]: falling 0x1a + c and landed 0x24 + c share one UV per colour',
+    'Counter FUN_7ff72bb17320: "%d" (DAT_7ff72bc820f0), size 48, align 2 / 2, at (infoX, infoY) + chip * (offsetX, offsetY) + origin = (636, 48); value max(0, target - lines). Win draw FUN_7ff72bb4c290: "OK" (DAT_7ff72bcb9e38) at (640, 300) (DAT_7ff72bc7d8ac / DAT_7ff72bc7daa8)',
+    '8-3 "SPEED UP": an ordinary Text row {-100, 300, "SPEED UP", 32, 0, 6, 1} (no message from the puzzle); the port\'s RecoveredText renders and slides it'],
+  behavior: '8-1 / 8-3: the puzzle draws in one container in the actor layer at the Puzzle row point (world (0, 0); inferred from the native translate by the Puzzle actor position): terrain chips 2..25 in the main-map style (picoStyle tiles, same-fill neighbours merged), piece cells as rounded 24 x 24 squares in the owning cat\'s colour (falling and landed identical), the "%d" lines-still-needed counter (48 px, centred at (636, 48)) and, after the win, "OK" centred at (640, 300), both in the runtime\'s monospace bold Text style. Inferred / untraced: the atlas cell art (plain colour squares instead), the text colour (the runtime text orange), the draw order against the cats (they never overlap: the grid ends at y 552, the cats live below the ceiling row at y 544).',
 }];
 
 // Fail the build if upstream code changes: never silently skip a correction.
@@ -1768,8 +1804,30 @@ import { frameTexture } from '../sprites';
   if (file === 'src/engine/types.ts') {
     // action-button: native input bit 11 ('[shot]'; jump is bit 2, BUTTON_MAX = 10 in stage_common.lua): held
     // (magnet, FUN_7ff72bb68300) and press edge (warp gun, FUN_7ff72bb68510). Optional: older callers omit them.
-    return replaceOnce(source, '  jumpPressed: boolean;\n  resetPressed: boolean;',
+    source = replaceOnce(source, '  jumpPressed: boolean;\n  resetPressed: boolean;',
       '  jumpPressed: boolean;\n  /** action-button: native input bit 11 held. */\n  action?: boolean;\n  /** action-button: native input bit 11 press edge. */\n  actionPressed?: boolean;\n  resetPressed: boolean;', file);
+    // puzzle-stage-data: the puzzle sub-stage map rides along with the Block rows.
+    source = replaceOnce(source, `export interface PuzzleDef {
+  createTable: ActorSpawnDef[];
+}`, `/** puzzle-stage-data: the Puzzle sub-stage map (FUN_7ff72bc27dc0 + FUN_7ff72bb17090 / FUN_7ff72bb16920). */
+export interface PuzzleMapDef extends MapDef {
+  offsetX?: number;
+  offsetY?: number;
+  judge?: { x: number; y: number; w: number; h: number };
+  infoX?: number;
+  infoY?: number;
+  fallTimeDefault?: number;
+  fallTimeFloorDefault?: number;
+  /** Rows [lines threshold, seconds for party 2, ..., party 8] (Lua row[party], 1-based). */
+  fallTimeTable?: number[][];
+}
+
+export interface PuzzleDef {
+  createTable: ActorSpawnDef[];
+  /** puzzle-stage-data: the sub-stage map; absent in data exported before batch 14. */
+  map?: PuzzleMapDef;
+}`, file);
+    return source;
   }
   if (file === 'src/engine/GameRuntime.ts') {
     // optional-teacher-cats: a leaving helper cat is removed with every retained reference to it.
@@ -6779,6 +6837,831 @@ interface MagnetAuxiliaryState {
         || this.warpGunDisabledPlayers.has(this.player)
         || this.warpGunDisabledPlayers.has(otherPlayer)
       ) {`, file);
+    // puzzle-proxies-netcode-only: class 0x2a has no body and no view offline.
+    source = replaceOnce(source, `    PuzzlePredictProxy: (spawn) => {
+      const staticRect = new StaticRect(spawn);
+      this.staticRects.push(staticRect);
+      this.addActorView(spawn, staticRect.view);
+    },`, `    PuzzlePredictProxy: (_spawn) => {
+      // puzzle-proxies-netcode-only: online prediction of remote Blocks; offline no body and no view.
+    },`, file);
+    // puzzle-tetris: the Puzzle row owns the sub-stage; Blocks are its cells, never main-stage push boxes.
+    source = replaceOnce(source, `    Puzzle: (spawn) => {
+      this.hasPuzzleController = true;
+    },
+    Block: (spawn) => {
+      const pushBox = Object.assign(new PushBox(spawn.x, spawn.y), { spawn });
+      this.pushBoxes.push(pushBox);
+      this.actorLayer.addChild(pushBox.view);
+    },`, `    Puzzle: (spawn) => {
+      this.hasPuzzleController = true;
+      // puzzle-tetris: the sub-stage is built once every createTable row is in (setupPuzzle).
+      this.puzzleRows.push(spawn);
+    },
+    Block: (_spawn) => {
+      // puzzle-proxies-netcode-only: a Block is a Puzzle sub-stage piece (puzzle-tetris), not a PushBox.
+    },`, file);
+    // puzzle-proxies-netcode-only: puzzle.createTable rows belong to the sub-stage.
+    source = replaceOnce(source, `    for (const spawn of resolvedStage.puzzle?.createTable ?? []) {
+      this.addSpawn(spawn);
+    }
+`, `    // puzzle-proxies-netcode-only: puzzle.createTable rows are the sub-stage's Blocks (puzzle-tetris), not main actors.
+`, file);
+    // puzzle-tetris: build the sub-stage after the cats exist (setup FUN_7ff72bb4c420 broadcasts 0x1a to them).
+    source = replaceOnce(source, `    // Now that the live player count is final, draw each numbered box's resting`, `    const puzzleRow = this.puzzleRows[0];
+    if (puzzleRow && resolvedStage.puzzle?.map) this.setupPuzzle(puzzleRow, resolvedStage.puzzle);
+
+    // Now that the live player count is final, draw each numbered box's resting`, file);
+    // puzzle-tetris: per-load reset.
+    source = replaceOnce(source, `    this.hasPuzzleController = false;
+`, `    this.hasPuzzleController = false;
+    this.puzzle = null;
+    this.puzzleRows = [];
+`, file);
+    // puzzle-tetris: state fields and the pure generator preview.
+    source = replaceOnce(source, `  private hasPuzzleController = false;
+`, `  private hasPuzzleController = false;
+  /** puzzle-tetris: the Puzzle sub-stage (readable state for solvers / tests); null on other stages. */
+  puzzle: PuzzleTetris | null = null;
+  private puzzleRows: ActorSpawnDef[] = [];
+
+  /** puzzle-tetris: the pieces (0 = L, 1 = I) the native generator hands out for a seed, in draw order. Pure. */
+  static puzzlePieceSequence(seed: number, count: number): number[] {
+    return puzzlePieceSequence(seed, count);
+  }
+`, file);
+    // puzzle-proxies-netcode-only: no proxy-occupancy clear.
+    source = replaceOnce(source, `      this.checkPuzzlePredictProxies();
+`, ``, file);
+    // puzzle-proxies-netcode-only: the invented instant clear is deleted; puzzle-tetris: the sub-stage driver.
+    source = replaceOnce(source, `  private checkPuzzlePredictProxies(): void {
+    if (!this.stage || !this.hasPuzzleController || !this.player) return;
+    const puzzleBlockLabels = new Set(
+      (this.stage.puzzle?.createTable ?? [])
+        .filter((spawn) => spawn.actorName === 'Block')
+        .map((spawn) => spawn.label)
+        .filter((label) => label.length > 0),
+    );
+    const proxyOccupancyTargets = this.staticRects
+      .filter((staticRect) => staticRect.spawn.actorName === 'PuzzlePredictProxy')
+      .map((staticRect) => ({
+        rect: staticRect.rect,
+        targetLabel: puzzlePredictProxyTargetLabel(staticRect.spawn, puzzleBlockLabels),
+      }));
+    if (proxyOccupancyTargets.length === 0) return;
+    const occupants: Array<{ rect: Rect; label?: string }> = [
+      ...this.players
+        .filter((player) => (
+          !this.collisionChangePlayersCollisionOff.has(player)
+          && !this.activelyGuardingPlayers.has(player)
+        ))
+        .map((player) => ({ rect: player.rect })),
+      ...this.pushBoxes.map((box) => ({ rect: box.rect, label: box.spawn.label })),
+      ...this.normalBoxes
+        .map((box) => ({ rect: normalBoxRect(box), label: box.spawn.label })),
+      ...this.smallBoxes.map((box) => ({ rect: smallBoxRect(box), label: box.spawn.label })),
+    ];
+    const usedOccupants = new Set<number>();
+    const allTargetsOccupied = proxyOccupancyTargets.every((target) => {
+      const occupantIndex = occupants.findIndex((occupant, index) => {
+        if (usedOccupants.has(index)) return false;
+        if (target.targetLabel && occupant.label !== target.targetLabel) return false;
+        return rectsOverlap(occupant.rect, target.rect);
+      });
+      if (occupantIndex < 0) return false;
+      usedOccupants.add(occupantIndex);
+      return true;
+    });
+    if (!allTargetsOccupied) return;
+
+    this.cleared = true;
+    this.showClearOverlay();
+    this.onEvent?.({ type: 'clear', playerIndex: this.currentInputPlayerIndex() });
+    this.emitStats();
+  }
+
+`, `  /**
+   * puzzle-tetris: the Puzzle row (p0 sub-stage path, p1 target actor name, p2 lines to clear; p3 / p4 are never read
+   * by the factory branch 0x7ff72bb75eed..0x7ff72bb75f77) builds its sub-stage (FUN_7ff72bb4be20, mode 1 trominoes;
+   * target default 5 from the ctor). Setup FUN_7ff72bb4c420 broadcasts 0x1a: every cat loses its activity credit
+   * (+0x430, FUN_7ff72bb69440) and ignores its buttons until the win's 0x1b.
+   * RNG decision: native seeds its generator once per stage start (FUN_7ff72bb28f60 -> FUN_7ff72bb9d2f0) from the
+   * host clock, shared to clients in the session snapshot; only the seed parity matters for mode-1 pieces. The port
+   * seeds it here from ONE draw of the runtime's seeded random (Math.random is the per-stage relay-seeded xorshift),
+   * so the seed travels with the stage journal: 16 init draws (2 per Block x 8, createTable order), then 1 per respawn.
+   */
+  private setupPuzzle(row: ActorSpawnDef, definition: NonNullable<StageDef['puzzle']>): void {
+    const party = Math.max(2, Math.trunc(this.nativePartyCount()));
+    const targetParam = row.raw[8];
+    const target = typeof targetParam === 'number' && Number.isFinite(targetParam) ? Math.trunc(targetParam) : 5;
+    const targetName = typeof row.raw[7] === 'string' ? row.raw[7] : '';
+    const seed = Math.floor(Math.random() * 4294967296) >>> 0;
+    this.puzzle = new PuzzleTetris(definition, party, target, targetName, seed, row.x, row.y);
+    this.actorLayer.addChild(this.puzzle.view);
+    // +0x430 starts at its maximum +0x42c = 1 (the port's Roulette activity credit model); 0x1a takes one.
+    if (this.roulettePlayerActivityBudgets.length === 0) {
+      this.roulettePlayerActivityBudgets = this.players.map(() => ({ maximum: 1, current: 1 }));
+    }
+    for (const budget of this.roulettePlayerActivityBudgets) budget.current = Math.max(0, budget.current - 1);
+  }
+
+  /**
+   * puzzle-tetris: one Puzzle update (FUN_7ff72bb4c0b0). A win stops the sub-stage (still drawn, "OK"), sends
+   * message 9 to the target ("Key": FUN_7ff72bb65700 shows the hidden Key) and broadcasts 0x1b (credit back).
+   * A fail (every active Block blocked) raises the stage fail flag 2 (vtable +0xf8 FUN_7ff72bb60000): restart.
+   * Returns true when the stage restarted.
+   */
+  private stepPuzzle(dt: number, input: InputState, playerInputs?: readonly InputState[]): boolean {
+    const puzzle = this.puzzle;
+    if (!puzzle || puzzle.stopped) return false;
+    const inputs = puzzle.blocks.map((block) => this.puzzleBlockInput(block.player, input, playerInputs));
+    const result = puzzle.tick(dt, inputs);
+    if (result === 'failed') {
+      this.restartBreakoutStage();
+      return true;
+    }
+    if (result !== 'won') return false;
+    for (const key of this.keys) {
+      if (key.spawn.actorName === puzzle.targetName) key.activate();
+    }
+    this.refreshKeyGoalViews();
+    for (const budget of this.roulettePlayerActivityBudgets) {
+      budget.current = Math.min(budget.maximum, budget.current + 1);
+    }
+    return false;
+  }
+
+  /** puzzle-tetris: a Block is steered by pad idx (FUN_7ff72bb137f0 / FUN_7ff72bc28ce0 read pad +0x90): input slot idx. */
+  private puzzleBlockInput(slot: number, input: InputState, playerInputs?: readonly InputState[]): InputState {
+    const catIndex = this.playerInputSlots.indexOf(slot);
+    if (catIndex >= 0) return this.resolvePlayerInput(input, playerInputs, this.players.length, catIndex, slot);
+    if (playerInputs && playerInputs.length > 0) return playerInputs[slot] ?? NEUTRAL_INPUT;
+    return slot === 0 ? input : NEUTRAL_INPUT;
+  }
+
+`, file);
+    // puzzle-proxies-netcode-only: its label helper goes with it.
+    source = replaceOnce(source, `function puzzlePredictProxyTargetLabel(spawn: ActorSpawnDef, puzzleBlockLabels: ReadonlySet<string>): string | undefined {
+  if (puzzleBlockLabels.size === 0) return undefined;
+  return spawn.raw.find((value): value is string => typeof value === 'string' && value.startsWith('Block'));
+}
+
+`, ``, file);
+    // puzzle-tetris: the Puzzle row follows the Player rows in createTable: its sub-stage ticks after the cats.
+    source = replaceOnce(source, `    this.updateMagnets(input, playerInputs);
+`, `    // puzzle-tetris: one Puzzle update per tick; a fail restarts the stage.
+    if (this.puzzle && this.stepPuzzle(clampedDt, input, playerInputs)) return;
+    this.updateMagnets(input, playerInputs);
+`, file);
+    // puzzle-tetris / puzzle-tetris-draw: the sub-stage, its Blocks and the native generator.
+    source += `
+// ---------------------------------------------------------------------------------------------------------------
+// puzzle-tetris (spec b14/spec-puzzle.md): the Puzzle sub-stage of 8-1 / 8-3, a co-op falling-tromino well.
+// Cell codes (FUN_7ff72bb12f60): 1 empty, 0x1a + colour a falling piece cell, 0x24 + colour a landed one.
+const PUZZLE_EMPTY = 1;
+const PUZZLE_FALLING = 0x1a;
+const PUZZLE_LANDED = 0x24;
+// The map loader FUN_7ff72bc27dc0 stores the chip value itself (stage_common.lua lines 31-64).
+const PUZZLE_CHIP_CODES: Readonly<Record<string, number>> = {
+  MC_INV: 0, MC_NON: 1, MC_BLK: 2, MC_FLC: 3, MC_FLL: 4, MC_FLR: 5, MC_CEC: 6, MC_CEL: 7, MC_CER: 8, MC_WAL: 9,
+  MC_WAR: 10, MC_INC: 11, MC_ILU: 12, MC_IRU: 13, MC_ILD: 14, MC_IRD: 15, MC_IUP: 16, MC_IDW: 17, MC_ILE: 18,
+  MC_IRG: 19, MC_BHU: 20, MC_BHC: 21, MC_BHD: 22, MC_BWL: 23, MC_BWC: 24, MC_BWR: 25, MC_DLU: 26, MC_DLD: 27,
+  MC_DRU: 28, MC_DRD: 29, MC_BR1: 30, MC_BR2: 31, MC_BR3: 32, MC_BR4: 33, MC_BR5: 34,
+};
+// Tetris mode 1 piece table DAT_7ff72c62a330 (FUN_7ff72bb142d0(., 1)): {rotatable, spawnable, cells (dx, dy)}.
+// 0 = the L tromino, 1 = the I tromino; the pivot (0, 0) sits on the Block position.
+export const PUZZLE_PIECES: ReadonlyArray<{
+  readonly name: string;
+  readonly rotatable: boolean;
+  readonly spawnable: boolean;
+  readonly cells: ReadonlyArray<readonly [number, number]>;
+}> = [
+  { name: 'L', rotatable: true, spawnable: true, cells: [[0, 0], [0, 1], [1, 0]] },
+  { name: 'I', rotatable: true, spawnable: true, cells: [[-1, 0], [0, 0], [1, 0]] },
+];
+// FUN_7ff72bb16f00 defaults when the Lua leaves them out: fallTime = floor = 1.0 (DAT_7ff72bd4f700) and the
+// table DAT_7ff72bd4f6c8 {lines threshold, seconds}.
+const PUZZLE_DEFAULT_FALL_TIME = 1.0;
+const PUZZLE_DEFAULT_FALL_TABLE: ReadonlyArray<readonly [number, number]> = [
+  [10, 0.8], [20, 0.6], [30, 0.4], [40, 0.39], [50, 0.37], [60, 0.35], [70, 0.33],
+];
+// DOWN while grounded is ignored for this long after landing (DAT_7ff72bc819a8).
+const PUZZLE_DOWN_GRACE = Math.fround(0.12);
+// Key repeat: the Tetris map loader FUN_7ff72bb17090 sets the first delay DAT_7ff72c61fb30 = 134 ms offline
+// (DAT_7ff72bc82150); the repeat interval DAT_7ff72c61fb34 = 66 ms. Device rule FUN_7ff72bbd2ce0.
+const PUZZLE_REPEAT_DELAY_MS = 134;
+const PUZZLE_REPEAT_INTERVAL_MS = 66;
+// "OK" (DAT_7ff72bcb9e38) is printed at (640, 300) (DAT_7ff72bc7d8ac / DAT_7ff72bc7daa8) by FUN_7ff72bb4c290.
+const PUZZLE_OK_X = 640;
+const PUZZLE_OK_Y = 300;
+// The counter / OK font: size 48 (FUN_7ff72bb17320); colour untraced, the runtime's text colour is used.
+const PUZZLE_TEXT_SIZE = 48;
+const PUZZLE_TEXT_COLOR = 0xff864d;
+
+/**
+ * puzzle-tetris: the one global subtractive generator (Knuth / Numerical Recipes ran3 without MBIG / abs), uint32.
+ * Seed FUN_7ff72bba81c0, refill FUN_7ff72bba8840, draw FUN_7ff72bba8a90 (wrapper FUN_7ff72bb9d380).
+ */
+export class PuzzleRandom {
+  private a = new Uint32Array(56);
+  private index = 55;
+
+  constructor(seed: number) {
+    const a = this.a;
+    const s = seed >>> 0;
+    a[55] = s;
+    let mj = s;
+    let mk = 1;
+    for (let i = 1; i <= 54; i += 1) {
+      const ii = (21 * i) % 55;
+      a[ii] = mk;
+      mk = (mj - mk) >>> 0;
+      mj = a[ii];
+    }
+    this.refill();
+    this.refill();
+    this.refill();
+    this.index = 55;
+  }
+
+  private refill(): void {
+    const a = this.a;
+    for (let i = 1; i <= 24; i += 1) a[i] = a[i] - a[i + 31];
+    for (let i = 25; i <= 55; i += 1) a[i] = a[i] - a[i - 24];
+  }
+
+  nextU32(): number {
+    this.index += 1;
+    if (this.index > 55) {
+      this.refill();
+      this.index = 1;
+    }
+    return this.a[this.index];
+  }
+
+  /** FUN_7ff72bb9d380(n): 0 when n == 0, else a uint32 draw mod (n + 1). */
+  below(n: number): number {
+    if (n === 0) return 0;
+    return this.nextU32() % (n + 1);
+  }
+
+  clone(): PuzzleRandom {
+    const copy = new PuzzleRandom(0);
+    copy.a = new Uint32Array(this.a);
+    copy.index = this.index;
+    return copy;
+  }
+}
+
+/** FUN_7ff72bb14810 / FUN_7ff72bb148c0 / FUN_7ff72bb14420: k = below(count - 1); a non-spawnable k redraws once. */
+function pickPuzzlePiece(random: PuzzleRandom): number {
+  let piece = random.below(PUZZLE_PIECES.length - 1);
+  if (!PUZZLE_PIECES[piece].spawnable) piece = random.below(PUZZLE_PIECES.length - 1);
+  return piece;
+}
+
+/** puzzle-tetris: the piece sequence a seed produces (pure: one draw per piece in mode 1). */
+export function puzzlePieceSequence(seed: number, count: number): number[] {
+  const random = new PuzzleRandom(seed);
+  return Array.from({ length: count }, () => pickPuzzlePiece(random));
+}
+
+interface PuzzleRepeatState {
+  held: boolean;
+  acc: number;
+  flags: number;
+}
+
+const newPuzzleRepeatState = (): PuzzleRepeatState => ({ held: false, acc: 0, flags: 0 });
+
+/** puzzle-tetris: one Block (base ctor FUN_7ff72bb124b0, Tetris ctor FUN_7ff72bb142d0, 0x1e0 bytes). */
+export class PuzzleBlock {
+  x: number;
+  y: number;
+  rotation = 0;
+  piece = 0;
+  next = 0;
+  shape: Array<[number, number]> = [];
+  /** +0xb0: the code its cells were last written with (1 erased, 0x1a falling, 0x24 landed). */
+  code = PUZZLE_FALLING;
+  fallTimer = 0;
+  /** +0xa0; the ctor value is untraced (0 assumed): only the DOWN grace test reads it before the first drop. */
+  lockTimer = 0;
+  blocked = false;
+  readonly repeat = { left: newPuzzleRepeatState(), right: newPuzzleRepeatState(), down: newPuzzleRepeatState() };
+
+  constructor(
+    readonly label: string,
+    readonly player: number,
+    readonly colour: number,
+    readonly active: boolean,
+    readonly spawnX: number,
+    readonly spawnY: number,
+  ) {
+    this.x = spawnX;
+    this.y = spawnY;
+  }
+
+  /** The piece's grid cells (absolute). */
+  cells(): Array<{ x: number; y: number }> {
+    return this.shape.map(([dx, dy]) => ({ x: this.x + dx, y: this.y + dy }));
+  }
+}
+
+type PuzzleDefinition = NonNullable<StageDef['puzzle']>;
+
+/**
+ * puzzle-tetris: the Puzzle row's sub-stage (PuzzleTetrisStage FUN_7ff72bb17f80 / Tetris map FUN_7ff72bb16f00).
+ * Readable state for solvers and tests: grid (row-major codes), width, height, judge, blocks, linesCleared,
+ * linesNeeded, won, failed, fallTime(), lockDelay(), previewPieces(n).
+ */
+export class PuzzleTetris {
+  readonly view = new Container();
+  readonly width: number;
+  readonly height: number;
+  readonly chipSize: number;
+  readonly grid: number[];
+  readonly chips: string[];
+  readonly judge: { x: number; y: number; w: number; h: number };
+  readonly blocks: PuzzleBlock[] = [];
+  readonly fallTable: Array<{ threshold: number; time: number }>;
+  fallTimeValue: number;
+  readonly fallTimeFloor: number;
+  linesCleared = 0;
+  /** +0x268: lines removed by the latest map update. */
+  lastClear = 0;
+  won = false;
+  failed = false;
+  private readonly random: PuzzleRandom;
+  private readonly cellView = new Graphics();
+  private readonly counter: Text;
+  private readonly okText: Text;
+
+  constructor(
+    definition: PuzzleDefinition,
+    readonly party: number,
+    readonly target: number,
+    readonly targetName: string,
+    readonly seed: number,
+    originX: number,
+    originY: number,
+  ) {
+    const map = definition.map!;
+    this.width = map.width;
+    this.height = map.height;
+    this.chipSize = map.chipSize;
+    // FUN_7ff72bc27dc0: variable != 0 -> table[party] (Lua 1-based), the party clamped to >= 2 by FUN_7ff72bb27b50.
+    const variantKey = map.variable !== 0 && map.variantByPlayerCount && map.variantByPlayerCount.length > 0
+      ? map.variantByPlayerCount[Math.min(party, map.variantByPlayerCount.length) - 1]
+      : undefined;
+    this.chips = [...((variantKey !== undefined ? map.variants?.[variantKey] : undefined) ?? map.table)];
+    this.grid = this.chips.map((chip) => PUZZLE_CHIP_CODES[chip] ?? PUZZLE_EMPTY);
+    this.judge = this.narrowJudge(map.judge ?? { x: 0, y: 0, w: 0, h: 0 });
+    // FUN_7ff72bb17090: fallTimeDefault / fallTimeFloorDefault, then fallTimeTable rows {threshold = Lua[1],
+    // time = Lua[party]}; the initial fallTime is the first row with threshold 0.
+    this.fallTimeValue = Math.fround(map.fallTimeDefault ?? PUZZLE_DEFAULT_FALL_TIME);
+    this.fallTimeFloor = Math.fround(map.fallTimeFloorDefault ?? PUZZLE_DEFAULT_FALL_TIME);
+    this.fallTable = map.fallTimeTable
+      ? map.fallTimeTable.map((row) => ({ threshold: Number(row[0]), time: Math.fround(Number(row[party - 1])) }))
+      : PUZZLE_DEFAULT_FALL_TABLE.map(([threshold, time]) => ({ threshold, time: Math.fround(time) }));
+    const initialRow = this.fallTable.find((row) => row.threshold === 0);
+    if (initialRow) this.fallTimeValue = initialRow.time;
+    // Seeding FUN_7ff72bb9d2f0 happens before the stage's actors load; then each Block of the createTable, in row
+    // order (inactive ones too), draws next and then current = next, next = draw (FUN_7ff72bb14420 / 148c0).
+    this.random = new PuzzleRandom(seed);
+    for (const row of definition.createTable) {
+      if (row.actorName !== 'Block') continue;
+      // FUN_7ff72bb12610: idx = int(p0) % 10, colour = the cat colour slot of idx, active iff idx < party.
+      const p0 = row.raw[6];
+      const player = typeof p0 === 'number' && Number.isFinite(p0) ? Math.trunc(p0) % 10 : 0;
+      const block = new PuzzleBlock(row.label, player, player, player < party, Math.trunc(row.x), Math.trunc(row.y));
+      block.next = pickPuzzlePiece(this.random);
+      this.advanceQueue(block);
+      this.blocks.push(block);
+    }
+    // Attach FUN_7ff72bb144b0 -> FUN_7ff72bb12b60: an active Block writes its first piece; fall timer = ft * 1.0.
+    for (const block of this.blocks) {
+      if (block.active) this.writeCells(block, PUZZLE_FALLING);
+      block.fallTimer = this.fallTimeValue;
+    }
+
+    // Draw origin: the Puzzle actor position (FUN_7ff72bb4c0b0 translates the sub-stage by it, scale 1).
+    this.view.x = originX;
+    this.view.y = originY;
+    this.view.addChild(this.drawTerrain());
+    this.view.addChild(this.cellView);
+    const style = new TextStyle({ fill: PUZZLE_TEXT_COLOR, fontSize: PUZZLE_TEXT_SIZE, fontFamily: 'monospace', fontWeight: '700' });
+    this.counter = new Text('', style);
+    this.counter.anchor.set(0.5, 0.5);
+    this.counter.x = (map.infoX ?? 0) + this.chipSize * (map.offsetX ?? 0);
+    this.counter.y = (map.infoY ?? 0) + this.chipSize * (map.offsetY ?? 0);
+    this.view.addChild(this.counter);
+    this.okText = new Text('OK', style);
+    this.okText.anchor.set(0.5, 0.5);
+    this.okText.x = PUZZLE_OK_X - originX;
+    this.okText.y = PUZZLE_OK_Y - originY;
+    this.okText.visible = false;
+    this.view.addChild(this.okText);
+    this.draw();
+  }
+
+  get stopped(): boolean {
+    return this.won || this.failed;
+  }
+
+  /** Lines still needed (FUN_7ff72bb17320: max(0, target - lines); the plain line count when target is 0). */
+  get linesNeeded(): number {
+    if (this.target === 0) return 0;
+    return Math.max(0, this.target - this.linesCleared);
+  }
+
+  /** Seconds per gravity row now (map +0x258). */
+  fallTime(): number {
+    return this.fallTimeValue;
+  }
+
+  /** Lock delay on contact: max(fallTime, floor). */
+  lockDelay(): number {
+    return Math.max(this.fallTimeValue, this.fallTimeFloor);
+  }
+
+  cellAt(x: number, y: number): number {
+    if (x < 0 || y < 0 || x >= this.width || y >= this.height) return 0;
+    return this.grid[y * this.width + x];
+  }
+
+  /** The next count pieces the shared stream will hand out (respawns take them in lock order). Pure. */
+  previewPieces(count: number): number[] {
+    const random = this.random.clone();
+    return Array.from({ length: count }, () => pickPuzzlePiece(random));
+  }
+
+  /**
+   * One sub-stage tick: every Block in createTable order (FUN_7ff72bb128d0), then the map update (line clear
+   * FUN_7ff72bb172e0 / 17530), then the fail / win tests of FUN_7ff72bb180f0. Returns 'won' / 'failed' on the
+   * tick that ends the puzzle. inputs[i] steers blocks[i].
+   */
+  tick(dt: number, inputs: readonly InputState[]): 'won' | 'failed' | null {
+    if (this.stopped) return null;
+    const step = Math.fround(dt);
+    const stepMs = Math.fround(dt * 1000);
+    // The input system updates every button's repeat state each frame, whatever the Block does with it.
+    const fired = this.blocks.map((block, index) => {
+      const input = inputs[index] ?? NEUTRAL_INPUT;
+      return {
+        rotate: !!input.jumpPressed,
+        left: this.repeatFires(block.repeat.left, !!input.left, stepMs),
+        right: this.repeatFires(block.repeat.right, !!input.right, stepMs),
+        down: this.repeatFires(block.repeat.down, !!input.down, stepMs),
+      };
+    });
+    this.blocks.forEach((block, index) => this.updateBlock(block, step, fired[index]));
+    this.lastClear = 0;
+    this.clearLines();
+    // FUN_7ff72bb180f0: every active Block blocked -> flag 8 (fail); target reached -> flag 4 (win). The Puzzle
+    // update's priority between the two is untraced: the win is taken first.
+    const everyoneBlocked = this.blocks.every((block) => !block.active || block.blocked);
+    if (this.target !== 0 && this.target <= this.linesCleared) this.won = true;
+    else if (everyoneBlocked) this.failed = true;
+    this.draw();
+    if (this.won) return 'won';
+    if (this.failed) return 'failed';
+    return null;
+  }
+
+  /** Device repeat rule FUN_7ff72bbd2ce0: fires on the press, again after 134 ms held, then every 66 ms. */
+  private repeatFires(state: PuzzleRepeatState, held: boolean, stepMs: number): boolean {
+    if (!held) {
+      state.held = false;
+      state.acc = 0;
+      state.flags = 0;
+      return false;
+    }
+    const wasHeld = state.held;
+    state.held = true;
+    state.flags &= 2;
+    const threshold = state.flags === 0 ? PUZZLE_REPEAT_DELAY_MS : PUZZLE_REPEAT_INTERVAL_MS;
+    state.acc = Math.fround(state.acc + stepMs);
+    if (!wasHeld) {
+      state.flags |= 1;
+      return true;
+    }
+    if (threshold < state.acc) {
+      state.flags |= 3;
+      state.acc = Math.fround(state.acc - threshold);
+      return true;
+    }
+    return false;
+  }
+
+  /** FUN_7ff72bb128d0. */
+  private updateBlock(block: PuzzleBlock, dt: number, fired: { rotate: boolean; left: boolean; right: boolean; down: boolean }): void {
+    if (block.blocked) {
+      // vtable +0xa0 FUN_7ff72bb146e0: retry the same (just-locked) shape at the spawn cell; no draw.
+      if (this.placeAtSpawn(block)) block.blocked = false;
+      return;
+    }
+    if (!block.active) return;
+    const below = this.fits(block, block.x, block.y + 1, block.shape);
+    // Grounded = blocked one row down by something that is not a falling piece (FUN_7ff72bb135c0 out flag).
+    const grounded = !below.free && below.solidGround;
+    const rotate = fired.rotate && PUZZLE_PIECES[block.piece].rotatable;
+    let dx = 0;
+    if (fired.left) dx = -1;
+    else if (fired.right) dx = 1;
+    let drop = false;
+    let softDrop = false;
+    if (fired.down) {
+      const lockDelay = this.lockDelay();
+      const inGrace = grounded && Math.fround(lockDelay - PUZZLE_DOWN_GRACE) <= block.lockTimer;
+      if (!inGrace) {
+        drop = true;
+        softDrop = true;
+      }
+    }
+    const lockBefore = block.lockTimer;
+    block.fallTimer = Math.fround(block.fallTimer - dt);
+    block.lockTimer = Math.fround(lockBefore - dt);
+    if (block.fallTimer <= 0) {
+      block.fallTimer = this.fallTimeValue;
+      drop = true;
+    }
+    if (!softDrop && grounded) {
+      // Gravity is suppressed on the ground; the drop attempt (and so the lock) waits for the lock timer.
+      if (Math.fround(lockBefore - dt) > 0) {
+        this.moveBlock(block, dx, false, rotate);
+        return;
+      }
+      drop = true;
+    } else if (!drop) {
+      this.moveBlock(block, dx, false, rotate);
+      return;
+    }
+    // Any drop resets both timers: fall = ft * 1.0, lock = max(ft, floor).
+    block.fallTimer = this.fallTimeValue;
+    block.lockTimer = Math.fround(this.lockDelay());
+    this.moveBlock(block, dx, true, rotate);
+  }
+
+  /** FUN_7ff72bb13130: erase; rotate (x, y) -> (-y, x) (no wall kick); x += dx; drop one row or lock. */
+  private moveBlock(block: PuzzleBlock, dx: number, drop: boolean, rotate: boolean): void {
+    if (dx === 0 && !drop && !rotate) return;
+    this.writeCells(block, PUZZLE_EMPTY);
+    let x = block.x;
+    let y = block.y;
+    if (rotate) {
+      const turned = block.shape.map(([cx, cy]): [number, number] => [0 - cy, cx]);
+      if (this.fits(block, x, y, turned).free) {
+        block.shape = turned;
+        block.rotation = (block.rotation + 1) % 4;
+      }
+    }
+    if (dx !== 0 && this.fits(block, x + dx, y, block.shape).free) x += dx;
+    if (drop) {
+      const below = this.fits(block, x, y + 1, block.shape);
+      if (below.free) {
+        y += 1;
+      } else if (below.solidGround) {
+        // Lock: cells become 0x24 + colour and vtable +0xb0 (FUN_7ff72bb14530) respawns in the same tick.
+        block.x = x;
+        block.y = y;
+        this.writeCells(block, PUZZLE_LANDED);
+        this.respawn(block);
+        return;
+      }
+      // Blocked by another falling piece: no lock, no drop.
+    }
+    block.x = x;
+    block.y = y;
+    this.writeCells(block, PUZZLE_FALLING);
+  }
+
+  /**
+   * FUN_7ff72bb14530: the just-locked piece's shape (rotation reset) is tested at the spawn cell; when it fits the
+   * queue advances (current = next, one new draw) and the NEW piece is written there untested; else BLOCKED.
+   */
+  private respawn(block: PuzzleBlock): void {
+    this.resetShape(block);
+    if (!this.placeAtSpawn(block)) {
+      block.blocked = true;
+      return;
+    }
+    this.writeCells(block, PUZZLE_EMPTY);
+    this.advanceQueue(block);
+    this.writeCells(block, PUZZLE_FALLING);
+  }
+
+  /** FUN_7ff72bb127b0: the current shape fits at the spawn cell -> moved there and written as falling. */
+  private placeAtSpawn(block: PuzzleBlock): boolean {
+    if (!this.fits(block, block.spawnX, block.spawnY, block.shape).free) return false;
+    if (block.code !== PUZZLE_LANDED) this.writeCells(block, PUZZLE_EMPTY);
+    block.x = block.spawnX;
+    block.y = block.spawnY;
+    this.writeCells(block, PUZZLE_FALLING);
+    return true;
+  }
+
+  /** FUN_7ff72bb148c0: current = next (shape from the table, rotation 0), next = one draw. */
+  private advanceQueue(block: PuzzleBlock): void {
+    block.piece = block.next;
+    this.resetShape(block);
+    block.next = pickPuzzlePiece(this.random);
+  }
+
+  /** FUN_7ff72bb12bf0(., table[current], ., ., 1): the table shape, rotation count 0. */
+  private resetShape(block: PuzzleBlock): void {
+    block.shape = PUZZLE_PIECES[block.piece].cells.map(([dx, dy]): [number, number] => [dx, dy]);
+    block.rotation = 0;
+  }
+
+  /** FUN_7ff72bb12f60: write the cells at the Block position (1 = erase; else code + colour). */
+  private writeCells(block: PuzzleBlock, code: number): void {
+    for (const [dx, dy] of block.shape) {
+      const x = block.x + dx;
+      const y = block.y + dy;
+      if (x < 0 || y < 0 || x >= this.width || y >= this.height) continue;
+      this.grid[y * this.width + x] = code === PUZZLE_EMPTY ? PUZZLE_EMPTY : code + block.colour;
+    }
+    block.code = code;
+  }
+
+  /**
+   * FUN_7ff72bb135c0: does the shape fit at (x, y)? A Block whose cells are written as falling is erased for the
+   * test and rewritten after. solidGround: the first blocking cell is not a falling piece cell (0x1a..0x23).
+   */
+  private fits(block: PuzzleBlock, x: number, y: number, shape: ReadonlyArray<readonly [number, number]>): { free: boolean; solidGround: boolean } {
+    const ownCellsWritten = block.code === PUZZLE_FALLING;
+    if (ownCellsWritten) this.writeCells(block, PUZZLE_EMPTY);
+    let result = { free: true, solidGround: false };
+    for (const [dx, dy] of shape) {
+      const cx = x + dx;
+      const cy = y + dy;
+      if (!this.solidAt(cx, cy)) continue;
+      const code = this.cellAt(cx, cy);
+      const fallingCell = cx >= 0 && cy >= 0 && cx < this.width && cy < this.height
+        && code >= PUZZLE_FALLING && code - PUZZLE_FALLING < 10;
+      result = { free: false, solidGround: !fallingCell };
+      break;
+    }
+    if (ownCellsWritten) this.writeCells(block, PUZZLE_FALLING);
+    return result;
+  }
+
+  /** FUN_7ff72bc281c0: coordinates clamped into the map; codes 0 / 1 free, 2..25 solid (DAT_7ff72bcc8a30),
+   *  26..55 solid (DAT_7ff72bc81e10). */
+  private solidAt(x: number, y: number): boolean {
+    const cx = Math.min(Math.max(x, 0), this.width - 1);
+    const cy = Math.min(Math.max(y, 0), this.height - 1);
+    const code = this.grid[cy * this.width + cx];
+    if (code > 0x19) return code - PUZZLE_FALLING < 30;
+    return code >= 2;
+  }
+
+  /** FUN_7ff72bb16920: x / w narrow to the first run of empty (code 1) cells of row judge.y. */
+  private narrowJudge(raw: { x: number; y: number; w: number; h: number }): { x: number; y: number; w: number; h: number } {
+    const judge = { ...raw };
+    const end = raw.x + raw.w;
+    let inRun = false;
+    for (let x = raw.x; x < end; x += 1) {
+      const code = x >= 0 && x < this.width && raw.y >= 0 && raw.y < this.height ? this.grid[raw.y * this.width + x] : 0;
+      if (inRun) {
+        if (code !== PUZZLE_EMPTY) {
+          judge.w = x - judge.x;
+          break;
+        }
+      } else if (code === PUZZLE_EMPTY) {
+        judge.x = x;
+        inRun = true;
+      }
+    }
+    return judge;
+  }
+
+  private landedAt(x: number, y: number): boolean {
+    if (x < 0 || y < 0 || x >= this.width || y >= this.height) return false;
+    const code = this.grid[y * this.width + x];
+    return code >= PUZZLE_LANDED && code - PUZZLE_LANDED < 10;
+  }
+
+  private rowFull(y: number): boolean {
+    for (let x = this.judge.x; x - this.judge.x < this.judge.w; x += 1) {
+      if (!this.landedAt(x, y)) return false;
+    }
+    return true;
+  }
+
+  /**
+   * FUN_7ff72bb17530: rows from judge.y + h - 1 up to 0; a row whose judge cells are all landed adds 1 to the
+   * shift; while the shift is > 0 each judge column copies (x, r - shift) to (x, r) -- only while r - shift >= 1
+   * and no terrain / out-of-range source has been met in this row (sticky); an empty or piece destination takes the
+   * source (the source becomes empty) or, with copying off, is emptied; terrain destinations are untouched.
+   */
+  private clearLines(): void {
+    const width = this.width;
+    const height = this.height;
+    const grid = this.grid;
+    const end = this.judge.x + this.judge.w;
+    let shift = 0;
+    for (let r = this.judge.y + this.judge.h - 1; r >= 0; r -= 1) {
+      if (this.rowFull(r)) shift += 1;
+      while (shift > 0) {
+        const source = r - shift;
+        let copy = source > 0;
+        for (let x = this.judge.x; x < end; x += 1) {
+          const columnInMap = x >= 0 && x < width;
+          const rowInMap = r < height;
+          const sourceInMap = columnInMap && source >= 0 && source < height;
+          const sourceCode = sourceInMap ? grid[source * width + x] : 0;
+          const destinationCode = columnInMap && rowInMap ? grid[r * width + x] : 0;
+          if (sourceCode !== PUZZLE_EMPTY && sourceCode < PUZZLE_FALLING) copy = false;
+          if (destinationCode !== PUZZLE_EMPTY && destinationCode <= 0x19) continue;
+          if (!columnInMap || !rowInMap) continue;
+          if (!copy) {
+            grid[r * width + x] = PUZZLE_EMPTY;
+            continue;
+          }
+          grid[r * width + x] = sourceCode;
+          if (sourceInMap) grid[source * width + x] = PUZZLE_EMPTY;
+        }
+        if (!this.rowFull(r)) break;
+        shift += 1;
+      }
+    }
+    if (shift === 0) return;
+    this.linesCleared += shift;
+    this.lastClear = shift;
+    // Each Block's vtable +0xa8 (FUN_7ff72bb145d0), then the fallTime table (every row with threshold <= lines).
+    for (const block of this.blocks) this.afterClear(block);
+    for (const row of this.fallTable) {
+      if (row.threshold <= this.linesCleared) this.fallTimeValue = row.time;
+    }
+  }
+
+  /**
+   * FUN_7ff72bb145d0 (active Blocks): y += n, erase there, test the shape at (x, y + n - 1): free -> back to the
+   * original y, else stays at y + n; written as falling. (Quirk: a falling piece normally does not move.)
+   */
+  private afterClear(block: PuzzleBlock): void {
+    if (!block.active) return;
+    const n = this.lastClear;
+    block.y += n;
+    this.writeCells(block, PUZZLE_EMPTY);
+    let finalY = block.y;
+    for (let i = 0; i < n; i += 1) {
+      if (!this.fits(block, block.x, block.y - 1, block.shape).free) break;
+      finalY -= 1;
+    }
+    block.y = finalY;
+    this.writeCells(block, PUZZLE_EMPTY);
+    this.writeCells(block, PUZZLE_FALLING);
+  }
+
+  /** Terrain chips 2..25 in the main map style (picoStyle drawPicoTile, same-fill neighbours merged). */
+  private drawTerrain(): Graphics {
+    const g = new Graphics();
+    const size = this.chipSize;
+    const fillAt = (x: number, y: number): number | undefined => {
+      if (x < 0 || y < 0 || x >= this.width || y >= this.height) return undefined;
+      const code = this.grid[y * this.width + x];
+      if (code < 2 || code >= PUZZLE_FALLING) return undefined;
+      return chipFillColor(this.chips[y * this.width + x] ?? 'MC_NON');
+    };
+    for (let y = 0; y < this.height; y += 1) {
+      for (let x = 0; x < this.width; x += 1) {
+        const fill = fillAt(x, y);
+        if (fill === undefined) continue;
+        drawPicoTile(g, x * size, y * size, size, this.chips[y * this.width + x], {
+          up: fillAt(x, y - 1) === fill,
+          down: fillAt(x, y + 1) === fill,
+          left: fillAt(x - 1, y) === fill,
+          right: fillAt(x + 1, y) === fill,
+        });
+      }
+    }
+    return g;
+  }
+
+  /** Piece cells (falling and landed share the colour: FUN_7ff72bb16bd0 uses one UV per colour), the counter, OK. */
+  private draw(): void {
+    const g = this.cellView;
+    const size = this.chipSize;
+    g.clear();
+    for (let y = 0; y < this.height; y += 1) {
+      for (let x = 0; x < this.width; x += 1) {
+        const code = this.grid[y * this.width + x];
+        if (code < PUZZLE_FALLING) continue;
+        const colour = code >= PUZZLE_LANDED ? code - PUZZLE_LANDED : code - PUZZLE_FALLING;
+        g.lineStyle(2, 0x8b8b8b, 1);
+        g.beginFill(PLAYER_BODY_COLORS[colour] ?? DEFAULT_PLAYER_BODY_COLOR, 1);
+        g.drawRoundedRect(x * size + 1, y * size + 1, size - 2, size - 2, 5);
+        g.endFill();
+      }
+    }
+    this.counter.text = String(this.target !== 0 ? Math.max(0, this.target - this.linesCleared) : this.linesCleared);
+    this.okText.visible = this.won;
+  }
+}
+`;
     source += `
 /** magnet-player: move a rect by (dx, dy), x then y, stopping flush at the first solid it would enter. A solid it
  *  already overlaps does not block (the lift that moved into it pushes it out). */
