@@ -221,6 +221,19 @@ export const CAMPAIGN_PATCHES = [{
     'FUN_7ff72bb4fe10 (KeyBridge slot 25): while +0x520 is set, once the actor named "Key" is held (key +0x408 != 0) it sends itself command 9',
     'FUN_7ff72bb4f630: the head segment with headPush (+1000 |= 4) pushes the bodies it meets (FUN_7ff72bb34f30)'],
   behavior: 'Every stage: a Bridge is a solid strip that starts folded into the one-cell nub at its row point (or pre-extended by trunc(p3 (8 - n) 0.1) cells), extends 2 units per tick when switched on and folds back to the nub at 1 per tick when switched off; a KeyBridge starts folded and extends once any key is held (was: deployed from frame 0 and removed by a key). A Gate is solid and shrinks to its row-point cell at 2 per tick when opened and grows back at 1 per tick when closed (was: instant hide / show). Growing stops for a frame instead of entering a live cat or push box; a head-push bridge (p5 > 0) shoves them along instead. Switch / mediator / key wiring unchanged. Deterministic: frame-counted. Not modelled: the 4-tick follower stagger (the strip stays contiguous either way).',
+}, {
+  // Teacher 2026-10-07 (1-4): "a character on the middle lift gets frozen in place when the moving door goes over them".
+  id: 'native-movewall-rollback',
+  files: ['src/engine/GameRuntime.ts'],
+  evidence: ['FUN_7ff72bb667e0 (MoveWall update): the timer (+0x3fc) and the state machine advance first (state 2: offset += sign 2 until |offset| > |travel| -> state 3; state 3: offset += sign -1.5 after 1.5 s until offset travel <= 0 -> 0, state 1); then delta = offset - saved, and FUN_7ff72bc16f50(this, delta, 0, 0): on failure the offset is restored to the saved value (FUN_7ff72bb93150(pfVar1, local_res18)) and nothing moves (state and timer kept, retried next tick); on success the body moves (FUN_7ff72bb97ce0) and FUN_7ff72bb34f30(this, delta, side 2 / 3) displaces what it meets (FUN_7ff72bc17330, recursive)',
+    'FUN_7ff72bc16f50 (chain test): for each body touching in the motion direction (FUN_7ff72bc13550), fail if that body touches a tile in that direction (FUN_7ff72bc137b0) or its own chain fails (recursive)'],
+  behavior: 'Every stage: each MoveWall step is planned before it is taken: the cats and push boxes the wall would enter are pushed ahead of it (each pushes what it meets, recursively); if any of them would enter a tile, a Rect, a solid gate / bridge, a lift slab or another wall, or the wall itself would enter a lift slab or a solid, the whole step is undone (the wall waits; its state and timer keep running, as native) and it retries next tick. Bodies are moved only by a step that succeeds, so a cat is never left inside the wall. Was: the wall always advanced and shoved, leaving a cat pinned against the 1-4 ledge inside the wall (frozen).',
+}, {
+  id: 'weighted-lift-chain-test',
+  files: ['src/engine/GameRuntime.ts'],
+  evidence: ['FUN_7ff72bb64310 (WeightedLift family update): the step (0, d) is tested with FUN_7ff72bc16f50(this, step, 0, 0); only when it passes is the offset (+0x400) committed (FUN_7ff72bb31fc0) and the stack carried (FUN_7ff72bc17330); otherwise nothing moves this tick',
+    'The port already applied this preflight to DarknessWeightedLift (FUN_7ff72bb62790)'],
+  behavior: 'Every stage: a WeightedLift / Ex / Ex2 rising step is taken only if the slab and every cat or push box resting on it (transitively) can rise with it without entering a tile, a Rect, a MoveWall, a solid gate / bridge, another lift or another body; otherwise it waits this tick (a rider is never carried into the 1-4 wall or a ceiling). Descending steps keep descending-lift-stops-on-bodies.',
 }];
 
 // Fail the build if upstream code changes: never silently skip a correction.
@@ -1946,6 +1959,101 @@ function createMoveWallState(spawn: ActorSpawnDef): MoveWallState {`, file);
   }
 
   removeRuntimePlayer(player: Player): void {`, file);
+    // native-movewall-rollback: FUN_7ff72bb667e0 + FUN_7ff72bc16f50 (plan the step; undo it when anything is pinned).
+    source = replaceOnce(source, `      const baseX = native.body.x;
+      const baseY = native.body.y;
+      moveWall.rect.x = baseX + state.offsetX;
+      moveWall.rect.y = baseY;`, `      const baseX = native.body.x;
+      const baseY = native.body.y;
+      const stepPlan = this.planMoveWallStep(moveWall, { ...moveWall.rect, x: baseX + state.offsetX, y: baseY });
+      if (!stepPlan) {
+        // The chain test failed: restore the offset (state and timer keep running) and retry next tick.
+        state.offsetX = moveWall.rect.x - baseX;
+      } else {
+        for (const [body, rect] of stepPlan) body.move(rect);
+      }
+      moveWall.rect.x = baseX + state.offsetX;
+      moveWall.rect.y = baseY;`, file);
+    // weighted-lift-chain-test: FUN_7ff72bb64310 commits a step only after FUN_7ff72bc16f50 accepts it.
+    source = replaceOnce(source, `    this.weightedLiftOffsets.set(lift, nextOffset);
+    lift.view.y = lift.spawn.y + nextOffset;`, `    if (lift.spawn.actorName !== 'DarknessWeightedLift' && nextOffset < currentOffset
+      && this.liftRiseBlocked(lift, nextOffset - currentOffset)) return;
+    this.weightedLiftOffsets.set(lift, nextOffset);
+    lift.view.y = lift.spawn.y + nextOffset;`, file);
+    source = replaceOnce(source, '  private nativePartyCount(): number {', `  /** The rects a moving wall or lift must never enter (excluding the mover itself). */
+  private stepSolidRects(except: object): Rect[] {
+    return [
+      ...this.staticRects.filter((block) => block !== except).map((block) => block.rect),
+      ...this.gates.filter((gate) => gate !== except && gate.isSolid()).map((gate) => gate.rect),
+      ...this.bridges.filter((bridge) => bridge !== except && bridge.isSolid()).map((bridge) => bridge.rect),
+      ...this.weightedLifts.filter((lift) => lift !== except).map((lift) => lift.rect),
+      ...this.moveWalls.filter((wall) => wall !== except).map((wall) => wall.rect),
+    ];
+  }
+
+  /** The live cats and push boxes a moving wall or lift can meet. */
+  private stepBodies(): Array<{ key: object; rect: Rect; move: (rect: Rect) => void }> {
+    return [
+      ...this.players.filter((player) => player.deathTimer <= 0 && !this.deathFallPlayers.has(player)
+        && !this.collisionChangePlayersCollisionOff.has(player))
+        .map((player) => ({ key: player, rect: player.rect,
+          move: (rect: Rect) => player.applyResolvedCollision(rect, player.velocity, player.grounded) })),
+      ...this.pushBoxes.map((box) => ({ key: box, rect: box.rect, move: (rect: Rect) => box.applyRect(rect) })),
+    ];
+  }
+
+  /** native-movewall-rollback: the bodies a wall step pushes and where to, or null when the chain test fails. */
+  private planMoveWallStep(wall: object, next: Rect): Map<{ move: (rect: Rect) => void }, Rect> | null {
+    const current = (wall as { rect: Rect }).rect;
+    const dx = next.x - current.x;
+    const plan = new Map<{ key: object; rect: Rect; move: (rect: Rect) => void }, Rect>();
+    if (dx === 0) return plan;
+    const solids = this.stepSolidRects(wall);
+    if (solids.some((solid) => !rectsOverlap(current, solid) && rectsOverlap(next, solid))) return null;
+    const bodies = this.stepBodies();
+    const pushers: Rect[] = [next];
+    for (let i = 0; i < pushers.length; i += 1) {
+      const front = pushers[i];
+      for (const body of bodies) {
+        if (plan.has(body) || !rectsOverlap(front, body.rect)) continue;
+        const rect = { ...body.rect, x: dx < 0 ? front.x - body.rect.width : front.x + front.width };
+        if (this.tileMap?.rectHitsSolid(rect)) return null;
+        if (solids.some((solid) => rectsOverlap(rect, solid))) return null;
+        plan.set(body, rect);
+        pushers.push(rect);
+      }
+    }
+    return plan;
+  }
+
+  /** weighted-lift-chain-test: would this rising lift step carry the slab or its stack into anything solid? */
+  private liftRiseBlocked(lift: object, dy: number): boolean {
+    const slab = (lift as { rect: Rect }).rect;
+    const solids = this.stepSolidRects(lift);
+    const bodies = this.stepBodies();
+    const stack: Rect[] = [];
+    const supports: Rect[] = [slab];
+    for (let i = 0; i < supports.length; i += 1) {
+      for (const body of bodies) {
+        if (stack.includes(body.rect)) continue;
+        const support = supports[i];
+        const resting = Math.abs(body.rect.y + body.rect.height - support.y) <= 0.5
+          && body.rect.x < support.x + support.width && body.rect.x + body.rect.width > support.x;
+        if (!resting) continue;
+        stack.push(body.rect);
+        supports.push(body.rect);
+      }
+    }
+    const others = bodies.map((body) => body.rect).filter((rect) => !stack.includes(rect));
+    return [slab, ...stack].some((rect) => {
+      const target = { ...rect, y: rect.y + dy };
+      return (rect !== slab && this.tileMap?.rectHitsSolid(target))
+        || solids.some((solid) => !rectsOverlap(rect, solid) && rectsOverlap(target, solid))
+        || others.some((other) => !rectsOverlap(rect, other) && rectsOverlap(target, other));
+    });
+  }
+
+  private nativePartyCount(): number {`, file);
     source += `
 /** A copy of a stage row at a new point; raw x / y follow, because param parsers find their params after them. */
 function spawnMovedTo(spawn: ActorSpawnDef, x: number, y: number): ActorSpawnDef {

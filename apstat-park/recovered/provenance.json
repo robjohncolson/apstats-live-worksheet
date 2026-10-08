@@ -367,6 +367,28 @@
         "FUN_7ff72bb4f630: the head segment with headPush (+1000 |= 4) pushes the bodies it meets (FUN_7ff72bb34f30)"
       ],
       "behavior": "Every stage: a Bridge is a solid strip that starts folded into the one-cell nub at its row point (or pre-extended by trunc(p3 (8 - n) 0.1) cells), extends 2 units per tick when switched on and folds back to the nub at 1 per tick when switched off; a KeyBridge starts folded and extends once any key is held (was: deployed from frame 0 and removed by a key). A Gate is solid and shrinks to its row-point cell at 2 per tick when opened and grows back at 1 per tick when closed (was: instant hide / show). Growing stops for a frame instead of entering a live cat or push box; a head-push bridge (p5 > 0) shoves them along instead. Switch / mediator / key wiring unchanged. Deterministic: frame-counted. Not modelled: the 4-tick follower stagger (the strip stays contiguous either way)."
+    },
+    {
+      "id": "native-movewall-rollback",
+      "files": [
+        "src/engine/GameRuntime.ts"
+      ],
+      "evidence": [
+        "FUN_7ff72bb667e0 (MoveWall update): the timer (+0x3fc) and the state machine advance first (state 2: offset += sign 2 until |offset| > |travel| -> state 3; state 3: offset += sign -1.5 after 1.5 s until offset travel <= 0 -> 0, state 1); then delta = offset - saved, and FUN_7ff72bc16f50(this, delta, 0, 0): on failure the offset is restored to the saved value (FUN_7ff72bb93150(pfVar1, local_res18)) and nothing moves (state and timer kept, retried next tick); on success the body moves (FUN_7ff72bb97ce0) and FUN_7ff72bb34f30(this, delta, side 2 / 3) displaces what it meets (FUN_7ff72bc17330, recursive)",
+        "FUN_7ff72bc16f50 (chain test): for each body touching in the motion direction (FUN_7ff72bc13550), fail if that body touches a tile in that direction (FUN_7ff72bc137b0) or its own chain fails (recursive)"
+      ],
+      "behavior": "Every stage: each MoveWall step is planned before it is taken: the cats and push boxes the wall would enter are pushed ahead of it (each pushes what it meets, recursively); if any of them would enter a tile, a Rect, a solid gate / bridge, a lift slab or another wall, or the wall itself would enter a lift slab or a solid, the whole step is undone (the wall waits; its state and timer keep running, as native) and it retries next tick. Bodies are moved only by a step that succeeds, so a cat is never left inside the wall. Was: the wall always advanced and shoved, leaving a cat pinned against the 1-4 ledge inside the wall (frozen)."
+    },
+    {
+      "id": "weighted-lift-chain-test",
+      "files": [
+        "src/engine/GameRuntime.ts"
+      ],
+      "evidence": [
+        "FUN_7ff72bb64310 (WeightedLift family update): the step (0, d) is tested with FUN_7ff72bc16f50(this, step, 0, 0); only when it passes is the offset (+0x400) committed (FUN_7ff72bb31fc0) and the stack carried (FUN_7ff72bc17330); otherwise nothing moves this tick",
+        "The port already applied this preflight to DarknessWeightedLift (FUN_7ff72bb62790)"
+      ],
+      "behavior": "Every stage: a WeightedLift / Ex / Ex2 rising step is taken only if the slab and every cat or push box resting on it (transitively) can rise with it without entering a tile, a Rect, a MoveWall, a solid gate / bridge, another lift or another body; otherwise it waits this tick (a rider is never carried into the 1-4 wall or a ceiling). Descending steps keep descending-lift-stops-on-bodies."
     }
   ],
   "hashes": {
