@@ -1,0 +1,84 @@
+% u1_poster/tex/example.tex — the demo poster for the board: Data, Graph, Sentence on the Flint lead data.
+% Landscape so it projects like a poster board. Page 2 is the teacher talk-track.
+\documentclass[12pt]{article}
+\usepackage{preamble}
+\usepackage{amssymb}
+\geometry{letterpaper,landscape,margin=0.5in}
+\begin{document}
+\pagestyle{empty}
+
+\begin{center}
+{\LARGE\bfseries Is Flint's water ``fine on average''?}\\[2pt]
+{\large Lead level in 71 Flint home water samples, Jan--Jun 2015 (parts per billion)}\\[2pt]
+{\small\color{framegray} EXAMPLE POSTER \textperiodcentered\ Data \textperiodcentered\ Graph \textperiodcentered\ Sentence}
+\end{center}
+
+\begin{tcolorbox}[enhanced,colback=warmredlt,colframe=warmred,boxrule=1pt,arc=2pt,left=8pt,right=8pt,top=4pt,bottom=4pt]
+\textbf{The claim we judged:} \emph{``The average home is at 7.31 ppb, under the 15 ppb action level, so the water is fine.''}
+\end{tcolorbox}
+
+\vspace{4pt}
+\noindent
+\begin{minipage}[t]{0.34\linewidth}
+\begin{tcolorbox}[enhanced,colback=calloutgreen,colframe=black!55,boxrule=0.7pt,arc=2pt,title={\textbf{DATA}},coltitle=black,fonttitle=\bfseries]
+\textbf{Individuals:} 71 water samples, one per Flint home.\\
+\textbf{Variable:} lead level (ppb), quantitative.\\[4pt]
+\begin{tabular}{lr}
+Minimum & 0 ppb \\
+Q1 & 2 ppb \\
+\textbf{Median} & \textbf{3 ppb} \\
+Q3 & 7 ppb \\
+Maximum & 104 ppb \\ \hline
+Mean & 7.31 ppb \\
+IQR & $7 - 2 = 5$ ppb \\
+\end{tabular}\\[4pt]
+Upper fence: $7 + 1.5(5) = 14.5$ ppb. The right whisker stops at 13; every value above 14.5 is an outlier.\\
+Above 15 ppb: 8 of 71 $= 11.3\%$.
+\end{tcolorbox}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.64\linewidth}
+\begin{tcolorbox}[enhanced,colback=white,colframe=black!55,boxrule=0.7pt,arc=2pt,title={\textbf{GRAPH}},coltitle=black,fonttitle=\bfseries]
+\begin{center}\begin{tikzpicture}
+\begin{axis}[width=\linewidth,height=2.35in,xmin=-4,xmax=110,xtick={0,15,30,45,60,75,90,105},
+ ytick=\empty,ymin=0.4,ymax=1.6,xlabel={Lead level in the water sample (parts per billion)},
+ title={Flint lead levels, 71 homes},tick label style={font=\small},label style={font=\small},title style={font=\small}]
+\addplot+[boxplot prepared={lower whisker=0,lower quartile=2,median=3,upper quartile=7,upper whisker=13,draw position=1},fill=calloutblue,draw=dayblue,mark=none] coordinates {};
+\addplot[only marks,mark=*,mark size=2pt,dayblue] coordinates {(18,1) (20,1) (22,1) (27,1) (33,1) (42,1) (104,1)};
+\draw[warmred,thick,dashed] (axis cs:15,0.4) -- (axis cs:15,1.6);
+\node[font=\scriptsize\bfseries,color=warmred,anchor=west] at (axis cs:17,1.22) {15 ppb action level: 8 of 71 homes above it};
+\draw[framegray,thick] (axis cs:7.31,0.45) -- (axis cs:7.31,0.72);
+\node[font=\scriptsize,color=framegray,anchor=west] at (axis cs:9,0.55) {mean 7.31 ppb};
+\node[font=\scriptsize,color=framegray,anchor=west] at (axis cs:17,1.42) {top 25\% of homes: 7 ppb up to 104 ppb};
+\end{axis}\end{tikzpicture}\end{center}
+{\footnotesize Each of the four pieces of the box plot holds about 25\% of the 71 homes: 0 to 2, 2 to 3, 3 to 7, and 7 to 104 ppb. The whisker stops at 13, the last value under the 14.5 fence; the seven outlier dots are placed at illustrative values because the exact readings are not printed in the lesson. The five-number summary and 8 of 71 above 15 ppb are from Lessons 1.7 and 1.8.}
+\end{tcolorbox}
+\end{minipage}
+
+\vspace{6pt}
+\begin{tcolorbox}[enhanced,colback=calloutyellow,colframe=black!55,boxrule=0.7pt,arc=2pt,title={\textbf{SENTENCE}},coltitle=black,fonttitle=\bfseries,left=8pt,right=8pt]
+\large Half of the 71 Flint homes tested at or below 3 ppb of lead, but the top quarter ran from 7 ppb all the way to 104 ppb, and 8 homes (11.3\%) were over the 15 ppb action level. The mean of 7.31 ppb is more than double the median because those few dangerous homes drag it up, so ``the average home is fine'' hides exactly the homes that are not. Report the median and IQR (3 ppb, 5 ppb) and the 11.3\%, not the mean.
+\end{tcolorbox}
+
+\newpage
+\pagestyle{empty}
+\daybanner{AP Statistics \textperiodcentered\ Unit 1 Poster \textperiodcentered\ Board demo}{Talk-track for the example poster}
+
+\begin{callout}{\IconSpeak\ WHAT TO SAY AT THE BOARD (about 8 minutes)}{calloutgreen}
+\begin{enumerate}[leftmargin=1.6em,itemsep=4pt]
+  \item \textbf{Read the claim out loud.} ``The average home is at 7.31 ppb, under 15, so the water is fine.'' Ask: what would you need to see before you believed that? Take two answers. Do not evaluate them yet.
+  \item \textbf{DATA box.} Point out it opens with WHO (71 homes) and WHAT (lead level, ppb). ``Every number on every poster in this room needs those two things or it is not a statistic yet, it is a number.'' Then the five-number summary. Ask: which is bigger, the mean or the median? By how much? Which direction is the tail?
+  \item \textbf{GRAPH box.} Build the box plot with the class: box from 2 to 7, median line at 3, whisker to 0, right whisker to 13 because 14.5 is the fence. ``Where do the other seven homes go?'' Dots. Draw the 15 ppb line. ``How many homes are to the right of that line?'' Eight, 11.3\%. Then the 25\% labels: ``each piece of a box plot is a quarter of the homes, no matter how long it looks.''
+  \item \textbf{SENTENCE box.} Read it. Then ask the class to find, in the sentence: the context (Flint homes, lead, ppb), the comparative numbers (3 vs 7.31, 8 of 71), the judgment (``hides exactly the homes that are not''), and the recommendation (median and IQR). ``That is what your two or three sentences must do: context, numbers from the graph, a judgment, and a recommendation.''
+  \item \textbf{Hand out the sheets.} ``Your sheet has a claim somebody made. Solve (a) through (d) together before anyone touches the poster board. Your poster is these three boxes: Data, Graph, Sentence.''
+\end{enumerate}
+\end{callout}
+
+\begin{callout}{\IconWarn\ MISTAKES TO NAME WHILE YOU DEMO (these are the class's own)}{calloutred}
+\begin{itemize}[leftmargin=1.4em,itemsep=2pt]
+  \item ``7.31 is the typical home.'' The mean follows the tail; the median (3) does not. Period E was flagged on this across 12 answers.
+  \item ``The whisker goes to 104.'' Whiskers stop at the last non-outlier (13); outliers are separate dots.
+  \item ``75\% of homes are above the median.'' Each section is 25\%; above the median is 50\%.
+  \item ``11.3\%'' with no sentence around it. Who, what, units, and the 15 ppb question are what make it mean something.
+\end{itemize}
+\end{callout}
+\end{document}

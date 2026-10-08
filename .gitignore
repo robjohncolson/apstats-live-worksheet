@@ -123,3 +123,11 @@ syllabus/*.log
 syllabus/*.out
 
 .weekly-dok-wt/
+
+# Unit 1 poster packet: LaTeX byproducts (PDFs in u1_poster/pdf/ ARE committed)
+u1_poster/tex/*.aux
+u1_poster/tex/*.log
+u1_poster/tex/*.out
+u1_poster/tex/*.pdf
+u1_poster/tex/*.stdout
+u1_poster/tex/*.synctex.gz

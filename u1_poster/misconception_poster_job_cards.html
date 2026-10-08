@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unit 1 Poster — Data, Graph, Sentence (built from our own mistakes)</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f5f5f5; padding: 0.5rem; color: #222; }
+  .sheet { max-width: 8.5in; margin: 0 auto 0.75rem auto; background: #fff; border-radius: 8px; padding: 0.9rem 1rem; page-break-after: always; }
+  .sheet:last-child { page-break-after: auto; }
+  h1 { font-size: 1.45rem; text-align: center; }
+  h2 { font-size: 1.1rem; margin: 0.8rem 0 0.35rem; }
+  h3 { font-size: 0.95rem; margin: 0.6rem 0 0.25rem; }
+  p, li { font-size: 0.88rem; line-height: 1.35; }
+  ul, ol { margin-left: 1.2rem; }
+  .sub { text-align: center; color: #666; margin-bottom: 0.6rem; font-size: 0.9rem; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.82rem; margin: 0.4rem 0; }
+  th, td { border: 1px solid #bbb; padding: 0.3rem 0.4rem; text-align: left; vertical-align: top; }
+  th { background: #1565c0; color: #fff; }
+  tr:nth-child(even) td { background: #f7f7f7; }
+  .teacher { border: 3px solid #1565c0; }
+  .teacher h1 { color: #1565c0; }
+  .note { background: #fff8e1; border-left: 4px solid #f9a825; padding: 0.5rem 0.7rem; margin: 0.5rem 0; font-size: 0.85rem; }
+  .badge { display: inline-block; padding: 0.1rem 0.45rem; border-radius: 4px; font-size: 0.7rem; font-weight: bold; color: #fff; vertical-align: middle; }
+  .core { background: #2e7d32; } .persist { background: #c62828; }
+
+  /* Poster cards */
+  .card { border: 3px solid #333; }
+  .card .head { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid #333; padding-bottom: 0.3rem; margin-bottom: 0.5rem; }
+  .card .head .num { font-size: 0.8rem; color: #666; text-align: right; }
+  .card h1 { font-size: 1.3rem; text-align: left; }
+  .display { background: #e3f2fd; border: 2px solid #1565c0; padding: 0.4rem 0.7rem; margin: 0.4rem 0; font-size: 0.95rem; }
+  .dok { background: #fff3e0; border: 2px solid #e65100; padding: 0.5rem 0.7rem; margin: 0.5rem 0; }
+  .dok h3 { margin-top: 0; color: #e65100; }
+  .dok p { font-size: 0.92rem; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+  .box { border: 1px solid #999; border-radius: 6px; padding: 0.45rem 0.6rem; }
+  .box h3 { margin-top: 0; }
+  .data { font-family: Consolas, monospace; font-size: 0.82rem; background: #f3f3f3; padding: 0.4rem 0.6rem; border-radius: 4px; white-space: pre-wrap; }
+  .data table { font-family: Consolas, monospace; font-size: 0.8rem; margin: 0.2rem 0; }
+  .data th { background: #555; }
+  .must li { margin-bottom: 0.15rem; }
+  .must li::marker { content: '☐ '; }
+  .roles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4rem; margin-top: 0.5rem; }
+  .role { border-top: 4px solid #1565c0; background: #e3f2fd; padding: 0.35rem 0.5rem; font-size: 0.8rem; }
+  .role b { display: block; margin-bottom: 0.15rem; }
+  .evidence { font-size: 0.8rem; color: #444; }
+  .myth { font-style: italic; color: #b71c1c; }
+
+  /* Gallery walk */
+  .walk td { height: 3.4rem; }
+  .walk td:first-child { width: 24%; font-weight: 600; height: auto; }
+  .lines { border-bottom: 1px solid #999; height: 1.5rem; }
+
+  @media print {
+    body { background: #fff; padding: 0; }
+    .sheet { border-radius: 0; margin: 0; max-width: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================================================ -->
+<!-- TEACHER GUIDE                                                 -->
+<!-- ============================================================ -->
+<section class="sheet teacher">
+  <h1>Unit 1 Poster — Data, Graph, Sentence</h1>
+  <p class="sub">Five posters. Each shows one Unit 1 data set, one kind of display, and the answer to one DOK-3 question in a sentence or two. Together the five posters cover every Unit 1 display.</p>
+
+  <div class="note"><b>Printables (PDF):</b> <a href="pdf/u1_poster_group_sheets_student.pdf">five group sheets</a> (2 pages each, print one per group) &middot; <a href="pdf/u1_poster_teacher_key.pdf">teacher key</a> (answers, finished graphs, scoring grid) &middot; <a href="pdf/u1_poster_example_board_demo.pdf">example poster + talk-track</a> (project this first). Two days are on the calendar: Period B Thu 10/8 + Fri 10/9, Period E Fri 10/9 + Wed 10/14.</div>
+<div class="note"><b>The hook for students:</b> "Every question on these cards is built from a mistake this class made over and over on Unit 1 worksheets and quizzes. Your group solves it together, then puts the data, the graph, and your answer on the poster so nobody in this room makes it again on the Progress Check."</div>
+
+  <h2>The five cards</h2>
+  <table>
+    <tr><th>#</th><th>Display(s) the poster must show</th><th>Data set (all from Unit 1)</th><th>Misconception it busts</th><th>Students flagged</th></tr>
+    <tr><td>1</td><td>Frequency table + bar chart</td><td>Superpower survey, 50 students (L3, L4)</td><td>"If it's a number it's quantitative" + numbers without context</td><td>~15 + ~18</td></tr>
+    <tr><td>2</td><td>Relative frequency table + relative frequency bar chart (two groups)</td><td>Spirit day survey, 9th (30) vs 10th (20) (L4)</td><td>"The bigger count wins" <span class="badge persist">PERSISTENT B</span></td><td>~10</td></tr>
+    <tr><td>3</td><td>Dotplot</td><td>Late-bus wait, 11 students (L6)</td><td>"Describing a distribution = naming the center" (SOCS, unusual features)</td><td>~12</td></tr>
+    <tr><td>4</td><td>Stem-and-leaf plot + histogram (same data)</td><td>Resting heart rate, 25 spring-sport athletes (L2 context, L5, L7, L8)</td><td>"The mean is the fair average" + skew direction + "a histogram shows every value" <span class="badge persist">PERSISTENT E</span></td><td>~13 + ~8</td></tr>
+    <tr><td>5</td><td>Parallel box plots</td><td>Study Hall A vs B homework minutes (L8, L9)</td><td>"Same median = same distribution"; box plot pieces are 25% each; IQR vs range</td><td>~12</td></tr>
+  </table>
+  <p class="evidence">Counts are distinct students across both periods flagged by the misconception tracker since September (215 flagged lines, 29 students). Card 4's heart-rate values are written for this activity in the Lesson 2 spring-sport context, because the Flint raw data is not printed in any worksheet. Every other data set is printed in a Unit 1 worksheet exactly as shown.</p>
+
+  <h2>Groups</h2>
+  <table>
+    <tr><th>Class size</th><th>Groups</th><th>Who gets what</th></tr>
+    <tr><td>14 (Period B)</td><td>4 trios + 1 pair</td><td>The pair takes card 3 (one display). A strong trio takes card 2, Period B's persistent one.</td></tr>
+    <tr><td>15 (Period E)</td><td>5 trios</td><td>A strong trio takes card 4, Period E's persistent one.</td></tr>
+    <tr><td>12–13</td><td>4 groups</td><td>Drop card 3; fold its dotplot into card 4's group as an extra display if they finish early.</td></tr>
+    <tr><td>16–18</td><td>6 groups</td><td>Give card 2 or card 4 to two groups; the gallery walk compares the two posters.</td></tr>
+  </table>
+
+  <h2>Roles inside a trio</h2>
+  <p>The whole group solves the DOK-3 question together <b>first</b>, on scratch paper, before anyone touches the poster. Then:</p>
+  <ul>
+    <li><b>Data Keeper</b> — writes the data table on the poster and does every computation shown (percents, five-number summary, fences, mean and median). Shows the arithmetic.</li>
+    <li><b>Grapher</b> — draws the display(s): title, labeled axes with units, a scale that starts and ends sensibly, a key if two groups are shown.</li>
+    <li><b>Writer</b> — writes the answer in one or two sentences, in context, with at least one number from the graph, and checks the must-have list before the walk.</li>
+  </ul>
+  <p>In a pair, the Data Keeper also writes.</p>
+
+  <h2>Timing</h2>
+  <table>
+    <tr><th>One long block</th><th>Two short blocks</th></tr>
+    <tr>
+      <td><b>10 min</b> launch: show the table above, ask "which one got you?"<br><b>15 min</b> solve the DOK-3 question on scratch paper, no poster yet.<br><b>25 min</b> build the poster.<br><b>15 min</b> gallery walk with the walk sheet.<br><b>10 min</b> debrief on the two persistent posters.</td>
+      <td><b>Day 1:</b> launch, solve, start the poster. Posters stay in the room.<br><b>Day 2:</b> 15 min finish + checklist, 15 min gallery walk, 10 min debrief.</td>
+    </tr>
+  </table>
+
+  <h2>Materials and grading</h2>
+  <p>One card per group (pages 2–6), poster paper, markers, rulers, one gallery-walk sheet per student (page 7), the rubric (page 8). Each card's five must-haves are the rubric: all five = E, three or four = P, fewer = I. Enter in Schoology's <b>Posters</b> category (E 100 / P 85 / I 60). Posters are hand-entered; the grade engine has no poster data source.</p>
+</section>
+
+<!-- ============================================================ -->
+<!-- CARD 1 — frequency table + bar chart                          -->
+<!-- ============================================================ -->
+<section class="sheet card">
+  <div class="head"><h1>Poster 1 — Frequency Table + Bar Chart</h1><span class="num">Superpower survey · Lessons 1.2–1.4</span></div>
+  <div class="display"><b>Your poster must show:</b> a frequency table AND a bar chart of the same data.</div>
+
+  <h3>Data (printed in Lesson 1.3)</h3>
+  <div class="data">A random sample of 50 high school students was asked which superpower they would most like to have.
+  Fly 9     Freeze time 15     Invisibility 7     Super strength 3     Telepathy 16</div>
+
+  <div class="dok">
+    <h3>DOK-3 question — solve together before you build</h3>
+    <p>A streaming service wants to make a show called <i>Freeze Time</i>. Their pitch says: <span class="myth">"Freeze time is the superpower teens want most, and it's twice as popular as flying."</span> A second writer says the show should be about telepathy instead.</p>
+    <p>(a) Build the frequency table and bar chart. (b) Decide which parts of the pitch the data support and which they don't, with numbers. (c) Write the one claim the service <i>could</i> honestly make about the two most popular powers. (d) Explain why this data gets a bar chart and not a dotplot or histogram: what are the individuals, what is the variable, and what type is it?</p>
+  </div>
+
+  <div class="grid2">
+    <div class="box">
+      <h3>The mistakes this busts</h3>
+      <p class="evidence">On the Charleston reflection, 11 of 29 students defined "individual" correctly but never said who the individuals were, and 10 couldn't name a variable from the sheet. Eight treated grade level and six treated zip code as quantitative because they're written with digits. And the most-flagged line in the whole class: a number stated with no variable, no units, no question attached (13 students on one Flint reflection alone).</p>
+    </div>
+    <div class="box">
+      <h3>Poster must-haves</h3>
+      <ul class="must">
+        <li>Frequency table with a total row that adds to 50</li>
+        <li>Bar chart: title, both axes labeled, bars separated, count scale that fits the tallest bar</li>
+        <li>Individuals, variable, and variable type (categorical) named in a sentence</li>
+        <li>The pitch judged claim by claim with numbers: "most" (telepathy 16 beats freeze time 15), "twice as popular" (15 vs 9)</li>
+        <li>One honest claim in context with a number, such as what fraction chose telepathy or freeze time</li>
+      </ul>
+    </div>
+  </div>
+  <div class="roles">
+    <div class="role"><b>Data Keeper</b>The table with totals and the "most" / "twice" arithmetic.</div>
+    <div class="role"><b>Grapher</b>The bar chart with title, axes, scale.</div>
+    <div class="role"><b>Writer</b>Individuals / variable / type sentence and the honest-claim sentence.</div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- CARD 2 — relative frequency table + rel freq bar chart        -->
+<!-- ============================================================ -->
+<section class="sheet card">
+  <div class="head"><h1>Poster 2 — Relative Frequency Table + Relative Frequency Bar Chart</h1><span class="num"><span class="badge persist">PERSISTENT in Period B</span><br>Spirit day survey · Lesson 1.4</span></div>
+  <div class="display"><b>Your poster must show:</b> a relative frequency table for both grades AND a side-by-side relative frequency bar chart with a key.</div>
+
+  <h3>Data (printed in Lesson 1.4)</h3>
+  <div class="data">A teacher surveyed two grades about their favorite spirit day theme.
+  Theme          9th grade (30 students)   10th grade (20 students)
+  Pajama Day              12                        5
+  Jersey Day               6                        8
+  Twin Day                 9                        3
+  Costume Day              3                        4</div>
+
+  <div class="dok">
+    <h3>DOK-3 question — solve together before you build</h3>
+    <p>Student council voted for Jersey Day as the schoolwide theme. Their reasoning: <span class="myth">"Jersey Day got the most 10th-grade votes, and 9th grade was close anyway: 6 versus 8."</span></p>
+    <p>(a) Convert every count to a relative frequency (percent) within its grade. (b) Draw the side-by-side relative frequency bar chart. (c) Decide which theme <i>each</i> grade actually prefers and whether "9th grade was close" is true once you compare percents. (d) The two grades disagree. Recommend one schoolwide theme and defend it with percents, not counts. Then explain why a chart of raw counts would have misled the council.</p>
+  </div>
+
+  <div class="grid2">
+    <div class="box">
+      <h3>The mistake this busts</h3>
+      <p class="evidence">The only misconception the tracker calls <b>persistent</b> in Period B: the same students, two lessons, days apart. Six students could not explain why relative frequencies beat counts when the groups are 30 and 20; five couldn't turn 4 of 40 into 10%; the same thing hit the 80-males vs 125-females comparison. On quiz U1-L4-Q02, students picked claims about "the greatest number" from a chart that only showed relative frequencies.</p>
+    </div>
+    <div class="box">
+      <h3>Poster must-haves</h3>
+      <ul class="must">
+        <li>Relative frequency table: eight percents, each column summing to 100%, arithmetic shown for at least two</li>
+        <li>Side-by-side relative frequency bar chart: title, percent axis, key for the two grades</li>
+        <li>Each grade's actual favorite named with its percent (Pajama 40% vs Jersey 40%)</li>
+        <li>"6 vs 8 is close" rejected with percents (20% vs 40%)</li>
+        <li>A schoolwide recommendation defended with percents, plus one sentence on why counts mislead when groups differ in size</li>
+      </ul>
+    </div>
+  </div>
+  <div class="roles">
+    <div class="role"><b>Data Keeper</b>Eight percents, column totals, the 20% vs 40% comparison.</div>
+    <div class="role"><b>Grapher</b>The side-by-side chart with key and percent scale.</div>
+    <div class="role"><b>Writer</b>Each grade's favorite, the recommendation, the "why counts mislead" sentence.</div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- CARD 3 — dotplot                                              -->
+<!-- ============================================================ -->
+<section class="sheet card">
+  <div class="head"><h1>Poster 3 — Dotplot</h1><span class="num">Late-bus wait · Lessons 1.5–1.7</span></div>
+  <div class="display"><b>Your poster must show:</b> a dotplot with every value as a dot, on a number line with a scale.</div>
+
+  <h3>Data (printed in Lesson 1.6)</h3>
+  <div class="data">A school recorded the number of minutes 11 students waited for a late bus after school.
+  1, 2, 3, 3, 4, 4, 4, 5, 5, 6, 18</div>
+
+  <div class="dok">
+    <h3>DOK-3 question — solve together before you build</h3>
+    <p>The transportation office reports: <span class="myth">"Students wait an average of 5 minutes for the late bus, so there is no problem."</span></p>
+    <p>(a) Draw the dotplot. (b) Describe the distribution fully: shape, center, variability, and unusual features, in context. (c) Is 18 an outlier? Show the 1.5 × IQR rule. (d) The mean is exactly 5.0 and the median is 4. Explain, using the dotplot, why the office's "average of 5" sentence hides the actual problem, and rewrite their sentence so it tells the truth in one or two lines.</p>
+  </div>
+
+  <div class="grid2">
+    <div class="box">
+      <h3>The mistakes this busts</h3>
+      <p class="evidence">Six of 29 students never mentioned unusual features (gaps, clusters, outliers) when asked to describe a distribution, and four described shape but skipped variability. Five said the variable in a study was "the students" instead of the measurement. Many picked the mean as "typical" for skewed data; in Period E that tag is persistent (8 students, 12 answers).</p>
+    </div>
+    <div class="box">
+      <h3>Poster must-haves</h3>
+      <ul class="must">
+        <li>Dotplot: 11 dots, number line from 0 to 20 with even tick marks, axis label with units, title</li>
+        <li>Shape, center, variability, and unusual features each in its own labeled sentence, in context (minutes waiting)</li>
+        <li>Outlier check shown: Q1 3, Q3 5, IQR 2, fence 5 + 3 = 8, so 18 is an outlier</li>
+        <li>Mean 5.0 vs median 4 explained from the dotplot: one dot dragged the mean</li>
+        <li>The office's sentence rewritten honestly, with a number</li>
+      </ul>
+    </div>
+  </div>
+  <div class="roles">
+    <div class="role"><b>Data Keeper</b>Five-number summary, IQR, fence, mean.</div>
+    <div class="role"><b>Grapher</b>The dotplot with a clean scale.</div>
+    <div class="role"><b>Writer</b>The SOCS sentences and the honest rewrite.</div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- CARD 4 — stem-and-leaf + histogram                            -->
+<!-- ============================================================ -->
+<section class="sheet card">
+  <div class="head"><h1>Poster 4 — Stem-and-Leaf Plot + Histogram</h1><span class="num"><span class="badge persist">PERSISTENT in Period E</span><br>Resting heart rate · Lessons 1.2, 1.5, 1.7, 1.8</span></div>
+  <div class="display"><b>Your poster must show:</b> a stem-and-leaf plot AND a histogram (bins of 5 bpm) of the same 25 values, side by side.</div>
+
+  <h3>Data (Lesson 1.2 spring-sport context)</h3>
+  <div class="data">Resting heart rate, in beats per minute, for 25 students who play a spring sport (already in order):
+  42, 46, 50, 54, 57, 58, 59, 60, 60, 61, 62, 62, 62, 63, 64, 64, 65, 65, 66, 66, 67, 68, 68, 69, 70</div>
+
+  <div class="dok">
+    <h3>DOK-3 question — solve together before you build</h3>
+    <p>The coach says: <span class="myth">"Resting heart rate is skewed, so the mean is pulled up. I'll use the mean as the typical athlete, and anyone below 50 bpm has to see the trainer."</span></p>
+    <p>(a) Make the stem-and-leaf plot and the histogram. (b) Describe the shape. Which direction is the tail? Which way does that push the mean relative to the median? Check with the actual mean and median. (c) Which measure of center should the coach report as "typical," and why? (d) Use the 1.5 × IQR rule to decide which athletes are outliers. Does the coach's "below 50" rule agree with the statistics? (e) The trainer wants to see individual athletes' numbers. Which of your two displays do you hand her, and what does the other one hide?</p>
+  </div>
+
+  <div class="grid2">
+    <div class="box">
+      <h3>The mistakes this busts</h3>
+      <p class="evidence">The tracker's largest persistent flag: in Period E, 8 students were tagged "treats the mean as resistant to outliers" across 12 answers. On quiz U1-L8-Q03 most of the class chose "mean greater than median because skewed right" for a histogram that was skewed <i>left</i>. Five never said a histogram bins values, and four missed that only dotplots and stem-and-leaf plots show every value.</p>
+    </div>
+    <div class="box">
+      <h3>Poster must-haves</h3>
+      <ul class="must">
+        <li>Stem-and-leaf plot with stems 4–7, leaves in order, and a key (e.g. 6 | 2 = 62 bpm)</li>
+        <li>Histogram: bins 40–44 through 70–74, bars touching, labeled axes with units, title</li>
+        <li>Shape named with the tail direction (skewed left), and mean 61.1 vs median 62 shown to confirm which way the tail pulls</li>
+        <li>Outlier check shown: Q1 58.5, Q3 66, IQR 7.5, low fence 47.25, so 42 and 46 are outliers and 50 is not; coach's rule compared</li>
+        <li>A sentence choosing the center to report and a sentence saying which display shows every athlete and what the histogram hides</li>
+      </ul>
+    </div>
+  </div>
+  <div class="roles">
+    <div class="role"><b>Data Keeper</b>Mean (sum 1528 ÷ 25), median, quartiles, fences.</div>
+    <div class="role"><b>Grapher</b>Both displays, side by side, same data.</div>
+    <div class="role"><b>Writer</b>Shape + direction sentence, the center choice, the trainer sentence.</div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- CARD 5 — parallel box plots                                   -->
+<!-- ============================================================ -->
+<section class="sheet card">
+  <div class="head"><h1>Poster 5 — Parallel Box Plots</h1><span class="num">Study halls · Lessons 1.8, 1.9</span></div>
+  <div class="display"><b>Your poster must show:</b> two box plots on one shared number line, outlier plotted as a separate point.</div>
+
+  <h3>Data (printed in Lesson 1.9)</h3>
+  <div class="data">Nightly homework time, in minutes, for students in two study halls.
+  Study Hall A:  minimum 30   Q1 45   median 60   Q3 90   largest non-outlier 110   one high outlier at 150
+  Study Hall B:  minimum 45   Q1 54   median 60   Q3 66   maximum 75   no outliers</div>
+
+  <div class="dok">
+    <h3>DOK-3 question — solve together before you build</h3>
+    <p>The principal says: <span class="myth">"Both study halls have a median of 60 minutes, so homework time is the same in both."</span> A parent asks: <span class="myth">"What percent of Study Hall A students spent more than 90 minutes?"</span></p>
+    <p>(a) Draw both box plots on one number line. (b) Compare the two distributions in shape, center, variability, and unusual features, with a comparative word in every sentence. (c) Answer the parent, and explain how a box plot lets you say that without seeing the data. (d) Is the principal right? Use at least two features besides the median. (e) A student wants the study hall where homework time is most predictable. Which one, and which box-plot feature proves it?</p>
+  </div>
+
+  <div class="grid2">
+    <div class="box">
+      <h3>The mistakes this busts</h3>
+      <p class="evidence">On the salary comparison, six students missed the outliers, five never compared the medians, four skipped variability, and almost nobody used comparative words. On quiz U1-L8-Q02 most of the class read a box plot whose median sat at the cutoff and said 75% passed; the answer was 50%. On U1-L9-Q01 we said the medians matched when it was the IQRs. Three students gave the range when asked for the IQR.</p>
+    </div>
+    <div class="box">
+      <h3>Poster must-haves</h3>
+      <ul class="must">
+        <li>Two box plots on one shared scale (30 to 150), labeled A and B, axis label with units, 150 plotted as a separate point</li>
+        <li>Four comparison sentences (shape, center, variability, unusual), each with a comparative word, in context</li>
+        <li>Parent answered: about 25% of A spent more than 90 minutes, with the "each piece is 25%" rule written on the plot</li>
+        <li>Principal judged with numbers: IQR 45 vs 12, range 120 vs 30, outlier vs none</li>
+        <li>Predictability choice (B) tied to the narrower box and shorter whiskers</li>
+      </ul>
+    </div>
+  </div>
+  <div class="roles">
+    <div class="role"><b>Data Keeper</b>IQRs, ranges, the 25% labels.</div>
+    <div class="role"><b>Grapher</b>Both plots on one scale, outlier as a point.</div>
+    <div class="role"><b>Writer</b>Four comparative sentences, the parent's answer, the choice.</div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- GALLERY WALK SHEET                                            -->
+<!-- ============================================================ -->
+<section class="sheet">
+  <h1>Gallery Walk Sheet</h1>
+  <p class="sub">Name: ______________________ &nbsp;&nbsp; Period: _____ &nbsp;&nbsp; My group's poster: #____</p>
+  <p>Visit every poster except your own. For each: name the display, write the question's answer in one sentence <b>using a number from the graph</b>, and write one thing you could not have told from a different kind of display.</p>
+  <table class="walk">
+    <tr><th>Poster</th><th>Display(s)</th><th>Their answer, in one sentence with a number</th><th>What this display shows that another would hide</th></tr>
+    <tr><td>1 — Superpowers</td><td></td><td></td><td></td></tr>
+    <tr><td>2 — Spirit day</td><td></td><td></td><td></td></tr>
+    <tr><td>3 — Late bus</td><td></td><td></td><td></td></tr>
+    <tr><td>4 — Heart rates</td><td></td><td></td><td></td></tr>
+    <tr><td>5 — Study halls</td><td></td><td></td><td></td></tr>
+  </table>
+  <h3>Which of these mistakes got YOU this unit? On which worksheet or quiz? What will you write differently on the Progress Check?</h3>
+  <div class="lines"></div><div class="lines"></div><div class="lines"></div><div class="lines"></div>
+</section>
+
+<!-- ============================================================ -->
+<!-- TEACHER RUBRIC                                                -->
+<!-- ============================================================ -->
+<section class="sheet teacher">
+  <h1>Scoring</h1>
+  <p class="sub">Each card's five must-haves are the rubric. Check what is present, then score.</p>
+  <table>
+    <tr><th>Score</th><th>Criteria</th><th>Enter as</th></tr>
+    <tr><td><b>E</b></td><td>All five must-haves. The display is correctly drawn (scale, labels, units, key). Arithmetic is right. The answer sentences are in context and carry a number from the graph.</td><td>100</td></tr>
+    <tr><td><b>P</b></td><td>Three or four must-haves, or all five with one error of direction or arithmetic (skew direction, a fence, a percent).</td><td>85</td></tr>
+    <tr><td><b>I</b></td><td>Two or fewer must-haves, or the display is the wrong kind for the data, or the answer agrees with the myth.</td><td>60</td></tr>
+  </table>
+  <table>
+    <tr><th>Poster</th><th>Group</th><th>☐ ☐ ☐ ☐ ☐</th><th>E / P / I</th><th>Note</th></tr>
+    <tr><td>1 Frequency table + bar chart</td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>2 Rel. freq. table + rel. freq. bar chart</td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>3 Dotplot</td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>4 Stem-and-leaf + histogram</td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>5 Parallel box plots</td><td></td><td></td><td></td><td></td></tr>
+  </table>
+
+  <h2>Answer notes</h2>
+  <ul>
+    <li><b>1:</b> Telepathy 16 is the most, not freeze time 15. 15 vs 9 is not twice. Honest claim: 31 of 50 (62%) chose telepathy or freeze time. Individuals = the 50 students; variable = preferred superpower, categorical.</li>
+    <li><b>2:</b> 9th: Pajama 40, Jersey 20, Twin 30, Costume 10. 10th: Pajama 25, Jersey 40, Twin 15, Costume 20. 9th prefers Pajama, 10th prefers Jersey; 20% vs 40% is not close. Any defended pick is fine; Pajama (40 / 25) is the only theme at 25% or better in both grades.</li>
+    <li><b>3:</b> Skewed right, one peak near 4, typical 4 minutes, spread 1 to 18, gap 6 to 18, 18 is an outlier (fence 8). Mean 5.0, median 4. Honest version: most students wait about 4 minutes, but one waited 18.</li>
+    <li><b>4:</b> Skewed left (tail toward low values). Mean 61.1 &lt; median 62: the coach has the direction backwards. Report the median. Q1 58.5, Q3 66, IQR 7.5, low fence 47.25: 42 and 46 are outliers, 50 is not, so "below 50" happens to match the statistics here but was not derived from them. Hand the trainer the stem-and-leaf plot; the histogram hides individual values.</li>
+    <li><b>5:</b> A: IQR 45, range 120, one outlier. B: IQR 12, range 30, none. Same median, very different variability, so the principal is wrong. Parent: about 25% of A spent over 90 minutes (Q3 = 90). Predictable: B.</li>
+  </ul>
+
+  <h2>Debrief prompts</h2>
+  <ul>
+    <li>Stand by your period's persistent poster (2 in B, 4 in E). "This one came back after we taught it. What on this poster would have stopped it the second time?"</li>
+    <li>"Every poster has the same hidden rule in its answer sentence. What is it?" (A number means nothing without its variable, units, and question.)</li>
+    <li>Three students read their "which mistake got you" line aloud.</li>
+  </ul>
+  <p class="evidence">After the walk the misconception tracker keeps counting. If a cluster drops off the dashboard's "most frequent" list over the next two weeks, the poster worked. If it stays, the weekly DOK sheet picks it up again.</p>
+</section>
+
+</body>
+</html>

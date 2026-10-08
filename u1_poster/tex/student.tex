@@ -1,0 +1,13 @@
+% u1_poster/tex/student.tex — the five group sheets, student edition (no key, no finished graphs).
+% Compile from this directory:
+%   pdflatex -interaction=nonstopmode -include-directory=../../dok/tex -output-directory=. student.tex   (twice)
+\documentclass[11pt]{article}
+\usepackage{preamble}
+\usepackage{amssymb}
+\geometry{letterpaper,margin=0.6in}
+\renewcommand{\answer}[1]{}
+\newcommand{\keygraph}[1]{}
+\newcommand{\sketchbox}[1]{#1}
+\begin{document}
+\input{cards}
+\end{document}
