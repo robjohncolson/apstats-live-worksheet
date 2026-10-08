@@ -269,6 +269,54 @@ export const CAMPAIGN_PATCHES = [{
   evidence: ['FUN_7ff72bb56c10 (the guard object update) places the plank from the owner transform (+0x3f0 -> +0x44) in the actor update pass, before the shared body/contact pass in which FUN_7ff72bb4da00 (Thunder beam contact) cuts L against bodies and lists players',
     'FUN_7ff72bb4d850 (Thunder slot 27) then kills only listed players overlapping the beam of that same L: the plank, the cut and the kill all read one frame of body positions; Thunder slot 25 (0x7ff72bb4d600) only shifts the +0x4e0 / +0x4e4 / +0x4e8 latch and toggles the frame'],
   behavior: 'Thunder stages with GuardPlayers (4-1, 12-1): planks are refreshed after every cat and body has moved this frame, and the beam cut, the drawn length and the kill judge all use those same positions (was: the plank was placed and the beam cut at the start of the frame, before the cats moved, so a guard walking into a beam left the beam at its old length for one frame and the cat behind it could die on the second contact). Thunder kills are judged for the same cats as before (those that reached the contact checks this frame), after the per-cat loop instead of inside it.',
+}, {
+  // Fidelity audit 2026-10-08 batch 6 (solvability harness: 7-1 BLOCKED by BowwowEnemy).
+  id: 'bowwow-chase-stops',
+  files: ['src/engine/actors/BowwowEnemy.ts', 'src/engine/GameRuntime.ts'],
+  evidence: ['FUN_7ff72bb39180 (update) picks the in-range cat (|dx| < 300 asleep DAT_7ff72bc7daa8, else < 400 DAT_7ff72bc7da00) with the largest FUN_7ff72bb67b10(cat, out, 0x1e) movement, and only when that movement is strictly above 0.0 (best starts at 0.0, strict compare): a cat whose 30-frame mean displacement is zero is never a target',
+    'States (+0x3f8): 0 sleep (bob, Zzz) -> 1 on any target; 1 -> 2 (warn) when best > 1.5 (DAT_7ff72bc7d1ac); 2 -> 0 with no target, -> 3 (wake) when best > 2.5 (DAT_7ff72bcb74c4); 3 steers v = normalize(cat - (dog + (0, 64 DAT_7ff72bc7d1b8))) * speed (+0x40c, p0) only while it has a target, and adds v to its position EVERY tick, target or not; it never returns to sleep',
+    'Contact FUN_7ff72bb39680 (fixture category 7, rect {-30, -39, 60, 78} DAT_7ff72c61f358): a category-1 (cat) contact gets command 4 (death), and a dog in state 3 enters state 4, which only keeps adding the last v (no more steering)'],
+  behavior: 'BowwowEnemy (7-1): a cat standing still (zero 30-frame mean movement) no longer wakes or steers the dog, and a warned dog goes back to sleep when every cat in range is still; a dog that is already chasing keeps flying straight along its last heading while the cats are still (it steers again as soon as one moves), and after it catches a cat it only drifts along that heading (state 4) instead of turning to the next cat. Was: any cat in range counted as a target even when still, and a chasing dog froze in place when the cats froze. The coordinator expectation "it stops when all cats are still" is not native: only a warned (state 2) dog gives up; the way through 7-1 is to keep each cat\'s 30-frame mean movement under 1.5 (sneak in short steps).',
+}, {
+  // Fidelity audit 2026-10-08 batch 6 (solvability harness: 2-2, 2-4, 10-1 BLOCKED by FallBox).
+  id: 'fallbox-solid-while-armed',
+  files: ['src/engine/actors/FallBox.ts', 'src/engine/actors/KeyGate.ts', 'src/engine/GameRuntime.ts'],
+  evidence: ['FUN_7ff72bb42d90 (body): the rect inset 2 (DAT_7ff72bcff5c0 = 2.0, DAT_7ff72bcb7d8c = -4.0), FUN_7ff72bc16bf0(..., 3), body+4 = 2; nothing in the update FUN_7ff72bb429b0 disables it except the horizontal on-screen gate FUN_7ff72bb42ff0: the box is solid unarmed, during the arm delay and while it falls',
+    'Contact FUN_7ff72bb42fb0: ANY body or chip contact whose normal has y < 0 (something resting on its top) sets +0x6f4 |= 1 (armed): a cat, a push box or another FallBox',
+    'FUN_7ff72bb429b0 (update): armed -> if t <= 0.22 (DAT_7ff72bcb8d20 = 0.22) t += dt and the box holds still; else FUN_7ff72bc13690(body, (0, 1.0 DAT_7ff72bcff538), 1) tests for a contact below: none -> vy += 0.65 per tick (DAT_7ff72bcb69bc, gravity, no cap), else vy = 0; the box lands on chips and bodies (cats too); vx is never written; nothing carries a rider (a cat on it falls by its own gravity)',
+    'Despawn in the fall branch: the node y (the box BOTTOM, row-point anchored) > 2 * 720 / scale (DAT_7ff72bc7db90) -> FUN_7ff72bc11650 destroys it; there is no respawn timer (only a stage rebuild brings it back)'],
+  behavior: 'FallBox (2-2, 2-4, 10-1 and every FallBox stage): an armed box stays solid while it waits 0.22 s and while it falls (was: it stopped being solid the tick it armed, so a cat dropped straight through it); it then falls under gravity (0.65 per tick per tick, uncapped; was a constant 0.65 per frame) and lands on chips, blocks, boxes, other FallBoxes and cats, starting to fall again if that support goes; a push box or FallBox resting on its top arms it too (was: cats only); it despawns when its bottom passes twice the view height (was: its centre), and never respawns. Its solid body is the native rect inset 2 on every side (the drawn box is unchanged), so a cat stands 2 lower on a FallBox than on its drawn top (2-2: on 336, level with the Rect blocks either side; was 334) and neighbouring boxes leave a 4-unit seam. FallBox bodies are resolved in the same pass as Rects and gates, and that pass sets a cat back on top of what it stands on before any side push, so it walks off a FallBox onto a level Rect (native: the down contact keeps vy 0, so the feet never dip below a level neighbour). A cat standing on it is not carried; it falls with the box under the same gravity.',
+}, {
+  // Fidelity audit 2026-10-08 batch 6 (solvability harness: 10-3 BLOCKED by DarknessWeightedLift).
+  id: 'darkness-weighted-lift-tiles',
+  files: ['src/engine/GameRuntime.ts'],
+  evidence: ['FUN_7ff72bb62580 (setParams): the slab body is FUN_7ff72bc16bf0(this, {0, 0, p0, p1}, 2), a type-2 body: FUN_7ff72bc12490 moves a body whose type (+0x20) has bit 0 clear straight (pos += delta), never through the map sweep FUN_7ff72bc2fca0, and it never records a chip contact (its +0xa0 list stays empty)',
+    'FUN_7ff72bb62790 (update): the 0.06 s freeze (0x3d75c28f) is refreshed by FUN_7ff72bc13690(body, DOWN, 1), which for this body can only see bodies below it; the offset step is committed only when FUN_7ff72bc16f50(this, delta, 0, 0) accepts it, and that test walks the slab\'s BODY contacts in the move direction (a contacted body blocks when it touches a chip that way or its own chain fails); the slab\'s own chip contacts are never consulted. The plain WeightedLift (FUN_7ff72bb63cf0 / FUN_7ff72bb64310) is the same'],
+  behavior: 'DarknessWeightedLift (10-3; 10-4 unchanged): the slab is no longer stopped or frozen by map chips it passes through: only bodies under it freeze it, and only riders that would hit a chip (rising) or a static block block a step. 10-3 lift 2 now sinks past the row-144 chips (it stopped at y 96 after 48 of its 144); its riders land on those chips and the lift holds just below them, uncovering the door slot. Was: the port tested the slab itself against chips (freeze probe and step preflight). The plain WeightedLift branch already skipped the slab\'s chip test.',
+}, {
+  // Fidelity audit 2026-10-08 batch 6 (Codex batch-5 note: the 7-2 StepEnemy spawns inside a step chip and flips every frame).
+  id: 'stepenemy-unspawn',
+  files: ['src/engine/actors/StepEnemy.ts'],
+  evidence: ['The Lua row is read correctly: stage_traffic_light01.lua { "StepEnemy", chipSize*20, chipSize*8, -1 } = (960, 384), p0 -1; map column 20 row 8 is MC_FLL (solid), so the native body {-24, -13, 48, 26} (DAT_7ff72c62d250) starts 24 x 13 inside that chip',
+    'Native never pushes a body out of a chip. FUN_7ff72bc1da80 (world step) sweeps a moved body with FUN_7ff72bc12490(body, map, delta, 0, slide 1) -> FUN_7ff72bc2fca0: per moving axis FUN_7ff72bc304f0 first tests a face strip 0.5 (DAT_7ff72bcff4fc) past the leading face, cells floor(coord / 48) edges inclusive (every chip id >= 2 solid, DAT_7ff72bcc8a30): a hit zeroes that axis and records the contact (FUN_7ff72bb31cf0); the sweep itself only tests cells the box enters beyond its current extents (FUN_7ff72bc28390 / FUN_7ff72bc284a0) and stops 0.01 short of the cell boundary (DAT_7ff72bc7d45c); chips already under the box are never tested',
+    'FUN_7ff72bb6cbe0: grounded = a down contact (FUN_7ff72bc13690(body, (0, 1), 1)) -> vy = 0, else vy += 0.65 per tick; FUN_7ff72bb6ce10 reverses only on a NEW contact with a horizontal normal (begin-contact, FUN_7ff72bc14040 re-checks it with the same face strip)'],
+  behavior: 'StepEnemy (every stage; visible on 7-2): its chip collision follows the native face-strip rule instead of testing its whole next rect: the ground is the strip 0.5 under its bottom (a chip it already overlaps counts as ground), a wall is the strip 0.5 past its leading face, chips it already overlaps never block it, a fall stops 0.01 above the chip, and it turns only on a new wall contact. The 7-2 StepEnemy (spawned 24 x 13 inside the first step) now stands on that step, walks left off it after 25 ticks, drops about 35 to the floor and keeps walking left (was: it reversed every frame in place). Bodies (blocks, boxes, lifts, gates) keep the rect test, ignoring any it already overlaps.',
+}, {
+  // Fidelity audit 2026-10-08 batch 6 (solvability harness: 7-3 BLOCKED by the MC_D* chips).
+  id: 'mc-d-tiles-solid',
+  files: ['src/engine/chips.ts', 'src/engine/GameRuntime.ts'],
+  evidence: ['stage_common.lua: MC_DLU = 26, MC_DLD = 27, MC_DRU = 28, MC_DRD = 29 (MC_BR1..5 = 30..34)',
+    'FUN_7ff72bc2fc00 (map ctor, from scene ctor FUN_7ff72bc1a070) sets map+0x40 = DAT_7ff72bcc8c40, map+0x48 = 9: chips 26..34 read that extension table; FUN_7ff72bc285c0 (inlined in FUN_7ff72bc281c0 / 28270 / 28390 / 284a0): chip < 26 -> DAT_7ff72bcc8a30[chip] = {0, 0, 1 x 24}, chip 26..34 -> ext = {3, 3, 3, 3, 1, 1, 1, 1, 1}; solid = attr & 1',
+    'FUN_7ff72bc2fca0 (map sweep) tests only bit 0, the same in every direction: no one-way and no kill for any chip; bit 1 (set only on MC_D*) is never read by action-stage code. The only kill near these blocks is the UpDownEnemy sensor (FUN_7ff72bb6d780)'],
+  behavior: 'MC_DLU / MC_DLD / MC_DRU / MC_DRD (the red 2 x 2 blocks the UpDownEnemy hides in on 5-1, 5-3, 7-3): solid blocks like any other chip, still drawn red; touching them no longer kills (was: non-solid tiles that killed a cat on a guessed directional rule, a 96-wide death pit). Cats can stand on the block while the enemy is down; the enemy\'s own sensor still kills. A StepEnemy walking into the block now turns back.',
+}, {
+  // Fidelity audit 2026-10-08 batch 6 (solvability harness: 3-4 BLOCKED by a push box hanging off a ledge).
+  id: 'pushbox-general-fall',
+  files: ['src/engine/GameRuntime.ts', 'src/engine/actors/PushBox.ts'],
+  evidence: ['PushBox vtable PTR_FUN_7ff72bcb68c0 slot +0xc8 = FUN_7ff72bb33890, installed by every PushBox ctor (FUN_7ff72bb334f0 / FUN_7ff72bb33600) and the Normal / Small / Tall / Big ctor FUN_7ff72bb333d0: no stage test anywhere',
+    'FUN_7ff72bb33890 (every tick): vx = 0, then the push rule may set +-1.0 (DAT_7ff72c61f320); no contact with normal (0, 1) below (FUN_7ff72bc13690(body, (0, +1), 1), any body or chip, the whole bottom edge) -> FUN_7ff72bb34c40(a, 0, 0.65) adds 0.65 (DAT_7ff72bcb69bc) to vy; else vy = 0. No maximum fall speed (the 19.5 cap DAT_7ff72bcbdf88 is the Player\'s FUN_7ff72bb67da0 only)',
+    'Nothing in FUN_7ff72bb33890 or its callees moves x except the +-1.0 push: there is no snap into a box-wide gap; a box drops into a one-chip gap because the push moves it 1 unit per tick, so it cannot skip the first position where nothing is under it. The world sweep FUN_7ff72bc12760 lands it flush (0.01 margin)'],
+  behavior: 'Every stage: an unsupported push box (PushBox and the Normal / Small / Tall / Big family) falls at the native 0.65 per tick per tick with no speed cap, as soon as nothing is under its whole bottom edge, and lands flush (was: only on stage_jump02 or for the box family; elsewhere a box pushed off a ledge hung in the air unless it fitted a box-wide gap, under 980 / s^2 capped at 600 / s, with a centre tip-over rule). The box-wide-gap snap is removed (not native). Because the port pushes a box by the pusher\'s whole step (about 4.9 per frame, native: 1 per tick), a push step now stops at the first unit where the box loses all support, as the native 1-unit steps would. Floating spawns drop from frame 0 (10-3 box onto row 192, 10-4 onto 240, 12-1 onto Rect 302.4); a DamageRect under a box supports it like any body (the 4-2 BlockRoad plug rests on its lower DamageRect, FUN_7ff72bb3e730). A push step also ends flush against a wall it would hit (native 1-unit steps end at contact; was: the whole step was refused, leaving the box up to a step short). The support and fall tests use the native body\'s x extent (FUN_7ff72bb340f0: the rect inset 1 on each side), so 10-4\'s 96-wide box drops into the 95.52 gap beside DarknessRect 2. Not modelled: the body\'s 1-unit vertical inset and the native 1-unit-per-tick push speed.',
 }];
 
 // Fail the build if upstream code changes: never silently skip a correction.
@@ -279,6 +327,14 @@ function replaceOnce(source, before, after, file) {
 
 export function patchCampaignSource(file, source) {
   source = source.replaceAll('\r\n', '\n');
+  if (file === 'src/engine/chips.ts') {
+    // mc-d-tiles-solid: chips 26..29 have attribute 3 (bit 0 solid) in DAT_7ff72bcc8c40.
+    for (const corner of ['LU', 'LD', 'RU', 'RD']) {
+      source = replaceOnce(source, `  MC_D${corner}: { color: danger, alpha: 1.0, solid: false,`, `  MC_D${corner}: { color: danger, alpha: 1.0, solid: true,`, file);
+    }
+    return replaceOnce(source, "  if (chip.startsWith('MC_D')) return { color: danger, alpha: 1.0, solid: false, label: 'danger chip' };",
+      "  if (chip.startsWith('MC_D')) return { color: danger, alpha: 1.0, solid: true, label: 'danger chip' };", file);
+  }
   if (file === 'src/engine/actors/PlayerGeometry.ts') {
     // native-player-body: FUN_7ff72bb6a3b0 body = DAT_7ff72c62d1a8 = {-16, -47, 32, 46} from the row point.
     source = replaceOnce(source, 'export const PLAYER_RECT_WIDTH = 26;', 'export const PLAYER_RECT_WIDTH = 32;', file);
@@ -542,6 +598,15 @@ function planPushBoxLine(
   return planned;
 }
 `;
+    // pushbox-general-fall: the runtime may stop a push step where the box first loses all support (native 1 per tick).
+    source = replaceOnce(source, `  canMoveBox?: (index: number, sign: number, chain?: { lead: number; bodies: number }) => boolean,
+): PushBoxCollisionResult {`, `  canMoveBox?: (index: number, sign: number, chain?: { lead: number; bodies: number }) => boolean,
+  limitPush?: (index: number, from: Rect, to: Rect) => Rect,
+): PushBoxCollisionResult {`, file);
+    source = replaceOnce(source, `    const destination = { ...box, x: box.x + pushDelta };
+    const destinationHitsSolid = map.rectHitsSolid(destination, {`, `    const unlimited = { ...box, x: box.x + pushDelta };
+    const destination = limitPush ? limitPush(i, box, unlimited) : unlimited;
+    const destinationHitsSolid = map.rectHitsSolid(destination, {`, file);
     return source;
   }
   if (file === 'src/engine/actors/KeyGate.ts') {
@@ -568,7 +633,7 @@ function planPushBoxLine(
     source = replaceOnce(source, '      height: Math.abs(endY) + size + Number(!horizontal) };', `      height: Math.abs(endY) + size + Number(!horizontal) };
     this.segmentMotion = { length: (count - 1) * size, progress: (count - 1) * size, target: (count - 1) * size, speed: 1,
       dirX: dx, dirY: dy, cellW: size + Number(horizontal), cellH: size + Number(!horizontal), headPush: false };`, file);
-    return replaceOnce(source, `  open(): void {
+    source = replaceOnce(source, `  open(): void {
     this.opened = true;
     this.view.visible = false;
   }
@@ -612,6 +677,27 @@ function planPushBoxLine(
     }
     this.view.visible = true;
   }`, file);
+    // fallbox-solid-while-armed: a cat that sank a little into the body it stands on is set back on top of it before
+    // any side push, so it walks across level seams (FallBox body -> Rect, both tops 336) as it does on native bodies,
+    // where the down contact zeroes vy and the feet never dip (FUN_7ff72bc13690 / FUN_7ff72bc304f0).
+    source = replaceOnce(source, `  for (const gate of closedGateRects) {
+    if (!rectsOverlap(rect, gate)) continue;
+
+    const previousRight = previousRect.x + previousRect.width;`, `  const landings = closedGateRects.filter((gate) => previousRect.y + previousRect.height <= gate.y);
+  const ordered = [...landings, ...closedGateRects.filter((gate) => !landings.includes(gate))];
+  for (const gate of ordered) {
+    if (!rectsOverlap(rect, gate)) continue;
+    if (landings.includes(gate) && velocity.y >= 0) {
+      // It was above this body's top last frame: it is standing on it, whatever its sideways motion.
+      rect = { ...rect, y: gate.y - rect.height };
+      outVelocity.y = 0;
+      grounded = true;
+      blocked = true;
+      continue;
+    }
+
+    const previousRight = previousRect.x + previousRect.width;`, file);
+    return source;
   }
   if (file === 'src/engine/actors/Bridge.ts') {
     source = replaceOnce(source, 'const segmentWidth = horizontalSegment ? segmentSize : segmentSize + 1;', 'const segmentWidth = horizontalSegment ? segmentSize + 1 : segmentSize;', file);
@@ -926,7 +1012,7 @@ import { frameTexture } from '../sprites';
     const begin = source.indexOf('  update(dt: number, tileMap?: TileMap): void {');
     const end = source.indexOf('\n  }\n}\n', begin);
     if (begin < 0 || end < 0) throw new Error('Patch anchor changed: StepEnemy.update');
-    return source.slice(0, begin) + `  /** FUN_7ff72bb6cbe0: walk 1 unit per tick; reverse at a wall; fall 0.65 per tick squared while unsupported. */
+    source = source.slice(0, begin) + `  /** FUN_7ff72bb6cbe0: walk 1 unit per tick; reverse at a wall; fall 0.65 per tick squared while unsupported. */
   update(dt: number, tileMap?: TileMap, solids: readonly Rect[] = []): void {
     const blocked = (rect: Rect): boolean => !!tileMap?.rectHitsSolid(rect)
       || solids.some((solid) => rect.x < solid.x + solid.width && rect.x + rect.width > solid.x
@@ -966,6 +1052,101 @@ import { frameTexture } from '../sprites';
     this.view.x = this.rect.x + this.rect.width / 2;
     this.view.y = this.rect.y + this.rect.height / 2;
 ` + source.slice(end);
+    // stepenemy-unspawn: the native face-strip chip rule (FUN_7ff72bc304f0 / FUN_7ff72bc2fca0); no push-out.
+    const nativeBegin = source.indexOf('  /** FUN_7ff72bb6cbe0: walk 1 unit per tick;');
+    const nativeEnd = source.indexOf('    this.view.x = this.rect.x + this.rect.width / 2;', nativeBegin);
+    if (nativeBegin < 0 || nativeEnd < 0) throw new Error('Patch anchor changed: StepEnemy native update');
+    return source.slice(0, nativeBegin) + `  private wasWallContact = false;
+
+  /** FUN_7ff72bb6cbe0 + the world sweep: walk 1 unit per tick, fall 0.65 per tick squared, turn on a new wall contact.
+   *  Chips: a face strip 0.5 past the leading face (edges inclusive) blocks that axis; chips the body already
+   *  overlaps never block it (FUN_7ff72bc304f0 / FUN_7ff72bc2fca0). Bodies: the rect test, minus bodies it overlaps. */
+  update(dt: number, tileMap?: TileMap, solids: readonly Rect[] = []): void {
+    const chip = tileMap?.map.chipSize ?? 48;
+    const solidCell = (tx: number, ty: number): boolean => !!tileMap
+      && tx >= 0 && ty >= 0 && tx < tileMap.map.width && ty < tileMap.map.height && tileMap.isSolidTile(tx, ty);
+    // A zero-thickness strip at x (vertical) or y (horizontal); cells floor(coord / chip), edges inclusive.
+    const verticalStripHits = (x: number, top: number, bottom: number): boolean => {
+      const tx = Math.floor(x / chip);
+      for (let ty = Math.floor(top / chip); ty <= Math.floor(bottom / chip); ty += 1) if (solidCell(tx, ty)) return true;
+      return false;
+    };
+    const horizontalStripHits = (y: number, left: number, right: number): boolean => {
+      const ty = Math.floor(y / chip);
+      for (let tx = Math.floor(left / chip); tx <= Math.floor(right / chip); tx += 1) if (solidCell(tx, ty)) return true;
+      return false;
+    };
+    const overlapsInclusive = (a: Rect, b: Rect): boolean => a.x <= b.x + b.width && a.x + a.width >= b.x
+      && a.y <= b.y + b.height && a.y + a.height >= b.y;
+    const overlapsStrict = (a: Rect, b: Rect): boolean => a.x < b.x + b.width && a.x + a.width > b.x
+      && a.y < b.y + b.height && a.y + a.height > b.y;
+    const freeSolids = solids.filter((solid) => !overlapsStrict(this.rect, solid));
+
+    const left = this.rect.x, right = this.rect.x + this.rect.width;
+    const top = this.rect.y, bottom = this.rect.y + this.rect.height;
+    const downStrip = { x: left, y: bottom + 0.5, width: this.rect.width, height: 0 };
+    const grounded = horizontalStripHits(bottom + 0.5, left, right)
+      || freeSolids.some((solid) => overlapsInclusive(downStrip, solid));
+    if (grounded) {
+      this.fallVelocity = 0;
+    } else {
+      this.fallVelocity = Math.min(19.5 * 60, this.fallVelocity + 0.65 * 3600 * dt);
+      const fall = this.fallVelocity * dt;
+      // Sweep down: only rows entered below the current bottom; stop 0.01 above the first solid row.
+      let allowed = fall;
+      for (let ty = Math.floor(bottom / chip) + 1; ty <= Math.floor((bottom + fall) / chip); ty += 1) {
+        let hit = false;
+        for (let tx = Math.floor(left / chip); tx <= Math.floor((right - 1e-6) / chip); tx += 1) if (solidCell(tx, ty)) hit = true;
+        if (hit) { allowed = Math.max(0, Math.min(allowed, ty * chip - 0.01 - bottom)); break; }
+      }
+      for (const solid of freeSolids) {
+        if (solid.x < right && solid.x + solid.width > left && solid.y >= bottom) {
+          allowed = Math.max(0, Math.min(allowed, solid.y - bottom));
+        }
+      }
+      if (allowed < fall) this.fallVelocity = 0;
+      this.rect.y += allowed;
+    }
+
+    const step = this.walkDirection * STEP_ENEMY_PATROL_SPEED * dt;
+    const faceX = this.walkDirection > 0 ? this.rect.x + this.rect.width + 0.5 : this.rect.x - 0.5;
+    const faceStrip = { x: faceX, y: this.rect.y, width: 0, height: this.rect.height };
+    const wallContact = verticalStripHits(faceX, this.rect.y, this.rect.y + this.rect.height)
+      || freeSolids.some((solid) => overlapsInclusive(faceStrip, solid));
+    if (wallContact) {
+      if (!this.wasWallContact) {
+        this.walkDirection = this.walkDirection > 0 ? -1 : 1;
+        const sprite = this.view.children[0] as { scale?: { x: number }; x: number } | undefined;
+        if (sprite?.scale) { sprite.scale.x *= -1; sprite.x = -sprite.x; }
+      }
+    } else {
+      // Sweep sideways: only columns entered past the leading face; stop 0.01 short of the first solid column.
+      let allowed = Math.abs(step);
+      const lead = this.walkDirection > 0 ? this.rect.x + this.rect.width : this.rect.x;
+      const target = lead + step;
+      const firstTx = this.walkDirection > 0 ? Math.ceil(lead / chip) : Math.floor(lead / chip) - 1;
+      const lastTx = this.walkDirection > 0 ? Math.floor((target - 1e-9) / chip) : Math.floor(target / chip);
+      for (let tx = firstTx; this.walkDirection > 0 ? tx <= lastTx : tx >= lastTx; tx += this.walkDirection) {
+        let hit = false;
+        for (let ty = Math.floor(this.rect.y / chip); ty <= Math.floor((this.rect.y + this.rect.height - 1e-6) / chip); ty += 1) {
+          if (solidCell(tx, ty)) hit = true;
+        }
+        if (hit) {
+          const boundary = this.walkDirection > 0 ? tx * chip : (tx + 1) * chip;
+          allowed = Math.max(0, Math.min(allowed, Math.abs(boundary - lead) - 0.01));
+          break;
+        }
+      }
+      for (const solid of freeSolids) {
+        if (solid.y < this.rect.y + this.rect.height && solid.y + solid.height > this.rect.y) {
+          const gap = this.walkDirection > 0 ? solid.x - lead : lead - (solid.x + solid.width);
+          if (gap >= 0) allowed = Math.min(allowed, gap);
+        }
+      }
+      this.rect.x += this.walkDirection * allowed;
+    }
+    this.wasWallContact = wallContact;
+` + source.slice(nativeEnd);
   }
   if (file === 'src/engine/actors/UpDownEnemy.ts') {
     // step-enemy-native: FUN_7ff72bb6d170 sensor {-28, -22, 56, 48}; view {-30, -26, 60, 52} from atlas (385,0,30,26).
@@ -990,12 +1171,132 @@ import { frameTexture } from '../sprites';
     // step-enemy-native: FUN_7ff72bb38ba0 sensors {-30, -39, 60, 78}; the art is not decoded (dark placeholder).
     source = replaceOnce(source, 'export const BOWWOW_ENEMY_WIDTH = 28;', 'export const BOWWOW_ENEMY_WIDTH = 60;', file);
     source = replaceOnce(source, 'export const BOWWOW_ENEMY_HEIGHT = 22;', 'export const BOWWOW_ENEMY_HEIGHT = 78;', file);
-    return replaceOnce(source, "    g.beginFill(0x2b2f77, 0.72);\n    g.lineStyle(2, 0xf97316, 0.95);\n    g.drawRoundedRect(-14, -11, 28, 22, 5);",
+    source = replaceOnce(source, "    g.beginFill(0x2b2f77, 0.72);\n    g.lineStyle(2, 0xf97316, 0.95);\n    g.drawRoundedRect(-14, -11, 28, 22, 5);",
       "    g.beginFill(0x1b1b1b, 1);\n    g.lineStyle(2, 0x3a2418, 1);\n    g.drawEllipse(0, 0, 30, 39);", file);
+    // bowwow-chase-stops: only a moving cat (mean movement > 0) is a target (FUN_7ff72bb39180).
+    source = replaceOnce(source, `      const movement = Math.hypot(target.movementX, target.movementY);
+      if (!selected || movement > selected.movement) {`, `      const movement = Math.hypot(target.movementX, target.movementY);
+      if (!(movement > 0)) continue;
+      if (!selected || movement > selected.movement) {`, file);
+    // bowwow-chase-stops: state 3 steers only with a target but always moves along its last heading.
+    source = replaceOnce(source, `    if (this.state === 3) {
+      if (candidate) {
+        this.chase(candidate.target);
+      }
+      return;
+    }`, `    if (this.state === 3) {
+      if (candidate) this.steer(candidate.target);
+      this.translate(this.lastChaseDelta.x, this.lastChaseDelta.y);
+      return;
+    }`, file);
+    source = replaceOnce(source, `  private chase(target: BowwowEnemyTarget): void {
+    const dx = target.x - this.view.x;
+    const dy = target.y - (this.view.y + BOWWOW_CHASE_SOURCE_Y_OFFSET);
+    const length = Math.hypot(dx, dy);
+    if (length === 0) return;
+
+    this.lastChaseDelta = {
+      x: (dx / length) * this.params.chaseStepPerFrame,
+      y: (dy / length) * this.params.chaseStepPerFrame,
+    };
+    this.translate(this.lastChaseDelta.x, this.lastChaseDelta.y);
+  }`, `  private steer(target: BowwowEnemyTarget): void {
+    const dx = target.x - this.view.x;
+    const dy = target.y - (this.view.y + BOWWOW_CHASE_SOURCE_Y_OFFSET);
+    const length = Math.hypot(dx, dy);
+    if (length === 0) return;
+
+    this.lastChaseDelta = {
+      x: (dx / length) * this.params.chaseStepPerFrame,
+      y: (dy / length) * this.params.chaseStepPerFrame,
+    };
+  }
+
+  /** bowwow-chase-stops: FUN_7ff72bb39680 - a catch in state 3 locks the dog into state 4 (drift only). */
+  notifyCatch(): void {
+    if (this.state === 3) this.state = 4;
+  }
+
+  get chaseState(): number {
+    return this.state;
+  }`, file);
+    return source;
   }
   if (file === 'src/engine/actors/FallBox.ts') {
     // bottom-anchored-boxes: FUN_7ff72bb42900 rect {-p0/2, -p1, p0, p1} (bottom-centre on the row point).
-    return replaceOnce(source, '      y: spawn.y - size.height / 2,', '      y: spawn.y - size.height,', file);
+    source = replaceOnce(source, '      y: spawn.y - size.height / 2,', '      y: spawn.y - size.height,', file);
+    // fallbox-solid-while-armed: every active box is solid, armed or not (FUN_7ff72bb42d90 / FUN_7ff72bb429b0).
+    source = replaceOnce(source, `  fallBoxRects.forEach((box, index) => {
+    if (falling.has(index)) return;
+    if (shouldTriggerFallBox(previousPlayerRect, currentPlayerRect, playerVelocity, box)) {
+      triggeredBoxIndices.push(index);
+      return;
+    }
+    activeBoxRects.push(box);
+  });`, `  fallBoxRects.forEach((box, index) => {
+    if (!falling.has(index) && shouldTriggerFallBox(previousPlayerRect, currentPlayerRect, playerVelocity, box)) {
+      triggeredBoxIndices.push(index);
+    }
+    activeBoxRects.push(box);
+  });`, file);
+    // fallbox-solid-while-armed: hold while t <= 0.22 (compare, then add), then gravity 0.65 per tick per tick.
+    source = replaceOnce(source, `  const stepDt = Number.isFinite(dt) ? Math.max(0, dt) : 0;
+  const armedSeconds = velocity.armedSeconds + stepDt;
+  if (armedSeconds <= armDelaySeconds) {
+    return {
+      rect: { ...rect },
+      velocity: { y: 0, armedSeconds },
+    };
+  }`, `  const stepDt = Number.isFinite(dt) ? Math.max(0, dt) : 0;
+  if (velocity.armedSeconds <= armDelaySeconds) {
+    return {
+      rect: { ...rect },
+      velocity: { y: 0, armedSeconds: velocity.armedSeconds + stepDt },
+    };
+  }
+  const armedSeconds = velocity.armedSeconds;`, file);
+    source = replaceOnce(source, `  return {
+    rect: { ...rect, y: rect.y + settleStep },
+    velocity: { y: settleStep, armedSeconds },
+  };
+}`, `  const fallVelocity = velocity.y + settleStep * 60 * 60 * stepDt;
+  return {
+    rect: { ...rect, y: rect.y + fallVelocity * stepDt },
+    velocity: { y: fallVelocity, armedSeconds },
+  };
+}`, file);
+    // fallbox-solid-while-armed: the despawn test reads the box bottom (the row-point anchored node y).
+    source = replaceOnce(source, `  const actorCenterY = rect.y + rect.height / 2;
+  return actorCenterY > (FALL_BOX_NATIVE_SCREEN_HEIGHT / scale) * 2;`, `  const actorBottomY = rect.y + rect.height;
+  return actorBottomY > (FALL_BOX_NATIVE_SCREEN_HEIGHT / scale) * 2;`, file);
+    // fallbox-solid-while-armed: the runtime limits the fall to the free space below (land on the first support).
+    // fallbox-solid-while-armed: the native body is the rect inset 2 on every side (FUN_7ff72bb42d90).
+    source = replaceOnce(source, `  setActive(active: boolean): void {`, `  get body(): Rect {
+    return { x: this.rect.x + 2, y: this.rect.y + 2, width: this.rect.width - 4, height: this.rect.height - 4 };
+  }
+
+  setActive(active: boolean): void {`, file);
+    return replaceOnce(source, `  updateFalling(dt: number, supported = false): void {
+    if (!this.falling) return;
+    const result = integrateFallingFallBox(this.rect, this.velocity, dt, supported);
+    this.rect = result.rect;
+    this.velocity = result.velocity;
+    this.syncView();
+  }`, `  updateFalling(dt: number, supported = false, freeDrop?: (rect: Rect, dy: number) => number): void {
+    if (!this.falling) return;
+    const result = integrateFallingFallBox(this.rect, this.velocity, dt, supported);
+    const dy = result.rect.y - this.rect.y;
+    if (dy > 0 && freeDrop) {
+      const allowed = freeDrop(this.body, dy);
+      if (allowed < dy) {
+        result.rect = { ...result.rect, y: this.rect.y + allowed };
+        result.velocity = { ...result.velocity, y: 0 };
+      }
+    }
+    this.rect = result.rect;
+    this.velocity = result.velocity;
+    this.syncView();
+  }`, file);
   }
   if (file === 'src/engine/GameRuntime.ts') {
     // optional-teacher-cats: a leaving helper cat is removed with every retained reference to it.
@@ -2415,6 +2716,221 @@ function createMoveWallState(spawn: ActorSpawnDef): MoveWallState {`, file);
     this.player = activePlayers[0];`, `    this.updatePushBoxDisplayCounts();
     this.applyThundersAfterMotion(activePlayers, thunderContactIndexes);
     this.player = activePlayers[0];`, file);
+    // bowwow-chase-stops: the dog that catches a cat locks into state 4 (FUN_7ff72bb39680).
+    source = replaceOnce(source, `    if (this.bowwowEnemies.some((enemy) => shouldRespawnPlayerForBowwowEnemy(this.player!.rect, enemy.rect))) {
+      this.startPlayerDeathSequence(this.player, this.currentInputPlayerIndex());
+    }`, `    const catchers = this.bowwowEnemies.filter((enemy) => shouldRespawnPlayerForBowwowEnemy(this.player!.rect, enemy.rect));
+    if (catchers.length > 0) {
+      for (const enemy of catchers) enemy.notifyCatch();
+      this.startPlayerDeathSequence(this.player, this.currentInputPlayerIndex());
+    }`, file);
+    source = replaceOnce(source, `    this.bowwowEnemies = [];`, `    this.bowwowEnemies = [];
+    this.bowwowMovementRings.clear();`, file);
+    // fallbox-solid-while-armed: FallBox bodies are resolved in the same pass as the Rects and gates, so a cat on one
+    // is set on its top before a level neighbour can push it sideways.
+    source = replaceOnce(source, `    const blockerRects = [
+      ...(bracingGuardPlayer ? [] : closedGateRects),`, `    const blockerRects = [
+      ...this.stationaryActiveFallBoxRects(),
+      ...(bracingGuardPlayer ? [] : closedGateRects),`, file);
+    // fallbox-solid-while-armed: armed and falling boxes stay solid (FUN_7ff72bb42d90 / FUN_7ff72bb429b0).
+    source = replaceOnce(source, `  private stationaryActiveFallBoxRects(): Rect[] {
+    return this.fallBoxes
+      .filter((fallBox) => fallBox.active && !fallBox.falling)
+      .map((fallBox) => fallBox.rect);
+  }`, `  private stationaryActiveFallBoxRects(): Rect[] {
+    return this.fallBoxes
+      .filter((fallBox) => fallBox.active)
+      .map((fallBox) => fallBox.body);
+  }`, file);
+    source = replaceOnce(source, `  private activeFallBoxRects(): Rect[] {
+    return this.fallBoxes
+      .filter((fallBox) => fallBox.active)
+      .map((fallBox) => fallBox.rect);
+  }`, `  private activeFallBoxRects(): Rect[] {
+    return this.fallBoxes
+      .filter((fallBox) => fallBox.active)
+      .map((fallBox) => fallBox.body);
+  }`, file);
+    source = replaceOnce(source, `      activeFallBoxes.map(({ fallBox }) => fallBox.rect),`, `      activeFallBoxes.map(({ fallBox }) => fallBox.body),`, file);
+    source = replaceOnce(source, `    const supportProbe: Rect = {
+      x: fallBox.rect.x + 0.5,
+      y: fallBox.rect.y + fallBox.rect.height + 0.001,
+      width: Math.max(1, fallBox.rect.width - 1),
+      height: 1,
+    };`, `    const body = fallBox.body;
+    const supportProbe: Rect = {
+      x: body.x + 0.5,
+      y: body.y + body.height + 0.001,
+      width: Math.max(1, body.width - 1),
+      height: 1,
+    };`, file);
+    source = replaceOnce(source, `      ...this.fallBoxes
+        .filter((fallBox, index) => index !== fallBoxIndex && fallBox.active)
+        .map((fallBox) => fallBox.rect),`, `      ...this.fallBoxes
+        .filter((fallBox, index) => index !== fallBoxIndex && fallBox.active)
+        .map((fallBox) => fallBox.body),`, file);
+    // fallbox-solid-while-armed: a body resting on a box top arms it (FUN_7ff72bb42fb0); the fall lands on the
+    // first chip or body below, cats included (FUN_7ff72bc13690).
+    source = replaceOnce(source, `  private updateFallBoxes(dt: number): void {
+    for (let index = this.fallBoxes.length - 1; index >= 0; index -= 1) {
+      const fallBox = this.fallBoxes[index];
+      fallBox.updateFalling(dt, this.fallBoxHasSupport(fallBox, index));`, `  private updateFallBoxes(dt: number): void {
+    this.armFallBoxesUnderBodies();
+    for (let index = this.fallBoxes.length - 1; index >= 0; index -= 1) {
+      const fallBox = this.fallBoxes[index];
+      fallBox.updateFalling(dt, this.fallBoxHasSupport(fallBox, index), (rect, dy) => this.fallBoxFreeDrop(rect, dy, index));`, file);
+    source = replaceOnce(source, `  private fallBoxSupportBlockerRects(fallBoxIndex: number): Rect[] {
+    return [`, `  /** fallbox-solid-while-armed: FUN_7ff72bb42fb0 arms a box when any body rests on its top (normal y < 0). */
+  private armFallBoxesUnderBodies(): void {
+    const bodies = [
+      ...this.pushBoxes.map((pushBox) => pushBox.rect),
+      ...this.fallBoxes.filter((fallBox) => fallBox.active).map((fallBox) => fallBox.body),
+    ];
+    for (const fallBox of this.fallBoxes) {
+      if (!fallBox.active || fallBox.falling) continue;
+      const own = fallBox.body;
+      const restsOnTop = bodies.some((body) => !(body.x === own.x && body.y === own.y)
+        && Math.abs(body.y + body.height - own.y) <= 0.5
+        && body.x < own.x + own.width && body.x + body.width > own.x);
+      if (restsOnTop) fallBox.trigger();
+    }
+  }
+
+  /** fallbox-solid-while-armed: how far the box can drop this frame before it meets a chip or a body. */
+  private fallBoxFreeDrop(rect: Rect, dy: number, fallBoxIndex: number): number {
+    // A body the box already overlaps (a cat sunk into its top) touches it from above, not below: it never stops the drop.
+    const blockers = this.fallBoxSupportBlockerRects(fallBoxIndex).filter((other) => !rectsOverlap(rect, other));
+    const hits = (y: number) => {
+      const probe = { ...rect, y };
+      return !!this.tileMap?.rectHitsSolid(probe) || blockers.some((other) => rectsOverlap(probe, other));
+    };
+    let travelled = 0;
+    while (travelled < dy) {
+      const next = Math.min(dy, travelled + 1);
+      if (hits(rect.y + next)) {
+        let low = travelled, high = next;
+        for (let i = 0; i < 12; i += 1) {
+          const mid = (low + high) / 2;
+          if (hits(rect.y + mid)) high = mid; else low = mid;
+        }
+        return low;
+      }
+      travelled = next;
+    }
+    return dy;
+  }
+
+  private fallBoxSupportBlockerRects(fallBoxIndex: number): Rect[] {
+    return [
+      ...this.players
+        .filter((player) => player.deathTimer <= 0 && !this.deathFallPlayers.has(player)
+          && !this.collisionChangePlayersCollisionOff.has(player) && !this.goalClearedPlayers.has(player))
+        .map((player) => player.rect),
+      ...this.balances.map((balance) => balance.rect),
+      ...this.seesaws.map((seesaw) => seesaw.rect),`, file);
+    // darkness-weighted-lift-tiles: the type-2 slab never meets map chips (FUN_7ff72bc12490 / FUN_7ff72bc16f50).
+    source = replaceOnce(source, `      if (
+        touchesLowerSolidChip
+        || touchesLowerStaticBody`, `      if (
+        touchesLowerStaticBody`, file);
+    source = replaceOnce(source, `      const blockedBySolidChip = movementSign !== 0 && preflightRects.some((rect) =>`, `      const chipPreflightRects = movementSign < 0 ? darknessSupportedRects : [];
+      const blockedBySolidChip = movementSign !== 0 && chipPreflightRects.some((rect) =>`, file);
+    // mc-d-tiles-solid: no map chip kills (FUN_7ff72bc2fca0 reads only the solid bit).
+    source = replaceOnce(source, `  if (!chip.startsWith('MC_D')) return false;
+  const directionalMatch = /^MC_D([LR])([UD])$/.exec(chip);`, `  if (!chip.startsWith('MC_D')) return false;
+  return false; // mc-d-tiles-solid: native MC_D* chips are plain solid blocks
+  const directionalMatch = /^MC_D([LR])([UD])$/.exec(chip);`, file);
+    // pushbox-general-fall: every box falls natively on every stage (FUN_7ff72bb33890 -> FUN_7ff72bb34c40).
+    source = replaceOnce(source, `    const stageNativeBoxes = this.stage?.name === 'stage_jump02';
+    const STAGE_PUSH_BOX_GRAVITY = stageNativeBoxes ? .65 * 60 * 60 : 980;
+    const STAGE_PUSH_BOX_MAX_FALL_SPEED = stageNativeBoxes ? Infinity : 600;`, `    const PUSH_BOX_GRAVITY = .65 * 60 * 60;
+    const PUSH_BOX_MAX_FALL_SPEED = Infinity;`, file);
+    // pushbox-general-fall: any body under the box supports it, DamageRects too (the BlockRoad plug rests on one).
+    source = replaceOnce(source, `      ...this.colorBoxes.map(colorBoxRect),
+    ];
+    for (let i = 0; i < this.pushBoxes.length; i += 1) {
+      const box = this.pushBoxes[i];`, `      ...this.colorBoxes.map(colorBoxRect),
+      ...this.damageRects.map((damageRect) => damageRect.rect),
+    ];
+    for (let i = 0; i < this.pushBoxes.length; i += 1) {
+      const box = this.pushBoxes[i];`, file);
+    source = replaceOnce(source, `      const nativeJumpBoxes = stageNativeBoxes || box.nativeFall === true;
+      const PUSH_BOX_GRAVITY = box.nativeFall === true ? .65 * 60 * 60 : STAGE_PUSH_BOX_GRAVITY;
+      const PUSH_BOX_MAX_FALL_SPEED = box.nativeFall === true ? Infinity : STAGE_PUSH_BOX_MAX_FALL_SPEED;`, `      const nativeJumpBoxes = true;`, file);
+    {
+      const snapBegin = source.indexOf('      if (!box.falling) {\n        // Engage only on the supported -> unsupported transition');
+      const snapEnd = source.indexOf('      if (supported && box.velocityY >= 0) {', snapBegin);
+      if (snapBegin < 0 || snapEnd < 0) throw new Error('Patch anchor changed: push box gap snap');
+      source = source.slice(0, snapBegin) + '      box.wasSupported = supported;\n' + source.slice(snapEnd);
+    }
+    // pushbox-general-fall: the fall and support tests use the body's x extent (the rect inset 1 on each side,
+    // FUN_7ff72bb340f0: {x + 1, y + 1, w - 2, h - 2}), so a box whose drawn rect overlaps a ledge by under 1 drops.
+    source = replaceOnce(source, `      const blockedAt = (rect: Rect): boolean =>
+        this.tileMap!.rectHitsSolid(rect)
+        || solidRects.some((solid) => rectsOverlap(rect, solid))
+        || otherBoxRects.some((other) => rectsOverlap(rect, other));`, `      const blockedAt = (rect: Rect): boolean => {
+        const body = { ...rect, x: rect.x + 1, width: rect.width - 2 };
+        return this.tileMap!.rectHitsSolid(body)
+          || solidRects.some((solid) => rectsOverlap(body, solid))
+          || otherBoxRects.some((other) => rectsOverlap(body, other));
+      };`, file);
+    // pushbox-general-fall: every box lands flush on its support (FUN_7ff72bc12760), not only a hopping one: the
+    // 1-unit support strip otherwise stops a falling box up to 1 above what it lands on.
+    source = replaceOnce(source, `      if (supported && box.velocityY >= 0) {
+        if (box.hopping) {`, `      if (supported && box.velocityY >= 0) {
+        {`, file);
+    // pushbox-general-fall: a push step stops where the box first has nothing under it (native pushes 1 per tick).
+    source = replaceOnce(source, `        return this.countPlayersPushingBox(pushedRect, sign) + (chain ? chain.bodies : 0) >= required;
+      },
+    );`, `        return this.countPlayersPushingBox(pushedRect, sign) + (chain ? chain.bodies : 0) >= required;
+      },
+      (index, from, to) => {
+        const firstFreeX = this.firstUnsupportedPushBoxX(index, from, to);
+        const limited = firstFreeX === undefined ? to : { ...to, x: firstFreeX };
+        if (!pushBoxCollisionMap.rectHitsSolid(limited)) return limited;
+        // Native moves the box 1 unit per tick and the sweep stops it flush (FUN_7ff72bc12760): end at contact.
+        const sign = Math.sign(limited.x - from.x);
+        let low = 0, high = Math.abs(limited.x - from.x);
+        for (let pass = 0; pass < 20; pass += 1) {
+          const middle = (low + high) / 2;
+          if (pushBoxCollisionMap.rectHitsSolid({ ...from, x: from.x + sign * middle })) high = middle; else low = middle;
+        }
+        return low > 0.001 ? { ...from, x: from.x + sign * low } : limited;
+      },
+    );`, file);
+    source = replaceOnce(source, `  private updateFallingPushBoxes(dt: number): void {`, `  /** pushbox-general-fall: the first x on the push path (1-unit steps) where nothing is under the box's whole
+   *  bottom edge, starting from a supported box; undefined when it stays supported (FUN_7ff72bb33890). */
+  private firstUnsupportedPushBoxX(index: number, before: Rect, after: Rect): number | undefined {
+    if (!this.tileMap || after.x === before.x) return undefined;
+    const solids: Rect[] = [
+      ...this.gates.filter((gate) => gate.isSolid()).map((gate) => gate.rect),
+      ...this.stationaryActiveFallBoxRects(),
+      ...this.staticRects.filter((staticRect) => staticRect.spawn.actorName !== 'PuzzlePredictProxy').map((staticRect) => staticRect.rect),
+      ...this.moveWalls.map((moveWall) => moveWall.rect),
+      ...this.weightedLifts.map((weightedLift) => weightedLift.rect),
+      ...this.bridges.filter((bridge) => bridge.isSolid()).map((bridge) => bridge.rect),
+      ...this.blinkBlocks.filter((blinkBlock) => blinkBlock.solid).map((blinkBlock) => blinkBlock.rect),
+      ...this.colorBoxes.map(colorBoxRect),
+      ...this.damageRects.map((damageRect) => damageRect.rect),
+      ...this.pushBoxes.filter((_, other) => other !== index).map((other) => other.rect),
+      ...this.players.filter((player) => player.deathTimer <= 0 && !this.deathFallPlayers.has(player)
+        && !this.collisionChangePlayersCollisionOff.has(player)).map((player) => player.rect),
+    ];
+    const supportedAt = (x: number): boolean => {
+      const strip = { x: x + 1.001, y: before.y + before.height + .001, width: before.width - 2.002, height: 1 };
+      return this.tileMap!.rectHitsSolid(strip) || solids.some((solid) => rectsOverlap(strip, solid));
+    };
+    if (!supportedAt(before.x)) return undefined;
+    const sign = Math.sign(after.x - before.x);
+    const distance = Math.abs(after.x - before.x);
+    for (let travelled = 1; travelled < distance; travelled += 1) {
+      const x = before.x + sign * travelled;
+      if (!supportedAt(x)) return x;
+    }
+    return undefined;
+  }
+
+  private updateFallingPushBoxes(dt: number): void {`, file);
     source += `
 /** A copy of a stage row at a new point; raw x / y follow, because param parsers find their params after them. */
 function spawnMovedTo(spawn: ActorSpawnDef, x: number, y: number): ActorSpawnDef {

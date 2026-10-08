@@ -1,20 +1,27 @@
 // 7-3 MOVE AND STOP (stage_ghost01).
-// The puzzle: a Ghost that drifts after the cats whenever no cat faces it (it grabs a key within 100 of it and
-// carries it; touching it kills). A WeightedLift (whole party) lifts the cats onto a long plateau (top 288); a
-// floating StepEnemy over the plateau; a 2 x 2 red block (MC_DLU/DRU/DLD/DRD chips, x 1920..2016, y 240..336) that
-// an UpDownEnemy pops out of; then a walled hut whose sealed room holds the Key (only the Ghost can reach it), the
-// roof route over the hut to a platform, a drop to the lower floor and stairs up to the door.
-// Intended route: ride the lift, jump the walking StepEnemy, cross the red block between the enemy's pops, lure the Ghost
-// (all cats facing away) through the hut so it picks up the key, take the key from it while facing it, then over
-// the hut, down and up the stairs to the door.
-// Runtime finding (2026-10-08): the port reads the MC_D* chips as non-solid danger tiles (touching one kills), so
-// the red block is a 96-wide kill pit sunk 48 into the plateau: crossing means staying above y 240 for 128 units of
-// travel. One jump from the plateau stays above 240 for less than that; cat 0 gets over from cat 1's head, but cat 1
-// is then left with no way across. This solver runs that and reports cat 1's best jump.
+// The puzzle: a Ghost (gaze ratio 0.5 -> with 2 cats ONE cat facing it freezes it; it restarts only when no cat
+// faces it; 6 px/tick, faster than a walking cat; touching it kills; it passes through walls). While chasing it heads
+// for the nearest cat's feet point (cat x + 16, feet + 1) from a source 50 above its anchor, except that a free Key
+// within 100 in x becomes its target: it carries the key, which eases 0.1/frame toward the ghost anchor (key rect
+// anchor +-28 vs ghost body anchor -99..-43, so a settled key hangs 15 below the body). A cat overlapping a
+// ghost-carried key takes it.
+// Map: WeightedLift (772..966, both cats) up to the plateau (top 288); a StepEnemy patrolling the plateau; the red
+// block (MC_D* chips, 1920..2016, top 240: a plain solid step) with an UpDownEnemy inside (low 122 frames, rises 50
+// over 152, high 122, falls 152); steps 2304 (top 240) / 2352 (top 192) to the hut roof (2400..2592, top 144); the
+// sealed room under it (2400..2592, floor 336) holds the Key (2480..2512, 260..316); east of the hut a step
+// (2592..2640, top 192) down to a slab (2640..3072, top 288, bottom 336) over a lower floor (top 432, 2640..3120),
+// reached through the hole at 3072..3120; stairs 3120 (384) / 3168 (336) / 3216 (288) / 3264 (240) / 3312 (192) to
+// the door (3360..3408, on top 192). The ghost spawns far west (171, 93) and never moves while a cat faces it.
+// Route: ride the lift, jump the StepEnemy, hop the red block while the enemy is low, up over the hut roof -- always
+// one cat facing the ghost so it stays at its spawn. Cat 1 goes down the hole and back west under the slab (x 3040);
+// cat 0 waits on the slab (x ~2880). Both turn east: the ghost flies at cat 0 along y ~232, diverts through the hut
+// wall to the key, and comes on east carrying it. At ghost x 2760 both turn west (cat 0's gaze holds it); cat 1
+// walks under it and jumps -- its head stops on the slab bottom (336) inside the hanging key (~303..359) while the
+// slab keeps it off the ghost body (bottom ~288). Cat 0 keeps facing the ghost while cat 1 takes the key up the
+// stairs, then cat 1 faces it while cat 0 follows; both enter.
 export default {
   party: 2,
-  budget: 3000,
-  blocker: 'MC_D* chips (7-3 red block under the UpDownEnemy): non-solid kill tiles in the port, so the second cat cannot cross',
+  budget: 3200,
   async solve(stage, api) {
     const { cats, game } = api;
     const lift = game.weightedLifts[0];
@@ -60,26 +67,54 @@ export default {
       faceGhost(i);
     }
     alive('to the red block');
-    // Cat 0 crosses from cat 1's head (cat 1 keeps facing the ghost).
-    // The UpDownEnemy (56 x 48 over the block) rises 50 and drops back on a 9 s cycle: jump while it rests low.
+    // The red block (1920..2016, top 240) is a plain solid step; the UpDownEnemy inside it is low (y 251.6, under
+    // the block top) for 122 frames, rises 50 over 152, stays high 122, falls 152 (548-frame cycle). Each cat hops
+    // over the block right after the enemy settles low.
     const popper = game.upDownEnemies[0];
-    // Cat 1 at the very edge (right side 1918), cat 0 on its head edges east as far as it can stand.
-    api.walkTo(1, 1897); faceGhost(1);   // right side stays west of the block (1920); the west tap faces the ghost
-    api.climbOnto(0, 1, { from: 1810 });
-    const bottomX = cats[1].rect.x;
-    api.until(() => cats[0].rect.x >= Math.min(bottomX + 26, 1885), [{ right: true }, {}], 20, 'cat 0 could not edge east on the head');   // not past 1888: the red block's top row is 1.4 above a head
-    api.until(() => popper.phase === 0 && popper.phaseTimer < 0.3, [], 600, 'the UpDownEnemy never rested');
-    api.jumpTo(0, 2080); faceGhost(0);
-    alive('cat 0 over the red block');
-    // Cat 1: the longest running jump from the edge.
-    api.walkTo(1, 1780); faceGhost(1);
-    api.until(() => popper.phase === 0 && popper.phaseTimer < 0.3, [], 600, 'the UpDownEnemy never rested');
-    let airborne = false;
-    api.until(() => cats[1].deathTimer > 0 || (airborne && cats[1].grounded), (f) => {
-      if (!cats[1].grounded) airborne = true;
-      return [{}, { right: true, jump: f > 10 && f < 26 }];
-    }, 150, 'cat 1 jump did not resolve');
-    alive('cat 1 jumping the red block (MC_D* kill tiles, 96 wide)');
-    api.block('unexpected: cat 1 crossed the red block; the Ghost / key / hut part is not scripted');
+    const whilePopperLow = () => api.until(() => popper.phase === 0 && popper.phaseTimer < 0.3, [], 600, 'the UpDownEnemy never rested');
+    const move = (i, x, opts = {}) => { api.walkTo(i, x, { hop: true, max: 400, ...opts }); faceGhost(i); alive(`cat ${i} to x ${x}`); };
+    whilePopperLow();
+    move(1, 2110);
+    move(0, 2060);
+    // Up the steps (2304 top 240, 2352 top 192) onto the hut roof (2400..2592, top 144); then down the east step
+    // (2592..2640, top 192) to the slab (2640..3072, top 288) east of the hut.
+    move(1, 2520);
+    move(0, 2440);
+    // Cat 1 (the key receiver) goes on down through the slab's east hole (3072..3120) to the lower floor (top 432,
+    // 2640..3120), then back west under the slab; cat 0 stands on the slab further west.
+    move(1, 3096);
+    move(1, 3040);
+    move(0, 2900);
+    // Release: both cats face east (away), so the ghost chases the nearest cat (cat 0 on the slab) along y ~232;
+    // passing x 2396 it diverts to the key (within 100 of it), picks it up through the hut wall, and heads on east
+    // toward cat 0 with the key easing 0.1/frame toward its anchor (15 below its body).
+    api.step([{ right: true }, { right: true }]);
+    const freezeX = 2760;   // ghost centre x where the cats freeze it, well short of cat 0
+    api.until(() => ghost.rect.x + 21 >= freezeX, [], 900, () => `the ghost never reached x ${freezeX} (at ${Math.round(ghost.rect.x)})`);
+    // Both cats are east of it: both turn west. Cat 0's gaze is the one that holds -- cat 1 will stand right under
+    // the ghost's anchor, where its own gaze flips with the sign of dx.
+    api.step([{ left: true }, { left: true }]);
+    if (ghost.isChasing()) api.block('the cats could not freeze the ghost');
+    const ghostHasKey = () => (game.carriedKeys || []).some((entry) => entry.ghost === ghost);
+    if (!ghostHasKey()) api.block(`the ghost did not pick up the key on its way (ghost at ${Math.round(ghost.rect.x)},${Math.round(ghost.rect.y)})`);
+    // Handoff under the slab: the key hangs at y ~303..359 below the frozen ghost (body bottom ~288 = slab top).
+    // Cat 1 walks west under it and jumps; its head stops on the slab bottom (336), inside the key, and the slab keeps
+    // it clear of the ghost's body.
+    const keyX = () => game.keys[0].rect.x + 16;
+    api.walkTo(1, freezeX, { max: 200 });
+    api.until(() => api.carrierOfKey() === 1, (f) => {
+      const dx = keyX() - api.centreX(cats[1]);
+      return [{}, { jump: f % 30 < 14, ...(Math.abs(dx) <= 3 ? {} : dx > 0 ? { right: true } : { left: true }) }];
+    }, 240, 'cat 1 could not take the key from the ghost');
+    alive('taking the key');
+    // Exit: cat 0 (east of the ghost) faces it while cat 1 carries the key east, out of the hole and up the stairs
+    // (3120 top 384, 3168 336, 3216 288, 3264 240, 3312 192) next to the door (3360..3408, on top 192); then cat 1
+    // faces the ghost while cat 0 follows (off the slab's east end, down the hole, up the stairs).
+    api.land();
+    api.walkTo(1, 3330, { hop: true, max: 400 }); faceGhost(1);
+    alive('cat 1 to the door');
+    api.walkTo(0, 3280, { hop: true, max: 400 }); faceGhost(0);
+    alive('cat 0 to the door');
+    api.enterGoal();
   },
 };

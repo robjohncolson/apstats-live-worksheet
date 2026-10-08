@@ -4,8 +4,12 @@
 // (600, 432) and the Key -- inside the west DarknessWeightedLift 1 (0..96, top 220.8, sinks 192 under 2 bodies).
 // Riding lift 1 down reaches the Key and the trigger at 24..72 / 360..408, which creates the Goal (768, 96, on the
 // big east block) and a row of stepping stones (y 48). Route: east to the alcove trigger; JumpStand up and west to
-// lift 1; both ride it down (key + goal trigger); hop it back up (an airborne cat does not weigh); JumpStand again
-// onto the stones at y 48, east along them, drop onto the big block and in at the door.
+// lift 1 (PushBox 1 spawns floating at (336, 0) and drops at frame 0 onto the middle block, walling it off: both
+// bounce onto the block, push the box west into the 95.52 gap -- its native body is inset 1 a side, 94 wide -- where
+// it lands as a step (top 273.6); cross onto DarknessRect 2 and over lift 2 onto lift 1); both ride it down (key +
+// goal trigger); hop it back up (an airborne cat does not weigh); both onto lift 2, which rises to 28.8 (and sinks
+// back the moment one cat leaves); east along the created stones (240 and 336, top 48) and the y-48 blocks, drop
+// onto the big block and in at the door.
 
 export default {
   party: 2,
@@ -35,17 +39,34 @@ export default {
       if (api.feetY(cats[i]) > 241) api.block(`cat ${i} bounced off the JumpStand but missed the middle block top (feet ${api.feetY(cats[i])})`);
     };
     launchToBlock(1);
-    // West: over the gap onto the DarknessRect 2 wall (192..240, top 220.8), across lift 2 onto lift 1 (0..96).
-    api.walkTo(1, 323, { tol: 2 });
-    api.jumpTo(1, 210, { holdJump: 16 });
-    api.jumpTo(1, 140);
-    api.jumpTo(1, 30);
+    // PushBox 1 (96x168, weight 100 = both cats) spawns floating at (336, 0) and drops at frame 0 onto the middle
+    // block (336..432, top 72): it walls off the way west. Cat 1 waits against its east face for the partner.
+    api.walkTo(1, 449, { tol: 2 });
     // Cat 0 drops from the alcove back to the low floor and follows.
     api.walkTo(0, 690);
     api.walkTo(0, 668);
     api.land(0);
     launchToBlock(0);
-    api.walkTo(0, 323, { tol: 2 });
+    // Both push the box west. It has to drop into the gap (240.48..336) to clear the way: as a 168-tall wall on the
+    // block (top 72) nobody gets over it at party 2 (jump rise ~79; a two-cat stack reaches feet ~115; the JumpStand
+    // apex is feet ~232). Pushed in, it lands on DarknessRect 1 (top 441.6) as a step (top ~273.6).
+    const box = game.pushBoxes[0];
+    let lastX = box.rect.x, still = 0;
+    api.until(() => box.rect.y > 250 || still > 40, () => {
+      still = Math.abs(box.rect.x - lastX) < 0.01 ? still + 1 : 0;
+      lastX = box.rect.x;
+      return [{ left: true }, { left: true }];
+    }, 300, 'push PushBox 1 west');
+    if (box.rect.y < 250) {
+      api.block(`PushBox 1 stopped at x ${box.rect.x.toFixed(2)} on the middle block (top ${box.rect.y.toFixed(1)}) instead of ` +
+        `dropping into the gap west of it (DarknessRect 2 ends at 240.48, the block starts at 336)`);
+    }
+    // West: across the box onto the DarknessRect 2 wall (192..240, top 220.8), over lift 2 onto lift 1 (0..96).
+    api.walkTo([0, 1], [330, 296], { tol: 3 });
+    api.land();
+    api.jumpTo(1, 210, { holdJump: 16 });
+    api.jumpTo(1, 140);
+    api.jumpTo(1, 30);
     api.jumpTo(0, 210, { holdJump: 16 });
     api.jumpTo(0, 140);
     api.jumpTo(0, 66);
@@ -65,13 +86,14 @@ export default {
     api.jumpTo(0, 168);
     api.jumpTo(1, 118);
     api.until(() => lift2.rect.y <= 29, [], 400, 'lift 2 did not rise under both cats');
-    // East along the top: stone (240..288, top 48) -> PushBox 1 top (336..432, top 0) -> blocks at 432 / 528 / 624 /
-    // 672 (top 48) -> drop onto the big block (top 96) at the door (744..792).
+    // East along the top: created stones (240..288 and 336..384, top 48) -> blocks at 432 / 528 / 624 / 672 (top 48)
+    // -> drop onto the big block (top 96) at the door (744..792).
+    // Lift 2 sinks back as soon as one cat leaves it, so cat 1 jumps for the first stone while cat 0 jumps on.
     api.jumpTo(0, 264);
-    api.jumpTo(0, 380);
-    api.jumpTo(1, 264);
+    api.jumpTo([0, 1], [365, 264]);
+    api.jumpTo(0, 456);
     api.jumpTo(1, 360);
-    for (const x of [456, 552, 648, 700]) api.jumpTo(0, x);
+    for (const x of [552, 648, 700]) api.jumpTo(0, x);
     // Cat 0 drops into the door nook (720..816, floor 96) and waits at its east end; cat 1 (key carrier) drops in
     // beside it, opens the door and enters; then cat 0 (still overlapping the door sensor) enters.
     api.walkTo(0, 798, { tol: 2, max: 200 });

@@ -3,15 +3,16 @@
 // holds a switch while the other crosses. Gap 1 (x 432..576): SwitchRect "1" (480..528) appears while a cat stands
 // on switch 288 or 720. The long gap (1344..1824): four pads on the stage top (1160..1307) raise SwitchRects 2..5 as
 // stepping stones; the far block holds switch 6 (the whole bridge 1344..1824) for the partner. Past the Key, a
-// FallBox pit; then the ScaleSwitches, the Gate switch (3408), the SwitchRect "7" step switch (3336 / 3912 inside)
-// and the door room behind Gate "1".
+// FallBox pit (each FallBox holds 0.22 s after a landing, so the cats hop straight on); then the ScaleSwitches
+// (walking over them only nudges the size), the SwitchRect "7" step switch (3336; a twin at 3912 inside), the Gate 1
+// switch (3408) and the door room behind Gate "1": cat 0 holds the step for cat 1, then the gate; cat 1 walks in and
+// holds the inside step switch while cat 0 climbs and slips through the closing gate (it closes at 1/tick).
 // Note: at party 2 the runtime binds cat i to input slot playerInputSlots[i] ([1, 0] here); the driver places
 // each cat's buttons in its slot.
 
 export default {
   party: 2,
   budget: 9000,
-  blocker: 'FallBox (audit: Misread, batch 8 fixed only its anchor): an armed FallBox stops being solid the tick it is armed',
   async solve(stage, api) {
     const { cats, game } = api;
     // Gap 1 (floor ends 336; brown blocks 384..432 and 576..624; SwitchRect 1 at 480..528 while a pad is held):
@@ -62,23 +63,45 @@ export default {
     // Both down the steps (1920 / 1968) to the 336 floor; cat 1 (in front) walks through the Key (2048..2080).
     api.walkTo([0, 1], [2100, 2160], { max: 400 });
     if (api.carrierOfKey() < 0) api.block('nobody picked up the key at 2048');
-    // FallBox pit (2208..2400): 192 wide, too far for a jump at the same height, so each cat lands on the middle
-    // FallBox (2280..2328, top 336) and jumps again before the armed box drops (0.22 s), then the other cat follows.
-    // Runtime finding: the box arms on the landing contact and stops being solid in the same tick, so the cat is
-    // never grounded on it and falls into the Thunder pit.
-    api.walkTo(1, 2185, { tol: 3 });
-    const box = game.fallBoxes.find((fallBox) => fallBox.spawn.x === 2304);
-    let f = 0;
-    api.until(() => cats[1].grounded && f > 3, () => {
-      const over = api.centreX(cats[1]) > box.rect.x && api.centreX(cats[1]) < box.rect.x + box.rect.width;
-      if (over && api.feetY(cats[1]) > box.rect.y + 6) {
-        api.block(`cat 1 landed on the middle FallBox (x ${box.rect.x}, top ${box.rect.y}) and dropped through it the same ` +
-          `tick it armed (falling = ${box.falling}); it was never grounded, so it could not jump on to the far side (2400)`);
+    // FallBox pit (2208..2400, Thunder at the bottom): FallBoxes are solid (body = drawn rect inset 2) while armed
+    // (0.22 s after a body lands on top) and while falling, but only inside the camera view. Middle box 2280..2328
+    // (top 336), low boxes 2232..2280 and 2328..2376 (top 384). Cat 1 lands on the middle box and jumps on to the far
+    // ledge (2400.., top 336) before it drops; cat 0 follows box-to-box over the low pair.
+    const hopVia = (who, xs, label, { pit = false } = {}) => {
+      for (const x of xs) {
+        let f = 0, left = false;
+        api.until(() => left && cats[who].grounded, () => {
+          if (!cats[who].grounded) left = true;
+          const specs = [{}, {}];
+          specs[who] = { jump: f++ < 14, ...steer(cats[who], x, 2) };
+          return specs;
+        }, 150, `${label}: cat ${who} jumping to x ${x}`);
+        if (pit && api.feetY(cats[who]) > 390) api.block(`${label}: cat ${who} fell into the FallBox pit near x ${Math.round(api.centreX(cats[who]))}`);
       }
-      return [{}, { jump: f++ < 14, ...steer(cats[1], 2304, 2) }];
-    }, 200, 'cat 1 jumping onto the middle FallBox');
-    // (Not reached in the current runtime.) Then: jump on to 2400, the other cat follows; ScaleSwitches; one cat holds
-    // the Gate 1 switch (3408) while the other climbs SwitchRect 7 and enters the door room.
+    };
+    api.walkTo([0, 1], [2120, 2185], { tol: 3 });
+    hopVia(1, [2304, 2440], 'middle FallBox', { pit: true });
+    hopVia(0, [2256, 2352, 2420], 'low FallBoxes', { pit: true });
+    // On east: the 336 ledge (2400..2544) steps down to 384 (2544..2592) and the 432 floor, over the ScaleSwitches.
+    api.walkTo([0, 1], [3336, 3500], { tol: 2, max: 600 });
+    // Door room (block 3696.., top 336; ceiling to 144) behind Gate 1 (3744..3774, nine 30-high segments: opening
+    // retracts them at 2/tick, closing extends them at 1/tick). Floor switches: SwitchRect7 (3320) raises the step
+    // SwitchRect 7 (3648..3744, top 384, the only way up the 96 face); Gate1 (3392) opens the gate. Inside, a second
+    // SwitchRect7 switch (3896) holds the step for whoever is left outside.
+    const gate = game.gates[0];
+    const step7 = game.switchRects.find((rect) => rect.spawn.label === '7');
+    api.until(() => step7.collisionPublished, [{}, {}], 30, 'cat 0 on the 3320 switch did not raise SwitchRect 7');
+    hopVia(1, [3672, 3718], 'up SwitchRect 7');
+    if (api.feetY(cats[1]) > 337) api.block('cat 1 did not reach the door-room block top (336) west of Gate 1');
+    // Cat 0 opens the gate and stays until it is fully retracted.
+    api.walkTo(0, 3408, { tol: 3 });
+    api.until(() => gate.opened && gate.segmentMotion.progress <= 0, [{}, {}], 300, 'Gate 1 did not open');
+    // Cat 1 walks in onto the inside switch (the step comes back); cat 0 then has ~160 ticks of closing gate.
+    api.walkTo(1, 3912, { tol: 3, max: 200 });
+    api.until(() => step7.collisionPublished, [{}, {}], 30, 'the inside switch did not raise SwitchRect 7');
+    api.walkTo(0, 3615, { tol: 3 });
+    hopVia(0, [3672, 3718], 'cat 0 up SwitchRect 7');
+    api.walkTo(0, 3820, { tol: 3, max: 120, label: 'cat 0 through the closing Gate 1' });
     api.enterGoal();
   },
 };

@@ -446,6 +446,83 @@
         "FUN_7ff72bb4d850 (Thunder slot 27) then kills only listed players overlapping the beam of that same L: the plank, the cut and the kill all read one frame of body positions; Thunder slot 25 (0x7ff72bb4d600) only shifts the +0x4e0 / +0x4e4 / +0x4e8 latch and toggles the frame"
       ],
       "behavior": "Thunder stages with GuardPlayers (4-1, 12-1): planks are refreshed after every cat and body has moved this frame, and the beam cut, the drawn length and the kill judge all use those same positions (was: the plank was placed and the beam cut at the start of the frame, before the cats moved, so a guard walking into a beam left the beam at its old length for one frame and the cat behind it could die on the second contact). Thunder kills are judged for the same cats as before (those that reached the contact checks this frame), after the per-cat loop instead of inside it."
+    },
+    {
+      "id": "bowwow-chase-stops",
+      "files": [
+        "src/engine/actors/BowwowEnemy.ts",
+        "src/engine/GameRuntime.ts"
+      ],
+      "evidence": [
+        "FUN_7ff72bb39180 (update) picks the in-range cat (|dx| < 300 asleep DAT_7ff72bc7daa8, else < 400 DAT_7ff72bc7da00) with the largest FUN_7ff72bb67b10(cat, out, 0x1e) movement, and only when that movement is strictly above 0.0 (best starts at 0.0, strict compare): a cat whose 30-frame mean displacement is zero is never a target",
+        "States (+0x3f8): 0 sleep (bob, Zzz) -> 1 on any target; 1 -> 2 (warn) when best > 1.5 (DAT_7ff72bc7d1ac); 2 -> 0 with no target, -> 3 (wake) when best > 2.5 (DAT_7ff72bcb74c4); 3 steers v = normalize(cat - (dog + (0, 64 DAT_7ff72bc7d1b8))) * speed (+0x40c, p0) only while it has a target, and adds v to its position EVERY tick, target or not; it never returns to sleep",
+        "Contact FUN_7ff72bb39680 (fixture category 7, rect {-30, -39, 60, 78} DAT_7ff72c61f358): a category-1 (cat) contact gets command 4 (death), and a dog in state 3 enters state 4, which only keeps adding the last v (no more steering)"
+      ],
+      "behavior": "BowwowEnemy (7-1): a cat standing still (zero 30-frame mean movement) no longer wakes or steers the dog, and a warned dog goes back to sleep when every cat in range is still; a dog that is already chasing keeps flying straight along its last heading while the cats are still (it steers again as soon as one moves), and after it catches a cat it only drifts along that heading (state 4) instead of turning to the next cat. Was: any cat in range counted as a target even when still, and a chasing dog froze in place when the cats froze. The coordinator expectation \"it stops when all cats are still\" is not native: only a warned (state 2) dog gives up; the way through 7-1 is to keep each cat's 30-frame mean movement under 1.5 (sneak in short steps)."
+    },
+    {
+      "id": "fallbox-solid-while-armed",
+      "files": [
+        "src/engine/actors/FallBox.ts",
+        "src/engine/actors/KeyGate.ts",
+        "src/engine/GameRuntime.ts"
+      ],
+      "evidence": [
+        "FUN_7ff72bb42d90 (body): the rect inset 2 (DAT_7ff72bcff5c0 = 2.0, DAT_7ff72bcb7d8c = -4.0), FUN_7ff72bc16bf0(..., 3), body+4 = 2; nothing in the update FUN_7ff72bb429b0 disables it except the horizontal on-screen gate FUN_7ff72bb42ff0: the box is solid unarmed, during the arm delay and while it falls",
+        "Contact FUN_7ff72bb42fb0: ANY body or chip contact whose normal has y < 0 (something resting on its top) sets +0x6f4 |= 1 (armed): a cat, a push box or another FallBox",
+        "FUN_7ff72bb429b0 (update): armed -> if t <= 0.22 (DAT_7ff72bcb8d20 = 0.22) t += dt and the box holds still; else FUN_7ff72bc13690(body, (0, 1.0 DAT_7ff72bcff538), 1) tests for a contact below: none -> vy += 0.65 per tick (DAT_7ff72bcb69bc, gravity, no cap), else vy = 0; the box lands on chips and bodies (cats too); vx is never written; nothing carries a rider (a cat on it falls by its own gravity)",
+        "Despawn in the fall branch: the node y (the box BOTTOM, row-point anchored) > 2 * 720 / scale (DAT_7ff72bc7db90) -> FUN_7ff72bc11650 destroys it; there is no respawn timer (only a stage rebuild brings it back)"
+      ],
+      "behavior": "FallBox (2-2, 2-4, 10-1 and every FallBox stage): an armed box stays solid while it waits 0.22 s and while it falls (was: it stopped being solid the tick it armed, so a cat dropped straight through it); it then falls under gravity (0.65 per tick per tick, uncapped; was a constant 0.65 per frame) and lands on chips, blocks, boxes, other FallBoxes and cats, starting to fall again if that support goes; a push box or FallBox resting on its top arms it too (was: cats only); it despawns when its bottom passes twice the view height (was: its centre), and never respawns. Its solid body is the native rect inset 2 on every side (the drawn box is unchanged), so a cat stands 2 lower on a FallBox than on its drawn top (2-2: on 336, level with the Rect blocks either side; was 334) and neighbouring boxes leave a 4-unit seam. FallBox bodies are resolved in the same pass as Rects and gates, and that pass sets a cat back on top of what it stands on before any side push, so it walks off a FallBox onto a level Rect (native: the down contact keeps vy 0, so the feet never dip below a level neighbour). A cat standing on it is not carried; it falls with the box under the same gravity."
+    },
+    {
+      "id": "darkness-weighted-lift-tiles",
+      "files": [
+        "src/engine/GameRuntime.ts"
+      ],
+      "evidence": [
+        "FUN_7ff72bb62580 (setParams): the slab body is FUN_7ff72bc16bf0(this, {0, 0, p0, p1}, 2), a type-2 body: FUN_7ff72bc12490 moves a body whose type (+0x20) has bit 0 clear straight (pos += delta), never through the map sweep FUN_7ff72bc2fca0, and it never records a chip contact (its +0xa0 list stays empty)",
+        "FUN_7ff72bb62790 (update): the 0.06 s freeze (0x3d75c28f) is refreshed by FUN_7ff72bc13690(body, DOWN, 1), which for this body can only see bodies below it; the offset step is committed only when FUN_7ff72bc16f50(this, delta, 0, 0) accepts it, and that test walks the slab's BODY contacts in the move direction (a contacted body blocks when it touches a chip that way or its own chain fails); the slab's own chip contacts are never consulted. The plain WeightedLift (FUN_7ff72bb63cf0 / FUN_7ff72bb64310) is the same"
+      ],
+      "behavior": "DarknessWeightedLift (10-3; 10-4 unchanged): the slab is no longer stopped or frozen by map chips it passes through: only bodies under it freeze it, and only riders that would hit a chip (rising) or a static block block a step. 10-3 lift 2 now sinks past the row-144 chips (it stopped at y 96 after 48 of its 144); its riders land on those chips and the lift holds just below them, uncovering the door slot. Was: the port tested the slab itself against chips (freeze probe and step preflight). The plain WeightedLift branch already skipped the slab's chip test."
+    },
+    {
+      "id": "stepenemy-unspawn",
+      "files": [
+        "src/engine/actors/StepEnemy.ts"
+      ],
+      "evidence": [
+        "The Lua row is read correctly: stage_traffic_light01.lua { \"StepEnemy\", chipSize*20, chipSize*8, -1 } = (960, 384), p0 -1; map column 20 row 8 is MC_FLL (solid), so the native body {-24, -13, 48, 26} (DAT_7ff72c62d250) starts 24 x 13 inside that chip",
+        "Native never pushes a body out of a chip. FUN_7ff72bc1da80 (world step) sweeps a moved body with FUN_7ff72bc12490(body, map, delta, 0, slide 1) -> FUN_7ff72bc2fca0: per moving axis FUN_7ff72bc304f0 first tests a face strip 0.5 (DAT_7ff72bcff4fc) past the leading face, cells floor(coord / 48) edges inclusive (every chip id >= 2 solid, DAT_7ff72bcc8a30): a hit zeroes that axis and records the contact (FUN_7ff72bb31cf0); the sweep itself only tests cells the box enters beyond its current extents (FUN_7ff72bc28390 / FUN_7ff72bc284a0) and stops 0.01 short of the cell boundary (DAT_7ff72bc7d45c); chips already under the box are never tested",
+        "FUN_7ff72bb6cbe0: grounded = a down contact (FUN_7ff72bc13690(body, (0, 1), 1)) -> vy = 0, else vy += 0.65 per tick; FUN_7ff72bb6ce10 reverses only on a NEW contact with a horizontal normal (begin-contact, FUN_7ff72bc14040 re-checks it with the same face strip)"
+      ],
+      "behavior": "StepEnemy (every stage; visible on 7-2): its chip collision follows the native face-strip rule instead of testing its whole next rect: the ground is the strip 0.5 under its bottom (a chip it already overlaps counts as ground), a wall is the strip 0.5 past its leading face, chips it already overlaps never block it, a fall stops 0.01 above the chip, and it turns only on a new wall contact. The 7-2 StepEnemy (spawned 24 x 13 inside the first step) now stands on that step, walks left off it after 25 ticks, drops about 35 to the floor and keeps walking left (was: it reversed every frame in place). Bodies (blocks, boxes, lifts, gates) keep the rect test, ignoring any it already overlaps."
+    },
+    {
+      "id": "mc-d-tiles-solid",
+      "files": [
+        "src/engine/chips.ts",
+        "src/engine/GameRuntime.ts"
+      ],
+      "evidence": [
+        "stage_common.lua: MC_DLU = 26, MC_DLD = 27, MC_DRU = 28, MC_DRD = 29 (MC_BR1..5 = 30..34)",
+        "FUN_7ff72bc2fc00 (map ctor, from scene ctor FUN_7ff72bc1a070) sets map+0x40 = DAT_7ff72bcc8c40, map+0x48 = 9: chips 26..34 read that extension table; FUN_7ff72bc285c0 (inlined in FUN_7ff72bc281c0 / 28270 / 28390 / 284a0): chip < 26 -> DAT_7ff72bcc8a30[chip] = {0, 0, 1 x 24}, chip 26..34 -> ext = {3, 3, 3, 3, 1, 1, 1, 1, 1}; solid = attr & 1",
+        "FUN_7ff72bc2fca0 (map sweep) tests only bit 0, the same in every direction: no one-way and no kill for any chip; bit 1 (set only on MC_D*) is never read by action-stage code. The only kill near these blocks is the UpDownEnemy sensor (FUN_7ff72bb6d780)"
+      ],
+      "behavior": "MC_DLU / MC_DLD / MC_DRU / MC_DRD (the red 2 x 2 blocks the UpDownEnemy hides in on 5-1, 5-3, 7-3): solid blocks like any other chip, still drawn red; touching them no longer kills (was: non-solid tiles that killed a cat on a guessed directional rule, a 96-wide death pit). Cats can stand on the block while the enemy is down; the enemy's own sensor still kills. A StepEnemy walking into the block now turns back."
+    },
+    {
+      "id": "pushbox-general-fall",
+      "files": [
+        "src/engine/GameRuntime.ts",
+        "src/engine/actors/PushBox.ts"
+      ],
+      "evidence": [
+        "PushBox vtable PTR_FUN_7ff72bcb68c0 slot +0xc8 = FUN_7ff72bb33890, installed by every PushBox ctor (FUN_7ff72bb334f0 / FUN_7ff72bb33600) and the Normal / Small / Tall / Big ctor FUN_7ff72bb333d0: no stage test anywhere",
+        "FUN_7ff72bb33890 (every tick): vx = 0, then the push rule may set +-1.0 (DAT_7ff72c61f320); no contact with normal (0, 1) below (FUN_7ff72bc13690(body, (0, +1), 1), any body or chip, the whole bottom edge) -> FUN_7ff72bb34c40(a, 0, 0.65) adds 0.65 (DAT_7ff72bcb69bc) to vy; else vy = 0. No maximum fall speed (the 19.5 cap DAT_7ff72bcbdf88 is the Player's FUN_7ff72bb67da0 only)",
+        "Nothing in FUN_7ff72bb33890 or its callees moves x except the +-1.0 push: there is no snap into a box-wide gap; a box drops into a one-chip gap because the push moves it 1 unit per tick, so it cannot skip the first position where nothing is under it. The world sweep FUN_7ff72bc12760 lands it flush (0.01 margin)"
+      ],
+      "behavior": "Every stage: an unsupported push box (PushBox and the Normal / Small / Tall / Big family) falls at the native 0.65 per tick per tick with no speed cap, as soon as nothing is under its whole bottom edge, and lands flush (was: only on stage_jump02 or for the box family; elsewhere a box pushed off a ledge hung in the air unless it fitted a box-wide gap, under 980 / s^2 capped at 600 / s, with a centre tip-over rule). The box-wide-gap snap is removed (not native). Because the port pushes a box by the pusher's whole step (about 4.9 per frame, native: 1 per tick), a push step now stops at the first unit where the box loses all support, as the native 1-unit steps would. Floating spawns drop from frame 0 (10-3 box onto row 192, 10-4 onto 240, 12-1 onto Rect 302.4); a DamageRect under a box supports it like any body (the 4-2 BlockRoad plug rests on its lower DamageRect, FUN_7ff72bb3e730). A push step also ends flush against a wall it would hit (native 1-unit steps end at contact; was: the whole step was refused, leaving the box up to a step short). The support and fall tests use the native body's x extent (FUN_7ff72bb340f0: the rect inset 1 on each side), so 10-4's 96-wide box drops into the 95.52 gap beside DarknessRect 2. Not modelled: the body's 1-unit vertical inset and the native 1-unit-per-tick push speed."
     }
   ],
   "hashes": {

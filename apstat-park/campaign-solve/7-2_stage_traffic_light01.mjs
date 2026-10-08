@@ -3,14 +3,17 @@
 // A staircase (first step x 960..1056, top 384) with a StepEnemy at its foot, a pit with a Warp, a field of 27
 // JumpStands with the Key high above it, then a NormalBox (whole party push) and, behind a wall, the raised door
 // ledge (x 3696..4008, top 264) with a SmallBox on it.
-// Route: cat 0 jumps from cat 1's head over the StepEnemy onto the stairs; cat 1 makes a running jump that comes
-// down on the enemy's solid top and walks off it. Up the stairs, over the pit, stop before the jump field for the
+// StepEnemy (48 x 26, native walker): spawns at x 936 on the first step, walks west at 1 per tick from frame 0, drops
+// to the floor at x ~906 (frame ~30) and keeps walking west toward the spawn (turns at walls; the floor pit at
+// x 48..144 catches it). Side contact kills, its top is safe. It meets the cats around x ~810 at frame ~115.
+// Route: both cats walk east and each makes a plain running jump over the enemy when it is < 36 ahead (26 tall:
+// any jump clears it), then they gather at x 860 / 900. Up the stairs, over the pit, stop before the jump field for the
 // red. Next green: bounce across the field (the key is taken on a bounce), push the NormalBox to the east wall;
 // stop for the red. Next green: cat 0 climbs cat 1 -> NormalBox -> ledge, hops the SmallBox and pushes it off the
 // ledge into the gap before the NormalBox; cat 1 climbs SmallBox -> NormalBox -> ledge; both enter.
-// Notes: the static StepEnemy (audit: Misread; never walks) can only be passed this way, by landing exactly on its
-// solid top (any side contact kills). The NormalBox -> ledge jump (72 up, peak 78) only works holding west from the
-// box's west end, sliding up the ledge face.
+// Notes: the route's later legs are paced by the light (waitForGreen), so the total frame count is set by the light
+// cycle, not by leg 1. The NormalBox -> ledge jump (72 up, peak 78) only works holding west from the box's west end,
+// sliding up the ledge face.
 export default {
   party: 2,
   budget: 6000,
@@ -29,19 +32,23 @@ export default {
       const dead = cats.findIndex((cat) => cat.deathTimer > 0);
       if (dead >= 0) api.block(`${label}: cat ${dead} died at ${JSON.stringify(api.snapshot()[dead])} (light ${red() ? 'red' : 'green'})`);
     };
-    // Leg 1, first green: past the StepEnemy (936..984, 371..397).
-    api.walkTo([0, 1], [860, 905]);
-    api.climbOnto(0, 1, { from: 850 });
-    api.jumpTo(0, 1010);
-    alive('cat 0 over the StepEnemy');
-    api.jumpTo(0, 1110);   // second step (top 336), out of cat 1's way
-    api.walkTo(1, 780);
-    let airborne = false;
-    api.until(() => cats[1].deathTimer > 0 || (airborne && cats[1].grounded), (f) => {
-      if (!cats[1].grounded) airborne = true;
-      return [{}, { right: true, jump: f > 8 && f < 24 }];
-    }, 120, 'cat 1 jump did not resolve');
-    alive('cat 1 landing on the StepEnemy top');
+    // Leg 1, first green: past the StepEnemy. It walks west at 1 per tick from frame 0, drops off the first step's
+    // west end (x ~906) to the floor (top 406, 48 x 26) and keeps walking west toward the cats (turning at walls; the
+    // floor pit at x 48..144 west of the spawn eventually swallows it). Each cat walks east and jumps it as it comes.
+    const enemy = game.stepEnemies[0];
+    const jumpLeft = [0, 0];
+    api.until(() => [0, 1].every((i) => cats[i].grounded && cats[i].rect.x > enemy.rect.x + 52 && api.centreX(cats[i]) >= 860 + i * 40), () => {
+      alive('jumping the StepEnemy');
+      return [0, 1].map((i) => {
+        const cat = cats[i];
+        const gap = enemy.rect.x - (cat.rect.x + cat.rect.width);
+        if (cat.grounded && jumpLeft[i] === 0 && gap > 0 && gap < 36) jumpLeft[i] = 14;
+        const jump = jumpLeft[i] > 0;
+        if (jumpLeft[i] > 0) jumpLeft[i]--;
+        return { right: api.centreX(cat) < 860 + i * 40, jump };
+      });
+    }, 400, 'the cats could not get past the StepEnemy');
+    alive('past the StepEnemy');
     // Up the stairs (tops 336 / 288 / 240) and over the pit (1344..1440) to the floor; stop at x ~1700.
     api.walkTo([0, 1], [1300, 1260], { hop: true, max: 300 });
     alive('stairs');

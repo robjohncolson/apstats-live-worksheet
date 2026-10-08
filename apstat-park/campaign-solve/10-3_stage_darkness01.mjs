@@ -2,20 +2,19 @@
 // The puzzle (party 2): a dark room. The cats start in the lower-left room; touching the top of the bump (trigger
 // 312..360) creates a Rect step (192..240, top 384); the corridor east leads to DarknessWeightedLift 1 in the east
 // shaft, which carries the party up to the 240 floor. Touching 528..576 there creates the Key in the upper-left
-// area (behind the tall PushBox "1", weight 100: both cats push); touching 124.8..158.4 (far west, upper area)
+// area (past the tall PushBox "1", weight 100: both cats push; it drops from (312, -48) onto the 192 floor at frame 0
+// and the pair shoves it west to the wall); touching 124.8..158.4 (far west, upper area)
 // creates the Goal on the high east ledge (768, 144) and a JumpStand (552, 240) to get up there.
 // Route: stack-jump onto the bump (creates the step), the partner climbs step -> bump; east along the corridor onto
 // lift 1 (the corridor is one chip tall: cat 0 jumps up the shaft while cat 1 walks under it, so the stack lands on
-// the one-cat-wide slab), ride up; trigger the key, walk west under the hanging PushBox through the key and the goal
+// the one-cat-wide slab), ride up; trigger the key, push PushBox 1 west along the 192 floor through the key and the goal
 // trigger; each cat bounces off the JumpStand east onto DarknessWeightedLift 2 (720..816, top 48), which sinks 144
-// under both and should carry them down into the door slot beneath it (744..792, 112..144).
-// Runtime finding (2026-10-08): the port's DarknessWeightedLift preflight tests the sinking slab itself against map
-// chips, so lift 2 stops after 48 units on the row-144 chips and the riders never reach the door slot.
+// under both (the slab ignores map chips) and the riders land on the row-144 chips in the door slot (744..792,
+// 112..144); enterGoal then takes both in.
 
 export default {
   party: 2,
   budget: 6000,
-  blocker: 'DarknessWeightedLift (audit: Match): the port tests the sinking slab itself against map chips, so lift 2 cannot sink through the row under it',
   async solve(stage, api) {
     const { cats, game } = api;
     // Bump (288..384, top 336, 96 tall): cat 1 stands at its west face, cat 0 climbs onto its head and jumps on top.
@@ -43,9 +42,10 @@ export default {
     // (weight 100) west to the wall.
     api.walkTo([0, 1], [552, 600]);
     api.walkTo([0, 1], [430, 470], { hop: true });
-    // Walk west under the hanging PushBox 1 through the Key (it appears at 144, 144) and the far-west trigger
-    // (124.8..158.4), which creates the Goal (768, 144) and a JumpStand (552, 240).
-    api.walkTo([0, 1], [100, 140]);
+    // PushBox 1 (48x192) spawns floating at (312, -48) and drops at frame 0 onto the 192 floor (312..360, top 0); both
+    // cats push it west to the wall (it stops a push step short of x 48), walking through the Key (it appears at 144,
+    // 144) and the far-west trigger (124.8..158.4), which creates the Goal (768, 144) and a JumpStand (552, 240).
+    api.walkTo([0, 1], [125, 160], { stall: 30 });
     if (api.carrierOfKey() < 0) api.block('nobody picked up the key at (144, 144)');
     if (game.goals.length === 0 || game.jumpStands.length === 0) api.block('the far-west trigger did not create the Goal / JumpStand');
     api.walkTo([0, 1], [500, 540], { hop: true });
@@ -79,9 +79,8 @@ export default {
       return [{}, {}];
     }, 400, 'lift 2 never settled');
     if (!cats.some((cat) => api.feetY(cat) > goal.rect.y)) {
-      api.block(`lift 2 stopped at y ${lift2.rect.y} (offset ${lift2.rect.y - 48} of its 144 travel): the port's chip preflight ` +
-        `stops the slab on the row-144 chips under it, so the riders (feet ${Math.round(api.feetY(cats[0]))}) never reach the door ` +
-        `slot (sensor y 112..144) below`);
+      api.block(`lift 2 stopped at y ${lift2.rect.y} (offset ${lift2.rect.y - 48} of its 144 travel): the riders ` +
+        `(feet ${Math.round(api.feetY(cats[0]))}) never reached the door slot (sensor y 112..144) below`);
     }
     api.enterGoal();
   },

@@ -2,8 +2,8 @@
   "note": "Written by re-running every campaign-solve solver (party 2 unless a row says otherwise). campaign-solvability.test.mjs asserts the SOLVED rows.",
   "recorded": "2026-10-08",
   "counts": {
-    "SOLVED": 16,
-    "BLOCKED": 14,
+    "SOLVED": 22,
+    "BLOCKED": 8,
     "SKIPPED-UNIMPLEMENTED": 18
   },
   "stages": [
@@ -21,7 +21,7 @@
       "title": "HELLO PICO PARK",
       "status": "SOLVED",
       "party": 2,
-      "frames": 1053
+      "frames": 1040
     },
     {
       "tag": "1-3",
@@ -68,26 +68,9 @@
       "tag": "2-2",
       "source": "stage_fall01",
       "title": "GO TOGETHER",
-      "status": "BLOCKED",
+      "status": "SOLVED",
       "party": 2,
-      "frame": 290,
-      "reason": "FallBox (audit: Misread, batch 8 fixed only its anchor): an armed FallBox is no longer solid during its 0.22 s arm delay -- cat 1 fell through the FallBox bridge at x 1154, 6 frames after landing on it at full speed; armed boxes (still in place, already non-solid): 1104, 1152",
-      "cats": [
-        {
-          "x": 924.1,
-          "y": 290,
-          "feet": 336,
-          "grounded": true,
-          "dead": false
-        },
-        {
-          "x": 1154.4,
-          "y": 301.7,
-          "feet": 347.7,
-          "grounded": false,
-          "dead": false
-        }
-      ]
+      "frames": 717
     },
     {
       "tag": "2-3",
@@ -120,21 +103,21 @@
       "title": "GO TOGETHER",
       "status": "BLOCKED",
       "party": 2,
-      "frame": 229,
-      "reason": "FallBox (audit: Misread, batch 8 fixed only its anchor): an armed FallBox is no longer solid during its 0.22 s arm delay -- cat 1 fell through the FallBox bridge at x 1112, 7 frames after stepping onto it at full speed; armed boxes (still in place, already non-solid): 1056, 1104",
+      "frame": 601,
+      "reason": "WeightedLift needs 4 bodies at party 2 (both push boxes too), and the JumpStandEx never launches a push box onto a head -- both cats crossed; 2 cats on the WeightedLift (top 288), sign shows 2 more, lift has not moved in 60 frames; the push boxes are still at (595, 248), (633, 282)",
       "cats": [
         {
-          "x": 864.3,
-          "y": 241.2,
-          "feet": 287.2,
+          "x": 2471.5,
+          "y": 242,
+          "feet": 288,
           "grounded": true,
           "dead": false
         },
         {
-          "x": 1111.9,
-          "y": 258.2,
-          "feet": 304.2,
-          "grounded": false,
+          "x": 2405.2,
+          "y": 242,
+          "feet": 288,
+          "grounded": true,
           "dead": false
         }
       ]
@@ -184,26 +167,9 @@
       "tag": "3-4",
       "source": "stage_time_limit01",
       "title": "TIME LIMIT",
-      "status": "BLOCKED",
+      "status": "SOLVED",
       "party": 2,
-      "frame": 276,
-      "reason": "PushBox (audit: Match): an unsupported push box only falls in stage_jump02 or for the NormalBox/SmallBox family (nativeFall); elsewhere a box pushed off a ledge floats unless it fits a box-wide gap (findPushBoxGapSnapX) -- push box pushed off the slab edge (x 720) hangs in the air at {\"x\":669.3999999999999,\"y\":288,\"width\":48,\"height\":48} (falling false, wasSupported false); a cat jumping under it does not hop it either",
-      "cats": [
-        {
-          "x": 718.3,
-          "y": 290,
-          "feet": 336,
-          "grounded": true,
-          "dead": false
-        },
-        {
-          "x": 593.5,
-          "y": 385.7,
-          "feet": 431.7,
-          "grounded": true,
-          "dead": false
-        }
-      ]
+      "frames": 1791
     },
     {
       "tag": "4-1",
@@ -219,7 +185,7 @@
       "title": "GIMMICK GIMMICK",
       "status": "SOLVED",
       "party": 2,
-      "frames": 1231
+      "frames": 1223
     },
     {
       "tag": "4-3",
@@ -296,14 +262,14 @@
       "reason": "UNSOLVED: route stops on the first block; the 480-wide gap between the Rect at 2016 (top 112) and the goal tower (2688, top 71) has no party-2 crossing found by the solver",
       "cats": [
         {
-          "x": 876,
+          "x": 880.9,
           "y": 241.4,
           "feet": 287.4,
           "grounded": true,
           "dead": false
         },
         {
-          "x": 908,
+          "x": 912.9,
           "y": 241.6,
           "feet": 287.6,
           "grounded": true,
@@ -317,7 +283,7 @@
       "title": "PUSH OR JUMP",
       "status": "BLOCKED",
       "party": 2,
-      "frame": 1087,
+      "frame": 1082,
       "reason": "UNSOLVED: no party-2 route found from the key to the goal block (tower cycles stall ~2050; goal block at 2448)",
       "cats": [
         {
@@ -328,7 +294,7 @@
           "dead": false
         },
         {
-          "x": 2067.3,
+          "x": 2066.7,
           "y": 385.9,
           "feet": 431.9,
           "grounded": true,
@@ -356,26 +322,9 @@
       "tag": "7-1",
       "source": "stage_bowwow01",
       "title": "MOVE AND STOP",
-      "status": "BLOCKED",
+      "status": "SOLVED",
       "party": 2,
-      "frame": 94,
-      "reason": "BowwowEnemy (audit: Misread, 28x22 vs 60x78; wake rule): chase state 3 is permanent and ignores whether the cats move -- the dog (state 3) killed cat 1 at x 457 on its way to the key; cat 1 froze as soon as the dog woke and was still caught",
-      "cats": [
-        {
-          "x": 84,
-          "y": 385.7,
-          "feet": 431.7,
-          "grounded": true,
-          "dead": false
-        },
-        {
-          "x": 457.4,
-          "y": 385.7,
-          "feet": 431.7,
-          "grounded": true,
-          "dead": true
-        }
-      ]
+      "frames": 666
     },
     {
       "tag": "7-2",
@@ -389,26 +338,9 @@
       "tag": "7-3",
       "source": "stage_ghost01",
       "title": "MOVE AND STOP",
-      "status": "BLOCKED",
+      "status": "SOLVED",
       "party": 2,
-      "frame": 1685,
-      "reason": "MC_D* chips (7-3 red block under the UpDownEnemy): non-solid kill tiles in the port, so the second cat cannot cross -- cat 1 jumping the red block (MC_D* kill tiles, 96 wide): cat 1 died at {\"x\":1960.1,\"y\":205.4,\"feet\":251.4,\"grounded\":false,\"dead\":true} (ghost at 171)",
-      "cats": [
-        {
-          "x": 2057.8,
-          "y": 241.7,
-          "feet": 287.7,
-          "grounded": true,
-          "dead": false
-        },
-        {
-          "x": 1960.1,
-          "y": 205.4,
-          "feet": 251.4,
-          "grounded": false,
-          "dead": true
-        }
-      ]
+      "frames": 2613
     },
     {
       "tag": "7-4",
@@ -416,7 +348,7 @@
       "title": "MOVE AND STOP",
       "status": "SOLVED",
       "party": 2,
-      "frames": 1644
+      "frames": 1660
     },
     {
       "tag": "8-1",
@@ -486,26 +418,9 @@
       "tag": "10-1",
       "source": "stage_jump07",
       "title": "TWO PLAYERS",
-      "status": "BLOCKED",
+      "status": "SOLVED",
       "party": 2,
-      "frame": 930,
-      "reason": "FallBox (audit: Misread, batch 8 fixed only its anchor): an armed FallBox stops being solid the tick it is armed -- cat 1 landed on the middle FallBox (x 2280, top 336) and dropped through it the same tick it armed (falling = true); it was never grounded, so it could not jump on to the far side (2400)",
-      "cats": [
-        {
-          "x": 2112.7,
-          "y": 289.4,
-          "feet": 335.4,
-          "grounded": true,
-          "dead": false
-        },
-        {
-          "x": 2288.2,
-          "y": 298.7,
-          "feet": 344.7,
-          "grounded": false,
-          "dead": false
-        }
-      ]
+      "frames": 1691
     },
     {
       "tag": "10-2",
@@ -536,26 +451,9 @@
       "tag": "10-3",
       "source": "stage_darkness01",
       "title": "TWO PLAYERS",
-      "status": "BLOCKED",
+      "status": "SOLVED",
       "party": 2,
-      "frame": 920,
-      "reason": "DarknessWeightedLift (audit: Match): the port tests the sinking slab itself against map chips, so lift 2 cannot sink through the row under it -- lift 2 stopped at y 96 (offset 48 of its 144 travel): the port's chip preflight stops the slab on the row-144 chips under it, so the riders (feet 96) never reach the door slot (sensor y 112..144) below",
-      "cats": [
-        {
-          "x": 720.8,
-          "y": 50,
-          "feet": 96,
-          "grounded": true,
-          "dead": false
-        },
-        {
-          "x": 779.2,
-          "y": 50,
-          "feet": 96,
-          "grounded": true,
-          "dead": false
-        }
-      ]
+      "frames": 952
     },
     {
       "tag": "10-4",
@@ -563,7 +461,7 @@
       "title": "TWO PLAYERS",
       "status": "SOLVED",
       "party": 2,
-      "frames": 1882
+      "frames": 1872
     },
     {
       "tag": "11-1",
