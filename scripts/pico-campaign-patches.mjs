@@ -317,6 +317,40 @@ export const CAMPAIGN_PATCHES = [{
     'FUN_7ff72bb33890 (every tick): vx = 0, then the push rule may set +-1.0 (DAT_7ff72c61f320); no contact with normal (0, 1) below (FUN_7ff72bc13690(body, (0, +1), 1), any body or chip, the whole bottom edge) -> FUN_7ff72bb34c40(a, 0, 0.65) adds 0.65 (DAT_7ff72bcb69bc) to vy; else vy = 0. No maximum fall speed (the 19.5 cap DAT_7ff72bcbdf88 is the Player\'s FUN_7ff72bb67da0 only)',
     'Nothing in FUN_7ff72bb33890 or its callees moves x except the +-1.0 push: there is no snap into a box-wide gap; a box drops into a one-chip gap because the push moves it 1 unit per tick, so it cannot skip the first position where nothing is under it. The world sweep FUN_7ff72bc12760 lands it flush (0.01 margin)'],
   behavior: 'Every stage: an unsupported push box (PushBox and the Normal / Small / Tall / Big family) falls at the native 0.65 per tick per tick with no speed cap, as soon as nothing is under its whole bottom edge, and lands flush (was: only on stage_jump02 or for the box family; elsewhere a box pushed off a ledge hung in the air unless it fitted a box-wide gap, under 980 / s^2 capped at 600 / s, with a centre tip-over rule). The box-wide-gap snap is removed (not native). Because the port pushes a box by the pusher\'s whole step (about 4.9 per frame, native: 1 per tick), a push step now stops at the first unit where the box loses all support, as the native 1-unit steps would. Floating spawns drop from frame 0 (10-3 box onto row 192, 10-4 onto 240, 12-1 onto Rect 302.4); a DamageRect under a box supports it like any body (the 4-2 BlockRoad plug rests on its lower DamageRect, FUN_7ff72bb3e730). A push step also ends flush against a wall it would hit (native 1-unit steps end at contact; was: the whole step was refused, leaving the box up to a step short). The support and fall tests use the native body\'s x extent (FUN_7ff72bb340f0: the rect inset 1 on each side), so 10-4\'s 96-wide box drops into the 95.52 gap beside DarknessRect 2. Not modelled: the body\'s 1-unit vertical inset and the native 1-unit-per-tick push speed.',
+}, {
+  // Fidelity audit 2026-10-08 batch 7 (solvability harness: 4-4 BLOCKED, a growing cat shoved its rider off).
+  id: 'scaleswitch-carry',
+  files: ['src/engine/GameRuntime.ts'],
+  evidence: ['ScaleSwitch update FUN_7ff72bb5f550: while pressed by a cat (contact category 1) it sends command 0x21 with its rate (p0, +-0.015 per tick on 4-4) to that cat every tick',
+    'Player command 0x21: rate <= 0 only resizes (FUN_7ff72bb679c0); rate > 0 reads body 0\'s world box (FUN_7ff72bb70550) before and after the resize, and with dh = h_after - h_before, dw = (w_after - w_before) * 0.5 (DAT_7ff72bcff4fc) calls FUN_7ff72bb34f30(player, (0, -dh), up), (+dw, 0) right and (-dw, 0) left',
+    'FUN_7ff72bb34f30 -> FUN_7ff72bc17330 (params _DAT_7ff72bcb6220 = {1, 0, 1, 0}, mask 2): every cat contact (category 1 only, so not push boxes) whose normal is that direction is moved by the delta with FUN_7ff72bc16780 (position += delta, no map sweep, body synced, recursing into the moved cat the same way, visited set of 100); velocity and grounded state are untouched'],
+  behavior: 'ScaleSwitch (4-4): while a cat grows, every cat standing on its head (and the whole stack on that cat) rises with it by the height gained, and cats touching its sides are pushed out by half the width gained, recursively; no map test (native moves them directly). Was: the rider overlapped the grown head and was shoved off sideways. Shrinking moves nobody (a rider just drops), and push boxes are never lifted by growth.',
+}, {
+  // Fidelity audit 2026-10-08 batch 7 (solvability harness: 2-4 and 3-2 BLOCKED on the JumpStand launch).
+  id: 'jumpstand-launch',
+  files: ['src/engine/actors/Player.ts', 'src/engine/actors/PushBox.ts', 'src/engine/GameRuntime.ts'],
+  evidence: ['Factory: JumpStand builds the launch vector (0, p0) (0x7ff72bb7495c..6c), JumpStandEx (p0, p1) (0x7ff72bb749f1..a10); ctor FUN_7ff72bb649a0: body {-16, -34, 32, 34} (DAT_7ff72bcbd960) mode 3, category 5, which the Stage contact matrix pairs with cats (1) and boxes (2): a solid block cats and boxes stand on; no gravity',
+    'Update FUN_7ff72bb64c70 (every tick, no cooldown, no extra sensor): every body touching its top (FUN_7ff72bb40af0(body, up, ..., mask -1)) that has nothing on its own top (FUN_7ff72bc132c0(other, up, 0, 0, -1) == 0) gets command 0 with the vector; a cat gets x forced to 0 (0x7ff72bb64da1)',
+    'Player strategy FUN_7ff72bb6fd20: command 0 is taken only while the hold-ramp counter (ctrl+0x14) is 0; FUN_7ff72bb6f0e0 then sets vy = p_y after gravity (the first tick moves exactly p_y), the counter stays 0 (no held-jump ramp), a jump press that tick is ignored, and a later press keeps vy when it is already below the -5.1 jump speed (counter 0xe: no ramp)',
+    'PushBox family (vtable PTR_FUN_7ff72bcb68c0 +0x98 = FUN_7ff72bb33d00): stores (|x| * sign(current vx, 0 -> +), y) at +0x7e8 with flag 1; FUN_7ff72bb33890 sets vy = launch.y on the ground, then while airborne with nothing on its top adds launch.x to vx every tick; the stored launch clears on landing'],
+  behavior: 'JumpStand / JumpStandEx (1-1 ... 12-x; blocking 2-4 and 3-2): the stand is a solid 32 x 34 block for cats and boxes (was: walk-through, boxes fell into the 2-4 gap). Every tick, a cat or push box resting on its top with nothing on its own head is launched: a cat straight up at p_y per tick with no held-jump boost, its first tick moving the full p_y (the port lost that tick: a -10 stand rose 71 instead of the native 82); a box up at p_y with the stand\'s sideways component (JumpStandEx) pushing it each tick while nothing rides it (2-4: the -18 / 3 stand throws a box about 258 up and onto the floor east of the gap). A cat or box with something on its head is not launched (a loaded stand is a pedestal), and a coyote jump right after a launch keeps the launch speed. Was: only a falling cat in the top 8 was bounced, after its move, and boxes never.',
+}, {
+  // Fidelity audit 2026-10-08 batch 7 (solvability harness: 2-1, 2-3 BLOCKED by the rope).
+  id: 'distance-constraint-native',
+  files: ['src/engine/GameRuntime.ts'],
+  evidence: ['Factory 0x7ff72bb75e9a, ctor FUN_7ff72bb3f3a0 (no body); slot 12 FUN_7ff72bb40be0: N = party size, maxDist = p[2N - 4], w = p[2N - 3] (the hanging weight); links bind neighbours in player order (i, i + 1)',
+    'Update FUN_7ff72bb3f580 (slot 25): nothing while any player is in state 1 or 3; per player the far-side loads L / R (FUN_7ff72bb40380 / FUN_7ff72bb40570: W = (0, (stackAbove + 1) * w) when unsupported, plus, walking every link out to the chain end, unit(p_neighbour - p) * (stackAbove + 1) for each link that is stretched (FUN_7ff72bb407a0 returns 0 for a slack link, which does not stop the walk), stackAbove = FUN_7ff72bc132c0(body, up, 1, 0, -1)) and the count of unsupported neighbours out to the chain end (0 as soon as one is supported); c_i = pair(i, i - 1) + pair(i, i + 1) (FUN_7ff72bb3fce0)',
+    'pair FUN_7ff72bb3ffe0: nothing unless len > maxDist (a rope); n = d / len; share = (s2 + 1) / (s1 + s2 + 2), s1 = max(0, -n.selfFar), s2 = max(0, n.otherFar) (1 when the partner is in state 4); c = n * (len - maxDist) * share * 0.2 (DAT_7ff72c61f374); blocked redirects from the tile-contact normals (FUN_7ff72bc137b0): a blocked side turns x into y, a blocked ceiling turns y into x, a blocked floor turns y into x (x k = min(1, 1.2 / (count + 1)) under the cmd-0x29 latch, DAT_7ff72c61f37c); sgn(0) = +1',
+    'Post rules: latch and opposing velocity -> c.x = -sgn(v.x) (|v.x| - 0.1); an upward pull weaker than gravity (c.y > -0.65, DAT_7ff72bcb69bc) on a grounded cat is dropped; |c.y| <= 20.15 (DAT_7ff72bcb86e8); every c is computed first, then applied: position += c and velocity += c (FUN_7ff72bb97db0 / FUN_7ff72bb93620), riders carried (FUN_7ff72bc17330); the moved body reaches its world position only through the world step\'s tile sweep with slide (FUN_7ff72bc17ca0 -> FUN_7ff72bc1da80 -> FUN_7ff72bc12490), so a rope never pulls a cat into chips',
+    'WarpAll (FUN_7ff72bb63060 -> cmd 7 -> FUN_7ff72bb6fd20 -> msg 0x14 to "Key" -> FUN_7ff72bb65700): a carried key is released and eases home (FUN_7ff72bb65430); the port already matches (unchanged)'],
+  behavior: 'DistanceConstraint rope (2-1, 2-3): the pull is the native rope: only when a link is stretched past its length, split by anchoring (a hanging cat gets a third, the standing partner two thirds, weighted by the stack above and the hanging weight w), all corrections computed first and then applied, each moved through the tile sweep (a cat is never pulled into a wall, bar or roof; a blocked pull turns sideways or down as native does), velocity changed by the same amount, riders carried, a grounded cat ignoring an upward pull weaker than gravity, and the whole rope idle while any cat is dying. Was: equal halves applied link by link with no tile test (cats were pulled into the bar / roof tiles), no hanging share, the cmd-0x29 velocity clamp with the wrong sign. WarpAll dropping a carried key back home is native (unchanged).',
+}, {
+  // Codex batch-7 must-fix: a carrier stopped on the lift edge counted for the lift while its head boxes were carried into it.
+  id: 'lift-load-carry-agree',
+  files: ['src/engine/GameRuntime.ts'],
+  evidence: ['FUN_7ff72bb64310 (WeightedLift update) counts its load with FUN_7ff72bc132c0(body, up, recursive, mask 6) over the slab\'s own support contacts and carries exactly that contact set with FUN_7ff72bc17330 (recursive, one visited set): what counts is what rides, and a stack rides only through the body under it',
+    'Browser adaptation: a body is taken as supported by the slab when the centre of its feet is over the slab (a narrow Ex2 slab still carries a cat wider than it); a body only touching the slab corner while standing on a ledge is not on the slab'],
+  behavior: 'Weighted lifts (every family): a cat or box counts toward a lift, and is carried by it, only when the centre of its feet is over the slab; the cats and boxes on its head count and ride through it. A push box on a cat\'s head is carried by a lift only when that cat itself was carried (moved by the lift\'s delta this frame). Was: a cat touching the slab by 1 unit while stopped by a ledge counted (the lift moved) and its head boxes were moved by the lift into the stopped cat (2-4 lift edge).',
 }];
 
 // Fail the build if upstream code changes: never silently skip a correction.
@@ -355,8 +389,42 @@ export function patchCampaignSource(file, source) {
   }
 `, file);
     source = replaceOnce(source, '    this.facing = 1;\n    this.refreshPose();', '    this.facing = this.spawnFacing;\n    this.refreshPose();', file);
-    return replaceOnce(source, '// Browser PlayerGeometry can rest a fraction above (or up to 2px inside) a floor. Probe only',
+    source = replaceOnce(source, '// Browser PlayerGeometry can rest a fraction above (or up to 2px inside) a floor. Probe only',
       '// The native body rests up to one step above a floor (never inside it). Probe only', file);
+    // jumpstand-launch: a stand's command 0 sets vy after gravity (the first tick moves the full launch), no ramp,
+    // and a press that tick is ignored (FUN_7ff72bb6fd20 / FUN_7ff72bb6f0e0).
+    source = replaceOnce(source, '  private facing: -1 | 1 = 1;\n', `  private facing: -1 | 1 = 1;
+  /** jumpstand-launch: a stand launch waiting for this cat's next update (per second; null = none). */
+  pendingLaunchY: number | null = null;
+`, file);
+    // jumpstand-launch: the runtime reads the hold-ramp counter (a stand launch is refused while it runs).
+    source = replaceOnce(source, '  private jumpPhase = 0;', '  jumpPhase = 0;', file);
+    source = replaceOnce(source, `    const startsJump = input.jumpPressed && canStartJump;
+    if (startsJump) {
+      this.velocity.y = this.getJumpSpeed();
+      this.grounded = false;
+      this.jumpPhase = 1;
+      this.jumpCoyoteTimer = 0;
+    } else if`, `    const launch = this.pendingLaunchY;
+    this.pendingLaunchY = null;
+    const startsJump = launch === null && input.jumpPressed && canStartJump;
+    if (launch !== null) {
+      this.velocity.y = launch;
+      this.grounded = false;
+      this.jumpPhase = 0;
+      this.jumpCoyoteTimer = 0;
+    } else if (startsJump && this.velocity.y < this.getJumpSpeed()) {
+      // Already rising faster than a jump (a stand launch): the press keeps it and starts no ramp.
+      this.grounded = false;
+      this.jumpPhase = 0;
+      this.jumpCoyoteTimer = 0;
+    } else if (startsJump) {
+      this.velocity.y = this.getJumpSpeed();
+      this.grounded = false;
+      this.jumpPhase = 1;
+      this.jumpCoyoteTimer = 0;
+    } else if`, file);
+    return source;
   }
   if (file === 'src/engine/physics.ts') {
     // native-player-body: the 3-unit floor-rest inset only compensated for the old body starting 2 units
@@ -598,6 +666,8 @@ function planPushBoxLine(
   return planned;
 }
 `;
+    // jumpstand-launch: the sideways part of a stand launch, applied while airborne with nothing on top (per second).
+    source = replaceOnce(source, '  velocityY = 0;\n', '  velocityY = 0;\n  launchX = 0;\n', file);
     // pushbox-general-fall: the runtime may stop a push step where the box first loses all support (native 1 per tick).
     source = replaceOnce(source, `  canMoveBox?: (index: number, sign: number, chain?: { lead: number; bodies: number }) => boolean,
 ): PushBoxCollisionResult {`, `  canMoveBox?: (index: number, sign: number, chain?: { lead: number; bodies: number }) => boolean,
@@ -2931,6 +3001,309 @@ function createMoveWallState(spawn: ActorSpawnDef): MoveWallState {`, file);
   }
 
   private updateFallingPushBoxes(dt: number): void {`, file);
+    // scaleswitch-carry: a growing cat lifts the stack on its head and pushes cats at its sides (command 0x21 ->
+    // FUN_7ff72bb34f30 -> FUN_7ff72bc17330).
+    source = replaceOnce(source, `    this.player.charge = nextSize;
+    this.player.view.scale.set(nextBodyScale, nextBodyScale);
+    this.player.applyResolvedCollision(nextRect, this.player.velocity, this.player.grounded);
+  }`, `    const grower = this.player;
+    const beforeRect = { ...currentRect };
+    this.player.charge = nextSize;
+    this.player.view.scale.set(nextBodyScale, nextBodyScale);
+    this.player.applyResolvedCollision(nextRect, this.player.velocity, this.player.grounded);
+    if (nextSize > currentSize) {
+      const dh = nextRect.height - beforeRect.height;
+      const dw = (nextRect.width - beforeRect.width) / 2;
+      if (dh > 0) this.pushTouchingCats(grower, beforeRect, 'up', 0, -dh, new Set([grower]));
+      if (dw > 0) {
+        this.pushTouchingCats(grower, beforeRect, 'right', dw, 0, new Set([grower]));
+        this.pushTouchingCats(grower, beforeRect, 'left', -dw, 0, new Set([grower]));
+      }
+    }
+  }
+
+  /** scaleswitch-carry: FUN_7ff72bc17330 / FUN_7ff72bc16780 - move every cat touching \`sourceRect\` on the \`side\` face
+   *  by (dx, dy), no map sweep, then the cats touching each moved cat the same way (visited set). */
+  private pushTouchingCats(source: Player, sourceRect: Rect, side: 'up' | 'left' | 'right', dx: number, dy: number, visited: Set<Player>): void {
+    for (const cat of this.players) {
+      if (visited.size >= 100) return;
+      if (visited.has(cat) || cat === source) continue;
+      if (this.collisionChangePlayersCollisionOff.has(cat) || cat.deathTimer > 0 || this.deathFallPlayers.has(cat)) continue;
+      const rect = cat.rect;
+      const verticalOverlap = rect.y < sourceRect.y + sourceRect.height && rect.y + rect.height > sourceRect.y;
+      const touches = side === 'up'
+        ? rectRestsOnSupport(rect, sourceRect)
+        : side === 'right'
+          ? verticalOverlap && Math.abs(rect.x - (sourceRect.x + sourceRect.width)) <= 0.5
+          : verticalOverlap && Math.abs(rect.x + rect.width - sourceRect.x) <= 0.5;
+      if (!touches) continue;
+      visited.add(cat);
+      const before = { ...rect };
+      cat.applyResolvedCollision({ ...rect, x: rect.x + dx, y: rect.y + dy }, cat.velocity, cat.grounded);
+      this.pushTouchingCats(cat, before, side, dx, dy, visited);
+    }
+  }`, file);
+    // jumpstand-launch: the stand is a solid body for cats and boxes (FUN_7ff72bb649a0, category 5).
+    source = replaceOnce(source, `    const blockerRects = [
+      ...this.stationaryActiveFallBoxRects(),`, `    const blockerRects = [
+      ...this.jumpStands.map((jumpStand) => jumpStand.rect),
+      ...this.stationaryActiveFallBoxRects(),`, file);
+    source = replaceOnce(source, `          || publishedSwitchRectRects.some((switchRect) => rectsOverlap(rect, switchRect));
+      },
+    };`, `          || publishedSwitchRectRects.some((switchRect) => rectsOverlap(rect, switchRect))
+          || this.jumpStands.some((jumpStand) => rectsOverlap(rect, jumpStand.rect));
+      },
+    };`, file);
+    source = replaceOnce(source, `      ...this.colorBoxes.map(colorBoxRect),
+      ...this.damageRects.map((damageRect) => damageRect.rect),
+    ];
+    for (let i = 0; i < this.pushBoxes.length; i += 1) {`, `      ...this.colorBoxes.map(colorBoxRect),
+      ...this.damageRects.map((damageRect) => damageRect.rect),
+      ...this.jumpStands.map((jumpStand) => jumpStand.rect),
+    ];
+    for (let i = 0; i < this.pushBoxes.length; i += 1) {`, file);
+    source = replaceOnce(source, `      ...this.damageRects.map((damageRect) => damageRect.rect),
+      ...this.pushBoxes.filter((_, other) => other !== index).map((other) => other.rect),`, `      ...this.damageRects.map((damageRect) => damageRect.rect),
+      ...this.jumpStands.map((jumpStand) => jumpStand.rect),
+      ...this.pushBoxes.filter((_, other) => other !== index).map((other) => other.rect),`, file);
+    // jumpstand-launch: launch a cat resting on a stand top with nothing on its head (FUN_7ff72bb64c70).
+    {
+      const begin = source.indexOf('  private applyJumpStands(previousPlayerRect: Rect): void {');
+      const end = source.indexOf('  private applyJumpAreas(): void {', begin);
+      if (begin < 0 || end < 0) throw new Error('Patch anchor changed: applyJumpStands');
+      source = source.slice(0, begin) + `  private applyJumpStands(previousPlayerRect: Rect): void {
+    void previousPlayerRect;
+    const cat = this.player;
+    if (!cat) return;
+    if (this.collisionChangePlayersCollisionOff.has(cat)) return;
+    if (this.activelyGuardingPlayers.has(cat)) return;
+    if (cat.jumpPhase !== 0) return;   // command 0 is refused while the hold ramp runs
+    const stand = this.jumpStands.find((jumpStand) => rectRestsOnSupport(cat.rect, jumpStand.rect));
+    if (!stand) return;
+    if (this.somethingRestsOn(cat.rect, cat)) return;
+    cat.pendingLaunchY = stand.launchVelocity.y;
+  }
+
+  /** jumpstand-launch: FUN_7ff72bc132c0(body, up, ...) != 0 - a cat or box rests on top of \`rect\`. */
+  private somethingRestsOn(rect: Rect, self: unknown): boolean {
+    return this.players.some((other) => other !== self && !this.collisionChangePlayersCollisionOff.has(other)
+        && other.deathTimer <= 0 && rectRestsOnSupport(other.rect, rect))
+      || this.pushBoxes.some((box) => box !== self && rectRestsOnSupport(box.rect, rect));
+  }
+
+` + source.slice(end);
+    }
+    // jumpstand-launch: launch a box resting on a stand top (FUN_7ff72bb33d00 / FUN_7ff72bb33890).
+    source = replaceOnce(source, `      const otherBoxRects = this.pushBoxes.filter((_, j) => j !== i).map((other) => other.rect);`, `      {
+        const stand = this.jumpStands.find((jumpStand) => rectRestsOnSupport(box.rect, jumpStand.rect));
+        if (stand && box.velocityY >= 0 && !this.somethingRestsOn(box.rect, box)) {
+          const start = this.frameStartPushBoxRects[i];
+          const movedLeft = !!start && box.rect.x < start.x;
+          box.launchX = Math.abs(stand.launchVelocity.x) * (movedLeft ? -1 : 1);
+          // vy = launch after gravity: the first airborne tick moves the full launch (the rise branch adds gravity).
+          box.velocityY = stand.launchVelocity.y - PUSH_BOX_GRAVITY * dt;
+          box.falling = true;
+          box.hopping = true;
+          box.wasSupported = false;
+        }
+      }
+      const otherBoxRects = this.pushBoxes.filter((_, j) => j !== i).map((other) => other.rect);`, file);
+    source = replaceOnce(source, `      const supported = blockedAt(supportStrip);`, `      // jumpstand-launch: while airborne with nothing on top, the stand's sideways launch moves the box each tick.
+      if (box.launchX !== 0 && box.falling && !this.somethingRestsOn(box.rect, box)) {
+        const dx = box.launchX * dt;
+        const moved = { ...box.rect, x: box.rect.x + dx };
+        if (blockedAt(moved)) box.launchX = 0; else box.applyRect(moved);
+      }
+      const supported = blockedAt(supportStrip);`, file);
+    source = replaceOnce(source, `        box.hopping = false;
+        box.falling = false;
+        box.velocityY = 0;
+        box.wasSupported = true;
+        continue;`, `        box.hopping = false;
+        box.falling = false;
+        box.velocityY = 0;
+        box.launchX = 0;
+        box.wasSupported = true;
+        continue;`, file);
+    // distance-constraint-native: the native rope solver (FUN_7ff72bb3f580 / FUN_7ff72bb3fce0 / FUN_7ff72bb3ffe0).
+    {
+      const begin = source.indexOf('  private applyDistanceConstraints(): void {');
+      const end = source.indexOf('  private applyCollisionConstraintMoves(): void {', begin);
+      if (begin < 0 || end < 0) throw new Error('Patch anchor changed: applyDistanceConstraints');
+      source = source.slice(0, begin) + `  private applyDistanceConstraints(): void {
+    if (this.distanceConstraints.length === 0) return;
+    try {
+      for (const distanceConstraint of this.distanceConstraints) this.applyNativeRope(distanceConstraint);
+    } finally {
+      for (const distanceConstraint of this.distanceConstraints) distanceConstraint.clearCommand29Latches();
+    }
+  }
+
+  /** distance-constraint-native: one tick of FUN_7ff72bb3f580 for one rope. */
+  private applyNativeRope(rope: DistanceConstraint): void {
+    const cats = this.players;
+    const count = cats.length;
+    if (count < 2 || !this.tileMap) return;
+    // States 1 / 3 (respawning / dying) idle the whole rope.
+    if (cats.some((cat) => cat.deathTimer > 0 || this.deathFallPlayers.has(cat))) return;
+    const link = selectDistanceConstraintLinkForPlayerCount(rope.params.values, count);
+    if (!link || link.maxDistance <= 0) return;
+    const maxDist = link.maxDistance;
+    const weight = link.secondValue;
+    const cleared = (cat: Player) => this.goalClearedPlayers.has(cat);   // state 4
+    const point = (cat: Player) => ({ x: cat.rect.x + cat.rect.width / 2, y: cat.rect.y + cat.rect.height + 1 });
+    const sgn = (value: number) => (value < 0 ? -1 : 1);
+    const tileMap = this.tileMap;
+    const blocked = (cat: Player, dx: number, dy: number) => tileMap.rectHitsSolid({ ...cat.rect, x: cat.rect.x + dx, y: cat.rect.y + dy });
+
+    // Recursive stack above each cat (cats and boxes resting on it).
+    const stackAbove = (rect: Rect, seen: Set<unknown>): number => {
+      let total = 0;
+      for (const other of cats) {
+        if (seen.has(other) || !rectRestsOnSupport(other.rect, rect)) continue;
+        seen.add(other);
+        total += 1 + stackAbove(other.rect, seen);
+      }
+      for (const box of this.pushBoxes) {
+        if (seen.has(box) || !rectRestsOnSupport(box.rect, rect)) continue;
+        seen.add(box);
+        total += 1 + stackAbove(box.rect, seen);
+      }
+      return total;
+    };
+    const stacks = cats.map((cat) => stackAbove(cat.rect, new Set([cat])));
+    // Supported: on a tile or a non-cat body, or on a supported cat (FUN_7ff72bb67850 / FUN_7ff72bb69dd0).
+    const supported = cats.map((cat) => cat.grounded);
+    for (let pass = 0; pass < count; pass += 1) {
+      cats.forEach((cat, i) => {
+        if (!cat.grounded) return;
+        const onTile = tileMap.rectHitsSolid({ ...cat.rect, y: cat.rect.y + 1 });
+        if (onTile) return;
+        const supports = cats.filter((other, j) => j !== i && rectRestsOnSupport(cat.rect, other.rect));
+        if (supports.length > 0 && supports.every((other) => !supported[cats.indexOf(other)])) supported[i] = false;
+      });
+    }
+    const positions = cats.map(point);
+    const taut = (a: number, b: number) => Math.hypot(positions[b].x - positions[a].x, positions[b].y - positions[a].y) > maxDist;
+    // FUN_7ff72bb40380 / FUN_7ff72bb40570: walk EVERY link out to the chain end; a slack link adds nothing
+    // (FUN_7ff72bb407a0 returns 0 when len <= maxDist) but does not stop the walk.
+    const farSide = (i: number, step: -1 | 1) => {
+      const far = { x: 0, y: supported[i] ? 0 : (stacks[i] + 1) * weight };
+      for (let j = i; j + step >= 0 && j + step < count; j += step) {
+        if (!taut(j, j + step)) continue;
+        const dx = positions[j + step].x - positions[j].x, dy = positions[j + step].y - positions[j].y;
+        const len = Math.hypot(dx, dy);
+        far.x += (dx / len) * (stacks[j + step] + 1);
+        far.y += (dy / len) * (stacks[j + step] + 1);
+      }
+      return far;
+    };
+    // The same walk counts unsupported neighbours; the first supported one resets the count to 0 for good.
+    const hangingRun = (i: number, step: -1 | 1) => {
+      let run = 0;
+      for (let j = i + step; j >= 0 && j < count; j += step) {
+        if (supported[j]) return 0;
+        run += 1;
+      }
+      return run;
+    };
+    const left = cats.map((_, i) => farSide(i, -1));
+    const right = cats.map((_, i) => farSide(i, 1));
+
+    const corrections = cats.map((cat, i) => {
+      if (cleared(cat)) return { x: 0, y: 0 };
+      let upRedirect = false;
+      const latch = rope.hasCommand29Latch(i);
+      const pair = (j: number, selfFar: { x: number; y: number }, otherFar: { x: number; y: number }, run: number) => {
+        if (j < 0 || j >= count) return { x: 0, y: 0 };
+        const dx = positions[j].x - positions[i].x, dy = positions[j].y - positions[i].y;
+        const len = Math.hypot(dx, dy);
+        if (len <= maxDist || len === 0) return { x: 0, y: 0 };
+        const nx = dx / len, ny = dy / len;
+        const s1 = Math.max(0, -(nx * selfFar.x + ny * selfFar.y));
+        const s2 = Math.max(0, nx * otherFar.x + ny * otherFar.y);
+        const share = cleared(cats[j]) ? 1 : (s2 + 1) / (s1 + s2 + 2);
+        const c = { x: nx * (len - maxDist) * share * 0.2, y: ny * (len - maxDist) * share * 0.2 };
+        const eps = 1.19e-7;
+        if ((c.x > eps && blocked(cat, 1, 0)) || (c.x < -eps && blocked(cat, -1, 0))) {
+          c.y += Math.abs(c.x) * sgn(c.y);
+          c.x = 0;
+          if (sgn(c.y) < 0) upRedirect = true;
+        }
+        if (c.y < -eps && blocked(cat, 0, -1)) {
+          c.x += Math.abs(c.y) * sgn(c.x);
+          c.y = 0;
+        } else if (c.y > eps && blocked(cat, 0, 1)) {
+          const k = latch ? Math.min(1, 1.2 / (run + 1)) : 1;
+          c.x += Math.abs(c.y) * sgn(c.x) * k;
+          c.y = 0;
+        }
+        return c;
+      };
+      const a = pair(i - 1, right[i], left[i - 1] ?? { x: 0, y: 0 }, hangingRun(i, -1));
+      const b = pair(i + 1, left[i], right[i + 1] ?? { x: 0, y: 0 }, hangingRun(i, 1));
+      const c = { x: a.x + b.x, y: a.y + b.y };
+      const vx = cat.velocity.x / 60, vy = cat.velocity.y / 60;
+      if (latch && vx * c.x < 0 && Math.abs(vx) < Math.abs(c.x) + 0.1) c.x = -sgn(vx) * (Math.abs(vx) - 0.1);
+      if (c.y < -0.1 && !cat.grounded && upRedirect && c.y > vy) c.y = 0;
+      if (c.y < 0 && cat.grounded && c.y > -0.65) c.y = 0;
+      c.y = Math.max(-20.15, Math.min(20.15, c.y));
+      return c;
+    });
+
+    // Apply every correction through the tile sweep, then carry riders by what was applied.
+    cats.forEach((cat, i) => {
+      const c = corrections[i];
+      if (c.x === 0 && c.y === 0) return;
+      const before = { ...cat.rect };
+      const moved = moveRectWithTileCollisions(tileMap, cat.rect, { x: c.x, y: c.y });
+      cat.applyResolvedCollision(moved.rect, { x: cat.velocity.x + c.x * 60, y: cat.velocity.y + c.y * 60 },
+        c.y > 0 ? false : cat.grounded);
+      const dx = moved.rect.x - before.x, dy = moved.rect.y - before.y;
+      if (dx === 0 && dy === 0) return;
+      for (const rider of cats) {
+        if (rider === cat || !rectRestsOnSupport(rider.rect, before)) continue;
+        const carried = moveRectWithTileCollisions(tileMap, rider.rect, { x: dx, y: dy });
+        rider.applyResolvedCollision(carried.rect, rider.velocity, rider.grounded);
+      }
+    });
+  }
+
+` + source.slice(end);
+    }
+    // lift-load-carry-agree: the slab counts and carries only bodies whose foot centre is over it (FUN_7ff72bb64310).
+    source = replaceOnce(source, `    const rectLoadsLift = (rect: Rect) => {
+      const rectBottom = rect.y + rect.height;
+      return Math.abs(rectBottom - lift.rect.y) <= 0.5
+        && rect.x + rect.width > lift.rect.x
+        && rect.x < lift.rect.x + lift.rect.width;
+    };`, `    const rectLoadsLift = (rect: Rect) => feetOnSlab(rect, lift.rect);`, file);
+    source = replaceOnce(source, `        if (liftLoadPlayers.has(player) || this.collisionChangePlayersCollisionOff.has(player)) continue;
+        if (!rectRestsOnSupport(player.rect, liftLoadSupports[supportIndex])) continue;`, `        if (liftLoadPlayers.has(player) || this.collisionChangePlayersCollisionOff.has(player)) continue;
+        if (supportIndex === 0 ? !feetOnSlab(player.rect, lift.rect) : !rectRestsOnSupport(player.rect, liftLoadSupports[supportIndex])) continue;`, file);
+    source = replaceOnce(source, `          const playerRect = previousPlayerRects[playerIndex];
+          if (!restsOnSupport(playerRect, supportRect)) continue;
+          supportedPlayers.add(playerIndex);`, `          const playerRect = previousPlayerRects[playerIndex];
+          if (supportIndex === 0 ? !feetOnSlab(playerRect, supportRect) : !restsOnSupport(playerRect, supportRect)) continue;
+          supportedPlayers.add(playerIndex);`, file);
+    // lift-load-carry-agree: a head box rides a lift only through a cat the lift actually carried this frame.
+    source = replaceOnce(source, `      if (carrierIndex < 0) continue;
+      const carrier = this.players[carrierIndex];`, `      if (carrierIndex < 0) continue;
+      const carrier = this.players[carrierIndex];
+      {
+        const carrierStart = this.frameStartPlayerRects[carrierIndex];
+        const carrierMoved = carrierStart
+          && Math.abs(carrier.rect.x - carrierStart.x - dx) <= 0.01 && Math.abs(carrier.rect.y - carrierStart.y - dy) <= 0.01;
+        if (!carrierMoved) continue;
+      }`, file);
+    source += `
+/** lift-load-carry-agree: a body is on a lift slab when its feet rest on the slab top with their centre over it. */
+function feetOnSlab(rect: Rect, slab: Rect): boolean {
+  const centre = rect.x + rect.width / 2;
+  return Math.abs(rect.y + rect.height - slab.y) <= 0.5
+    && centre >= slab.x && centre <= slab.x + slab.width;
+}
+`;
     source += `
 /** A copy of a stage row at a new point; raw x / y follow, because param parsers find their params after them. */
 function spawnMovedTo(spawn: ActorSpawnDef, x: number, y: number): ActorSpawnDef {

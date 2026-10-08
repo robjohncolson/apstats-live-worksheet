@@ -7,8 +7,18 @@
 // box 0's sliver onto cat 0's head and jumps onto the block; cat 1 pushes box 1 (colour 1) west off the block onto
 // box 0 as a second step, and cat 0 climbs box 0 -> box 1 -> block.
 // Then platform -> Rect 1608 -> Rect 2016 (key) -> goal tower.
-// UNSOLVED (solver): the Rect at 2016 ends at 2208 and the goal tower starts at 2688 -- a 480-wide gap at the
-// same height with only the floor (448) below; no party-2 route across was found. See the block message.
+// BLOCKED (batch 6/7 runtime, analysed at party 2..4): the goal tower (map cols 56-61, 2688..2976, capped by the
+// Rect top 71; door 2784..2832 at y 40..72) stands 377 above the only floor (Rect y 448, x 864..3456). The nearest
+// ledge is the Rect 2016..2208 (top 112): a 480-wide gap. Cat 32x46, jump rise 78.6, running jump 35 frames / 124
+// across -> the gap cannot be jumped (it would take ~2800 of drop). From the floor a lone cat needs a support whose
+// top is <= 149.6 (377 - 78.6 = 298.4 above the floor) against the tower = at least 6 stacked boxes (the 5 tallest are
+// 62+60+58+56+54 = 290). Boxes never gain height: they slide when pushed, fall, or ride a WALKING cat's head at that
+// cat's level; a cat with a body on its head cannot jump (head-stack-jump-impulse: the top free box hops 22 instead).
+// Between 2208 and 2688 the only surface is the floor, so every box reaches the tower base at floor level (or on a
+// carrier's head, 46 / 92 up, with the carrier stranded under it). The column's upper boxes (bottom >= 236) can never
+// get there, so the LAST cat (no one left to boost it) can never climb. A human tower needs 7 cats under the first
+// climber (448 - 46k - 78.6 <= 71 -> k >= 6.5). No party-dependent rows: no largeParty, Rect rows carry only W/H, and
+// the ColorBox p3 only changes colours. Needs a native check of the intended (8-player?) solution.
 export default {
   party: 2,
   budget: 4000,
@@ -43,7 +53,9 @@ export default {
     api.jumpTo(0, box1.rect.x + 20);
     api.jumpTo(0, 960);
     if (api.feetY(cats[0]) > 289) api.block('cat 0 could not climb box 0 / box 1 onto the block');
-    api.block('UNSOLVED: route stops on the first block; the 480-wide gap between the Rect at 2016 (top 112) and ' +
-      'the goal tower (2688, top 71) has no party-2 crossing found by the solver');
+    api.block('UNSOLVED (structural, party 2..4): goal tower top 71 is 377 above the only floor (448) and 480 east of ' +
+      'the last ledge (Rect 2016..2208, top 112); jump rise 78.6 / running jump 124 across; a loaded cat cannot jump ' +
+      'and boxes never rise (only a 22 head-hop), so no box support >= 298.4 tall (>= 6 boxes) can be built at the ' +
+      'tower base and the last cat can never climb; a human tower needs 7 cats under the climber');
   },
 };

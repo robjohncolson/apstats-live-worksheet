@@ -2,9 +2,9 @@
   "note": "Written by re-running every campaign-solve solver (party 2 unless a row says otherwise). campaign-solvability.test.mjs asserts the SOLVED rows.",
   "recorded": "2026-10-08",
   "counts": {
-    "SOLVED": 22,
-    "BLOCKED": 8,
-    "SKIPPED-UNIMPLEMENTED": 18
+    "SOLVED": 28,
+    "SKIPPED-UNIMPLEMENTED": 16,
+    "BLOCKED": 4
   },
   "stages": [
     {
@@ -43,26 +43,9 @@
       "tag": "2-1",
       "source": "stage_constraint01",
       "title": "GO TOGETHER",
-      "status": "BLOCKED",
+      "status": "SOLVED",
       "party": 2,
-      "frame": 623,
-      "reason": "DistanceConstraint rope (audit: params ok; mechanism unknown): rope corrections move cats through solid tiles (applyResolvedCollision with no tile test) -- the rope pulled cat 0 up into the bar tiles at {\"x\":1982.2,\"y\":183.6,\"feet\":229.6,\"grounded\":true,\"dead\":false} (cat 1 on the bar at x 2149) instead of letting it hang beneath the bar through the key",
-      "cats": [
-        {
-          "x": 1982.2,
-          "y": 183.6,
-          "feet": 229.6,
-          "grounded": true,
-          "dead": false
-        },
-        {
-          "x": 2148.6,
-          "y": 97.6,
-          "feet": 143.6,
-          "grounded": true,
-          "dead": false
-        }
-      ]
+      "frames": 945
     },
     {
       "tag": "2-2",
@@ -76,51 +59,17 @@
       "tag": "2-3",
       "source": "stage_constraint02",
       "title": "GO TOGETHER",
-      "status": "BLOCKED",
+      "status": "SOLVED",
       "party": 2,
-      "frame": 63,
-      "reason": "DistanceConstraint rope (audit: params ok; mechanism unknown): it never holds a hanging cat; it drags the standing partner through solid tiles -- the rope dragged the anchor (cat 1) into the roof tiles at {\"x\":213.2,\"y\":58.2,\"feet\":104.2,\"grounded\":true,\"dead\":false} while cat 0 kept falling (cat 0 feet 428); the party then falls into the WarpAll, which drops the key back to its spawn",
-      "cats": [
-        {
-          "x": 96.1,
-          "y": 382.4,
-          "feet": 428.4,
-          "grounded": false,
-          "dead": false
-        },
-        {
-          "x": 213.2,
-          "y": 58.2,
-          "feet": 104.2,
-          "grounded": true,
-          "dead": false
-        }
-      ]
+      "frames": 936
     },
     {
       "tag": "2-4",
       "source": "stage_fall02",
       "title": "GO TOGETHER",
-      "status": "BLOCKED",
+      "status": "SOLVED",
       "party": 2,
-      "frame": 601,
-      "reason": "WeightedLift needs 4 bodies at party 2 (both push boxes too), and the JumpStandEx never launches a push box onto a head -- both cats crossed; 2 cats on the WeightedLift (top 288), sign shows 2 more, lift has not moved in 60 frames; the push boxes are still at (595, 248), (633, 282)",
-      "cats": [
-        {
-          "x": 2471.5,
-          "y": 242,
-          "feet": 288,
-          "grounded": true,
-          "dead": false
-        },
-        {
-          "x": 2405.2,
-          "y": 242,
-          "feet": 288,
-          "grounded": true,
-          "dead": false
-        }
-      ]
+      "frames": 1191
     },
     {
       "tag": "3-1",
@@ -134,26 +83,9 @@
       "tag": "3-2",
       "source": "stage_time_limit02",
       "title": "TIME LIMIT",
-      "status": "BLOCKED",
+      "status": "SOLVED",
       "party": 2,
-      "frame": 784,
-      "reason": "JumpStand (audit: partial; batch 25 jumpstand-launch-boxes): the p0 -10 launch (one -600/s impulse, no held-jump ramp) peaks at feet ~327, 105 above the pit floor; the key corridor floor is 144 above it -- JumpStand 2 bounces cat 1 to feet 326.9 at best (a rise of 71 from the stand top 398); the corridor floor is 288 (the pit floor 432), so the key corridor stays out of reach",
-      "cats": [
-        {
-          "x": 1705.4,
-          "y": 385.4,
-          "feet": 431.4,
-          "grounded": true,
-          "dead": false
-        },
-        {
-          "x": 658,
-          "y": 284.3,
-          "feet": 330.3,
-          "grounded": false,
-          "dead": false
-        }
-      ]
+      "frames": 1321
     },
     {
       "tag": "3-3",
@@ -161,7 +93,7 @@
       "title": "TIME LIMIT",
       "status": "SOLVED",
       "party": 2,
-      "frames": 1554
+      "frames": 1545
     },
     {
       "tag": "3-4",
@@ -175,9 +107,9 @@
       "tag": "4-1",
       "source": "stage_thunder01",
       "title": "GIMMICK GIMMICK",
-      "status": "SKIPPED-UNIMPLEMENTED",
+      "status": "SOLVED",
       "party": 2,
-      "reason": "Thunder (audit: Misread -- not swept to the first solid, never cut by a body or guard shield, batch 6 thunder-beam) and GuardPlayer (audit: Misread -- no shield planks, batch 7 guard-shields): the beams the guards must block are always 2400 long and nothing cuts them."
+      "frames": 800
     },
     {
       "tag": "4-2",
@@ -199,26 +131,9 @@
       "tag": "4-4",
       "source": "stage_big_and_small",
       "title": "GIMMICK GIMMICK",
-      "status": "BLOCKED",
+      "status": "SOLVED",
       "party": 2,
-      "frame": 535,
-      "reason": "ScaleSwitch growth (audit: Match; growth-with-rider not covered): a cat growing on a ScaleSwitch shoves the cat on its head sideways off it instead of lifting it -- growing on the 1488 ScaleSwitch, cat 1 (now 21.8 tall) shoved cat 0 off its head (cat 0 at x 1453.6, feet 419.5; cat 1 at x 1485.0); cat 0 cannot get back up (small jump 58), so the 20-unit slot at y 220..240 is out of reach",
-      "cats": [
-        {
-          "x": 1453.6,
-          "y": 401.1,
-          "feet": 419.5,
-          "grounded": false,
-          "dead": false
-        },
-        {
-          "x": 1485,
-          "y": 409.5,
-          "feet": 431.4,
-          "grounded": true,
-          "dead": false
-        }
-      ]
+      "frames": 1135
     },
     {
       "tag": "5-1",
@@ -259,7 +174,7 @@
       "status": "BLOCKED",
       "party": 2,
       "frame": 608,
-      "reason": "UNSOLVED: route stops on the first block; the 480-wide gap between the Rect at 2016 (top 112) and the goal tower (2688, top 71) has no party-2 crossing found by the solver",
+      "reason": "UNSOLVED (structural, party 2..4): goal tower top 71 is 377 above the only floor (448) and 480 east of the last ledge (Rect 2016..2208, top 112); jump rise 78.6 / running jump 124 across; a loaded cat cannot jump and boxes never rise (only a 22 head-hop), so no box support >= 298.4 tall (>= 6 boxes) can be built at the tower base and the last cat can never climb; a human tower needs 7 cats under the climber",
       "cats": [
         {
           "x": 880.9,
@@ -284,7 +199,7 @@
       "status": "BLOCKED",
       "party": 2,
       "frame": 1082,
-      "reason": "UNSOLVED: no party-2 route found from the key to the goal block (tower cycles stall ~2050; goal block at 2448)",
+      "reason": "UNSOLVED (party 2): goal block (2448, top 144) is 288 above the floor; after cycle 1 the tower top (box 7, 2054.6..2160.6, top 96) is 287 short (jump reach ~190); every east move (push cycle, floor push of box 0, pushed-box carry) leaves its operator east of the west-facing treads or under the stack (a loaded cat cannot jump), so the last cat cannot climb; colours 0,1,0,1 make cycles 1 and 3 both need cat 1",
       "cats": [
         {
           "x": 2094.6,
@@ -332,7 +247,7 @@
       "title": "MOVE AND STOP",
       "status": "SOLVED",
       "party": 2,
-      "frames": 3697
+      "frames": 3695
     },
     {
       "tag": "7-3",
@@ -348,7 +263,7 @@
       "title": "MOVE AND STOP",
       "status": "SOLVED",
       "party": 2,
-      "frames": 1660
+      "frames": 1643
     },
     {
       "tag": "8-1",
@@ -428,21 +343,21 @@
       "title": "TWO PLAYERS",
       "status": "BLOCKED",
       "party": 2,
-      "frame": 148,
-      "reason": "Player jump height / Bridge \"1\" (audit: Bridge geometry ok, state/motion fixed in batch 3): a two-cat stack cannot reach the first block top -- cat 0 jumping from the head of cat 1 at the block's west face peaked with its feet at y 307.1; the block top is y 288 (the stack reaches 124.9 of the 144 needed)",
+      "frame": 382,
+      "reason": "Pit x 672..864 under the ceiling slab x 816+ (bottom y 288): no cat reaches the east floor (best landing centre ~844 at feet 432, needs >= 848), and Bridge 2 that spans the pit is switched from the far side -- pit: cat 1 (riding cat 0 off the block edge, walking on its head) reached feet y 432 at centre x 844.1; landing on the east floor (x 864) needs centre >= 848. Under the ceiling slab (x 816+, bottom 288) a cat needs feet >= 334, so its fall apex must be below ~y 298 -- lower than the block top (288) -- and a carried cat cannot jump from a falling carrier after the ~4-tick coyote window",
       "cats": [
         {
-          "x": 351.5,
-          "y": 339.7,
-          "feet": 385.7,
-          "grounded": true,
+          "x": 560,
+          "y": -95,
+          "feet": -49,
+          "grounded": false,
           "dead": false
         },
         {
-          "x": 351.5,
-          "y": 385.7,
-          "feet": 431.7,
-          "grounded": true,
+          "x": 828.1,
+          "y": 390.1,
+          "feet": 436.1,
+          "grounded": false,
           "dead": false
         }
       ]
@@ -453,7 +368,7 @@
       "title": "TWO PLAYERS",
       "status": "SOLVED",
       "party": 2,
-      "frames": 952
+      "frames": 1017
     },
     {
       "tag": "10-4",
@@ -461,7 +376,7 @@
       "title": "TWO PLAYERS",
       "status": "SOLVED",
       "party": 2,
-      "frames": 1872
+      "frames": 1867
     },
     {
       "tag": "11-1",
@@ -499,9 +414,26 @@
       "tag": "12-1",
       "source": "stage_thunder02",
       "title": "LAST PARK",
-      "status": "SKIPPED-UNIMPLEMENTED",
+      "status": "BLOCKED",
       "party": 2,
-      "reason": "Thunder (audit: Misread, batch 6 thunder-beam), GuardPlayer (audit: Misread, batch 7 guard-shields) and JumpSwitch (audit: Misread+unimpl -- fires on touch, re-arms, never launches PushBox1 vy -9; batch 17 switch-family-native)."
+      "frame": 19,
+      "reason": "party 2 cannot get the plain cat above the lower Thunder band (y 286..290). Rect 1 is 81.3 above the floor, max jump rise 78.6, a cat with a rider cannot jump, and the only shield is the guard's LEFT plank (protects x >= guard.x-15). Cat 1 can reach the PushBox once the guard shoves it off Rect 1 (it lands on the floor, top 336; a cat on it has y 290, touching but not in the band) by walking off the guard's head. From there it needs the guard on Rect 1 to its left: the guard stands at x >= 636 (lip), so cat 1 must clear the guard's head (256.4) -- reach from the box top is 336 - 78.57 = 257.4, 1.0 short -- and landing on Rect 1 left of the guard puts it in the beam. Guard on the dropped box (head 290): cat 1 needs 93.7 rise from the floor, or 0 rise from the guard's right, where the wall leaves no room. A guard jumping on the floor keeps its plank in the band only ~20 frames per jump (guard y 297..259..297), with ~12-frame gaps; the walk from the ledge to the pillar is ~40+ frames. JumpSwitch \"PushBox1\" (x 132..168) registers the press (pressedJumpSwitches, alpha .55) but its vy -9 impulse is applied only to normalBoxes, so PushBox 1 never launches (stays y 254.4); even native, the switch is ~470 px from the ledge and the guard (the only shield) would have to be the presser. Needs a larger party (native 8). -- cat 1 jumping in place on the floor dies in the lower Thunder band",
+      "cats": [
+        {
+          "x": 234,
+          "y": 337.7,
+          "feet": 383.7,
+          "grounded": true,
+          "dead": false
+        },
+        {
+          "x": 284,
+          "y": 282,
+          "feet": 328,
+          "grounded": false,
+          "dead": true
+        }
+      ]
     },
     {
       "tag": "12-2",
@@ -509,7 +441,7 @@
       "title": "LAST PARK",
       "status": "SOLVED",
       "party": 2,
-      "frames": 1191
+      "frames": 1201
     },
     {
       "tag": "12-3",
@@ -525,7 +457,7 @@
       "title": "LAST PARK",
       "status": "SOLVED",
       "party": 2,
-      "frames": 1417
+      "frames": 1423
     }
   ]
 }

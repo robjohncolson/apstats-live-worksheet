@@ -9,6 +9,23 @@
 // Cycle 1 (cat 1 pushes box 1) leaves box 7 right at the key's height and x: a cat climbs the treads and takes it.
 // Cycles 2 (cat 0, box 2) and 3 (cat 1, box 3) were meant to bring the tower top next to the goal block (top 144)
 // -- see the UNSOLVED note in the code: that part of the route was not found.
+// BLOCKED (batch 6/7 runtime): the goal block (x >= 2448, top 144) stands 288 above the floor (432). From the tower
+// top (box 7 at 1885..1991, top 48) it is 457 away; one jump covers <= ~210, so the tower must be moved >= ~250
+// east. The LAST cat must then climb alone: it needs >= 5 box levels (top <= 222.6) within ~150 of 2448, with treads
+// on ITS side. The treads face west (each box sits 16 east of the one below), so the climber must end up WEST of the
+// tower, but every way to move boxes east leaves its operator east of the tower or under it:
+//  * cycle (cat on base box B pushes box N off): N always lands flush at B.right, and the rest of the tower lands
+//    on the pusher's head (box N+1 spans the pusher at [B.right-32, B.right]); a loaded cat cannot jump, so it can
+//    only set the stack down by walking off N's east end -> stranded on the floor east, under east overhangs with
+//    no treads. (Two cats under the falling box: the lower index carries; the other is free but still east/on top.)
+//  * floor push of box 0 (cat 0 from the west): boxes 1..7 drop onto cat 0's head (box 1 spans [cat-74, cat+32]);
+//    any obstacle that stops box 1 (y 338..386) also stops the cat (386..432), so the stack cannot be set down.
+//  * carrying via a pushed box (carrier on a floor box M, other cat pushes M): the box pushed off box 0 lands flush
+//    against box 0, and the chain box 0 + box 1 needs a colour-0 AND a colour-1 cat pushing -- one is the carrier.
+// Colours alternate 0,1,0,1,... so cycles 1 and 3 both need cat 1. Measured: after cycle 1 the tower is boxes 1..7
+// on box 1 (1904.6..2010.6), box 7 at 2054.6..2160.6 top 96 (block 287 away, reach ~190); cat 1 on the floor at
+// x 2066.7 under box 2's 68-wide east overhang. Party 3/4 do not remove the stranded operator (the last cat must
+// still climb alone). Observation: cats left of the auto-scroll view are not killed (cat at x 84 with scroll 400).
 export default {
   party: 2,
   budget: 6000,
@@ -82,6 +99,9 @@ export default {
     // cat cannot get back west (box 1 top and box 2 bottom touch: no gap to pass), so cycle 3 (box 3, colour 1)
     // has no pusher; cycle 2 alone moves the tower only ~15 east (box 3 lands across boxes 1 and 2), leaving its
     // top (144) ~290 short of the goal block. Colours here alternate 0,1,0,1,... (box k: k % 2).
-    api.block('UNSOLVED: no party-2 route found from the key to the goal block (tower cycles stall ~2050; goal block at 2448)');
+    api.block('UNSOLVED (party 2): goal block (2448, top 144) is 288 above the floor; after cycle 1 the tower top ' +
+      '(box 7, 2054.6..2160.6, top 96) is 287 short (jump reach ~190); every east move (push cycle, floor push of ' +
+      'box 0, pushed-box carry) leaves its operator east of the west-facing treads or under the stack (a loaded cat ' +
+      'cannot jump), so the last cat cannot climb; colours 0,1,0,1 make cycles 1 and 3 both need cat 1');
   },
 };

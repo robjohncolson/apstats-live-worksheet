@@ -179,6 +179,7 @@ test('every stage at parties 2/4/8: no cat inside a wall / lift / bridge / gate 
         ...game.fallBoxes.filter((box) => box.active).map((box) => box.rect),
         ...game.switchRects.filter((block) => block.collisionPublished).map((block) => block.rect),
         ...game.blinkBlocks.filter((block) => block.solid).map((block) => block.rect),
+        ...game.jumpStands.map((stand) => stand.rect),   // jumpstand-launch (batch 7): a solid 32 x 34 block
       ];
       let frozenRun = game.players.map(() => 0);
       for (let frame = 0; frame < 240; frame++) {

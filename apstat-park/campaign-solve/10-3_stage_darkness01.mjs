@@ -4,7 +4,8 @@
 // shaft, which carries the party up to the 240 floor. Touching 528..576 there creates the Key in the upper-left
 // area (past the tall PushBox "1", weight 100: both cats push; it drops from (312, -48) onto the 192 floor at frame 0
 // and the pair shoves it west to the wall); touching 124.8..158.4 (far west, upper area)
-// creates the Goal on the high east ledge (768, 144) and a JumpStand (552, 240) to get up there.
+// creates the Goal on the high east ledge (768, 144) and a JumpStand (552, 240: a solid 32x34 block 536..568, top 206,
+// that launches any cat resting on its top) to get up there.
 // Route: stack-jump onto the bump (creates the step), the partner climbs step -> bump; east along the corridor onto
 // lift 1 (the corridor is one chip tall: cat 0 jumps up the shaft while cat 1 walks under it, so the stack lands on
 // the one-cat-wide slab), ride up; trigger the key, push PushBox 1 west along the 192 floor through the key and the goal
@@ -50,10 +51,16 @@ export default {
     if (game.goals.length === 0 || game.jumpStands.length === 0) api.block('the far-west trigger did not create the Goal / JumpStand');
     api.walkTo([0, 1], [500, 540], { hop: true });
     // JumpStand (536..568): each cat bounces high and steers east over the col-14 wall onto lift 2 (720..816, top 48).
+    // The stand is a solid 32x34 block (536..568, top 206): a cat that walks off the 192 floor lands on its top
+    // (grounded there for a tick) and is launched straight up on the stand's next update; only a rise that starts
+    // from the stand top counts as the launch.
+    const stand = game.jumpStands[0];
     const launch = (i, x) => {
-      let left = false;
+      let left = false, onStand = false;
       api.until(() => left && cats[i].grounded, () => {
-        if (!cats[i].grounded) left = true;
+        const cat = cats[i];
+        if (cat.grounded && Math.abs(api.feetY(cat) - stand.rect.y) < 2 && cat.rect.x < stand.rect.x + stand.rect.width && cat.rect.x + cat.rect.width > stand.rect.x) onStand = true;
+        if (onStand && !cat.grounded) left = true;
         const specs = [{}, {}];
         const cx = api.centreX(cats[i]);
         // Rise over the stand, then cross the wall (top 48) only while well above it.

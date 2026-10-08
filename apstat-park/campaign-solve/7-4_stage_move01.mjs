@@ -1,7 +1,7 @@
 // 7-4 MOVE AND STOP (stage_move01).
 // The puzzle: a shared MoveEnergy meter drains 0.005 per tick while any cat moves and refills 0.01 per tick while
 // all stand still; empty = every cat dies. Three StepEnemies patrol the floor between two bumps; a JumpStand (power
-// -35) launches a cat onto a tall block (top 240) carrying a 120 x 96 PushBox (weight 100: the whole party); the
+// -35; a solid 32x34 block at 1808..1840 that launches any cat resting on its top) launches a cat onto a tall block (top 240) carrying a 120 x 96 PushBox (weight 100: the whole party); the
 // Key hangs in a sunken gap east of the block; then steps down to the door.
 // Route: move in short bursts and stand still to recharge; jump each StepEnemy; each cat jumps off the JumpStand
 // onto the block; both push the box east off the block into the gap, where it lands as a step; drop onto the box
@@ -50,16 +50,16 @@ export default {
     }
     rest();
     travel({ 0: 1700, 1: 1760 }, 'along the floor past the StepEnemies');
-    // Each cat stands on the JumpStand (1808..1840) and jumps: the stand launches it high; steer onto the block.
+    // The JumpStand (1808..1840) is a solid 32x34 block (top 398): each cat walks up to its west face, hops onto its
+    // top (resting there is the launch, straight up), then steers east onto the block.
     for (const [i, x] of [[1, 2060], [0, 1990]]) {
-      api.walkTo(i, 1824, { tol: 2 });
-      // Hop straight up and land on the stand's top: that landing is the launch; then steer east onto the block.
+      api.walkTo(i, 1792, { tol: 2 });
       let launched = false;
       api.until(() => launched && cats[i].grounded, (f) => {
         if (api.feetY(cats[i]) < 330) launched = true;   // higher than any normal jump from the floor
         const specs = [{}, {}];
-        const dx = x - api.centreX(cats[i]);
-        specs[i] = { jump: f < 14, ...(launched && Math.abs(dx) > 3 ? (dx > 0 ? { right: true } : { left: true }) : {}) };
+        const dx = (launched ? x : 1824) - api.centreX(cats[i]);
+        specs[i] = { jump: f < 14, ...(Math.abs(dx) > 3 ? (dx > 0 ? { right: true } : { left: true }) : {}) };
         return specs;
       }, 400, `cat ${i} was not launched by the JumpStand`);
       alive('JumpStand launch');

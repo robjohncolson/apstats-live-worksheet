@@ -1,54 +1,71 @@
 // 2-4 GO TOGETHER (stage_fall02).
 // Map (party 2): a ledge (top 288, x 48..960) holding two push boxes (451 and 551, 38 x 40) and a one-chip notch
-// (624..672) filled by a JumpStandEx (632..664, top 288, launch (3, -18) per tick) on a Rect (322..370); a FallBox
-// bridge (23 boxes, body top 288, x 960..2064) over a Thunder pit; a slab (tile top 288, x 2064..2352); the
-// WeightedLift (2351..2545, top 288) over the sunken room (floor 432, x 2112..2784) that holds the Key (2216) and
-// the door (2568). A Rect hangs over the bridge at x 1728 (y 48..144): any stack taller than 144 hits it.
-// FallBox rules (see 2-2): a cat walking behind another falls, so the party crosses as one body: cat 0 climbs onto
-// cat 1's head at the bridge's west end and rides it across (92 tall, clears the hanging Rect); the stack walks onto
-// the slab, where both cats step off.
-// The lift (lua flags {0, 4, 1} at party <= 2, {0, 5, 1} at party >= 3; runtime: flag 1 = minimum load) needs 4
-// bodies at party 2: both cats plus both push boxes (party 3: 3 + 2 boxes, party 4: 4 + the one box, party >= 5:
-// the cats alone, and there the notch holds a plain Rect instead of the JumpStandEx). So the design is: bring the
-// boxes over the bridge. They cannot be pushed over it (push speed 2.45/frame; a FallBox under a body drops 14
-// frames after it arms, so anything slower than ~3.7/frame falls through) and can only cross carried on a cat's
-// head. The JumpStandEx (the only launcher, with an x component) is how a box would get onto a head: a box pushed
-// into the notch should be thrown up and to the right onto a waiting cat.
-// Runtime finding (batch 6): a push box pushed into the notch is never launched -- it drops through the stand to
-// rest on the Rect below (box y 282, top 6 above the ledge), and the stand's launch (180, -1080)/s is only applied
-// to cats (and without its x part). With no way to lift a box onto a head, only the 2 cats reach the lift: BLOCKED.
+// (624..672) holding a JumpStandEx (solid 632..664, top 288, launch (3, -18) per tick) on a Rect (322..370); a FallBox
+// bridge (23 boxes, body top 288, x 960..2064) over a Thunder pit; a slab (top 288, x 2064..2352); the WeightedLift
+// (2350.6..2544.6, top 288) between the slab and a roof (top 288, x 2544..2784) over the sunken room (floor 432,
+// x 2112..2784, 96 high) that holds the Key (2216) under the slab and the door (2568) under the roof. Column 36
+// (x 1728..1776) is solid from the top down to y 144: any stack taller than 144 is stopped there.
+// The lift (lua flags {0, 4, 1} at party <= 2) needs 4 bodies at party 2: both cats and both push boxes (a box on a
+// cat's head counts).
+// Route:
+// 1. Cat 1 hops over both boxes and the stand and waits on the ledge with its centre at 790. Cat 0 pushes both boxes
+//    right (one cat pushes the pair): each box reaches the stand and is thrown up 258 and ~168 right, so box 551
+//    lands on cat 1's head and box 451 on top of it (cat 1 + 2 boxes = 126 tall, clears the y-144 column by 18).
+// 2. Cat 1 walks to 900; cat 0 walks onto the stand, is launched straight up and steered right onto the top of the
+//    stack (feet 162). Both hold right: the carrier walks onto the bridge and cat 0 walks forward off the stack top,
+//    dropping onto the bridge right in front of the carrier. From there they walk nose to tail (touching).
+//    FallBox trap: a box drops 14 frames after the FRONT cat triggers it (trigger overlap 6..10.9), so the rear cat
+//    survives only when the front cat's trigger came late enough (measured: overlap 6.6 survives, 6.5 drops the rear
+//    cat). The phase set by step 2 (front cat at 1028.6 + 4.9 n) keeps every trigger >= 6.6 from box 1152 on; walking
+//    the pair onto the bridge from the ledge instead puts box 1008 at 6.5 and the carrier falls.
+// 3. On the slab cat 0 walks across the lift onto the roof, cat 1 walks fully onto the lift (3 of 4), then cat 0
+//    steps back on: the lift sinks to the room floor. (Boarding with the 4th body only 1 px over the lift edge makes
+//    the lift move the carried boxes but not their carrier: the boxes sink into the cat and fall off.)
+// 4. In the room cat 1 (west of cat 0) walks under the slab to the key; cat 0 walks past the door to the room's
+//    east end (the room is too low to hop a cat), cat 1 opens the door and enters, then cat 0.
 export default {
   party: 2,
   budget: 3000,
-  blocker: 'WeightedLift needs 4 bodies at party 2 (both push boxes too), and the JumpStandEx never launches a push box onto a head',
   async solve(stage, api) {
     const { cats, game } = api;
-    const rider = cats[0], carrier = cats[1];   // cat 1 spawns in front
-    // Along the ledge (over the jump stand notch) to the bridge's west end; cat 0 onto cat 1's head.
-    api.walkTo([0, 1], [820, 930], { hop: true, max: 900 });
-    api.climbOnto(0, 1);
-    // Cat 1 walks the bridge at full speed with cat 0 riding (kept centred) onto the slab.
-    api.until(() => api.centreX(carrier) > 2200, () => {
-      const keepUp = api.centreX(rider) < api.centreX(carrier) - 1;
-      return [{ right: keepUp }, { right: true }];
-    }, 600, 'cat 1 did not cross the bridge');
-    api.land();
-    // Both cats onto the lift (cat 0 in front, so cat 1 is not blocked by it).
-    api.walkTo([0, 1], [2490, 2420], { max: 200 });
     const lift = game.weightedLifts[0];
-    const startY = lift.rect.y;
-    api.wait(60);
-    if (lift.rect.y === startY) {
-      const onLift = cats.filter((cat) => Math.abs(api.feetY(cat) - lift.rect.y) < 1 &&
-        cat.rect.x + cat.rect.width > lift.rect.x && cat.rect.x < lift.rect.x + lift.rect.width).length;
-      const boxesLeft = game.pushBoxes.map((box) => `(${Math.round(box.rect.x)}, ${Math.round(box.rect.y)})`).join(', ');
-      api.block(`both cats crossed; ${onLift} cats on the WeightedLift (top ${lift.rect.y}), sign shows ` +
-        `${lift.signText?.text ?? '?'} more, lift has not moved in 60 frames; the push boxes are still at ${boxesLeft}`);
+    // 1. Cat 1 over the boxes and the stand to the catch spot.
+    api.walkTo(1, 400, { tol: 2 });
+    api.jumpTo(1, 520);
+    api.jumpTo(1, 720, { holdJump: 16 });
+    api.land(1);
+    api.walkTo(1, 790, { tol: 1 });
+    api.land(1);
+    // Cat 0 pushes both boxes into the stand; they land stacked on cat 1's head.
+    const onHead = () => game.pushBoxes.every((box) => box.rect.y < 210 && box.rect.x > 740);
+    api.until(onHead, () => [{ right: api.centreX(cats[0]) < 590 }, {}], 400, 'the stand did not throw both boxes onto cat 1');
+    api.wait(20);
+    if (!game.pushBoxes.every((box) => Math.abs(box.rect.y + box.rect.height - 242) < 41)) {
+      api.block('the push boxes did not settle on cat 1\'s head');
     }
-    // (Not reached in the current runtime.) The lift sinks into the room: key, then the door.
-    api.until(() => lift.rect.y > startY + 100, [], 300, () => 'lift stuck at y ' + lift.rect.y);
+    // 2. Cat 0 rides the stand up onto the stack top, then the pair crosses the bridge nose to tail.
+    api.walkTo(1, 900, { tol: 2 });
+    api.until(() => cats[0].grounded && api.feetY(cats[0]) < 170, () => [{ right: true }, {}], 300,
+      'cat 0 did not land on top of the stack');
+    api.until(() => api.centreX(cats[1]) > 2300, () => {
+      const fell = cats.find((cat) => cat.rect.y > 300);
+      if (fell) api.block(`cat ${cats.indexOf(fell)} fell through the FallBox bridge at x ${Math.round(fell.rect.x)}`);
+      return [{ right: true }, { right: true }];
+    }, 400, 'the pair did not cross the bridge');
+    if (game.pushBoxes.some((box) => box.rect.y > 210)) api.block('a push box slid off cat 1 on the bridge');
+    // 3. Cat 0 to the roof, cat 1 fully onto the lift, cat 0 back on: 4 bodies.
+    api.walkTo(0, 2590, { tol: 3, max: 200 });
+    api.walkTo(1, 2440, { tol: 3, max: 200 });
+    api.walkTo(0, 2495, { tol: 3, max: 200 });
+    api.until(() => lift.rect.y > 430, [], 300, () => `the lift did not sink (top ${lift.rect.y}, sign ${lift.signText?.text})`);
     api.land();
-    api.walkTo([0, 1], [2232, 2300], { max: 300 });
+    // 4. Cat 1 to the key under the slab; then the door.
+    api.walkTo(1, 2232, { tol: 3, max: 300 });
+    if (api.carrierOfKey() < 0) api.block('nobody picked up the key');
+    // Cat 0 clears the way to the far side of the door (the 96-high room is too low to hop a cat), then the key
+    // carrier opens the door and both enter.
+    api.walkTo(0, 2720, { tol: 4, max: 200 });
+    api.enterOne(1);
     api.enterGoal();
   },
 };

@@ -1,14 +1,15 @@
 // 7-2 MOVE AND STOP (stage_traffic_light01).
 // The puzzle: a TrafficLight (green 10 s at first, then red 7 s / green 12 s): any cat moving during red dies.
 // A staircase (first step x 960..1056, top 384) with a StepEnemy at its foot, a pit with a Warp, a field of 27
-// JumpStands with the Key high above it, then a NormalBox (whole party push) and, behind a wall, the raised door
+// JumpStands (solid 32x34 blocks every 48 from x 1808, top 398; launch -16.3/tick, ~212 up, for any cat resting on
+// a top) with the Key (2432..2464, 164..220) above the stand at 2432, then a NormalBox (whole party push) and, behind a wall, the raised door
 // ledge (x 3696..4008, top 264) with a SmallBox on it.
 // StepEnemy (48 x 26, native walker): spawns at x 936 on the first step, walks west at 1 per tick from frame 0, drops
 // to the floor at x ~906 (frame ~30) and keeps walking west toward the spawn (turns at walls; the floor pit at
 // x 48..144 catches it). Side contact kills, its top is safe. It meets the cats around x ~810 at frame ~115.
 // Route: both cats walk east and each makes a plain running jump over the enemy when it is < 36 ahead (26 tall:
 // any jump clears it), then they gather at x 860 / 900. Up the stairs, over the pit, stop before the jump field for the
-// red. Next green: bounce across the field (the key is taken on a bounce), push the NormalBox to the east wall;
+// red. Next green: hop onto the first stand and bounce across the field (the key is taken on a bounce), push the NormalBox to the east wall;
 // stop for the red. Next green: cat 0 climbs cat 1 -> NormalBox -> ledge, hops the SmallBox and pushes it off the
 // ledge into the gap before the NormalBox; cat 1 climbs SmallBox -> NormalBox -> ledge; both enter.
 // Notes: the route's later legs are paced by the light (waitForGreen), so the total frame count is set by the light
@@ -56,7 +57,9 @@ export default {
     alive('pit');
     // Leg 2: the jump field (1808..3088), key above x 2448; then push the NormalBox to the east wall.
     waitForGreen(7);
-    api.walkTo([0, 1], [2500, 2448], { max: 400 });
+    // The stands are solid 32x34 blocks (top 398, 16-wide seams): each cat hops onto the first one and then rides
+    // the launches (any cat resting on a stand top goes straight up ~212) east across the field.
+    api.walkTo([0, 1], [2500, 2448], { max: 400, hop: true });
     // Cat 1 jumps off the stand under the key (a stand jump peaks ~225 above the floor).
     api.until(() => api.carrierOfKey() >= 0, (f) => [{}, { jump: f < 16 }], 120, 'the stand jump under the key missed it');
     alive('jump field');

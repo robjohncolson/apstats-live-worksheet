@@ -4,18 +4,23 @@
 // of the key corridor (y 288, x 1472..1640) and a row on the roof (y 96). The Key hangs in the corridor
 // (x 816..1632, y 144..288), whose only way in is the pit under its west end; the door is at the bottom of the east
 // shaft, reached along the low corridor under the big Rect (y 384..432).
-// Runtime finding (2026-10-08): JumpStand 2 (p0 -10, present only at party 2) bounces a cat to feet ~328, 40 short of
-// the corridor floor (288), and nothing else reaches the 48-tall band the corridor opens on; cat 0's half of the
-// route (block switches, roof switches, down the shaft to the door) works.
+// The pit (x 624..792, floor 432, ceiling y 240 over x 624..816) holds JumpStand 2 (solid 656..688, top 398,
+// p0 -10, party 2 only) and, on its east side, the ledge = the top of the Rect 744..1680 (y 336..384; the low
+// corridor runs under it). The corridor floor is the Rect 792..1680 (top 288) east of the ledge's 48-high wall.
+// A plain jump rises ~78 (pit floor 432 -> feet 353: the ledge is 96 up, out of reach); the stand's bounce rises ~82
+// (feet 398 -> ~316), so the stand is the step onto the ledge, and from the ledge a jump against the wall at 792
+// rises until the head meets the y-240 ceiling with the feet at 287, one unit above the corridor floor, and held
+// right carries the cat over the edge.
 // Route: cat 1 taps the two floor switches (+2 s). Cat 0 leaves its pocket, drops to the west floor, rides
 // JumpStand 1 up the west shaft, walks the six block-top switches (+6 s), jumps down onto the small Rect, hops up the
-// Rect steps onto the roof, walks its switches and drops down the east shaft to the door. Cat 1 should ride
-// JumpStand 2 up the pit onto the corridor floor, take the key, walk the six corridor switches and come back down;
-// then both enter.
+// Rect steps onto the roof, walks its switches and drops down the east shaft to the door. Cat 1 hops onto JumpStand 2,
+// steers east during the bounce onto the ledge, walks to the wall and jumps into the corridor, takes the key, walks
+// the six corridor switches, comes back west, steps off the ledge's west end straight down (clear of the stand) and
+// walks the low corridor to the door; cat 0 waits past the door, cat 1 opens it and both enter.
+// (The DeadTimer never drops below ~2.3 s on this route.)
 export default {
   party: 2,
   budget: 3000,
-  blocker: 'JumpStand (audit: partial; batch 25 jumpstand-launch-boxes): the p0 -10 launch (one -600/s impulse, no held-jump ramp) peaks at feet ~327, 105 above the pit floor; the key corridor floor is 144 above it',
   async solve(stage, api) {
     const { cats, game } = api;
     const timer = game.deadTimers[0];
@@ -60,31 +65,40 @@ export default {
     api.walkTo(0, 1720, { stall: 200 });
     api.land(0);
     timeUp();
-    // Cat 1: JumpStand 2 (656..688, filter -2: it exists only for a party of 2, so it is the way into the key
-    // corridor). Hop onto it from x 704 (east of there the low corridor's ceiling, y 384, stops a jump) and ride the
-    // bounce; steer east once the feet are above the corridor floor (288).
-    api.walkTo(1, 720, { tol: 3 });
-    api.until(() => api.feetY(cats[1]) < 380, guard((i) => [{}, { jump: i < 12, ...(api.centreX(cats[1]) > 674 ? { left: true } : {}) }]),
-      120, 'JumpStand 2 did not launch cat 1');
+    // Cat 1: hop onto JumpStand 2 (656..688, top 398) and ride the bounce (feet ~316), steering east onto the
+    // ledge (top of the Rect 744..1680 at y 336).
+    api.walkTo(1, 636, { tol: 2 });
+    api.until(() => cats[1].grounded && Math.abs(api.feetY(cats[1]) - 398) < 1, guard((i) => {
+      const cx = api.centreX(cats[1]);
+      const steer = Math.abs(cx - 672) > 2 && api.feetY(cats[1]) < 397 ? (cx < 672 ? { right: true } : { left: true }) : {};
+      return [{}, { jump: i < 10, ...steer }];
+    }), 80, 'cat 1 could not hop onto JumpStand 2');
     let apex = 999;
-    api.until(() => cats[1].grounded && api.feetY(cats[1]) <= 289 && api.centreX(cats[1]) > 800, guard((i) => {
+    api.until(() => cats[1].grounded && api.feetY(cats[1]) < 390, guard(() => {
       apex = Math.min(apex, api.feetY(cats[1]));
-      if (i > 150) {
-        api.block(`JumpStand 2 bounces cat 1 to feet ${apex.toFixed(1)} at best (a rise of ${(398 - apex).toFixed(0)} from the stand top 398); ` +
-          'the corridor floor is 288 (the pit floor 432), so the key corridor stays out of reach');
-      }
-      return [{}, api.feetY(cats[1]) < 287 ? { right: true } : {}];
-    }), 200, 'cat 1 never reached the corridor');
+      return [{}, { right: api.feetY(cats[1]) < 335 }];
+    }), 120, () => `JumpStand 2 did not put cat 1 on the ledge (apex feet ${apex.toFixed(1)})`);
+    if (Math.abs(api.feetY(cats[1]) - 336) > 1) api.block(`cat 1 landed at feet ${api.feetY(cats[1]).toFixed(1)}, not on the 336 ledge`);
+    // Against the ledge's wall (792), jump: the head stops at the y-240 ceiling with the feet at 287, one unit above
+    // the corridor floor, and the held right carries the cat over the edge.
+    api.until(() => cats[1].grounded && api.feetY(cats[1]) < 289 && api.centreX(cats[1]) > 790, guard((i) => [{}, { jump: i > 8 && i < 30, right: true }]),
+      80, () => `cat 1 could not climb from the ledge into the key corridor (feet ${api.feetY(cats[1]).toFixed(1)})`);
     // Key (1376..1408, 164..220): jump under it; then the six corridor switches.
     api.walkTo(1, 1392);
     api.jump(1, { frames: 36 });
     if (api.carrierOfKey() !== 1) api.block('cat 1 jumped under the key without taking it');
-    api.walkTo(1, 1630, { tol: 4 });
+    api.walkTo(1, 1612, { tol: 4 });
     timeUp();
-    // Back down the pit and along the low corridor to the door.
-    api.walkTo(1, 700, { stall: 200 });
+    // Back west, off the corridor floor onto the ledge, then off the ledge's west end straight down to the pit
+    // floor (clear of the stand at 656..688), and east along the low corridor to the door.
+    api.walkTo(1, 770, { stall: 200 });
+    api.land(1);
+    api.until(() => !cats[1].grounded, guard([{}, { left: true }]), 60, 'cat 1 did not step off the ledge');
     api.land(1);
     timeUp();
+    // Cat 0 waits at the shaft's east wall, past the door, so the key carrier can reach it.
+    api.walkTo(0, 1806, { tol: 3, max: 120 });
+    api.enterOne(1, { max: 900 });
     api.enterGoal({ max: 900 });
   },
 };

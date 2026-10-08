@@ -1,7 +1,9 @@
 // 3-3 TIME LIMIT (stage_coin02).
 // The puzzle (party 2, one screen): collect all 53 Coins before the 40 s DeadTimer runs out; the CoinObserver then
-// shows the Key over the middle of the floor, where the door is. The floor is lined with JumpStands (p0 -24: a
-// bounce peaks ~415 above the floor) except for the middle (x 576..704). Four rows of coins hang above the stands in
+// shows the Key over the middle of the floor, where the door is. The floor is lined with JumpStands (solid 32x34
+// blocks, top 640, every 50 from x 34 / back from 1214; launch -24/tick: a bounce peaks at feet ~197, ABOVE the peg
+// tops) except for the middle (x 576..704). Because the bounce clears the pegs, a column cat must not overlap a peg's
+// edge (it lands on the peg top) and a cat crossing over a peg must be past it before it comes down. Four rows of coins hang above the stands in
 // alternating columns (rows 318/478 at x 50 + 128k, rows 398/558 at x 114 + 128k): a cat bouncing in a column takes
 // both of its coins. Small pegs (top 256) stand at x 160 / 288 / 416 / 544 / 704 / 832 / 960 / 1088; two BlinkBlocks
 // (top 161, solid about 1 s in 2) sit beside the middle pegs; high platforms (top 128, x 192..416 and 864..1088)
@@ -122,13 +124,16 @@ export default {
     //    peg 1088, then a leap east through the two wall coins (1154 / 1218, y 138..162) down onto the stands, and the
     //    east columns. Cat 0, once its head is free, leaps west through the middle coin (628..652) and bounces the
     //    west columns, ending on peg 160 with a leap west through the two west wall coins.
-    const eastColumns = [1202, 1138, 1074, 1010, 946, 882, 818, 754, 690].map((x) => ['bounce', x]);
+    // A stand bounce now peaks above the pegs (feet ~197 < peg top 256), so a column cat that overlaps a peg's edge
+    // can land on its top: the east columns under the coins at 690 / 818 / 946 / 1074 sit 4 west of the coin centre
+    // to clear the pegs at 704 / 832 / 960 / 1088 (the cat still overlaps each 24-wide coin).
+    const eastColumns = [1202, 1138, 1070, 1010, 942, 882, 814, 754, 686].map((x) => ['bounce', x]);
     const westColumns = [562, 498, 434, 370, 306, 242, 178, 114, 50].map((x) => ['bounce', x]);
     run([
       [['wait', () => cats[1].grounded && feet(cats[1]) < 170], ['wait', headFree(0)], ['jump', 516], ['walk', 515],
         ...westColumns, ['peg', 176], ['walk', 176], ['leap', 20],
         // back east over the stands and down the middle column (614..638: rows 398 / 558) onto the middle floor
-        ['bounce', 200], ['bounce', 380], ['bounce', 515], ['bounce', 630], ['land']],
+        ['bounce', 222], ['bounce', 380], ['bounce', 515], ['bounce', 630], ['land']],
       [['onto', 0], ['solid', east], ['jump', 786], ['jump', 880], ['walk', 944], ['jump', 1010], ['walk', 1112],
         ['land'], ['walk', 1104], ['leap', 1260], ...eastColumns, ['land']],
     ], 1600, 'east platforms and columns');
