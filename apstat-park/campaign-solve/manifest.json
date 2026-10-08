@@ -2,8 +2,8 @@
   "note": "Written by re-running every campaign-solve solver (party 2 unless a row says otherwise). campaign-solvability.test.mjs asserts the SOLVED rows.",
   "recorded": "2026-10-08",
   "counts": {
-    "SOLVED": 42,
-    "SKIPPED-UNIMPLEMENTED": 6
+    "SOLVED": 46,
+    "SKIPPED-UNIMPLEMENTED": 2
   },
   "stages": [
     {
@@ -330,33 +330,33 @@
       "tag": "11-1",
       "source": "stage_gun01",
       "title": "HAND GIMMICK",
-      "status": "SKIPPED-UNIMPLEMENTED",
+      "status": "SOLVED",
       "party": 2,
-      "reason": "WarpGunPlayer (audit: Misread -- gun bound to jump, so gun cats cannot jump; native input bit 11; batch 20 warpgun-action-button)."
+      "frames": 1642
     },
     {
       "tag": "11-2",
       "source": "stage_magnet01",
       "title": "HAND GIMMICK",
-      "status": "SKIPPED-UNIMPLEMENTED",
+      "status": "SOLVED",
       "party": 2,
-      "reason": "MagnetPlayer (audit: Unimpl -- the magnet does nothing; batch 20 magnet-grab) and Thunder (audit: Misread; batch 6)."
+      "frames": 1051
     },
     {
       "tag": "11-3",
       "source": "stage_gun02",
       "title": "HAND GIMMICK",
-      "status": "SKIPPED-UNIMPLEMENTED",
+      "status": "SOLVED",
       "party": 2,
-      "reason": "WarpGunPlayer (audit: Misread; batch 20 warpgun-action-button), ForceColorBox (audit: Misread -- no recolour) and FallBox (armed boxes are non-solid at once, see 2-2)."
+      "frames": 1658
     },
     {
       "tag": "11-4",
       "source": "stage_magnet02",
       "title": "HAND GIMMICK",
-      "status": "SKIPPED-UNIMPLEMENTED",
+      "status": "SOLVED",
       "party": 2,
-      "reason": "MagnetPlayer (audit: Unimpl; batch 20 magnet-grab) and DelaySwitch (audit: Misread -- fires at once instead of a 10 s countdown; batch 17 switch-family-native)."
+      "frames": 2576
     },
     {
       "tag": "12-1",

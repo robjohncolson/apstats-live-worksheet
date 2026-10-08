@@ -880,6 +880,61 @@
         "Codex replay (real Box2D 2.3.1) of the batch-12 solver's per-frame plank angles: the ball first lands at frame 672 near x 236.91 and never reaches the switch (the hand-rolled port latched at 929); reproduced here: the death test fires at tick 674, x 239.1, never latched"
       ],
       "behavior": "9-2: the planks, the PhysicsArea boundary, the PhysicsBall and the PhysicsSwitch ray live in one Box2D 2.3 world (planck 1.5.0, a faithful JS port of Box2D 2.3, bundled into runtime.mjs from the repo node_modules) built on the first ball-park tick in native creation order (ground, PhysicsArea, SeesawParent + revolute, each Seesaw + revolute + gear) at 100 px per metre with gravity (0, 9.8). Each tick, after the actor updates (Balance -> SeesawParent SetAngularVelocity((target - angle) * 60), the ball death test on the last step's contacts, the switch ray), the world steps once with b2World::Step(1/60, 10, 10); the plank angles and the ball position / velocity are read back for drawing. Planks: dynamic boxes from the shape table, density 1, friction 1, restitution 0, gravity scale 0, revolute to the ground at the pivot with limits +-0.1745 rad, children geared to the parent at ratio -1. PhysicsArea: a static body with four edges (density 1, friction 1, restitution 0, kind 1) with the native ghost vertices. Ball: dynamic circle r 12, density 0.1, friction 0.5, restitution 0.2, angular damping 0.5, spawned at rest at the pitcher + 20 px; it rolls as a damped disk (about (2/3) (g sin(theta) - 0.25 v)). Death: a contact with the area whose manifold normal is vertical starts the 30-tick countdown (15 ticks moving, then put to sleep each tick, then the body is destroyed). Switch: the 16 px segment is ray-cast through every fixture with each shape's RayCast, so a ball whose centre sits on the segment start misses while one approaching from the side is hit. The 9-2 solver was re-routed on this world (FLIP_LEFT_AT 520 / FLIP_RIGHT_AT 760). Remaining approximations: planck computes in float64 (Box2D: float32); the native polygon keeps an unscaled centroid (used only by edge-polygon contacts, which never occur here); the order of the SeesawParent and Balance updates within a tick follows the port (Balance first), not a traced actor-list order; a contact that stops touching keeps its stale manifold normal in Box2D but is zeroed by planck (equivalent for the death test, which fires on the first touching tick)."
+    },
+    {
+      "id": "action-button",
+      "files": [
+        "src/engine/types.ts",
+        "src/engine/GameRuntime.ts"
+      ],
+      "evidence": [
+        "Warp gun update FUN_7ff72bb57280 fires on FUN_7ff72bb68510(owner, 0xb) = input bit 11 press edge ((cur & m) == m && (prev & m) == 0, FUN_7ff72bb6ad30); magnet input FUN_7ff72bb59530 reads FUN_7ff72bb68300(owner, 0xb) = bit 11 held; jump is bit 2 (BUTTON_JUMP = 2, stage_common.lua); bit 11 > BUTTON_MAX = 10, shown as '[shot]' in the stage text",
+        "Port (b12 snapshot): InputState (types.ts 65-75) had no such button; the warp gun fired on jumpPressed (GameRuntime 2131)"
+      ],
+      "behavior": "Every stage: InputState gains action (held) and actionPressed (press edge) for native input bit 11. The desk sends them as bits 64 (held) and 256 (press edge) beside 1/2/4/8 directions, 16 jump, 32 jump edge (128 stays the teacher-helper flag); keys: X (also K) for the player, G for the solo buddy; the relay accepts bits <= 511 and keeps the edges one tick like jump. Old packets (bits <= 63) decode exactly as before. A cat with zero Roulette activity has no action button either; an action press counts as player activity for the solo input routing."
+    },
+    {
+      "id": "warp-gun-player",
+      "files": [
+        "src/engine/GameRuntime.ts"
+      ],
+      "evidence": [
+        "Factory branch 0x7ff72bb72c13: a normal mode-3 cat (FUN_7ff72bb6f0e0 moves and jumps normally) + the gun FUN_7ff72bb57010; fire FUN_7ff72bb57280 on the bit-11 press edge, independent of jump; one live shot per gun (+0x408)",
+        "Range FUN_7ff72bb57c80: dies when its SCREEN x (FUN_7ff72bc15b90 subtracts the camera scroll when actor +0x90 bit 8 is set; base ctor FUN_7ff72bc155e0 line 107 sets it on every actor) < 0 or >= 1280 / scale (DAT_7ff72bc7db94)",
+        "Pick-up: message 0xe value 0 to a hit cat (FUN_7ff72bb6fd20 -> FUN_7ff72bb67cc0(0)): active off, collision off, hidden (the port still ran resolvePlayerBodyCollisions on it, so a held cat blocked walking)",
+        "Port (b12 snapshot): 2131-2134 fired on jumpPressed and cancelled the jump (gun cats never jumped); 9585 / 9646 tested the WORLD x (a shot fired at world x >= 853 died on its first step)"
+      ],
+      "behavior": "11-1 / 11-3: a WarpGun cat fires on the action press edge (X), not on jump; it jumps like any cat. The shot range is the visible screen: shot x minus the scroll-camera scroll in 0 .. 1280 / scale, so a shot fired far right in the world flies. Unchanged (already native): the gun at (+-20, -10), the shot from owner + (+-30, -17) at 6 per tick, its 10 x 10 contact and launch probe, the 0.5 s hit fade, one live shot per gun, Player / ColorBox pick-up (hidden, inert where hit, a carried key stays), placement on the shooter's side (x = shot.x - w - 1 / shot.x + 1, bottom = shot.y - 1, one retry h + 2 lower), the key drop on placement. A held cat cannot fire (it is skipped as before) and no longer blocks another cat (cat-vs-cat body push skipped while held: collision bit off). Not modelled: the launch probe ignores the tile map (unverified natively); the scroll camera still counts a held cat at its old position (native unknown); a ColorBox-class push box (ColorBox rows) is not a pick-up target (no gun stage has one)."
+    },
+    {
+      "id": "colorbox-gravity",
+      "files": [
+        "src/engine/GameRuntime.ts"
+      ],
+      "evidence": [
+        "ForceColorBox factory 0x7ff72bb73c9b, ctor FUN_7ff72bb3b490: the ColorBox class (vtable 0x7ff72bcb7c88), colour = raw p0 = 8; update FUN_7ff72bb3b5e0 pushable only by a cat whose slot == colour (8: nobody) and HAS GRAVITY: falls when FUN_7ff72bc13690 fails (FUN_7ff72bb34c40)",
+        "Port (b12 snapshot): ColorBox / ForceColorBox in colorBoxes never fell; a warp-gun release (9830-9835) only wrote the spawn x / y, so a placed box floated"
+      ],
+      "behavior": "11-3 (every ForceColorBox): a ColorBox-class box outside the push-box list falls when unsupported with the push-box family fall (0.65 per tick per tick, 2-unit sweep steps, flush landing on the map, any solid, a push box, another ColorBox or a live cat below; side contact never holds it up). A ForceColorBox the warp gun places falls from where it appears. It stays unpushable (colour 8: no slot matches). ColorBox rows were already push boxes that fall (colorbox-colour-push)."
+    },
+    {
+      "id": "magnet-player",
+      "files": [
+        "src/engine/GameRuntime.ts",
+        "src/engine/actors/Player.ts",
+        "src/engine/sprites.ts"
+      ],
+      "evidence": [
+        "Factory branch 0x7ff72bb72d33: an ordinary mode-3 cat + the aux FUN_7ff72bb59090(new 0x670, cat), attached by FUN_7ff72bb59390; sprite {-11, -22.5, 22, 30} atlas (208, 496) 11 x 15; field body {20, -50, 110, 80} (DAT_7ff72c61f438), contact callback FUN_7ff72bb5a180",
+        "Placement FUN_7ff72bb59e50: facing right aux = cat + (20, -10), hold offset (0, 0); facing left aux = cat + (-170, -10), hold offset (150, 0), body not mirrored: field {cat.x + 40, cat.y - 60, 110, 80} / {cat.x - 150, cat.y - 60, 110, 80}",
+        "Input FUN_7ff72bb59530: on while bit 11 is held (toggle variant only when DAT_7ff72c6301b0 != 0; 0 in the memdump)",
+        "Candidates FUN_7ff72bb5a180: up to 8 per step, cats (+4 == 1) but its own, box family DAT_7ff72c62a10f (FUN_7ff72bb34e10); |normalize(target - cat).y| < sin(2.0) (FUN_7ff72bc4cd48); grab: insertion-sorted by squared distance, command 0x1e(1), first accepting wins (cat FUN_7ff72bb6fd20: input skipped, velocity 0, gravity bit cleared FUN_7ff72bb691d0; box FUN_7ff72bb33d00: +0x400 bit 2 freezes push / fall); holder +0x90 bit 4 cleared (FUN_7ff72bae78f0 / FUN_7ff72bae7950)",
+        "Pull FUN_7ff72bb5a2d0: hold y = cat.y, near edge 30 in front; d = hold - (target + vOwner), vOwner once locked; gains (0.03, 0.08) / (0.06, 0.16) (DAT_7ff72bc7eaf8 / DAT_7ff72bcbbb34 / bbb30 / bbb38); |dx| > 1 -> sign * max(2, g|d|) else snap, y threshold 2; both snapped -> lock; FUN_7ff72bb5b630 -> FUN_7ff72bc13690 wall / ceiling zeroing; velocity FUN_7ff72bb35190 and pos += v FUN_7ff72bb97db0; lock break > 32 (DAT_7ff72bc7d7f8); release 0x1e(0) zeroes the target velocity",
+        "Blocking FUN_7ff72bb59530: FUN_7ff72bb5b630(body, side 2 / 3, 1) zeroes v.x, (side 0, 1) zeroes v.y < 0; FUN_7ff72bb5b630 -> FUN_7ff72bc13690 param_3 = 1 also tests the actor contacts at body +0xa0 (count +0xe8), not only the map contacts (+0x90); then FUN_7ff72bb35190 (velocity) and FUN_7ff72bb97db0 (pos += v), the engine sweep resolves the body; the lock bit (+0x3f8 bit 0) is only set while unlocked, never cleared by a block",
+        "Shared targets: command 0x1e handlers FUN_7ff72bb33d00 (box: set / clear +0x400 bit 2, velocity 0, return 1) and FUN_7ff72bb6fd20 (cat) accept unconditionally; FUN_7ff72bb5a180 filters by class, field, angle and the cap of 8, not by holder; each aux keeps its own +0x518 and pulls every update",
+        "Port (b12 snapshot): 2745-2747 MagnetPlayer only joined magnetPlayers; 241-242 / 7798-7825 a MoveEnergy pull (radius 112) and collect radius 56 with no caller and no native source"
+      ],
+      "behavior": "11-2 / 11-4: each MagnetPlayer carries a magnet (drawn at cat + (+-20, -10), mirrored by facing). While its action button is HELD the magnet field is {x + 40, y - 60, 110, 80} in front of the cat (x / y = centre x / feet y; facing left {x - 150, ...}). Field list: other live cats and box-family push boxes (PushBox, Normal / Small / Tall / Big Box; not ColorBox) touching the field with |normalize(target - cat).y| < 0.909, at most 8. With nothing held the nearest (squared distance, ties in list order) is grabbed, even one another magnet already holds: then both magnets pull it, each in its own update (MagnetPlayer order), each moving it once; the held state is one flag on the target, so either magnet letting go unfreezes it (a box falls again, a cat gets its buttons and gravity back) while the other keeps pulling it. A held cat ignores its buttons and has no gravity (its own update is skipped; it is still a body for keys, Thunder, cats standing on it); a held box neither falls nor is pushed. The holder cannot turn while it holds (it walks backwards). Each tick, after the cats moved, the target is pulled toward the hold point (its origin at the holder's feet level, near edge 30 in front): d = hold - (target + vOwner) with vOwner the holder's motion this tick once locked, gains (0.03, 0.08) unlocked / (0.06, 0.16) locked, |dx| > 1 -> sign * max(2, gx |dx|) else dx, y the same with threshold 2, both snapped -> locked; v.x = 0 when the target touches a wall on that side, v.y < 0 -> 0 under a ceiling (map OR a solid actor body: Rect, gate, bridge, lift, wall, blink block, FallBox, jump stand, box, live cat); the target then moves once by vOwner + v swept against the map and then those bodies, stopping flush at contact (no second move). A blocked pull keeps the lock (only the > 32 distance unlocks). A locked target more than 32 from the hold point unlocks. Letting go, the holder dying, or the target leaving the field list releases: the target velocity is zeroed (it drops straight down), a cat gets gravity back, the holder can turn. A helper cat that leaves is released first. The invented MoveEnergy pull / collect radius is deleted. Not modelled: the repeating magnet sound (0.6 s); the field list order among cats and boxes beyond distance (cats first, then boxes); lift carry of a locked target is by the holder's displacement."
     }
   ],
   "hashes": {

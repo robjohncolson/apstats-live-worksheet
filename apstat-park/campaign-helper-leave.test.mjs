@@ -35,7 +35,10 @@ const IDLE = { left: false, right: false, up: false, down: false, jump: false, j
   resetPressed: false, prevStagePressed: false, nextStagePressed: false };
 // Same bit layout as campaign-engine.mjs decodeInput; bit 128 = an optional teacher cat is present.
 const decode = (bits) => ({ ...IDLE, left: !!(bits & 1), right: !!(bits & 2), up: !!(bits & 4), down: !!(bits & 8),
-  jump: !!(bits & 16), jumpPressed: !!(bits & 32) });
+  jump: !!(bits & 16), jumpPressed: !!(bits & 32), action: !!(bits & 64), actionPressed: !!(bits & 256) });
+
+// action-button: the warp gun fires on the action press edge (bit 256) with the button held (bit 64).
+const SHOT = 64 | 256;
 
 function play(source, party, script, frames) {
   const entry = runtime.stages.find((stage) => stage.source === source);
@@ -81,7 +84,7 @@ test('11-3 (gun02, party 2): P1 picks up the teacher cat, the teacher leaves, P1
   // probe and the shot is refused): P1 2 -> 7 frames, the teacher 6 -> 13 frames.
   const shots = new Set([80, 130, 160, 190]);
   const { game, removed, teacherWasHeld } = play('stage_gun02', 2, (frame) => [
-    (frame >= 60 && frame < 67 ? 2 : 0) | (shots.has(frame) ? 48 : 0),
+    (frame >= 60 && frame < 67 ? 2 : 0) | (shots.has(frame) ? SHOT : 0),
     frame < 50 ? 2 : 0,
     frame < 100 ? 128 | (frame >= 20 && frame < 33 ? 2 : 0) : 0,
   ], 300);
@@ -105,10 +108,12 @@ test('every WarpGun / Magnet stage, parties 2 and 4: a teacher joins, is shot at
           for (const aim of [1, 2]) {
             const { game, removed } = play(source, party, (frame) => {
               const students = Array.from({ length: party }, (_, slot) => {
-                if (slot === 0) return (frame >= 60 && frame < 62 ? aim : 0) | (frame % 30 === 20 ? 48 : 0);
-                return frame < 50 ? away : frame % 45 === 10 ? 48 : 0;
+                // The action button (64 held, 256 press edge): the gun fires on the edge, the magnet holds while held.
+                if (slot === 0) return (frame >= 60 && frame < 62 ? aim : 0) | (frame % 30 === 20 ? SHOT : 0)
+                  | (frame >= 40 && frame < leave + 30 ? 64 : 0);
+                return frame < 50 ? away : frame % 45 === 10 ? SHOT : 0;
               });
-              const teacher = frame < leave ? 128 | (frame >= 20 && frame < 26 ? 2 : 0) | (frame === 40 ? 48 : 0) : 0;
+              const teacher = frame < leave ? 128 | (frame >= 20 && frame < 26 ? 2 : 0) | (frame === 40 ? SHOT : 0) : 0;
               return [...students, teacher];
             }, leave + 150);
             assert.deepEqual(retainedReferences(game, removed), [], `${source} p${party} leave ${leave}`);

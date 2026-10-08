@@ -172,15 +172,16 @@ export function mountCampaign({ container, getSocket, board, onClose }) {
     const now = performance.now();
     if (selecting && now - lastSelect > 1000 && send('campaign_select')) lastSelect = now;
     if (selecting && !joined) return;   // nobody joins a team until a stage is chosen
-    if (!joined && now - lastJoin > 1000) { lastJoin = now; send('campaign_join', { protocol: 29, active: activeJoin }); }
+    if (!joined && now - lastJoin > 1000) { lastJoin = now; send('campaign_join', { protocol: 30, active: activeJoin }); }
     if (!state || !game) return;
     if (now - lastPacket > 1500) resume();
     // Keyboard edges send immediately. A blocked write must retain the jump
     // pulse until it actually reaches the ordered authoritative input stream.
     if (bits !== sentBits || buddy !== sentBuddy || now - lastInput > 500) {
       if (send('campaign_input', { bits, buddy })) {
-        sentBits = bits & 31; sentBuddy = buddy & 31;
-        bits &= 31; buddy &= 31; lastInput = now;
+        // Held buttons (31 = arrows + jump, 64 = action) stay; the jump (32) and action (256) edges were sent.
+        sentBits = bits & 95; sentBuddy = buddy & 95;
+        bits &= 95; buddy &= 95; lastInput = now;
       }
     }
     if (game.stats.cleared && !clearActive && now - lastClear > 500 && replay.frame > 0) {
@@ -193,8 +194,9 @@ export function mountCampaign({ container, getSocket, board, onClose }) {
     const down = event.type === 'keydown', key = event.key.toLowerCase();
     if (key === 'escape' && down) { event.preventDefault(); dispose(); return; }
     if (key === 'r' && down && !event.repeat) { event.preventDefault(); send('campaign_retry'); return; }
-    const first = { arrowleft: 1, arrowright: 2, arrowup: 4, arrowdown: 8, ' ': 16 };
-    const second = { a: 1, d: 2, w: 4, s: 8, f: 16 };
+    // 64 = the action button (native input bit 11, '[shot]': warp gun fires on the press, magnet works while held).
+    const first = { arrowleft: 1, arrowright: 2, arrowup: 4, arrowdown: 8, ' ': 16, x: 64, k: 64 };
+    const second = { a: 1, d: 2, w: 4, s: 8, f: 16, g: 64 };
     const mask = first[key] || second[key]; if (!mask) return;
     event.preventDefault();
     if (idle && down) { idle = false; activeJoin = true; lastJoin = -Infinity; pump(); return; }
@@ -205,8 +207,10 @@ export function mountCampaign({ container, getSocket, board, onClose }) {
       dispose(); return;
     }
     if (down) held.add(key); else held.delete(key);
-    if (first[key]) { bits = down ? bits | mask : bits & ~mask; if (mask === 16 && fresh) bits |= 32; }
-    else { buddy = down ? buddy | mask : buddy & ~mask; if (mask === 16 && fresh) buddy |= 32; }
+    // A fresh press also sets the edge bit: 32 for jump, 256 for action.
+    const edge = fresh ? ({ 16: 32, 64: 256 })[mask] || 0 : 0;
+    if (first[key]) { bits = down ? bits | mask : bits & ~mask; bits |= edge; }
+    else { buddy = down ? buddy | mask : buddy & ~mask; buddy |= edge; }
     pump();
   }
   function blur() {
@@ -283,7 +287,7 @@ export function mountCampaign({ container, getSocket, board, onClose }) {
       : state && !state.roster.includes(board.username) && !(state.helpers || []).includes(board.username) ? 'JOINING NEXT STAGE. TEAM CAN PRESS R TO RESTART.'
       : replay.received - replay.frame > 120 ? 'CATCHING UP WITH YOUR TEAM...'
       : clearActive ? 'NEXT STAGE...' : state?.roster.length === 1
-        ? 'SOLO: ARROWS + SPACE / WASD + F.  R TO RETRY.' : 'ARROWS + SPACE. UP TO ENTER DOORS. R TO RETRY.');
+        ? 'SOLO: ARROWS + SPACE + X / WASD + F + G.  R TO RETRY.' : 'ARROWS + SPACE. X = ACTION. UP TO ENTER DOORS. R TO RETRY.');
     pixelText(ctx, message, 28 + left, 74, 7);
     if (state) pixelText(ctx, state.roster.join(' + ').slice(0, 96), 28 + left, 91, 7);
     status.textContent = entry.world + '-' + entry.stage + ' ' + entry.title + '. ' + message;

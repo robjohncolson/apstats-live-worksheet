@@ -34,7 +34,7 @@ const { restoreJump01Steps } = await import('../campaign-jump01.mjs');
 const { CAMPAIGN } = await import('../campaign-catalog.mjs');
 
 export const IDLE = Object.freeze({ left: false, right: false, up: false, down: false, jump: false, jumpPressed: false,
-  resetPressed: false, prevStagePressed: false, nextStagePressed: false });
+  action: false, actionPressed: false, resetPressed: false, prevStagePressed: false, nextStagePressed: false });
 
 export const STAGES = CAMPAIGN.map((entry) => ({ tag: `${entry.world}-${entry.stage}`, world: entry.world,
   stage: entry.stage, title: entry.title, source: entry.source, index: entry.index }));
@@ -85,6 +85,7 @@ export function createApi(run, { budget = 6000, party, onFrame } = {}) {
   const n = party ?? cats.length;
   let frame = 0;
   const jumpHeld = new Array(n).fill(false);   // to derive the jumpPressed edge
+  const actionHeld = new Array(n).fill(false);   // to derive the actionPressed edge (warp gun fires on it)
   const log = [];
 
   function snapshot() {
@@ -95,7 +96,7 @@ export function createApi(run, { budget = 6000, party, onFrame } = {}) {
     throw new Blocked(reason, { frame, cats: snapshot(), ...extra });
   }
 
-  // One frame. specs[i] is a partial button set for cat i ('jump' means held; the press edge is derived).
+  // One frame. specs[i] is a partial button set for cat i ('jump' / 'action' mean held; the press edges are derived).
   // The runtime reads cat i's buttons from input slot game.playerInputSlots[i] (not always i: a Player row with
   // p0 = 1 swaps slots, e.g. [1, 0] in 3-1, 4-1, 10-x, 12-1), so the specs are placed by slot.
   function step(specs = []) {
@@ -111,7 +112,10 @@ export function createApi(run, { budget = 6000, party, onFrame } = {}) {
       const spec = input(specs[i]);
       const pressed = spec.jump && !jumpHeld[i];
       jumpHeld[i] = spec.jump;
-      inputs[i < cats.length ? (slots[i] ?? i) : i] = { ...spec, jumpPressed: spec.jumpPressed || pressed };
+      const actionPressed = spec.action && !actionHeld[i];
+      actionHeld[i] = spec.action;
+      inputs[i < cats.length ? (slots[i] ?? i) : i] = { ...spec, jumpPressed: spec.jumpPressed || pressed,
+        actionPressed: spec.actionPressed || actionPressed };
     }
     run.tick(inputs);
     frame++;

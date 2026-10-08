@@ -546,6 +546,39 @@ export const CAMPAIGN_PATCHES = [{
     'Death FUN_7ff72bb55e40: walks the ball body contact list (+0x88): other body userData kind (+0xc) == 1 and |1 - |manifold localNormal.y (contact +0xa4)|| <= DAT_7ff72bc7d458 -> 30; below 15 the awake flag is cleared, sleep time / velocities / forces zeroed every tick; 0 -> FUN_7ff72bc11650. PhysicsSwitch ray FUN_7ff72bbe7770: every fixture of every body (no broad-phase), shape RayCast from (x, y) * 0.01 to (x, y - 16) * 0.01, maxFraction 1',
     'Codex replay (real Box2D 2.3.1) of the batch-12 solver\'s per-frame plank angles: the ball first lands at frame 672 near x 236.91 and never reaches the switch (the hand-rolled port latched at 929); reproduced here: the death test fires at tick 674, x 239.1, never latched'],
   behavior: '9-2: the planks, the PhysicsArea boundary, the PhysicsBall and the PhysicsSwitch ray live in one Box2D 2.3 world (planck 1.5.0, a faithful JS port of Box2D 2.3, bundled into runtime.mjs from the repo node_modules) built on the first ball-park tick in native creation order (ground, PhysicsArea, SeesawParent + revolute, each Seesaw + revolute + gear) at 100 px per metre with gravity (0, 9.8). Each tick, after the actor updates (Balance -> SeesawParent SetAngularVelocity((target - angle) * 60), the ball death test on the last step\'s contacts, the switch ray), the world steps once with b2World::Step(1/60, 10, 10); the plank angles and the ball position / velocity are read back for drawing. Planks: dynamic boxes from the shape table, density 1, friction 1, restitution 0, gravity scale 0, revolute to the ground at the pivot with limits +-0.1745 rad, children geared to the parent at ratio -1. PhysicsArea: a static body with four edges (density 1, friction 1, restitution 0, kind 1) with the native ghost vertices. Ball: dynamic circle r 12, density 0.1, friction 0.5, restitution 0.2, angular damping 0.5, spawned at rest at the pitcher + 20 px; it rolls as a damped disk (about (2/3) (g sin(theta) - 0.25 v)). Death: a contact with the area whose manifold normal is vertical starts the 30-tick countdown (15 ticks moving, then put to sleep each tick, then the body is destroyed). Switch: the 16 px segment is ray-cast through every fixture with each shape\'s RayCast, so a ball whose centre sits on the segment start misses while one approaching from the side is hit. The 9-2 solver was re-routed on this world (FLIP_LEFT_AT 520 / FLIP_RIGHT_AT 760). Remaining approximations: planck computes in float64 (Box2D: float32); the native polygon keeps an unscaled centroid (used only by edge-polygon contacts, which never occur here); the order of the SeesawParent and Balance updates within a tick follows the port (Balance first), not a traced actor-list order; a contact that stops touching keeps its stale manifold normal in Box2D but is zeroed by planck (equivalent for the death test, which fires on the first touching tick).',
+}, {
+  // Batch 13 (decoded spec b13/spec-warpgun.md + spec-magnet.md): the action button.
+  id: 'action-button',
+  files: ['src/engine/types.ts', 'src/engine/GameRuntime.ts'],
+  evidence: ['Warp gun update FUN_7ff72bb57280 fires on FUN_7ff72bb68510(owner, 0xb) = input bit 11 press edge ((cur & m) == m && (prev & m) == 0, FUN_7ff72bb6ad30); magnet input FUN_7ff72bb59530 reads FUN_7ff72bb68300(owner, 0xb) = bit 11 held; jump is bit 2 (BUTTON_JUMP = 2, stage_common.lua); bit 11 > BUTTON_MAX = 10, shown as \'[shot]\' in the stage text',
+    'Port (b12 snapshot): InputState (types.ts 65-75) had no such button; the warp gun fired on jumpPressed (GameRuntime 2131)'],
+  behavior: 'Every stage: InputState gains action (held) and actionPressed (press edge) for native input bit 11. The desk sends them as bits 64 (held) and 256 (press edge) beside 1/2/4/8 directions, 16 jump, 32 jump edge (128 stays the teacher-helper flag); keys: X (also K) for the player, G for the solo buddy; the relay accepts bits <= 511 and keeps the edges one tick like jump. Old packets (bits <= 63) decode exactly as before. A cat with zero Roulette activity has no action button either; an action press counts as player activity for the solo input routing.',
+}, {
+  id: 'warp-gun-player',
+  files: ['src/engine/GameRuntime.ts'],
+  evidence: ['Factory branch 0x7ff72bb72c13: a normal mode-3 cat (FUN_7ff72bb6f0e0 moves and jumps normally) + the gun FUN_7ff72bb57010; fire FUN_7ff72bb57280 on the bit-11 press edge, independent of jump; one live shot per gun (+0x408)',
+    'Range FUN_7ff72bb57c80: dies when its SCREEN x (FUN_7ff72bc15b90 subtracts the camera scroll when actor +0x90 bit 8 is set; base ctor FUN_7ff72bc155e0 line 107 sets it on every actor) < 0 or >= 1280 / scale (DAT_7ff72bc7db94)',
+    'Pick-up: message 0xe value 0 to a hit cat (FUN_7ff72bb6fd20 -> FUN_7ff72bb67cc0(0)): active off, collision off, hidden (the port still ran resolvePlayerBodyCollisions on it, so a held cat blocked walking)',
+    'Port (b12 snapshot): 2131-2134 fired on jumpPressed and cancelled the jump (gun cats never jumped); 9585 / 9646 tested the WORLD x (a shot fired at world x >= 853 died on its first step)'],
+  behavior: '11-1 / 11-3: a WarpGun cat fires on the action press edge (X), not on jump; it jumps like any cat. The shot range is the visible screen: shot x minus the scroll-camera scroll in 0 .. 1280 / scale, so a shot fired far right in the world flies. Unchanged (already native): the gun at (+-20, -10), the shot from owner + (+-30, -17) at 6 per tick, its 10 x 10 contact and launch probe, the 0.5 s hit fade, one live shot per gun, Player / ColorBox pick-up (hidden, inert where hit, a carried key stays), placement on the shooter\'s side (x = shot.x - w - 1 / shot.x + 1, bottom = shot.y - 1, one retry h + 2 lower), the key drop on placement. A held cat cannot fire (it is skipped as before) and no longer blocks another cat (cat-vs-cat body push skipped while held: collision bit off). Not modelled: the launch probe ignores the tile map (unverified natively); the scroll camera still counts a held cat at its old position (native unknown); a ColorBox-class push box (ColorBox rows) is not a pick-up target (no gun stage has one).',
+}, {
+  id: 'colorbox-gravity',
+  files: ['src/engine/GameRuntime.ts'],
+  evidence: ['ForceColorBox factory 0x7ff72bb73c9b, ctor FUN_7ff72bb3b490: the ColorBox class (vtable 0x7ff72bcb7c88), colour = raw p0 = 8; update FUN_7ff72bb3b5e0 pushable only by a cat whose slot == colour (8: nobody) and HAS GRAVITY: falls when FUN_7ff72bc13690 fails (FUN_7ff72bb34c40)',
+    'Port (b12 snapshot): ColorBox / ForceColorBox in colorBoxes never fell; a warp-gun release (9830-9835) only wrote the spawn x / y, so a placed box floated'],
+  behavior: '11-3 (every ForceColorBox): a ColorBox-class box outside the push-box list falls when unsupported with the push-box family fall (0.65 per tick per tick, 2-unit sweep steps, flush landing on the map, any solid, a push box, another ColorBox or a live cat below; side contact never holds it up). A ForceColorBox the warp gun places falls from where it appears. It stays unpushable (colour 8: no slot matches). ColorBox rows were already push boxes that fall (colorbox-colour-push).',
+}, {
+  id: 'magnet-player',
+  files: ['src/engine/GameRuntime.ts', 'src/engine/actors/Player.ts', 'src/engine/sprites.ts'],
+  evidence: ['Factory branch 0x7ff72bb72d33: an ordinary mode-3 cat + the aux FUN_7ff72bb59090(new 0x670, cat), attached by FUN_7ff72bb59390; sprite {-11, -22.5, 22, 30} atlas (208, 496) 11 x 15; field body {20, -50, 110, 80} (DAT_7ff72c61f438), contact callback FUN_7ff72bb5a180',
+    'Placement FUN_7ff72bb59e50: facing right aux = cat + (20, -10), hold offset (0, 0); facing left aux = cat + (-170, -10), hold offset (150, 0), body not mirrored: field {cat.x + 40, cat.y - 60, 110, 80} / {cat.x - 150, cat.y - 60, 110, 80}',
+    'Input FUN_7ff72bb59530: on while bit 11 is held (toggle variant only when DAT_7ff72c6301b0 != 0; 0 in the memdump)',
+    'Candidates FUN_7ff72bb5a180: up to 8 per step, cats (+4 == 1) but its own, box family DAT_7ff72c62a10f (FUN_7ff72bb34e10); |normalize(target - cat).y| < sin(2.0) (FUN_7ff72bc4cd48); grab: insertion-sorted by squared distance, command 0x1e(1), first accepting wins (cat FUN_7ff72bb6fd20: input skipped, velocity 0, gravity bit cleared FUN_7ff72bb691d0; box FUN_7ff72bb33d00: +0x400 bit 2 freezes push / fall); holder +0x90 bit 4 cleared (FUN_7ff72bae78f0 / FUN_7ff72bae7950)',
+    'Pull FUN_7ff72bb5a2d0: hold y = cat.y, near edge 30 in front; d = hold - (target + vOwner), vOwner once locked; gains (0.03, 0.08) / (0.06, 0.16) (DAT_7ff72bc7eaf8 / DAT_7ff72bcbbb34 / bbb30 / bbb38); |dx| > 1 -> sign * max(2, g|d|) else snap, y threshold 2; both snapped -> lock; FUN_7ff72bb5b630 -> FUN_7ff72bc13690 wall / ceiling zeroing; velocity FUN_7ff72bb35190 and pos += v FUN_7ff72bb97db0; lock break > 32 (DAT_7ff72bc7d7f8); release 0x1e(0) zeroes the target velocity',
+    'Blocking FUN_7ff72bb59530: FUN_7ff72bb5b630(body, side 2 / 3, 1) zeroes v.x, (side 0, 1) zeroes v.y < 0; FUN_7ff72bb5b630 -> FUN_7ff72bc13690 param_3 = 1 also tests the actor contacts at body +0xa0 (count +0xe8), not only the map contacts (+0x90); then FUN_7ff72bb35190 (velocity) and FUN_7ff72bb97db0 (pos += v), the engine sweep resolves the body; the lock bit (+0x3f8 bit 0) is only set while unlocked, never cleared by a block',
+    'Shared targets: command 0x1e handlers FUN_7ff72bb33d00 (box: set / clear +0x400 bit 2, velocity 0, return 1) and FUN_7ff72bb6fd20 (cat) accept unconditionally; FUN_7ff72bb5a180 filters by class, field, angle and the cap of 8, not by holder; each aux keeps its own +0x518 and pulls every update',
+    'Port (b12 snapshot): 2745-2747 MagnetPlayer only joined magnetPlayers; 241-242 / 7798-7825 a MoveEnergy pull (radius 112) and collect radius 56 with no caller and no native source'],
+  behavior: '11-2 / 11-4: each MagnetPlayer carries a magnet (drawn at cat + (+-20, -10), mirrored by facing). While its action button is HELD the magnet field is {x + 40, y - 60, 110, 80} in front of the cat (x / y = centre x / feet y; facing left {x - 150, ...}). Field list: other live cats and box-family push boxes (PushBox, Normal / Small / Tall / Big Box; not ColorBox) touching the field with |normalize(target - cat).y| < 0.909, at most 8. With nothing held the nearest (squared distance, ties in list order) is grabbed, even one another magnet already holds: then both magnets pull it, each in its own update (MagnetPlayer order), each moving it once; the held state is one flag on the target, so either magnet letting go unfreezes it (a box falls again, a cat gets its buttons and gravity back) while the other keeps pulling it. A held cat ignores its buttons and has no gravity (its own update is skipped; it is still a body for keys, Thunder, cats standing on it); a held box neither falls nor is pushed. The holder cannot turn while it holds (it walks backwards). Each tick, after the cats moved, the target is pulled toward the hold point (its origin at the holder\'s feet level, near edge 30 in front): d = hold - (target + vOwner) with vOwner the holder\'s motion this tick once locked, gains (0.03, 0.08) unlocked / (0.06, 0.16) locked, |dx| > 1 -> sign * max(2, gx |dx|) else dx, y the same with threshold 2, both snapped -> locked; v.x = 0 when the target touches a wall on that side, v.y < 0 -> 0 under a ceiling (map OR a solid actor body: Rect, gate, bridge, lift, wall, blink block, FallBox, jump stand, box, live cat); the target then moves once by vOwner + v swept against the map and then those bodies, stopping flush at contact (no second move). A blocked pull keeps the lock (only the > 32 distance unlocks). A locked target more than 32 from the hold point unlocks. Letting go, the holder dying, or the target leaving the field list releases: the target velocity is zeroed (it drops straight down), a cat gets gravity back, the holder can turn. A helper cat that leaves is released first. The invented MoveEnergy pull / collect radius is deleted. Not modelled: the repeating magnet sound (0.6 s); the field list order among cats and boxes beyond distance (cats first, then boxes); lift carry of a locked target is by the holder\'s displacement.',
 }];
 
 // Fail the build if upstream code changes: never silently skip a correction.
@@ -689,6 +722,12 @@ export function patchCampaignSource(file, source) {
       this.jumpsUsed += 1;
       this.velocity.x = 0;
     }`, file);
+    // magnet-player: a holding MagnetPlayer cannot turn (owner +0x90 bit 4 'can turn' cleared, FUN_7ff72bae78f0 /
+    // FUN_7ff72bae7950): it can walk backwards.
+    source = replaceOnce(source, '  private spawnFacing: -1 | 1 = 1;\n',
+      '  private spawnFacing: -1 | 1 = 1;\n  /** magnet-player: facing frozen while this cat\'s magnet holds something. */\n  facingLocked = false;\n', file);
+    source = replaceOnce(source, '    if (this.velocity.x > 0) this.facing = 1;\n    else if (this.velocity.x < 0) this.facing = -1;',
+      '    if (!this.facingLocked && this.velocity.x > 0) this.facing = 1;\n    else if (!this.facingLocked && this.velocity.x < 0) this.facing = -1;', file);
     return source;
   }
   if (file === 'src/engine/physics.ts') {
@@ -885,6 +924,8 @@ function breakoutPaddleDomeNormal(ballCenter: Vector2, playerRect: Rect): Vector
     // bound-ball-pitcher / laser-ball-pitcher / laser-key-box: cannon barrel (DAT_7ff72bcb7300), base (DAT_7ff72bcb72f0),
     // LaserKeyBox hit frames (DAT_7ff72bcbaf10).
     source = replaceOnce(source, 'export const PICO_ATLAS_FRAMES = {', 'export const PICO_ATLAS_FRAMES = {\n  ball_cannon_barrel: [240, 400, 23, 29],\n  ball_cannon_base: [240, 432, 26, 20],\n  laser_key_box_0: [288, 480, 23, 31],\n  laser_key_box_1: [320, 480, 23, 31],\n  laser_key_box_2: [352, 480, 23, 31],', file);
+    // magnet-player: the aux sprite (ctor FUN_7ff72bb59090: atlas (208, 496) 11 x 15).
+    source = replaceOnce(source, 'export const PICO_ATLAS_FRAMES = {', 'export const PICO_ATLAS_FRAMES = {\n  magnet_auxiliary: [208, 496, 11, 15],', file);
     return source;
   }
   if (file === 'src/engine/actors/Goal.ts') {
@@ -1723,6 +1764,12 @@ import { frameTexture } from '../sprites';
       '    g.drawRoundedRect(0, 0, this.params.width, this.params.height, 6);', file);
     source = replaceOnce(source, '    g.drawRect(-10, -2, 20, 4);', '    g.drawRect(this.params.width / 2 - 10, this.params.height / 2 - 2, 20, 4);', file);
     return source;
+  }
+  if (file === 'src/engine/types.ts') {
+    // action-button: native input bit 11 ('[shot]'; jump is bit 2, BUTTON_MAX = 10 in stage_common.lua): held
+    // (magnet, FUN_7ff72bb68300) and press edge (warp gun, FUN_7ff72bb68510). Optional: older callers omit them.
+    return replaceOnce(source, '  jumpPressed: boolean;\n  resetPressed: boolean;',
+      '  jumpPressed: boolean;\n  /** action-button: native input bit 11 held. */\n  action?: boolean;\n  /** action-button: native input bit 11 press edge. */\n  actionPressed?: boolean;\n  resetPressed: boolean;', file);
   }
   if (file === 'src/engine/GameRuntime.ts') {
     // optional-teacher-cats: a leaving helper cat is removed with every retained reference to it.
@@ -6213,7 +6260,553 @@ function box2dRayHitsAnyFixture(world: planck.World, x1: number, y1: number, x2:
   return false;
 }
 `;
+    // action-button: native input bit 11 ('[shot]') reaches the runtime as action (held) / actionPressed (edge).
+    // A cat whose Roulette activity is 0 has no buttons at all, the action button included.
+    source = replaceOnce(source, `            jump: false,
+            jumpPressed: false,
+          }
+        : playerInput;`, `            jump: false,
+            jumpPressed: false,
+            action: false,
+            actionPressed: false,
+          }
+        : playerInput;`, file);
+    source = replaceOnce(source, `    || input.jumpPressed
+    || input.resetPressed;
+}`, `    || input.jumpPressed
+    || !!input.action
+    || !!input.actionPressed
+    || input.resetPressed;
+}`, file);
+    // warp-gun-player: the gun fires on the action press edge (FUN_7ff72bb57280 -> FUN_7ff72bb68510(owner, 0xb) =
+    // FUN_7ff72bb6ad30: (cur & m) == m && (prev & m) == 0); jump is bit 2 and independent: gun cats jump normally.
+    source = replaceOnce(source, `      if (resolvedPlayerInput.jumpPressed && this.warpGunPlayers.has(this.player)) {
+        this.createWarpGunPlayerShot(this.player);
+        resolvedPlayerInput = { ...resolvedPlayerInput, jump: false, jumpPressed: false };
+      }`, `      if (resolvedPlayerInput.actionPressed && this.warpGunPlayers.has(this.player)) {
+        this.createWarpGunPlayerShot(this.player);
+      }`, file);
+    // warp-gun-player: range FUN_7ff72bb57c80 tests the SCREEN x (FUN_7ff72bc15b90 subtracts the camera scroll for
+    // every actor: base ctor FUN_7ff72bc155e0 sets +0x90 bit 8), as viewportWorldRight does: the shot lives until it
+    // leaves the visible screen (was the world x: a shot fired at world x >= 1280 / scale died on its first step).
+    source = replaceOnce(source, `      const previousShotX = shot.x;
+      shot.x += shot.direction * WARP_GUN_SHOT_STEP;
+      if (shot.x < 0 || shot.x >= rightBoundary) {`, `      const previousShotX = shot.x;
+      shot.x += shot.direction * WARP_GUN_SHOT_STEP;
+      const cameraScroll = this.scrollCameraConfig && this.scrollCameraConfig.mode !== 0
+        ? this.scrollCameraState.scroll
+        : 0;
+      const shotScreenX = shot.x - cameraScroll;
+      if (shotScreenX < 0 || shotScreenX >= rightBoundary) {`, file);
+    // magnet-player / warp-gun-player: the decoded actors (spec b13).
+    source = replaceOnce(source, `  MagnetPlayer: { provenance: 'suspected', runtimeRole: 'player' },
+  WarpGunPlayer: { provenance: 'suspected', runtimeRole: 'player' },`, `  MagnetPlayer: { provenance: 'recovered-data', runtimeRole: 'player' },
+  WarpGunPlayer: { provenance: 'recovered-data', runtimeRole: 'player' },`, file);
+
+    // colorbox-gravity: ColorBox-class boxes outside the push-box list (ForceColorBox, incl. one a warp gun placed)
+    // fall when unsupported, like the push-box family (FUN_7ff72bb3b5e0 -> FUN_7ff72bb34c40).
+    source = replaceOnce(source, `  private colorBoxes: ColorBox[] = [];`, `  private colorBoxes: ColorBox[] = [];
+  /** colorbox-gravity: fall speed (per second) of each ColorBox in colorBoxes. */
+  private colorBoxFallVelocity = new Map<ColorBox, number>();`, file);
+    source = replaceOnce(source, `    this.updateFallingPushBoxes(clampedDt);
+`, `    this.updateFallingPushBoxes(clampedDt);
+    this.updateFallingColorBoxes(clampedDt);
+`, file);
+    source = replaceOnce(source, `  private applyWarpAlls(): void {`, `  /**
+   * colorbox-gravity: FUN_7ff72bb3b5e0 (the ColorBox-class update, ForceColorBox included) falls when the support
+   * test FUN_7ff72bc13690 fails (FUN_7ff72bb34c40, the push-box family fall): 0.65 per tick per tick, stopping flush
+   * on the map, any solid, a box or a cat below. The colour push rule is unchanged (a ForceColorBox has colour 8:
+   * no slot matches, so it is never pushed).
+   */
+  private updateFallingColorBoxes(dt: number): void {
+    if (!this.tileMap || this.colorBoxes.length === 0) return;
+    const COLOR_BOX_GRAVITY = .65 * 60 * 60;
+    const lowestY = this.tileMap.pixelHeight + 2880;
+    for (const box of this.colorBoxes) {
+      const boxRect = colorBoxRect(box);
+      if (boxRect.y > lowestY) continue;
+      const solids: Rect[] = [
+        ...this.gates.filter((gate) => gate.isSolid()).map((gate) => gate.rect),
+        ...this.stationaryActiveFallBoxRects(),
+        ...this.staticRects
+          .filter((staticRect) => staticRect.spawn.actorName !== 'PuzzlePredictProxy')
+          .map((staticRect) => staticRect.rect),
+        ...this.moveWalls.map((moveWall) => moveWall.rect),
+        ...this.weightedLifts.map((weightedLift) => weightedLift.rect),
+        ...this.bridges.filter((bridge) => bridge.isSolid()).map((bridge) => bridge.rect),
+        ...this.blinkBlocks.filter((blinkBlock) => blinkBlock.solid).map((blinkBlock) => blinkBlock.rect),
+        ...this.smallBoxes.map(smallBoxRect),
+        ...this.normalBoxes.map(normalBoxRect),
+        ...this.pushBoxes.map((pushBox) => pushBox.rect),
+        ...this.colorBoxes.filter((other) => other !== box).map(colorBoxRect),
+        ...this.jumpStands.map((jumpStand) => jumpStand.rect),
+        // Only live cats below the box hold it up (side contact never suspends a fall, as for push boxes).
+        ...this.players
+          .filter((player) => player.deathTimer <= 0 && !this.deathFallPlayers.has(player)
+            && !this.collisionChangePlayersCollisionOff.has(player) && !this.warpGunDisabledPlayers.has(player)
+            && player.rect.y >= boxRect.y + boxRect.height - .001)
+          .map((player) => player.rect),
+      ];
+      const blockedAt = (rect: Rect): boolean => {
+        const body = { ...rect, x: rect.x + 1, width: rect.width - 2 };
+        return this.tileMap!.rectHitsSolid(body) || solids.some((solid) => rectsOverlap(body, solid));
+      };
+      const moveBy = (deltaY: number): void => {
+        box.spawn.y += deltaY;
+        box.view.y += deltaY;
+      };
+      const resolveLanding = (from: number, span: number): number => {
+        let low = 0, high = span;
+        for (let pass = 0; pass < 20; pass += 1) {
+          const middle = (low + high) / 2;
+          if (blockedAt({ ...boxRect, y: boxRect.y + from + middle })) high = middle;
+          else low = middle;
+        }
+        return low;
+      };
+      const supportStrip: Rect = {
+        x: boxRect.x + .001,
+        y: boxRect.y + boxRect.height + 0.001,
+        width: boxRect.width - .002,
+        height: 1,
+      };
+      if (blockedAt(supportStrip)) {
+        const settle = resolveLanding(0, 1.002);
+        if (settle > 0) moveBy(settle);
+        this.colorBoxFallVelocity.set(box, 0);
+        continue;
+      }
+      const velocityY = (this.colorBoxFallVelocity.get(box) ?? 0) + COLOR_BOX_GRAVITY * dt;
+      const fall = velocityY * dt;
+      let moved = 0;
+      let landed = false;
+      while (fall - moved > 1e-6) {
+        const step = Math.min(2, fall - moved);
+        if (blockedAt({ ...boxRect, y: boxRect.y + moved + step })) {
+          moved += resolveLanding(moved, step);
+          landed = true;
+          break;
+        }
+        moved += step;
+      }
+      if (moved > 1e-6) moveBy(moved);
+      this.colorBoxFallVelocity.set(box, landed ? 0 : velocityY);
+    }
+  }
+
+  /** magnet-player: the aux (FUN_7ff72bb59090) drawn in the cat's hand: atlas (208, 496) 11 x 15 as {-11, -22.5, 22, 30}. */
+  private createMagnetAuxiliary(owner: Player): void {
+    if (this.magnetAuxiliaries.has(owner)) return;
+    const auxiliary: MagnetAuxiliaryState = { owner, locked: false, view: new Container() };
+    auxiliary.view.zIndex = WARP_GUN_AUXILIARY_DEPTH;
+    const texture = frameTexture('magnet_auxiliary');
+    if (texture) {
+      const sprite = new Sprite(texture);
+      sprite.x = -11;
+      sprite.y = -22.5;
+      sprite.scale.set(22 / texture.orig.width, 30 / texture.orig.height);
+      auxiliary.view.addChild(sprite);
+    } else {
+      const graphic = new Graphics();
+      graphic.beginFill(0xd84a4a, 1);
+      graphic.drawRect(-11, -22.5, 22, 30);
+      graphic.endFill();
+      auxiliary.view.addChild(graphic);
+    }
+    this.magnetAuxiliaries.set(owner, auxiliary);
+    this.syncMagnetAuxiliary(auxiliary);
+    this.actorLayer.addChild(auxiliary.view);
+  }
+
+  /** magnet-player: vtable slot 27 FUN_7ff72bb59e50: the aux copies the cat position (+-20, -10) and visibility. */
+  private syncMagnetAuxiliary(auxiliary: MagnetAuxiliaryState): void {
+    const owner = auxiliary.owner;
+    const origin = this.magnetOrigin(owner);
+    const facing = owner.getFacingDirection();
+    auxiliary.view.x = origin.x + facing * MAGNET_AUX_OFFSET_X;
+    auxiliary.view.y = origin.y + MAGNET_AUX_OFFSET_Y;
+    auxiliary.view.scale.set(facing, 1);
+    auxiliary.view.visible = owner.view.visible !== false;
+  }
+
+  /** magnet-player: the native origin: a cat's centre x / feet y (body bottom + 1); a box's bottom centre. */
+  private magnetOrigin(body: Player | PushBox): { x: number; y: number } {
+    if (body instanceof Player) {
+      return { x: body.rect.x + PLAYER_RECT_CENTER_OFFSET_X, y: body.rect.y + PLAYER_RECT_CENTER_OFFSET_Y };
+    }
+    return { x: body.rect.x + body.rect.width / 2, y: body.rect.y + body.rect.height };
+  }
+
+  /** magnet-player: the field body {20, -50, 110, 80} at aux = cat + (20, -10): {cat.x + 40, cat.y - 60, 110, 80};
+   *  facing left the aux sits at cat + (-170, -10): {cat.x - 150, cat.y - 60, 110, 80} (body not mirrored). */
+  private magnetField(owner: Player): Rect {
+    const origin = this.magnetOrigin(owner);
+    const left = owner.getFacingDirection() > 0
+      ? origin.x + MAGNET_FIELD_NEAR
+      : origin.x - MAGNET_FIELD_NEAR - MAGNET_FIELD_WIDTH;
+    return { x: left, y: origin.y + MAGNET_FIELD_TOP, width: MAGNET_FIELD_WIDTH, height: MAGNET_FIELD_HEIGHT };
+  }
+
+  /**
+   * magnet-player: contact callback FUN_7ff72bb5a180: every body touching the field, at most 8 (aux+0x520). Cats
+   * (body +4 == 1) other than its own, and the box family (DAT_7ff72c62a10f, FUN_7ff72bb34e10: PushBox and
+   * Normal / Small / Tall / Big Box; a ColorBox is another class); everything else is ignored. Angle filter:
+   * d = normalize(target - cat), |d.y| < sin(2.0) = 0.909.
+   */
+  private magnetFieldList(owner: Player): Array<Player | PushBox> {
+    const field = this.magnetField(owner);
+    const origin = this.magnetOrigin(owner);
+    const accepts = (body: Player | PushBox): boolean => {
+      if (!rectsOverlap(field, body.rect)) return false;
+      const point = this.magnetOrigin(body);
+      const dx = point.x - origin.x;
+      const dy = point.y - origin.y;
+      const length = Math.hypot(dx, dy);
+      return length > 0 && Math.abs(dy / length) < MAGNET_ANGLE_LIMIT;
+    };
+    const list: Array<Player | PushBox> = [];
+    for (const cat of this.players) {
+      if (cat === owner) continue;
+      if (cat.deathTimer > 0 || this.deathFallPlayers.has(cat)) continue;
+      if (this.warpGunDisabledPlayers.has(cat) || this.collisionChangePlayersCollisionOff.has(cat)) continue;
+      if (accepts(cat)) list.push(cat);
+    }
+    for (const box of this.pushBoxes) {
+      if (box.colorIndex !== undefined) continue;
+      if (accepts(box)) list.push(box);
+    }
+    return list.slice(0, MAGNET_FIELD_LIST_MAX);
+  }
+
+  /** magnet-player: command 0x1e(1). A cat accepts (FUN_7ff72bb6fd20: input skipped, velocity 0, no gravity
+   *  FUN_7ff72bb691d0); a box accepts (FUN_7ff72bb33d00: +0x400 bit 2 freezes push / fall, velocity 0). Both
+   *  handlers accept unconditionally, so a body another magnet already holds is grabbed too; the held state is ONE
+   *  flag on the target (set by any grab, cleared by any release). */
+  private grabMagnetTarget(auxiliary: MagnetAuxiliaryState, target: Player | PushBox): boolean {
+    if (target instanceof Player) {
+      this.magnetHeldPlayers.add(target);
+      target.velocity = { x: 0, y: 0 };
+      target.grounded = false;
+    } else {
+      this.magnetHeldBoxes.add(target);
+      target.velocityY = 0;
+      target.falling = false;
+      target.hopping = false;
+      target.launchX = 0;
+    }
+    auxiliary.target = target;
+    auxiliary.locked = false;
+    return true;
+  }
+
+  /** magnet-player: command 0x1e(0): the target's velocity is zeroed (it drops straight down), a cat gets its
+   *  gravity back, the lock clears and the holder can turn again. */
+  private releaseMagnetTarget(auxiliary: MagnetAuxiliaryState): void {
+    const target = auxiliary.target;
+    auxiliary.target = undefined;
+    auxiliary.locked = false;
+    auxiliary.owner.facingLocked = false;
+    if (!target) return;
+    if (target instanceof Player) {
+      this.magnetHeldPlayers.delete(target);
+      target.velocity = { x: 0, y: 0 };
+      return;
+    }
+    this.magnetHeldBoxes.delete(target);
+    target.velocityY = 0;
+  }
+
+  /**
+   * magnet-player: hold point FUN_7ff72bb5a2d0 and the pull. The target's origin heads for the holder's feet level
+   * with its near edge 30 in front of the holder. d = hold - (target + vOwner), vOwner = the holder's motion this
+   * tick once locked (else 0); gains (0.03, 0.08) unlocked / (0.06, 0.16) locked; |dx| > 1 -> sign * max(2, gx|dx|)
+   * else dx (snap), y likewise with 2; both snapped -> locked. No push into a wall / ceiling the target touches
+   * (FUN_7ff72bb5b630). The target moves once, kinematically (its own update is frozen), by vOwner + v swept
+   * against the map. Lock break: a locked target more than 32 from the hold point (DAT_7ff72bc7d7f8) unlocks.
+   */
+  private pullMagnetTarget(auxiliary: MagnetAuxiliaryState, holderStart: Rect | undefined): void {
+    const owner = auxiliary.owner;
+    const target = auxiliary.target;
+    if (!target) return;
+    const origin = this.magnetOrigin(owner);
+    const halfWidth = target.rect.width / 2;
+    const hold = {
+      x: owner.getFacingDirection() > 0 ? origin.x + MAGNET_HOLD_GAP + halfWidth : origin.x - MAGNET_HOLD_GAP - halfWidth,
+      y: origin.y,
+    };
+    const point = this.magnetOrigin(target);
+    if (auxiliary.locked && Math.hypot(hold.x - point.x, hold.y - point.y) > MAGNET_LOCK_BREAK) auxiliary.locked = false;
+    const carry = auxiliary.locked && holderStart
+      ? { x: owner.rect.x - holderStart.x, y: owner.rect.y - holderStart.y }
+      : { x: 0, y: 0 };
+    const dx = hold.x - (point.x + carry.x);
+    const dy = hold.y - (point.y + carry.y);
+    const gainX = auxiliary.locked ? MAGNET_GAIN_LOCKED_X : MAGNET_GAIN_UNLOCKED_X;
+    const gainY = auxiliary.locked ? MAGNET_GAIN_LOCKED_Y : MAGNET_GAIN_UNLOCKED_Y;
+    const pull = (delta: number, gain: number, snap: number): number => (
+      Math.abs(delta) > snap ? Math.sign(delta) * Math.max(MAGNET_MIN_SPEED, gain * Math.abs(delta)) : delta
+    );
+    let velocityX = pull(dx, gainX, MAGNET_SNAP_X);
+    let velocityY = pull(dy, gainY, MAGNET_SNAP_Y);
+    if (Math.abs(dx) <= MAGNET_SNAP_X && Math.abs(dy) <= MAGNET_SNAP_Y) auxiliary.locked = true;
+    const rect = target.rect;
+    const solids = this.magnetTargetSolids(target);
+    const touches = (probe: Rect): boolean => (this.tileMap?.rectHitsSolid(probe) ?? false)
+      || solids.some((solid) => rectsOverlap(probe, solid));
+    if (velocityX !== 0 && touches({ x: rect.x + Math.sign(velocityX), y: rect.y + .5, width: rect.width, height: rect.height - 1 })) {
+      velocityX = 0;
+    }
+    if (velocityY < 0 && touches({ x: rect.x + .5, y: rect.y - 1, width: rect.width - 1, height: rect.height })) {
+      velocityY = 0;
+    }
+    const move = { x: carry.x + velocityX, y: carry.y + velocityY };
+    const swept = this.tileMap
+      ? moveRectWithTileCollisions(this.tileMap, rect, move).rect
+      : { ...rect, x: rect.x + move.x, y: rect.y + move.y };
+    const next = sweepRectAgainstSolids(rect, swept.x - rect.x, swept.y - rect.y, solids);
+    if (target instanceof Player) {
+      target.applyResolvedCollision(next, { x: velocityX * 60, y: velocityY * 60 }, false);
+    } else {
+      target.applyRect(next);
+      // FUN_7ff72bb35190: the pull is also the target's velocity (frozen while held; zeroed on release).
+      target.velocityY = velocityY * 60;
+    }
+  }
+
+  /** magnet-player: the solid actor bodies a pulled target meets (FUN_7ff72bc13690 with param_3 != 0 reads the
+   *  actor contacts at body +0xa0 as well as the map): Rects, gates, bridges, lifts, walls, blink blocks, FallBoxes,
+   *  jump stands, every box and every live cat but the target itself. */
+  private magnetTargetSolids(target: Player | PushBox): Rect[] {
+    return [
+      ...this.staticRects
+        .filter((staticRect) => staticRect.spawn.actorName !== 'PuzzlePredictProxy')
+        .map((staticRect) => staticRect.rect),
+      ...this.gates.filter((gate) => gate.isSolid()).map((gate) => gate.rect),
+      ...this.bridges.filter((bridge) => bridge.isSolid()).map((bridge) => bridge.rect),
+      ...this.weightedLifts.map((lift) => lift.rect),
+      ...this.moveWalls.map((wall) => wall.rect),
+      ...this.blinkBlocks.filter((blinkBlock) => blinkBlock.solid).map((blinkBlock) => blinkBlock.rect),
+      ...this.stationaryActiveFallBoxRects(),
+      ...this.jumpStands.map((jumpStand) => jumpStand.rect),
+      ...this.smallBoxes.map(smallBoxRect),
+      ...this.normalBoxes.map(normalBoxRect),
+      ...this.colorBoxes.map(colorBoxRect),
+      ...this.pushBoxes.filter((box) => box !== target).map((box) => box.rect),
+      ...this.players
+        .filter((cat) => cat !== target && cat.deathTimer <= 0 && !this.deathFallPlayers.has(cat)
+          && !this.collisionChangePlayersCollisionOff.has(cat) && !this.warpGunDisabledPlayers.has(cat))
+        .map((cat) => cat.rect),
+    ];
+  }
+
+  /**
+   * magnet-player: one update of every MagnetPlayer aux, after the cats moved. Input FUN_7ff72bb59530: ON while
+   * input bit 11 is HELD (the toggle variant needs DAT_7ff72c6301b0 != 0; it is 0). Off, an inactive holder, or a
+   * target that left the field list: release. On with no target: the field list sorted by squared distance to the
+   * cat (stable), the first to accept becomes the target. Then the pull. The holder's facing is frozen while it
+   * holds (+0x90 bit 4 cleared).
+   */
+  private updateMagnets(input: InputState, playerInputs: readonly InputState[] | undefined): void {
+    for (const [owner, auxiliary] of this.magnetAuxiliaries) {
+      const index = this.players.indexOf(owner);
+      const active = index >= 0
+        && owner.deathTimer <= 0
+        && !this.deathFallPlayers.has(owner)
+        && !this.warpGunDisabledPlayers.has(owner);
+      const slot = this.playerInputSlots[index] ?? index;
+      const on = active && !!this.resolvePlayerInput(input, playerInputs, this.players.length, index, slot).action;
+      if (!on) {
+        this.releaseMagnetTarget(auxiliary);
+        this.syncMagnetAuxiliary(auxiliary);
+        continue;
+      }
+      const list = this.magnetFieldList(owner);
+      if (auxiliary.target && !list.includes(auxiliary.target)) this.releaseMagnetTarget(auxiliary);
+      if (!auxiliary.target) {
+        const origin = this.magnetOrigin(owner);
+        const ranked = list.map((body, order) => {
+          const point = this.magnetOrigin(body);
+          return { body, order, distance: (point.x - origin.x) ** 2 + (point.y - origin.y) ** 2 };
+        }).sort((a, b) => a.distance - b.distance || a.order - b.order);
+        for (const { body } of ranked) {
+          if (this.grabMagnetTarget(auxiliary, body)) break;
+        }
+      }
+      if (auxiliary.target) this.pullMagnetTarget(auxiliary, this.frameStartPlayerRects[index]);
+      owner.facingLocked = !!auxiliary.target;
+      this.syncMagnetAuxiliary(auxiliary);
+    }
+  }
+
+  private applyWarpAlls(): void {`, file);
+    // magnet-player: replaces the invented MoveEnergy pull (radius 112) / collect radius 56 (no caller, no native source).
+    source = replaceOnce(source, `const MAGNET_MOVE_ENERGY_PULL_RADIUS = 112;
+const MAGNET_MOVE_ENERGY_PULL_SPEED = 240;
+`, `// magnet-player (spec b13): aux FUN_7ff72bb59090 / FUN_7ff72bb59e50, pull FUN_7ff72bb5a2d0.
+const MAGNET_AUX_OFFSET_X = 20;
+const MAGNET_AUX_OFFSET_Y = -10;
+const MAGNET_FIELD_NEAR = 40;
+const MAGNET_FIELD_TOP = -60;
+const MAGNET_FIELD_WIDTH = 110;
+const MAGNET_FIELD_HEIGHT = 80;
+const MAGNET_FIELD_LIST_MAX = 8;
+const MAGNET_ANGLE_LIMIT = Math.sin(2.0);
+const MAGNET_HOLD_GAP = 30;
+const MAGNET_GAIN_UNLOCKED_X = 0.03;
+const MAGNET_GAIN_UNLOCKED_Y = 0.08;
+const MAGNET_GAIN_LOCKED_X = 0.06;
+const MAGNET_GAIN_LOCKED_Y = 0.16;
+const MAGNET_SNAP_X = 1;
+const MAGNET_SNAP_Y = 2;
+const MAGNET_MIN_SPEED = 2;
+const MAGNET_LOCK_BREAK = 32;
+`, file);
+    {
+      const start = source.indexOf('  private pullMoveEnergyTowardMagnetPlayer(');
+      const end = source.indexOf('  private collectKeys(\n');
+      assert(start > 0 && end > start && end - start < 2000, 'Patch anchor changed: GameRuntime.ts dead MoveEnergy magnet code');
+      const dead = source.slice(start, end);
+      assert(dead.includes('private playerCanCollectMoveEnergy(') && !source.slice(0, start).includes('pullMoveEnergyTowardMagnetPlayer(')
+        && !source.slice(end).includes('pullMoveEnergyTowardMagnetPlayer(') && !source.slice(end).includes('playerCanCollectMoveEnergy('),
+      'Patch anchor changed: GameRuntime.ts MoveEnergy magnet code gained a caller');
+      source = source.slice(0, start) + source.slice(end);
+    }
+    source = replaceOnce(source, `interface WarpGunAuxiliaryState {
+  owner: Player;
+  tint: number;
+  view: Container;
+}`, `interface WarpGunAuxiliaryState {
+  owner: Player;
+  tint: number;
+  view: Container;
+}
+/** magnet-player: the MagnetPlayer aux (FUN_7ff72bb59090): target +0x518, lock bit +0x3f8 bit 1. */
+interface MagnetAuxiliaryState {
+  owner: Player;
+  target?: Player | PushBox;
+  locked: boolean;
+  view: Container;
+}`, file);
+    source = replaceOnce(source, `  private magnetPlayers = new Set<Player>();`, `  private magnetPlayers = new Set<Player>();
+  private magnetAuxiliaries = new Map<Player, MagnetAuxiliaryState>();
+  /** magnet-player: cats / boxes a magnet holds (input skipped, no gravity / push and fall frozen). */
+  private magnetHeldPlayers = new Set<Player>();
+  private magnetHeldBoxes = new Set<PushBox>();`, file);
+    source = replaceOnce(source, `    this.magnetPlayers.clear();
+`, `    this.magnetPlayers.clear();
+    this.magnetAuxiliaries.clear();
+    this.magnetHeldPlayers.clear();
+    this.magnetHeldBoxes.clear();
+    this.colorBoxFallVelocity.clear();
+`, file);
+    source = replaceOnce(source, `      this.createWarpGunAuxiliary(player);
+    }
+  }
+`, `      this.createWarpGunAuxiliary(player);
+    }
+    // magnet-player: factory branch 0x7ff72bb72d33 attaches the aux (FUN_7ff72bb59390, cat slot 0).
+    if (spawn.actorName === 'MagnetPlayer') {
+      this.createMagnetAuxiliary(player);
+    }
+  }
+`, file);
+    // magnet-player: a held cat's input is skipped entirely (FUN_7ff72bb6f0e0 line 57) and it has no gravity: its
+    // own update does not run; it is still an ordinary body for every contact (keys, Thunder, goals need UP: no).
+    source = replaceOnce(source, `      if (playerInput.resetPressed) {
+        this.resetPlayerToSpawn(this.player, index, this.eventInputSlotForPlayer(this.player, playerInputSlot));
+        continue;
+      }`, `      if (playerInput.resetPressed) {
+        this.resetPlayerToSpawn(this.player, index, this.eventInputSlotForPlayer(this.player, playerInputSlot));
+        continue;
+      }
+      const magnetHeld = this.magnetHeldPlayers.has(this.player);
+      if (magnetHeld) {
+        resolvedPlayerInput = {
+          ...resolvedPlayerInput,
+          left: false,
+          right: false,
+          up: false,
+          down: false,
+          jump: false,
+          jumpPressed: false,
+          action: false,
+          actionPressed: false,
+        };
+      }`, file);
+    source = replaceOnce(source, `      if (this.collisionChangePlayersCollisionOff.has(this.player)) {
+        this.updateCollisionOffPlayer(clampedDt, activePlayerInput);
+      } else {
+        this.player.update(clampedDt, activePlayerInput, this.tileMap);
+      }`, `      if (this.collisionChangePlayersCollisionOff.has(this.player)) {
+        this.updateCollisionOffPlayer(clampedDt, activePlayerInput);
+      } else if (magnetHeld) {
+        // magnet-player: the magnet moves it (pullMagnetTarget), once per tick.
+      } else {
+        this.player.update(clampedDt, activePlayerInput, this.tileMap);
+      }`, file);
+    source = replaceOnce(source, `    this.layoutBreakoutPaddles();
+    this.updateGhosts(ghostPreKeyTarget);`, `    // magnet-player: every aux after the cats moved (the pull reads the holder's motion this tick).
+    this.updateMagnets(input, playerInputs);
+    this.layoutBreakoutPaddles();
+    this.updateGhosts(ghostPreKeyTarget);`, file);
+    // magnet-player: a held box's push and fall logic is frozen (+0x400 bit 2, FUN_7ff72bb33d00).
+    source = replaceOnce(source, `        const box = this.pushBoxes[index];
+        const pushedRect = previousPushBoxRects[chain ? chain.lead : index];`, `        const box = this.pushBoxes[index];
+        if (box && this.magnetHeldBoxes.has(box)) return false;
+        const pushedRect = previousPushBoxRects[chain ? chain.lead : index];`, file);
+    source = replaceOnce(source, `    for (let i = 0; i < this.pushBoxes.length; i += 1) {
+      const box = this.pushBoxes[i];
+      const nativeJumpBoxes = true;`, `    for (let i = 0; i < this.pushBoxes.length; i += 1) {
+      const box = this.pushBoxes[i];
+      if (this.magnetHeldBoxes.has(box)) {
+        box.falling = false;
+        box.velocityY = 0;
+        continue;
+      }
+      const nativeJumpBoxes = true;`, file);
+    // magnet-player + optional-teacher-cats: a leaving cat that holds, or is held by, a magnet is released first.
+    source = replaceOnce(source, `    const held = this.warpGunSelectedPlayers.get(player);
+    if (held instanceof Player) {`, `    for (const auxiliary of this.magnetAuxiliaries.values()) {
+      if (auxiliary.owner === player || auxiliary.target === player) this.releaseMagnetTarget(auxiliary);
+    }
+    const held = this.warpGunSelectedPlayers.get(player);
+    if (held instanceof Player) {`, file);
+    // warp-gun-player: a held cat has its collision bit off (message 0xe value 0), so it never blocks a cat.
+    source = replaceOnce(source, `        this.collisionChangePlayersCollisionOff.has(this.player)
+        || this.collisionChangePlayersCollisionOff.has(otherPlayer)
+      ) {`, `        this.collisionChangePlayersCollisionOff.has(this.player)
+        || this.collisionChangePlayersCollisionOff.has(otherPlayer)
+        || this.warpGunDisabledPlayers.has(this.player)
+        || this.warpGunDisabledPlayers.has(otherPlayer)
+      ) {`, file);
     source += `
+/** magnet-player: move a rect by (dx, dy), x then y, stopping flush at the first solid it would enter. A solid it
+ *  already overlaps does not block (the lift that moved into it pushes it out). */
+function sweepRectAgainstSolids(rect: Rect, dx: number, dy: number, solids: readonly Rect[]): Rect {
+  const next = { ...rect };
+  if (dx !== 0) {
+    let x = next.x + dx;
+    for (const solid of solids) {
+      if (rectsOverlap(next, solid)) continue;
+      const span = { ...next, x: Math.min(next.x, x), width: next.width + Math.abs(x - next.x) };
+      if (!rectsOverlap(span, solid)) continue;
+      x = dx > 0 ? Math.min(x, solid.x - next.width) : Math.max(x, solid.x + solid.width);
+    }
+    next.x = x;
+  }
+  if (dy !== 0) {
+    let y = next.y + dy;
+    for (const solid of solids) {
+      if (rectsOverlap(next, solid)) continue;
+      const span = { ...next, y: Math.min(next.y, y), height: next.height + Math.abs(y - next.y) };
+      if (!rectsOverlap(span, solid)) continue;
+      y = dy > 0 ? Math.min(y, solid.y - next.height) : Math.max(y, solid.y + solid.height);
+    }
+    next.y = y;
+  }
+  return next;
+}
+
 /** A copy of a stage row at a new point; raw x / y follow, because param parsers find their params after them. */
 function spawnMovedTo(spawn: ActorSpawnDef, x: number, y: number): ActorSpawnDef {
   const raw = [...spawn.raw];
