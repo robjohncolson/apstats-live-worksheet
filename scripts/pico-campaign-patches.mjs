@@ -10,7 +10,7 @@ export const CAMPAIGN_PATCHES = [{
   id: 'optional-teacher-cats',
   files: ['src/engine/GameRuntime.ts'],
   evidence: ['Desk requirement: teachers can help without counting toward the student team'],
-  behavior: 'Desk adaptation, not a native rule: optional teacher cats do not increase party thresholds, goal quorums, or scroll-camera membership.',
+  behavior: 'Desk adaptation, not a native rule: optional teacher cats do not increase party thresholds, goal quorums, or scroll-camera membership. A teacher cat that leaves is removed with every retained reference to it (removeRuntimePlayer): a WarpGun that held it returns to the empty hold (native aux +0x430 == 0, FUN_7ff72bb580a0), a cat it held is put back where it is, and its keys, magnet, ride and hop entries are dropped.',
 }, {
   id: 'warp-sensor-origin',
   files: ['src/engine/actors/Warp.ts', 'src/engine/actors/WarpAll.ts'],
@@ -134,6 +134,17 @@ export const CAMPAIGN_PATCHES = [{
     'FUN_7ff72bb64310: count = FUN_7ff72bc132c0(UP, mask 6) = cats and push boxes, recursively (a box weighs one, a box on a cat counts); fixed 1.0 per tick toward full travel when count >= required, else the return step toward 0 (if auto-return), clamped; any contact under the slab sets +0x408 = 0.06 s and nothing moves until it expires',
     'FUN_7ff72bb64640: the sign prints "%d" = max(0, required - count) at (x+5, y+7+offset), size 32'],
   behavior: 'Plain WeightedLift rows, every stage: body {x-92, y+67, 194, 18} (was 64 x 14 centred) drawn with the native sign-and-slab sprite and the number of bodies still needed on the sign; required = max(p3 or 2, ceil(p1/100 n)) when p1 > 0, else max(2, ceil(0.2 n)) (was floor, and p3 applied always); travel p0 + p2 n; 1 unit per tick toward full travel while loaded, else 1 + p5 max(0, n-2) per tick back to rest unless p4 > 0 (no auto-return); a cat or push box touching the slab underside freezes it 0.06 s. The weight counts cats and push boxes resting on the slab, transitively (a box on a cat now counts); n = the student party (optional teacher cats never raise the requirement). 1-1 keeps its verified 184 x 19 slab (campaign-jump01.mjs). Not modelled: the native chain test before each step (a rider pinned on a ceiling), tile contacts in the underside freeze (1-4 A sinks flush with the floor by design; whether native freezes there is open), WeightedLiftEx / Ex2 (variant mapping unverified), the sign text colour/font (not decoded: stage orange used).',
+}, {
+  // Fidelity audit 2026-10-07 (state/pico-campaign-fidelity-audit-2026-10-07.md, Top 10 #1, batch 1; teacher "Let's go").
+  id: 'native-player-body',
+  files: ['src/engine/actors/PlayerGeometry.ts', 'src/engine/actors/Player.ts', 'src/engine/physics.ts',
+    'src/engine/GameRuntime.ts', 'src/engine/actors/BreakoutBall.ts'],
+  evidence: ['FUN_7ff72bb66e50 (avatar ctor) -> FUN_7ff72bb6a3b0(avatar, 0): rect = DAT_7ff72c62d1a8 (copied from DAT_7ff72bcbdfa0 by FUN_7ff72baa5f10; the memory image reads [-16, -47, 32, 46]) -> FUN_7ff72bc16bf0(avatar, &rect, 3); FUN_7ff72bc12370 stores it as the body {x, y, w, h} at +0x28..+0x34; category 1 (+4)',
+    'FUN_7ff72bb66e50 view: DAT_7ff72bcb98a0 = [-32, -62, 64, 62] with UV DAT_7ff72c62ad68.. = [1, 1, 31, 31] atlas px, so the drawn cat spans y-62..y and its bottom is 1 below the body bottom (y-1); the port already draws this 64 x 62 root bottom-centred on the row point',
+    'Lua stage rows stack spawned cats 50 apart (block_size = PLAYER_HEIGHT + 4 with PLAYER_HEIGHT 46): stage_jump02 P1..P8 at y = 432, 382, ..., 82',
+    'FUN_7ff72bb774a0 common tail -> setParams FUN_7ff72bb67620: if p0 is numeric and (int)p0 == 1, vtable +0xa8 = FUN_7ff72bae78f0 makes scale.x negative (the cat spawns facing left)',
+    'FUN_7ff72bb774a0: slot = table(+0xc0)[counter(+0xb8) % length(+0xf0)], the counter = player rows spawned so far in row order; FUN_7ff72bb72960 fills the table with 0..numPlayers-1 (shuffled only when enableShufflePlayer); the row label is never read'],
+  behavior: 'Every stage: a cat\'s body is the native 32 x 46 with its bottom 1 above the row point (x-16..x+16, y-47..y-1); it was 26 x 34 with its bottom 2 below it. The drawn cat is unchanged relative to the row point (64 x 62, bottom-centred on it, as native). The browser-only 3-unit floor-rest inset in the tile sweep is removed: it existed only because the old body started 2 units inside the floor, and the new body never starts inside one. A Player-family row whose p0 is 1 spawns facing left (the port also restores that facing on respawn: native respawn facing not traced). Stage player rows bind input slot and colour by row order (slot-table entry k for the k-th spawned row), not by label; optional teacher cats keep their own slot. Adapters keyed to the old body follow it: the key-carry actor point (body bottom + 1) and the BreakoutBall native-contact offset (now 0). Not changed: the jump/gravity integrator and the ScaleSwitch scaling rule.',
 }];
 
 // Fail the build if upstream code changes: never silently skip a correction.
@@ -144,6 +155,46 @@ function replaceOnce(source, before, after, file) {
 
 export function patchCampaignSource(file, source) {
   source = source.replaceAll('\r\n', '\n');
+  if (file === 'src/engine/actors/PlayerGeometry.ts') {
+    // native-player-body: FUN_7ff72bb6a3b0 body = DAT_7ff72c62d1a8 = {-16, -47, 32, 46} from the row point.
+    source = replaceOnce(source, 'export const PLAYER_RECT_WIDTH = 26;', 'export const PLAYER_RECT_WIDTH = 32;', file);
+    source = replaceOnce(source, 'export const PLAYER_RECT_HEIGHT = 34;', 'export const PLAYER_RECT_HEIGHT = 46;', file);
+    source = replaceOnce(source, 'export const PLAYER_RECT_CENTER_OFFSET_X = 13;', 'export const PLAYER_RECT_CENTER_OFFSET_X = 16;', file);
+    return replaceOnce(source, 'export const PLAYER_RECT_CENTER_OFFSET_Y = 32;',
+      '// The body bottom is the row point - 1; the drawn 64 x 62 cat (bottom at the row point) is 1 lower.\nexport const PLAYER_RECT_CENTER_OFFSET_Y = 47;', file);
+  }
+  if (file === 'src/engine/actors/Player.ts') {
+    // native-player-body: row p0 == 1 spawns the cat facing left (FUN_7ff72bb67620 -> FUN_7ff72bae78f0).
+    source = replaceOnce(source, '  private facing: -1 | 1 = 1;\n', `  private facing: -1 | 1 = 1;
+  private spawnFacing: -1 | 1 = 1;
+
+  setSpawnFacing(direction: -1 | 1): void {
+    this.spawnFacing = direction;
+    this.facing = direction;
+    this.refreshPose();
+  }
+`, file);
+    source = replaceOnce(source, '    this.facing = 1;\n    this.refreshPose();', '    this.facing = this.spawnFacing;\n    this.refreshPose();', file);
+    return replaceOnce(source, '// Browser PlayerGeometry can rest a fraction above (or up to 2px inside) a floor. Probe only',
+      '// The native body rests up to one step above a floor (never inside it). Probe only', file);
+  }
+  if (file === 'src/engine/physics.ts') {
+    // native-player-body: the 3-unit floor-rest inset only compensated for the old body starting 2 units
+    // inside the floor. The native body (bottom = row point - 1) never starts inside a floor, and this
+    // sweep never moves a rect into a tile, so walking and jumping use the full rect.
+    source = replaceOnce(source, '  const xSweepRect: Rect = restingOnFloor ? insetBottom(next) : next;', '  const xSweepRect: Rect = next;', file);
+    source = replaceOnce(source, '  const ySweepRect: Rect = (restingOnFloor && velocity.y < 0) ? insetBottom(next) : next;', '  const ySweepRect: Rect = next;', file);
+    source = replaceOnce(source, '  const insetBottom = (r: Rect): Rect => ({ ...r, height: Math.max(1, r.height - FLOOR_REST_TOLERANCE) });\n', '  void restingOnFloor;\n', file);
+    const oldComment = source.slice(source.indexOf('// Recovered Player actors are authored'), source.indexOf('const FLOOR_REST_TOLERANCE = 3;\n'));
+    assert(oldComment.length > 0 && oldComment.length < 1200, 'Patch anchor changed: physics.ts floor-rest comment');
+    return replaceOnce(source, oldComment + 'const FLOOR_REST_TOLERANCE = 3;\n',
+      '// Sweeps stop a rect at contact; it never enters a tile (native-player-body removed the old floor-rest inset).\n', file);
+  }
+  if (file === 'src/engine/actors/BreakoutBall.ts') {
+    // native-player-body: the browser rect IS the native {-16, -47, 32, 46} body now; no adapter offset.
+    source = replaceOnce(source, 'const NATIVE_PLAYER_CONTACT_OFFSET_FROM_BROWSER_X = -3;', 'const NATIVE_PLAYER_CONTACT_OFFSET_FROM_BROWSER_X = 0;', file);
+    return replaceOnce(source, 'const NATIVE_PLAYER_CONTACT_OFFSET_FROM_BROWSER_Y = -15;', 'const NATIVE_PLAYER_CONTACT_OFFSET_FROM_BROWSER_Y = 0;', file);
+  }
   if (file === 'src/engine/picoStyle.ts') {
     // native-lift-and-ledge-look: the MC_BW* ledge is stage orange in the original (retail capture, 1-4).
     return replaceOnce(source, "  if (chip.startsWith('MC_B')) return 0xb0784f;",
@@ -324,6 +375,78 @@ export function getRectLeftBottomRect(spawn: ActorSpawnDef): Rect {
 `;
   }
   if (file === 'src/engine/GameRuntime.ts') {
+    // optional-teacher-cats: a leaving helper cat is removed with every retained reference to it.
+    source = replaceOnce(source, '  private addRuntimePlayer(spawn: ActorSpawnDef): void {', `  /**
+   * Desk adaptation (optional teacher cats leave mid-stage; native cats never do). Removes the cat and every
+   * retained reference to it, deterministically (own-property order): Map entries keyed by it or whose value is
+   * it / names it as player, owner, carrier or target; Set / WeakSet / WeakMap keys; array entries. A WarpGun
+   * that held it returns to the native empty hold (aux +0x430 == 0, FUN_7ff72bb580a0: the next contact selects
+   * anew); a cat it held is put back, visible and enabled, where it is.
+   */
+  removeRuntimePlayer(player: Player): void {
+    const index = this.players.indexOf(player);
+    if (index < 0) return;
+    const held = this.warpGunSelectedPlayers.get(player);
+    if (held instanceof Player) {
+      this.warpGunDisabledPlayers.delete(held);
+      held.view.visible = true;
+    }
+    for (const [owner, target] of [...this.warpGunSelectedPlayers]) {
+      if (target === player) this.setWarpGunSelectedTarget(owner);
+    }
+    this.players.splice(index, 1);
+    this.playerSpawns.splice(index, 1);
+    this.playerInputSlots.splice(index, 1);
+    if (this.player === player) this.player = this.players[0];
+    const names = (value: unknown): boolean => value === player || (!!value && typeof value === 'object'
+      && ['player', 'owner', 'carrier', 'target'].some((key) => (value as Record<string, unknown>)[key] === player));
+    const dropView = (value: unknown): void => {
+      const view = (value as { view?: Container } | undefined)?.view;
+      if (view && view !== player.view && view.parent) view.parent.removeChild(view);
+    };
+    for (const value of Object.values(this as unknown as Record<string, unknown>)) {
+      if (value === this.players || value === this.playerSpawns || value === this.playerInputSlots) continue;
+      if (value instanceof Map) {
+        for (const [key, entry] of [...value]) {
+          if (key === player || names(entry)) {
+            if (key === player) dropView(entry);
+            value.delete(key);
+          } else if (entry instanceof Set) entry.delete(player);
+          else if (Array.isArray(entry)) entry.splice(0, entry.length, ...entry.filter((item) => !names(item)));
+        }
+      } else if (value instanceof Set || value instanceof WeakSet || value instanceof WeakMap) {
+        value.delete(player);
+      } else if (Array.isArray(value) && value.some(names)) {
+        value.splice(0, value.length, ...value.filter((item) => !names(item)));
+      }
+    }
+    if (player.view.parent) player.view.parent.removeChild(player.view);
+  }
+
+  private addRuntimePlayer(spawn: ActorSpawnDef): void {`, file);
+    // native-player-body: FUN_7ff72bb774a0 binds the k-th spawned player row to slot table[k % length]
+    // (FUN_7ff72bb72960: 0..n-1, shuffled only with enableShufflePlayer). The row label is never read.
+    source = replaceOnce(source, `    const shuffledInputSlot = (this.stage?.enableShufflePlayer ?? 0) !== 0
+      ? this.controllerInputSlotPermutation[this.players.length]
+      : undefined;`, `    const slotTable = this.controllerInputSlotPermutation;
+    const nativeRowCounter = this.players.filter((other) => !(other as { parkHelper?: boolean }).parkHelper).length;
+    const isStageRow = !!this.stage?.createTable.includes(spawn) && slotTable.length > 0;
+    const shuffledInputSlot = isStageRow
+      ? slotTable[nativeRowCounter % slotTable.length]
+      : (this.stage?.enableShufflePlayer ?? 0) !== 0
+        ? slotTable[this.players.length]
+        : undefined;`, file);
+    // native-player-body: setParams FUN_7ff72bb67620: numeric p0 with (int)p0 == 1 -> FUN_7ff72bae78f0 (scale.x < 0).
+    source = replaceOnce(source, `      usesMoveSpeedMultiplier,
+    );
+    this.players.push(player);`, `      usesMoveSpeedMultiplier,
+    );
+    const facingParam = spawn.raw[6];
+    if (typeof facingParam === 'number' && Math.trunc(facingParam) === 1) player.setSpawnFacing(-1);
+    this.players.push(player);`, file);
+    // native-player-body: the body bottom is the actor point - 1 (DAT_7ff72c62d1a8), so the actor point is bottom + 1.
+    source = replaceOnce(source, 'const actorY = Math.fround(player.rect.y + player.rect.height - 2);',
+      'const actorY = Math.fround(player.rect.y + player.rect.height + 1);', file);
     // rect-left-bottom-anchor: literal Rect rows use the native left-bottom rectangle.
     source = replaceOnce(source, "import { StaticRect } from './actors/StaticRect';",
       "import { StaticRect, getRectLeftBottomRect } from './actors/StaticRect';", file);

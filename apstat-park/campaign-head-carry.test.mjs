@@ -55,7 +55,10 @@ function boxOnHead(box, player) {
   box.falling = false; box.velocityY = 0; box.wasSupported = true;
 }
 
-// 1-3 (stage_jump02): floor top at y 434 from x 820 on (a bottomless pit lies left of it); the box is 40 x 50.
+// 1-3 (stage_jump02): floor top at y 432 from x 820 on (a bottomless pit lies left of it); the box is 40 x 50.
+// native-player-body: a cat standing on a floor has rect.y = floor - 46 (FLOOR_Y below); the old 26 x 34 body
+// was placed at y 400 (bottom 434, 2 units inside the floor), which now buries the 46-tall body 14 deep.
+const FLOOR_Y = (player) => 432 - player.rect.height;
 // x 1300 is clear of the static block at x 1032 and of the third box floating at x 1180, y 286.
 // stack-riding (retail capture og-capture-2 run B2) supersedes the earlier 'walking away leaves the box' rule:
 // a box on a walking cat rides it. It only falls when it is stopped (here by a wall at box height) and the cat
@@ -63,7 +66,7 @@ function boxOnHead(box, player) {
 test('1-3: a box rests on a standing cat and rides it when it walks; a wall stops the box, the cat walks on, the box falls', () => {
   const game = loadStage('stage_jump02');
   const [cat, other] = game.players;
-  place(cat, 1300, 400); place(other, 900, 400);
+  place(cat, 1300, FLOOR_Y(cat)); place(other, 900, FLOOR_Y(other));
   const box = game.pushBoxes[0];
   boxOnHead(box, cat);
   step(game, 2);
@@ -128,8 +131,10 @@ test('1-3: the hop is the same for a jump held 1, 10 or 40 frames (edge-triggere
 });
 
 // The port walks ~4.9 units a frame. Retail run P: ~140 ms of walking left ~22 native units of overlap.
-test('1-3: walking 2 frames during the hop: the box keeps its x in the air and lands off-centre on the head (~22 overlap)', () => {
-  const { rest, frames, cat, box } = headHop('stage_jump02', 1, (f) => (f < 2 ? { right: true } : {}));
+// native-player-body: overlap = 32/2 + 40/2 - 3 x 4.9 = 21.3 for the native 32-wide cat (the 26-wide cat
+// reached ~22 in 2 frames: 13 + 20 - 9.8 = 23.2; 2 frames now leave 26.2).
+test('1-3: walking 3 frames during the hop: the box keeps its x in the air and lands off-centre on the head (~22 overlap)', () => {
+  const { rest, frames, cat, box } = headHop('stage_jump02', 1, (f) => (f < 3 ? { right: true } : {}));
   for (const frame of frames.filter((frame) => frame.falling)) assert.equal(frame.boxX, rest.boxX, 'no horizontal inheritance in flight');
   assert.ok(Math.abs(box.rect.y + box.rect.height - cat.rect.y) <= 0.5, 'it landed on the head');
   const overlap = Math.min(box.rect.x + box.rect.width, cat.rect.x + cat.rect.width) - Math.max(box.rect.x, cat.rect.x);
@@ -197,7 +202,7 @@ test('1-3: cat on cat: the lower cat does not rise and the upper cat is not laun
 test('1-2 (not jump02): a cat holds a box and carries it when it walks', () => {
   const game = loadStage('stage_push02');
   const [cat, other] = game.players;
-  place(cat, 1200, 400); place(other, 100, 400);
+  place(cat, 1200, FLOOR_Y(cat)); place(other, 100, FLOOR_Y(other));
   const box = game.pushBoxes[2];   // the 96 x 96 block
   boxOnHead(box, cat);
   step(game, 2);
@@ -212,7 +217,7 @@ test('1-2 (not jump02): a cat holds a box and carries it when it walks', () => {
 test('determinism (240 frames): two runtimes with a box on a head, same inputs, identical cats and boxes', () => {
   const make = () => {
     const game = loadStage('stage_jump02', 3);
-    place(game.players[0], 1300, 400); place(game.players[1], 900, 400);
+    place(game.players[0], 1300, FLOOR_Y(game.players[0])); place(game.players[1], 900, FLOOR_Y(game.players[1]));
     boxOnHead(game.pushBoxes[0], game.players[0]);
     return game;
   };
@@ -247,7 +252,7 @@ test('1-4: one cat alone does not move the two-cat lift (threshold unchanged)', 
   const lift = game.weightedLifts.find((entry) => entry.spawn.actorName === 'WeightedLift' && entry.params.travel < 0);
   const [base, other] = game.players;
   const startY = lift.rect.y;
-  place(base, lift.rect.x + 19, startY - base.rect.height - 10); place(other, lift.rect.x - 80, 400);
+  place(base, lift.rect.x + 19, startY - base.rect.height - 10); place(other, lift.rect.x - 80, FLOOR_Y(other));
   step(game, 40);
   assert.equal(lift.rect.y, startY);
 });
@@ -256,7 +261,7 @@ test('1-4: one cat alone does not move the two-cat lift (threshold unchanged)', 
 test('1-3: a pushed box resting on a switch pad holds the switch down; the box at its spawn does not', () => {
   const game = loadStage('stage_jump02');
   const [cat, other] = game.players;
-  place(cat, 100, 400); place(other, 150, 400);
+  place(cat, 100, FLOOR_Y(cat)); place(other, 150, FLOOR_Y(other));
   const pad = game.switches.find((entry) => entry.rect.x === 1384);
   const box = game.pushBoxes[0];
   step(game, 1);
@@ -274,7 +279,7 @@ test('1-3: a pushed box resting on a switch pad holds the switch down; the box a
 test('1-2: a box left on a cat that dies falls to the ground instead of floating', () => {
   const game = loadStage('stage_push02');
   const [cat, other] = game.players;
-  place(cat, 1200, 400); place(other, 100, 400);
+  place(cat, 1200, FLOOR_Y(cat)); place(other, 100, FLOOR_Y(other));
   const box = game.pushBoxes[2];
   boxOnHead(box, cat);
   step(game, 2);
@@ -289,15 +294,23 @@ test('10-3: the dark-room lift rises with a cat carrying a box on its head (no j
   const lift = game.weightedLifts[0];
   const [a, b] = game.players;
   const startY = lift.rect.y;
-  // The slab is 48 wide: two 26-wide cats fit only packed edge to edge; the 48-wide box spans both heads.
-  place(a, lift.rect.x, startY - a.rect.height - 6);
-  place(b, lift.rect.x + 22, startY - b.rect.height - 6);
+  // native-player-body: the slab is 48 wide, so only ONE 32-wide cat fits on it (two 26-wide cats used to fit
+  // packed edge to edge). The cat plus the 48 x 192 box on its head weigh 2, enough to lift it.
+  // Placed touching (no drop gap): 6 units of drop would put the box top 4 into the ceiling (192 > 432 - 6 - 238).
+  place(a, lift.rect.x + 8, startY - a.rect.height);
+  place(b, lift.rect.x - 200, FLOOR_Y(b));
   const box = game.pushBoxes[0];
-  box.applyRect({ ...box.rect, x: lift.rect.x, y: startY - a.rect.height - 6 - box.rect.height });
+  box.applyRect({ ...box.rect, x: lift.rect.x, y: startY - a.rect.height - box.rect.height });
   box.falling = false; box.velocityY = 0; box.wasSupported = true;
   step(game, 90);
-  // Without the fix the slab flips between 431 and 432 forever; it rises ~13 here before a ceiling stops it.
-  assert.ok(lift.rect.y < startY - 10, 'the lift rose: ' + (lift.rect.y - startY));
+  // Without the fix the slab flips between 431 and 432 forever. The ceiling is 240 above the slab at rest, so the
+  // stack (46-tall cat + 192 box = 238) lets it rise exactly 240 - 238 = 2 (the 34-tall cat allowed ~14).
+  assert.equal(lift.rect.y, startY - 2, 'the lift rose to the ceiling stop: ' + (lift.rect.y - startY));
+  const held = lift.rect.y;
+  for (let frame = 0; frame < 30; frame++) {
+    step(game, 1);
+    assert.equal(lift.rect.y, held, 'no jitter (frame ' + frame + ')');
+  }
   assert.ok(Math.abs(box.rect.y + box.rect.height - a.rect.y) <= 0.5, 'the box is still on the head');
 });
 

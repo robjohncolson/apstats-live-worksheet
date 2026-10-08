@@ -43,7 +43,8 @@ try {
     game.load(campaignStages.findIndex(stage => stage.source === 'stage_jump02'), 2, 100);
     const runtime = game.runtime, [cat, other] = runtime.players, box = runtime.pushBoxes[0];
     const place = (player, x, y) => player.applyResolvedCollision({ ...player.rect, x, y }, { x: 0, y: 0 }, true);
-    place(cat, 1300, 400); place(other, 900, 400);
+    // native-player-body: standing on the 432 floor = rect.y 432 - 46 (the 34-tall cat used 400, 2 inside the floor).
+    place(cat, 1300, 432 - cat.rect.height); place(other, 900, 432 - other.rect.height);
     box.applyRect({ ...box.rect, x: cat.rect.x + cat.rect.width / 2 - box.rect.width / 2, y: cat.rect.y - box.rect.height });
     box.falling = false; box.velocityY = 0; box.wasSupported = true;
     for (let tick = 0; tick < 2; tick++) game.step([0, 0]);

@@ -72,7 +72,8 @@ test('1-4 (retail): with both cats on the floor the MoveWall never moves (600 fr
   const game = loadStage('stage_weight01');
   const [wall] = game.moveWalls;
   const [a, b] = game.players;
-  place(a, 820, 398); place(b, 900, 398);
+  // native-player-body: standing on the 432 floor = rect.y 432 - 46 (the 34-tall cat used 398).
+  place(a, 820, 432 - a.rect.height); place(b, 900, 432 - b.rect.height);
   const start = { ...wall.rect };
   for (let frame = 0; frame < 600; frame++) {
     step(game, 1, [frame % 60 === 0 ? JUMP : IDLE, IDLE]);
@@ -85,8 +86,9 @@ test('1-4: a cat walking into the sensor starts the native cycle: 2/tick out pas
   const [wall] = game.moveWalls;
   const [a, b] = game.players;
   // On the row-5 ledge (x 1008..1248, top 240). The sensor starts at 1496 - 483 + 10 = 1023: cat a stands on the
-  // ledge's left end just outside it (990..1016), cat b inside it from load (no begin-contact, timer < 1.5 s).
-  place(a, 990, 240 - 34); place(b, 1040, 240 - 34);
+  // ledge's left end just outside it (990..1022 with the native 32-wide body), cat b inside it from load
+  // (no begin-contact, timer < 1.5 s). Standing on the 240 ledge = rect.y 240 - 46 (native-player-body).
+  place(a, 990, 240 - a.rect.height); place(b, 1040, 240 - b.rect.height);
   step(game, 5);
   const x0 = wall.rect.x;
   assert.equal(x0, 1488);
@@ -138,7 +140,7 @@ test('every campaign stage: MoveWall rects are the decoded 16-wide pillars, move
 test('determinism (240 frames): two 1-4 runtimes with a cat triggering the MoveWall, identical state', () => {
   const make = () => {
     const game = loadStage('stage_weight01', 4);
-    place(game.players[0], 1008, 240 - 34); place(game.players[1], 900, 398);
+    place(game.players[0], 1008, 240 - game.players[0].rect.height); place(game.players[1], 900, 432 - game.players[1].rect.height);
     return game;
   };
   const a = make(), b = make();

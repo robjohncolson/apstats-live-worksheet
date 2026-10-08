@@ -100,7 +100,9 @@ test('1-4: two stacked cats move lift A down exactly 1 unit per tick to its 192 
   assert.ok(moving.length >= 190 && moving.every((d) => Math.abs(d - 1) < 1e-9), 'down 1 per tick: ' + [...new Set(moving)]);
   assert.equal(A.rect.y, 240 + 192, 'stops at full travel (top flush with the floor)');
   assert.equal(A.signText.text, '0');
-  place(a, 1150, 206); place(b, 1180, 206);   // both leave (onto the left ledge)
+  // native-player-body: a cat standing on the 240 ledge has rect.y = 240 - 46 (the 34-tall cat used 206);
+  // b at 1186 keeps the old 4-unit gap between two 32-wide cats.
+  place(a, 1150, 240 - a.rect.height); place(b, 1186, 240 - b.rect.height);   // both leave (onto the left ledge)
   const up = trace(game, A, 220);
   const upDeltas = up.map((y, i) => y - (i ? up[i - 1] : 432)).filter((d) => d !== 0);
   assert.ok(upDeltas.every((d) => Math.abs(d + 1) < 1e-9), 'returns 1 per tick: ' + [...new Set(upDeltas)]);
@@ -118,9 +120,9 @@ test('1-4: lift B rises with two cats side by side (travel -192) and the riders 
 test('1-4: a push box weighs one: a cat plus a box on lift A move it; a box on a cat on the lift counts too', () => {
   for (const onCat of [false, true]) {
     const { game, A, cats: [a, b] } = liftsOf14();
-    place(b, 1150, 206);
+    place(b, 1150, 240 - b.rect.height);
     onSlab(a, A);
-    const box = onCat ? spawnBox(game, a.rect.x + 13, a.rect.y) : spawnBox(game, A.rect.x + 160, A.rect.y);
+    const box = onCat ? spawnBox(game, a.rect.x + a.rect.width / 2, a.rect.y) : spawnBox(game, A.rect.x + 160, A.rect.y);
     step(game, 60);
     assert.ok(A.rect.y > 240 + 30, (onCat ? 'box on the cat' : 'box beside the cat') + ': the lift went down: ' + A.rect.y);
     assert.equal(A.signText.text, '0');
@@ -131,9 +133,9 @@ test('1-4: a push box weighs one: a cat plus a box on lift A move it; a box on a
 // Codex review: the weight counts a box on a box, so the lift must carry the whole stack (it used to carry only the
 // bottom box: contact broke, the sign flipped 0/1 and the lift oscillated by one unit).
 for (const [name, build] of [
-  ['box on box', (game, A, [a, b]) => { place(a, 1150, 206); place(b, 1180, 206);
+  ['box on box', (game, A, [a, b]) => { place(a, 1150, 240 - a.rect.height); place(b, 1186, 240 - b.rect.height);
     const low = spawnBox(game, A.rect.x + 77, A.rect.y); return [low, spawnBox(game, low.rect.x + 20, low.rect.y)]; }],
-  ['cat on box', (game, A, [a, b]) => { place(b, 1150, 206);
+  ['cat on box', (game, A, [a, b]) => { place(b, 1150, 240 - b.rect.height);
     const low = spawnBox(game, A.rect.x + 77, A.rect.y); place(a, low.rect.x + 7, low.rect.y - a.rect.height); return [low, a]; }],
 ]) {
   test(`1-4: ${name} on lift A: it descends 1 per tick to full travel with the whole stack riding; the sign stays 0`, () => {

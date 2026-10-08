@@ -31,7 +31,7 @@
       "evidence": [
         "Desk requirement: teachers can help without counting toward the student team"
       ],
-      "behavior": "Desk adaptation, not a native rule: optional teacher cats do not increase party thresholds, goal quorums, or scroll-camera membership."
+      "behavior": "Desk adaptation, not a native rule: optional teacher cats do not increase party thresholds, goal quorums, or scroll-camera membership. A teacher cat that leaves is removed with every retained reference to it (removeRuntimePlayer): a WarpGun that held it returns to the empty hold (native aux +0x430 == 0, FUN_7ff72bb580a0), a cat it held is put back where it is, and its keys, magnet, ride and hop entries are dropped."
     },
     {
       "id": "warp-sensor-origin",
@@ -226,6 +226,24 @@
         "FUN_7ff72bb64640: the sign prints \"%d\" = max(0, required - count) at (x+5, y+7+offset), size 32"
       ],
       "behavior": "Plain WeightedLift rows, every stage: body {x-92, y+67, 194, 18} (was 64 x 14 centred) drawn with the native sign-and-slab sprite and the number of bodies still needed on the sign; required = max(p3 or 2, ceil(p1/100 n)) when p1 > 0, else max(2, ceil(0.2 n)) (was floor, and p3 applied always); travel p0 + p2 n; 1 unit per tick toward full travel while loaded, else 1 + p5 max(0, n-2) per tick back to rest unless p4 > 0 (no auto-return); a cat or push box touching the slab underside freezes it 0.06 s. The weight counts cats and push boxes resting on the slab, transitively (a box on a cat now counts); n = the student party (optional teacher cats never raise the requirement). 1-1 keeps its verified 184 x 19 slab (campaign-jump01.mjs). Not modelled: the native chain test before each step (a rider pinned on a ceiling), tile contacts in the underside freeze (1-4 A sinks flush with the floor by design; whether native freezes there is open), WeightedLiftEx / Ex2 (variant mapping unverified), the sign text colour/font (not decoded: stage orange used)."
+    },
+    {
+      "id": "native-player-body",
+      "files": [
+        "src/engine/actors/PlayerGeometry.ts",
+        "src/engine/actors/Player.ts",
+        "src/engine/physics.ts",
+        "src/engine/GameRuntime.ts",
+        "src/engine/actors/BreakoutBall.ts"
+      ],
+      "evidence": [
+        "FUN_7ff72bb66e50 (avatar ctor) -> FUN_7ff72bb6a3b0(avatar, 0): rect = DAT_7ff72c62d1a8 (copied from DAT_7ff72bcbdfa0 by FUN_7ff72baa5f10; the memory image reads [-16, -47, 32, 46]) -> FUN_7ff72bc16bf0(avatar, &rect, 3); FUN_7ff72bc12370 stores it as the body {x, y, w, h} at +0x28..+0x34; category 1 (+4)",
+        "FUN_7ff72bb66e50 view: DAT_7ff72bcb98a0 = [-32, -62, 64, 62] with UV DAT_7ff72c62ad68.. = [1, 1, 31, 31] atlas px, so the drawn cat spans y-62..y and its bottom is 1 below the body bottom (y-1); the port already draws this 64 x 62 root bottom-centred on the row point",
+        "Lua stage rows stack spawned cats 50 apart (block_size = PLAYER_HEIGHT + 4 with PLAYER_HEIGHT 46): stage_jump02 P1..P8 at y = 432, 382, ..., 82",
+        "FUN_7ff72bb774a0 common tail -> setParams FUN_7ff72bb67620: if p0 is numeric and (int)p0 == 1, vtable +0xa8 = FUN_7ff72bae78f0 makes scale.x negative (the cat spawns facing left)",
+        "FUN_7ff72bb774a0: slot = table(+0xc0)[counter(+0xb8) % length(+0xf0)], the counter = player rows spawned so far in row order; FUN_7ff72bb72960 fills the table with 0..numPlayers-1 (shuffled only when enableShufflePlayer); the row label is never read"
+      ],
+      "behavior": "Every stage: a cat's body is the native 32 x 46 with its bottom 1 above the row point (x-16..x+16, y-47..y-1); it was 26 x 34 with its bottom 2 below it. The drawn cat is unchanged relative to the row point (64 x 62, bottom-centred on it, as native). The browser-only 3-unit floor-rest inset in the tile sweep is removed: it existed only because the old body started 2 units inside the floor, and the new body never starts inside one. A Player-family row whose p0 is 1 spawns facing left (the port also restores that facing on respawn: native respawn facing not traced). Stage player rows bind input slot and colour by row order (slot-table entry k for the k-th spawned row), not by label; optional teacher cats keep their own slot. Adapters keyed to the old body follow it: the key-carry actor point (body bottom + 1) and the BreakoutBall native-contact offset (now 0). Not changed: the jump/gravity integrator and the ScaleSwitch scaling rule."
     }
   ],
   "hashes": {

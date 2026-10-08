@@ -165,7 +165,7 @@ test('1-3 (G2): cat / box / cat: the box and the top cat ride the walking bottom
 
 test('1-3 (F2): a box and a cat side by side on one head both ride', () => {
   const game = loadStage('stage_jump02');
-  // Two 26-wide cats cannot share a 26-wide head: the carrier is player 0 and the box overhangs to the left.
+  // Two 32-wide cats cannot share a 32-wide head: the carrier is player 0 and the box overhangs to the left.
   const [bottom, top] = game.players;
   place(bottom, 1300, FLOOR - bottom.rect.height); place(top, 900, FLOOR - top.rect.height);
   step(game, 10);
@@ -265,11 +265,14 @@ test('determinism (240 frames): two runtimes, a cat / box / cat stack walking an
 function boxOnTwoCats(boxDx = 0) {
   const game = loadStage('stage_jump02');
   const [a, b] = game.players;
-  place(a, 1300, FLOOR - a.rect.height); place(b, 1332, FLOOR - b.rect.height);
+  // A 6-unit gap between the cats (native-player-body: b at 1300 + 32 + 6 = 1338; the 26-wide pair used 1332).
+  place(a, 1300, FLOOR - a.rect.height); place(b, a.rect.x + a.rect.width + 6, FLOOR - b.rect.height);
   step(game, 10);
   const box = game.pushBoxes[0];
-  // Box 40 wide over the 58-unit pair; boxDx shifts it toward one cat to choose the support.
-  box.applyRect({ ...box.rect, x: 1309 + boxDx, y: a.rect.y - box.rect.height });
+  // Box 40 wide centred over the pair (70 units for 32-wide cats: x 1315; 58 and 1309 for the old 26-wide
+  // pair); boxDx shifts it toward one cat to choose the support.
+  const pairCentre = (a.rect.x + b.rect.x + b.rect.width) / 2;
+  box.applyRect({ ...box.rect, x: pairCentre - box.rect.width / 2 + boxDx, y: a.rect.y - box.rect.height });
   box.falling = false; box.velocityY = 0; box.wasSupported = true;
   step(game, 3);
   assert.ok(restsOn(box.rect, a.rect) && restsOn(box.rect, b.rect), 'set-up: the box rests on both heads');
@@ -341,6 +344,7 @@ test('every campaign stage: a cat-on-cat stack walking left and right for 240 fr
     // Bodies that a stage spawns overlapping (before any riding) are not this check's business.
     const startHits = new Set(game.pushBoxes.flatMap((box, j) => game.players
       .filter((p) => hit(inset(p.rect), inset(box.rect))).map((_, i) => i + ':' + j)));
+    let lastX = game.players.map((p) => p.rect.x), lastY = game.players.map((p) => p.rect.y);
     for (let frame = 0; frame < 240; frame++) {
       const phase = frame % 120;
       step(game, 1, [phase < 60 ? RIGHT : LEFT, frame === 90 ? JUMP : IDLE]);
@@ -351,9 +355,14 @@ test('every campaign stage: a cat-on-cat stack walking left and right for 240 fr
         assert.ok(Number.isFinite(box.rect.x) && Number.isFinite(box.rect.y), entry.source + ' box frame ' + frame);
       }
       const live = game.players.filter((p) => p.deathTimer <= 0 && !game.deathFallPlayers.has(p));
+      // A Warp teleport (a step over 48 units) may drop a cat onto the other's last position; the body
+      // resolution separates them the next frame. With the native 46-tall body, jump02's pit Warp returns the
+      // pair to (408, -32) two frames apart and the second overlaps the first for that one frame.
+      const teleported = game.players.some((p, i) => Math.abs(p.rect.x - lastX[i]) > 48 || Math.abs(p.rect.y - lastY[i]) > 48);
+      lastX = game.players.map((p) => p.rect.x); lastY = game.players.map((p) => p.rect.y);
       // stage_seesaw01 overlaps the placed pair at frame 0 on the committed pre-riding runtime too (checked
       // 2026-10-07 over all stages: the only stage, identical first frame with and without stack-riding).
-      if (live.length === 2 && entry.source !== 'stage_seesaw01') assert.ok(!hit(inset(live[0].rect), inset(live[1].rect)), entry.source + ': cats interpenetrate at frame ' + frame);
+      if (live.length === 2 && !teleported && entry.source !== 'stage_seesaw01') assert.ok(!hit(inset(live[0].rect), inset(live[1].rect)), entry.source + ': cats interpenetrate at frame ' + frame);
       live.forEach((p) => game.pushBoxes.forEach((box, j) => {
         const key = game.players.indexOf(p) + ':' + j;
         if (box.falling || box.hopping || startHits.has(key)) return;

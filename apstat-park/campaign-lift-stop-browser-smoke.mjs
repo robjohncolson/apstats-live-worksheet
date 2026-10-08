@@ -1,6 +1,7 @@
 // Local-only smoke (teacher 2026-10-07, retail capture og-capture-2/notes.md run L4): in the real browser engine,
-// 1-4, a cat stands on the floor under the UpDownLift. The lift comes down, stops on its head, holds ~68 ticks
-// (the time its sine path spends below the head) and rises again; the cat never moves, is never inside the lift
+// 1-4, a cat stands on the floor under the UpDownLift. The lift comes down, stops on its head, holds ~90 ticks
+// (the time its sine path spends below the head: (2/w) acos(1 - 29/70), w = 2pi/5 -> 1.50 s for the native 46-tall
+// body, retail 1.48 s; the old 34-tall cat gave d = 17 -> ~68 ticks) and rises again; the cat never moves, is never inside the lift
 // and is never hurt (recovered patch 'descending-lift-stops-on-bodies'). Needs Playwright: PARK_PLAYWRIGHT_MODULE
 // may point to an installed playwright-core index.mjs and PARK_BROWSER to a Chromium/Edge/Chrome executable.
 import assert from 'node:assert/strict';
@@ -69,7 +70,7 @@ try {
   const after = await run(80, false);
   await page.screenshot({ path: path.join(output, '1-4-lift-3-risen.png') });
   const rows = [...approach, ...hold, ...after];
-  const inside = r => r.catX < r.liftX + r.liftW && r.liftX < r.catX + 26 && r.catY < r.liftBottom - 1e-6 && r.liftY < r.catY + 34;
+  const inside = r => r.catX < r.liftX + r.liftW && r.liftX < r.catX + 32 && r.catY < r.liftBottom - 1e-6 && r.liftY < r.catY + 46;   // native 32 x 46 body
   for (const [i, r] of rows.entries()) {
     assert.equal(r.catY, start.cat.y, 'the cat never moves (tick ' + i + ')');
     assert.equal(r.catX, start.cat.x, 'the cat never moves (tick ' + i + ')');
@@ -78,7 +79,7 @@ try {
   }
   assert.equal(approach.at(-1).liftBottom, start.cat.y, 'the lift stopped on the head');
   const held = rows.filter(r => r.liftBottom === start.cat.y).length;
-  assert.ok(held >= 64 && held <= 72, 'held ~68 ticks: ' + held);
+  assert.ok(held >= 86 && held <= 94, 'held ~90 ticks: ' + held);
   assert.ok(after.at(-1).liftY < approach.at(-1).liftY - 20, 'and rose again');
   assert.deepEqual(errors, []);
   writeFileSync(path.join(output, 'lift-stop.json'), JSON.stringify({ start, rows }, null, 2));

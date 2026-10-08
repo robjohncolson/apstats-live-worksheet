@@ -76,7 +76,7 @@ try {
   const loaded = await page.evaluate(() => {
     const [A] = window.lifts, [a, b] = window.cats;
     const place = (p, x, y) => p.applyResolvedCollision({ ...p.rect, x, y }, { x: 0, y: 0 }, true);
-    place(a, A.rect.x + 84, A.rect.y - 34); place(b, A.rect.x + 84, A.rect.y - 68);
+    place(a, A.rect.x + 84, A.rect.y - a.rect.height); place(b, A.rect.x + 84, A.rect.y - a.rect.height - b.rect.height);
     const ys = [];
     for (let i = 0; i < 60; i++) { window.steps(1); ys.push(A.rect.y); }
     window.view(1100);

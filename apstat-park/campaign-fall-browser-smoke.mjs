@@ -73,29 +73,30 @@ try {
     const { createCampaignEngine } = await import('/apstat-park/campaign-engine.mjs');
     const events = [], game = await createCampaignEngine({ onEvent: event => events.push(event) });
     const cases = [];
+    // native-player-body: the row/actor point is rect + (16, 47) for the 32 x 46 body (was + (13, 32)).
     for (const [x, expectedX] of [[880, 720], [910, 720], [1600, 1392], [1770, 1392]]) {
       game.load(0, 2, 100); events.length = 0;
       const player = game.runtime.players[0];
       // Start below the floor, including the right edge missed by centered sensors.
-      Object.assign(player.rect, { x: x - 13, y: 490 }); player.velocity.y = 200;
+      Object.assign(player.rect, { x: x - 16, y: 490 }); player.velocity.y = 200;
       for (let tick = 0; tick < 180 && !events.some(e => e.type === 'warp' || e.type === 'hit'); tick++) game.step([0, 0]);
-      cases.push({ x, expectedX, actorX: player.rect.x + 13, actorY: player.rect.y + 32,
+      cases.push({ x, expectedX, actorX: player.rect.x + 16, actorY: player.rect.y + 47,
         events: events.map(e => e.type), death: player.deathTimer });
     }
     game.load(0, 2, 100); events.length = 0;
     const walker = game.runtime.players[0];
-    Object.assign(walker.rect, { x: 827, y: 398 });
+    Object.assign(walker.rect, { x: 827, y: 432 - walker.rect.height });
     for (let tick = 0; tick < 180 && !events.some(event => event.type === 'warp'); tick++) game.step([2, 0]);
-    const walkingReturn = { x: walker.rect.x + 13, y: walker.rect.y + 32, events: events.map(event => event.type) };
+    const walkingReturn = { x: walker.rect.x + 16, y: walker.rect.y + 47, events: events.map(event => event.type) };
     // Two arrivals use the native per-zone counter and -50 vertical offset.
     game.load(0, 2, 100); events.length = 0;
     for (const player of game.runtime.players) {
       Object.assign(player.rect, { x: 897, y: 490 }); player.velocity.y = 200;
     }
     game.step([0, 0]);
-    const pair = game.runtime.players.map(player => ({ x: player.rect.x + 13, y: player.rect.y + 32 }));
+    const pair = game.runtime.players.map(player => ({ x: player.rect.x + 16, y: player.rect.y + 47 }));
     for (let tick = 0; tick < 120; tick++) game.step([0, 0]);
-    const settled = game.runtime.players.map(player => ({ x: player.rect.x + 13, feet: player.rect.y + player.rect.height }));
+    const settled = game.runtime.players.map(player => ({ x: player.rect.x + 16, feet: player.rect.y + player.rect.height }));
     const deaths = events.filter(event => event.type === 'hit' || event.type === 'dead');
     game.dispose(); return { cases, walkingReturn, pair, settled, deaths };
   });
@@ -108,7 +109,7 @@ try {
   assert.deepEqual(result.pair, [{ x: 720, y: -48 }, { x: 720, y: -98 }]);
   assert.deepEqual(result.walkingReturn, { x: 720, y: -48, events: ['warp'] }, 'walking off the ledge uses the Warp, without death');
   assert.deepEqual(result.deaths, []);
-  assert.ok(result.settled.every(player => player.x === 720 && player.feet <= 434), 'players land on the near side, never at the entrance');
+  assert.ok(result.settled.every(player => player.x === 720 && player.feet <= 432), 'players land on the near side, never at the entrance');
   writeFileSync(path.join(output, 'fall-audit.json'), JSON.stringify(result, null, 2));
   console.log('CAMPAIGN FALL PASS: both pits, right edges, above-pit destinations, staggered multiplayer return and safe landing');
 } finally {

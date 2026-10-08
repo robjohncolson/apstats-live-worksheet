@@ -54,7 +54,7 @@ const inside = (a, b) => a.x < b.x + b.width - 1e-6 && b.x < a.x + a.width - 1e-
   && a.y < b.y + b.height - 1e-6 && b.y < a.y + a.height - 1e-6;
 
 // 1-4: the UpDownLift (x 917, travel -70; native 118 x 18 body, native-lift-and-ledge-look) swings over open floor;
-// its lowest underside is 336 + 70 + 9 = 415, a floor cat's top 398. (The native MoveWall stays idle: no cat here
+// its lowest underside is 336 + 70 + 9 = 415, a floor cat's top 432 - 46 = 386. (The native MoveWall stays idle: no cat here
 // touches its sensor, native-movewall.)
 function underUpDownLift() {
   const game = loadStage('stage_weight01');
@@ -82,8 +82,8 @@ test('1-4 (L4): the UpDownLift comes down onto a standing cat, stops on its head
   }
   assert.equal(lowestBottom, cat.rect.y, 'it stops exactly on the head');
   // One pass in 400 frames (5 s = 300-frame period). The hold is the time the sine path spends below the head:
-  // (2/w) acos(1 - d/A) with d = lowest underside - head (415 - 398 = 17), A = 70, w = 2pi/5 -> 1.13 s = 68 frames.
-  // (Retail: d = 415 - 386 for its 46-tall cat = 29 -> 1.50 s; captured 1.48 s.)
+  // (2/w) acos(1 - d/A) with d = lowest underside - head (415 - 386 = 29 for the native 46-tall body), A = 70,
+  // w = 2pi/5 -> 1.50 s = 90 frames; retail captured 1.48 s. (The old 34-tall cat gave d = 17 -> 1.13 s.)
   const d = 336 + 70 + lift.rect.height / 2 - cat.rect.y;
   const expected = 2 / (2 * Math.PI / 5) * Math.acos(1 - d / 70) * 60;
   assert.ok(Math.abs(contactFrames - expected) <= 2, 'held on the head ~' + expected.toFixed(1) + ' frames: ' + contactFrames);

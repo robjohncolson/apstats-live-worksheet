@@ -15,10 +15,11 @@ export function createCampaignHelpers(runtime, definition, requiredCount) {
     }
     for (const [slot, player] of helpers) {
       if (inputs[slot] & 128) continue;
-      const index = runtime.players.indexOf(player);
-      if (index >= 0) {
-        runtime.players.splice(index, 1); runtime.playerSpawns.splice(index, 1); runtime.playerInputSlots.splice(index, 1);
-        player.view.parent?.removeChild(player.view); player.view.destroy({ children: true });
+      // removeRuntimePlayer (patch optional-teacher-cats) also clears every retained reference to the cat
+      // (a WarpGun hold, magnet, carried key, ride state), so nothing later touches the destroyed view.
+      if (runtime.players.includes(player)) {
+        runtime.removeRuntimePlayer(player);
+        player.view.destroy({ children: true });
       }
       helpers.delete(slot);
     }

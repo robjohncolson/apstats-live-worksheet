@@ -68,7 +68,8 @@ export async function createJump01Art(doc) {
       const cell = player.deathTimer > 0 ? 1 : !player.grounded ? 5
         : player.velocity.x ? WALK_CELLS[Math.floor(ticks / WALK_TICKS) % WALK_CELLS.length] : 0;
       const x = Math.round((player.rect.x + player.rect.width / 2) / 2 - 10);
-      const y = Math.round((player.rect.y + player.rect.height - 2) / 2 - 24);
+      // native-player-body: the row point (the drawn cat's bottom) is the body bottom + 1.
+      const y = Math.round((player.rect.y + player.rect.height + 1) / 2 - 24);
       art.cat(ctx, colour, cell, player.getFacingDirection() > 0, x, y);
       if (slot !== focusSlot) return;
       ctx.fillStyle = colour; ctx.strokeStyle = '#3a2418'; ctx.lineWidth = 1;
