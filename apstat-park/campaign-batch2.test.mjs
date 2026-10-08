@@ -210,20 +210,22 @@ const colorRect = (box) => {
   return { x: box.spawn.x - width / 2, y: box.spawn.y - height / 2, width, height };
 };
 
+// colorbox-colour-push (batch 3) makes ColorBox rows push boxes, so their rect is the push box rect (bottom-centred).
+const colorPushBoxes = (game) => game.pushBoxes.filter((box) => box.spawn.actorName === 'ColorBox');
 test('6-1 / 6-2 ColorBox rects stand on their row point; the stage row is never mutated', () => {
   const push01 = load('stage_push01', 4);
-  const first = push01.colorBoxes.find((box) => box.spawn.raw[4] === 576);
-  assert.deepEqual(colorRect(first), { x: 552, y: 384, width: 48, height: 48 });
-  const big = push01.colorBoxes.find((box) => box.spawn.raw[4] === 1344);
-  assert.deepEqual(colorRect(big), { x: 1313, y: 370, width: 62, height: 62 });
+  const first = colorPushBoxes(push01).find((box) => box.spawn.raw[4] === 576);
+  assert.deepEqual(rectOf(first), { x: 552, y: 384, width: 48, height: 48 });
+  const big = colorPushBoxes(push01).find((box) => box.spawn.raw[4] === 1344);
+  assert.deepEqual(rectOf(big), { x: 1313, y: 370, width: 62, height: 62 });
   const row = runtime.stages.find((entry) => entry.source === 'stage_push01').data.createTable.find((r) => r.actorName === 'ColorBox');
   assert.deepEqual([row.x, row.y], [576, 432], 'the row keeps its Lua point');
   const autoScroll = load('stage_auto_scroll01', 4);
   const rows = runtime.stages.find((entry) => entry.source === 'stage_auto_scroll01').data.createTable
     .filter((r) => r.actorName === 'ColorBox');
-  assert.equal(autoScroll.colorBoxes.length, rows.length);
-  autoScroll.colorBoxes.forEach((box, i) => {
-    const rect = colorRect(box);
+  assert.equal(colorPushBoxes(autoScroll).length, rows.length);
+  colorPushBoxes(autoScroll).forEach((box, i) => {
+    const rect = rectOf(box);
     assert.ok(Math.abs(rect.y + rect.height - rows[i].y) < 1e-9 && Math.abs(rect.x + rect.width / 2 - rows[i].x) < 1e-9,
       'bottom-centre on the row point: ' + JSON.stringify(rect) + ' row ' + rows[i].x + ',' + rows[i].y);
   });

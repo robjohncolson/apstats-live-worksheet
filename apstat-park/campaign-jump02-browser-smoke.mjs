@@ -18,6 +18,9 @@ const result = await page.evaluate(() => {
   const gates = runtime.gates.map(gate => ({...gate.rect}));
   const bridge = runtime.bridges.find(bridge => bridge.spawn.label === '');
   bridge.open();
+  // bridge-folded-start-and-motion: open() sets the target (full span) and the strip extends 2 units per tick;
+  // with no switch held the momentary pass would fold it again, so jump to the target to check the deployed extent.
+  bridge.applyProgress(bridge.segmentMotion.target);
   const bridgeRect = {...bridge.rect};
   const box = runtime.pushBoxes[0]; runtime.pushBoxes = [box];
   const player = runtime.players[0], other = runtime.players[1];

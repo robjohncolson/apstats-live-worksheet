@@ -179,6 +179,48 @@ export const CAMPAIGN_PATCHES = [{
     'ForceColorBox has no recolour rule: it shares the ColorBox vtable (PTR_LAB_7ff72bcb7c88); the only callers of the player recolour FUN_7ff72bb67670 are FUN_7ff72bb688c0 (own slot), FUN_7ff72bb68a50 (network packet), FUN_7ff72bb6a160 (online slot reassignment) and FUN_7ff72bb6f0e0 (MultiPlayer relay)',
     'The FallBox atlas region is a channel mask (red fill, blue outline) that the native draw remaps; the remap is not decoded, so the grey look stays'],
   behavior: 'Every stage: FallBox, ColorBox and ForceColorBox stand bottom-centred on their row point (were centred on it, half their height too low). ForceColorBox no longer recolours a cat that overlaps it (invented; the warp-gun colour of the box is unchanged). Not changed here: FallBox art (grey), its 2-unit body inset, ColorBox colour / push rules (batch 3).',
+}, {
+  // Fidelity audit 2026-10-07 batch 3 (Top 10 #10; audit-48 B-boxes section 2).
+  id: 'normal-small-box-are-pushboxes',
+  files: ['src/engine/GameRuntime.ts'],
+  evidence: ['FUN_7ff72bb72ae0 branches 0x7ff72bb739a7 / 0x7ff72bb73a09 / 0x7ff72bb73a77 / 0x7ff72bb73ae7 (TallBox / BigBox / NormalBox / SmallBox, index 0..3) -> FUN_7ff72bb333d0(obj, index)',
+    'FUN_7ff72bb333d0: the PushBox ctor body (vtable PTR_FUN_7ff72bcb68c0, weight +0x404 = 100, offset +0x40c = 0) with rect DAT_7ff72bcb66a0[index]; the memory image reads Tall {-40,-703,80,703}, Big {-48,-128,96,128}, Normal {-48,-96,96,96}, Small {-25,-48,48,48}; then +0x90 |= 0x10 (hop propagation)',
+    'Same vtable as PushBox: p0 = weight / offset (FUN_7ff72bb33780), required = ceil(weight/100 n) + offset (FUN_7ff72bb34820, ceil = IAT 0x7ff72bc7c5d8), pushed by FUN_7ff72bb33890, falls 0.65 when unsupported (FUN_7ff72bb34c40)'],
+  behavior: 'Every stage: TallBox / BigBox / NormalBox / SmallBox rows are push boxes (the port PushBox, so they push, fall, ride, hop, respawn and hold switches like one) with the native table rect on the row point and p0 as the weight: 7-2 NormalBox (p0 100) needs the whole student party, the 7-2 / 11-4 SmallBoxes (p0 10) one cat. Was: static grey solids centred on the row point. LaserKeyBox / BallBox keep their own actors. Not modelled: the native 1-unit body inset.',
+}, {
+  // Fidelity audit 2026-10-07 batch 3 (audit-48 B-boxes sections 1, 4).
+  id: 'colorbox-colour-push',
+  files: ['src/engine/GameRuntime.ts', 'src/engine/actors/PushBox.ts'],
+  evidence: ['FUN_7ff72bb3b350 (ColorBox ctor): colour +0x6fc = p0 % n (n = DAT_7ff72c629fa8+0xcc08); if p3 >= 0 and that colour == p3 % n it becomes (colour + 1) % n; flags |= 0x10',
+    'FUN_7ff72bb3b5e0 (update): vx = 0, then it moves if FUN_7ff72bb3c2e0(side 2) or (side 3) finds the colour; FUN_7ff72bb3c2e0 walks the side contacts recursively and returns 1 on a player (type DAT_7ff72c62a101) moving into the box whose colour (player +0x400 = plVar2[0x80]) equals the box colour; one such cat anywhere in the chain is enough',
+    'Box pushes box: FUN_7ff72bb343e0 (leading side) fails on a wall (FUN_7ff72bc137b0); for a push-box contact (type DAT_7ff72c62a10f) it counts that box own chain (FUN_7ff72bb34530, any body moving into it, the pushed box included) and fails only when the count < its requirement (FUN_7ff72bb34820), then recurses along the line'],
+  behavior: 'Every stage: a ColorBox row is a push box (rect {-w/2, -h, w, h}, w = p1, h = p2, default 32) of colour p0 % n (p3 skip) that moves only when a cat of that colour (the cat on that player slot) is in the chain pushing it; it falls, rides, hops and respawns like a push box. Was: a static solid in a 6-colour palette. ForceColorBox (11-3) keeps its own actor (warp-gun target). And every stage: a push box pushed into another push box moves it (and the line beyond it) when each box requirement is met by the pushers plus the boxes in front of them; a solid ends the line. Was: a box never moved into another box.',
+}, {
+  // Fidelity audit 2026-10-07 batch 3 (audit-48 D-movers section 5).
+  id: 'weighted-lift-ex-variants',
+  files: ['src/engine/GameRuntime.ts', 'src/engine/actors/WeightedLift.ts', 'src/engine/sprites.ts'],
+  evidence: ['FUN_7ff72bb72ae0 0x7ff72bb742ab..0x7ff72bb74307: bl = (name == "WeightedLiftEx2", string at 0x7ff72bcbef18); FUN_7ff72bb63cf0(obj, 0.0, bl)',
+    'FUN_7ff72bb63cf0: param_3 == 0 -> DAT_7ff72c62d108 = {-92, 67, 194, 18} (wide), else DAT_7ff72c62d118 = {-28, 67, 56, 18} (narrow): WeightedLiftEx is wide, WeightedLiftEx2 narrow',
+    'Factory 0x7ff72bb74314..0x7ff72bb743ae: if int p0 != 0, travel = p0 + int(param[n + 1]) (when nonzero) -> FUN_7ff72bb64050; if int p1 > 0, FUN_7ff72bb64100(int p1, 0) (required = max(2, ceil(p1/100 n))); float p2 -> +0x414 and +0x418 (the step per tick both ways)',
+    'Narrow sprite atlas (383,559,34,42) drawn {-34, 0, 68, 84}; sign at (x + 0, y + 7) (FUN_7ff72bb64640: +5 only for the wide variant)'],
+  behavior: 'Every stage: WeightedLiftEx (6-3) is the wide 194 x 18 slab and WeightedLiftEx2 (12-2) the narrow 56 x 18 slab, 67 below the row point, with the sign showing the bodies still needed; travel = p0 + the party table entry p[n + 1]; required = max(2, ceil(p1/100 n)); p2 units per tick in both directions; auto-return; the 0.06 s underside freeze; weight = cats and push boxes on the slab, transitively (as native-weighted-lift). Was: a 64 x 14 slab centred on the row point, travel p0, 1 unit per tick.',
+}, {
+  // Fidelity audit 2026-10-07 batch 3 (audit-48 D-movers section 2).
+  id: 'lift-horizontal-carry',
+  files: ['src/engine/GameRuntime.ts', 'src/engine/actors/WeightedLift.ts'],
+  evidence: ['FUN_7ff72bb550a0 (Lift ctor): body DAT_7ff72c62d010 = {-59, -9, 118, 18} (memory image), view {-60, -10, 120, 20} from atlas (385,49,60,10), as UpDownLift',
+    'FUN_7ff72bb55370 (update): FUN_7ff72bb34f30(this, (0, dy), dir 0 = the contacts above) and FUN_7ff72bb34f30(this, (dx, 0), dir 0) -> the stack on the slab moves by the slab dx as well as its dy (recursively, FUN_7ff72bc17330)'],
+  behavior: 'Every stage: a Lift is the native 118 x 18 orange slab, and what rests on it (cats and push boxes, transitively) moves with its horizontal sweep as well as its vertical one (11-4: the 1488-unit trip). Was: 64 x 14 translucent blue, vertical carry only. Not changed: Lift p2 / p3 (native: amplitude per party member; 11-4 has 0, 0).',
+}, {
+  // Fidelity audit 2026-10-07 batch 3 (audit-48 A-geometry section 4).
+  id: 'bridge-folded-start-and-motion',
+  files: ['src/engine/actors/Bridge.ts', 'src/engine/actors/KeyGate.ts', 'src/engine/GameRuntime.ts'],
+  evidence: ['FUN_7ff72bb72ae0 Bridge / KeyBridge block 0x7ff72bb76c59: count = int p0, dir = normalize(int p1, int p2), seg = int p4, headPush = int p5 > 0 -> FUN_7ff72bb4f630(obj, type 0, ...); if int p3 > 0: +0x518 = trunc(int p3 * (8 - N) * 0.1) (0x7ff72bb76d0d..0x7ff72bb76d5f, 8 - N unsigned); KeyBridge also sets +0x520 = 1',
+    'FUN_7ff72bb4f9d0 (on add): type 0 segments start at the row point (base +0x130 = the row point), target row + dir seg (count - 1 - i); segment i < +0x518 starts at row + dir seg (m - i); type 1 (Gate) starts extended and targets the row cell',
+    'FUN_7ff72bb4fea0: command 9 -> segment state 1, command 10 -> state 2; FUN_7ff72bb4f230: state 1 moves toward the target at DAT_7ff72bcff538 (1.0), state 2 back to the base at DAT_7ff72bcff4fc (0.5) via FUN_7ff72bb4f3e0 (2 units per tick at 1.0)',
+    'FUN_7ff72bb4fe10 (KeyBridge slot 25): while +0x520 is set, once the actor named "Key" is held (key +0x408 != 0) it sends itself command 9',
+    'FUN_7ff72bb4f630: the head segment with headPush (+1000 |= 4) pushes the bodies it meets (FUN_7ff72bb34f30)'],
+  behavior: 'Every stage: a Bridge is a solid strip that starts folded into the one-cell nub at its row point (or pre-extended by trunc(p3 (8 - n) 0.1) cells), extends 2 units per tick when switched on and folds back to the nub at 1 per tick when switched off; a KeyBridge starts folded and extends once any key is held (was: deployed from frame 0 and removed by a key). A Gate is solid and shrinks to its row-point cell at 2 per tick when opened and grows back at 1 per tick when closed (was: instant hide / show). Growing stops for a frame instead of entering a live cat or push box; a head-push bridge (p5 > 0) shoves them along instead. Switch / mediator / key wiring unchanged. Deterministic: frame-counted. Not modelled: the 4-tick follower stagger (the strip stays contiguous either way).',
 }];
 
 // Fail the build if upstream code changes: never silently skip a correction.
@@ -299,13 +341,46 @@ export function patchCampaignSource(file, source) {
     }
     if (spawn.actorName !== 'Lift' && !isDarknessWeightedLift) {
       // Native lifts`, file);
-    return replaceOnce(source, '    this.view.y = this.spawn.y + offset;\n    this.rect.y = this.view.y - LIFT_HEIGHT / 2;',
+    source = replaceOnce(source, '    this.view.y = this.spawn.y + offset;\n    this.rect.y = this.view.y - LIFT_HEIGHT / 2;',
       '    this.view.y = this.spawn.y + offset;\n    this.rect.y = this.view.y - this.rect.height / 2;', file);
+    // lift-horizontal-carry: FUN_7ff72bb550a0 Lift = the UpDownLift body {-59, -9, 118, 18} and orange atlas slab.
+    source = replaceOnce(source, "    if (spawn.actorName === 'UpDownLift') {\n", "    if (spawn.actorName === 'UpDownLift' || spawn.actorName === 'Lift') {\n", file);
+    source = replaceOnce(source, '    this.rect.x = this.view.x - LIFT_WIDTH / 2;\n    this.rect.y = this.view.y - LIFT_HEIGHT / 2;',
+      '    this.rect.x = this.view.x - this.rect.width / 2;\n    this.rect.y = this.view.y - this.rect.height / 2;', file);
+    // weighted-lift-ex-variants: FUN_7ff72bb63cf0(obj, 0.0, name == "WeightedLiftEx2"): Ex wide, Ex2 narrow.
+    source = replaceOnce(source, "    if (spawn.actorName === 'WeightedLift') {\n      // FUN_7ff72bb63cf0 wide variant", `    if (spawn.actorName === 'WeightedLiftEx' || spawn.actorName === 'WeightedLiftEx2') {
+      // DAT_7ff72c62d108 wide {-92, 67, 194, 18} / DAT_7ff72c62d118 narrow {-28, 67, 56, 18}; narrow sprite (383,559,34,42)
+      // drawn {-34, 0, 68, 84}; FUN_7ff72bb64640 sign at (x + (narrow ? 0 : 5), y + 7).
+      const narrow = spawn.actorName === 'WeightedLiftEx2';
+      this.rect.x = spawn.x + (narrow ? -28 : -92); this.rect.y = spawn.y + 67;
+      this.rect.width = narrow ? 56 : 194; this.rect.height = 18;
+      this.bodyOffsetY = 67;
+      const art = frameTexture((narrow ? 'weighted_lift_narrow' : 'weighted_lift_wide') as AtlasFrameName);
+      if (art) {
+        const sprite = new Sprite(art);
+        sprite.x = narrow ? -34 : -93; sprite.y = 0; sprite.width = narrow ? 68 : 196; sprite.height = 84;
+        this.view.addChild(sprite);
+      } else {
+        const slab = new Graphics();
+        slab.beginFill(0xff864d, 1);
+        slab.drawRoundedRect(narrow ? -28 : -92, 67, narrow ? 56 : 194, 18, 5);
+        slab.endFill();
+        this.view.addChild(slab);
+      }
+      this.signText = new Text('', { fontFamily: 'monospace', fontSize: 32, fontWeight: 'bold', fill: 0xff864d });
+      this.signText.anchor.set(0.5, 0);
+      this.signText.x = narrow ? 0 : 5; this.signText.y = 7;
+      this.view.addChild(this.signText);
+      return;
+    }
+    if (spawn.actorName === 'WeightedLift') {
+      // FUN_7ff72bb63cf0 wide variant`, file);
+    return source;
   }
   if (file === 'src/engine/sprites.ts') {
     const frames = Array.from({ length: 9 }, (_, i) =>
       `  push_box_${i}: [${464 + i % 3 * 16}, ${32 + Math.floor(i / 3) * 16}, 16, 16],`).join('\n');
-    return replaceOnce(source, 'export const PICO_ATLAS_FRAMES = {', 'export const PICO_ATLAS_FRAMES = {\n  door_closed: [96, 512, 48, 48],\n  updown_lift: [385, 49, 60, 10],\n  weighted_lift_wide: [351, 511, 98, 42],\n  move_wall: [500, 255, 9, 130],\n' + frames, file);
+    return replaceOnce(source, 'export const PICO_ATLAS_FRAMES = {', 'export const PICO_ATLAS_FRAMES = {\n  door_closed: [96, 512, 48, 48],\n  updown_lift: [385, 49, 60, 10],\n  weighted_lift_wide: [351, 511, 98, 42],\n  weighted_lift_narrow: [383, 559, 34, 42],\n  move_wall: [500, 255, 9, 130],\n' + frames, file);
   }
   if (file === 'src/engine/actors/Goal.ts') {
     source = replaceOnce(source, '  readonly rect: Rect;', `  readonly rect: Rect;
@@ -351,7 +426,7 @@ export function patchCampaignSource(file, source) {
 
     let pushDelta = 0;
     let resolvedPlayerX = playerRect.x;`, file);
-    return replaceOnce(source, '    this.view.addChild(g);', `    const cornerX = Math.min(24, resolvedWidth / 2);
+    source = replaceOnce(source, '    this.view.addChild(g);', `    const cornerX = Math.min(24, resolvedWidth / 2);
     const cornerY = Math.min(24, resolvedHeight / 2);
     const widths = [cornerX, resolvedWidth - 2 * cornerX, cornerX];
     const heights = [cornerY, resolvedHeight - 2 * cornerY, cornerY];
@@ -367,6 +442,59 @@ export function patchCampaignSource(file, source) {
         this.view.addChild(sprite);
       });
     } else this.view.addChild(g);`, file);
+    // colorbox-colour-push: the player colour whose cat alone pushes this box (FUN_7ff72bb3b5e0 / FUN_7ff72bb3c2e0).
+    source = replaceOnce(source, '  falling = false;\n', '  falling = false;\n  /** colorbox-colour-push: the player slot colour that pushes this ColorBox (undefined for other boxes). */\n  colorIndex?: number;\n  /** normal-small-box-are-pushboxes / colorbox-colour-push: falls when unsupported in every stage (FUN_7ff72bb33890 -> FUN_7ff72bb34c40). */\n  nativeFall = false;\n', file);
+    // colorbox-colour-push (box pushes box, FUN_7ff72bb343e0): a push into another box moves the line when each box
+    // in it meets its requirement with the pushers plus the boxes in front of them; a solid ends the line.
+    source = replaceOnce(source, '  canMoveBox?: (index: number, sign: number) => boolean,',
+      '  canMoveBox?: (index: number, sign: number, chain?: { lead: number; bodies: number }) => boolean,', file);
+    source = replaceOnce(source, `    const destinationHitsBox = boxRects.some((otherBox, otherIndex) => (
+      otherIndex !== i && rectsOverlap(destination, otherBox)
+    ));
+
+    const enoughPushers = !canMoveBox || canMoveBox(i, Math.sign(pushDelta));
+    if (!destinationHitsSolid && !destinationHitsBox && enoughPushers) {
+      boxRects[i] = destination;
+      movedBoxIndex = i;
+    }`, `    const enoughPushers = !canMoveBox || canMoveBox(i, Math.sign(pushDelta));
+    const followers = !destinationHitsSolid && enoughPushers
+      ? planPushBoxLine(i, destination, Math.sign(pushDelta), boxRects, map, canMoveBox)
+      : null;
+    if (followers) {
+      boxRects[i] = destination;
+      for (const [index, rect] of followers) boxRects[index] = rect;
+      movedBoxIndex = i;
+    }`, file);
+    source += `
+/** colorbox-colour-push: the boxes a pushed box drives in front of it (breadth-first from the lead), or null when a
+ *  solid or an under-pushed box ends the line (FUN_7ff72bb343e0). depth = the boxes already moving behind it. */
+function planPushBoxLine(
+  lead: number,
+  leadRect: Rect,
+  sign: number,
+  boxRects: readonly Rect[],
+  map: PushBoxCollisionMap,
+  canMoveBox?: (index: number, sign: number, chain?: { lead: number; bodies: number }) => boolean,
+): Map<number, Rect> | null {
+  const planned = new Map<number, Rect>();
+  const frontier: Array<{ rect: Rect; depth: number }> = [{ rect: leadRect, depth: 1 }];
+  while (frontier.length > 0) {
+    const { rect, depth } = frontier.shift()!;
+    for (let index = 0; index < boxRects.length; index += 1) {
+      if (index === lead || planned.has(index)) continue;
+      const other = boxRects[index];
+      if (!rectsOverlap(rect, other) || !hasVerticalOverlap(rect, other)) continue;
+      const next = { ...other, x: sign > 0 ? rect.x + rect.width : rect.x - other.width };
+      if (map.rectHitsSolid(next, { axis: 'x', sign, previousRect: other })) return null;
+      if (canMoveBox && !canMoveBox(index, sign, { lead, bodies: depth })) return null;
+      planned.set(index, next);
+      frontier.push({ rect: next, depth: depth + 1 });
+    }
+  }
+  return planned;
+}
+`;
+    return source;
   }
   if (file === 'src/engine/actors/KeyGate.ts') {
     source = replaceOnce(source, '    this.rect = { x: spawn.x - 8, y: spawn.y - 32, width: 16, height: 64 };', `    const [countValue, dxValue, dyValue, sizeValue] = spawn.raw.slice(6);
@@ -381,10 +509,61 @@ export function patchCampaignSource(file, source) {
     const begin = source.indexOf('    g.beginFill(0x4f8cff, 0.9);');
     const end = source.indexOf('    this.view.addChild(g);', begin);
     if (begin < 0 || end < begin) throw new Error('Gate artwork anchor changed');
-    return source.slice(0, begin) + `    g.beginFill(0xff864d, 1);
+    source = source.slice(0, begin) + `    g.beginFill(0xff864d, 1);
     g.drawRoundedRect(this.rect.x - spawn.x, this.rect.y - spawn.y, this.rect.width, this.rect.height, 4);
     g.endFill();
 ` + source.slice(end);
+    // bridge-folded-start-and-motion (Gate = FUN_7ff72bb4f630 type 1): starts extended; opened -> shrinks into the
+    // row cell at 2 units per tick; closed -> grows back at 1 per tick (FUN_7ff72bb4fea0 / FUN_7ff72bb4f230).
+    source = `import { segmentExtent, drawSegmentStrip, type SegmentMotion } from './Bridge';
+` + source;
+    source = replaceOnce(source, '      height: Math.abs(endY) + size + Number(!horizontal) };', `      height: Math.abs(endY) + size + Number(!horizontal) };
+    this.segmentMotion = { length: (count - 1) * size, progress: (count - 1) * size, target: (count - 1) * size, speed: 1,
+      dirX: dx, dirY: dy, cellW: size + Number(horizontal), cellH: size + Number(!horizontal), headPush: false };`, file);
+    return replaceOnce(source, `  open(): void {
+    this.opened = true;
+    this.view.visible = false;
+  }
+
+  close(): void {
+    this.opened = false;
+    this.view.visible = true;
+  }`, `  segmentMotion?: SegmentMotion;
+
+  isSolid(): boolean {
+    return this.segmentMotion ? true : !this.opened;
+  }
+
+  extentAt(progress: number): Rect {
+    return segmentExtent(this.spawn, this.segmentMotion!, progress);
+  }
+
+  applyProgress(progress: number): void {
+    if (!this.segmentMotion) return;
+    this.segmentMotion.progress = progress;
+    Object.assign(this.rect, this.extentAt(progress));
+    drawSegmentStrip(this.view, this.rect, this.spawn);
+  }
+
+  open(): void {
+    this.opened = true;
+    if (this.segmentMotion) {
+      this.segmentMotion.target = 0;
+      this.segmentMotion.speed = 2;
+      return;
+    }
+    this.view.visible = false;
+  }
+
+  close(): void {
+    this.opened = false;
+    if (this.segmentMotion) {
+      this.segmentMotion.target = this.segmentMotion.length;
+      this.segmentMotion.speed = 1;
+      return;
+    }
+    this.view.visible = true;
+  }`, file);
   }
   if (file === 'src/engine/actors/Bridge.ts') {
     source = replaceOnce(source, 'const segmentWidth = horizontalSegment ? segmentSize : segmentSize + 1;', 'const segmentWidth = horizontalSegment ? segmentSize + 1 : segmentSize;', file);
@@ -398,6 +577,116 @@ export function patchCampaignSource(file, source) {
       ['const height = horizontalSegment ? params.segmentSize + 1 : params.segmentSize;', 'const height = horizontalSegment ? params.segmentSize : params.segmentSize + 1;'],
       ['x: spawn.x - width / 2,', 'x: spawn.x,'], ['y: spawn.y - height / 2,', 'y: spawn.y,'],
     ]) source = replaceOnce(source, before, after, file);
+    // bridge-folded-start-and-motion: a solid strip whose length follows commands 9 / 10 at 2 / 1 units per tick.
+    source = replaceOnce(source, '  private usesSegmentCommands = false;\n  opened = false;\n', `  private usesSegmentCommands = false;
+  opened = false;
+  /** bridge-folded-start-and-motion: head distance from the row cell (progress), its target and speed per tick. */
+  segmentMotion?: SegmentMotion;
+  private partyCount = 2;
+
+  setPartyCount(count: number): void {
+    this.partyCount = count;
+  }
+
+  isSolid(): boolean {
+    return this.segmentMotion ? true : !this.opened;
+  }
+
+  extentAt(progress: number): Rect {
+    return segmentExtent(this.spawn, this.segmentMotion!, progress);
+  }
+
+  applyProgress(progress: number): void {
+    if (!this.segmentMotion) return;
+    this.segmentMotion.progress = progress;
+    Object.assign(this.rect, this.extentAt(progress));
+    drawSegmentStrip(this.view, this.rect, this.spawn);
+  }
+`, file);
+    source = replaceOnce(source, `  enableSegmentCommandMode(): void {
+    if (this.spawn.actorName !== 'Bridge') return;
+    this.usesSegmentCommands = true;
+    this.retract();
+  }`, `  enableSegmentCommandMode(): void {
+    if (this.spawn.actorName !== 'Bridge' && this.spawn.actorName !== 'KeyBridge') return;
+    this.usesSegmentCommands = true;
+    const p = this.params;
+    if (p.segmentCount === undefined || p.segmentSize === undefined || p.directionX === undefined || p.directionY === undefined) {
+      this.retract();
+      return;
+    }
+    const horizontal = Math.abs(p.directionX) > ENGINE_AXIS_EPSILON;
+    const length = p.segmentSize * (p.segmentCount - 1);
+    const row = this.spawn.raw.slice(6);
+    const preExtension = typeof row[3] === 'number' ? Math.trunc(row[3]) : 0;
+    // FUN_7ff72bb72ae0 0x7ff72bb76d0d..0x7ff72bb76d5f: m = trunc(p3 (8 - N) 0.1); 8 - N is unsigned (N > 8 wraps huge).
+    const cells = preExtension <= 0 ? 0
+      : this.partyCount > 8 ? Infinity
+        : Math.trunc(Math.fround(Math.fround(preExtension * (8 - this.partyCount)) * Math.fround(0.1)));
+    const start = Math.min(length, cells * p.segmentSize);
+    this.segmentMotion = {
+      length, progress: start, target: start, speed: 2, dirX: p.directionX, dirY: p.directionY,
+      cellW: horizontal ? p.segmentSize + 1 : p.segmentSize, cellH: horizontal ? p.segmentSize : p.segmentSize + 1,
+      headPush: typeof row[5] === 'number' && Math.trunc(row[5]) > 0,
+    };
+    this.opened = true;
+    this.applyProgress(start);
+  }`, file);
+    source = replaceOnce(source, '  private deploy(): void {\n', `  private deploy(): void {
+    if (this.segmentMotion) {
+      this.segmentMotion.target = this.segmentMotion.length;
+      this.segmentMotion.speed = 2;
+      this.opened = false;
+      return;
+    }
+`, file);
+    source = replaceOnce(source, '  private retract(): void {\n', `  private retract(): void {
+    if (this.segmentMotion) {
+      this.segmentMotion.target = 0;
+      this.segmentMotion.speed = 1;
+      this.opened = true;
+      return;
+    }
+`, file);
+    source += `
+/** bridge-folded-start-and-motion: shared by Bridge / KeyBridge / Gate (FUN_7ff72bb4f630 segment platforms). */
+export interface SegmentMotion {
+  length: number;
+  progress: number;
+  target: number;
+  speed: number;
+  dirX: number;
+  dirY: number;
+  cellW: number;
+  cellH: number;
+  headPush: boolean;
+}
+
+/** The union of the segments when the head is 'progress' along the direction from the row cell. */
+export function segmentExtent(spawn: ActorSpawnDef, motion: SegmentMotion, progress: number): Rect {
+  const endX = motion.dirX * progress;
+  const endY = motion.dirY * progress;
+  return {
+    x: spawn.x + Math.min(0, endX),
+    y: spawn.y + Math.min(0, endY),
+    width: Math.abs(endX) + motion.cellW,
+    height: Math.abs(endY) + motion.cellH,
+  };
+}
+
+/** The 16 px orange cells (atlas (240,576) family) drawn as one rounded strip. */
+export function drawSegmentStrip(view: Container, rect: Rect, spawn: ActorSpawnDef): void {
+  for (const child of view.removeChildren()) child.destroy();
+  const g = new Graphics();
+  g.lineStyle(0, 0, 0);
+  g.beginFill(0xff864d, 1);
+  g.drawRoundedRect(rect.x - spawn.x, rect.y - spawn.y, rect.width, rect.height,
+    Math.round(Math.min(rect.width, rect.height) * 0.28));
+  g.endFill();
+  view.addChild(g);
+  view.visible = true;
+}
+`;
     return source;
   }
   if (file === 'src/engine/actors/StaticRect.ts') {
@@ -1381,6 +1670,273 @@ function createMoveWallState(spawn: ActorSpawnDef): MoveWallState {`, file);
     }
     source = replaceOnce(source, "import { COLOR_BOX_FALLBACK_SIZE, ColorBox } from './actors/ColorBox';",
       "import { COLOR_BOX_FALLBACK_SIZE, ColorBox, parseColorBoxParamsFromSpawn } from './actors/ColorBox';", file);
+    // normal-small-box-are-pushboxes: the box family are push boxes (FUN_7ff72bb333d0 + DAT_7ff72bcb66a0).
+    source = replaceOnce(source, `    SmallBox: (spawn) => {
+      const smallBox = new SmallBox(spawn);
+      this.smallBoxes.push(smallBox);
+      this.addActorView(spawn, smallBox.view);
+    },`, `    SmallBox: (spawn) => {
+      this.addBoxFamilyPushBox(spawn, 3);
+    },`, file);
+    for (const [name, index] of [['TallBox', 0], ['NormalBox', 2], ['BigBox', 1]]) {
+      source = replaceOnce(source, `    ${name}: (spawn) => {
+      const normalBox = new NormalBox(spawn);
+      this.normalBoxes.push(normalBox);
+      this.addActorView(spawn, normalBox.view);
+    },`, `    ${name}: (spawn) => {
+      this.addBoxFamilyPushBox(spawn, ${index});
+    },`, file);
+    }
+    source = replaceOnce(source, "import { PushBox, parsePushBoxParamsFromSpawn, requiredPushPlayers, resolvePushBoxCollision } from './actors/PushBox';",
+      "import { PushBox, parsePushBoxParamsFromSpawn, parsePushBoxWeightValue, requiredPushPlayers, resolvePushBoxCollision } from './actors/PushBox';", file);
+    // colorbox-colour-push: a ColorBox row is a push box moved only by its colour cat.
+    source = replaceOnce(source, `    ColorBox: (spawn) => {
+      const boxHeight = parseColorBoxParamsFromSpawn(spawn)?.height ?? COLOR_BOX_FALLBACK_SIZE;
+      const colorBox = new ColorBox(spawnMovedTo(spawn, spawn.x, spawn.y - boxHeight / 2));
+      this.colorBoxes.push(colorBox);
+      this.addActorView(spawn, colorBox.view);
+    },`, `    ColorBox: (spawn) => {
+      this.addColorPushBox(spawn);
+    },`, file);
+    source = replaceOnce(source, '  private countPlayersPushingBox(boxRect: Rect, sign: number): number {',
+      '  private countPlayersPushingBox(boxRect: Rect, sign: number, colour?: number): number {', file);
+    source = replaceOnce(source, '      .map((player, index) => ({ rect: player.rect, intent: this.framePushIntentX[index] ?? 0 }))',
+      '      .map((player, index) => ({ rect: player.rect, intent: this.framePushIntentX[index] ?? 0, slot: this.playerInputSlots[index] ?? index }))', file);
+    if (source.split('used[i] = true; count += 1;').length !== 3) throw new Error('Patch anchor changed: GameRuntime.ts pusher count');
+    source = source.replaceAll('used[i] = true; count += 1;', 'used[i] = true; count += colour === undefined || c.slot === colour ? 1 : 0;');
+    source = replaceOnce(source, `      (index, sign) => {
+        const box = this.pushBoxes[index];
+        const required = this.pushBoxRequiredPlayers(box);
+        if (required <= 1) return true;
+        return this.countPlayersPushingBox(previousPushBoxRects[index], sign) >= required;
+      },`, `      (index, sign, chain) => {
+        // colorbox-colour-push: a ColorBox needs a cat of its colour in the chain (FUN_7ff72bb3c2e0); a box driven by
+        // another box counts the boxes in front of the pushers as bodies (FUN_7ff72bb34530 / FUN_7ff72bb343e0).
+        const box = this.pushBoxes[index];
+        const pushedRect = previousPushBoxRects[chain ? chain.lead : index];
+        if (box?.colorIndex !== undefined) return this.countPlayersPushingBox(pushedRect, sign, box.colorIndex) >= 1;
+        const required = this.pushBoxRequiredPlayers(box);
+        if (required <= 1) return true;
+        return this.countPlayersPushingBox(pushedRect, sign) + (chain ? chain.bodies : 0) >= required;
+      },`, file);
+    // colorbox-colour-push (Codex review): a pushed line of boxes commits ALL OR NONE. Every moved box gets its cat
+    // contact plan (planBoxPush, against the final box rects and the cats already moved by earlier plans), its rider
+    // carry and its moved-this-frame mark (ledge tip-over / support bookkeeping); if any plan fails, or any two boxes
+    // would overlap, nothing moves and the pusher stops at the lead box's old face.
+    source = replaceOnce(source, `    result.boxRects.forEach((rect, index) => {
+      this.pushBoxes[index]?.applyRect(rect);
+    });
+    if (result.movedBoxIndex !== undefined) {
+      const previousBoxRect = previousPushBoxRects[result.movedBoxIndex];
+      const currentBoxRect = result.boxRects[result.movedBoxIndex];
+      if (previousBoxRect && currentBoxRect) {
+        const contacts = planPush(previousBoxRect, currentBoxRect);
+        for (const [index, rect] of contacts || []) {
+          const player = this.players[index];
+          player.applyResolvedCollision(rect, player.velocity, player.grounded);
+        }
+        this.carryPlayersWithPushedBox(previousBoxRect, currentBoxRect);
+      }
+      const movedBox = this.pushBoxes[result.movedBoxIndex];
+      if (movedBox) this.pushBoxesMovedThisFrame.add(movedBox);
+    }`, `    const lead = result.movedBoxIndex;
+    const movedIndices = lead === undefined ? [] : [lead, ...result.boxRects.map((rect, index) => index)
+      .filter((index) => index !== lead && (result.boxRects[index].x !== previousPushBoxRects[index].x
+        || result.boxRects[index].y !== previousPushBoxRects[index].y))];
+    const catRects: Array<Rect | null> = this.players.map((player) => (player.deathTimer > 0
+      || this.collisionChangePlayersCollisionOff.has(player) ? null : { ...player.rect }));
+    const pusherIndex = this.players.indexOf(this.player!);
+    const catMoves = new Map<number, Rect>();
+    let lineCommits = movedIndices.length > 0;
+    for (const index of movedIndices) {
+      const before = previousPushBoxRects[index];
+      const after = result.boxRects[index];
+      const othersOverlap = result.boxRects.some((rect, other) => other !== index && rectsOverlap(rect, after));
+      const plan = othersOverlap ? null : planBoxPush(before, after, catRects, pusherIndex, (rect: Rect) =>
+        pushBoxCollisionMap.rectHitsSolid(rect) || result.boxRects.some((other) => rectsOverlap(rect, other)));
+      if (!plan) { lineCommits = false; break; }
+      for (const [catIndex, rect] of plan) { catMoves.set(catIndex, rect); catRects[catIndex] = rect; }
+    }
+    if (lineCommits) {
+      result.boxRects.forEach((rect, index) => {
+        this.pushBoxes[index]?.applyRect(rect);
+      });
+      for (const [catIndex, rect] of catMoves) {
+        const player = this.players[catIndex];
+        player.applyResolvedCollision(rect, player.velocity, player.grounded);
+      }
+      for (const index of movedIndices) {
+        this.carryPlayersWithPushedBox(previousPushBoxRects[index], result.boxRects[index]);
+        this.pushBoxesMovedThisFrame.add(this.pushBoxes[index]);
+      }
+    } else if (lead !== undefined) {
+      // Nothing moves: the pusher stops against the lead box where it was.
+      const before = previousPushBoxRects[lead];
+      const pushedRight = result.boxRects[lead].x > before.x;
+      result.playerRect = { ...result.playerRect, x: pushedRight ? before.x - result.playerRect.width : before.x + before.width };
+      result.playerVelocity = { ...result.playerVelocity, x: 0 };
+    }`, file);
+    source = replaceOnce(source, "        box.spawn.actorName === 'PushBox'\n        && rectsOverlap({",
+      "        /^(Push|Normal|Small|Tall|Big|Color)Box$/.test(box.spawn.actorName)\n        && rectsOverlap({", file);
+    // bridge-folded-start-and-motion: a native Bridge / Gate is always solid; its length moves (isSolid()).
+    for (const [before, after] of [['(gate) => !gate.opened)', '(gate) => gate.isSolid())'], ['(bridge) => !bridge.opened)', '(bridge) => bridge.isSolid())']]) {
+      if (source.split(before).length < 18) throw new Error('Patch anchor changed: GameRuntime.ts ' + before);
+      source = source.replaceAll(before, after);
+    }
+    source = replaceOnce(source, '    this.updateMoveWalls(clampedDt);\n', '    this.updateMoveWalls(clampedDt);\n    this.advanceSegmentPlatforms(clampedDt);\n', file);
+    source = replaceOnce(source, '    KeyBridge: (spawn) => {\n      const bridge = new Bridge(spawn);\n',
+      '    KeyBridge: (spawn) => {\n      const bridge = new Bridge(spawn);\n      bridge.setPartyCount(this.nativePartyCount());\n      bridge.enableSegmentCommandMode();\n', file);
+    source = replaceOnce(source, '      if (controlledByPlainSwitch) bridge.enableSegmentCommandMode();',
+      '      if (controlledByPlainSwitch) {\n        bridge.setPartyCount(this.nativePartyCount());\n        bridge.enableSegmentCommandMode();\n      }', file);
+    // weighted-lift-ex-variants: the Ex / Ex2 factory rule in the shared lift update.
+    source = replaceOnce(source, `      if (lift.spawn.actorName === 'WeightedLift') {
+        // FUN_7ff72bb72ae0 + FUN_7ff72bb64100 + FUN_7ff72bb64310 (native-weighted-lift).`, `      if (lift.spawn.actorName === 'WeightedLiftEx' || lift.spawn.actorName === 'WeightedLiftEx2') {
+        // FUN_7ff72bb72ae0 0x7ff72bb74314..0x7ff72bb743ae: travel p0 + int(p[n + 1]); FUN_7ff72bb64100(int p1, 0);
+        // p2 per tick both ways (+0x414 / +0x418); auto-return; FUN_7ff72bb64310 underside freeze 0.06 s.
+        const n = this.requiredPlayerCount ?? this.players.length;
+        const row = lift.spawn.raw.slice(6);
+        const param = (i: number): number => (typeof row[i] === 'number' && Number.isFinite(row[i] as number) ? row[i] as number : 0);
+        const fullTravel = Math.trunc(param(0)) !== 0 ? param(0) + Math.trunc(param(n + 1)) : travel;
+        const required = Math.trunc(param(1)) > 0
+          ? Math.max(2, Math.ceil((Math.trunc(param(1)) / 100) * n))
+          : Math.max(2, Math.ceil(0.2 * n));
+        lift.setSignNumber(Math.max(0, required - loadCount));
+        const probe = { ...lift.rect, y: lift.rect.y + 0.01 };
+        const touchedBelow = [...this.players.filter((player) => !this.collisionChangePlayersCollisionOff.has(player)
+          && player.deathTimer <= 0 && !this.deathFallPlayers.has(player)).map((player) => player.rect),
+          ...this.pushBoxes.map((box) => box.rect)]
+          .some((rect) => rect.y >= lift.rect.y + lift.rect.height - 0.5 && !rectsOverlap(lift.rect, rect) && rectsOverlap(probe, rect));
+        let cooldown = Math.fround((this.darknessWeightedLiftContactCooldowns.get(lift) ?? 0) - Math.fround(dt));
+        if (touchedBelow) cooldown = Math.fround(0.06);
+        this.darknessWeightedLiftContactCooldowns.set(lift, cooldown);
+        if (cooldown > 0) return;
+        const target = loadCount >= required ? fullTravel : 0;
+        const stepSize = param(2) > 0 ? param(2) : 1;
+        const delta = target - currentOffset;
+        nextOffset = Math.abs(delta) <= stepSize ? target : currentOffset + Math.sign(delta) * stepSize;
+      } else if (lift.spawn.actorName === 'WeightedLift') {
+        // FUN_7ff72bb72ae0 + FUN_7ff72bb64100 + FUN_7ff72bb64310 (native-weighted-lift).`, file);
+    // lift-horizontal-carry: a Lift moves its stack by its dx too (FUN_7ff72bb55370 -> FUN_7ff72bb34f30 (dx, 0)).
+    source = replaceOnce(source, `      const dy = lift.rect.y - liftStart.y;
+      if (dy === 0) continue;`, `      const dy = lift.rect.y - liftStart.y;
+      const dx = lift.spawn.actorName === 'Lift' ? lift.rect.x - liftStart.x : 0;
+      if (dy === 0 && dx === 0) continue;`, file);
+    source = replaceOnce(source, `        if (now.x !== body.start.x || now.y !== body.start.y) continue;   // already carried (or moved itself)
+        const target = { ...now, y: now.y + dy };
+        if (this.tileMap.rectHitsSolid(target)) continue;`, `        let target = now;
+        // already carried vertically (or moved itself): no second dy; the Lift's dx is carried by nothing else
+        if (dy !== 0 && now.x === body.start.x && now.y === body.start.y) target = { ...target, y: now.y + dy };
+        if (dx !== 0) target = { ...target, x: target.x + dx };
+        if (target === now) continue;
+        if (this.tileMap.rectHitsSolid(target)) continue;`, file);
+    // normal-small-box-are-pushboxes / colorbox-colour-push: the converted boxes take the native unsupported fall
+    // (0.65 units / tick squared, FUN_7ff72bb34c40) that jump02 boxes already use; other PushBox rows are unchanged.
+    source = replaceOnce(source, "    const nativeJumpBoxes = this.stage?.name === 'stage_jump02';\n    const PUSH_BOX_GRAVITY = nativeJumpBoxes ? .65 * 60 * 60 : 980;",
+      "    const stageNativeBoxes = this.stage?.name === 'stage_jump02';\n    const STAGE_PUSH_BOX_GRAVITY = stageNativeBoxes ? .65 * 60 * 60 : 980;", file);
+    source = replaceOnce(source, '    const PUSH_BOX_MAX_FALL_SPEED = nativeJumpBoxes ? Infinity : 600;',
+      '    const STAGE_PUSH_BOX_MAX_FALL_SPEED = stageNativeBoxes ? Infinity : 600;', file);
+    source = replaceOnce(source, '      const box = this.pushBoxes[i];\n      if (this.scrollCameraConfig && isBelowFailWindow(box.rect.y, this.scrollCameraConfig)) {',
+      `      const box = this.pushBoxes[i];
+      const nativeJumpBoxes = stageNativeBoxes || box.nativeFall === true;
+      const PUSH_BOX_GRAVITY = box.nativeFall === true ? .65 * 60 * 60 : STAGE_PUSH_BOX_GRAVITY;
+      const PUSH_BOX_MAX_FALL_SPEED = box.nativeFall === true ? Infinity : STAGE_PUSH_BOX_MAX_FALL_SPEED;
+      if (this.scrollCameraConfig && isBelowFailWindow(box.rect.y, this.scrollCameraConfig)) {`, file);
+    // Helpers for the batch-3 entries.
+    source = replaceOnce(source, '  removeRuntimePlayer(player: Player): void {', `  /** normal-small-box-are-pushboxes: FUN_7ff72bb333d0(obj, index) = the PushBox ctor with rect DAT_7ff72bcb66a0[index]
+   *  (Tall {-40,-703,80,703}, Big {-48,-128,96,128}, Normal {-48,-96,96,96}, Small {-25,-48,48,48}); p0 = weight. */
+  private addBoxFamilyPushBox(spawn: ActorSpawnDef, index: number): void {
+    const [left, width, height] = [[-40, 80, 703], [-48, 96, 128], [-48, 96, 96], [-25, 48, 48]][index];
+    const weight = parsePushBoxWeightValue(spawn.raw[6] ?? null);
+    const pushBox = Object.assign(
+      new PushBox(spawn.x + left + width / 2, spawn.y, width, height, weight.weightPercent, weight.offset),
+      { spawn },
+    );
+    pushBox.nativeFall = true;
+    this.pushBoxes.push(pushBox);
+    this.actorLayer.addChild(pushBox.view);
+  }
+
+  /** colorbox-colour-push: FUN_7ff72bb3b350 colour = p0 % n, skipping p3 % n; rect {-w/2, -h, w, h}, w = p1, h = p2. */
+  private addColorPushBox(spawn: ActorSpawnDef): void {
+    const row = spawn.raw.slice(6);
+    const param = (i: number, fallback: number): number => (typeof row[i] === 'number' && Number.isFinite(row[i] as number) ? row[i] as number : fallback);
+    const n = this.nativePartyCount();
+    const width = param(1, 32);
+    const height = param(2, 32);
+    let colour = Math.trunc(param(0, 0)) % n;
+    const skip = Math.trunc(param(3, -1));
+    if (skip >= 0 && colour === skip % n) colour = (colour + 1) % n;
+    const pushBox = Object.assign(new PushBox(spawn.x, spawn.y, width, height), { spawn });
+    pushBox.colorIndex = colour;
+    pushBox.nativeFall = true;
+    // Native: the FallBox 9-slice tinted with the player colour (FUN_7ff72bb3c0c0); the mask remap is not decoded.
+    for (const child of pushBox.view.removeChildren()) child.destroy();
+    const g = new Graphics();
+    g.lineStyle(3, 0x3a2418, 1);
+    g.beginFill(PLAYER_BODY_COLORS[colour] ?? 0xe0e0e0, 1);
+    g.drawRoundedRect(0, 0, width, height, Math.min(8, width / 4, height / 4));
+    g.endFill();
+    pushBox.view.addChild(g);
+    this.pushBoxes.push(pushBox);
+    this.actorLayer.addChild(pushBox.view);
+  }
+
+  /** bridge-folded-start-and-motion: lengths approach their command targets; a KeyBridge extends once a key is held. */
+  private advanceSegmentPlatforms(dt: number): void {
+    // FUN_7ff72bb4fe10: the KeyBridge sends itself command 9 once the key is held (key +0x408 != 0).
+    if (this.carriedKeys.length > 0) {
+      for (const bridge of this.bridges) {
+        if (bridge.spawn.actorName === 'KeyBridge' && bridge.opened && bridge.segmentMotion) bridge.open();
+      }
+    }
+    const bodies = (): Array<{ rect: Rect; move: (dx: number, dy: number) => void }> => [
+      ...this.players.filter((player) => player.deathTimer <= 0 && !this.deathFallPlayers.has(player)
+        && !this.collisionChangePlayersCollisionOff.has(player))
+        .map((player) => ({ rect: player.rect, move: (dx: number, dy: number): void => {
+          player.applyResolvedCollision({ ...player.rect, x: player.rect.x + dx, y: player.rect.y + dy }, player.velocity, player.grounded);
+        } })),
+      ...this.pushBoxes.map((box) => ({ rect: box.rect, move: (dx: number, dy: number): void => {
+        box.applyRect({ ...box.rect, x: box.rect.x + dx, y: box.rect.y + dy });
+      } })),
+    ];
+    for (const platform of [...this.bridges, ...this.gates]) {
+      const motion = platform.segmentMotion;
+      if (!motion || motion.progress === motion.target) continue;
+      const step = motion.speed * dt * 60;
+      const growing = motion.target > motion.progress;
+      const next = growing ? Math.min(motion.target, motion.progress + step) : Math.max(motion.target, motion.progress - step);
+      if (growing) {
+        const before = { ...platform.rect };
+        const after = platform.extentAt(next);
+        const hit = bodies().filter((body) => rectsOverlap(after, body.rect) && !rectsOverlap(before, body.rect));
+        if (hit.length > 0) {
+          if (!motion.headPush) continue;   // a growing strip waits instead of entering a body
+          // Atomic shove (Codex review): every hit body moves by the head's step only if EVERY destination is clear of
+          // tiles, solids, the strip itself and every other body; otherwise neither the strip nor any body moves.
+          const push = next - motion.progress;
+          const planned = hit.map((body) => ({ body, rect: { ...body.rect, x: body.rect.x + motion.dirX * push, y: body.rect.y + motion.dirY * push } }));
+          const others = bodies().filter((body) => !hit.some((moving) => moving.rect === body.rect)).map((body) => body.rect);
+          const solids = [
+            ...this.staticRects.map((block) => block.rect),
+            ...this.gates.filter((gate) => gate.isSolid()).map((gate) => gate.rect),
+            ...this.bridges.filter((bridge) => bridge !== platform && bridge.isSolid()).map((bridge) => bridge.rect),
+            ...this.weightedLifts.map((lift) => lift.rect),
+            ...this.moveWalls.map((wall) => wall.rect),
+          ];
+          const clear = planned.every(({ rect }, i) => !this.tileMap?.rectHitsSolid(rect)
+            && !rectsOverlap(rect, after)
+            && !solids.some((solid) => rectsOverlap(rect, solid))
+            && !others.some((other) => rectsOverlap(rect, other))
+            && !planned.some((otherPlan, j) => j !== i && rectsOverlap(rect, otherPlan.rect)));
+          if (!clear) continue;
+          for (const { body, rect } of planned) body.move(rect.x - body.rect.x, rect.y - body.rect.y);
+        }
+      }
+      platform.applyProgress(next);
+    }
+  }
+
+  removeRuntimePlayer(player: Player): void {`, file);
     // bottom-anchored-boxes: native ForceColorBox never recolours a cat (no caller of FUN_7ff72bb67670).
     source = replaceOnce(source, '      this.applyForceColorBoxes();', '      // bottom-anchored-boxes: no native recolour-on-overlap (applyForceColorBoxes retired).', file);
     // Shared helpers for the batch-2 entries.

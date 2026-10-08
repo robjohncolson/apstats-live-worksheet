@@ -299,6 +299,74 @@
         "The FallBox atlas region is a channel mask (red fill, blue outline) that the native draw remaps; the remap is not decoded, so the grey look stays"
       ],
       "behavior": "Every stage: FallBox, ColorBox and ForceColorBox stand bottom-centred on their row point (were centred on it, half their height too low). ForceColorBox no longer recolours a cat that overlaps it (invented; the warp-gun colour of the box is unchanged). Not changed here: FallBox art (grey), its 2-unit body inset, ColorBox colour / push rules (batch 3)."
+    },
+    {
+      "id": "normal-small-box-are-pushboxes",
+      "files": [
+        "src/engine/GameRuntime.ts"
+      ],
+      "evidence": [
+        "FUN_7ff72bb72ae0 branches 0x7ff72bb739a7 / 0x7ff72bb73a09 / 0x7ff72bb73a77 / 0x7ff72bb73ae7 (TallBox / BigBox / NormalBox / SmallBox, index 0..3) -> FUN_7ff72bb333d0(obj, index)",
+        "FUN_7ff72bb333d0: the PushBox ctor body (vtable PTR_FUN_7ff72bcb68c0, weight +0x404 = 100, offset +0x40c = 0) with rect DAT_7ff72bcb66a0[index]; the memory image reads Tall {-40,-703,80,703}, Big {-48,-128,96,128}, Normal {-48,-96,96,96}, Small {-25,-48,48,48}; then +0x90 |= 0x10 (hop propagation)",
+        "Same vtable as PushBox: p0 = weight / offset (FUN_7ff72bb33780), required = ceil(weight/100 n) + offset (FUN_7ff72bb34820, ceil = IAT 0x7ff72bc7c5d8), pushed by FUN_7ff72bb33890, falls 0.65 when unsupported (FUN_7ff72bb34c40)"
+      ],
+      "behavior": "Every stage: TallBox / BigBox / NormalBox / SmallBox rows are push boxes (the port PushBox, so they push, fall, ride, hop, respawn and hold switches like one) with the native table rect on the row point and p0 as the weight: 7-2 NormalBox (p0 100) needs the whole student party, the 7-2 / 11-4 SmallBoxes (p0 10) one cat. Was: static grey solids centred on the row point. LaserKeyBox / BallBox keep their own actors. Not modelled: the native 1-unit body inset."
+    },
+    {
+      "id": "colorbox-colour-push",
+      "files": [
+        "src/engine/GameRuntime.ts",
+        "src/engine/actors/PushBox.ts"
+      ],
+      "evidence": [
+        "FUN_7ff72bb3b350 (ColorBox ctor): colour +0x6fc = p0 % n (n = DAT_7ff72c629fa8+0xcc08); if p3 >= 0 and that colour == p3 % n it becomes (colour + 1) % n; flags |= 0x10",
+        "FUN_7ff72bb3b5e0 (update): vx = 0, then it moves if FUN_7ff72bb3c2e0(side 2) or (side 3) finds the colour; FUN_7ff72bb3c2e0 walks the side contacts recursively and returns 1 on a player (type DAT_7ff72c62a101) moving into the box whose colour (player +0x400 = plVar2[0x80]) equals the box colour; one such cat anywhere in the chain is enough",
+        "Box pushes box: FUN_7ff72bb343e0 (leading side) fails on a wall (FUN_7ff72bc137b0); for a push-box contact (type DAT_7ff72c62a10f) it counts that box own chain (FUN_7ff72bb34530, any body moving into it, the pushed box included) and fails only when the count < its requirement (FUN_7ff72bb34820), then recurses along the line"
+      ],
+      "behavior": "Every stage: a ColorBox row is a push box (rect {-w/2, -h, w, h}, w = p1, h = p2, default 32) of colour p0 % n (p3 skip) that moves only when a cat of that colour (the cat on that player slot) is in the chain pushing it; it falls, rides, hops and respawns like a push box. Was: a static solid in a 6-colour palette. ForceColorBox (11-3) keeps its own actor (warp-gun target). And every stage: a push box pushed into another push box moves it (and the line beyond it) when each box requirement is met by the pushers plus the boxes in front of them; a solid ends the line. Was: a box never moved into another box."
+    },
+    {
+      "id": "weighted-lift-ex-variants",
+      "files": [
+        "src/engine/GameRuntime.ts",
+        "src/engine/actors/WeightedLift.ts",
+        "src/engine/sprites.ts"
+      ],
+      "evidence": [
+        "FUN_7ff72bb72ae0 0x7ff72bb742ab..0x7ff72bb74307: bl = (name == \"WeightedLiftEx2\", string at 0x7ff72bcbef18); FUN_7ff72bb63cf0(obj, 0.0, bl)",
+        "FUN_7ff72bb63cf0: param_3 == 0 -> DAT_7ff72c62d108 = {-92, 67, 194, 18} (wide), else DAT_7ff72c62d118 = {-28, 67, 56, 18} (narrow): WeightedLiftEx is wide, WeightedLiftEx2 narrow",
+        "Factory 0x7ff72bb74314..0x7ff72bb743ae: if int p0 != 0, travel = p0 + int(param[n + 1]) (when nonzero) -> FUN_7ff72bb64050; if int p1 > 0, FUN_7ff72bb64100(int p1, 0) (required = max(2, ceil(p1/100 n))); float p2 -> +0x414 and +0x418 (the step per tick both ways)",
+        "Narrow sprite atlas (383,559,34,42) drawn {-34, 0, 68, 84}; sign at (x + 0, y + 7) (FUN_7ff72bb64640: +5 only for the wide variant)"
+      ],
+      "behavior": "Every stage: WeightedLiftEx (6-3) is the wide 194 x 18 slab and WeightedLiftEx2 (12-2) the narrow 56 x 18 slab, 67 below the row point, with the sign showing the bodies still needed; travel = p0 + the party table entry p[n + 1]; required = max(2, ceil(p1/100 n)); p2 units per tick in both directions; auto-return; the 0.06 s underside freeze; weight = cats and push boxes on the slab, transitively (as native-weighted-lift). Was: a 64 x 14 slab centred on the row point, travel p0, 1 unit per tick."
+    },
+    {
+      "id": "lift-horizontal-carry",
+      "files": [
+        "src/engine/GameRuntime.ts",
+        "src/engine/actors/WeightedLift.ts"
+      ],
+      "evidence": [
+        "FUN_7ff72bb550a0 (Lift ctor): body DAT_7ff72c62d010 = {-59, -9, 118, 18} (memory image), view {-60, -10, 120, 20} from atlas (385,49,60,10), as UpDownLift",
+        "FUN_7ff72bb55370 (update): FUN_7ff72bb34f30(this, (0, dy), dir 0 = the contacts above) and FUN_7ff72bb34f30(this, (dx, 0), dir 0) -> the stack on the slab moves by the slab dx as well as its dy (recursively, FUN_7ff72bc17330)"
+      ],
+      "behavior": "Every stage: a Lift is the native 118 x 18 orange slab, and what rests on it (cats and push boxes, transitively) moves with its horizontal sweep as well as its vertical one (11-4: the 1488-unit trip). Was: 64 x 14 translucent blue, vertical carry only. Not changed: Lift p2 / p3 (native: amplitude per party member; 11-4 has 0, 0)."
+    },
+    {
+      "id": "bridge-folded-start-and-motion",
+      "files": [
+        "src/engine/actors/Bridge.ts",
+        "src/engine/actors/KeyGate.ts",
+        "src/engine/GameRuntime.ts"
+      ],
+      "evidence": [
+        "FUN_7ff72bb72ae0 Bridge / KeyBridge block 0x7ff72bb76c59: count = int p0, dir = normalize(int p1, int p2), seg = int p4, headPush = int p5 > 0 -> FUN_7ff72bb4f630(obj, type 0, ...); if int p3 > 0: +0x518 = trunc(int p3 * (8 - N) * 0.1) (0x7ff72bb76d0d..0x7ff72bb76d5f, 8 - N unsigned); KeyBridge also sets +0x520 = 1",
+        "FUN_7ff72bb4f9d0 (on add): type 0 segments start at the row point (base +0x130 = the row point), target row + dir seg (count - 1 - i); segment i < +0x518 starts at row + dir seg (m - i); type 1 (Gate) starts extended and targets the row cell",
+        "FUN_7ff72bb4fea0: command 9 -> segment state 1, command 10 -> state 2; FUN_7ff72bb4f230: state 1 moves toward the target at DAT_7ff72bcff538 (1.0), state 2 back to the base at DAT_7ff72bcff4fc (0.5) via FUN_7ff72bb4f3e0 (2 units per tick at 1.0)",
+        "FUN_7ff72bb4fe10 (KeyBridge slot 25): while +0x520 is set, once the actor named \"Key\" is held (key +0x408 != 0) it sends itself command 9",
+        "FUN_7ff72bb4f630: the head segment with headPush (+1000 |= 4) pushes the bodies it meets (FUN_7ff72bb34f30)"
+      ],
+      "behavior": "Every stage: a Bridge is a solid strip that starts folded into the one-cell nub at its row point (or pre-extended by trunc(p3 (8 - n) 0.1) cells), extends 2 units per tick when switched on and folds back to the nub at 1 per tick when switched off; a KeyBridge starts folded and extends once any key is held (was: deployed from frame 0 and removed by a key). A Gate is solid and shrinks to its row-point cell at 2 per tick when opened and grows back at 1 per tick when closed (was: instant hide / show). Growing stops for a frame instead of entering a live cat or push box; a head-push bridge (p5 > 0) shoves them along instead. Switch / mediator / key wiring unchanged. Deterministic: frame-counted. Not modelled: the 4-tick follower stagger (the strip stays contiguous either way)."
     }
   ],
   "hashes": {
