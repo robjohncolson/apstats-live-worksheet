@@ -2945,10 +2945,10 @@
 <script src="js/ced2026-crosswalk.js"></script>
 <script src="js/ced2026-labels.js"></script>
 <script src="lib/qrcode.min.js"></script>
-<script src="canvas_engine.js?v=2026-10-08-i4kq"></script>
-<script src="sprite_sheet.js?v=2026-10-08-i4kq"></script>
-<script src="classroom-board.js?v=2026-10-08-i4kq"></script>
-<script src="pico-home.js?v=2026-10-08-i4kq"></script>
+<script src="canvas_engine.js?v=2026-10-08-bun2"></script>
+<script src="sprite_sheet.js?v=2026-10-08-bun2"></script>
+<script src="classroom-board.js?v=2026-10-08-bun2"></script>
+<script src="pico-home.js?v=2026-10-08-bun2"></script>
 <script src="ti84-plot.js"></script>
 <script src="activity-bridge.js"></script>
 <script src="activity-colorbox.js"></script>
@@ -10135,6 +10135,12 @@ async function renderDoNow() {
         + (pcLink ? 'Click today’s tile on the calendar to open it.' : 'Your teacher shares the link in class.'), 'todo');
       return;
     }
+    if (typeof _todayLessonInf !== 'undefined' && _todayLessonInf && _todayLessonInf.kind === 'poster') {
+      var posterLinks = (typeof posterLinksFor === 'function') ? posterLinksFor(_todayLessonInf.t) : null;
+      show('Today: ' + _todayLessonInf.n + ' — groups of three.\n'
+        + (posterLinks ? 'Click today’s tile for your group sheet and the example poster.' : 'Your teacher hands out the group sheets in class.'), 'todo');
+      return;
+    }
     if (typeof _todayLessonInf !== 'undefined' && _todayLessonInf && _todayLessonInf.kind === 'work') {
       var workNext = _workDayNextLesson();
       show('Work Day — nothing new today.\nFinish: ' + (workNext ? cedLabel(workNext.inf.t).text : 'All caught up.')
@@ -10468,6 +10474,26 @@ function cedTeacherBridgeAllowed() {
 var PC_LINKS = {
     'U1-PCA': { url: 'https://apclassroom.collegeboard.org/33/assignments?quizId=21010399&type=', label: 'Unit 1 Progress Check — MCQ Part A' }
 };
+// Poster-day materials, keyed by the unit's poster tile id (U{u}-Poster; the
+// day-2 tile U{u}-Poster2 shares the entry via posterLinksFor). `student`
+// links render for everyone; `teacher` links render only for a signed-in
+// teacher outside student preview (cedTeacherBridgeAllowed). URLs are
+// repo-relative so they work on GH Pages and the Vercel mirror alike.
+var POSTER_LINKS = {
+    'U1-Poster': {
+        student: [
+            { label: 'Group sheets — one per trio, two pages each', url: 'u1_poster/pdf/u1_poster_group_sheets_student.pdf' },
+            { label: 'Example poster — the board demo (Data, Graph, Sentence)', url: 'u1_poster/pdf/u1_poster_example_board_demo.pdf' }
+        ],
+        teacher: [
+            { label: 'Teacher key — answers, finished graphs, scoring grid', url: 'u1_poster/pdf/u1_poster_teacher_key.pdf' }
+        ]
+    }
+};
+function posterLinksFor(t) {
+    if (typeof POSTER_LINKS === 'undefined' || !t) return null;
+    return POSTER_LINKS[String(t).replace(/2$/, '')] || null;
+}
 // Grading Model v3 (s121): inject Poster + PC Day 1 + PC Day 2 pseudo-lessons
 // at every unit transition (and at the array end). generateSchedule treats
 // them like lessons and places them on consecutive meeting days so each
@@ -11970,10 +11996,56 @@ function _showProgressCheckPanel(inf, dateStr) {
     document.getElementById('resource-overlay').style.display = 'block';
 }
 
+// Poster day: the group sheets + example poster for everyone, the key for a
+// signed-in teacher only. Both poster tiles (day 1 / day 2) open the same panel.
+function _showPosterPanel(inf, dateStr) {
+    _lastResourcePanel = { inf: inf, dateStr: dateStr };
+    var links = (typeof posterLinksFor === 'function') ? posterLinksFor(inf.t) : null;
+    var header = document.getElementById('resource-header');
+    header.textContent = inf.n;
+    header.style.color = '';
+    header.style.fontStyle = '';
+    var body = document.getElementById('resource-body');
+    body.innerHTML = '';
+    var p = document.createElement('p');
+    p.textContent = links
+        ? 'Groups of three. Solve your sheet together first, then build the poster: Data, Graph, Sentence.'
+        : 'Poster day. Your teacher hands out the group sheets in class.';
+    body.appendChild(p);
+    function addLink(item) {
+        var a = document.createElement('a');
+        a.href = item.url;
+        a.target = '_blank';
+        a.rel = 'noopener';
+        a.className = 's7btn chicago';
+        a.style.cssText = 'display:block;margin:6px 0;padding:6px 10px;text-decoration:none';
+        a.textContent = item.label + ' →';
+        body.appendChild(a);
+    }
+    if (links) {
+        (links.student || []).forEach(addLink);
+        var teacherLinks = links.teacher || [];
+        var teacherOk = (typeof cedTeacherBridgeAllowed === 'function') && cedTeacherBridgeAllowed();
+        if (teacherLinks.length && teacherOk) {
+            var th = document.createElement('p');
+            th.className = 'poster-teacher-only';
+            th.style.cssText = 'margin:10px 0 2px;font-weight:bold';
+            th.textContent = 'Teacher only';
+            body.appendChild(th);
+            teacherLinks.forEach(addLink);
+        }
+    }
+    document.getElementById('resource-overlay').style.display = 'block';
+}
+
 function showResourcePanel(inf, dateStr) {
     if (!inf || !inf.t) return;
     if (inf.kind === 'pc') {
         _showProgressCheckPanel(inf, dateStr);
+        return;
+    }
+    if (inf.kind === 'poster') {
+        _showPosterPanel(inf, dateStr);
         return;
     }
     if (inf.kind === 'break') {
@@ -27089,6 +27161,7 @@ function sTip(ev,dt,inf,ds){if(inf===NC||!inf)return;
         if(inf.as)h+=`<div class="th">Assign: ${_resourcePanelEsc(newLabels?cedDisplayText(inf.as):inf.as)}</div>`;
         if(inf.db)h+='<div class="th">** Double topic day **</div>';
         if(inf.kind==='pc')h+='<div class="th" style="color:#2b6cb0">'+((typeof PC_LINKS!=='undefined'&&PC_LINKS[inf.t])?'Click to open in AP Classroom':'Taken in AP Classroom')+'</div>';
+        if(inf.kind==='poster')h+='<div class="th" style="color:#2b6cb0">'+((typeof posterLinksFor==='function'&&posterLinksFor(inf.t))?'Click for the group sheets + example poster':'Groups of three, Data / Graph / Sentence')+'</div>';
         const keys=inf.group?groupTopics(inf):[inf.t];
         const re=keys.map(getRegistryEntry).find(Boolean);
         if(re){
@@ -27627,7 +27700,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-10-08-i4kq';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-10-08-bun2';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.
