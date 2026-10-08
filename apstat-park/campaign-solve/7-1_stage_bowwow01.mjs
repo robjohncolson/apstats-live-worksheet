@@ -13,8 +13,8 @@
 // (x < 468), stand 31 frames so the ring empties, then SNEAK: each cat steps only while its own displacement over
 // the last 29 frames plus one more step (+ release slide) stays under SNEAK_CAP px. The dog goes 0 -> 1 on the first
 // sneak step and stays at 1 (harmless, it never moves). Cat 1 sneaks over the key (pickup by touch), both sneak to
-// the door; cat 1 taps UP in the door sensor (opens it / enters) and sneaks on past it (an entered cat is still a body),
-// then cat 0 sneaks into the door and taps UP.
+// the door; cat 1 taps UP in the door sensor (opens it / enters; an entered cat is hidden and bodiless), then cat 0
+// sneaks into the door centre and taps UP.
 // Measured: the cap settles into a steady 30-frame cadence of 8 moving frames (walk + coast) / 22 still frames; the
 // highest in-range 30-frame mean is 1.31, the dog stays in state 1 the whole time; SOLVED in 666 frames.
 // Traps: a trailing cat that touches the floating carried key takes it over (keep KEY_GAP); the key pickup registers
@@ -83,8 +83,8 @@ export default {
       let f = 0;
       api.until(() => game.goalClearedPlayers?.has(cats[1]) || api.cleared,
         () => { checkDog('cat 1 entering'); record(); f++; return [{}, { up: f % 2 === 0 }]; }, 120, 'cat 1 could not enter the door');
-      // an entered cat is still a body: cat 1 sneaks on past the door so cat 0 can stand in it
-      sneak({ 1: doorX + 50, 0: doorX }, 'cat 1 clears the door, cat 0 to the door centre', { tol: 6 });
+      // an entered cat is hidden and bodiless (goal-enter-native): cat 0 sneaks straight into the door centre
+      sneak({ 0: doorX }, 'cat 0 to the door centre', { tol: 6 });
       f = 0;
       api.until(() => api.cleared,
         () => { checkDog('cat 0 entering'); record(); f++; return [{ up: f % 2 === 0 }, {}]; }, 120,

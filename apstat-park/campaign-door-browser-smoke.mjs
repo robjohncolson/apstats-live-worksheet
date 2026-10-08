@@ -26,20 +26,22 @@ try {
       game.load(stage, 2, 123);
       const r = game.runtime, [a, b] = r.players, goal = r.goals[0], key = r.keys[0];
       const initialTexture = goal.view.children[0].texture;
-      r.player = a; r.carryKeyForPlayer(key, a, 0); r.checkGoals({ up: true });
+      // goal-enter-native: entry needs this tick's UP press edge (the step loop sets goalUpPressed per cat).
+      const checkGoals = (up) => { r.goalUpPressed = up; r.checkGoals({ up }); r.goalUpPressed = false; };
+      r.player = a; r.carryKeyForPlayer(key, a, 0); checkGoals(true);
       const remotePickup = goal.opened;
       Object.assign(b.rect, { x: goal.rect.x, y: goal.rect.y });
-      r.player = b; r.checkGoals({ up: true });
+      r.player = b; checkGoals(true);
       const noKey = goal.opened;
       Object.assign(a.rect, { x: goal.rect.x, y: goal.rect.y });
-      r.player = a; r.checkGoals({ up: false });
+      r.player = a; checkGoals(false);
       const noUp = goal.opened;
-      r.checkGoals({ up: true });
+      checkGoals(true);
       const delivered = { opened: goal.opened, consumed: !key.active, entered: r.goalClearedPlayers.size,
         changedArt: initialTexture !== goal.view.children[0].texture };
-      r.player = b; r.checkGoals({ up: false });
+      r.player = b; checkGoals(false);
       const stillWaiting = !game.stats.cleared;
-      r.checkGoals({ up: true });
+      checkGoals(true);
       return { remotePickup, noKey, noUp, delivered, stillWaiting, cleared: game.stats.cleared };
     }, stage);
     assert.deepEqual(result, { remotePickup: false, noKey: false, noUp: false,

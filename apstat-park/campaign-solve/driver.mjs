@@ -86,6 +86,7 @@ export function createApi(run, { budget = 6000, party, onFrame } = {}) {
   let frame = 0;
   const jumpHeld = new Array(n).fill(false);   // to derive the jumpPressed edge
   const actionHeld = new Array(n).fill(false);   // to derive the actionPressed edge (warp gun fires on it)
+  const upHeld = new Array(n).fill(false);   // to derive the upPressed edge (door enter / exit, wire bit 512)
   const log = [];
 
   function snapshot() {
@@ -114,8 +115,10 @@ export function createApi(run, { budget = 6000, party, onFrame } = {}) {
       jumpHeld[i] = spec.jump;
       const actionPressed = spec.action && !actionHeld[i];
       actionHeld[i] = spec.action;
+      const upPressed = spec.up && !upHeld[i];
+      upHeld[i] = spec.up;
       inputs[i < cats.length ? (slots[i] ?? i) : i] = { ...spec, jumpPressed: spec.jumpPressed || pressed,
-        actionPressed: spec.actionPressed || actionPressed };
+        actionPressed: spec.actionPressed || actionPressed, upPressed: spec.upPressed || upPressed };
     }
     run.tick(inputs);
     frame++;
@@ -245,6 +248,7 @@ export function createApi(run, { budget = 6000, party, onFrame } = {}) {
   // in its way) and taps UP; the others wait 100 units back on their side. Once open, every cat walks to the door
   // centre and taps UP to enter. Clear = all cats entered.
   // One cat (it must carry the key if the door is shut) walks into the door and taps UP until it has entered.
+  // Entry needs an UP press edge, so UP is tapped (released every other frame); it stops the moment the cat is in.
   function enterOne(who, { goal = game.goals[0], max = 600 } = {}) {
     const gx = goal.rect.x + goal.rect.width / 2;
     let f = 0;
@@ -274,8 +278,9 @@ export function createApi(run, { budget = 6000, party, onFrame } = {}) {
       f++;
       const carrier = carrierOfKey();
       const specs = cats.map((cat, i) => {
-        // An entered cat stays a body here: it moves on to the far side of the door to make room.
-        if (game.goalClearedPlayers?.has(cat)) return towards(cat, gx - side * 8, 2);
+        // An entered cat is hidden and bodiless (goal-enter-native). It presses nothing: an UP press after 1 s would
+        // bring it back out.
+        if (game.goalClearedPlayers?.has(cat)) return {};
         const inside = overlaps(cat.rect, goal.rect);
         const stuck = Math.abs(cat.rect.x - lastX[i]) < 0.01;
         lastX[i] = cat.rect.x;

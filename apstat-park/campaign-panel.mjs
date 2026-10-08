@@ -191,14 +191,14 @@ export function mountCampaign({ container, getSocket, board, onClose, keyShop = 
     if (selecting && now - lastSelect > 1000 && send('campaign_select')) lastSelect = now;
     if (selecting) shop.tick();
     if (selecting && !joined) return;   // nobody joins a team until a stage is chosen
-    if (!joined && now - lastJoin > 1000) { lastJoin = now; send('campaign_join', { protocol: 31, active: activeJoin }); }
+    if (!joined && now - lastJoin > 1000) { lastJoin = now; send('campaign_join', { protocol: 32, active: activeJoin }); }
     if (!state || !game) return;
     if (now - lastPacket > 1500) resume();
     // Keyboard edges send immediately. A blocked write must retain the jump
     // pulse until it actually reaches the ordered authoritative input stream.
     if (bits !== sentBits || buddy !== sentBuddy || now - lastInput > 500) {
       if (send('campaign_input', { bits, buddy })) {
-        // Held buttons (31 = arrows + jump, 64 = action) stay; the jump (32) and action (256) edges were sent.
+        // Held buttons (31 = arrows + jump, 64 = action) stay; the jump (32), action (256) and up (512) edges were sent.
         sentBits = bits & 95; sentBuddy = buddy & 95;
         bits &= 95; buddy &= 95; lastInput = now;
       }
@@ -226,8 +226,8 @@ export function mountCampaign({ container, getSocket, board, onClose, keyShop = 
       dispose(); return;
     }
     if (down) held.add(key); else held.delete(key);
-    // A fresh press also sets the edge bit: 32 for jump, 256 for action.
-    const edge = fresh ? ({ 16: 32, 64: 256 })[mask] || 0 : 0;
+    // A fresh press also sets the edge bit: 32 for jump, 256 for action, 512 for up (the door: goal-enter-native).
+    const edge = fresh ? ({ 16: 32, 64: 256, 4: 512 })[mask] || 0 : 0;
     if (first[key]) { bits = down ? bits | mask : bits & ~mask; bits |= edge; }
     else { buddy = down ? buddy | mask : buddy & ~mask; buddy |= edge; }
     pump();

@@ -990,6 +990,73 @@
         "8-3 \"SPEED UP\": an ordinary Text row {-100, 300, \"SPEED UP\", 32, 0, 6, 1} (no message from the puzzle); the port's RecoveredText renders and slides it"
       ],
       "behavior": "8-1 / 8-3: the puzzle draws in one container in the actor layer at the Puzzle row point (world (0, 0); inferred from the native translate by the Puzzle actor position): terrain chips 2..25 in the main-map style (picoStyle tiles, same-fill neighbours merged), piece cells as rounded 24 x 24 squares in the owning cat's colour (falling and landed identical), the \"%d\" lines-still-needed counter (48 px, centred at (636, 48)) and, after the win, \"OK\" centred at (640, 300), both in the runtime's monospace bold Text style. Inferred / untraced: the atlas cell art (plain colour squares instead), the text colour (the runtime text orange), the draw order against the cats (they never overlap: the grid ends at y 552, the cats live below the ceiling row at y 544)."
+    },
+    {
+      "id": "rope-draw",
+      "files": [
+        "src/engine/GameRuntime.ts"
+      ],
+      "evidence": [
+        "DistanceConstraint ctor FUN_7ff72bb3f3a0 (vtable PTR_FUN_7ff72bcb85f0): draw component +0x3f0 (PTR_FUN_7ff72bcb6560), draw node +0x400 (FUN_7ff72bbbafa0), delegate +0x490 FUN_7ff72bb40b50 with obj +0x4a0 = actor, fn +0x4a8 = FUN_7ff72bb3f960; FUN_7ff72bc15ac0 slot 3 FUN_7ff72bc2fb60 -> FUN_7ff72bbbb0f0 -> FUN_7ff72bbbda80 appends the node to the scene renderables",
+        "FUN_7ff72bb3f960 (every draw): consecutive players in Stage order (scene +0x6b198, count +0x6b240) -> FUN_7ff72bb3fa30(actor, P[i], P[i+1], ctx, renderer)",
+        "FUN_7ff72bb3fa30 (0x7ff72bb3faa7..0x7ff72bb3fc52): skip only when BOTH cats have +0x410 == 4 (no length test: slack or taut is drawn); Pos = FUN_7ff72bc15b90 (transform +0x44 + presentation +0x138) = the feet centre (avatar body {-16,-47,32,46}); Bresenham FUN_7ff72bba53b0(buf DAT_7ff72c62b060, cap 1000, (5,0) -> (trunc(B.x - A.x - 5.0), trunc(B.y - A.y))), 5.0 = DAT_7ff72bc7d588; i += 2.0 (DAT_7ff72bcff5c0); each point a 2 x 2 quad (w = h = 0x40000000) at A + (px, py - 14.0), 14.0 = DAT_7ff72bcb7d88 (0x7ff72bb3fbaa)",
+        "Renderer vtable +0x10 (0x7ff72bb3fc23): UV DAT_7ff72bc7d7a0 = (0.4921875, 0, 2/256, 2/256) (the MoveEnergy meter slice: INFERENCE a solid texel tinted by the colour), texture DAT_7ff72c62f480, colour 0xFFFF864D; ARGB byte order INFERENCE from palette DAT_7ff72c62a040[0] = 0xff7fbfff (P1 light blue) => opaque orange #FF864D, NOT green (the teacher expected green; the native rope is orange)",
+        "Layer: the ctor writes -0.5f to node +8 (actor +0x408); node default 0; FUN_7ff72bb32c20 writes -0.6. That is a field of the rope draw node, not the sprite-node depth +0x360 the cats / Goal use, and the sort over it was not decoded: INFERENCE the rope draws behind the cats and in front of the map (and of the door)",
+        "Port (b14 snapshot): DistanceConstraint.ts builds a static green 0x34d399 circle + bar marker at the spawn point (snapshot 1331-1334), never moved; nothing drew between the cats (on 2-1 the spawn is (0, 0): a green blob in the corner)"
+      ],
+      "behavior": "Every rope stage (2-1, 2-3): each frame, after the rope update, one Graphics per rope draws a straight line between every neighbouring pair of cats in Stage order, from cat A feet centre + (5, -14) to cat B feet centre + (-5, -14) (feet centre = rect.x + width / 2, rect.y + height + 1), as 2 x 2 squares on every 2nd Bresenham point (reads as a ~2 px dotted-solid line), colour #FF864D opaque, drawn slack or taut; a pair is skipped only when both cats are inside the door. zIndex 0.2: behind the cats (0.3+), in front of default actors (0), the door (-0.3) and the map (separate layer). The green spawn-point marker is hidden."
+    },
+    {
+      "id": "rope-pull-solids",
+      "files": [
+        "src/engine/GameRuntime.ts"
+      ],
+      "evidence": [
+        "Native rope FUN_7ff72bb3fce0 -> FUN_7ff72bb3ffe0 per neighbour: correction summed; 0x29 latch clamp (DAT_7ff72bcff6a8 = -1, DAT_7ff72bc7d464); FUN_7ff72bc13690(body +0x98, (0,1), 1) grounded drops an upward pull weaker than 0.65 (DAT_7ff72bcb69bc); |c.y| <= 20.15 (DAT_7ff72bcb86e8), c.x uncapped (already ported: snapshot 7109-7111, kept)",
+        "Apply FUN_7ff72bb3f580 after all are computed: position move FUN_7ff72bb97db0(transform +0x44, c) plus velocity += c (FUN_7ff72bb93620 on +0x118); attachments notified (+0x3d0, slot +0x28); riders carried (FUN_7ff72bc17330)",
+        "The body reaches its world position only through the world step FUN_7ff72bc17ca0 -> FUN_7ff72bc1da80 -> FUN_7ff72bc12490 -> map FUN_7ff72bc2fca0 (batch-7 decode): the map part is sub-stepped by face strips, so a correction never crosses a chip (port: moveRectWithTileCollisions sweeps in 1 px sub-steps, physics.ts sweepAxis)",
+        "Bodies: a Rect is a static solid body in the same contact matrix cats stand on, so the contact pass keeps the cat out (INFERENCE: body separation not traced); 2-1 crevasse block = Rect {1388, 240, 56, 56} (staticRects[0], no chip under it, bottomless pit)",
+        "Port bug (b14 snapshot): applyNativeRope 7120 / 7127 moved the cat and its riders with moveRectWithTileCollisions only (tiles); next frame resolveClosedGateCollision (KeyGate.ts:213) got a previousRect already inside the Rect and restored it, so every taut tick ratcheted cat A deeper (probe: A inside the stone from tick 15, y 194 -> 284 in 55 ticks) until it fell out the bottom",
+        "Port order of the sweep (review F2): x against tiles then bodies, then y against tiles then bodies from the resolved x (one swept move per axis); the earlier tiles-then-bodies composition could keep a tile-chosen y after a body stopped x early and end inside a chip. Native world-step order between map and body contacts not traced",
+        "blocked() (redirect probes 7089 / 7094 / 7097) still tests tile chips only: whether the native redirect normals list body +0xa0 (FUN_7ff72bc137b0, kept by FUN_7ff72bc14040 against the map +0x140 / FUN_7ff72bc304f0) holds actor contacts is unresolved, so it is left as is"
+      ],
+      "behavior": "Every rope stage: the rope correction and the rider carry are swept against tiles (1 px sub-steps, unchanged) and then against every solid actor body (magnetTargetSolids(cat): Rects, solid gates / bridges, lifts, MoveWalls, solid BlinkBlocks, stationary FallBoxes, JumpStands, boxes, other live cats) minus the cats and push boxes resting on the moving cat (they ride on it; a carried rider also ignores its carrier), with the continuous span sweep sweepRectAgainstSolids, so even a 20.15 pull never crosses a body. Where the bodies stop an axis the velocity does not take that component; a stopped downward pull leaves the cat grounded with vy 0. On 2-1 a cat standing on the crevasse stone with its partner hanging in the pit stays on the stone (dragged sideways along its top) instead of being pulled through it. Entered (state 4) cats are not riders."
+    },
+    {
+      "id": "actor-draw-depth",
+      "files": [
+        "src/engine/GameRuntime.ts"
+      ],
+      "evidence": [
+        "Depth float actor +0x360 (sprite node +0x178, field +0x1e8). Goal ctor FUN_7ff72bb52c20: param_1 + 0x6c = 0x3e99999a -> +0.3",
+        "Player ctor FUN_7ff72bb66e50 (~line 214): +0x360 = DAT_7ff72bcbdf8c (-0.3) - slot (+0x400) * DAT_7ff72bc7d45c (0.01) -> -0.30, -0.31, -0.32 ... per cat slot",
+        "Sort FUN_7ff72bbbd5b0 (per layer from FUN_7ff72bbe7c80 / FUN_7ff72bc1b830): insertion sort moving an entry ahead while prev.depth < its depth => descending depth, drawn in order: larger depth = further back. Same reading as the port TerritoryBallJudgeGridRenderer.ts:22-26 (\"larger depths first, invert the sign\")",
+        "KeyGoal ctor depth not checked: INFERENCE same family as Goal. Layer index of either not traced (INFERENCE both default world-layer actors)",
+        "Port (b14 snapshot): actorLayer.sortableChildren = true (1543) but no zIndex on Goal (886), KeyGoal (900) or Player (2830): all 0, so row order decided and a Goal row after the Player rows drew over the cats",
+        "Port order, uncited: cats 0.3 + 0.01 * slot (above every default-z actor); rope 0.2; every other actor class (boxes, keys, enemies, lifts, walls, Rects, switches, gates, bridges, coins, ...) 0 in stable row order; TerritoryBallJudge grid -0.1; Goal / KeyGoal -0.3; warp-gun and magnet auxiliaries -0.4 (WARP_GUN_AUXILIARY_DEPTH); RecoveredText its own render depth. Only the Goal / KeyGoal and cat values are cited; the relative order of the zero-z classes is unchanged from before (row order)",
+        "WARP_GUN_AUXILIARY_DEPTH (-0.4, written straight to zIndex at 9413 / 9999) has no native citation in the port; if it were a native depth it would be +0.4 as a zIndex, but that is not traced, so it is left unchanged (it stays behind its cat either way)"
+      ],
+      "behavior": "Every stage: Pixi zIndex = -native depth. Goal and KeyGoal views zIndex -0.3 (always behind every cat); each cat view zIndex 0.3 + 0.01 * its colour / input slot (native +0x400), so cats always draw in front of the door and higher slots over lower ones; actors without a native depth stay at 0 (between the door and the cats)."
+    },
+    {
+      "id": "goal-enter-native",
+      "files": [
+        "src/engine/GameRuntime.ts"
+      ],
+      "evidence": [
+        "Goal sensor FUN_7ff72bb53000: rect DAT_7ff72bcbada0 = {-24, -32, 48, 32} (+p0 raises the top), category 10; overlap callback (+0x188 trampoline FUN_7ff72bb53420 -> +0x1a8) FUN_7ff72bb531d0, called every world step for every overlapping pair whose bodies both have body +0xc bit 0 (FUN_7ff72bc1da80 lines 86-103, FUN_7ff72bc119c0)",
+        "FUN_7ff72bb531d0(goal, other): online-guest bail (FUN_7ff72bc11800); category 1 (cat) AND door open (goal +0x3f8 bit 0, set by FUN_7ff72bb52ec0) AND FUN_7ff72bb68510(cat, 3) -> FUN_7ff72bb67800(cat, 4); closed door + cat: nothing",
+        "Button 3 is a RISING EDGE: FUN_7ff72bc28ce0 returns cur & bit && !(prev & bit); FUN_7ff72bb6ad30 the same ((+8 & m) == m && (+0x10 & m) == 0). The wire carries held UP, so the port derives the edge per cat from its previous UP (deterministic, as the puzzle Blocks do for their keys)",
+        "State switch FUN_7ff72bb69be0 -> FUN_7ff72bb69c80(4) -> FUN_7ff72bb6e990, vtable PTR_FUN_7ff72bcbe8f0 {enter 6ea00, exit 6ea60, update 6eab0, input 6eb80}; +0x410 = 4",
+        "Enter FUN_7ff72bb6ea00: node flags +0x178 &= ~8 (INFERENCE hidden, the bit FUN_7ff72bb67cc0(0) clears for the warp-gun hold); body +0xc bit 0 cleared (out of every overlap / solid pass); FUN_7ff72bc13a50 ends all contacts. No walk-in / fade; not destroyed",
+        "Update FUN_7ff72bb6eab0: first tick zeroes +0x118 (velocity) and pushes it to attachments; a 1.0 timer counts down by dt (1/60, DAT_7ff72bc7d790) -> phase 2. Input FUN_7ff72bb6eb80: in phase 2 an UP press (FUN_7ff72bb68510(cat, 3)) with FUN_7ff72bc1d3a0(world, body, -1) == 0 (no active body on its spot) -> state 2: the cat comes back out where it entered; exit FUN_7ff72bb6ea60 restores the draw bit and body bit 0",
+        "Clear FUN_7ff72bb7bbe0: each frame counts avatars with +0x410 == 4 (plus riders via +0xc98, FUN_7ff72bb7c950) into scene +0x6b2b8; == player count (+0x6b240) -> scene flag |= 4. Live count, not latched",
+        "Order (review F1): FUN_7ff72bb7bbe0 runs the actors (FUN_7ff72bbe7720, decompile line 52), then the world step (FUN_7ff72bc1da80, line 53; the Goal overlap callback requests state 4 here), then the state-4 count and the clear flag (lines 65-137): once per frame, after every state change, no timer or wait. The port runs every entered cat's exit input before any cat moves, so a same-frame exit is never lost to an earlier cat's entry. Not ported: the native request (+0x414) is applied in the next PRE, so natively the clear lands one frame after the last entry (INFERENCE from FUN_7ff72bb69be0 being called from PRE FUN_7ff72bb690d0); the port clears on the entry frame",
+        "Press edge on the wire (review F3): the relay zeroes a silent peer after 1500 ms; deriving the edge from held UP made the resumed heartbeat a new press (an entered cat came out with no key release). The campaign carries a real UP press edge (bit 512, latched one authoritative tick like jump 32 / action 256), decoded to InputState.upPressed; the runtime uses it when present and derives the edge from held UP only for inputs without the field",
+        "Port (b14 snapshot): checkGoals (11362) entered on HELD up and latched goalClearedPlayers; the cat kept input, physics, view and body; only 5908 / 7014 / 11266 / 11292 filtered it, so entered cats blocked the doorway (the driver walked them aside, campaign-solve/driver.mjs:277-278)",
+        "Camera: stepScrollCamera (2419) still counts every non-helper cat: native camera membership of a state-4 cat NOT traced, left unchanged"
+      ],
+      "behavior": "Every stage with a Goal / KeyGoal: a cat enters only on an UP press edge (UP held from before does not enter) while it overlaps the sensor of an OPEN door; a closed door does nothing. On entering it is hidden at once and loses its body: one predicate isBodyOff(cat) = collision-off OR entered replaces the collision-off test at every other-cat site (standing on a cat, cat-vs-cat, lift / wall step bodies and carries, weighted-lift load, push chains and carried boxes, switch occupancy, jump switches, dead switch, ball bodies, balance riders, judges, magnet field / solids, blink-block occupancy, rope stacks) and it is excluded from the warp-gun launch / placement / target checks and push intent; its own update is skipped with velocity 0. After 1.0 s inside, an UP press while no active body overlaps its spot brings it back out where it entered (visible, solid); the exit of every entered cat is handled before any cat moves or enters, so the result never depends on player order, and a cat that came out does not use the same press to go back in. In the campaign the press edge is wire bit 512 (sent only on a real key-down), so an input timeout never fakes a press. The stage clears when the live count of entered cats equals the eligible cats (entered cats still count). A reset puts an entered cat back out at its spawn. KeyGoal follows the same entry rule (INFERENCE: its callback was not traced)."
     }
   ],
   "hashes": {

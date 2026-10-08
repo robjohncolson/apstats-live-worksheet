@@ -175,7 +175,7 @@ export default {
     until(() => api.cleared, () => {
       f++;
       return cats.map((cat, i) => {
-        if (game.goalClearedPlayers?.has(cat)) return dir(cat, gx + 8, 2);
+        if (game.goalClearedPlayers?.has(cat)) return {};   // entered: hidden and bodiless; no UP (it would come back out)
         // Cat 1 (the carrier) stands in the door centre; cat 0 waits west, then squeezes into the west half.
         const target = i === 1 ? gx : goal.opened ? gx - 16 : gx - 70;
         const near = Math.abs(target - cx(cat)) <= 6;

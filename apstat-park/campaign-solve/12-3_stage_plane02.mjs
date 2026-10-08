@@ -80,10 +80,7 @@ export default {
       const specs = [{}, {}]; specs[other] = { up: true }; return specs;
     }, 60, 'the other plane could not move aside');
     enterPlane(carrier, gx);
-    // An entered plane stays a body: it flies on past the door to make room.
-    api.until(() => cats[carrier].rect.x > goal.rect.x + goal.rect.width + 10, () => {
-      const specs = [{}, {}]; specs[carrier] = { right: true }; return specs;
-    }, 60, 'the entered plane could not clear the doorway');
+    // An entered plane is hidden and bodiless (goal-enter-native): the other flies straight into the door.
     enterPlane(other, gx);
     if (!api.cleared) api.block('both planes entered but the stage did not clear');
   },

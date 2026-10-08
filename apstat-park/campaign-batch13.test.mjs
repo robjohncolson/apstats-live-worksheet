@@ -62,14 +62,16 @@ const FIRE = { action: true, actionPressed: true };
 // action-button
 
 test('action button: bits 64 (held) / 256 (press edge) decode; old packets (bits <= 63) decode as before', () => {
-  assert.deepEqual(decodeInput(64 | 256 | 2), { ...IDLE, right: true, action: true, actionPressed: true });
-  assert.deepEqual(decodeInput(64), { ...IDLE, action: true });
-  assert.deepEqual(decodeInput(50), { ...IDLE, jump: true, jumpPressed: true, right: true });
+  // upPressed is the batch-15 UP press edge (bit 512); older packets never set it.
+  assert.deepEqual(decodeInput(64 | 256 | 2), { ...IDLE, upPressed: false, right: true, action: true, actionPressed: true });
+  assert.deepEqual(decodeInput(64), { ...IDLE, upPressed: false, action: true });
+  assert.deepEqual(decodeInput(50), { ...IDLE, upPressed: false, jump: true, jumpPressed: true, right: true });
   assert.equal(decodeInput(128).action, false, '128 is the helper flag, not a button');
   for (let bits = 0; bits <= 63; bits++) {
     const decoded = decodeInput(bits);
     assert.equal(decoded.action || decoded.actionPressed, false);
     assert.equal(decoded.jumpPressed, !!(bits & 32));
+    assert.equal(decoded.upPressed, false);
   }
 });
 

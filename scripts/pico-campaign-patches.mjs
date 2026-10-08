@@ -615,6 +615,54 @@ export const CAMPAIGN_PATCHES = [{
     'Counter FUN_7ff72bb17320: "%d" (DAT_7ff72bc820f0), size 48, align 2 / 2, at (infoX, infoY) + chip * (offsetX, offsetY) + origin = (636, 48); value max(0, target - lines). Win draw FUN_7ff72bb4c290: "OK" (DAT_7ff72bcb9e38) at (640, 300) (DAT_7ff72bc7d8ac / DAT_7ff72bc7daa8)',
     '8-3 "SPEED UP": an ordinary Text row {-100, 300, "SPEED UP", 32, 0, 6, 1} (no message from the puzzle); the port\'s RecoveredText renders and slides it'],
   behavior: '8-1 / 8-3: the puzzle draws in one container in the actor layer at the Puzzle row point (world (0, 0); inferred from the native translate by the Puzzle actor position): terrain chips 2..25 in the main-map style (picoStyle tiles, same-fill neighbours merged), piece cells as rounded 24 x 24 squares in the owning cat\'s colour (falling and landed identical), the "%d" lines-still-needed counter (48 px, centred at (636, 48)) and, after the win, "OK" centred at (640, 300), both in the runtime\'s monospace bold Text style. Inferred / untraced: the atlas cell art (plain colour squares instead), the text colour (the runtime text orange), the draw order against the cats (they never overlap: the grid ends at y 552, the cats live below the ceiling row at y 544).',
+}, {
+  // batch 15: rope draw, rope vs actor bodies, actor draw depth, native goal entry (teacher reports on 2-1).
+  id: 'rope-draw',
+  files: ['src/engine/GameRuntime.ts'],
+  evidence: ['DistanceConstraint ctor FUN_7ff72bb3f3a0 (vtable PTR_FUN_7ff72bcb85f0): draw component +0x3f0 (PTR_FUN_7ff72bcb6560), draw node +0x400 (FUN_7ff72bbbafa0), delegate +0x490 FUN_7ff72bb40b50 with obj +0x4a0 = actor, fn +0x4a8 = FUN_7ff72bb3f960; FUN_7ff72bc15ac0 slot 3 FUN_7ff72bc2fb60 -> FUN_7ff72bbbb0f0 -> FUN_7ff72bbbda80 appends the node to the scene renderables',
+    'FUN_7ff72bb3f960 (every draw): consecutive players in Stage order (scene +0x6b198, count +0x6b240) -> FUN_7ff72bb3fa30(actor, P[i], P[i+1], ctx, renderer)',
+    'FUN_7ff72bb3fa30 (0x7ff72bb3faa7..0x7ff72bb3fc52): skip only when BOTH cats have +0x410 == 4 (no length test: slack or taut is drawn); Pos = FUN_7ff72bc15b90 (transform +0x44 + presentation +0x138) = the feet centre (avatar body {-16,-47,32,46}); Bresenham FUN_7ff72bba53b0(buf DAT_7ff72c62b060, cap 1000, (5,0) -> (trunc(B.x - A.x - 5.0), trunc(B.y - A.y))), 5.0 = DAT_7ff72bc7d588; i += 2.0 (DAT_7ff72bcff5c0); each point a 2 x 2 quad (w = h = 0x40000000) at A + (px, py - 14.0), 14.0 = DAT_7ff72bcb7d88 (0x7ff72bb3fbaa)',
+    'Renderer vtable +0x10 (0x7ff72bb3fc23): UV DAT_7ff72bc7d7a0 = (0.4921875, 0, 2/256, 2/256) (the MoveEnergy meter slice: INFERENCE a solid texel tinted by the colour), texture DAT_7ff72c62f480, colour 0xFFFF864D; ARGB byte order INFERENCE from palette DAT_7ff72c62a040[0] = 0xff7fbfff (P1 light blue) => opaque orange #FF864D, NOT green (the teacher expected green; the native rope is orange)',
+    'Layer: the ctor writes -0.5f to node +8 (actor +0x408); node default 0; FUN_7ff72bb32c20 writes -0.6. That is a field of the rope draw node, not the sprite-node depth +0x360 the cats / Goal use, and the sort over it was not decoded: INFERENCE the rope draws behind the cats and in front of the map (and of the door)',
+    'Port (b14 snapshot): DistanceConstraint.ts builds a static green 0x34d399 circle + bar marker at the spawn point (snapshot 1331-1334), never moved; nothing drew between the cats (on 2-1 the spawn is (0, 0): a green blob in the corner)'],
+  behavior: 'Every rope stage (2-1, 2-3): each frame, after the rope update, one Graphics per rope draws a straight line between every neighbouring pair of cats in Stage order, from cat A feet centre + (5, -14) to cat B feet centre + (-5, -14) (feet centre = rect.x + width / 2, rect.y + height + 1), as 2 x 2 squares on every 2nd Bresenham point (reads as a ~2 px dotted-solid line), colour #FF864D opaque, drawn slack or taut; a pair is skipped only when both cats are inside the door. zIndex 0.2: behind the cats (0.3+), in front of default actors (0), the door (-0.3) and the map (separate layer). The green spawn-point marker is hidden.',
+}, {
+  id: 'rope-pull-solids',
+  files: ['src/engine/GameRuntime.ts'],
+  evidence: ['Native rope FUN_7ff72bb3fce0 -> FUN_7ff72bb3ffe0 per neighbour: correction summed; 0x29 latch clamp (DAT_7ff72bcff6a8 = -1, DAT_7ff72bc7d464); FUN_7ff72bc13690(body +0x98, (0,1), 1) grounded drops an upward pull weaker than 0.65 (DAT_7ff72bcb69bc); |c.y| <= 20.15 (DAT_7ff72bcb86e8), c.x uncapped (already ported: snapshot 7109-7111, kept)',
+    'Apply FUN_7ff72bb3f580 after all are computed: position move FUN_7ff72bb97db0(transform +0x44, c) plus velocity += c (FUN_7ff72bb93620 on +0x118); attachments notified (+0x3d0, slot +0x28); riders carried (FUN_7ff72bc17330)',
+    'The body reaches its world position only through the world step FUN_7ff72bc17ca0 -> FUN_7ff72bc1da80 -> FUN_7ff72bc12490 -> map FUN_7ff72bc2fca0 (batch-7 decode): the map part is sub-stepped by face strips, so a correction never crosses a chip (port: moveRectWithTileCollisions sweeps in 1 px sub-steps, physics.ts sweepAxis)',
+    'Bodies: a Rect is a static solid body in the same contact matrix cats stand on, so the contact pass keeps the cat out (INFERENCE: body separation not traced); 2-1 crevasse block = Rect {1388, 240, 56, 56} (staticRects[0], no chip under it, bottomless pit)',
+    'Port bug (b14 snapshot): applyNativeRope 7120 / 7127 moved the cat and its riders with moveRectWithTileCollisions only (tiles); next frame resolveClosedGateCollision (KeyGate.ts:213) got a previousRect already inside the Rect and restored it, so every taut tick ratcheted cat A deeper (probe: A inside the stone from tick 15, y 194 -> 284 in 55 ticks) until it fell out the bottom',
+    'Port order of the sweep (review F2): x against tiles then bodies, then y against tiles then bodies from the resolved x (one swept move per axis); the earlier tiles-then-bodies composition could keep a tile-chosen y after a body stopped x early and end inside a chip. Native world-step order between map and body contacts not traced',
+    'blocked() (redirect probes 7089 / 7094 / 7097) still tests tile chips only: whether the native redirect normals list body +0xa0 (FUN_7ff72bc137b0, kept by FUN_7ff72bc14040 against the map +0x140 / FUN_7ff72bc304f0) holds actor contacts is unresolved, so it is left as is'],
+  behavior: 'Every rope stage: the rope correction and the rider carry are swept against tiles (1 px sub-steps, unchanged) and then against every solid actor body (magnetTargetSolids(cat): Rects, solid gates / bridges, lifts, MoveWalls, solid BlinkBlocks, stationary FallBoxes, JumpStands, boxes, other live cats) minus the cats and push boxes resting on the moving cat (they ride on it; a carried rider also ignores its carrier), with the continuous span sweep sweepRectAgainstSolids, so even a 20.15 pull never crosses a body. Where the bodies stop an axis the velocity does not take that component; a stopped downward pull leaves the cat grounded with vy 0. On 2-1 a cat standing on the crevasse stone with its partner hanging in the pit stays on the stone (dragged sideways along its top) instead of being pulled through it. Entered (state 4) cats are not riders.',
+}, {
+  id: 'actor-draw-depth',
+  files: ['src/engine/GameRuntime.ts'],
+  evidence: ['Depth float actor +0x360 (sprite node +0x178, field +0x1e8). Goal ctor FUN_7ff72bb52c20: param_1 + 0x6c = 0x3e99999a -> +0.3',
+    'Player ctor FUN_7ff72bb66e50 (~line 214): +0x360 = DAT_7ff72bcbdf8c (-0.3) - slot (+0x400) * DAT_7ff72bc7d45c (0.01) -> -0.30, -0.31, -0.32 ... per cat slot',
+    'Sort FUN_7ff72bbbd5b0 (per layer from FUN_7ff72bbe7c80 / FUN_7ff72bc1b830): insertion sort moving an entry ahead while prev.depth < its depth => descending depth, drawn in order: larger depth = further back. Same reading as the port TerritoryBallJudgeGridRenderer.ts:22-26 ("larger depths first, invert the sign")',
+    'KeyGoal ctor depth not checked: INFERENCE same family as Goal. Layer index of either not traced (INFERENCE both default world-layer actors)',
+    'Port (b14 snapshot): actorLayer.sortableChildren = true (1543) but no zIndex on Goal (886), KeyGoal (900) or Player (2830): all 0, so row order decided and a Goal row after the Player rows drew over the cats',
+    'Port order, uncited: cats 0.3 + 0.01 * slot (above every default-z actor); rope 0.2; every other actor class (boxes, keys, enemies, lifts, walls, Rects, switches, gates, bridges, coins, ...) 0 in stable row order; TerritoryBallJudge grid -0.1; Goal / KeyGoal -0.3; warp-gun and magnet auxiliaries -0.4 (WARP_GUN_AUXILIARY_DEPTH); RecoveredText its own render depth. Only the Goal / KeyGoal and cat values are cited; the relative order of the zero-z classes is unchanged from before (row order)',
+    'WARP_GUN_AUXILIARY_DEPTH (-0.4, written straight to zIndex at 9413 / 9999) has no native citation in the port; if it were a native depth it would be +0.4 as a zIndex, but that is not traced, so it is left unchanged (it stays behind its cat either way)'],
+  behavior: 'Every stage: Pixi zIndex = -native depth. Goal and KeyGoal views zIndex -0.3 (always behind every cat); each cat view zIndex 0.3 + 0.01 * its colour / input slot (native +0x400), so cats always draw in front of the door and higher slots over lower ones; actors without a native depth stay at 0 (between the door and the cats).',
+}, {
+  id: 'goal-enter-native',
+  files: ['src/engine/GameRuntime.ts'],
+  evidence: ['Goal sensor FUN_7ff72bb53000: rect DAT_7ff72bcbada0 = {-24, -32, 48, 32} (+p0 raises the top), category 10; overlap callback (+0x188 trampoline FUN_7ff72bb53420 -> +0x1a8) FUN_7ff72bb531d0, called every world step for every overlapping pair whose bodies both have body +0xc bit 0 (FUN_7ff72bc1da80 lines 86-103, FUN_7ff72bc119c0)',
+    'FUN_7ff72bb531d0(goal, other): online-guest bail (FUN_7ff72bc11800); category 1 (cat) AND door open (goal +0x3f8 bit 0, set by FUN_7ff72bb52ec0) AND FUN_7ff72bb68510(cat, 3) -> FUN_7ff72bb67800(cat, 4); closed door + cat: nothing',
+    'Button 3 is a RISING EDGE: FUN_7ff72bc28ce0 returns cur & bit && !(prev & bit); FUN_7ff72bb6ad30 the same ((+8 & m) == m && (+0x10 & m) == 0). The wire carries held UP, so the port derives the edge per cat from its previous UP (deterministic, as the puzzle Blocks do for their keys)',
+    'State switch FUN_7ff72bb69be0 -> FUN_7ff72bb69c80(4) -> FUN_7ff72bb6e990, vtable PTR_FUN_7ff72bcbe8f0 {enter 6ea00, exit 6ea60, update 6eab0, input 6eb80}; +0x410 = 4',
+    'Enter FUN_7ff72bb6ea00: node flags +0x178 &= ~8 (INFERENCE hidden, the bit FUN_7ff72bb67cc0(0) clears for the warp-gun hold); body +0xc bit 0 cleared (out of every overlap / solid pass); FUN_7ff72bc13a50 ends all contacts. No walk-in / fade; not destroyed',
+    'Update FUN_7ff72bb6eab0: first tick zeroes +0x118 (velocity) and pushes it to attachments; a 1.0 timer counts down by dt (1/60, DAT_7ff72bc7d790) -> phase 2. Input FUN_7ff72bb6eb80: in phase 2 an UP press (FUN_7ff72bb68510(cat, 3)) with FUN_7ff72bc1d3a0(world, body, -1) == 0 (no active body on its spot) -> state 2: the cat comes back out where it entered; exit FUN_7ff72bb6ea60 restores the draw bit and body bit 0',
+    'Clear FUN_7ff72bb7bbe0: each frame counts avatars with +0x410 == 4 (plus riders via +0xc98, FUN_7ff72bb7c950) into scene +0x6b2b8; == player count (+0x6b240) -> scene flag |= 4. Live count, not latched',
+    'Order (review F1): FUN_7ff72bb7bbe0 runs the actors (FUN_7ff72bbe7720, decompile line 52), then the world step (FUN_7ff72bc1da80, line 53; the Goal overlap callback requests state 4 here), then the state-4 count and the clear flag (lines 65-137): once per frame, after every state change, no timer or wait. The port runs every entered cat\'s exit input before any cat moves, so a same-frame exit is never lost to an earlier cat\'s entry. Not ported: the native request (+0x414) is applied in the next PRE, so natively the clear lands one frame after the last entry (INFERENCE from FUN_7ff72bb69be0 being called from PRE FUN_7ff72bb690d0); the port clears on the entry frame',
+    'Press edge on the wire (review F3): the relay zeroes a silent peer after 1500 ms; deriving the edge from held UP made the resumed heartbeat a new press (an entered cat came out with no key release). The campaign carries a real UP press edge (bit 512, latched one authoritative tick like jump 32 / action 256), decoded to InputState.upPressed; the runtime uses it when present and derives the edge from held UP only for inputs without the field',
+    'Port (b14 snapshot): checkGoals (11362) entered on HELD up and latched goalClearedPlayers; the cat kept input, physics, view and body; only 5908 / 7014 / 11266 / 11292 filtered it, so entered cats blocked the doorway (the driver walked them aside, campaign-solve/driver.mjs:277-278)',
+    'Camera: stepScrollCamera (2419) still counts every non-helper cat: native camera membership of a state-4 cat NOT traced, left unchanged'],
+  behavior: 'Every stage with a Goal / KeyGoal: a cat enters only on an UP press edge (UP held from before does not enter) while it overlaps the sensor of an OPEN door; a closed door does nothing. On entering it is hidden at once and loses its body: one predicate isBodyOff(cat) = collision-off OR entered replaces the collision-off test at every other-cat site (standing on a cat, cat-vs-cat, lift / wall step bodies and carries, weighted-lift load, push chains and carried boxes, switch occupancy, jump switches, dead switch, ball bodies, balance riders, judges, magnet field / solids, blink-block occupancy, rope stacks) and it is excluded from the warp-gun launch / placement / target checks and push intent; its own update is skipped with velocity 0. After 1.0 s inside, an UP press while no active body overlaps its spot brings it back out where it entered (visible, solid); the exit of every entered cat is handled before any cat moves or enters, so the result never depends on player order, and a cat that came out does not use the same press to go back in. In the campaign the press edge is wire bit 512 (sent only on a real key-down), so an input timeout never fakes a press. The stage clears when the live count of entered cats equals the eligible cats (entered cats still count). A reset puts an entered cat back out at its spawn. KeyGoal follows the same entry rule (INFERENCE: its callback was not traced).',
 }];
 
 // Fail the build if upstream code changes: never silently skip a correction.
@@ -1806,6 +1854,9 @@ import { frameTexture } from '../sprites';
     // (magnet, FUN_7ff72bb68300) and press edge (warp gun, FUN_7ff72bb68510). Optional: older callers omit them.
     source = replaceOnce(source, '  jumpPressed: boolean;\n  resetPressed: boolean;',
       '  jumpPressed: boolean;\n  /** action-button: native input bit 11 held. */\n  action?: boolean;\n  /** action-button: native input bit 11 press edge. */\n  actionPressed?: boolean;\n  resetPressed: boolean;', file);
+    // goal-enter-native: the UP press edge (campaign wire bit 512). Optional: callers without it derive it from held UP.
+    source = replaceOnce(source, '  actionPressed?: boolean;\n  resetPressed: boolean;',
+      '  actionPressed?: boolean;\n  /** goal-enter-native: UP (button 3) press edge, FUN_7ff72bc28ce0. */\n  upPressed?: boolean;\n  resetPressed: boolean;', file);
     // puzzle-stage-data: the puzzle sub-stage map rides along with the Block rows.
     source = replaceOnce(source, `export interface PuzzleDef {
   createTable: ActorSpawnDef[];
@@ -7660,6 +7711,290 @@ export class PuzzleTetris {
     this.counter.text = String(this.target !== 0 ? Math.max(0, this.target - this.linesCleared) : this.linesCleared);
     this.okText.visible = this.won;
   }
+}
+`;
+    // ---- batch 15: rope-draw, rope-pull-solids, actor-draw-depth, goal-enter-native ----
+    source = replaceOnce(source, 'const WARP_GUN_AUXILIARY_DEPTH = -0.4;\n', `const WARP_GUN_AUXILIARY_DEPTH = -0.4;
+// actor-draw-depth: Pixi zIndex = -native depth (actor +0x360; FUN_7ff72bbbd5b0 draws descending depth = back to front).
+const GOAL_VIEW_Z = -0.3;            // Goal ctor FUN_7ff72bb52c20: depth +0.3
+const PLAYER_VIEW_Z_BASE = 0.3;      // Player ctor FUN_7ff72bb66e50: depth -0.3 - 0.01 * slot
+const PLAYER_VIEW_Z_SLOT = 0.01;
+// rope-draw: behind the cats, in front of the door and default actors (INFERENCE from the rope node's -0.5 key).
+const ROPE_VIEW_Z = 0.2;
+const ROPE_COLOR = 0xff864d;         // FUN_7ff72bb3fa30 colour 0xFFFF864D (ARGB: opaque orange)
+// goal-enter-native: the state-4 timer FUN_7ff72bb6eab0 (1.0 s) before an UP press can bring the cat back out.
+const GOAL_ENTERED_EXIT_DELAY = 1.0;
+`, file);
+    source = replaceOnce(source, '  private goalClearedPlayers = new Set<Player>();\n', `  private goalClearedPlayers = new Set<Player>();
+  /** goal-enter-native: seconds left before an entered (state 4) cat may come back out. */
+  private goalEnterTimers = new Map<Player, number>();
+  /** goal-enter-native: each cat's UP of the previous tick, for the press edge (FUN_7ff72bc28ce0). */
+  private goalPreviousUp = new Map<Player, boolean>();
+  /** goal-enter-native: this cat's UP press edge, read by checkGoals. */
+  private goalUpPressed = false;
+  /** rope-draw: one line view per rope (FUN_7ff72bb3f960). */
+  private ropeViews = new Map<DistanceConstraint, Graphics>();
+`, file);
+    // goal-enter-native: one predicate for "this cat has no body" (collision-off OR entered, native body +0xc bit 0).
+    // Every other-cat site (not the current cat's own self-guards, which an entered cat never reaches) uses it.
+    {
+      const bodyOffSites = source.match(/this\.collisionChangePlayersCollisionOff\.has\((?!this\.player)/g) ?? [];
+      assert.equal(bodyOffSites.length, 63, 'Patch anchor changed: goal-enter-native isBodyOff site count');
+      source = source.replace(/this\.collisionChangePlayersCollisionOff\.has\((?!this\.player)/g, 'this.isBodyOff(');
+    }
+    // ... except: the CollisionChange toggle itself, the goal-eligible roster (entered cats still count), the score.
+    source = replaceOnce(source, `  private toggleCollisionChangePlayerCollision(player: Player): void {
+    if (this.isBodyOff(player)) {`, `  private toggleCollisionChangePlayerCollision(player: Player): void {
+    if (this.collisionChangePlayersCollisionOff.has(player)) {`, file);
+    source = replaceOnce(source, `    const goalEligiblePlayers = this.players.filter((player) => (!player.parkHelper &&
+      !this.isBodyOff(player)`, `    const goalEligiblePlayers = this.players.filter((player) => (!player.parkHelper &&
+      !this.collisionChangePlayersCollisionOff.has(player)`, file);
+    source = replaceOnce(source, `    const forwardScorePlayers = this.players.filter((player) => (
+      !this.isBodyOff(player)`, `    const forwardScorePlayers = this.players.filter((player) => (
+      !this.collisionChangePlayersCollisionOff.has(player)`, file);
+    source = replaceOnce(source, '  private toggleCollisionChangePlayerCollision(player: Player): void {\n', `  /** goal-enter-native: no body (CollisionChange off, or inside the door: FUN_7ff72bb6ea00 clears body +0xc bit 0). */
+  private isBodyOff(player: Player): boolean {
+    return this.collisionChangePlayersCollisionOff.has(player) || this.goalClearedPlayers.has(player);
+  }
+
+  private toggleCollisionChangePlayerCollision(player: Player): void {
+`, file);
+    // goal-enter-native: the warp-gun hold sites an entered cat also leaves (launch, placement, target, magnet owner).
+    source = replaceOnce(source, '      if (this.warpGunDisabledPlayers.has(player) || warpGunRelocatedPlayers.has(player)) return 0;\n',
+      '      if (this.warpGunDisabledPlayers.has(player) || warpGunRelocatedPlayers.has(player) || this.goalClearedPlayers.has(player)) return 0;\n', file);
+    source = replaceOnce(source, `      && !this.warpGunDisabledPlayers.has(player)
+      && rectsOverlap(launchProbe, player.rect)`, `      && !this.warpGunDisabledPlayers.has(player) && !this.goalClearedPlayers.has(player)
+      && rectsOverlap(launchProbe, player.rect)`, file);
+    source = replaceOnce(source, `        && !this.warpGunDisabledPlayers.has(player)
+        && rectsOverlap(candidate, player.rect)`, `        && !this.warpGunDisabledPlayers.has(player) && !this.goalClearedPlayers.has(player)
+        && rectsOverlap(candidate, player.rect)`, file);
+    source = replaceOnce(source, `        && !this.warpGunDisabledPlayers.has(candidate)
+        && rectsOverlap(shotContactRect, candidate.rect)`, `        && !this.warpGunDisabledPlayers.has(candidate) && !this.goalClearedPlayers.has(candidate)
+        && rectsOverlap(shotContactRect, candidate.rect)`, file);
+    source = replaceOnce(source, `        && !this.warpGunDisabledPlayers.has(owner);
+      const slot = this.playerInputSlots[index] ?? index;`, `        && !this.warpGunDisabledPlayers.has(owner) && !this.goalClearedPlayers.has(owner);
+      const slot = this.playerInputSlots[index] ?? index;`, file);
+    // goal-enter-native: the UP press edge per cat, once per tick, before the cats move.
+    source = replaceOnce(source, `      return (pi.right ? 1 : 0) - (pi.left ? 1 : 0);
+    });
+`, `      return (pi.right ? 1 : 0) - (pi.left ? 1 : 0);
+    });
+    // goal-enter-native: button 3 is a press edge (FUN_7ff72bc28ce0: cur & bit && !(prev & bit)). It travels on the
+    // wire (campaign bit 512 = upPressed, set only on a physical key-down) so a relay input timeout followed by the
+    // same held heartbeat is never a new press; inputs without the field (tests, older harnesses) derive it from held UP.
+    const goalUpEdges = activePlayers.map((player, index) => {
+      const slot = this.playerInputSlots[index] ?? index;
+      const playerInput = this.resolvePlayerInput(input, playerInputs, activePlayers.length, index, slot);
+      const up = !!playerInput.up;
+      const derived = up && !this.goalPreviousUp.get(player);
+      this.goalPreviousUp.set(player, up);
+      if (typeof playerInput.upPressed === 'boolean') return up && playerInput.upPressed;
+      return derived;
+    });
+    // goal-enter-native: every entered cat's state-4 update and exit input (FUN_7ff72bb6eab0 / FUN_7ff72bb6eb80) runs
+    // for all cats BEFORE any cat moves or enters, so the clear (FUN_7ff72bb7bbe0: state-4 avatars counted once per
+    // frame after the actors FUN_7ff72bbe7720 and the world step FUN_7ff72bc1da80) never depends on player order.
+    // A cat that came out this frame does not use the same press to go straight back in.
+    activePlayers.forEach((player, index) => {
+      if (!this.goalClearedPlayers.has(player)) return;
+      if (this.stepGoalEnteredPlayer(player, goalUpEdges[index] ?? false, clampedDt)) goalUpEdges[index] = false;
+    });
+`, file);
+    // goal-enter-native: an entered cat skips its own update (velocity 0) like the warp-gun hold.
+    source = replaceOnce(source, `      if (this.warpGunDisabledPlayers.has(this.player) || warpGunRelocatedPlayers.has(this.player)) {
+        this.player.velocity.x = 0;
+        this.player.velocity.y = 0;
+        continue;
+      }
+`, `      if (this.warpGunDisabledPlayers.has(this.player) || warpGunRelocatedPlayers.has(this.player)) {
+        this.player.velocity.x = 0;
+        this.player.velocity.y = 0;
+        continue;
+      }
+      if (this.goalClearedPlayers.has(this.player)) {
+        this.player.velocity.x = 0;
+        this.player.velocity.y = 0;
+        continue;
+      }
+`, file);
+    source = replaceOnce(source, '      this.checkGoals(resolvedPlayerInput);\n', `      this.goalUpPressed = goalUpEdges[index] ?? false;
+      this.checkGoals(resolvedPlayerInput);
+      this.goalUpPressed = false;
+`, file);
+    source = replaceOnce(source, `      player === this.player && !!input?.up && player.deathTimer <= 0
+      && standardGoals.some(`, `      player === this.player && !!input?.up && this.goalUpPressed && player.deathTimer <= 0
+      && standardGoals.some(`, file);
+    source = replaceOnce(source, `      player === this.player && !!input?.up && player.deathTimer <= 0 && unlockedKeyGoals.some(`,
+      `      player === this.player && !!input?.up && this.goalUpPressed && player.deathTimer <= 0 && unlockedKeyGoals.some(`, file);
+    source = replaceOnce(source, `    for (const player of playersOnStandardGoal) {
+      this.goalClearedPlayers.add(player);
+    }`, `    for (const player of playersOnStandardGoal) {
+      this.enterGoal(player);
+    }`, file);
+    source = replaceOnce(source, `    for (const player of playersOnKeyGoal) {
+      this.goalClearedPlayers.add(player);
+    }`, `    for (const player of playersOnKeyGoal) {
+      this.enterGoal(player);
+    }`, file);
+    source = replaceOnce(source, '  private checkGoals(input?: InputState): void {\n', `  /** goal-enter-native: FUN_7ff72bb67800(cat, 4) -> enter FUN_7ff72bb6ea00: hidden, bodiless, contacts ended, at once. */
+  private enterGoal(player: Player): void {
+    if (this.goalClearedPlayers.has(player)) return;
+    this.goalClearedPlayers.add(player);
+    this.goalEnterTimers.set(player, GOAL_ENTERED_EXIT_DELAY);
+    player.view.visible = false;
+    player.velocity.x = 0;
+    player.velocity.y = 0;
+  }
+
+  /** goal-enter-native: state 4 update FUN_7ff72bb6eab0 (velocity 0, 1.0 s timer) and input FUN_7ff72bb6eb80: after the
+   *  timer an UP press with no active body on its spot (FUN_7ff72bc1d3a0) brings it back out (exit FUN_7ff72bb6ea60). */
+  private stepGoalEnteredPlayer(player: Player, upPressed: boolean, dt: number): boolean {
+    player.velocity.x = 0;
+    player.velocity.y = 0;
+    const left = (this.goalEnterTimers.get(player) ?? 0) - dt;
+    this.goalEnterTimers.set(player, left);
+    if (left > 1e-9 || !upPressed || this.cleared) return false;
+    if (this.magnetTargetSolids(player).some((solid) => rectsOverlap(solid, player.rect))) return false;
+    this.goalClearedPlayers.delete(player);
+    this.goalEnterTimers.delete(player);
+    player.view.visible = true;
+    return true;
+  }
+
+  private checkGoals(input?: InputState): void {
+`, file);
+    // goal-enter-native: a reset brings an entered cat back out at its spawn; a stage load starts with none inside.
+    source = replaceOnce(source, `    this.activeRouletteLiftTriggerContacts.delete(player);
+    if (this.collisionChangePlayersCollisionOff.delete(player)) {`, `    this.activeRouletteLiftTriggerContacts.delete(player);
+    if (this.goalClearedPlayers.delete(player)) player.view.visible = true;
+    this.goalEnterTimers.delete(player);
+    if (this.collisionChangePlayersCollisionOff.delete(player)) {`, file);
+    source = replaceOnce(source, '    this.goalClearedPlayers.clear();\n', `    for (const player of this.goalClearedPlayers) player.view.visible = true;
+    this.goalClearedPlayers.clear();
+    this.goalEnterTimers.clear();
+    this.goalPreviousUp.clear();
+    this.ropeViews.clear();
+`, file);
+    // actor-draw-depth: the door behind, the cats in front by slot.
+    source = replaceOnce(source, `      this.goals.push(goal);
+      this.actorLayer.addChild(goal.view);`, `      this.goals.push(goal);
+      goal.view.zIndex = GOAL_VIEW_Z;
+      this.actorLayer.addChild(goal.view);`, file);
+    source = replaceOnce(source, `      this.keyGoals.push(goal);
+      this.actorLayer.addChild(goal.view);`, `      this.keyGoals.push(goal);
+      goal.view.zIndex = GOAL_VIEW_Z;
+      this.actorLayer.addChild(goal.view);`, file);
+    source = replaceOnce(source, `    this.actorLayer.addChild(player.view);
+    if (spawn.actorName === 'WarpGunPlayer') {`, `    player.view.zIndex = PLAYER_VIEW_Z_BASE + PLAYER_VIEW_Z_SLOT * colorSlot;
+    this.actorLayer.addChild(player.view);
+    if (spawn.actorName === 'WarpGunPlayer') {`, file);
+    // rope-draw: hide the spawn marker, add the line view, redraw it every frame after the rope update.
+    source = replaceOnce(source, `      this.distanceConstraints.push(distanceConstraint);
+      this.addActorView(spawn, distanceConstraint.view);`, `      this.distanceConstraints.push(distanceConstraint);
+      this.addActorView(spawn, distanceConstraint.view);
+      distanceConstraint.view.visible = false;   // rope-draw: no native spawn-point marker
+      const ropeView = new Graphics();
+      ropeView.zIndex = ROPE_VIEW_Z;
+      this.ropeViews.set(distanceConstraint, ropeView);
+      this.actorLayer.addChild(ropeView);`, file);
+    source = replaceOnce(source, '    this.applyDistanceConstraints();\n    this.applyDarknessRects();\n',
+      '    this.applyDistanceConstraints();\n    this.drawRopes();\n    this.applyDarknessRects();\n', file);
+    source = replaceOnce(source, '  /** distance-constraint-native: one tick of FUN_7ff72bb3f580 for one rope. */\n', `  /** rope-draw: FUN_7ff72bb3f960 -> FUN_7ff72bb3fa30 per neighbouring pair: a Bresenham line from A + (5, -14) to
+   *  B + (-5, -14) (feet centres), a 2 x 2 square on every 2nd point, colour 0xFFFF864D; skipped when both are entered. */
+  private drawRopes(): void {
+    const cats = this.players;
+    for (const view of this.ropeViews.values()) {
+      view.clear();
+      view.beginFill(ROPE_COLOR, 1);
+      for (let i = 0; i + 1 < cats.length; i += 1) {
+        const a = cats[i], b = cats[i + 1];
+        if (this.goalClearedPlayers.has(a) && this.goalClearedPlayers.has(b)) continue;
+        const ax = a.rect.x + a.rect.width / 2, ay = a.rect.y + a.rect.height + 1;
+        const bx = b.rect.x + b.rect.width / 2, by = b.rect.y + b.rect.height + 1;
+        const points = ropeLinePoints(5, 0, Math.trunc(bx - ax - 5), Math.trunc(by - ay), 1000);
+        for (let k = 0; k < points.length; k += 2) {
+          view.drawRect(ax + points[k].x, ay + points[k].y - 14, 2, 2);
+        }
+      }
+      view.endFill();
+    }
+  }
+
+  /** distance-constraint-native: one tick of FUN_7ff72bb3f580 for one rope. */
+`, file);
+    // goal-enter-native: entered cats are out of the rope's stacks and supports (body bit 0 off).
+    source = replaceOnce(source, `      for (const other of cats) {
+        if (seen.has(other) || !rectRestsOnSupport(other.rect, rect)) continue;`, `      for (const other of cats) {
+        if (seen.has(other) || cleared(other) || !rectRestsOnSupport(other.rect, rect)) continue;`, file);
+    source = replaceOnce(source, '        const supports = cats.filter((other, j) => j !== i && rectRestsOnSupport(cat.rect, other.rect));\n',
+      '        const supports = cats.filter((other, j) => j !== i && !cleared(other) && rectRestsOnSupport(cat.rect, other.rect));\n', file);
+    // rope-pull-solids: tiles, then every solid actor body (continuous sweep).
+    source = replaceOnce(source, `    // Apply every correction through the tile sweep, then carry riders by what was applied.
+    cats.forEach((cat, i) => {
+      const c = corrections[i];
+      if (c.x === 0 && c.y === 0) return;
+      const before = { ...cat.rect };
+      const moved = moveRectWithTileCollisions(tileMap, cat.rect, { x: c.x, y: c.y });
+      cat.applyResolvedCollision(moved.rect, { x: cat.velocity.x + c.x * 60, y: cat.velocity.y + c.y * 60 },
+        c.y > 0 ? false : cat.grounded);
+      const dx = moved.rect.x - before.x, dy = moved.rect.y - before.y;
+      if (dx === 0 && dy === 0) return;
+      for (const rider of cats) {
+        if (rider === cat || !rectRestsOnSupport(rider.rect, before)) continue;
+        const carried = moveRectWithTileCollisions(tileMap, rider.rect, { x: dx, y: dy });
+        rider.applyResolvedCollision(carried.rect, rider.velocity, rider.grounded);
+      }
+    });`, `    // rope-pull-solids: the tile sweep (1 px sub-steps), then the solid actor bodies (continuous span sweep), so a
+    // correction never crosses a chip or a body. What rests on the moving cat rides on it and never blocks it.
+    // One swept move per axis: x against tiles then bodies, then y against tiles then bodies FROM THE RESOLVED x, so a
+    // body stopping x early can never leave the tile-chosen y inside a chip.
+    const sweepTilesAndBodies = (cat: Player, from: Rect, dx: number, dy: number, carrier?: Player) => {
+      const riding = [
+        ...cats.filter((other) => other !== cat && rectRestsOnSupport(other.rect, from)).map((other) => other.rect),
+        ...this.pushBoxes.filter((box) => rectRestsOnSupport(box.rect, from)).map((box) => box.rect),
+      ];
+      const solids = this.magnetTargetSolids(cat).filter((solid) => solid !== carrier?.rect && !riding.includes(solid));
+      const tileX = moveRectWithTileCollisions(tileMap, from, { x: dx, y: 0 }).rect;
+      const atX = sweepRectAgainstSolids(from, tileX.x - from.x, 0, solids);
+      const tileY = moveRectWithTileCollisions(tileMap, atX, { x: 0, y: dy }).rect;
+      const rect = sweepRectAgainstSolids(atX, 0, tileY.y - atX.y, solids);
+      return { rect, bodyStoppedX: atX.x !== tileX.x, bodyStoppedY: rect.y !== tileY.y };
+    };
+    cats.forEach((cat, i) => {
+      const c = corrections[i];
+      if (c.x === 0 && c.y === 0) return;
+      const before = { ...cat.rect };
+      const swept = sweepTilesAndBodies(cat, before, c.x, c.y);
+      const next = swept.rect;
+      const landed = swept.bodyStoppedY && c.y > 0;
+      cat.applyResolvedCollision(next, {
+        x: swept.bodyStoppedX ? cat.velocity.x : cat.velocity.x + c.x * 60,
+        y: landed ? 0 : swept.bodyStoppedY ? cat.velocity.y : cat.velocity.y + c.y * 60,
+      }, landed ? true : c.y > 0 ? false : cat.grounded);
+      const dx = next.x - before.x, dy = next.y - before.y;
+      if (dx === 0 && dy === 0) return;
+      for (const rider of cats) {
+        if (rider === cat || cleared(rider) || !rectRestsOnSupport(rider.rect, before)) continue;
+        const from = { ...rider.rect };
+        rider.applyResolvedCollision(sweepTilesAndBodies(rider, from, dx, dy, cat).rect, rider.velocity, rider.grounded);
+      }
+    });`, file);
+    source += `
+/** rope-draw: FUN_7ff72bba53b0, integer Bresenham from (x0, y0) to (x1, y1), both ends included, at most cap points. */
+function ropeLinePoints(x0: number, y0: number, x1: number, y1: number, cap: number): Array<{ x: number; y: number }> {
+  const points: Array<{ x: number; y: number }> = [];
+  const dx = Math.abs(x1 - x0), dy = -Math.abs(y1 - y0);
+  const sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1;
+  let err = dx + dy;
+  let x = x0, y = y0;
+  while (points.length < cap) {
+    points.push({ x, y });
+    if (x === x1 && y === y1) break;
+    const e2 = 2 * err;
+    if (e2 >= dy) { err += dy; x += sx; }
+    if (e2 <= dx) { err += dx; y += sy; }
+  }
+  return points;
 }
 `;
     source += `

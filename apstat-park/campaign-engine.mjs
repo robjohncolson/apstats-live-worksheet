@@ -4,10 +4,11 @@ const { createJump01Art, restoreJump01Steps } = await import('./campaign-jump01.
 const { createCampaignHelpers } = await import('./campaign-helpers.mjs' + V);
 
 export const campaignStages = recovered.stages;
-// Bits: 1 left, 2 right, 4 up, 8 down, 16 jump, 32 jump press edge, 64 action held, 256 action press edge
+// Bits: 1 left, 2 right, 4 up, 8 down, 16 jump, 32 jump press edge, 64 action held, 256 action press edge,
+// 512 up press edge (door enter / exit, goal-enter-native; older journals never set it)
 // (native input bit 11, '[shot]'); 128 is the teacher-helper flag (campaign-helpers.mjs), not a button.
 export const decodeInput = bits => ({ left: !!(bits & 1), right: !!(bits & 2), up: !!(bits & 4), down: !!(bits & 8),
-  jump: !!(bits & 16), jumpPressed: !!(bits & 32), action: !!(bits & 64), actionPressed: !!(bits & 256),
+  jump: !!(bits & 16), jumpPressed: !!(bits & 32), action: !!(bits & 64), actionPressed: !!(bits & 256), upPressed: !!(bits & 512),
   resetPressed: false, prevStagePressed: false, nextStagePressed: false });
 
 export async function createCampaignEngine({ onEvent = () => {} } = {}) {

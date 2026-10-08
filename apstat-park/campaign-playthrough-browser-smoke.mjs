@@ -44,7 +44,7 @@ try {
     engine.setViewWidth(1600);
     // campaign-engine decodeInput bits: left 1, right 2, up 4, down 8, jump 16, jumpPressed 32.
     const bits = input => (input.left ? 1 : 0) | (input.right ? 2 : 0) | (input.up ? 4 : 0) | (input.down ? 8 : 0)
-      | (input.jump ? 16 : 0) | (input.jumpPressed ? 32 : 0);
+      | (input.jump ? 16 : 0) | (input.jumpPressed ? 32 : 0) | (input.upPressed ? 512 : 0);
     const shots = [];
     const snap = new Set(['key', 'both on lift A', 'the wall passes over lift A', 'hop lift A back up', 'both on lift B', 'both enter']);
     const outcome = playStage14({ runtime: engine.runtime, advance: inputs => engine.step(inputs.map(bits)),

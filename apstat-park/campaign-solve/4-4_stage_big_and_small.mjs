@@ -12,7 +12,7 @@
 // cat 1 walks right until it touches the Gate; cat 0 runs to the head's east edge and jumps holding right: its head
 // grazes the wall bottom at 220 on the way up and it slides through the slot onto the shelf. Cat 0 jumps under the
 // Key (x 1824) to take it, pushes the PushBox east off the shelf into the shaft (Switch pressed, Gate sinks), drops
-// onto the box, opens the door and enters, then steps east out of the way; big cat 1 (147.2 tall, clearance under
+// onto the box, opens the door and enters (hidden and bodiless from then on); big cat 1 (147.2 tall, clearance under
 // the shelf 154) walks under the shelf and enters.
 export default {
   party: 2,
@@ -51,11 +51,10 @@ export default {
     const box = game.pushBoxes[0];
     api.until(() => box.rect.x >= 2160, [{ right: true }, {}], 200, 'cat 0 could not push the PushBox off the shelf');
     api.until(() => game.switches[0].pressed, [], 120, 'the PushBox did not press the shaft Switch');
-    // Drop onto the box (top flush with the floor), open the door, enter, step aside.
+    // Drop onto the box (top flush with the floor), open the door, enter (an entered cat is bodiless: no step aside).
     api.until(() => rider.rect.x > 2160, [{ right: true }, {}], 60, 'cat 0 did not step off the shelf into the shaft');
     api.land(0);
     api.enterOne(0);
-    api.walkTo(0, 1960, { stall: 30 });
     // The big cat walks under the shelf once the Gate has sunk, and enters.
     api.until(() => game.gates[0].rect.y >= 431.9, [], 200, 'the Gate did not sink');
     api.enterOne(1);

@@ -139,8 +139,10 @@ export function playStage14({ runtime: game, advance, cleared, onPhase = () => {
   steps.push(() => until(() => goal.opened, () => cats.map((c) => (c === holder()
     ? { ...walk(c, 2616), up: Math.abs(cx(c) - 2616) < 6 }
     : walk(c, cx(c) > cx(holder()) ? 2700 : 2530))), 300, 'deliver the key'));
-  // Both enter: each walks into the door sensor (x 2592..2640) and holds UP.
-  steps.push(() => until(() => !!stats.cleared, () => cats.map((c) => ({ ...walk(c, 2616, 14), up: true })), 300, 'both enter'));
+  // Both enter: each walks into the door sensor (x 2592..2640) and taps UP (entry is an UP press edge,
+  // goal-enter-native); an entered cat presses nothing more (an UP press after 1 s would bring it back out).
+  steps.push(() => until(() => !!stats.cleared, () => cats.map((c) => (game.goalClearedPlayers.has(c)
+    ? {} : { ...walk(c, 2616, 14), up: frame % 2 === 0, upPressed: frame % 2 === 0 })), 300, 'both enter'));
   const ok = steps.every((s) => s());
   return { cleared: ok && cleared(), frames: frame, failedPhase, state: {
     cats: cats.map((c) => [Math.round(c.rect.x), Math.round(c.rect.y)]), wall: wall.rect.x, liftA: liftA.rect.y, liftB: liftB.rect.y } };
