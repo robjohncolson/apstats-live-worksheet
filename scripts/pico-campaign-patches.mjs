@@ -145,6 +145,40 @@ export const CAMPAIGN_PATCHES = [{
     'FUN_7ff72bb774a0 common tail -> setParams FUN_7ff72bb67620: if p0 is numeric and (int)p0 == 1, vtable +0xa8 = FUN_7ff72bae78f0 makes scale.x negative (the cat spawns facing left)',
     'FUN_7ff72bb774a0: slot = table(+0xc0)[counter(+0xb8) % length(+0xf0)], the counter = player rows spawned so far in row order; FUN_7ff72bb72960 fills the table with 0..numPlayers-1 (shuffled only when enableShufflePlayer); the row label is never read'],
   behavior: 'Every stage: a cat\'s body is the native 32 x 46 with its bottom 1 above the row point (x-16..x+16, y-47..y-1); it was 26 x 34 with its bottom 2 below it. The drawn cat is unchanged relative to the row point (64 x 62, bottom-centred on it, as native). The browser-only 3-unit floor-rest inset in the tile sweep is removed: it existed only because the old body started 2 units inside the floor, and the new body never starts inside one. A Player-family row whose p0 is 1 spawns facing left (the port also restores that facing on respawn: native respawn facing not traced). Stage player rows bind input slot and colour by row order (slot-table entry k for the k-th spawned row), not by label; optional teacher cats keep their own slot. Adapters keyed to the old body follow it: the key-carry actor point (body bottom + 1) and the BreakoutBall native-contact offset (now 0). Not changed: the jump/gravity integrator and the ScaleSwitch scaling rule.',
+}, {
+  // Fidelity audit 2026-10-07 batch 2 (Top 10 #2; audit-48 F-goal-key-warp section 1).
+  id: 'goal-native-open-and-door',
+  files: ['src/engine/actors/Goal.ts', 'src/engine/GameRuntime.ts'],
+  evidence: ['FUN_7ff72bb52c20 (Goal ctor): view {-32, -64, 64, 64} (DAT_7ff72bcbad80/84, DAT_7ff72bc7d1b8, DAT_7ff72bcbad90) from atlas (96,512,48,48), drawn at 4/3; open frame (96,576,48,48) (FUN_7ff72bb52ec0)',
+    'FUN_7ff72bb53000 (slot 12): sensor DAT_7ff72bcbada0 = {-24, -32, 48, 32}, category 10; a numeric p0 raises its top: y = -32 - p0, h = 32 + p0',
+    'FUN_7ff72bb531d0 (contact): the Goal opens (FUN_7ff72bb52ec0) only on a category-8 body (Key) touching its sensor, on message 9 (FUN_7ff72bb53190) or on scene state 0x1a; it never opens by itself',
+    'No campaign row sends message 9 to a Goal (no row targets "Goal"). 9-1 / 9-4: LaserKeyBox / BallBox vtable slot 6 (FUN_7ff72bb54780 / FUN_7ff72bb53ff0) allocates an ordinary Key (FUN_7ff72bb64f20(key, 0)) into +0x400; breaking the box (FUN_7ff72bb54940: 3 category-5 hits / FUN_7ff72bb54330: a ball answering command 0xb within 5.0) puts that Key at (box x, box y - 30) (DAT_7ff72bcb4ee8) and adds it to the scene (FUN_7ff72bb54d60); the Key carried into the door opens it'],
+  behavior: 'Every stage: a Goal starts closed and opens only when a Key is delivered (the desk keeps UP for delivery, authored-switch-release-and-keyed-goal-entry); it no longer opens at frame 0 on stages with no Key row. The door is the native 64 x 64 (48 x 48 frame at 4/3) with its bottom on the row point (was 96 x 96 sunk 30 below it), and the sensor is {x-24, y-32-p0, 48, 32+p0} (was {x-20, y-30, 40, 60}). KeyGoal is a different class and is unchanged. Consequence: 8-2 / 8-4 (BreakoutKey) and 9-1 / 9-4 (the Key inside the LaserKeyBox / BallBox) cannot be cleared until those openers are implemented (batches 21 / 22).',
+}, {
+  // Fidelity audit 2026-10-07 batches 3 + 4 (Top 10 #8; audit-48 A-geometry sections 1-3).
+  id: 'rect-party-terms',
+  files: ['src/engine/actors/StaticRect.ts', 'src/engine/actors/DarknessRect.ts', 'src/engine/actors/SwitchRect.ts', 'src/engine/GameRuntime.ts'],
+  evidence: ['FUN_7ff72bb72ae0 Rect / InvisibleRect / DarknessRect branch 0x7ff72bb76872..0x7ff72bb7696b: k = (u32)(party - 2) (0x7ff72bb7687f add ebx,-2); W = p0 + p2 k (0x7ff72bb768bb..c9); H = p1 + p3 k (0x7ff72bb768d7..e5); if the param count > 4 (0x7ff72bb768ea cmp [r12+0x1c],4) origin += (p4 k, p5 k) (FUN_7ff72bb93620 on rsp+0x48); if W < 0 origin.x += W, W = -W; rect = FUN_7ff72bb77c10(0, -H, W, H)',
+    'DarknessRect: same branch and ctor FUN_7ff72bb5b820 (+0x6e0 = 1 only changes command 0x2c)',
+    'SwitchRect branch 0x7ff72bb7633f: W = p0, H = p1 (no party terms), the same negative-W flip, rect FUN_7ff72bb77c10(0, -H, W, H)',
+    'Colour: FUN_7ff72bb5b820 (Rect) and FUN_7ff72bb5bcb0 (SwitchRect) build the same 9-slice from the same UV table DAT_7ff72bcbbdf0..DAT_7ff72bcbbe60 (atlas (0..47, 528..575), solid #ff864d)'],
+  behavior: 'Every stage: a literal Rect / DarknessRect is W = p0 + p2 k wide, H = p1 + p3 k tall, shifted by (p4 k, p5 k) when the row has more than 4 params, k = student party - 2 (clamped at 0; native wraps unsigned for a party of 1), left-bottom anchored (was: p0 x p1 only). DarknessRect and SwitchRect use the same left-bottom anchor (were centred) and the stage orange (were black / translucent cyan). Zero sizes follow native (no 32 default for Rects). 1-1 keeps its campaign-jump01.mjs override.',
+}, {
+  // Fidelity audit 2026-10-07 batch 5 (Top 10 #7; audit-48 F-goal-key-warp section 2).
+  id: 'key-party-offset',
+  files: ['src/engine/GameRuntime.ts'],
+  evidence: ['FUN_7ff72bb72ae0 Key branch 0x7ff72bb7450a..0x7ff72bb7455f: int p0 -> xmm6, int p1 -> xmm1 (FUN_7ff72bb78470), vec = (p1, p0) (FUN_7ff72bb930e0), FUN_7ff72bb651a0 writes origin + ((N - 2) p1, 0.8 N p0) back to the factory origin rsp+0x48',
+    'FUN_7ff72bb651a0: ((float)N - DAT_7ff72bcff5c0 (2.0)) * a, (float)N * DAT_7ff72bcb5530 (0.8) * b; N = DAT_7ff72c629fa8+0xcc08 (the configured player count)'],
+  behavior: 'Every stage: a Key row spawns at x + (n - 2) p1, y + 0.8 n p0 (n = the student party; optional teacher cats never move it); its home position (where a dropped key returns) is that moved point. Was: the row point at every party size.',
+}, {
+  // Fidelity audit 2026-10-07 batch 8 anchors (Top 10 #10; audit-48 B-boxes sections 3-5).
+  id: 'bottom-anchored-boxes',
+  files: ['src/engine/actors/FallBox.ts', 'src/engine/GameRuntime.ts'],
+  evidence: ['FallBox: FUN_7ff72bb42900 (slot 12) rect = {-p0/2, -p1, p0, p1} (bottom-centre) -> FUN_7ff72bb42d90; view 9-slice from atlas (144..191, 640..687) tinted with palette index 9 (FUN_7ff72baea070(9) = DAT_7ff72c62a040[9] = 0xffffffff)',
+    'ColorBox: shared block 0x7ff72bb76d9d builds {-w/2, -h, w, h} with w = p1, h = p2 (default 32) for FUN_7ff72bb3b350; ForceColorBox branch 0x7ff72bb73c9b builds the same rect for FUN_7ff72bb3b490',
+    'ForceColorBox has no recolour rule: it shares the ColorBox vtable (PTR_LAB_7ff72bcb7c88); the only callers of the player recolour FUN_7ff72bb67670 are FUN_7ff72bb688c0 (own slot), FUN_7ff72bb68a50 (network packet), FUN_7ff72bb6a160 (online slot reassignment) and FUN_7ff72bb6f0e0 (MultiPlayer relay)',
+    'The FallBox atlas region is a channel mask (red fill, blue outline) that the native draw remaps; the remap is not decoded, so the grey look stays'],
+  behavior: 'Every stage: FallBox, ColorBox and ForceColorBox stand bottom-centred on their row point (were centred on it, half their height too low). ForceColorBox no longer recolours a cat that overlaps it (invented; the warp-gun colour of the box is unchanged). Not changed here: FallBox art (grey), its 2-unit body inset, ColorBox colour / push rules (batch 3).',
 }];
 
 // Fail the build if upstream code changes: never silently skip a correction.
@@ -281,6 +315,18 @@ export function patchCampaignSource(file, source) {
     const sprite = this.view.children[0];
     const texture = frameTexture(opened ? 'door_black' : 'door_closed');
     if (sprite instanceof Sprite && texture) sprite.texture = texture;
+  }
+  /** goal-native-open-and-door: FUN_7ff72bb52c20 view {-32, -64, 64, 64} (the 48 x 48 frame at 4/3) with its
+   *  bottom on the row point; FUN_7ff72bb53000 sensor {-24, -32 - p0, 48, 32 + p0}. */
+  applyNativeDoor(sensorExtraHeight: number): void {
+    const x = this.view.x;
+    const y = this.view.y;
+    Object.assign(this.rect, { x: x - 24, y: y - 32 - sensorExtraHeight, width: 48, height: 32 + sensorExtraHeight });
+    const sprite = this.view.children[0];
+    if (sprite instanceof Sprite) {
+      sprite.scale.set(64 / 48);
+      sprite.y = 0;
+    }
   }`, file);
     return replaceOnce(source, "const texture = frameTexture('door_black');", "const texture = frameTexture('door_closed');", file);
   }
@@ -372,7 +418,80 @@ export function getRectLeftBottomRect(spawn: ActorSpawnDef): Rect {
     height: absHeight,
   };
 }
+
+/** rect-party-terms: FUN_7ff72bb72ae0 Rect / DarknessRect branch (0x7ff72bb76872..0x7ff72bb7696b). Params read as
+ *  FUN_7ff72bb389b0 does (absent or non-number = 0). k = party - 2; W = p0 + p2 k, H = p1 + p3 k; with more than 4
+ *  params the origin moves by (p4 k, p5 k); a negative W moves the origin left by |W|; local rect {0, -H, W, H}.
+ *  partyTerms = false is the SwitchRect branch (0x7ff72bb7633f: W = p0, H = p1 only). */
+export function getNativeRectRect(spawn: ActorSpawnDef, partyCount: number, partyTerms = true): Rect {
+  const params = spawn.raw.slice(6);
+  const param = (index: number): number => {
+    const value = params[index];
+    return typeof value === 'number' && Number.isFinite(value) ? value : 0;
+  };
+  const k = partyTerms ? Math.max(0, partyCount - 2) : 0;
+  let width = param(0) + param(2) * k;
+  const height = param(1) + param(3) * k;
+  let x = spawn.x;
+  let y = spawn.y;
+  if (partyTerms && params.length > 4) {
+    x += param(4) * k;
+    y += param(5) * k;
+  }
+  if (width < 0) {
+    x += width;
+    width = -width;
+  }
+  return { x, y: y - height, width, height };
+}
+
+/** rect-party-terms: FUN_7ff72bb5b820 / FUN_7ff72bb5bcb0 draw the same orange 9-slice (UV table DAT_7ff72bcbbdf0..). */
+export function drawNativeRectSlab(view: Container, rect: Rect, originX: number, originY: number): void {
+  const g = new Graphics();
+  g.lineStyle(0, 0, 0);
+  g.beginFill(0xff864d, 1);
+  g.drawRoundedRect(rect.x - originX, rect.y - originY, rect.width, rect.height, Math.round(Math.min(rect.width, rect.height) * 0.28));
+  g.endFill();
+  view.addChild(g);
+}
 `;
+  }
+  if (file === 'src/engine/actors/DarknessRect.ts') {
+    // rect-party-terms: native left-bottom rect with party terms (same branch as Rect), stage orange.
+    source = `import { drawNativeRectSlab } from './StaticRect';
+` + source;
+    source = replaceOnce(source, `  constructor(readonly spawn: ActorSpawnDef) {
+    this.params = parseDarknessRectParamsFromSpawn(spawn);
+    this.rect = {`,
+      `  constructor(readonly spawn: ActorSpawnDef, nativeRect?: Rect) {
+    this.params = parseDarknessRectParamsFromSpawn(spawn);
+    this.rect = nativeRect ?? {`, file);
+    return replaceOnce(source, `    this.view.alpha = 0.72;
+`, `    this.view.alpha = 0.72;
+    if (nativeRect) {
+      this.view.alpha = 1;
+      drawNativeRectSlab(this.view, nativeRect, spawn.x, spawn.y);
+      return;
+    }
+`, file);
+  }
+  if (file === 'src/engine/actors/SwitchRect.ts') {
+    // rect-party-terms: SwitchRect is left-bottom (no party terms) and drawn in the stage orange.
+    source = `import { drawNativeRectSlab, getNativeRectRect } from './StaticRect';
+` + source;
+    return replaceOnce(source, `    this.rect = { x: spawn.x - width / 2, y: spawn.y - height / 2, width, height };
+    this.view.visible = false;
+    const g = new Graphics();`, `    this.rect = getNativeRectRect(spawn, 2, false);
+    this.view.visible = false;
+    if (this.params) {
+      drawNativeRectSlab(this.view, this.rect, spawn.x, spawn.y);
+      return;
+    }
+    const g = new Graphics();`, file);
+  }
+  if (file === 'src/engine/actors/FallBox.ts') {
+    // bottom-anchored-boxes: FUN_7ff72bb42900 rect {-p0/2, -p1, p0, p1} (bottom-centre on the row point).
+    return replaceOnce(source, '      y: spawn.y - size.height / 2,', '      y: spawn.y - size.height,', file);
   }
   if (file === 'src/engine/GameRuntime.ts') {
     // optional-teacher-cats: a leaving helper cat is removed with every retained reference to it.
@@ -1226,6 +1345,65 @@ function createMoveWallState(spawn: ActorSpawnDef): MoveWallState {`, file);
     source = replaceOnce(source, `      : lift.view.y - lift.rect.height / 2;
   }`, `      : lift.view.y + lift.bodyOffsetY;
   }`, file);
+    // goal-native-open-and-door: no Goal opens by itself (FUN_7ff72bb531d0 opens on Key contact / msg 9 / state 0x1a).
+    source = replaceOnce(source, `      if (!goalKeys.length) goal.setOpened(true);
+`, '', file);
+    source = replaceOnce(source, `      const goal = new Goal(spawn.x, spawn.y);
+      this.goals.push(goal);`,
+      `      const goal = new Goal(spawn.x, spawn.y);
+      const sensorExtra = spawn.raw[6];
+      goal.applyNativeDoor(typeof sensorExtra === 'number' && Number.isFinite(sensorExtra) ? sensorExtra : 0);
+      this.goals.push(goal);`, file);
+    // rect-party-terms: Rect / DarknessRect with the party terms; the student party is the native N.
+    source = replaceOnce(source, "import { StaticRect, getRectLeftBottomRect } from './actors/StaticRect';",
+      "import { StaticRect, getRectLeftBottomRect, getNativeRectRect } from './actors/StaticRect';", file);
+    source = replaceOnce(source, '      const staticRect = new StaticRect(spawn, getRectLeftBottomRect(spawn));',
+      '      const staticRect = new StaticRect(spawn, getNativeRectRect(spawn, this.nativePartyCount()));', file);
+    source = replaceOnce(source, '      const darknessRect = new DarknessRect(spawn);',
+      '      const darknessRect = new DarknessRect(spawn, getNativeRectRect(spawn, this.nativePartyCount()));', file);
+    // key-party-offset: FUN_7ff72bb651a0 moves the Key row point by ((N - 2) p1, 0.8 N p0).
+    source = replaceOnce(source, '      const key = new Key(spawn);', `      const n = this.nativePartyCount();
+      const intParam = (index: number): number => {
+        const value = spawn.raw[6 + index];
+        return typeof value === 'number' && Number.isFinite(value) ? Math.trunc(value) : 0;
+      };
+      const key = new Key(spawnMovedTo(spawn,
+        spawn.x + Math.fround((n - 2) * intParam(1)),
+        spawn.y + Math.fround(n * 0.8 * intParam(0))));`, file);
+    // bottom-anchored-boxes: ColorBox / ForceColorBox are bottom-centred natively; the port keeps their centre
+    // in spawn.x / spawn.y, so the row point is converted once here (a copy: the stage row is never mutated).
+    for (const name of ['ColorBox', 'ForceColorBox']) {
+      source = replaceOnce(source, `    ${name}: (spawn) => {
+      const colorBox = new ColorBox(spawn);`,
+        `    ${name}: (spawn) => {
+      const boxHeight = parseColorBoxParamsFromSpawn(spawn)?.height ?? COLOR_BOX_FALLBACK_SIZE;
+      const colorBox = new ColorBox(spawnMovedTo(spawn, spawn.x, spawn.y - boxHeight / 2));`, file);
+    }
+    source = replaceOnce(source, "import { COLOR_BOX_FALLBACK_SIZE, ColorBox } from './actors/ColorBox';",
+      "import { COLOR_BOX_FALLBACK_SIZE, ColorBox, parseColorBoxParamsFromSpawn } from './actors/ColorBox';", file);
+    // bottom-anchored-boxes: native ForceColorBox never recolours a cat (no caller of FUN_7ff72bb67670).
+    source = replaceOnce(source, '      this.applyForceColorBoxes();', '      // bottom-anchored-boxes: no native recolour-on-overlap (applyForceColorBoxes retired).', file);
+    // Shared helpers for the batch-2 entries.
+    source = replaceOnce(source, '  removeRuntimePlayer(player: Player): void {', `  /** The native configured player count N (DAT_7ff72c629fa8+0xcc08) = the student party; teachers never count. */
+  private nativePartyCount(): number {
+    return this.partySize ?? Math.max(2, this.activePlayerCount);
+  }
+
+  removeRuntimePlayer(player: Player): void {`, file);
+    source += `
+/** A copy of a stage row at a new point; raw x / y follow, because param parsers find their params after them. */
+function spawnMovedTo(spawn: ActorSpawnDef, x: number, y: number): ActorSpawnDef {
+  const raw = [...spawn.raw];
+  for (let i = 0; i < raw.length - 1; i += 1) {
+    if (raw[i] === spawn.x && raw[i + 1] === spawn.y) {
+      raw[i] = x;
+      raw[i + 1] = y;
+      break;
+    }
+  }
+  return { ...spawn, raw, x, y };
+}
+`;
     return source;
   }
   // Select by identity: prepending another patch must not disable warp recovery.

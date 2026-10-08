@@ -49,12 +49,18 @@ function load(name, partySize = 2, seed = 1) {
 }
 const literalRects = (game) => game.staticRects.filter((block) => block.spawn.actorName === 'Rect');
 const overlaps = (a, b) => a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
-// The native rectangle from the Lua row: params follow the x, y pair.
-function nativeRect(spawn) {
-  const at = spawn.raw.findIndex((value, i) => value === spawn.x && spawn.raw[i + 1] === spawn.y);
-  const w = Number(spawn.raw[at + 2]) || 32, h = Math.abs(Number(spawn.raw[at + 3]) || 32);
-  return { x: w < 0 ? spawn.x + w : spawn.x, y: spawn.y - h, width: Math.abs(w), height: h };
+// The native rectangle from the Lua row (rect-party-terms, FUN_7ff72bb72ae0 0x7ff72bb76872..0x7ff72bb7696b):
+// k = party - 2, W = p0 + p2 k, H = p1 + p3 k, origin += (p4 k, p5 k) when there are more than 4 params,
+// a negative W moves the origin left, rect {0, -H, W, H} at the origin. At party 2 (k = 0) this is p0 x p1.
+function nativeRect(spawn, party = 2) {
+  const p = spawn.raw.slice(6), at = (i) => (typeof p[i] === 'number' ? p[i] : 0), k = party - 2;
+  let w = at(0) + at(2) * k, x = spawn.x, y = spawn.y;
+  const h = at(1) + at(3) * k;
+  if (p.length > 4) { x += at(4) * k; y += at(5) * k; }
+  if (w < 0) { x += w; w = -w; }
+  return { x, y: y - h, width: w, height: h };
 }
+const rowBottom = (spawn, party) => nativeRect(spawn, party).y + nativeRect(spawn, party).height;
 
 test('1-3: the square at (1056, 368) 48x48 sits at y 320..368, leaving a 64-unit gap above the floor at 432', () => {
   const game = load('stage_jump02');
@@ -98,7 +104,7 @@ test('1-3: the stairs\' negative-width Rects run left from their spawn', () => {
 // chip*(fall_block_y-2) and row 37 Key 10 units above its base, inside it under either anchor); and the
 // left-bottom anchor buries no more Rect tops than the old centred rect did.
 const KEY_IN_BLOCK = new Set(['stage_fall01:1512,278']);
-test('every stage with Rects (19): native rect, bottom = Lua y, clear of player spawns, keys and goals', () => {
+test('every stage with Rects (19), parties 2/4/8: native rect with party terms, clear of player spawns, keys and goals', () => {
   const names = new Set();
   for (const entry of runtime.stages) for (const data of [entry.data, entry.largeParty?.data].filter(Boolean)) {
     if (data.createTable.some((row) => row.actorName === 'Rect')) names.add(data.name);
@@ -110,21 +116,24 @@ test('every stage with Rects (19): native rect, bottom = Lua y, clear of player 
   const problems = [];
   let checked = 0, buriedNew = 0, buriedOld = 0;
   for (const name of names) {
-    for (const party of [2, 8]) {
+    for (const party of [2, 4, 8]) {
       const game = load(name, party);
-      const points = definition(name).createTable.filter((row) => /^(Key|Goal)$/.test(row.actorName));
+      // Keys at their party-moved spawn (key-party-offset): the centre of the Key's 32 x 56 rect.
+      const points = [...game.keys.map((key) => ({ actorName: 'Key', x: key.rect.x + 16, y: key.rect.y + 28, row: key.spawn })),
+        ...definition(name).createTable.filter((row) => row.actorName === 'Goal')];
       for (const { spawn, rect } of literalRects(game)) {
         const where = name + ' x' + party + ' Rect@' + spawn.x + ',' + spawn.y;
         checked += 1;
-        assert.deepEqual(rect, nativeRect(spawn), where);
-        assert.equal(rect.y + rect.height, spawn.y, where + ' bottom = Lua y');
+        assert.deepEqual(rect, nativeRect(spawn, party), where);
+        assert.equal(rect.y + rect.height, rowBottom(spawn, party), where + ' bottom = Lua y + p5 k');
         // A cat standing on a Rect touches its top (the port's player body reaches 2 units below the feet).
         const deep = { x: rect.x + 3, y: rect.y + 3, width: rect.width - 6, height: rect.height - 6 };
         for (const player of game.players) if (overlaps(deep, player.rect)) problems.push(where + ' overlaps a player spawn');
         for (const point of points) {
-          if (inside(rect, point.x, point.y) && !KEY_IN_BLOCK.has(name + ':' + point.x + ',' + point.y)) problems.push(where + ' contains the ' + point.actorName + ' at ' + point.x + ',' + point.y);
+          const row = point.row ?? point;
+          if (inside(rect, point.x, point.y) && !KEY_IN_BLOCK.has(name + ':' + row.x + ',' + row.y)) problems.push(where + ' contains the ' + point.actorName + ' at ' + point.x + ',' + point.y);
         }
-        buriedNew += buriedTop(game, rect); buriedOld += buriedTop(game, centred(spawn));
+        if (party === 2) { buriedNew += buriedTop(game, rect); buriedOld += buriedTop(game, centred(spawn)); }
       }
     }
   }

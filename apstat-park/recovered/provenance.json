@@ -244,6 +244,61 @@
         "FUN_7ff72bb774a0: slot = table(+0xc0)[counter(+0xb8) % length(+0xf0)], the counter = player rows spawned so far in row order; FUN_7ff72bb72960 fills the table with 0..numPlayers-1 (shuffled only when enableShufflePlayer); the row label is never read"
       ],
       "behavior": "Every stage: a cat's body is the native 32 x 46 with its bottom 1 above the row point (x-16..x+16, y-47..y-1); it was 26 x 34 with its bottom 2 below it. The drawn cat is unchanged relative to the row point (64 x 62, bottom-centred on it, as native). The browser-only 3-unit floor-rest inset in the tile sweep is removed: it existed only because the old body started 2 units inside the floor, and the new body never starts inside one. A Player-family row whose p0 is 1 spawns facing left (the port also restores that facing on respawn: native respawn facing not traced). Stage player rows bind input slot and colour by row order (slot-table entry k for the k-th spawned row), not by label; optional teacher cats keep their own slot. Adapters keyed to the old body follow it: the key-carry actor point (body bottom + 1) and the BreakoutBall native-contact offset (now 0). Not changed: the jump/gravity integrator and the ScaleSwitch scaling rule."
+    },
+    {
+      "id": "goal-native-open-and-door",
+      "files": [
+        "src/engine/actors/Goal.ts",
+        "src/engine/GameRuntime.ts"
+      ],
+      "evidence": [
+        "FUN_7ff72bb52c20 (Goal ctor): view {-32, -64, 64, 64} (DAT_7ff72bcbad80/84, DAT_7ff72bc7d1b8, DAT_7ff72bcbad90) from atlas (96,512,48,48), drawn at 4/3; open frame (96,576,48,48) (FUN_7ff72bb52ec0)",
+        "FUN_7ff72bb53000 (slot 12): sensor DAT_7ff72bcbada0 = {-24, -32, 48, 32}, category 10; a numeric p0 raises its top: y = -32 - p0, h = 32 + p0",
+        "FUN_7ff72bb531d0 (contact): the Goal opens (FUN_7ff72bb52ec0) only on a category-8 body (Key) touching its sensor, on message 9 (FUN_7ff72bb53190) or on scene state 0x1a; it never opens by itself",
+        "No campaign row sends message 9 to a Goal (no row targets \"Goal\"). 9-1 / 9-4: LaserKeyBox / BallBox vtable slot 6 (FUN_7ff72bb54780 / FUN_7ff72bb53ff0) allocates an ordinary Key (FUN_7ff72bb64f20(key, 0)) into +0x400; breaking the box (FUN_7ff72bb54940: 3 category-5 hits / FUN_7ff72bb54330: a ball answering command 0xb within 5.0) puts that Key at (box x, box y - 30) (DAT_7ff72bcb4ee8) and adds it to the scene (FUN_7ff72bb54d60); the Key carried into the door opens it"
+      ],
+      "behavior": "Every stage: a Goal starts closed and opens only when a Key is delivered (the desk keeps UP for delivery, authored-switch-release-and-keyed-goal-entry); it no longer opens at frame 0 on stages with no Key row. The door is the native 64 x 64 (48 x 48 frame at 4/3) with its bottom on the row point (was 96 x 96 sunk 30 below it), and the sensor is {x-24, y-32-p0, 48, 32+p0} (was {x-20, y-30, 40, 60}). KeyGoal is a different class and is unchanged. Consequence: 8-2 / 8-4 (BreakoutKey) and 9-1 / 9-4 (the Key inside the LaserKeyBox / BallBox) cannot be cleared until those openers are implemented (batches 21 / 22)."
+    },
+    {
+      "id": "rect-party-terms",
+      "files": [
+        "src/engine/actors/StaticRect.ts",
+        "src/engine/actors/DarknessRect.ts",
+        "src/engine/actors/SwitchRect.ts",
+        "src/engine/GameRuntime.ts"
+      ],
+      "evidence": [
+        "FUN_7ff72bb72ae0 Rect / InvisibleRect / DarknessRect branch 0x7ff72bb76872..0x7ff72bb7696b: k = (u32)(party - 2) (0x7ff72bb7687f add ebx,-2); W = p0 + p2 k (0x7ff72bb768bb..c9); H = p1 + p3 k (0x7ff72bb768d7..e5); if the param count > 4 (0x7ff72bb768ea cmp [r12+0x1c],4) origin += (p4 k, p5 k) (FUN_7ff72bb93620 on rsp+0x48); if W < 0 origin.x += W, W = -W; rect = FUN_7ff72bb77c10(0, -H, W, H)",
+        "DarknessRect: same branch and ctor FUN_7ff72bb5b820 (+0x6e0 = 1 only changes command 0x2c)",
+        "SwitchRect branch 0x7ff72bb7633f: W = p0, H = p1 (no party terms), the same negative-W flip, rect FUN_7ff72bb77c10(0, -H, W, H)",
+        "Colour: FUN_7ff72bb5b820 (Rect) and FUN_7ff72bb5bcb0 (SwitchRect) build the same 9-slice from the same UV table DAT_7ff72bcbbdf0..DAT_7ff72bcbbe60 (atlas (0..47, 528..575), solid #ff864d)"
+      ],
+      "behavior": "Every stage: a literal Rect / DarknessRect is W = p0 + p2 k wide, H = p1 + p3 k tall, shifted by (p4 k, p5 k) when the row has more than 4 params, k = student party - 2 (clamped at 0; native wraps unsigned for a party of 1), left-bottom anchored (was: p0 x p1 only). DarknessRect and SwitchRect use the same left-bottom anchor (were centred) and the stage orange (were black / translucent cyan). Zero sizes follow native (no 32 default for Rects). 1-1 keeps its campaign-jump01.mjs override."
+    },
+    {
+      "id": "key-party-offset",
+      "files": [
+        "src/engine/GameRuntime.ts"
+      ],
+      "evidence": [
+        "FUN_7ff72bb72ae0 Key branch 0x7ff72bb7450a..0x7ff72bb7455f: int p0 -> xmm6, int p1 -> xmm1 (FUN_7ff72bb78470), vec = (p1, p0) (FUN_7ff72bb930e0), FUN_7ff72bb651a0 writes origin + ((N - 2) p1, 0.8 N p0) back to the factory origin rsp+0x48",
+        "FUN_7ff72bb651a0: ((float)N - DAT_7ff72bcff5c0 (2.0)) * a, (float)N * DAT_7ff72bcb5530 (0.8) * b; N = DAT_7ff72c629fa8+0xcc08 (the configured player count)"
+      ],
+      "behavior": "Every stage: a Key row spawns at x + (n - 2) p1, y + 0.8 n p0 (n = the student party; optional teacher cats never move it); its home position (where a dropped key returns) is that moved point. Was: the row point at every party size."
+    },
+    {
+      "id": "bottom-anchored-boxes",
+      "files": [
+        "src/engine/actors/FallBox.ts",
+        "src/engine/GameRuntime.ts"
+      ],
+      "evidence": [
+        "FallBox: FUN_7ff72bb42900 (slot 12) rect = {-p0/2, -p1, p0, p1} (bottom-centre) -> FUN_7ff72bb42d90; view 9-slice from atlas (144..191, 640..687) tinted with palette index 9 (FUN_7ff72baea070(9) = DAT_7ff72c62a040[9] = 0xffffffff)",
+        "ColorBox: shared block 0x7ff72bb76d9d builds {-w/2, -h, w, h} with w = p1, h = p2 (default 32) for FUN_7ff72bb3b350; ForceColorBox branch 0x7ff72bb73c9b builds the same rect for FUN_7ff72bb3b490",
+        "ForceColorBox has no recolour rule: it shares the ColorBox vtable (PTR_LAB_7ff72bcb7c88); the only callers of the player recolour FUN_7ff72bb67670 are FUN_7ff72bb688c0 (own slot), FUN_7ff72bb68a50 (network packet), FUN_7ff72bb6a160 (online slot reassignment) and FUN_7ff72bb6f0e0 (MultiPlayer relay)",
+        "The FallBox atlas region is a channel mask (red fill, blue outline) that the native draw remaps; the remap is not decoded, so the grey look stays"
+      ],
+      "behavior": "Every stage: FallBox, ColorBox and ForceColorBox stand bottom-centred on their row point (were centred on it, half their height too low). ForceColorBox no longer recolours a cat that overlaps it (invented; the warp-gun colour of the box is unchanged). Not changed here: FallBox art (grey), its 2-unit body inset, ColorBox colour / push rules (batch 3)."
     }
   ],
   "hashes": {
