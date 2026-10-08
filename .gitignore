@@ -131,3 +131,6 @@ u1_poster/tex/*.out
 u1_poster/tex/*.pdf
 u1_poster/tex/*.stdout
 u1_poster/tex/*.synctex.gz
+
+# Unit 1 poster grouping page carries STUDENT NAMES: local only, never commit
+u1_poster/local/
