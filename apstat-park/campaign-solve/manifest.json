@@ -2,8 +2,8 @@
   "note": "Written by re-running every campaign-solve solver (party 2 unless a row says otherwise). campaign-solvability.test.mjs asserts the SOLVED rows.",
   "recorded": "2026-10-08",
   "counts": {
-    "SOLVED": 39,
-    "SKIPPED-UNIMPLEMENTED": 9
+    "SOLVED": 42,
+    "SKIPPED-UNIMPLEMENTED": 6
   },
   "stages": [
     {
@@ -266,17 +266,17 @@
       "tag": "9-1",
       "source": "stage_laser_ball01",
       "title": "BALL PARK",
-      "status": "SKIPPED-UNIMPLEMENTED",
+      "status": "SOLVED",
       "party": 2,
-      "reason": "LaserBallPitcher (audit: Misread -- fires up not left, speed as seconds, no cannon; batch 22 ball-pitchers) and LaserKeyBox (audit: Misread+unimpl -- waits for an absent Key instead of breaking after 3 hits)."
+      "frames": 755
     },
     {
       "tag": "9-2",
       "source": "stage_seesaw01",
       "title": "BALL PARK",
-      "status": "SKIPPED-UNIMPLEMENTED",
+      "status": "SOLVED",
       "party": 2,
-      "reason": "SeesawParent (audit: Misread -- p1/p2 become a 365x915 wall), Balance (audit: Unimpl), PhysicsSwitch (audit: Misread+unimpl) and PhysicsBallPitcher (audit: motion); batches 22 ball-pitchers / 23 seesaw-balance."
+      "frames": 1258
     },
     {
       "tag": "9-3",
@@ -290,9 +290,9 @@
       "tag": "9-4",
       "source": "stage_bound01",
       "title": "BALL PARK",
-      "status": "SKIPPED-UNIMPLEMENTED",
+      "status": "SOLVED",
       "party": 2,
-      "reason": "BoundBallPitcher (audit: Misread -- jump-controlled instead of a launched bouncing ball; batch 22 ball-pitchers) and BallBox (audit: Misread -- 44x60 vs 48x48)."
+      "frames": 1110
     },
     {
       "tag": "10-1",

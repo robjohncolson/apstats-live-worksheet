@@ -484,6 +484,68 @@ export const CAMPAIGN_PATCHES = [{
   files: ['src/engine/GameRuntime.ts'],
   evidence: ['Native rebuilds the stage (and its map grid from the Lua table, FUN_7ff72bc27dc0) on every load and every fail restart, so chips a ball destroyed (FUN_7ff72bae7be0) are back on the next attempt; the shared stage data is never written'],
   behavior: 'Every stage: each load (and each breakout restart, which reloads) plays on its own copy of the map chip table; breaking chips (bricks, breakable chips) changes only that copy. Was: the runtime wrote into the shared stage table, so bricks broken on one attempt stayed gone on the restart and on every later load of that stage in the same session (a second 9-3 run stalled at frame 171).',
+}, {
+  // Batch 12 (decoded spec b12/spec-9-4.md): 9-4 BALL PARK, the BoundBall cannon.
+  id: 'bound-ball-pitcher',
+  files: ['src/engine/GameRuntime.ts', 'src/engine/sprites.ts'],
+  evidence: ['BoundBallPitcher factory 0x7ff72bb74b10 mode 0 -> ctor FUN_7ff72bb37d70: solid cannon body FUN_7ff72bc16bf0(this, DAT_7ff72bcb7320 = {-40, -18, 54, 40}, 3), category 4; ctor speed 5.0 (+0x3f0 / +0x3f4); params FUN_7ff72bb37f30: speed = p[N-1] * 0.1 (DAT_7ff72bc7d464), index N-1 (0x7ff72bb38064..82 via FUN_7ff72bb389b0); direction (sin a, -cos a) (FUN_7ff72bb933e0): 270 = left',
+    'Update FUN_7ff72bb38130: the first update is skipped (+0x3ec); one child at a time, no timer: a gone child is cleared that tick and the next update spawns; spawn FUN_7ff72bb383e0 at pos + dir * 20 (DAT_7ff72bc7d1b0), velocity dir * speed, held for 0.5 s (DAT_7ff72bcff4fc)',
+    'BoundBall ctor FUN_7ff72bb36d10 (setup FUN_7ff72bb36e40, update FUN_7ff72bb36ee0, msg FUN_7ff72bb37250, contact slot 31 FUN_7ff72bb37500): circle r 12 (DAT_7ff72c62add8), category 5, gravity +0x12c 0.65 per tick, mass +0x148 50 (cats 100 DAT_7ff72bcc7dc4, default 1.0 FUN_7ff72bc155e0); view 24 x 24 atlas (272, 496, 12, 12)',
+    'Contact step 1: |vy| = sqrt(vy_prev^2 + 2 * 0.65 * (y - y_prev)) (DAT_7ff72bcb69bc, prev state +0x100 / +0x110, FUN_7ff72bc16120), sign kept; map chips: v\' = v - (1 + e)(v.n)n, e 1.0 (DAT_7ff72bcff538), a normal part < 1.2 (DAT_7ff72bcb7134) -> 0; a top-face landing (n.y == 1) -> 30-frame fade (+0x3f8 = 0x1e), velocity 0 (FUN_7ff72bb37d00), body off',
+    'Actor contact, closing only: v1n\' = ((m1 - e m2) u1 + (e + 1) m2 u2) / (m1 + m2), e 1.2 (DAT_7ff72bcb7134) when N < 5 else 1.0, |v1n\'| < 1.2 -> 0; resting on a category 1 / 5 body with vy\' <= 1.19e-7 (DAT_7ff72bc7d458): +0x3fc++, update kills the ball at 2 (0 when N > 4, FUN_7ff72bb37af0) while |vy| ~ 0; grounded vx *= 0.95 (DAT_7ff72bcb7130) from the 2nd grounded frame (1st when N > 4); cats are never harmed (no avatar command)',
+    'Port (b12 snapshot): 126-133 a 16 px ball under 980 / s^2 with jump -408 / hold 13; 10372-10428 the ball sat at the pitcher and jumped on player 0\'s jump button (native: no player input); 10448-10470 an invented missing-BallBox fade; 10498-10528 an invented side push / support; 1305-1309 a generic DeadBallPitcher (no cannon body, no speed params)'],
+  behavior: '9-4 BALL PARK: the BoundBallPitcher is a solid cannon {x-40, y-18, 54, 40} (cats can stand on it) with the native barrel / base art. Its speed is 0.1 * p[N-1] (party 2: 3.16 per tick, party 4: 3.55; solo 5.0); after one skipped tick it fires one ball at a time from 20 px along its heading (left), held still and visible for 0.5 s, then flying; when that ball is gone the slot is cleared and the next tick fires again. The BoundBall is a circle of radius 12 falling 0.65 per tick per tick with no speed cap; bounces keep their energy (the vy fix). Map chips reflect it elastically (normal parts under 1.2 are dropped); landing on the top face of any chip (floor or ledge) stops it, it fades for 30 frames and is removed. Cats (mass 100), boxes and every other body (mass 1.0) bounce it only while it closes on them: off a still head it comes back at -0.467 of its speed (party 5+: -0.333), a cat jumping up into it adds a lot (10 vs a rising -10: -19.3). Two resting contacts (vy left ~0) on a head or box kill it (party 5+: the first; the native limit 0 is read as "after one resting contact", else a ball would die whenever |vy| passes ~0); on a head vx decays 0.95 per tick from the 2nd grounded frame. Cats are never harmed and never moved by it. Removed: the jump-button ball control, the invented side push and the invented missing-BallBox fade. Approximations: contacts are found by closest point on each chip / body rect at sub-steps of at most 4 px (native: the world sweep); the ball ignores its own cannon (it spawns inside the cannon body; native filtering not traced) and does not push cats.',
+}, {
+  id: 'ball-box',
+  files: ['src/engine/GameRuntime.ts'],
+  evidence: ['BallBox branch 0x7ff72bb7514d -> ctor FUN_7ff72bb53e10 (vtable PTR_FUN_7ff72bcbaf48): view {-24, -64, 48, 64} (DAT_7ff72bcb94c0), solid body {-22, -62, 44, 60} (DAT_7ff72bcb64f0) category 5, top sensor {-4, -66, 8, 10} (DAT_7ff72bcbb170); setup FUN_7ff72bb53ff0 pre-builds an ordinary Key (FUN_7ff72bb64f20) into +0x400',
+    'Update FUN_7ff72bb54060: falls when unsupported, vy 0 grounded; breaking: a 40-frame countdown, alpha fade frames 30..20, then removed (FUN_7ff72bc11650)',
+    'Sensor contact (slot 31 FUN_7ff72bb54330): |other.x - box.x| <= 5 (DAT_7ff72bc7d588) -> message 0xb; a reply > 0 starts the break and places the Key at (box.x, box.y - 30) (DAT_7ff72bcb4ee8); only the BoundBall answers 0xb (FUN_7ff72bb37250: 30-frame fade, velocity (0, 3.0) DAT_7ff72bc7eb00, body off, x = box x, reply 1); the player handler FUN_7ff72bb69440 never handles 0xb',
+    'Port (b12 snapshot): 919-923 / 12441 a centred 48 x 48 NormalBox with no sensor that never broke and held no Key (the Goal could never open)'],
+  behavior: '9-4 BALL PARK: the BallBox is a solid 44 x 60 body standing on its row point ({x-22, y-62}), falling when unsupported (it settles 3 px onto the floor; the fall uses the box-family 0.65 per tick per tick, the BallBox constant is not decoded). A BoundBall touching its 8 x 10 top sensor {x-4, y-66} with its centre within 5 of the box x breaks it: the ball drops into it (velocity (0, 3), fading for 30 frames), the box fades out over its 40-frame break (alpha from frame 30 to 20) and is removed, and an ordinary Key appears at (box x, box y - 30), carried like any key and opening the Goal by the existing key rule. A ball crossing the sensor off-centre (more than 5 away) just bounces off the box. Cats never break it (standing on it does nothing). Was: a centred 48 x 48 NormalBox that never broke and held no Key. The Key is created when the box breaks (native pre-builds it off-scene in +0x400 and adds it then: the same thing on screen).',
+}, {
+  // Batch 12 (decoded spec b12/spec-9-2.md): 9-2 seesaw stage.
+  id: 'seesaw-and-balance',
+  files: ['src/engine/GameRuntime.ts'],
+  evidence: ['Seesaw / SeesawParent ctor FUN_7ff72bb5d420(obj, p0) (SeesawParent FUN_7ff72bb77b30 ignores p1 / p2): plank rect from LAB_7ff72bcbc230[p0] = {-300, -10, 600, 20} / {-300, -10, 450, 20} / {-150, -10, 450, 20} about the pivot (the row point); setup FUN_7ff72bb5d700: one dynamic Box2D box (density 1, friction 1, restitution 0, gravity scale 0), revolute joint limits +-0.1745 rad (DAT_7ff72bcbc478 / DAT_7ff72bcbc470); NO engine collision body (no FUN_7ff72bc16bf0): cats and boxes never touch a plank',
+    'Children with p1 = 1: gear joint ratio -1.0 to the parent (FUN_7ff72bb5d9e0, FUN_7ff72bbe7210, DAT_7ff72bcff6a8) = they copy its angle; SeesawParent update FUN_7ff72bb5da90: angular velocity = (target - angle) / dt, target +0x930 from message 0xc (FUN_7ff72bb5db00); draw FUN_7ff72bb5d870 rotated (angle * 10430.378)',
+    'Balance ctor FUN_7ff72bb313f0(obj, 900.0), setup FUN_7ff72bb31900: two pans, body {-97, -7, 194, 14} (DAT_7ff72c62ada0) solid, at x -/+ p0 * 0.5 (DAT_7ff72bcff4fc); pan update FUN_7ff72bb31050: count FUN_7ff72bc132c0(pan, UP, 1), at most +0x400 px per tick toward +0x3f8 with the move check FUN_7ff72bc16f50 and rider carry FUN_7ff72bc17330',
+    'Balance update FUN_7ff72bb315f0: r = clamp((R - L) / (N * 0.5), -1, 1); amp = sin(0.12217) * 450 = 54.84 (DAT_7ff72bcb6210); |r| > 1.19e-7: targets -r * amp / +r * amp, else 0; speed max(|r|, 0.2) (DAT_7ff72bc7d858), 0.2 when a pan moves against the imbalance; angle = atan2(s * max(|L|, |R|), 450) with s = +1 when R >= 0 and -1 only when R < 0 (0x7ff72bb31809..31826) -> message 0xc to "SeesawParent"',
+    'Physics world 100 px / m (DAT_7ff72bc7d45c), gravity (0, 980) px/s^2 (DAT_7ff72bcc84b0, FUN_7ff72bbe76d0); PhysicsBall ctor FUN_7ff72bb55c30 / setup FUN_7ff72bb55d80: circle r 12 (DAT_7ff72c61f3d8), density 0.1, friction 0.5, restitution 0.2; death FUN_7ff72bb55e40: touching the area floor or ceiling starts a 30-tick countdown (moves 15, still below 15, removed at 0); the pitcher (angle 180 = down, 0.1 * p[N-1]) re-fires through FUN_7ff72bb38130',
+    'PhysicsSwitch: switch type 2, no fixture, latched; each update casts a ray (x, y) -> (x, y - 16) (DAT_7ff72bc7e738) through the Box2D world (FUN_7ff72bbe7770): only balls hit it; a hit sends ("Key", 9) and FUN_7ff72bb65700 shows the hidden Key',
+    'Port (b12 snapshot): seesawFromSpawn 12483-12505 (SeesawParent = a 365 x 915 wall from p1 / p2, children p0 * 48 x 16, no rotation) solid for cats and boxes in every collision list; updateSeesawTilts 8649-8720 (cat-driven tilt, rider snapping); balanceFromSpawn one static 28 x 20 block; the ball a straight line through the planks; physicsSwitchRect pressed by cats / boxes and released; no key.activate(); applyPhysicsAreas an invented 96 px/s slow-fall'],
+  behavior: '9-2: the three planks are rectangles from the p0 shape table about their pivots (SeesawParent 340..790 at y 358, the geared Seesaws 490..940 at 258 and 340..790 at 164), drawn rotated, and are NOT solid for cats or boxes (removed from every collision list; updateSeesawTilts deleted; the cats spawn on the floor strip again instead of inside a 365 x 915 wall). The SeesawParent is driven toward the Balance angle (see seesaw-box2d); the geared children copy it. The Balance is two 194 x 14 pans at x 640 -/+ 450 (y 597..611) that move like lift slabs (the rising-lift chain test, a sinking pan stops on what is under it, riders and their stacks are carried): r = clamp((right - left riders) / (N / 2), -1, 1) (stacked cats count), each pan heads for -/+ r * 54.84 at max(|r|, 0.2) px per tick (0.2 when moving against the imbalance), and the plank angle is atan2(s * max(|left|, |right|), 450), s = +1 when the right pan offset is >= 0 and -1 only below 0: at party 2 one extra cat on a pan gives the full 6.95 deg after ~55 ticks. The planks, the PhysicsArea boundary, the PhysicsBall and the PhysicsSwitch ray are a real Box2D world (seesaw-box2d supersedes this entry\'s batch-12 hand-rolled circle solver). The PhysicsBall lifecycle: touching the area floor or ceiling starts the native 30-tick death (moves 15 ticks, asleep, removed) and the pitcher fires the next ball (one at a time, first tick skipped). The PhysicsSwitch latches the first time a ball body is hit by its 16 px ray and shows the hidden Key; cats and boxes never press it and it never releases. The invented PhysicsArea slow-fall and its blue fill are gone.',
+}, {
+  // Batch 12 (decoded spec b12/spec-9-1.md): 9-1 laser ball.
+  id: 'laser-ball-pitcher',
+  files: ['src/engine/GameRuntime.ts', 'src/engine/sprites.ts'],
+  evidence: ['LaserBallPitcher factory 0x7ff72bb74b72 -> FUN_7ff72bb37d70 mode 1 (+0x3ec = 1: first update skipped; speed +0x3f0 / +0x3f4 = 5.0); cannon body FUN_7ff72bc16bf0(this, DAT_7ff72bcb7320 = {-40, -18, 54, 40}, 3), category 4',
+    'Params FUN_7ff72bb37f30: p0 angle, direction (sin a, -cos a), barrel {-23, -38, 46, 58} (DAT_7ff72bcb7330) atlas (240, 400, 23, 29) (DAT_7ff72bcb7300) rotated a / 180 * 32768; a outside 170..190 also draws the base {-25, -4, 52, 40} (DAT_7ff72bcb7310) atlas (240, 432, 26, 20) (DAT_7ff72bcb72f0); modes 1..3: raw p1 float = speed px/tick; 3+ params: p2 target (+0x660)',
+    'Firing FUN_7ff72bb38130 / FUN_7ff72bb383e0: one ball at a time at pos + dir * 20 (DAT_7ff72bc7d1b0), velocity dir * +0x3f0, 0.5 s spawn delay (DAT_7ff72bcff4fc), a gone child cleared and refired the next update; messages FUN_7ff72bb38210: 0x15 speed *= payload, 0x16 base speed',
+    'Ball FUN_7ff72bb4e470: view {-12, -12, 24, 24} atlas (256, 512, 12, 12), circle r 12 (DAT_7ff72c62cfd0) category 5; delay FUN_7ff72bb4e6f0 parks the velocity and hides it; no gravity; on its FIRST contact with anything (FUN_7ff72bb4ea70, chips too via FUN_7ff72bc14040) FUN_7ff72bb4ec10: velocity 0, body off, 30-frame fade, removed; hitting a category-1 cat with a target: message 0x25 to the target; no kill, no push',
+    'Port (b12 snapshot): 1295-1299 a DeadBallPitcher (no body, no sprite); 10684-10690 a 16 x 16 loop 96 px every p1 s along (cos, sin) (270 aimed up) that never collided; 10348-10352 cat contact a no-op'],
+  behavior: '9-1: each LaserBallPitcher is a solid cannon {x-40, y-18, 54, 40} (9-1: x 752..806, y 380..420) with the native barrel and base art; after one skipped tick it fires one ball at a time from 20 px along its heading (270 = left) at its raw p1 speed (7 per tick), hidden and still for 0.5 s, then flying in a straight line at constant speed with no gravity. The ball stops on its first contact with anything but its own cannon (map chips, cats, boxes, the LaserKeyBox, Rects, lifts), fades for 30 frames and is removed; the next tick the cannon fires again. A ball that hits a cat while its row names a target (the party <= 3 row: "LaserKeyBox") sends resetHits to that target; the party >= 4 rows have no target, so cats just absorb balls. Messages: 0x15 multiplies the NEXT ball\'s speed (the current ball keeps its own), 0x16 restores the base speed. Approximations: contact by closest point at sub-steps of at most 4 px; the ball ignores its own cannon (it spawns inside it; the category (4, 5) filter is not traced); the 11-frame scale part of the fade is drawn as an alpha fade only.',
+}, {
+  id: 'laser-key-box',
+  files: ['src/engine/GameRuntime.ts', 'src/engine/sprites.ts'],
+  evidence: ['LaserKeyBox ctor FUN_7ff72bb544e0: view {-23, -62, 46, 62} (DAT_7ff72bcb6500), frames (288, 480), (320, 480), (352, 480) 23 x 31 (DAT_7ff72bcbaf10); body {-22, -62, 44, 60} (DAT_7ff72bcb64f0) type 3 category 5; params FUN_7ff72bb54fe0: p0 pitcher name (+0x408), k = p[max(N-1, 1)] (+0x428); on-add FUN_7ff72bb54780 an ordinary Key FUN_7ff72bb64f20(0x558, 0) kept off-scene in +0x400',
+    'Hits FUN_7ff72bb54940: only actor contacts with a category-5 body (laser balls), any side; cats do not count; hits++ (+0x3fc); while hits < 3: frame = hits, message 0x15 with &k to the pitcher; at 3: a 40-frame fade (+0x3f8 = 0x28, FUN_7ff72bb547f0 alpha (n - 20) / 10, solid during the fade, then destroyed) and the Key moved to (box x, box y - 30) (DAT_7ff72bcb4ee8) and added to the scene (FUN_7ff72bb31f00, FUN_7ff72bb54d60)',
+    'Message 0x25 FUN_7ff72bb54860, only while hits < 3: hits = 0, 0x16 to the pitcher (base speed), frame 0',
+    'Port (b12 snapshot): 924-928 a centred 48 x 48 NormalBox; 7897-7900 / 11205 the box was hidden ("unlocked") only when a Key targeting it was carried (9-1 has no such Key: the Goal stayed closed)'],
+  behavior: '9-1: the LaserKeyBox is a solid 44 x 60 body standing on its row point ({x-22, y-62}; 9-1: x 53..97, y 372..432, blocking the left tunnel) drawn with its three native hit frames. Only laser balls count as hits (cats never do): hits 1 and 2 show the next frame and multiply the pitcher\'s next-ball speed by k = p[max(N-1, 1)] (party 2: 1.8, so 7 -> 12.6 -> 22.68 per tick; party 4: 1.6); the 3rd hit fades the box out over 40 frames (still solid while fading) and removes it, and an ordinary Key appears at (box x, box y - 30) (9-1: (75, 404)) that opens the Goal by the existing key rule. resetHits (a ball hitting a cat on the targeted row) works only while hits < 3: hits 0, frame 0, the pitcher back to its base speed. Removed: the carried-Key "unlock" path (carryKeyForPlayer hid a LaserKeyBox; isLaserKeyBoxUnlocked filtered it out of every collision list).',
+}, {
+  // Codex batch-12 must-fix (b13): the 9-2 clear depended on a non-native ball trajectory; the world is now Box2D 2.3.
+  id: 'seesaw-box2d',
+  files: ['src/engine/GameRuntime.ts'],
+  evidence: ['Step call site: scene tick FUN_7ff72bc1b830 runs the actor updates, then vtable +0x30 = stage update FUN_7ff72bb7bbe0 with dt = DAT_7ff72bc7d790 = 1/60 (vtable 0x7ff72bcbfec0 / 0x7ff72bcc00b8 slot +0x30); FUN_7ff72bb7bbe0 calls FUN_7ff72bbe7720(world + 0x51950, dt) once per tick, which is mov r9d, 0xa; mov r8d, r9d; jmp FUN_7ff72bbf4e50 = b2World::Step(dt, 10 velocity, 10 position iterations); then the engine world step FUN_7ff72bc1da80',
+    'World FUN_7ff72bbe74f0 -> b2World ctor FUN_7ff72bbf2950 (allowSleep 1 at +0x19340; warmStarting / continuousPhysics / subStepping / stepComplete = 0x1000101 at +0x1935c: Box2D 2.3 defaults) plus a static ground body (+0x19380); gravity FUN_7ff72bbe76d0: (x, y * 0.01) = (0, 9.8) m/s^2 from (0, 980) px/s^2; 100 px per metre (DAT_7ff72bc7d45c = 0.01 in FUN_7ff72bbe6520 / 5ad0 / 5d30 / 5f80 / 6ef0 / 7770)',
+    'Body FUN_7ff72bbe6520: b2BodyDef type 2 when wrapper +8 == 1, position (+0x20, +0x24) * 0.01, angle +0x30, angular damping +0x38, allowSleep / awake 0x101, velocity (+0x28, +0x2c) * 0.01, gravity scale +0x3c -> b2Body +0xa8; userData = the wrapper; fixtures (FUN_7ff72bbe5ad0 circle / 5d30 polygon / 5f80 edges): friction +0xc, restitution +0x10, density +8, category 1, mask 0xffff',
+    'PhysicsArea factory 0x7ff72bb7540f ("PhysicsArea" -> FUN_7ff72bb77970; "PhysicsRect" -> FUN_7ff72bb56400): static body, wrapper +0xc (kind) = 1, density 1 / friction 1 / restitution 0; params FUN_7ff72bb78d80: 5 points (p0, p1), (p0, p1 + p3), (p0 + p2, p1 + p3), (p0 + p2, p1), (p0, p1); FUN_7ff72bbe5f80 makes one b2EdgeShape per segment (radius 0.01) with vertex0 = the segment start (hasVertex0 after the first) and vertex3 = the next point (hasVertex3 before the last)',
+    'Seesaw setup FUN_7ff72bb5d700: dynamic box (polygon FUN_7ff72bbe5c70 from LAB_7ff72bcbc230[p0], y negated, then scaled), density 1 (+0x750), friction 1 (+0x754), restitution 0, gravity scale 0 (+0x734), angular damping 0; revolute (joint type 1, bodyA = the ground body when none, FUN_7ff72bbe6f70) with localAnchorA = the pivot * 0.01, localAnchorB 0 (FUN_7ff72bb5dd40 -> FUN_7ff72bbe6ef0), limits enabled -0.17453292 / +0.17453292 (DAT_7ff72bcbc478 / 470, FUN_7ff72bbe6ea0), no motor; children: gear joint (type 6) bodyA = parent, bodyB = child, joint1 = the parent revolute, joint2 = its own, ratio -1 (DAT_7ff72bcff6a8; FUN_7ff72bb5d9e0 / 7170 / 7210 / 7250); SeesawParent update (vtable 0x7ff72bcbfae0 +0xc8) FUN_7ff72bb5da90: SetAngularVelocity((+0x930 - angle) * (1 / dt)); Seesaw update 0x7ff72bb5d850 is empty',
+    'PhysicsBall setup FUN_7ff72bb55d80: circle r 12 (DAT_7ff72c61f3d8), density 0.1, friction 0.5, restitution 0.2, angular damping 0.5 (DAT_7ff72bcff4fc via FUN_7ff72bbe6850 -> b2Body +0xa4), dynamic; FUN_7ff72bb383e0 mode 4 stores dir * speed on the actor (+0x118) before the ball has components (registered in setup), and the body is built from the wrapper velocity (still 0): the ball starts at rest',
+    'Death FUN_7ff72bb55e40: walks the ball body contact list (+0x88): other body userData kind (+0xc) == 1 and |1 - |manifold localNormal.y (contact +0xa4)|| <= DAT_7ff72bc7d458 -> 30; below 15 the awake flag is cleared, sleep time / velocities / forces zeroed every tick; 0 -> FUN_7ff72bc11650. PhysicsSwitch ray FUN_7ff72bbe7770: every fixture of every body (no broad-phase), shape RayCast from (x, y) * 0.01 to (x, y - 16) * 0.01, maxFraction 1',
+    'Codex replay (real Box2D 2.3.1) of the batch-12 solver\'s per-frame plank angles: the ball first lands at frame 672 near x 236.91 and never reaches the switch (the hand-rolled port latched at 929); reproduced here: the death test fires at tick 674, x 239.1, never latched'],
+  behavior: '9-2: the planks, the PhysicsArea boundary, the PhysicsBall and the PhysicsSwitch ray live in one Box2D 2.3 world (planck 1.5.0, a faithful JS port of Box2D 2.3, bundled into runtime.mjs from the repo node_modules) built on the first ball-park tick in native creation order (ground, PhysicsArea, SeesawParent + revolute, each Seesaw + revolute + gear) at 100 px per metre with gravity (0, 9.8). Each tick, after the actor updates (Balance -> SeesawParent SetAngularVelocity((target - angle) * 60), the ball death test on the last step\'s contacts, the switch ray), the world steps once with b2World::Step(1/60, 10, 10); the plank angles and the ball position / velocity are read back for drawing. Planks: dynamic boxes from the shape table, density 1, friction 1, restitution 0, gravity scale 0, revolute to the ground at the pivot with limits +-0.1745 rad, children geared to the parent at ratio -1. PhysicsArea: a static body with four edges (density 1, friction 1, restitution 0, kind 1) with the native ghost vertices. Ball: dynamic circle r 12, density 0.1, friction 0.5, restitution 0.2, angular damping 0.5, spawned at rest at the pitcher + 20 px; it rolls as a damped disk (about (2/3) (g sin(theta) - 0.25 v)). Death: a contact with the area whose manifold normal is vertical starts the 30-tick countdown (15 ticks moving, then put to sleep each tick, then the body is destroyed). Switch: the 16 px segment is ray-cast through every fixture with each shape\'s RayCast, so a ball whose centre sits on the segment start misses while one approaching from the side is hit. The 9-2 solver was re-routed on this world (FLIP_LEFT_AT 520 / FLIP_RIGHT_AT 760). Remaining approximations: planck computes in float64 (Box2D: float32); the native polygon keeps an unscaled centroid (used only by edge-polygon contacts, which never occur here); the order of the SeesawParent and Balance updates within a tick follows the port (Balance first), not a traced actor-list order; a contact that stops touching keeps its stale manifold normal in Box2D but is zeroed by planck (equivalent for the death test, which fires on the first touching tick).',
 }];
 
 // Fail the build if upstream code changes: never silently skip a correction.
@@ -820,6 +882,9 @@ function breakoutPaddleDomeNormal(ballCenter: Vector2, playerRect: Rect): Vector
     source = replaceOnce(source, 'export const PICO_ATLAS_FRAMES = {', 'export const PICO_ATLAS_FRAMES = {\n  door_closed: [96, 512, 48, 48],\n  updown_lift: [385, 49, 60, 10],\n  weighted_lift_wide: [351, 511, 98, 42],\n  weighted_lift_narrow: [383, 559, 34, 42],\n  thunder_0: [160, 400, 32, 32],\n  thunder_1: [192, 400, 32, 32],\n  thunder_cap: [192, 436, 16, 4],\n  step_enemy: [358, 8, 25, 14],\n  updown_enemy: [385, 0, 30, 26],\n  move_wall: [500, 255, 9, 130],\n' + frames, file);
     // breakout-paddle-dome: paddle (DAT_7ff72c61f570[0]) and ball atlas frames (player-bound / free).
     source = replaceOnce(source, 'export const PICO_ATLAS_FRAMES = {', 'export const PICO_ATLAS_FRAMES = {\n  breakout_paddle: [288, 464, 24, 12],\n  breakout_ball: [256, 512, 12, 12],\n  breakout_ball_free: [272, 496, 12, 12],', file);
+    // bound-ball-pitcher / laser-ball-pitcher / laser-key-box: cannon barrel (DAT_7ff72bcb7300), base (DAT_7ff72bcb72f0),
+    // LaserKeyBox hit frames (DAT_7ff72bcbaf10).
+    source = replaceOnce(source, 'export const PICO_ATLAS_FRAMES = {', 'export const PICO_ATLAS_FRAMES = {\n  ball_cannon_barrel: [240, 400, 23, 29],\n  ball_cannon_base: [240, 432, 26, 20],\n  laser_key_box_0: [288, 480, 23, 31],\n  laser_key_box_1: [320, 480, 23, 31],\n  laser_key_box_2: [352, 480, 23, 31],', file);
     return source;
   }
   if (file === 'src/engine/actors/Goal.ts') {
@@ -4490,6 +4555,1664 @@ const NATIVE_WALK_SPEED = 3 * 60;
     const resolvedStage = { ...paintedStage, map: { ...paintedStage.map, table: [...paintedStage.map.table] } };
     this.stage = resolvedStage;
     this.tileMap = new TileMap(resolvedStage.map);`, file);
+    // ---- Batch 12 (decoded specs b12/spec-9-1, spec-9-2, spec-9-4): Ball Park (9-1, 9-2, 9-4). ----
+    // bound-ball-pitcher / laser-ball-pitcher / seesaw-and-balance: rowParams reads ValueAtom params.
+    source = replaceOnce(source, `import type { ActorSpawnDef, InputState, MapDef, Rect, RuntimeStats, StageDef } from './types';`, `import type { ActorSpawnDef, InputState, MapDef, Rect, RuntimeStats, StageDef, ValueAtom } from './types';`, file);
+    // Ball Park actor state (cannons, key boxes, planks, pans, physics balls, ray switches).
+    source = replaceOnce(source, `  private physicsSwitches: PhysicsSwitch[] = [];
+`, `  private physicsSwitches: PhysicsSwitch[] = [];
+  /** bound-ball-pitcher / laser-ball-pitcher: FUN_7ff72bb37d70 cannons (mode 0 BoundBall, mode 1 laser ball). */
+  private nativeCannons: NativeCannon[] = [];
+  /** ball-box / laser-key-box: the boxes holding the stage Key (BallBox FUN_7ff72bb53e10, LaserKeyBox FUN_7ff72bb544e0). */
+  private nativeKeyBoxes: NativeKeyBox[] = [];
+  /** seesaw-and-balance: rotating planks (no engine body), Balance pans (lifts), Box2D balls and the ray switch. */
+  private seesawPlanks: SeesawPlank[] = [];
+  private nativeBalances: NativeBalance[] = [];
+  private physicsPitchers: PhysicsPitcher[] = [];
+  private nativePhysicsSwitches: Array<{ physicsSwitch: PhysicsSwitch; latched: boolean }> = [];
+  /** seesaw-box2d: the stage's Box2D world (planck), built on the first ball-park tick. */
+  private ballParkWorld: planck.World | undefined;
+`, file);
+    // Ball Park actor state is rebuilt on every load / restart.
+    source = replaceOnce(source, `    this.physicsAreas = [];
+`, `    this.physicsAreas = [];
+    this.nativeCannons = [];
+    this.nativeKeyBoxes = [];
+    this.seesawPlanks = [];
+    this.nativeBalances = [];
+    this.physicsPitchers = [];
+    this.nativePhysicsSwitches = [];
+    this.ballParkWorld = undefined;
+`, file);
+    // ball-box / laser-key-box: native boxes, not centred 48 x 48 NormalBoxes.
+    source = replaceOnce(source, `    BallBox: (spawn) => {
+      const normalBox = new NormalBox(spawn);
+      this.normalBoxes.push(normalBox);
+      this.addActorView(spawn, normalBox.view);
+    },
+    LaserKeyBox: (spawn) => {
+      const normalBox = new NormalBox(spawn);
+      this.normalBoxes.push(normalBox);
+      this.addActorView(spawn, normalBox.view);
+    },
+`, `    BallBox: (spawn) => {
+      // ball-box: FUN_7ff72bb53e10, body {-22, -62, 44, 60} (DAT_7ff72bcb64f0), top sensor {-4, -66, 8, 10}.
+      this.addNativeKeyBox(spawn, 'ball');
+    },
+    LaserKeyBox: (spawn) => {
+      // laser-key-box: FUN_7ff72bb544e0, the same body; three hit frames (DAT_7ff72bcbaf10).
+      this.addNativeKeyBox(spawn, 'laser');
+    },
+`, file);
+    // seesaw-and-balance: PhysicsSwitch is latched and pressed only by a ball on its ray.
+    source = replaceOnce(source, `    PhysicsSwitch: (spawn) => {
+      const physicsSwitch = new PhysicsSwitch(spawn);
+      this.physicsSwitches.push(physicsSwitch);
+      this.addActorView(spawn, physicsSwitch.view);
+    },
+`, `    PhysicsSwitch: (spawn) => {
+      // seesaw-and-balance: switch type 2, no fixture, latched; only a Box2D ray (balls) presses it.
+      const physicsSwitch = new PhysicsSwitch(spawn);
+      this.nativePhysicsSwitches.push({ physicsSwitch, latched: false });
+      this.addActorView(spawn, physicsSwitch.view);
+    },
+`, file);
+    // bound-ball-pitcher / laser-ball-pitcher / seesaw-and-balance: native pitchers, not the generic DeadBallPitcher.
+    source = replaceOnce(source, `    LaserBallPitcher: (spawn) => {
+      const laserBallPitcher = new DeadBallPitcher(spawn);
+      this.deadBallPitchers.push(laserBallPitcher);
+      this.addActorView(spawn, laserBallPitcher.view);
+    },
+    PhysicsBallPitcher: (spawn) => {
+      const physicsBallPitcher = new DeadBallPitcher(spawn, this.activePlayerCount);
+      this.deadBallPitchers.push(physicsBallPitcher);
+      this.addActorView(spawn, physicsBallPitcher.view);
+    },
+    BoundBallPitcher: (spawn) => {
+      const boundBallPitcher = new DeadBallPitcher(spawn);
+      this.deadBallPitchers.push(boundBallPitcher);
+      this.addActorView(spawn, boundBallPitcher.view);
+    },
+`, `    LaserBallPitcher: (spawn) => {
+      // laser-ball-pitcher: factory 0x7ff72bb74b72 -> FUN_7ff72bb37d70 mode 1.
+      this.addNativeCannon(spawn, 'laser');
+    },
+    PhysicsBallPitcher: (spawn) => {
+      // seesaw-and-balance: the pitcher fires one PhysicsBall (FUN_7ff72bb55c30) at a time.
+      this.addPhysicsPitcher(spawn);
+    },
+    BoundBallPitcher: (spawn) => {
+      // bound-ball-pitcher: factory 0x7ff72bb74b10 -> FUN_7ff72bb37d70 mode 0.
+      this.addNativeCannon(spawn, 'bound');
+    },
+`, file);
+    // seesaw-and-balance: Balance = two moving pans.
+    source = replaceOnce(source, `    Balance: (spawn) => {
+      const balance = balanceFromSpawn(spawn);
+      this.balances.push(balance);
+      this.addActorView(spawn, balance.view);
+    },
+`, `    Balance: (spawn) => {
+      // seesaw-and-balance: FUN_7ff72bb313f0(obj, p0): two moving pans at x -/+ p0 * 0.5.
+      this.addNativeBalance(spawn);
+    },
+`, file);
+    // seesaw-and-balance: PhysicsArea is only the Box2D boundary; planks rotate about their pivot.
+    source = replaceOnce(source, `    PhysicsArea: (spawn) => {
+      const physicsArea = physicsAreaFromSpawn(spawn);
+      this.physicsAreas.push(physicsArea);
+      this.actorLayer.addChild(physicsArea.view);
+    },
+    Seesaw: (spawn) => {
+      const seesaw = seesawFromSpawn(spawn);
+      this.seesaws.push(seesaw);
+      this.addActorView(spawn, seesaw.view);
+    },
+    SeesawParent: (spawn) => {
+      const seesaw = seesawFromSpawn(spawn);
+      this.seesaws.push(seesaw);
+      this.addActorView(spawn, seesaw.view);
+    },
+`, `    PhysicsArea: (spawn) => {
+      // seesaw-and-balance / seesaw-box2d: only the Box2D boundary edges (no slow-fall, no fill).
+      this.physicsAreas.push(physicsAreaFromSpawn(spawn));
+    },
+    Seesaw: (spawn) => {
+      this.addSeesawPlank(spawn);
+    },
+    SeesawParent: (spawn) => {
+      // seesaw-and-balance: FUN_7ff72bb77b30 wraps FUN_7ff72bb5d420(obj, p0) and ignores p1 / p2.
+      this.addSeesawPlank(spawn);
+    },
+`, file);
+    // Ball Park: one tick of every ball-park actor (replaces the BoundBall input control and the straight-line PhysicsBall).
+    source = replaceOnce(source, `    this.updateBoundBallPitchers(clampedDt, input, playerInputs);
+    this.updateDeadBallPitcherViews();
+    this.updatePhysicsBallLifecycles();
+`, `    this.updateNativeBallPark(clampedDt);
+    this.updateDeadBallPitcherViews();
+`, file);
+    // seesaw-and-balance: no invented PhysicsArea slow-fall for cats.
+    source = replaceOnce(source, `      if (this.applyPhysicsAreas()) {
+        continue;
+      }
+`, ``, file);
+    // seesaw-and-balance: no cat-driven plank tilt / rider snapping (updateSeesawTilts deleted).
+    source = replaceOnce(source, `    this.updateSeesawTilts();
+`, ``, file);
+    // seesaw-and-balance: updateSeesawTilts deleted.
+    source = replaceOnce(source, `  private updateSeesawTilts(): void {
+    for (const seesaw of this.seesaws) {
+      const targetBalance = this.balances.find((balance) => (
+        balance.targetLabel !== ''
+        && (balance.targetLabel === seesaw.spawn.label || balance.targetLabel === seesaw.spawn.actorName)
+      ));
+      const pivotX = targetBalance?.spawn.x ?? seesaw.spawn.x;
+      const standingPlayers = this.players.filter((player) => (
+        !this.collisionChangePlayersCollisionOff.has(player)
+        && !this.activelyGuardingPlayers.has(player)
+        && rectsOverlap(
+          {
+            x: player.rect.x,
+            y: player.rect.y + player.rect.height,
+            width: player.rect.width,
+            height: 2,
+          },
+          seesaw.rect,
+        )
+      ));
+      if (standingPlayers.length === 0) {
+        seesaw.view.rotation = 0;
+        continue;
+      }
+
+      const sideWeight = standingPlayers.reduce((sum, player) => (
+        sum + rectCenter(player.rect).x - pivotX
+      ), 0);
+      const rotation = clamp(sideWeight / seesaw.rect.width, -0.16, 0.16);
+      seesaw.view.rotation = rotation;
+      const surfaceCenterY = seesaw.rect.y + seesaw.rect.height / 2;
+      for (const player of standingPlayers) {
+        const surfaceY = surfaceCenterY + Math.sin(rotation) * (rectCenter(player.rect).x - pivotX);
+        const nextY = surfaceY - player.rect.height;
+        player.applyResolvedCollision(
+          { ...player.rect, y: nextY },
+          { ...player.velocity, y: 0 },
+          true,
+        );
+      }
+      for (const pushBox of this.pushBoxes) {
+        const standingOnSeesaw = rectsOverlap(
+          {
+            x: pushBox.rect.x,
+            y: pushBox.rect.y + pushBox.rect.height,
+            width: pushBox.rect.width,
+            height: 2,
+          },
+          seesaw.rect,
+        );
+        if (!standingOnSeesaw) continue;
+
+        const surfaceY = surfaceCenterY + Math.sin(rotation) * (rectCenter(pushBox.rect).x - pivotX);
+        pushBox.applyRect({ ...pushBox.rect, y: surfaceY - pushBox.rect.height });
+      }
+      for (const normalBox of this.normalBoxes) {
+        const boxRect = normalBoxRect(normalBox);
+        const standingOnSeesaw = rectsOverlap(
+          {
+            x: boxRect.x,
+            y: boxRect.y + boxRect.height,
+            width: boxRect.width,
+            height: 2,
+          },
+          seesaw.rect,
+        );
+        if (!standingOnSeesaw) continue;
+
+        const surfaceY = surfaceCenterY + Math.sin(rotation) * (rectCenter(boxRect).x - pivotX);
+        normalBox.spawn.y = surfaceY - boxRect.height / 2;
+        normalBox.view.y = normalBox.spawn.y;
+      }
+      for (const smallBox of this.smallBoxes) {
+        const boxRect = smallBoxRect(smallBox);
+        const standingOnSeesaw = rectsOverlap(
+          {
+            x: boxRect.x,
+            y: boxRect.y + boxRect.height,
+            width: boxRect.width,
+            height: 2,
+          },
+          seesaw.rect,
+        );
+        if (!standingOnSeesaw) continue;
+
+        const surfaceY = surfaceCenterY + Math.sin(rotation) * (rectCenter(boxRect).x - pivotX);
+        smallBox.spawn.y = surfaceY - boxRect.height / 2;
+        smallBox.view.y = smallBox.spawn.y;
+      }
+      for (const colorBox of this.colorBoxes) {
+        const boxRect = colorBoxRect(colorBox);
+        const standingOnSeesaw = rectsOverlap(
+          {
+            x: boxRect.x,
+            y: boxRect.y + boxRect.height,
+            width: boxRect.width,
+            height: 2,
+          },
+          seesaw.rect,
+        );
+        if (!standingOnSeesaw) continue;
+
+        const surfaceY = surfaceCenterY + Math.sin(rotation) * (rectCenter(boxRect).x - pivotX);
+        colorBox.spawn.y = surfaceY - boxRect.height / 2;
+        colorBox.view.y = colorBox.spawn.y;
+      }
+    }
+  }
+
+`, ``, file);
+    // seesaw-and-balance: the pans carry stacked riders like the other lift slabs (FUN_7ff72bc17330, recursive).
+    source = replaceOnce(source, `if (!['WeightedLift', 'WeightedLiftEx', 'WeightedLiftEx2', 'DarknessWeightedLift'].includes(lift.spawn.actorName) || !previousLiftRect) return supportedPlayers;`, `if (!['WeightedLift', 'WeightedLiftEx', 'WeightedLiftEx2', 'DarknessWeightedLift', 'BalancePan'].includes(lift.spawn.actorName) || !previousLiftRect) return supportedPlayers;`, file);
+    // seesaw-and-balance: planks have no engine body (no FUN_7ff72bc16bf0): out of every cat / box collision list.
+    {
+      const spread = /^[ \t]*\.\.\.this\.seesaws\.map\(\(seesaw\) => seesaw\.rect\),\n/gm;
+      assert.equal((source.match(spread) ?? []).length, 13, `Patch anchor changed: ${file}: seesaw collision lists`);
+      source = source.replace(spread, '');
+      const seesawRects = '    const seesawRects = this.seesaws.map((seesaw) => seesaw.rect);\n';
+      assert.equal(source.split(seesawRects).length - 1, 2, `Patch anchor changed: ${file}: ${seesawRects}`);
+      source = source.replaceAll(seesawRects, '    const seesawRects: Rect[] = [];   // seesaw-and-balance: planks are not solid\n');
+      source = replaceOnce(source, '    const seesawBlockerRects = this.seesaws.map((seesaw) => seesaw.rect);\n',
+        '    const seesawBlockerRects: Rect[] = [];   // seesaw-and-balance: planks are not solid\n', file);
+    }
+    // bound-ball-pitcher / laser-ball-pitcher / seesaw-and-balance: these pitchers are no longer DeadBallPitchers.
+    source = replaceOnce(source, `      const phasesThroughCollisionOff = pitcher.spawn.actorName === 'DeadBallPitcher'
+        || pitcher.spawn.actorName === 'PhysicsBallPitcher'
+        || pitcher.spawn.actorName === 'BoundBallPitcher';
+`, `      const phasesThroughCollisionOff = pitcher.spawn.actorName === 'DeadBallPitcher';
+`, file);
+    // laser-ball-pitcher: the laser ball handles its own cat contact (stepLaserBall).
+    source = replaceOnce(source, `      if (hitPitcher.spawn.actorName === 'LaserBallPitcher') {
+        // Recovered-data: projectile mode 0 broadcasts command 0x25 to the
+        // named target, but LaserKeyBox/BallReceiver named receivers are no-ops.
+        return;
+      }
+`, ``, file);
+    // bound-ball-pitcher / seesaw-and-balance: their balls handle their own contacts.
+    source = replaceOnce(source, `      if (hitPitcher.spawn.actorName === 'BoundBallPitcher') {
+        // Recovered-data: BoundBall is owner-input controlled ball hardware
+        // (FUN_7ff72bb3b5e0), not DeadBall's avatar cmd-4 reset branch.
+        return;
+      }
+      if (hitPitcher.spawn.actorName === 'PhysicsBallPitcher') {
+        // Recovered-data: PhysicsBall player contact is nonfatal. Only a
+        // vertical-normal PhysicsArea contact starts FUN_7ff72bb55e40's own
+        // 30-frame child-removal countdown; DeadBall's avatar cmd 4 is absent.
+        return;
+      }
+`, ``, file);
+    // bound-ball-pitcher: delete the player-jump ball control, invented side push / support and missing-box timer.
+    source = replaceOnce(source, `  private updateBoundBallPitchers(
+    dt: number,
+    input: InputState,
+    playerInputs: readonly InputState[] | undefined,
+  ): void {
+    if (this.deadBallPitchers.length === 0) return;
+
+    for (const pitcher of [...this.deadBallPitchers]) {
+      if (pitcher.spawn.actorName !== 'BoundBallPitcher') continue;
+      const state = this.boundBallPitcherState(pitcher);
+      const ownerIndex = 0;
+      const ownerInputSlot = this.playerInputSlots[ownerIndex] ?? ownerIndex;
+      const ownerInput = this.resolvePlayerInput(input, playerInputs, this.players.length, ownerIndex, ownerInputSlot);
+
+      state.velocityX = this.boundBallPitcherSideContactVelocity(centeredRect(state.x, state.y, BOUND_BALL_SIZE, BOUND_BALL_SIZE));
+      if (state.velocityY >= 0) state.holdPhase = 0;
+      const canBoost = this.boundBallPitcherHasSupport(state)
+        || (state.holdPhase >= 1 && state.holdPhase <= BOUND_BALL_HOLD_FRAMES);
+
+      if (canBoost) {
+        if (ownerInput.jumpPressed) {
+          state.velocityY = BOUND_BALL_DEFAULT_JUMP_SPEED;
+          state.holdPhase = 1;
+          this.onEvent?.({ type: 'jump', playerIndex: this.eventInputSlotForPlayer(this.players[ownerIndex], ownerInputSlot) });
+        } else if (ownerInput.jump && state.holdPhase >= 1 && state.holdPhase <= BOUND_BALL_HOLD_FRAMES) {
+          const boost = BOUND_BALL_DEFAULT_JUMP_SPEED
+            * (1 - state.holdPhase / BOUND_BALL_HOLD_DECAY_DEN)
+            * BOUND_BALL_HOLD_GAIN;
+          state.velocityY += boost;
+          state.holdPhase += 1;
+        } else {
+          state.holdPhase = 0;
+        }
+      }
+
+      state.velocityY += BOUND_BALL_GRAVITY * dt;
+      const rect = centeredRect(state.x, state.y, BOUND_BALL_SIZE, BOUND_BALL_SIZE);
+      if (this.tileMap) {
+        const result = moveRectWithTileCollisions(
+          this.tileMap,
+          rect,
+          { x: state.velocityX * dt, y: state.velocityY * dt },
+          state.grounded,
+        );
+        state.x = result.rect.x + result.rect.width / 2;
+        state.y = result.rect.y + result.rect.height / 2;
+        if (result.velocity.y === 0) state.velocityY = 0;
+        state.grounded = result.grounded;
+      } else {
+        state.x += state.velocityX * dt;
+        state.y += state.velocityY * dt;
+        state.grounded = false;
+      }
+
+      if (this.updateBoundBallMissingBallBoxLifetime(pitcher, state, dt)) continue;
+    }
+  }
+
+  private boundBallPitcherState(pitcher: DeadBallPitcher): BoundBallPitcherState {
+    let state = this.boundBallPitcherStates.get(pitcher);
+    if (!state) {
+      state = {
+        x: pitcher.spawn.x,
+        y: pitcher.spawn.y,
+        velocityX: 0,
+        velocityY: 0,
+        holdPhase: 0,
+        grounded: false,
+        ballBoxSeen: false,
+        missingBallBoxFadeSeconds: undefined,
+      };
+      this.boundBallPitcherStates.set(pitcher, state);
+    }
+    return state;
+  }
+
+  private updateBoundBallMissingBallBoxLifetime(
+    pitcher: DeadBallPitcher,
+    state: BoundBallPitcherState,
+    dt: number,
+  ): boolean {
+    const hasBallBox = this.normalBoxes.some((box) => box.spawn.actorName === 'BallBox');
+    if (hasBallBox) {
+      state.ballBoxSeen = true;
+      state.missingBallBoxFadeSeconds = undefined;
+      pitcher.view.alpha = 1;
+      return false;
+    }
+    if (!state.ballBoxSeen) return false;
+
+    const previousRemaining = state.missingBallBoxFadeSeconds ?? BOUND_BALL_MISSING_BALL_BOX_FADE_SECONDS;
+    const remaining = Math.max(0, previousRemaining - dt);
+    state.missingBallBoxFadeSeconds = remaining;
+    pitcher.view.alpha = remaining / BOUND_BALL_MISSING_BALL_BOX_FADE_SECONDS;
+
+    if (remaining > 0) return false;
+    this.removeBoundBallPitcher(pitcher);
+    return true;
+  }
+
+  private removeBoundBallPitcher(pitcher: DeadBallPitcher): void {
+    const index = this.deadBallPitchers.indexOf(pitcher);
+    if (index >= 0) this.deadBallPitchers.splice(index, 1);
+    this.boundBallPitcherStates.delete(pitcher);
+    pitcher.view.visible = false;
+    const parent = pitcher.view.parent as unknown as {
+      removeChild?: (child: Container) => void;
+      children?: Container[];
+    } | null;
+    if (typeof parent?.removeChild === 'function') {
+      parent.removeChild(pitcher.view);
+      return;
+    }
+    if (parent && Array.isArray(parent.children)) {
+      parent.children = parent.children.filter((child) => child !== pitcher.view);
+      (pitcher.view as unknown as { parent: unknown }).parent = null;
+    }
+  }
+
+  private boundBallPitcherHasSupport(state: BoundBallPitcherState): boolean {
+    const rect = centeredRect(state.x, state.y, BOUND_BALL_SIZE, BOUND_BALL_SIZE);
+    if (this.boundBallPitcherHitsVerticalContact(rect, -1)) return false;
+    if (this.boundBallPitcherHitsVerticalContact(rect, 1)) return true;
+    return state.grounded;
+  }
+
+  private boundBallPitcherSideContactVelocity(rect: Rect): number {
+    const rectRight = rect.x + rect.width;
+    const centerX = rect.x + rect.width / 2;
+    for (const box of this.normalBoxes) {
+      if (box.spawn.actorName !== 'BallBox') continue;
+      const boxRect = normalBoxRect(box);
+      if (rect.y >= boxRect.y + boxRect.height || rect.y + rect.height <= boxRect.y) continue;
+
+      const boxRight = boxRect.x + boxRect.width;
+      if (boxRight <= centerX && Math.abs(boxRight - rect.x) <= 1) return BOUND_BALL_SIDE_CONTACT_SPEED;
+      if (boxRect.x >= centerX && Math.abs(boxRect.x - rectRight) <= 1) return -BOUND_BALL_SIDE_CONTACT_SPEED;
+    }
+    return 0;
+  }
+
+  private boundBallPitcherHitsVerticalContact(rect: Rect, sign: -1 | 1): boolean {
+    const centerY = rect.y + rect.height / 2;
+    const touchesBallBox = this.normalBoxes.some((box) => {
+      if (box.spawn.actorName !== 'BallBox') return false;
+      const boxRect = normalBoxRect(box);
+      if (rect.x >= boxRect.x + boxRect.width || rect.x + rect.width <= boxRect.x) return false;
+      if (sign < 0) return boxRect.y + boxRect.height <= centerY && boxRect.y + boxRect.height >= rect.y - 1;
+      return boxRect.y >= centerY && boxRect.y <= rect.y + rect.height + 1;
+    });
+    if (touchesBallBox) return true;
+    if (!this.tileMap) return false;
+
+    const probe = { ...rect, y: rect.y + sign };
+    return this.tileMap.rectHitsSolid(probe, { axis: 'y', sign, previousRect: rect });
+  }
+
+`, ``, file);
+    // seesaw-and-balance: the straight-line PhysicsBall lifecycle is replaced by the circle solver.
+    source = replaceOnce(source, `  private updatePhysicsBallLifecycles(): void {
+    for (const pitcher of [...this.deadBallPitchers]) {
+      if (pitcher.spawn.actorName !== 'PhysicsBallPitcher') continue;
+
+      if (this.physicsBallRearmPending.delete(pitcher)) {
+        // Recovered-data: FUN_7ff72bb38130 retains the one-child owner, clears
+        // its removed child slot, and creates the replacement on a later update.
+        this.physicsBallFrozenOffsets.delete(pitcher);
+        this.physicsBallMotionStartElapsed.set(pitcher, this.deadBallPitcherElapsed);
+        pitcher.restoreProjectile();
+        continue;
+      }
+
+      const countdown = this.physicsBallCountdowns.get(pitcher) ?? 0;
+      if (countdown > 0) {
+        if (countdown >= 20) {
+          const scale = Math.pow(1.0499999523162842, 31 - countdown);
+          pitcher.setProjectileAppearance(scale, (countdown - 20) / 10);
+        }
+
+        const nextCountdown = countdown - 1;
+        if (nextCountdown === 0) {
+          this.physicsBallCountdowns.delete(pitcher);
+          pitcher.removeProjectile();
+          this.physicsBallRearmPending.add(pitcher);
+        } else {
+          this.physicsBallCountdowns.set(pitcher, nextCountdown);
+          if (nextCountdown < 15 && !this.physicsBallFrozenOffsets.has(pitcher)) {
+            const rect = this.deadBallProjectileRect(pitcher);
+            this.physicsBallFrozenOffsets.set(pitcher, {
+              x: rect.x + rect.width / 2 - pitcher.spawn.x,
+              y: rect.y + rect.height / 2 - pitcher.spawn.y,
+            });
+          }
+        }
+        continue;
+      }
+
+      const projectileRect = this.deadBallProjectileRect(pitcher);
+      const hasHorizontalFaceContact = this.physicsAreas.some((area) => {
+        const horizontalOverlap = projectileRect.x < area.rect.x + area.rect.width
+          && projectileRect.x + projectileRect.width > area.rect.x;
+        if (!horizontalOverlap) return false;
+        const ballBottom = projectileRect.y + projectileRect.height;
+        const areaBottom = area.rect.y + area.rect.height;
+        return Math.abs(ballBottom - area.rect.y) <= 1.1920929e-7
+          || Math.abs(projectileRect.y - areaBottom) <= 1.1920929e-7;
+      });
+      if (hasHorizontalFaceContact) {
+        // Recovered-data: PhysicsBall PRE FUN_7ff72bb55e40 starts an integer
+        // 30-frame countdown on vertical-normal PhysicsArea contact. Detection
+        // does not consume the first count.
+        this.physicsBallCountdowns.set(pitcher, 30);
+      }
+    }
+  }
+
+`, ``, file);
+    // bound-ball-pitcher / seesaw-and-balance: no projectile rects for the removed paths.
+    source = replaceOnce(source, `    if (pitcher.spawn.actorName === 'BoundBallPitcher') {
+      const state = this.boundBallPitcherState(pitcher);
+      return centeredRect(state.x, state.y, BOUND_BALL_SIZE, BOUND_BALL_SIZE);
+    }
+    if (pitcher.spawn.actorName === 'PhysicsBallPitcher') {
+      const frozenOffset = this.physicsBallFrozenOffsets.get(pitcher);
+      if (frozenOffset) {
+        return centeredRect(
+          pitcher.spawn.x + frozenOffset.x,
+          pitcher.spawn.y + frozenOffset.y,
+          PHYSICS_BALL_DIAMETER,
+          PHYSICS_BALL_DIAMETER,
+        );
+      }
+      // Recovered-data: FUN_7ff72bb37f30 selects 0.1 * param[playerCount-1]
+      // (or the solo ctor default 5.0). FUN_7ff72bb383e0 launches the child
+      // 20px along the quantized rotated-up direction, and FUN_7ff72bc16120
+      // applies the same vector once per native 1/60 Stage tick.
+      const motionElapsed = this.deadBallPitcherElapsed
+        - (this.physicsBallMotionStartElapsed.get(pitcher) ?? 0);
+      const distance = motionElapsed * 60 * pitcher.physicsBallMotionMagnitude;
+      const direction = physicsBallDirectionFromAngle(pitcher.angleDegrees);
+      const launchDistance = Math.fround(PHYSICS_BALL_SPAWN_OFFSET + distance);
+      const centerX = Math.fround(
+        Math.fround(pitcher.spawn.x) + Math.fround(direction.x * launchDistance),
+      );
+      const centerY = Math.fround(
+        Math.fround(pitcher.spawn.y) + Math.fround(direction.y * launchDistance),
+      );
+      return centeredRect(
+        centerX,
+        centerY,
+        PHYSICS_BALL_DIAMETER,
+        PHYSICS_BALL_DIAMETER,
+      );
+    }
+`, ``, file);
+    // laser-key-box: a carried Key never hides a LaserKeyBox (not native).
+    source = replaceOnce(source, `    for (const box of this.normalBoxes) {
+      if (box.spawn.actorName === 'LaserKeyBox' && laserKeyBoxMatchesKey(key.spawn, box.spawn)) {
+        box.view.visible = false;
+      }
+    }
+`, ``, file);
+    // laser-key-box: LaserKeyBox / BallBox are no longer NormalBoxes; drop the isLaserKeyBoxUnlocked filters.
+    {
+      const patterns = [
+        [/\n[ \t]*\.filter\(\((\w+)\) => !this\.isLaserKeyBoxUnlocked\(\1\)\)(?=\n)/g, 9],
+        [/\.filter\(\((\w+)\) => !this\.isLaserKeyBoxUnlocked\(\1\)\)/g, 8],
+        [/!this\.isLaserKeyBoxUnlocked\((\w+)\) && /g, 3],
+        [/!this\.isLaserKeyBoxUnlocked\((\w+)\)\n[ \t]*&& /g, 2],
+      ];
+      for (const [pattern, count] of patterns) {
+        assert.equal((source.match(pattern) ?? []).length, count, `Patch anchor changed: ${file}: ${pattern}`);
+        source = source.replace(pattern, '');
+      }
+    }
+    // laser-key-box: isLaserKeyBoxUnlocked deleted.
+    source = replaceOnce(source, `  private isLaserKeyBoxUnlocked(box: NormalBox): boolean {
+    return box.spawn.actorName === 'LaserKeyBox' && box.view.visible === false;
+  }
+
+`, ``, file);
+    assert.ok(!source.includes('isLaserKeyBoxUnlocked'), `Patch anchor changed: ${file}: isLaserKeyBoxUnlocked`);
+    // seesaw-box2d: the 9-2 world is real Box2D 2.3 (planck, bundled from the repo's node_modules).
+    source = "import * as planck from 'planck';\n" + source;
+    // Ball Park methods.
+    source = replaceOnce(source, `  private applyDeadBallPitchers(): void {
+`, `  // ---- Ball Park (9-1 / 9-2 / 9-4): bound-ball-pitcher, ball-box, laser-ball-pitcher, laser-key-box, seesaw-and-balance ----
+
+  /** One native tick of every ball-park actor, before the cats move. */
+  private updateNativeBallPark(dt: number): void {
+    this.ensureBallParkWorld();
+    this.updateNativeBalances();
+    this.updateSeesawPlanks();
+    this.updatePhysicsPitchers();
+    this.updateNativePhysicsSwitches();
+    // Boxes first: a box broken this tick starts its 40-frame countdown on the next one.
+    this.updateNativeKeyBoxes();
+    this.updateNativeCannons(dt);
+    this.stepBallParkWorld();
+  }
+
+  /** FUN_7ff72bb37d70: a cannon with a solid body {-40, -18, 54, 40} (category 4) and the barrel / base art. */
+  private addNativeCannon(spawn: ActorSpawnDef, kind: 'bound' | 'laser'): void {
+    const cannon = nativeCannonFromSpawn(spawn, kind, this.nativePartyCount());
+    this.staticRects.push(cannon.body);
+    this.nativeCannons.push(cannon);
+    this.addActorView(spawn, cannon.view);
+  }
+
+  /** FUN_7ff72bb38130: first update skipped; one child at a time; a gone child is cleared, the next update refires. */
+  private updateNativeCannons(dt: number): void {
+    for (const cannon of this.nativeCannons) {
+      if (!cannon.firstTickSkipped) {
+        cannon.firstTickSkipped = true;
+        continue;
+      }
+      if (cannon.ball?.gone) {
+        cannon.ball = undefined;
+        continue;
+      }
+      if (!cannon.ball) {
+        cannon.ball = spawnNativeBall(cannon);
+        this.actorLayer.addChild(cannon.ball.view);
+        continue;
+      }
+      if (cannon.kind === 'bound') this.stepBoundBall(cannon, cannon.ball, dt);
+      else this.stepLaserBall(cannon, cannon.ball, dt);
+    }
+  }
+
+  /** The 30-frame fade (+0x3f8 = 0x1e) after a ball stops; at 0 the child is removed. True while fading. */
+  private advanceNativeBallFade(ball: NativeBall): boolean {
+    if (ball.fadeFrames <= 0) return false;
+    ball.fadeFrames -= 1;
+    ball.y += ball.dropVy;
+    ball.view.x = ball.x;
+    ball.view.y = ball.y;
+    if (ball.fadeFrames <= 10) ball.view.alpha = ball.fadeFrames / 10;
+    if (ball.fadeFrames > 0) return true;
+    ball.gone = true;
+    this.actorLayer.removeChild(ball.view);
+    return true;
+  }
+
+  /** The 0.5 s spawn delay (DAT_7ff72bcff4fc): the launch velocity is parked, then restored. True while waiting. */
+  private advanceNativeBallDelay(ball: NativeBall, dt: number): boolean {
+    if (ball.delaySeconds <= 0) return false;
+    ball.delaySeconds = Math.fround(ball.delaySeconds - Math.fround(dt));
+    if (ball.delaySeconds > 1e-6) return true;
+    ball.delaySeconds = 0;
+    ball.vx = ball.launchVx;
+    ball.vy = ball.launchVy;
+    ball.view.visible = true;
+    return true;
+  }
+
+  /** FUN_7ff72bb37d00 + body off + the 30-frame fade. */
+  private stopNativeBall(ball: NativeBall): void {
+    ball.vx = 0;
+    ball.vy = 0;
+    ball.fadeFrames = NATIVE_BALL_FADE_FRAMES;
+  }
+
+  /** bound-ball-pitcher: BoundBall update FUN_7ff72bb36ee0 + contact slot 31 FUN_7ff72bb37500. */
+  private stepBoundBall(cannon: NativeCannon, ball: NativeBall, dt: number): void {
+    if (this.advanceNativeBallFade(ball)) return;
+    if (this.advanceNativeBallDelay(ball, dt)) return;
+    const party = this.nativePartyCount();
+    // The settle count kill (FUN_7ff72bb37af0): 2 resting contacts (0 when N > 4) while |vy| ~ 0.
+    const settleLimit = party > 4 ? 0 : 2;
+    if (ball.settleCount > 0 && ball.settleCount >= settleLimit && Math.abs(ball.vy) <= NATIVE_FLOAT_EPSILON) {
+      this.stopNativeBall(ball);
+      return;
+    }
+    // FUN_7ff72bb36ee0: vertical flight resumed (|vy| > 1.19e-7, DAT_7ff72bc7d458) clears the resting count (+0x3fc = 0).
+    if (ball.settleCount > 0 && Math.abs(ball.vy) > NATIVE_FLOAT_EPSILON) ball.settleCount = 0;
+    const previousY = ball.y;
+    const previousVy = ball.vy;
+    ball.vy += BOUND_BALL_GRAVITY_PER_TICK;
+    const restitution = party < 5 ? 1.2 : 1.0;
+    const steps = Math.max(1, Math.ceil(Math.max(Math.abs(ball.vx), Math.abs(ball.vy)) / 4));
+    let restingOnBody = false;
+    for (let step = 0; step < steps; step += 1) {
+      ball.x += ball.vx / steps;
+      ball.y += ball.vy / steps;
+      if (this.ballBoxSensorCatches(ball)) return;
+      const tile = this.deepestTileContact(ball.x, ball.y);
+      if (tile) {
+        ball.x += tile.nx * tile.depth;
+        ball.y += tile.ny * tile.depth;
+        restoreBoundBallEnergy(ball, previousY, previousVy);
+        if (tile.ny === -1) {
+          // A top-face landing (floor or ledge top) kills the ball; the pitcher re-fires.
+          this.stopNativeBall(ball);
+          return;
+        }
+        reflectOffMap(ball, tile.nx, tile.ny);
+      }
+      for (const body of this.boundBallBodies(cannon)) {
+        const contact = circleRectContact(ball.x, ball.y, NATIVE_BALL_RADIUS, body.rect);
+        if (!contact) continue;
+        ball.x += contact.nx * contact.depth;
+        ball.y += contact.ny * contact.depth;
+        restoreBoundBallEnergy(ball, previousY, previousVy);
+        bounceOffBody(ball, contact.nx, contact.ny, body, restitution);
+        // Resting on a cat / box (category 1 or 5) with vy' ~ 0: +0x3fc++.
+        if (body.settles && Math.abs(ball.vy) <= NATIVE_FLOAT_EPSILON) ball.settleCount += 1;
+        if (contact.ny < -0.5) restingOnBody = true;
+      }
+    }
+    // Ground friction 0.95 (DAT_7ff72bcb7130) from the 2nd grounded frame (the 1st when N > 4).
+    if (restingOnBody) {
+      ball.groundedFrames += 1;
+      if (ball.groundedFrames >= (party > 4 ? 1 : 2)) ball.vx *= BOUND_BALL_GROUND_FRICTION;
+    } else {
+      ball.groundedFrames = 0;
+    }
+    ball.view.x = ball.x;
+    ball.view.y = ball.y;
+  }
+
+  /** Every actor body a BoundBall meets: cats (mass 100) and the other solids (mass 1.0); never its own cannon. */
+  private boundBallBodies(cannon: NativeCannon): BallContactBody[] {
+    const bodies: BallContactBody[] = [];
+    for (const player of this.players) {
+      if (player.deathTimer > 0 || this.deathFallPlayers.has(player)) continue;
+      if (this.collisionChangePlayersCollisionOff.has(player)) continue;
+      bodies.push({
+        rect: player.rect,
+        vx: player.velocity.x / 60,
+        vy: player.velocity.y / 60,
+        mass: CAT_BODY_MASS,
+        settles: true,
+      });
+    }
+    for (const staticRect of this.staticRects) {
+      if (staticRect === cannon.body) continue;
+      const keyBox = this.nativeKeyBoxes.find((box) => box.body === staticRect);
+      bodies.push({ rect: staticRect.rect, vx: 0, vy: 0, mass: DEFAULT_BODY_MASS, settles: keyBox !== undefined });
+    }
+    for (const pushBox of this.pushBoxes) {
+      bodies.push({ rect: pushBox.rect, vx: 0, vy: 0, mass: DEFAULT_BODY_MASS, settles: true });
+    }
+    return bodies;
+  }
+
+  /** The deepest solid map chip under a ball circle (r 12), with the normal pointing from the chip to the ball. */
+  private deepestTileContact(x: number, y: number): CircleContact | undefined {
+    if (!this.tileMap) return undefined;
+    const size = this.tileMap.map.chipSize;
+    let deepest: CircleContact | undefined;
+    const minTileX = Math.floor((x - NATIVE_BALL_RADIUS) / size);
+    const maxTileX = Math.floor((x + NATIVE_BALL_RADIUS) / size);
+    const minTileY = Math.floor((y - NATIVE_BALL_RADIUS) / size);
+    const maxTileY = Math.floor((y + NATIVE_BALL_RADIUS) / size);
+    for (let tileY = minTileY; tileY <= maxTileY; tileY += 1) {
+      for (let tileX = minTileX; tileX <= maxTileX; tileX += 1) {
+        if (!this.tileMap.isSolidTile(tileX, tileY)) continue;
+        const tileRect = { x: tileX * size, y: tileY * size, width: size, height: size };
+        const contact = circleRectContact(x, y, NATIVE_BALL_RADIUS, tileRect);
+        if (!contact) continue;
+        if (!deepest || contact.depth > deepest.depth) deepest = contact;
+      }
+    }
+    return deepest;
+  }
+
+  /** ball-box: BallBox sensor contact FUN_7ff72bb54330 -> message 0xb; the BoundBall answers 1 (FUN_7ff72bb37250). */
+  private ballBoxSensorCatches(ball: NativeBall): boolean {
+    for (const box of this.nativeKeyBoxes) {
+      if (box.kind !== 'ball' || box.breaking) continue;
+      const sensor = {
+        x: box.x + BALL_BOX_SENSOR.x,
+        y: box.y + BALL_BOX_SENSOR.y,
+        width: BALL_BOX_SENSOR.width,
+        height: BALL_BOX_SENSOR.height,
+      };
+      if (!circleRectContact(ball.x, ball.y, NATIVE_BALL_RADIUS, sensor)) continue;
+      if (Math.abs(ball.x - box.x) > BALL_BOX_SENSOR_REACH) continue;
+      // Message 0xb: 30-frame fade, velocity (0, 3.0) (DAT_7ff72bc7eb00), body off, x = box x, reply 1.
+      this.stopNativeBall(ball);
+      ball.x = box.x;
+      ball.dropVy = BOUND_BALL_BOX_DROP_SPEED;
+      this.breakNativeKeyBox(box);
+      return true;
+    }
+    return false;
+  }
+
+  /** laser-ball-pitcher: ball FUN_7ff72bb4e470: straight line, constant speed; the first contact stops it. */
+  private stepLaserBall(cannon: NativeCannon, ball: NativeBall, dt: number): void {
+    if (this.advanceNativeBallFade(ball)) return;
+    if (this.advanceNativeBallDelay(ball, dt)) return;
+    const steps = Math.max(1, Math.ceil(Math.max(Math.abs(ball.vx), Math.abs(ball.vy)) / 4));
+    for (let step = 0; step < steps; step += 1) {
+      ball.x += ball.vx / steps;
+      ball.y += ball.vy / steps;
+      const contact = this.firstLaserBallContact(cannon, ball);
+      if (!contact) continue;
+      // FUN_7ff72bb4ec10: velocity 0, body off, 'ball_hit', 30-frame fade, removed.
+      this.stopNativeBall(ball);
+      ball.view.x = ball.x;
+      ball.view.y = ball.y;
+      if (contact.keyBox) this.hitLaserKeyBox(contact.keyBox);
+      if (contact.player && cannon.target) this.resetLaserKeyBoxHits(cannon.target);
+      return;
+    }
+    ball.view.x = ball.x;
+    ball.view.y = ball.y;
+  }
+
+  /** What a laser ball touches first: map chips, cats, every solid body; never its own cannon. */
+  private firstLaserBallContact(
+    cannon: NativeCannon,
+    ball: NativeBall,
+  ): { player?: Player; keyBox?: NativeKeyBox } | undefined {
+    const touches = (rect: Rect) => circleRectContact(ball.x, ball.y, NATIVE_BALL_RADIUS, rect) !== undefined;
+    for (const staticRect of this.staticRects) {
+      if (staticRect === cannon.body || !touches(staticRect.rect)) continue;
+      const keyBox = this.nativeKeyBoxes.find((box) => box.body === staticRect);
+      return { keyBox };
+    }
+    for (const player of this.players) {
+      if (player.deathTimer > 0 || this.deathFallPlayers.has(player)) continue;
+      if (this.collisionChangePlayersCollisionOff.has(player)) continue;
+      if (touches(player.rect)) return { player };
+    }
+    if (this.pushBoxes.some((box) => touches(box.rect))) return {};
+    if (this.weightedLifts.some((lift) => touches(lift.rect))) return {};
+    if (this.deepestTileContact(ball.x, ball.y)) return {};
+    return undefined;
+  }
+
+  /** ball-box / laser-key-box: a bottom-anchored body {-22, -62, 44, 60}; the Key is added only when the box breaks. */
+  private addNativeKeyBox(spawn: ActorSpawnDef, kind: 'ball' | 'laser'): void {
+    const box = nativeKeyBoxFromSpawn(spawn, kind, this.nativePartyCount());
+    this.staticRects.push(box.body);
+    this.nativeKeyBoxes.push(box);
+    this.addActorView(spawn, box.view);
+  }
+
+  /** BallBox update FUN_7ff72bb54060 / LaserKeyBox FUN_7ff72bb547f0: fall (BallBox), then the 40-frame break fade. */
+  private updateNativeKeyBoxes(): void {
+    for (const box of [...this.nativeKeyBoxes]) {
+      if (box.kind === 'ball') this.dropBallBox(box);
+      if (!box.breaking) continue;
+      box.breakFrames -= 1;
+      box.view.alpha = clamp((box.breakFrames - 20) / 10, 0, 1);
+      if (box.breakFrames > 0) continue;
+      // FUN_7ff72bc11650: removed; the body (solid during the fade) goes with it.
+      this.staticRects = this.staticRects.filter((staticRect) => staticRect !== box.body);
+      this.nativeKeyBoxes = this.nativeKeyBoxes.filter((candidate) => candidate !== box);
+      this.actorLayer.removeChild(box.view);
+    }
+  }
+
+  /** ball-box: falls when unsupported (0.65 per tick per tick, the box fall), vy 0 when grounded. */
+  private dropBallBox(box: NativeKeyBox): void {
+    if (!this.tileMap) return;
+    box.vy += BOUND_BALL_GRAVITY_PER_TICK;
+    const result = moveRectWithTileCollisions(this.tileMap, box.body.rect, { x: 0, y: box.vy });
+    const dy = result.rect.y - box.body.rect.y;
+    if (result.velocity.y === 0) box.vy = 0;
+    if (dy === 0) return;
+    box.body.rect.y += dy;
+    box.y += dy;
+    box.view.y = box.y;
+  }
+
+  /** The 40-frame break and the Key placed at (box x, box y - 30) (DAT_7ff72bcb4ee8) and added to the scene. */
+  private breakNativeKeyBox(box: NativeKeyBox): void {
+    if (box.breaking) return;
+    box.breaking = true;
+    box.breakFrames = BREAKING_BOX_FRAMES;
+    const keyY = box.y - BOX_KEY_RISE;
+    const key = new Key({ raw: [0, 0, 'Key', '', box.x, keyY], actorName: 'Key', label: '', x: box.x, y: keyY });
+    this.keys.push(key);
+    this.actorLayer.addChild(key.view);
+    this.refreshKeyGoalViews();
+  }
+
+  /** laser-key-box: FUN_7ff72bb54940: a laser-ball contact; hits 1-2 send 0x15 (speed *= k), hit 3 breaks the box. */
+  private hitLaserKeyBox(box: NativeKeyBox): void {
+    if (box.kind !== 'laser' || box.breaking) return;
+    box.hits += 1;
+    if (box.hits >= 3) {
+      this.breakNativeKeyBox(box);
+      return;
+    }
+    showLaserKeyBoxFrame(box);
+    for (const cannon of this.nativeCannonsNamed(box.pitcherName)) {
+      cannon.speed = Math.fround(cannon.speed * box.speedFactor);
+    }
+  }
+
+  /** laser-key-box: message 0x25 FUN_7ff72bb54860, only while hits < 3: hits 0, 0x16 (base speed), frame 0. */
+  private resetLaserKeyBoxHits(target: string): void {
+    for (const box of this.nativeKeyBoxes) {
+      if (box.kind !== 'laser' || box.breaking || box.hits >= 3) continue;
+      if (box.spawn.label !== target && box.spawn.actorName !== target) continue;
+      box.hits = 0;
+      showLaserKeyBoxFrame(box);
+      for (const cannon of this.nativeCannonsNamed(box.pitcherName)) cannon.speed = cannon.baseSpeed;
+    }
+  }
+
+  private nativeCannonsNamed(name: string): NativeCannon[] {
+    return this.nativeCannons.filter((cannon) => cannon.spawn.label === name || cannon.spawn.actorName === name);
+  }
+
+  /** seesaw-and-balance: FUN_7ff72bb5d420 plank from the p0 shape table, local to the pivot (the row point). */
+  private addSeesawPlank(spawn: ActorSpawnDef): void {
+    const plank = seesawPlankFromSpawn(spawn);
+    this.seesawPlanks.push(plank);
+    this.addActorView(spawn, plank.view);
+  }
+
+  /**
+   * seesaw-box2d: SeesawParent update FUN_7ff72bb5da90: SetAngularVelocity((target - angle) * (1 / dt)) on its Box2D
+   * body; the revolute limit (+-10 deg) and the geared children are left to the Box2D step. Seesaw children have no update
+   * (vtable +0xc8 = 0x7ff72bb5d850, empty).
+   */
+  private updateSeesawPlanks(): void {
+    for (const plank of this.seesawPlanks) {
+      if (!plank.parent || !plank.body) continue;
+      plank.body.setAngularVelocity((plank.target - plank.body.getAngle()) * (1 / BOX2D_TIME_STEP));
+    }
+  }
+
+  /** seesaw-box2d: FUN_7ff72bbe74f0 world + ground body, then each PhysicsArea / plank body in row order. */
+  private ensureBallParkWorld(): void {
+    if (this.ballParkWorld) return;
+    if (this.seesawPlanks.length === 0 && this.physicsPitchers.length === 0) return;
+    const world = createBallParkWorld();
+    const ground = world.createBody();
+    for (const area of this.physicsAreas) addPhysicsAreaBody(world, area.spawn);
+    const parent = this.seesawPlanks.find((plank) => plank.parent);
+    for (const plank of this.seesawPlanks) addSeesawPlankBody(world, ground, plank, parent);
+    this.ballParkWorld = world;
+  }
+
+  /** seesaw-box2d: one b2World::Step(1/60, 10, 10) per game tick, after every actor update (FUN_7ff72bb7bbe0). */
+  private stepBallParkWorld(): void {
+    const world = this.ballParkWorld;
+    if (!world) return;
+    world.step(BOX2D_TIME_STEP, BOX2D_VELOCITY_ITERATIONS, BOX2D_POSITION_ITERATIONS);
+    for (const plank of this.seesawPlanks) {
+      if (!plank.body) continue;
+      plank.angle = plank.body.getAngle();
+      plank.view.rotation = plank.angle;
+    }
+    for (const pitcher of this.physicsPitchers) {
+      const ball = pitcher.ball;
+      if (!ball || ball.gone) continue;
+      syncPhysicsBall(ball);
+    }
+  }
+
+  /** seesaw-and-balance: Balance FUN_7ff72bb313f0 + setup FUN_7ff72bb31900: pans {-97, -7, 194, 14} at x -/+ p0 * 0.5. */
+  private addNativeBalance(spawn: ActorSpawnDef): void {
+    const balance = nativeBalanceFromSpawn(spawn);
+    for (const pan of [balance.left, balance.right]) {
+      this.weightedLifts.push(pan.lift);
+      this.actorLayer.addChild(pan.lift.view);
+    }
+    this.nativeBalances.push(balance);
+  }
+
+  /** Balance update FUN_7ff72bb315f0 + pan update FUN_7ff72bb31050; sends the angle (message 0xc) to its plank. */
+  private updateNativeBalances(): void {
+    for (const balance of this.nativeBalances) {
+      const party = this.nativePartyCount();
+      const leftCount = this.balancePanRiderCount(balance.left.lift.rect);
+      const rightCount = this.balancePanRiderCount(balance.right.lift.rect);
+      const ratio = clamp((rightCount - leftCount) / (party * 0.5), -1, 1);
+      const tilted = Math.abs(ratio) > NATIVE_FLOAT_EPSILON;
+      balance.left.target = tilted ? -ratio * BALANCE_AMPLITUDE : 0;
+      balance.right.target = tilted ? ratio * BALANCE_AMPLITUDE : 0;
+      const speed = Math.max(Math.abs(ratio), BALANCE_MIN_SPEED);
+      this.moveBalancePan(balance.left, speed);
+      this.moveBalancePan(balance.right, speed);
+      const reach = Math.max(Math.abs(balance.left.offset), Math.abs(balance.right.offset));
+      // FUN_7ff72bb315f0 (0x7ff72bb31809..31826): the sign is +1 when the right pan offset is >= 0, -1 only below 0.
+      const side = balance.right.offset < 0 ? -1 : 1;
+      balance.angle = Math.atan2(side * reach, BALANCE_ARM);
+      for (const plank of this.seesawPlanks) {
+        if (!plank.parent) continue;
+        if (plank.spawn.label !== balance.targetLabel && plank.spawn.actorName !== balance.targetLabel) continue;
+        plank.target = balance.angle;
+      }
+    }
+  }
+
+  /** FUN_7ff72bc132c0(pan, UP, 1): cats on the pan plus the cats stacked on them. */
+  private balancePanRiderCount(slab: Rect): number {
+    const supports: Rect[] = [slab];
+    const riders = new Set<Player>();
+    for (let index = 0; index < supports.length; index += 1) {
+      for (const player of this.players) {
+        if (riders.has(player) || player.deathTimer > 0 || this.deathFallPlayers.has(player)) continue;
+        if (this.collisionChangePlayersCollisionOff.has(player)) continue;
+        if (!rectRestsOnSupport(player.rect, supports[index])) continue;
+        riders.add(player);
+        supports.push(player.rect);
+      }
+    }
+    return riders.size;
+  }
+
+  /** At most +0x400 px toward the target (0.2 when moving against its imbalance), with the lift move check. */
+  private moveBalancePan(pan: BalancePan, speed: number): void {
+    const delta = pan.target - pan.offset;
+    if (delta === 0) return;
+    const returning = pan.target !== 0 && Math.sign(delta) === -Math.sign(pan.target);
+    const limit = returning ? BALANCE_MIN_SPEED : speed;
+    const dy = Math.abs(delta) <= limit ? delta : Math.sign(delta) * limit;
+    if (this.balancePanBlocked(pan, dy)) return;
+    pan.offset += dy;
+    pan.lift.view.y = pan.homeY + pan.offset;
+    pan.lift.rect.y = pan.lift.view.y + pan.lift.bodyOffsetY;
+  }
+
+  /** FUN_7ff72bc16f50: a rising pan may not push its stack into anything; a sinking pan stops on what is under it. */
+  private balancePanBlocked(pan: BalancePan, dy: number): boolean {
+    if (dy < 0) return this.liftRiseBlocked(pan.lift, dy);
+    const slab = pan.lift.rect;
+    const next = { ...slab, y: slab.y + dy };
+    if (this.tileMap?.rectHitsSolid(next)) return true;
+    if (this.stepSolidRects(pan.lift).some((solid) => !rectsOverlap(slab, solid) && rectsOverlap(next, solid))) return true;
+    return this.stepBodies().some((body) => !rectsOverlap(slab, body.rect) && rectsOverlap(next, body.rect));
+  }
+
+  /** seesaw-and-balance: PhysicsBallPitcher (angle 180 = down), launch 0.1 * p[N-1] (solo 5.0). */
+  private addPhysicsPitcher(spawn: ActorSpawnDef): void {
+    const pitcher = physicsPitcherFromSpawn(spawn, this.nativePartyCount());
+    this.physicsPitchers.push(pitcher);
+    this.addActorView(spawn, pitcher.view);
+  }
+
+  /** FUN_7ff72bb38130 for the PhysicsBall child, then FUN_7ff72bb55e40's 30-tick death countdown. */
+  private updatePhysicsPitchers(): void {
+    for (const pitcher of this.physicsPitchers) {
+      if (!pitcher.firstTickSkipped) {
+        pitcher.firstTickSkipped = true;
+        continue;
+      }
+      if (pitcher.ball?.gone) {
+        pitcher.ball = undefined;
+        continue;
+      }
+      if (!pitcher.ball) {
+        // seesaw-box2d: the body exists at once, so this tick's Box2D step already moves it.
+        if (!this.ballParkWorld) continue;
+        pitcher.ball = spawnPhysicsBall(this.ballParkWorld, pitcher);
+        this.actorLayer.addChild(pitcher.ball.view);
+        continue;
+      }
+      this.updatePhysicsBall(pitcher.ball);
+    }
+  }
+
+  /** PhysicsBall update FUN_7ff72bb55e40: the death test on the last step's contacts, then the 30-tick countdown. */
+  private updatePhysicsBall(ball: PhysicsBall): void {
+    if (ball.countdown === 0) {
+      // Detection does not consume the first count.
+      if (physicsBallTouchesAreaFloorOrCeiling(ball.body)) ball.countdown = PHYSICS_BALL_DEATH_TICKS;
+      return;
+    }
+    if (ball.countdown >= 20) {
+      ball.view.scale.set(Math.pow(1.0499999523162842, 31 - ball.countdown));
+      ball.view.alpha = (ball.countdown - 20) / 10;
+    }
+    ball.countdown -= 1;
+    if (ball.countdown === 0) {
+      // FUN_7ff72bc11650: the actor (and its body) is removed.
+      ball.gone = true;
+      this.ballParkWorld?.destroyBody(ball.body);
+      this.actorLayer.removeChild(ball.view);
+      return;
+    }
+    // Below 15: the body is put to sleep (awake flag cleared, sleep time, velocities and forces zeroed) every tick.
+    if (ball.countdown < 15) {
+      ball.body.setAwake(false);
+      syncPhysicsBall(ball);
+    }
+  }
+
+  /**
+   * PhysicsSwitch: FUN_7ff72bbe7770 casts (x, y) -> (x, y - 16) through every fixture of every body of the Box2D world
+   * (the shapes' own RayCast, no broad-phase); any hit sends ("Key", 9).
+   */
+  private updateNativePhysicsSwitches(): void {
+    const world = this.ballParkWorld;
+    for (const entry of this.nativePhysicsSwitches) {
+      if (entry.latched || !world) continue;
+      const { spawn } = entry.physicsSwitch;
+      if (!box2dRayHitsAnyFixture(world, spawn.x, spawn.y, spawn.x, spawn.y + PHYSICS_SWITCH_RAY)) continue;
+      entry.latched = true;
+      entry.physicsSwitch.view.alpha = 0.5;
+      // FUN_7ff72bb65700: the hidden Key appears.
+      for (const key of this.keys) {
+        if (key.spawn.actorName === spawn.label || key.spawn.label === spawn.label) key.activate();
+      }
+      this.refreshKeyGoalViews();
+    }
+  }
+
+  private applyDeadBallPitchers(): void {
+`, file);
+    source += `
+// ---- Ball Park (9-1 / 9-2 / 9-4) module helpers: bound-ball-pitcher, ball-box, laser-ball-pitcher, laser-key-box,
+// seesaw-and-balance. Every length is in map px, every speed in px per native tick (1/60 s).
+
+const NATIVE_FLOAT_EPSILON = 1.1920928955078125e-7;     // DAT_7ff72bc7d458
+const NATIVE_BALL_RADIUS = 12;                            // DAT_7ff72c62add8 / DAT_7ff72c62cfd0 / DAT_7ff72c61f3d8
+const NATIVE_BALL_FADE_FRAMES = 30;                       // +0x3f8 = 0x1e (BoundBall), +0x41c (laser ball)
+const CANNON_BODY = { x: -40, y: -18, width: 54, height: 40 };   // DAT_7ff72bcb7320
+const CANNON_SPAWN_OFFSET = 20;                           // DAT_7ff72bc7d1b0
+const CANNON_SPAWN_DELAY_SECONDS = 0.5;                   // DAT_7ff72bcff4fc
+const CANNON_SOLO_SPEED = 5;                              // ctor +0x3f0 / +0x3f4
+const CANNON_PARTY_SPEED_SCALE = Math.fround(0.1);        // DAT_7ff72bc7d464
+const BOUND_BALL_GRAVITY_PER_TICK = 0.65;                 // +0x12c (DAT_7ff72bcb69bc)
+const BOUND_BALL_MASS = 50;                               // +0x148
+const CAT_BODY_MASS = 100;                                // DAT_7ff72bcc7dc4
+const DEFAULT_BODY_MASS = 1;                              // FUN_7ff72bc155e0
+const BOUND_BALL_MIN_NORMAL_SPEED = 1.2;                  // DAT_7ff72bcb7134
+const BOUND_BALL_GROUND_FRICTION = 0.95;                  // DAT_7ff72bcb7130
+const BOUND_BALL_BOX_DROP_SPEED = 3;                      // DAT_7ff72bc7eb00
+const NATIVE_KEY_BOX_BODY = { x: -22, y: -62, width: 44, height: 60 };   // DAT_7ff72bcb64f0
+const BALL_BOX_SENSOR = { x: -4, y: -66, width: 8, height: 10 };         // DAT_7ff72bcbb170
+const BALL_BOX_SENSOR_REACH = 5;                          // DAT_7ff72bc7d588
+const BREAKING_BOX_FRAMES = 40;                           // +0x3f8 = 0x28
+const BOX_KEY_RISE = 30;                                  // DAT_7ff72bcb4ee8
+const SEESAW_ANGLE_LIMIT = 0.1745329201221466;            // DAT_7ff72bcbc478 = -0.17453292 / DAT_7ff72bcbc470 = +0.17453292
+const SEESAW_PLANK_SHAPES: readonly Rect[] = [            // LAB_7ff72bcbc230[p0]
+  { x: -300, y: -10, width: 600, height: 20 },
+  { x: -300, y: -10, width: 450, height: 20 },
+  { x: -150, y: -10, width: 450, height: 20 },
+];
+const BALANCE_PAN_BODY = { x: -97, y: -7, width: 194, height: 14 };      // DAT_7ff72c62ada0
+const BALANCE_ARM = 450;
+const BALANCE_AMPLITUDE = Math.sin(0.12217) * BALANCE_ARM;               // DAT_7ff72bcb6210: 54.84 px
+const BALANCE_MIN_SPEED = 0.2;                            // DAT_7ff72bc7d858
+const PHYSICS_BALL_DEATH_TICKS = 30;                      // FUN_7ff72bb55e40
+// seesaw-box2d: the Box2D 2.3 world of the PhysicsArea / Seesaw / PhysicsBall actors (planck, a JS port of Box2D 2.3).
+const BOX2D_SCALE = 0.009999999776482582;                 // DAT_7ff72bc7d45c: metres per px (FUN_7ff72bbe6520 / 5d30 / 6ef0)
+const BOX2D_GRAVITY_Y = 980;                              // (0, 980) px/s^2 (DAT_7ff72bcc84b0) -> FUN_7ff72bbe76d0: y * 0.01
+const BOX2D_TIME_STEP = 0.01666666753590107;              // DAT_7ff72bc7d790 = 1/60: scene tick FUN_7ff72bc1b830 -> FUN_7ff72bb7bbe0
+const BOX2D_VELOCITY_ITERATIONS = 10;                     // FUN_7ff72bbe7720: mov r9d, 0xa; mov r8d, r9d; jmp b2World::Step
+const BOX2D_POSITION_ITERATIONS = 10;
+const BOX2D_AREA_KIND = 1;                                // body wrapper +0xc: PhysicsArea ctor FUN_7ff72bb77970 (+0x404 = 1)
+const PHYSICS_AREA_DENSITY = 1;                           // FUN_7ff72bb77970: +0x450 = 1.0
+const PHYSICS_AREA_FRICTION = 1;                          //                   +0x454 = 1.0 (restitution 0)
+const SEESAW_DENSITY = 1;                                 // FUN_7ff72bb5d700: +0x750 = 1.0
+const SEESAW_FRICTION = 1;                                //                   +0x754 = 1.0 (restitution 0)
+const SEESAW_GEAR_RATIO = -1;                             // DAT_7ff72bcff6a8 (FUN_7ff72bb5d9e0 -> FUN_7ff72bbe7210)
+const PHYSICS_BALL_DENSITY = 0.10000000149011612;         // FUN_7ff72bb55d80: +0x468 = 0x3dcccccd
+const PHYSICS_BALL_FRICTION = 0.5;                        //                   +0x46c = 0x3f000000
+const PHYSICS_BALL_RESTITUTION = 0.20000000298023224;     //                   +0x470 = 0x3e4ccccd
+const PHYSICS_BALL_ANGULAR_DAMPING = 0.5;                 // DAT_7ff72bcff4fc -> FUN_7ff72bbe6850 -> b2Body +0xa4
+const PHYSICS_SWITCH_RAY = -16;                           // DAT_7ff72bc7e738
+
+interface NativeBall {
+  kind: 'bound' | 'laser';
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  launchVx: number;
+  launchVy: number;
+  delaySeconds: number;
+  fadeFrames: number;
+  dropVy: number;
+  gone: boolean;
+  settleCount: number;
+  groundedFrames: number;
+  view: Container;
+}
+
+interface NativeCannon {
+  spawn: ActorSpawnDef;
+  kind: 'bound' | 'laser';
+  dirX: number;
+  dirY: number;
+  speed: number;
+  baseSpeed: number;
+  target?: string;
+  body: StaticRect;
+  view: Container;
+  firstTickSkipped: boolean;
+  ball?: NativeBall;
+}
+
+interface NativeKeyBox {
+  spawn: ActorSpawnDef;
+  kind: 'ball' | 'laser';
+  x: number;
+  y: number;
+  vy: number;
+  body: StaticRect;
+  view: Container;
+  frames: Container[];
+  hits: number;
+  speedFactor: number;
+  pitcherName: string;
+  breaking: boolean;
+  breakFrames: number;
+}
+
+interface SeesawPlank {
+  spawn: ActorSpawnDef;
+  parent: boolean;
+  geared: boolean;
+  pivotX: number;
+  pivotY: number;
+  local: Rect;
+  angle: number;
+  target: number;
+  view: Container;
+  /** seesaw-box2d: the plank's Box2D body and its revolute joint to the ground body. */
+  body?: planck.Body;
+  joint?: planck.RevoluteJoint;
+}
+
+interface BalancePan {
+  lift: WeightedLift;
+  homeY: number;
+  offset: number;
+  target: number;
+}
+
+interface NativeBalance {
+  spawn: ActorSpawnDef;
+  targetLabel: string;
+  left: BalancePan;
+  right: BalancePan;
+  angle: number;
+}
+
+interface PhysicsBall {
+  /** Read back from the Box2D body after every step (px, px per tick). */
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  countdown: number;
+  gone: boolean;
+  view: Container;
+  body: planck.Body;
+}
+
+interface PhysicsPitcher {
+  spawn: ActorSpawnDef;
+  dirX: number;
+  dirY: number;
+  speed: number;
+  firstTickSkipped: boolean;
+  ball?: PhysicsBall;
+  view: Container;
+}
+
+interface CircleContact {
+  nx: number;
+  ny: number;
+  depth: number;
+  pointX: number;
+  pointY: number;
+}
+
+interface BallContactBody {
+  rect: Rect;
+  vx: number;
+  vy: number;
+  mass: number;
+  settles: boolean;
+}
+
+/** The row's params after its x / y pair. */
+function rowParams(spawn: ActorSpawnDef): ValueAtom[] {
+  for (let index = 0; index <= spawn.raw.length - 2; index += 1) {
+    if (spawn.raw[index] === spawn.x && spawn.raw[index + 1] === spawn.y) return spawn.raw.slice(index + 2);
+  }
+  return [];
+}
+
+function numberParam(params: readonly ValueAtom[], index: number): number | undefined {
+  const value = params[index];
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+}
+
+/** A sprite from the atlas at a local rect, or a flat fallback block. */
+function atlasPiece(frame: string, rect: Rect, fallbackColor: number): Container {
+  const texture = frameTexture(frame as any);
+  if (texture) {
+    const sprite = new Sprite(texture);
+    sprite.x = rect.x;
+    sprite.y = rect.y;
+    sprite.width = rect.width;
+    sprite.height = rect.height;
+    return sprite;
+  }
+  const g = new Graphics();
+  g.beginFill(fallbackColor, 1);
+  g.drawRoundedRect(rect.x, rect.y, rect.width, rect.height, 4);
+  g.endFill();
+  return g;
+}
+
+/** FUN_7ff72bb37d70 + params FUN_7ff72bb37f30. */
+function nativeCannonFromSpawn(spawn: ActorSpawnDef, kind: 'bound' | 'laser', party: number): NativeCannon {
+  const params = rowParams(spawn);
+  const angle = Math.trunc(numberParam(params, 0) ?? 0);
+  const direction = physicsBallDirectionFromAngle(angle);
+  let speed = CANNON_SOLO_SPEED;
+  let target: string | undefined;
+  if (kind === 'laser') {
+    // Modes 1..3: raw p1 float = speed px/tick; a 3rd param is the hit target (+0x660).
+    speed = numberParam(params, 1) ?? CANNON_SOLO_SPEED;
+    if (params.length >= 3 && typeof params[2] === 'string') target = params[2];
+  } else if (party > 1) {
+    // Mode 0: speed = p[N-1] * 0.1 (index N-1, FUN_7ff72bb389b0); solo keeps 5.0.
+    const partyValue = numberParam(params, party - 1);
+    if (partyValue !== undefined) speed = Math.fround(Math.fround(partyValue) * CANNON_PARTY_SPEED_SCALE);
+  }
+  const body = new StaticRect(spawn, {
+    x: spawn.x + CANNON_BODY.x,
+    y: spawn.y + CANNON_BODY.y,
+    width: CANNON_BODY.width,
+    height: CANNON_BODY.height,
+  });
+  body.view.visible = false;
+  const view = new Container();
+  view.x = spawn.x;
+  view.y = spawn.y;
+  // Base {-25, -4, 52, 40} (DAT_7ff72bcb7310) unless the angle is within 170..190; barrel {-23, -38, 46, 58} rotated.
+  if (angle < 170 || angle > 190) {
+    view.addChild(atlasPiece('ball_cannon_base', { x: -25, y: -4, width: 52, height: 40 }, 0x5b6470));
+  }
+  const barrel = new Container();
+  barrel.addChild(atlasPiece('ball_cannon_barrel', { x: -23, y: -38, width: 46, height: 58 }, 0x3a404a));
+  barrel.rotation = angle * Math.PI / 180;
+  view.addChild(barrel);
+  return {
+    spawn, kind, dirX: direction.x, dirY: direction.y, speed, baseSpeed: speed, target,
+    body, view, firstTickSkipped: false,
+  };
+}
+
+/** FUN_7ff72bb383e0: the child at pos + dir * 20, velocity dir * speed, parked for 0.5 s. */
+function spawnNativeBall(cannon: NativeCannon): NativeBall {
+  const x = Math.fround(cannon.spawn.x + Math.fround(cannon.dirX * CANNON_SPAWN_OFFSET));
+  const y = Math.fround(cannon.spawn.y + Math.fround(cannon.dirY * CANNON_SPAWN_OFFSET));
+  const view = new Container();
+  view.x = x;
+  view.y = y;
+  const frame = cannon.kind === 'bound' ? 'breakout_ball_free' : 'breakout_ball';
+  view.addChild(atlasPiece(frame, { x: -12, y: -12, width: 24, height: 24 }, cannon.kind === 'bound' ? 0xff864d : 0xff4f6d));
+  // The laser ball is hidden while it waits (FUN_7ff72bb4e6f0); the BoundBall shows, frozen.
+  view.visible = cannon.kind === 'bound';
+  return {
+    kind: cannon.kind, x, y, vx: 0, vy: 0,
+    launchVx: Math.fround(cannon.dirX * cannon.speed),
+    launchVy: Math.fround(cannon.dirY * cannon.speed),
+    delaySeconds: CANNON_SPAWN_DELAY_SECONDS,
+    fadeFrames: 0, dropVy: 0, gone: false, settleCount: 0, groundedFrames: 0, view,
+  };
+}
+
+/** Closest point of a rect to a circle; the normal points from the rect to the centre. Undefined when apart. */
+function circleRectContact(x: number, y: number, radius: number, rect: Rect): CircleContact | undefined {
+  const pointX = clamp(x, rect.x, rect.x + rect.width);
+  const pointY = clamp(y, rect.y, rect.y + rect.height);
+  const dx = x - pointX;
+  const dy = y - pointY;
+  const distance = Math.hypot(dx, dy);
+  if (distance > 0) {
+    if (distance >= radius) return undefined;
+    return { nx: dx / distance, ny: dy / distance, depth: radius - distance, pointX, pointY };
+  }
+  // The centre is inside: leave through the nearest face.
+  const faces = [
+    { d: x - rect.x, nx: -1, ny: 0 },
+    { d: rect.x + rect.width - x, nx: 1, ny: 0 },
+    { d: y - rect.y, nx: 0, ny: -1 },
+    { d: rect.y + rect.height - y, nx: 0, ny: 1 },
+  ];
+  const face = faces.reduce((best, candidate) => (candidate.d < best.d ? candidate : best));
+  return { nx: face.nx, ny: face.ny, depth: face.d + radius, pointX, pointY };
+}
+
+/** Contact step 1 (DAT_7ff72bcb69bc): |vy| = sqrt(vy_prev^2 + 2 * 0.65 * (y - y_prev)), sign kept: no energy lost. */
+function restoreBoundBallEnergy(ball: NativeBall, previousY: number, previousVy: number): void {
+  const squared = previousVy * previousVy + 2 * BOUND_BALL_GRAVITY_PER_TICK * (ball.y - previousY);
+  ball.vy = Math.sign(ball.vy) * Math.sqrt(Math.max(0, squared));
+}
+
+/** Map chips: v' = v - (1 + e)(v.n)n with e = 1.0 (DAT_7ff72bcff538); a normal part under 1.2 is dropped. */
+function reflectOffMap(ball: NativeBall, nx: number, ny: number): void {
+  const normal = ball.vx * nx + ball.vy * ny;
+  if (normal >= 0) return;
+  const reflected = Math.abs(normal) < BOUND_BALL_MIN_NORMAL_SPEED ? 0 : -normal;
+  ball.vx += (reflected - normal) * nx;
+  ball.vy += (reflected - normal) * ny;
+}
+
+/** Actor bodies, closing only: v1n' = ((m1 - e m2) u1 + (e + 1) m2 u2) / (m1 + m2); under 1.2 -> 0. */
+function bounceOffBody(ball: NativeBall, nx: number, ny: number, body: BallContactBody, restitution: number): boolean {
+  const u1 = ball.vx * nx + ball.vy * ny;
+  const u2 = body.vx * nx + body.vy * ny;
+  if (u1 - u2 >= 0) return false;
+  const m1 = BOUND_BALL_MASS;
+  const m2 = body.mass;
+  let after = ((m1 - restitution * m2) * u1 + (restitution + 1) * m2 * u2) / (m1 + m2);
+  if (Math.abs(after) < BOUND_BALL_MIN_NORMAL_SPEED) after = 0;
+  ball.vx += (after - u1) * nx;
+  ball.vy += (after - u1) * ny;
+  return true;
+}
+
+/** ball-box / laser-key-box: body {-22, -62, 44, 60} from the row point; views {-24, -64, 48, 64} / {-23, -62, 46, 62}. */
+function nativeKeyBoxFromSpawn(spawn: ActorSpawnDef, kind: 'ball' | 'laser', party: number): NativeKeyBox {
+  const params = rowParams(spawn);
+  const body = new StaticRect(spawn, {
+    x: spawn.x + NATIVE_KEY_BOX_BODY.x,
+    y: spawn.y + NATIVE_KEY_BOX_BODY.y,
+    width: NATIVE_KEY_BOX_BODY.width,
+    height: NATIVE_KEY_BOX_BODY.height,
+  });
+  body.view.visible = false;
+  const view = new Container();
+  view.x = spawn.x;
+  view.y = spawn.y;
+  const frames: Container[] = [];
+  if (kind === 'laser') {
+    for (let index = 0; index < 3; index += 1) {
+      const frame = atlasPiece('laser_key_box_' + index, { x: -23, y: -62, width: 46, height: 62 }, [0xffffff, 0xffd166, 0xff864d][index]);
+      frame.visible = index === 0;
+      frames.push(frame);
+      view.addChild(frame);
+    }
+  } else {
+    const g = new Graphics();
+    g.beginFill(0xffffff, 1);
+    g.lineStyle(3, 0x3a404a, 1);
+    g.drawRoundedRect(-24, -64, 48, 64, 6);
+    g.endFill();
+    g.beginFill(0x3a404a, 1);
+    g.drawRect(-6, -64, 12, 6);
+    g.endFill();
+    view.addChild(g);
+  }
+  // LaserKeyBox params FUN_7ff72bb54fe0: p0 pitcher name, k = p[max(N-1, 1)].
+  const pitcherName = typeof params[0] === 'string' ? params[0] : 'LaserBallPitcher';
+  const speedFactor = numberParam(params, Math.max(party - 1, 1)) ?? 1;
+  return {
+    spawn, kind, x: spawn.x, y: spawn.y, vy: 0, body, view, frames,
+    hits: 0, speedFactor: Math.fround(speedFactor), pitcherName, breaking: false, breakFrames: 0,
+  };
+}
+
+function showLaserKeyBoxFrame(box: NativeKeyBox): void {
+  box.frames.forEach((frame, index) => { frame.visible = index === Math.min(box.hits, box.frames.length - 1); });
+}
+
+/** FUN_7ff72bb5d420(obj, p0): plank rect from the shape table; Seesaw rows with p1 != 0 are geared to the parent. */
+function seesawPlankFromSpawn(spawn: ActorSpawnDef): SeesawPlank {
+  const params = rowParams(spawn);
+  const shape = SEESAW_PLANK_SHAPES[Math.trunc(numberParam(params, 0) ?? 0)] ?? SEESAW_PLANK_SHAPES[0];
+  const parent = spawn.actorName === 'SeesawParent';
+  const view = new Container();
+  view.x = spawn.x;
+  view.y = spawn.y;
+  const g = new Graphics();
+  g.beginFill(0xff864d, 1);
+  g.drawRoundedRect(shape.x, shape.y, shape.width, shape.height, 6);
+  g.endFill();
+  g.beginFill(0x3a404a, 1);
+  g.drawCircle(0, 0, 5);
+  g.endFill();
+  view.addChild(g);
+  return {
+    spawn, parent, geared: !parent && Math.trunc(numberParam(params, 1) ?? 0) !== 0,
+    pivotX: spawn.x, pivotY: spawn.y, local: { ...shape },
+    angle: 0, target: 0, view,
+  };
+}
+
+/** The two pans as lift bodies (the lift family's move check and rider carry); body {-97, -7, 194, 14}. */
+function nativeBalanceFromSpawn(spawn: ActorSpawnDef): NativeBalance {
+  const half = (numberParam(rowParams(spawn), 0) ?? 900) * 0.5;
+  const pan = (x: number): BalancePan => {
+    const lift = new WeightedLift({ raw: [0, 0, 'BalancePan', '', x, spawn.y], actorName: 'BalancePan', label: '', x, y: spawn.y });
+    lift.rect.x = x + BALANCE_PAN_BODY.x;
+    lift.rect.y = spawn.y + BALANCE_PAN_BODY.y;
+    lift.rect.width = BALANCE_PAN_BODY.width;
+    lift.rect.height = BALANCE_PAN_BODY.height;
+    lift.bodyOffsetY = BALANCE_PAN_BODY.y;
+    lift.view.removeChildren();
+    const g = new Graphics();
+    g.beginFill(0xff864d, 1);
+    g.drawRoundedRect(-98, -8, 196, 16, 5);
+    g.endFill();
+    lift.view.addChild(g);
+    return { lift, homeY: spawn.y, offset: 0, target: 0 };
+  };
+  return { spawn, targetLabel: spawn.label, left: pan(spawn.x - half), right: pan(spawn.x + half), angle: 0 };
+}
+
+/** PhysicsBallPitcher (FUN_7ff72bb37d70 family): direction (sin a, -cos a), launch 0.1 * p[N-1], solo 5.0. */
+function physicsPitcherFromSpawn(spawn: ActorSpawnDef, party: number): PhysicsPitcher {
+  const params = rowParams(spawn);
+  const direction = physicsBallDirectionFromAngle(Math.trunc(numberParam(params, 0) ?? 0));
+  let speed = CANNON_SOLO_SPEED;
+  const partyValue = party > 1 ? numberParam(params, party - 1) : undefined;
+  if (partyValue !== undefined) speed = Math.fround(Math.fround(partyValue) * CANNON_PARTY_SPEED_SCALE);
+  const view = new Container();
+  view.x = spawn.x;
+  view.y = spawn.y;
+  const g = new Graphics();
+  g.beginFill(0x3a404a, 1);
+  g.drawRoundedRect(-14, -14, 28, 28, 6);
+  g.endFill();
+  view.addChild(g);
+  return { spawn, dirX: direction.x, dirY: direction.y, speed, firstTickSkipped: false, view };
+}
+
+/** seesaw-box2d: the b2World of FUN_7ff72bbe74f0 / FUN_7ff72bbf2950 (Box2D 2.3 defaults: sleeping, warm starting, CCD on). */
+function createBallParkWorld(): planck.World {
+  return new planck.World({ gravity: new planck.Vec2(0, BOX2D_GRAVITY_Y * BOX2D_SCALE) });
+}
+
+function box2dPoint(x: number, y: number): planck.Vec2 {
+  return new planck.Vec2(x * BOX2D_SCALE, y * BOX2D_SCALE);
+}
+
+/**
+ * PhysicsArea FUN_7ff72bb77970 + params FUN_7ff72bb78d80: a static body at the row point (kind 1) whose 5-point loop
+ * (p0, p1) -> (p0, p1 + p3) -> (p0 + p2, p1 + p3) -> (p0 + p2, p1) -> (p0, p1) becomes four b2EdgeShapes
+ * (FUN_7ff72bbe5f80): each edge after the first has a ghost vertex0 equal to its own vertex1 (the loop reads the
+ * previous edge's end), each edge before the last has vertex3 = the next point; density 1, friction 1, restitution 0.
+ */
+function addPhysicsAreaBody(world: planck.World, spawn: ActorSpawnDef): void {
+  const params = rowParams(spawn);
+  const left = Math.trunc(numberParam(params, 0) ?? 0);
+  const top = Math.trunc(numberParam(params, 1) ?? 0);
+  const width = Math.trunc(numberParam(params, 2) ?? 0);
+  const height = Math.trunc(numberParam(params, 3) ?? 0);
+  const body = world.createBody({ type: 'static', position: box2dPoint(spawn.x, spawn.y) });
+  body.setUserData({ kind: BOX2D_AREA_KIND });
+  const points = [
+    box2dPoint(left, top),
+    box2dPoint(left, top + height),
+    box2dPoint(left + width, top + height),
+    box2dPoint(left + width, top),
+    box2dPoint(left, top),
+  ];
+  for (let index = 0; index < points.length - 1; index += 1) {
+    const edge = new planck.Edge(points[index], points[index + 1]);
+    if (index > 0) edge.setPrevVertex(points[index]);
+    if (index < points.length - 2) edge.setNextVertex(points[index + 2]);
+    body.createFixture(edge, { density: PHYSICS_AREA_DENSITY, friction: PHYSICS_AREA_FRICTION, restitution: 0 });
+  }
+}
+
+/**
+ * Seesaw setup FUN_7ff72bb5d700: a dynamic box at the pivot (gravity scale 0) from the p0 shape table, polygon
+ * FUN_7ff72bbe5c70 (x, -(y + h)), (x + w, -(y + h)), (x + w, -y), (x, -y) scaled by 0.01; a revolute joint from the
+ * ground body (anchor = the pivot, FUN_7ff72bbe6ef0) with limits +-0.1745 rad (FUN_7ff72bbe6ea0); geared children get
+ * a gear joint (parent revolute, own revolute, ratio -1: FUN_7ff72bb5d9e0 / FUN_7ff72bbe7250).
+ */
+function addSeesawPlankBody(world: planck.World, ground: planck.Body, plank: SeesawPlank, parent: SeesawPlank | undefined): void {
+  const body = world.createBody({
+    type: 'dynamic', position: box2dPoint(plank.pivotX, plank.pivotY), angle: 0, gravityScale: 0,
+  });
+  body.setUserData({ kind: 0 });
+  const { x, y, width, height } = plank.local;
+  const outline = new planck.Polygon([
+    box2dPoint(x, -(y + height)),
+    box2dPoint(x + width, -(y + height)),
+    box2dPoint(x + width, -y),
+    box2dPoint(x, -y),
+  ]);
+  body.createFixture(outline, { density: SEESAW_DENSITY, friction: SEESAW_FRICTION, restitution: 0 });
+  const joint = world.createJoint(new planck.RevoluteJoint({
+    bodyA: ground, bodyB: body,
+    localAnchorA: box2dPoint(plank.pivotX, plank.pivotY), localAnchorB: new planck.Vec2(0, 0), referenceAngle: 0,
+    enableLimit: true, lowerAngle: -SEESAW_ANGLE_LIMIT, upperAngle: SEESAW_ANGLE_LIMIT,
+  }));
+  plank.body = body;
+  plank.joint = joint ?? undefined;
+  if (!plank.geared || !parent?.body || !parent.joint || !plank.joint) return;
+  world.createJoint(new planck.GearJoint({
+    bodyA: parent.body, bodyB: body, joint1: parent.joint, joint2: plank.joint, ratio: SEESAW_GEAR_RATIO,
+  }));
+}
+
+/**
+ * PhysicsBall FUN_7ff72bb55c30 / setup FUN_7ff72bb55d80, fired by FUN_7ff72bb383e0 mode 4 at pos + dir * 20: a dynamic
+ * circle r 12, density 0.1, friction 0.5, restitution 0.2, angular damping 0.5, gravity scale 1. The pitcher's
+ * 0.1 * p[N-1] speed only goes to the actor (+0x118): the body is built later in setup from the wrapper velocity, which
+ * is still 0 (FUN_7ff72bbe6520), so the ball starts at rest.
+ */
+function spawnPhysicsBall(world: planck.World, pitcher: PhysicsPitcher): PhysicsBall {
+  const x = Math.fround(pitcher.spawn.x + Math.fround(pitcher.dirX * CANNON_SPAWN_OFFSET));
+  const y = Math.fround(pitcher.spawn.y + Math.fround(pitcher.dirY * CANNON_SPAWN_OFFSET));
+  const body = world.createBody({
+    type: 'dynamic', position: box2dPoint(x, y), angularDamping: PHYSICS_BALL_ANGULAR_DAMPING, gravityScale: 1,
+  });
+  body.setUserData({ kind: 0 });
+  body.createFixture(new planck.Circle(NATIVE_BALL_RADIUS * BOX2D_SCALE), {
+    density: PHYSICS_BALL_DENSITY, friction: PHYSICS_BALL_FRICTION, restitution: PHYSICS_BALL_RESTITUTION,
+  });
+  const view = new Container();
+  view.x = x;
+  view.y = y;
+  const g = new Graphics();
+  g.beginFill(0xff4f6d, 1);
+  g.lineStyle(2, 0xfff0f3, 0.9, 1);
+  g.drawCircle(0, 0, NATIVE_BALL_RADIUS);
+  g.endFill();
+  view.addChild(g);
+  return { x, y, vx: 0, vy: 0, countdown: 0, gone: false, view, body };
+}
+
+/** The ball's px position and px-per-tick velocity, read back from its body (FUN_7ff72bbe68a0: metres / 0.01). */
+function syncPhysicsBall(ball: PhysicsBall): void {
+  const position = ball.body.getPosition();
+  const velocity = ball.body.getLinearVelocity();
+  ball.x = position.x / BOX2D_SCALE;
+  ball.y = position.y / BOX2D_SCALE;
+  ball.vx = velocity.x / BOX2D_SCALE * BOX2D_TIME_STEP;
+  ball.vy = velocity.y / BOX2D_SCALE * BOX2D_TIME_STEP;
+  ball.view.x = ball.x;
+  ball.view.y = ball.y;
+}
+
+/**
+ * FUN_7ff72bb55e40's death test: some contact of the ball's contact list is with a kind-1 body (the PhysicsArea) and
+ * its manifold's local normal is vertical (|1 - |n.y|| <= 1.19e-7): the area's floor or ceiling edge.
+ */
+function physicsBallTouchesAreaFloorOrCeiling(body: planck.Body): boolean {
+  for (let edge = body.getContactList(); edge; edge = edge.next) {
+    const data = edge.other?.getUserData() as { kind?: number } | null | undefined;
+    if (data?.kind !== BOX2D_AREA_KIND) continue;
+    const normalY = Math.abs(edge.contact.getManifold().localNormal.y);
+    if (Math.abs(1 - normalY) <= NATIVE_FLOAT_EPSILON) return true;
+  }
+  return false;
+}
+
+/** FUN_7ff72bbe7770: the segment through every fixture of every body (maxFraction 1); true on any hit. */
+function box2dRayHitsAnyFixture(world: planck.World, x1: number, y1: number, x2: number, y2: number): boolean {
+  const input = { p1: box2dPoint(x1, y1), p2: box2dPoint(x2, y2), maxFraction: 1 };
+  const output = { normal: new planck.Vec2(0, 0), fraction: 0 };
+  for (let body = world.getBodyList(); body; body = body.getNext()) {
+    for (let fixture = body.getFixtureList(); fixture; fixture = fixture.getNext()) {
+      if (fixture.rayCast(output, input, 0)) return true;
+    }
+  }
+  return false;
+}
+`;
     source += `
 /** A copy of a stage row at a new point; raw x / y follow, because param parsers find their params after them. */
 function spawnMovedTo(spawn: ActorSpawnDef, x: number, y: number): ActorSpawnDef {

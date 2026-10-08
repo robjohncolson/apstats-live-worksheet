@@ -54,6 +54,8 @@ export { setRandomState, getRandomState } from 'campaign-random';
 await build({ stdin: { contents: runtimeEntry, resolveDir: source, sourcefile: 'campaign-entry.ts', loader: 'ts' },
   outfile: resolve(output, 'runtime.mjs'), bundle: true, format: 'esm', platform: 'browser', target: 'es2022',
   sourcemap: 'external', sourcesContent: true, minify: true, legalComments: 'linked',
+  // Bare imports added by the patches (planck) resolve from this repo's node_modules, not the browser port's.
+  nodePaths: [resolve(root, 'node_modules')],
   plugins: [{ name: 'recovered-campaign', setup(builder) {
     builder.onResolve({ filter: /^campaign-random$/ }, () => ({ path: 'campaign-random', namespace: 'campaign' }));
     builder.onLoad({ filter: /.*/, namespace: 'campaign' }, () => ({ contents:
