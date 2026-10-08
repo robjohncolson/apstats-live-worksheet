@@ -102,6 +102,12 @@ export async function createCampaignEngine({ onEvent = () => {} } = {}) {
       ctx.save(); ctx.translate(projection.x, projection.y); ctx.imageSmoothingEnabled = false;
       jumpArt.cats(ctx, runtime, ticks, colours, focusSlot); ctx.restore();
     }
+    // death-restarts-stage: the native 0.5 s fade-out before the stage rebuilds (runtime.restartFadeSeconds).
+    const fade = runtime.restartFadeSeconds || 0;
+    if (fade > 0) {
+      ctx.save(); ctx.globalAlpha = Math.min(1, Math.max(0, 1 - fade / 0.5)); ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, viewW, 750); ctx.restore();
+    }
     // Native camera transforms can participate in hazard bounds. Keep presentation
     // changes out of the next physics tick, including during reconnect replay.
     world.position.set(original.x, original.y); world.scale.set(original.scale);

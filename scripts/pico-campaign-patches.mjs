@@ -663,6 +663,32 @@ export const CAMPAIGN_PATCHES = [{
     'Port (b14 snapshot): checkGoals (11362) entered on HELD up and latched goalClearedPlayers; the cat kept input, physics, view and body; only 5908 / 7014 / 11266 / 11292 filtered it, so entered cats blocked the doorway (the driver walked them aside, campaign-solve/driver.mjs:277-278)',
     'Camera: stepScrollCamera (2419) still counts every non-helper cat: native camera membership of a state-4 cat NOT traced, left unchanged'],
   behavior: 'Every stage with a Goal / KeyGoal: a cat enters only on an UP press edge (UP held from before does not enter) while it overlaps the sensor of an OPEN door; a closed door does nothing. On entering it is hidden at once and loses its body: one predicate isBodyOff(cat) = collision-off OR entered replaces the collision-off test at every other-cat site (standing on a cat, cat-vs-cat, lift / wall step bodies and carries, weighted-lift load, push chains and carried boxes, switch occupancy, jump switches, dead switch, ball bodies, balance riders, judges, magnet field / solids, blink-block occupancy, rope stacks) and it is excluded from the warp-gun launch / placement / target checks and push intent; its own update is skipped with velocity 0. After 1.0 s inside, an UP press while no active body overlaps its spot brings it back out where it entered (visible, solid); the exit of every entered cat is handled before any cat moves or enters, so the result never depends on player order, and a cat that came out does not use the same press to go back in. In the campaign the press edge is wire bit 512 (sent only on a real key-down), so an input timeout never fakes a press. The stage clears when the live count of entered cats equals the eligible cats (entered cats still count). A reset puts an entered cat back out at its spawn. KeyGoal follows the same entry rule (INFERENCE: its callback was not traced).',
+}, {
+  // batch 16: a death restarts the whole stage (teacher: 2-2 FallBoxes never come back); the rope swings (2-1 "70%").
+  id: 'death-restarts-stage',
+  files: ['src/engine/GameRuntime.ts'],
+  evidence: ['Fatal hit: avatar command dispatcher 0x7ff72bb69440 (vtable +0x78), cmd 4 (enemies, DamageRect, DeadBallPitcher, hazards) / cmd 5 (Thunder): "hit", player +0x420 -= 1, at 0 FUN_7ff72bb67800(player, 3) (0x7ff72bb69885); blocked while +0x3f8 & 0x80 or FUN_7ff72bc1a260 reports the scene blocked (ENGINE_SPEC pass 8)',
+    'State 3 FUN_7ff72bb6eda0: phase 0 velocity 0, body contact bit +0xc & 1 cleared, dead animation 4; phase 1 waits DAT_7ff72bcff538 = 1.0 s then vy = -9.0 (+0x11c = 0xc1100000); phase 2 waits until y > (DAT_7ff72bc7db90 720 / scale) * DAT_7ff72bcff650 4.0 = 2880 / scale; then, when FUN_7ff72bb7b8a0(stage) (the stage id is in the level DB DAT_7ff72c62a028, FUN_7ff72bb8a050), stage +0xc |= 2, and in every case state 1 (ctor FUN_7ff72bb70630, no update). No position write, no checkpoint read: the cat is never respawned on its own',
+    'Off-screen FUN_7ff72bb6f0e0 (decompile lines 314-327): feet below the fail line stage +0xd5a1 * 8 or above failUp (< 0) -> cmd 4, then at once state 1 (the request at +0x414 overwrites the pending state 3) and stage +0xc |= 2: no 1 s hold and no fall, the flag is raised on the same tick. INFERENCE: the ctrl +0x20 / +0x24 velocity test (> DAT_7ff72bc7d458 = 1.19e-7 only zeroes the cat velocity via FUN_7ff72bb37d00) is not modelled',
+    'Backstop FUN_7ff72bb7bbe0 (level-DB stages, flag 0x40 clear, not everyone in state 4): stage flag 8, or every avatar in state 1 / out (+0x3f8 & 0x10) -> stage +0xc |= 2. The puzzle fail FUN_7ff72bb60000 and RetryTimer raise the same bit. Correction: the stage restart flag is stage +0xc bit 2 (value 2); FUN_7ff72bc210a0 is a physics contact flag, not a stage-fail check',
+    'Flag 2 -> rebuild: scene FSM FUN_7ff72bb2bbf0 play state 0xb calls FUN_7ff72bb2cd50 every frame; flag 2 with no higher bit: route d620 = 2, d624 = current level, scene state 0x32 = a fade-out of DAT_7ff72bcff4fc = 0.5 s (30 ticks); 0x33 waits for the fade (FUN_7ff72bb1fbc0) then FUN_7ff72bb25940(sceneMgr, 2, level): route 2 has no cached scene (only 4 / 0xb reuse one), so FUN_7ff72bb26810 creates a NEW scene; its state 0 loads the level from the DB (FUN_7ff72bb8a330: a fresh Stage from the Lua rows, every createTable actor re-created, the map grid rebuilt FUN_7ff72bc27dc0), state 1 waits DAT_7ff72bcff5c0 = 2.0 s. Network: FUN_7ff72bb29880 -> FUN_7ff72bb29e20(scene, 2), states 0x23 / 0x24 -> FUN_7ff72bb25940(.., 2, level)',
+    'Survives: only the CheckPoint table DAT_7ff72c629fa8 + 0xcc98 (100 slots, stride 0xa0), carried by FUN_7ff72bb29880 / 29a30 and applied as the spawn by FUN_7ff72bb774a0 when the new avatars are created (elapsed-time dword reset to 0)',
+    'Port bugs (b15 snapshot): advancePlayerDeathFall (3496-3507) ended in resetPlayerToSpawn for the one cat and rebuilt nothing (probe stage_fall01 party 2: 27 FallBoxes at load, 9 after cat 0 respawned, 19 never back, key not reset); the off-screen kill line (3468) used the 1 s hold + fall; stageResultFlags (857 / 1592 / 10541) was never read; resetStage (2485) reloaded this.stage, the PRIVATE map copy (1583-1584), so a chip changed in play survived a reset on stages without map variants (fall01, jump02); the comment "It is NOT a full-stage retry" (3462-3466) was wrong',
+    'DeadSwitch (review fix): ctor FUN_7ff72bb3f080 installs FUN_7ff72bb3f1f0; on press it BROADCASTS command 3 to the scene with a null payload (0x7ff72bb3f247..256); the avatar dispatcher (0x7ff72bb6948b..694dd) decrements +0x420 and a null payload goes to 0x7ff72bb69885 -> FUN_7ff72bb67800(player, 3) -> FUN_7ff72bb6eda0 -> stage +0xc |= 2. Every avatar receives it: each live cat takes the fatal hit (the hazard lifecycle: 1 s hold, fall, restart). Port bug (b16 first pass): applyDeadSwitches respawned the presser alone (6-4 repro: cat 0 back at spawn, partner alive, nothing rebuilt). INFERENCE: a cat already inside the door (state 4) is left alone (its command handling in state 4 is untraced; the restart rebuilds it anyway)',
+    'PlaneObstacle (review fix): road FUN_7ff72bb3e070 -> 3e730 creates DamageRect children (FUN_7ff72bb487c0 -> 48ab0) whose contact scan FUN_7ff72bb35f50 dispatches avatar command 4 -> state 3 -> FUN_7ff72bb6eda0: the same fatal-hit lifecycle as the DamageRect path (4-2). Port bug: resetPlayerIfTouchingPlaneObstacle respawned the cat alone',
+    'Kept, cited: the third applyDeadBallPitchers branch (resetPlayerToSpawn) is unreachable, only DeadBallPitcher (FUN_7ff72bb37d70 mode 3 -> projectile mode 2 -> FUN_7ff72bb4ea70 cmd 4, already a death) and EndlessLaserBallPitcher (command 6 score, no damage) rows enter deadBallPitchers; Laser / Bound / Physics pitchers are separate cannons (FUN_7ff72bb37d70 modes 1 / 0, FUN_7ff72bb55c30) with no resetPlayerToSpawn; resetPressed (global and per cat) is unreachable in the campaign (decodeInput sets resetPressed false). No other resetPlayerToSpawn caller remains'],
+  behavior: 'Every stage: a cat death is a stage restart. A fatal hit keeps the native 1.0 s hold and the collisionless fall; when the falling cat passes 2880 / scale it raises the stage restart flag (native stage +0xc bit 2) instead of respawning alone. Falling off the screen (or above failUp) plays "hit" and raises the flag on the same tick (the cat leaves every pass at once, no hold). A DeadSwitch press is a fatal hit for every live cat (native command 3 broadcast) and a PlaneObstacle contact is a fatal hit (its DamageRect children send command 4), so both end in the restart too. The breakout everyone-out, the puzzle fail and an expired RetryTimer raise the same flag. After any update that ends with the flag set and the stage not cleared the stage freezes for the native 0.5 s fade (DAT_7ff72bcff4fc; GameRuntime.restartFadeSeconds counts down, 30 ticks at 60 Hz; INFERENCE that nothing ticks during the fade: native leaves play state 0xb) and then runs ONE restart (restartStage, also the old restartBreakoutStage name): a full loadStage from the ORIGINAL stage definition (loadStage keeps it as sourceStage; resetStage reloads it, so every reload gets a pristine private map) with the same party size and simplifyPassivePlaceholders. Kept: requiredPlayerCount (never touched by loadStage), the Desk teacher cats (same objects, slots and spawns, put back at their spawn), every CheckPoint target the cats reached (re-applied as the spawn after the reload; the CheckPoint actor itself comes back unactivated: INFERENCE) and the identity of the players array (new cats, same array, for readers holding it). Nothing else survives: keys, FallBoxes, boxes, switches, gates, lifts, enemies, timers, the camera and map chips are all rebuilt. No reseed: the restart keeps drawing from the journal-seeded random stream (a shuffled-player stage reshuffles from it, INFERENCE that native FUN_7ff72bb72960 re-runs in the new scene), so replays through a restart are identical. Not modelled: the 2.0 s intro of the new scene.',
+}, {
+  id: 'rope-native-swing',
+  files: ['src/engine/GameRuntime.ts', 'src/engine/actors/Player.ts'],
+  evidence: ['(a) Order: scene tick FUN_7ff72bc1b830 = actor pass FUN_7ff72bba62b0 (priority buckets ascending, insertion order within; FUN_7ff72bb9d140 -> vtable +0x10 FUN_7ff72bc16120), then the stage step vtable +0x30 FUN_7ff72bb7bbe0 -> world sweep FUN_7ff72bc1da80, then the late pass FUN_7ff72bba63e0 -> FUN_7ff72bc16460 -> 17ca0. Bucket = actor +0x74 (copied to +0x70 by FUN_7ff72bb9cfe0 from FUN_7ff72bc1bf50; the base ctor zeroes it, 0x7ff72bc15647); the avatar ctor writes +0x74 = 1 (0x7ff72bb67299), the rope ctor FUN_7ff72bb3f3a0 does not: the rope (bucket 0) runs BEFORE every cat on the positions the previous world step resolved. FUN_7ff72bb3f580 is one Jacobi pass per tick: L / R for every cat (0x7ff72bb3f6d8 / 3f71a), every correction (fce0 at 0x7ff72bb3f7b8), then apply all (0x7ff72bb3f7d2..3f8d2); idle while any player is in state 1 / 3; the cmd-0x29 latches +0x4c8 cleared at the end (0x7ff72bb3f8df)',
+    '(b) FUN_7ff72bb3ffe0 per neighbour: d = p_other - p_self (transform +0x44, 0x7ff72bb40057..63); nothing when |len| <= 1.19e-7 or len <= maxDist (+0x3e8, 0x7ff72bb40090..a6); share = (s2 + 1) / (s1 + s2 + 2) (0x7ff72bb400fd..40135), s1 = max(0, -n . selfFar), s2 = max(0, n . otherFar), 1 when the partner is in state 4; c = n * (len - maxDist) * share * 0.2 (0x7ff72bb40139..40146, DAT_7ff72c61f374): a linear soft spring, not squared, not iterated. Redirects on the self cat MAP normals only (40ba0 -> FUN_7ff72bc137b0, list body +0xa0; body contacts are +0x90), sx / sy taken first (0x7ff72bb4017a / 40188); y > eps blocked down: k = 1 or under the latch min(1, 1.2 / (run + 1)) (0x7ff72bb40259..89). Summed per cat in FUN_7ff72bb3fce0',
+    '(c) Loads L (40380) / R (40570): W = (0, (stackAbove + 1) * w) only for an unsupported cat (FUN_7ff72bb67850 -> 69dd0), plus the stretched-link terms unit(p_next - p) * (stack(next) + 1) (407a0); the R walk stops at j < N - 2 (0x7ff72bb40661..40670), its hanging-run count comes from the same loop. Wiring 0x7ff72bb3fd49..fdc6: pair(prev) selfFar = own R, otherFar = prev L, run = own L count; pair(next) selfFar = own L, otherFar = next R, run = own R count. CONFIRMED: a standing w = 1 anchor with its partner hanging straight below takes 2/3 and the hanging cat 1/3 (direction- and weight-dependent, not a constant: horizontal taut 1/2 : 1/2, w 0.5 vertical 0.6 : 0.4)',
+    '(d) Post rules in fce0: latch c.x * v.x < 0 and |v.x| < |c.x| + 0.1 -> c.x = -sgn(v.x)(|v.x| - 0.1) (0x7ff72bb3fe07..fe7b); c.y < -0.1 (0x7ff72bb3fe81): not grounded (13690(body, (0, 1), 1)) -> CLEAR avatar +0x3f8 bit 0 (0x7ff72bb3fecf); the redirect flag and c.y > v.y -> c.y = 0 with NO grounded test (0x7ff72bb3fedc..fef0); c.y < -eps, grounded, c.y + 0.65 > 0 -> c.y = 0 (0x7ff72bb3ff29..ff46, DAT_7ff72bcb69bc 0.65: CONFIRMED); |c.y| <= 20.15 (0x7ff72bb3ff72, DAT_7ff72bcb86e8), c.x uncapped. Apply 0x7ff72bb3f7f3 / 3f80f: position += c AND velocity += c',
+    'Avatar FUN_7ff72bb6f0e0: vx = bit0 ? 0 : vx * 0.98 (0x7ff72bb6f1de, DAT_7ff72bcbea28); L / R set +-3 only while bit 0 is set; supported -> vy = 0 and bit 0 := 1 (the only re-setter), else vy = min(vy + 0.65, 19.5): an airborne cat yanked upward loses steering and keeps its momentum (decaying 2 % / tick, gravity on y) until it lands = the pendulum; a standing anchor keeps only the position part of c. The avatar ctor writes +0x3f8 = 0 (spawn without steering until the first landing): NOT applied (only the rope clear is ported); other bit-0 clearers untraced',
+    '(e) Rest length: maxDist = p[2N - 4], w = p[2N - 3], N = party (FUN_7ff72bb40be0, DAT_7ff72c629fa8 + 0xcc08): verified the port already does it (selectDistanceConstraintLinkForPlayerCount, N = the cat count): 2-1 170 / 1 (N 2), 160 / 0.7 (3), 150 / 0.5 (4-5), 140 / 0.5 (6-8); 2-3 310 / 1 (2-3), 160 / 0.4 (4-6), 110 / 0.3 (7-8). (f) No line-of-sight test anywhere: the pair uses the two origins; walls act only through the self cat map normals and the world sweep (the rope cuts through ledges, drawn straight). (g) A hanging cat cannot jump (down contact, the 0.07 s coyote +0x1c = 0x3d8f5c29, or multi-jump flag 2); an anchor jump moves the anchor alone (J = -5.1 DAT_7ff72bcbdf90)',
+    'Port divergence (b15 snapshot, traces scratchpad b16/rope/traces.json): applyDistanceConstraints ran after the player loop (2425 vs 2161-2281: the first taut tick saw the extra fall and yanked A 3 px at once); Player.update set vx = input every tick (browser_port actors/Player.ts:186), so the rope x velocity (7224) was erased and the hanging cat steered; 7194 tested !cat.grounded; farSide (7136-7146) walked the last link; a tile-supported cat kept a rope-added vy (Player.ts:215). Reference with "rope after move + no coasting" reproduces the old port swing trace to 0.0 px for 120 ticks; momentum is the dominant cause'],
+  behavior: 'Rope stages (2-1, 2-3): the rope runs once per tick BEFORE the cats move, on last tick\'s resolved positions (applyCollisionConstraintMoves stays after motion: the next tick\'s rope consumes its latch and clears it). Player.ropeCoast models native +0x3f8 bit 0 clear: the rope sets it when a cat\'s final pull is upward by more than 0.1 while the cat is not grounded; while it is set the cat ignores left / right and keeps its horizontal speed decaying x 0.98 per tick (the rope keeps adding position AND velocity), so a hanging cat swings like a pendulum and the anchor is dragged back and forth instead of off its ledge; it clears when the cat starts an update supported (tile, body or cat below; that landing tick still coasts, as native decides vx before the support test). A tile-supported cat starts its update with vy = 0. The flag zeroing for an upward redirect no longer tests grounded; the right-hand load walk stops at j < count - 2 (its hanging-run count too). Unchanged and confirmed: the share formula, the 0.2 spring, the map-only redirects, the 0.65 rule, the 20.15 y clamp, position + velocity apply, the solids sweep. Not applied: the spawn-without-steering of the avatar ctor; body-supported cats keep the port gravity-plus-resolution model (only tile support zeroes vy).',
 }];
 
 // Fail the build if upstream code changes: never silently skip a correction.
@@ -812,6 +838,41 @@ export function patchCampaignSource(file, source) {
       '  private spawnFacing: -1 | 1 = 1;\n  /** magnet-player: facing frozen while this cat\'s magnet holds something. */\n  facingLocked = false;\n', file);
     source = replaceOnce(source, '    if (this.velocity.x > 0) this.facing = 1;\n    else if (this.velocity.x < 0) this.facing = -1;',
       '    if (!this.facingLocked && this.velocity.x > 0) this.facing = 1;\n    else if (!this.facingLocked && this.velocity.x < 0) this.facing = -1;', file);
+    // rope-native-swing (batch 16)
+    source = replaceOnce(source, `  lockedVx: number | null = null;
+`, `  lockedVx: number | null = null;
+  /** rope-native-swing: native avatar +0x3f8 bit 0 CLEAR (0x7ff72bb3fecf): no steering, vx decays 0.98 / tick. */
+  ropeCoast = false;
+  /** rope-native-swing: the rect the last world step resolved, when the rope moved this cat since (support is read
+   *  from that step's contacts, not from the rope-moved rect). Consumed by the next update. */
+  supportProbeRect: Rect | null = null;
+`, file);
+    source = replaceOnce(source, `    this.velocity.x = direction * MOVE_AXIS_SCALE * MOVE_SPEED * moveSpeedMultiplier;
+`, `    // rope-native-swing: FUN_7ff72bb6f0e0 vx = bit0 ? 0 : vx * 0.98 (0x7ff72bb6f1de), input only while bit 0 is set;
+    // the support test that sets bit 0 again runs after it, so the landing tick still coasts.
+    const ropeCoasting = this.ropeCoast && this.mode === 'normal';
+    this.velocity.x = ropeCoasting
+      ? this.velocity.x * 0.98
+      : direction * MOVE_AXIS_SCALE * MOVE_SPEED * moveSpeedMultiplier;
+    if (ropeCoasting && (this.grounded || this.bodySupportContact)) this.ropeCoast = false;
+`, file);
+    source = replaceOnce(source, `    const hadTileSupport = wasGrounded && tileSupportsPlayer(tileMap, this.rect);
+`, `    // rope-native-swing: support comes from the last world step's contacts (FUN_7ff72bb67850), so a rope move since
+    // then does not change it; a supported cat starts its tick with vy = 0 (FUN_7ff72bb6f0e0).
+    const supportRect = this.supportProbeRect ?? this.rect;
+    this.supportProbeRect = null;
+    const hadTileSupport = wasGrounded && tileSupportsPlayer(tileMap, supportRect);
+    if (hadTileSupport) this.velocity.y = 0;
+`, file);
+    source = replaceOnce(source, `    this.jumpsUsed = 0;
+    this.lockedVx = null;
+    this.pendingLaunchY = null;
+`, `    this.jumpsUsed = 0;
+    this.lockedVx = null;
+    this.pendingLaunchY = null;
+    this.ropeCoast = false;
+    this.supportProbeRect = null;
+`, file);
     return source;
   }
   if (file === 'src/engine/physics.ts') {
@@ -7979,6 +8040,245 @@ const GOAL_ENTERED_EXIT_DELAY = 1.0;
         rider.applyResolvedCollision(sweepTilesAndBodies(rider, from, dx, dy, cat).rect, rider.velocity, rider.grounded);
       }
     });`, file);
+    // death-restarts-stage + rope-native-swing (batch 16)
+    source = replaceOnce(source, `  // Recovered Stage result flags. RetryTimer owns the currently modeled bit
+  // 0x2; the normal Stage clear/fail predicate remains human-reserved.
+  private stageResultFlags = 0;
+`, `  // death-restarts-stage: native stage +0xc. Bit 2 = restart (a cat death, the breakout / puzzle fail, RetryTimer);
+  // read once per update (FUN_7ff72bb2cd50): the fade, then one full rebuild.
+  private stageResultFlags = 0;
+  /** death-restarts-stage: the stage definition loadStage was given (never the private map copy). */
+  private sourceStage?: StageDef;
+  /** death-restarts-stage: > 0 while the restart fade runs (DAT_7ff72bcff4fc 0.5 s); the stage is frozen. */
+  restartFadeSeconds = 0;
+  /** death-restarts-stage: CheckPoint targets reached (native CheckPoint table DAT_7ff72c629fa8 + 0xcc98), by cat index. */
+  private checkpointSpawns = new Map<number, { x: number; y: number }>();
+`, file);
+    source = replaceOnce(source, `    const partySize = options.partySize;
+    const mapVariantStage = resolveStageMapVariant(stage, partySize);
+`, `    const partySize = options.partySize;
+    // death-restarts-stage: keep the caller's definition; resetStage rebuilds from it (a pristine map every time).
+    this.sourceStage = stage;
+    this.restartFadeSeconds = 0;
+    this.checkpointSpawns.clear();
+    this.moveWallSensorContacts = [];   // a contact cache of the old actors
+    const mapVariantStage = resolveStageMapVariant(stage, partySize);
+`, file);
+    source = replaceOnce(source, `    this.loadStage(this.stage, this.viewportWidth, this.viewportHeight, {
+`, `    this.loadStage(this.sourceStage ?? this.stage, this.viewportWidth, this.viewportHeight, {
+`, file);
+    source = replaceOnce(source, `  update(dt: number, input: InputState, playerInputs?: readonly InputState[]): void {
+    if (!this.stage) return;
+`, `  /**
+   * death-restarts-stage: FUN_7ff72bb2cd50 reads stage +0xc once per frame. Bit 2 with the stage not cleared -> the
+   * 0.5 s fade (scene states 0x32 / 0x33, DAT_7ff72bcff4fc; INFERENCE: nothing ticks meanwhile) -> ONE rebuild
+   * (FUN_7ff72bb25940(.., 2, level) -> a new scene). Only at the tick boundary, so no actor runs on destroyed actors.
+   */
+  update(dt: number, input: InputState, playerInputs?: readonly InputState[]): void {
+    if (this.restartFadeSeconds > 0) {
+      this.restartFadeSeconds -= Math.min(dt, 1 / 20);
+      if (this.restartFadeSeconds <= 1e-6) {
+        this.restartFadeSeconds = 0;
+        this.restartStage();
+      }
+      return;
+    }
+    this.updateFrame(dt, input, playerInputs);
+    if ((this.stageResultFlags & 0x2) !== 0 && !this.cleared && this.stage) {
+      this.restartFadeSeconds = RESTART_FADE_SECONDS;
+    }
+  }
+
+  private updateFrame(dt: number, input: InputState, playerInputs?: readonly InputState[]): void {
+    if (!this.stage) return;
+`, file);
+    source = replaceOnce(source, `    if (this.breakoutEveryoneOut()) {
+      this.restartBreakoutStage();
+      return;
+    }
+`, `    if (this.breakoutEveryoneOut()) {
+      // death-restarts-stage: the breakout fail raises the restart flag (FUN_7ff72bb7bbe0, stage +0xc |= 2).
+      this.stageResultFlags |= 0x2;
+      return;
+    }
+`, file);
+    source = replaceOnce(source, `    if (result === 'failed') {
+      this.restartBreakoutStage();
+      return true;
+    }
+`, `    if (result === 'failed') {
+      // death-restarts-stage: FUN_7ff72bb60000 raises stage +0xc bit 2; update() runs the restart.
+      this.stageResultFlags |= 0x2;
+      return true;
+    }
+`, file);
+    source = replaceOnce(source, `  /** breakout-loss-and-fail: the stage restarts (scene flag 2); Desk teacher cats are put back at their spawns. */
+  private restartBreakoutStage(): void {
+    const helpers = this.players
+      .map((player, index) => ({ player, slot: this.playerInputSlots[index] ?? index, spawn: this.playerSpawns[index] }))
+      .filter(({ player }) => player.parkHelper);
+    this.resetStage();
+`, `  /** breakout-loss-and-fail: the old name of restartStage (kept for callers). */
+  private restartBreakoutStage(): void {
+    this.restartStage();
+  }
+
+  /**
+   * death-restarts-stage: ONE stage restart = a full rebuild from the original definition (a new scene natively:
+   * FUN_7ff72bb26810 -> FUN_7ff72bb8a330). Kept: party size / simplifyPassivePlaceholders (resetStage),
+   * requiredPlayerCount, the Desk teacher cats (put back at their spawns), the CheckPoint targets (native
+   * DAT_7ff72c629fa8 + 0xcc98, applied as the spawn by FUN_7ff72bb774a0) and the players array identity.
+   */
+  restartStage(): void {
+    const helpers = this.players
+      .map((player, index) => ({ player, slot: this.playerInputSlots[index] ?? index, spawn: this.playerSpawns[index] }))
+      .filter(({ player }) => player.parkHelper);
+    const checkpoints = [...this.checkpointSpawns];
+    const players = this.players;
+    this.resetStage();
+    players.splice(0, players.length, ...this.players);
+    this.players = players;
+    for (const [index, target] of checkpoints) {
+      const cat = this.players[index];
+      if (!cat) continue;
+      this.checkpointSpawns.set(index, target);
+      this.playerSpawns[index] = { ...target };
+      if (index === 0) this.playerSpawn = { ...target };
+      cat.reset(target.x, target.y);
+    }
+`, file);
+    source = replaceOnce(source, `    if (player.rect.y + player.rect.height < thresholdY) return;
+    const inputSlot = this.deathSequenceInputSlots.get(player) ?? this.playerInputSlots[playerIndex] ?? playerIndex;
+    this.resetPlayerToSpawn(player, playerIndex, inputSlot);
+  }
+`, `    if (player.rect.y + player.rect.height < thresholdY) return;
+    // death-restarts-stage: FUN_7ff72bb6eda0 phase 2 -> stage +0xc |= 2 and state 1. The cat is not respawned on its
+    // own: it stays out of play until update() rebuilds the whole stage.
+    if ((this.stageResultFlags & 0x2) !== 0) return;
+    const inputSlot = this.deathSequenceInputSlots.get(player) ?? this.playerInputSlots[playerIndex] ?? playerIndex;
+    this.onEvent?.({ type: 'dead', playerIndex: inputSlot });
+    this.stageResultFlags |= 0x2;
+  }
+`, file);
+    source = replaceOnce(source, `  // Off-screen fall/fail death (FUN_7ff72bb6f0e0 ~151465-151490, VERIFIED):
+  // fires when playerY >= (720/scale)*failWindowScale (bottom kill-line) or
+  // failUpY < 0 and playerY < failUpY (top kill-line). Per pass 8 this is
+  // per-player cmd-4 damage — plays "hit" and enters the 1.0s state-3 hold.
+  // It is NOT a full-stage retry. The player's actor Y is its feet line
+  // (spawns are feet-anchored: rect.y = actorY - height).
+`, `  // Off-screen fall/fail death (FUN_7ff72bb6f0e0 ~151465-151490, VERIFIED):
+  // fires when playerY >= (720/scale)*failWindowScale (bottom kill-line) or
+  // failUpY < 0 and playerY < failUpY (top kill-line). death-restarts-stage:
+  // cmd 4 ("hit"), then at once state 1 and stage +0xc |= 2 (decompile lines
+  // 314-327): no 1.0 s hold, no fall; the whole stage restarts. The player's
+  // actor Y is its feet line (spawns are feet-anchored: rect.y = actorY - height).
+`, file);
+    source = replaceOnce(source, `      && !isAboveFailUpLine(feetY, this.scrollCameraConfig)
+    ) return;
+    this.startPlayerDeathSequence(this.player, this.eventInputSlotForPlayer(this.player, playerInputSlot));
+  }
+`, `      && !isAboveFailUpLine(feetY, this.scrollCameraConfig)
+    ) return;
+    const inputSlot = this.eventInputSlotForPlayer(this.player, playerInputSlot);
+    this.onEvent?.({ type: 'hit', playerIndex: inputSlot });
+    this.deathSequenceInputSlots.set(this.player, inputSlot);
+    this.beginPlayerDeathFall(this.player);   // state 1: out of every pass (the rope idles)
+    this.stageResultFlags |= 0x2;
+  }
+`, file);
+    source = replaceOnce(source, `      this.playerSpawns[playerIndex] = target;
+      if (playerIndex === 0) {
+        this.playerSpawn = target;
+      }
+      return;
+    }
+`, `      this.playerSpawns[playerIndex] = target;
+      if (playerIndex === 0) {
+        this.playerSpawn = target;
+      }
+      this.checkpointSpawns.set(playerIndex, { ...target });   // death-restarts-stage: survives a restart
+      return;
+    }
+`, file);
+    source = replaceOnce(source, `const PLAYER_DEATH_FALL_THRESHOLD_BASE_Y = 2880;
+`, `const PLAYER_DEATH_FALL_THRESHOLD_BASE_Y = 2880;
+// death-restarts-stage: scene state 0x32 fade-out DAT_7ff72bcff4fc = 0.5 s before the rebuild.
+const RESTART_FADE_SECONDS = 0.5;
+`, file);
+    source = replaceOnce(source, `    // thunder-frame-order: the cats that reach the contact checks; their Thunder kill is judged after all motion.
+    const thunderContactIndexes: number[] = [];
+`, `    // rope-native-swing: the rope (actor bucket 0, FUN_7ff72bb3f580) runs before every cat (bucket 1, avatar ctor
+    // 0x7ff72bb67299) on the positions the previous world step resolved.
+    this.applyDistanceConstraints();
+    // thunder-frame-order: the cats that reach the contact checks; their Thunder kill is judged after all motion.
+    const thunderContactIndexes: number[] = [];
+`, file);
+    source = replaceOnce(source, `    this.applyCollisionConstraintMoves();
+    this.applyDistanceConstraints();
+    this.drawRopes();
+`, `    this.applyCollisionConstraintMoves();
+    this.drawRopes();
+`, file);
+    source = replaceOnce(source, `      for (let j = i; j + step >= 0 && j + step < count; j += step) {
+`, `      // rope-native-swing: the R walk stops at j < N - 2 (0x7ff72bb40661..40670): it never walks the last link.
+      for (let j = i; step < 0 ? j > 0 : j < count - 2; j += step) {
+`, file);
+    source = replaceOnce(source, `      for (let j = i + step; j >= 0 && j < count; j += step) {
+`, `      for (let j = i + step; step < 0 ? j >= 0 : j < count - 1; j += step) {
+`, file);
+    source = replaceOnce(source, `      if (c.y < -0.1 && !cat.grounded && upRedirect && c.y > vy) c.y = 0;
+`, `      // rope-native-swing: c.y < -0.1: not grounded -> clear +0x3f8 bit 0 (0x7ff72bb3fecf, Player.ropeCoast); the
+      // up-redirect flag zeroes c.y when c.y > v.y with NO grounded test (0x7ff72bb3fedc..fef0).
+      if (c.y < -0.1) {
+        if (!cat.grounded) cat.ropeCoast = true;
+        if (upRedirect && c.y > vy) c.y = 0;
+      }
+`, file);
+    source = replaceOnce(source, `    cats.forEach((cat, i) => {
+      const c = corrections[i];
+      if (c.x === 0 && c.y === 0) return;
+      const before = { ...cat.rect };
+`, `    // rope-native-swing: the position part reaches the contacts only in the next world step; each moved cat (and
+    // carried rider) remembers the rect the last step resolved for its support test this tick.
+    for (const cat of cats) cat.supportProbeRect = null;
+    cats.forEach((cat, i) => {
+      const c = corrections[i];
+      if (c.x === 0 && c.y === 0) return;
+      const before = { ...cat.rect };
+      cat.supportProbeRect ??= before;
+`, file);
+    source = replaceOnce(source, `        const from = { ...rider.rect };
+        rider.applyResolvedCollision(sweepTilesAndBodies(rider, from, dx, dy, cat).rect, rider.velocity, rider.grounded);
+`, `        const from = { ...rider.rect };
+        rider.supportProbeRect ??= from;
+        rider.applyResolvedCollision(sweepTilesAndBodies(rider, from, dx, dy, cat).rect, rider.velocity, rider.grounded);
+`, file);
+    // death-restarts-stage review fix: DeadSwitch and PlaneObstacle are fatal hits
+    source = replaceOnce(source, `    if (!touchesPlaneObstacle) return false;
+
+    this.resetPlayerToSpawn(this.player, this.currentPlayerIndex, this.currentInputPlayerIndex());
+    return true;
+  }
+`, `    if (!touchesPlaneObstacle) return false;
+
+    // death-restarts-stage: the road's DamageRect children (FUN_7ff72bb3e730 -> FUN_7ff72bb487c0) scan with
+    // FUN_7ff72bb35f50 -> command 4 -> state 3 (FUN_7ff72bb6eda0): the fatal-hit lifecycle, then the stage restart.
+    this.startPlayerDeathSequence(this.player, this.eventInputSlotForPlayer(this.player, this.currentInputPlayerIndex()));
+    return true;
+  }
+`, file);
+    source = replaceOnce(source, `      this.pressSwitchMediatorsForSwitch(triggeredDeadSwitch.spawn, new Set<ActorSpawnDef>(), { emitSwitchEvent: false });
+      this.resetPlayerToSpawn(this.player, this.currentPlayerIndex, this.currentInputPlayerIndex());
+    }
+`, `      this.pressSwitchMediatorsForSwitch(triggeredDeadSwitch.spawn, new Set<ActorSpawnDef>(), { emitSwitchEvent: false });
+      // death-restarts-stage: FUN_7ff72bb3f1f0 broadcasts command 3 (null payload, 0x7ff72bb3f247..256) to every avatar:
+      // +0x420 -= 1 -> 0x7ff72bb69885 -> state 3 (FUN_7ff72bb6eda0) for each live cat; the fall then restarts the stage.
+      this.players.forEach((cat, index) => {
+        if (this.goalClearedPlayers.has(cat)) return;   // INFERENCE: state 4 untraced
+        this.startPlayerDeathSequence(cat, this.eventInputSlotForPlayer(cat, this.playerInputSlots[index] ?? index));
+      });
+    }
+`, file);
     source += `
 /** rope-draw: FUN_7ff72bba53b0, integer Bresenham from (x0, y0) to (x1, y1), both ends included, at most cap points. */
 function ropeLinePoints(x0: number, y0: number, x1: number, y1: number, cap: number): Array<{ x: number; y: number }> {

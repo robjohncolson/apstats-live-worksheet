@@ -92,19 +92,21 @@ test('7-3 (ghost01, every row p0 = 1): every cat spawns facing left, toward the 
   assert.equal(game.ghosts[0].gazeCount, 4, 'all four cats look at the Ghost (it stays frozen)');
 });
 
-test('p0 = 0 rows still face right (1-1), and a p0 = 1 cat faces left again after a respawn (port choice)', () => {
+test('p0 = 0 rows still face right (1-1), and a p0 = 1 cat faces left again after the death restart', () => {
   assert.deepEqual(loadStage('stage_jump01').players.map((cat) => cat.getFacingDirection()), [1, 1]);
   const game = loadStage('stage_ghost01', 2);
   const cat = game.players[0];
   step(game, 5, [RIGHT, IDLE]);
   assert.equal(cat.getFacingDirection(), 1, 'walking right turns it');
   game.startPlayerDeathSequence(cat, 0);
-  // 1.0 s hold, then the death fall off the screen, then the respawn at the row point.
+  // 1.0 s hold, then the death fall off the screen, then (death-restarts-stage, batch 16) the whole stage restarts:
+  // a new cat at the row point.
   let frames = 0;
-  do { step(game, 1, idle(2)); frames++; } while ((cat.deathTimer > 0 || game.deathFallPlayers.has(cat)) && frames < 600);
-  assert.ok(frames < 600, 'respawned');
-  assert.deepEqual({ ...cat.rect }, { x: 300 - 16, y: 432 - 47, width: 32, height: 46 }, 'at its row point');
-  assert.equal(cat.getFacingDirection(), -1, 'its spawn facing is restored');
+  do { step(game, 1, idle(2)); frames++; } while (game.players[0] === cat && frames < 600);
+  assert.ok(frames < 600, 'restarted');
+  const fresh = game.players[0];
+  assert.deepEqual({ ...fresh.rect }, { x: 300 - 16, y: 432 - 47, width: 32, height: 46 }, 'at its row point');
+  assert.equal(fresh.getFacingDirection(), -1, 'its spawn facing is restored');
 });
 
 test('8-1 (switch_puzzle01 lists label 8 before label 7): slots follow row order, not the label', () => {

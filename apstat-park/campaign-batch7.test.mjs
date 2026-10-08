@@ -239,7 +239,8 @@ function referenceRopeCorrections(points, maxDist, w) {
   const taut = (a, b) => Math.hypot(points[b].x - points[a].x, points[b].y - points[a].y) > maxDist;
   const far = (i, step) => {
     const v = { x: 0, y: w };   // every cat unsupported, nothing on any head
-    for (let j = i; j + step >= 0 && j + step < n; j += step) {
+    // rope-native-swing (batch 16): the R walk (FUN_7ff72bb40570) stops at j < n - 2 (0x7ff72bb40661..40670).
+    for (let j = i; step < 0 ? j > 0 : j < n - 2; j += step) {
       if (!taut(j, j + step)) continue;   // a slack link adds nothing but the walk goes on
       const dx = points[j + step].x - points[j].x, dy = points[j + step].y - points[j].y, len = Math.hypot(dx, dy);
       v.x += dx / len; v.y += dy / len;
@@ -264,7 +265,7 @@ function referenceRopeCorrections(points, maxDist, w) {
   });
 }
 
-test('rope, four-cat chain in open air: the far-side load walks every link, slack ones included (matches the native walk)', () => {
+test('rope, four-cat chain in open air: the far-side load walks across slack links; R never walks the last link (native walk)', () => {
   const game = load('stage_constraint01', 4);
   const cats = game.players;
   assert.equal(cats.length, 4);
@@ -283,7 +284,7 @@ test('rope, four-cat chain in open air: the far-side load walks every link, slac
     assert.ok(close(cat.rect.x - before[i].x, expected[i].x, 1e-6) && close(cat.rect.y - before[i].y, expected[i].y, 1e-6),
       `cat ${i}: moved (${cat.rect.x - before[i].x}, ${cat.rect.y - before[i].y}) vs native (${expected[i].x}, ${expected[i].y})`);
   });
-  // The walk through the slack 1-2 link matters: cat 1's right-side load includes link 2-3.
+  // The walk through the slack 1-2 link matters: cat 3's left-side load includes link 1-0.
   const total = cats.reduce((sum, cat, i) => sum + Math.hypot(cat.rect.x - before[i].x, cat.rect.y - before[i].y), 0);
   assert.ok(total > 0, 'the stretched links pull');
 });

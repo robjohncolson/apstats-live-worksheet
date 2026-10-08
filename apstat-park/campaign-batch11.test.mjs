@@ -290,7 +290,7 @@ test('every cat out (no key yet) -> the stage restarts: bricks, balls and counts
       loseAll(game, freeFloorXs(party));
       step(game, 30);
       assert.ok(game.breakoutBalls.every((ball) => ball.lossCountdownTicks > 0), `${label}: all landing`);
-      step(game, 175);
+      step(game, 175 + 30);   // + the 0.5 s restart fade (death-restarts-stage, batch 16)
       assert.equal(chips(game).length, bricks, `${label}: bricks restored`);
       assert.deepEqual(game.breakoutBalls.map((ball) => [ball.center.x, ball.center.y]), startBalls, `${label}: balls back at rest`);
       assert.deepEqual(ownerCounts(game), startCounts, `${label}: counts back`);
@@ -309,7 +309,7 @@ test('a Desk teacher cat neither holds off the restart nor is dropped by it', ()
   game.playerInputSlots[game.players.length - 1] = 2;
   assert.equal(game.breakoutBalls.length, 4, 'a teacher cat brings no ball');
   loseAll(game, freeFloorXs(2));
-  step(game, 230);
+  step(game, 230 + 30);   // + the 0.5 s restart fade (death-restarts-stage, batch 16)
   assert.equal(game.breakoutBalls.length, 4, 'restarted: four balls at rest again');
   assert.ok(game.breakoutBalls.every((ball) => speed(ball) === 0));
   assert.equal(game.players.length, 3);
