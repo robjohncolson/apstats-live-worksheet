@@ -7,7 +7,7 @@ describe('E lag-targeted pairing',()=>{
   it('matches the corrected Work Day B date fixture in both JSON copies',()=>{
     for(const path of ['data/lesson-schedule.json','roster-server/data/lesson-schedule.json']){
       const column=readFileSync(path,'utf8').split(/\r?\n/).filter(line=>/^\s*"B":/.test(line)&&!/^\s*"B": \[\]/.test(line)).join('\n');
-      expect(createHash('sha256').update(column).digest('hex')).toBe('67076972111e04067f53c2a31e31667adad9cb95b32fe5608e5b326841432f93');
+      expect(createHash('sha256').update(column).digest('hex')).toBe('ffdc26a1d36b0f8090deac073ba1860a45856fcafbc3cbf2a70f7694c9a7df0a');
     }
   });
 });
@@ -38,73 +38,8 @@ function generated(){
 const actual=generated();
 const S=actual.S;
 const first=S.find(row=>row[4]?.group)[4];
-const pairs=[
-  [
-    "2026-09-16",
-    "1.4+1.5",
-    27
-  ],
-  [
-    "2026-09-23",
-    "1.7+1.8",
-    27
-  ],
-  [
-    "2026-09-25",
-    "1.9+3.1",
-    14
-  ],
-  [
-    "2026-10-19",
-    "2.1+2.2",
-    16
-  ],
-  [
-    "2026-10-23",
-    "2.3+4.1",
-    15
-  ],
-  [
-    "2026-10-26",
-    "4.2+4.3",
-    24
-  ],
-  [
-    "2026-11-06",
-    "4.7+4.8",
-    20
-  ],
-  [
-    "2026-11-20",
-    "5.1+5.3",
-    20
-  ],
-  [
-    "2026-12-02",
-    "5.4+5.5",
-    18
-  ],
-  [
-    "2027-01-11",
-    "8.1+8.4",
-    16
-  ],
-  [
-    "2027-01-27",
-    "5.7+7.1",
-    23
-  ],
-  [
-    "2027-03-05",
-    "2.4+2.5",
-    23
-  ],
-  [
-    "2027-03-08",
-    "2.6+2.7",
-    29
-  ]
-];
+const pairs=[["2026-09-16","1.4+1.5",27],["2026-09-23","1.7+1.8",27],["2026-09-25","1.9+3.1",14],["2026-10-23","2.1+2.2",16],["2026-10-26","2.3+4.1",15],["2026-10-28","4.2+4.3",24],["2026-11-06","4.6+4.7",28],["2026-11-13","4.10+4.11",17],["2026-11-20","5.1+5.3",20],["2026-12-04","5.5+6.1",22],["2027-01-11","8.1+8.4",16],["2027-01-27","5.7+7.1",23],["2027-03-05","2.4+2.5",23],["2027-03-08","2.6+2.7",29]];
+// Sim output after the two-day Unit 1 Poster (2026-10-07): E's PC moved 10/14,16 -> 10/16,19, so the catch-up pairs re-settled (14 pairs).
 const iso=row=>row[0]+'-'+String(row[1]+1).padStart(2,'0')+'-'+String(row[2]).padStart(2,'0');
 describe('real extracted pairing generator',()=>{
  it('reproduces the entire acceptance table',()=>expect(S.filter(r=>r[4]?.group).map(r=>[iso(r),r[4].t,Math.round(r[4].group.reduce((sum,m)=>sum+actual.VIDEO_MINUTES[m.t],0))])).toEqual(pairs));
@@ -140,7 +75,7 @@ describe('real extracted pairing generator',()=>{
    }
  });
  it('reproduces five PC Day 2 dates and the review end',()=>{
-   expect(S.filter(r=>r[4]?.kind==='pc'&&r[4].admin===2).map(iso)).toEqual(['2026-10-16','2026-11-30','2027-01-25','2027-03-03','2027-03-17']);
+   expect(S.filter(r=>r[4]?.kind==='pc'&&r[4].admin===2).map(iso)).toEqual(['2026-10-19','2026-11-30','2027-01-25','2027-03-03','2027-03-17']);
    expect(S.filter(r=>r[4]?.t==='review').map(iso).at(-1)).toBe('2027-03-24');
  });
 });

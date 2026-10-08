@@ -114,7 +114,7 @@
       "enabled": false
     }
   },
-  "artHash": "c31baa61c6585160028d3d95a24d93cd4cc524f0d9ba90da099c97c0768a893e",
+  "artHash": "62fefd211c28e57e2a823fc24388d6f6131a85b34ae885db286716daecc23072",
   "grade": {
     "units": {
       "U1": {
@@ -155,7 +155,7 @@
         "ceiling": 100,
         "lessonsDue": 15,
         "lessonsGraded": 0,
-        "lessonsTotal": 28,
+        "lessonsTotal": 27,
         "pcAvg": null,
         "workAvg": null,
         "pcAvgRaw": null,
@@ -198,7 +198,7 @@
         "ceiling": null,
         "lessonsDue": 0,
         "lessonsGraded": 0,
-        "lessonsTotal": 26,
+        "lessonsTotal": 27,
         "pcAvg": null,
         "workAvg": null,
         "pcAvgRaw": null,

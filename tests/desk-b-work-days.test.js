@@ -29,11 +29,13 @@ const actual=generated(),S=actual.S;
 const iso=r=>r[0]+'-'+String(r[1]+1).padStart(2,'0')+'-'+String(r[2]).padStart(2,'0');
 // Sim output (never typed from memory). 2026-09-18: B Break Day (AP Classroom down) shifted B one meeting later,
 // so the first Work Day moved Oct 13 -> Oct 16 and the Oct 19 one disappeared (10 Work Days now).
-const fixture=[['2026-10-16','2.2'],['2026-11-13','5.2'],['2026-12-11','6.6'],['2026-12-18','6.8'],['2027-01-08','8.4'],['2027-01-22','5.7'],['2027-02-05','7.6'],['2027-02-12','7.9'],['2027-03-01','2.4'],['2027-03-19','review']];
+// 2026-10-07: the Unit 1 Poster takes two meeting days (POSTER_DAYS in injectPcPosterEvents); B's Dec 11 Work Day
+// disappeared and Nov 13 now precedes 1.10 (9 Work Days now).
+const fixture=[['2026-10-16','2.1'],['2026-11-13','1.10'],['2026-12-18','6.8'],['2027-01-08','8.4'],['2027-01-22','5.7'],['2027-02-05','7.6'],['2027-02-12','7.9'],['2027-03-01','2.4'],['2027-03-19','review']];
 const breakDay={t:'B-Break',n:'Break Day',u:0,kind:'break',due:'',as:''};
 const work=S.find(r=>r[3]?.kind==='work')[3];
 describe('B Work Day generator',()=>{
- it('reproduces all ten dates and the next queued lesson, including Review 1',()=>{
+ it('reproduces all nine dates and the next queued lesson, including Review 1',()=>{
   expect(S.flatMap((r,i)=>r[3]?.kind==='work'?[[iso(r),S.slice(i+1).find(n=>typeof n[3]==='object')[3].t]]:[])).toEqual(fixture);
   expect(S.find(r=>iso(r)==='2027-03-22')[3].n).toBe(actual.def.pacing.B.at(-1).n);
   expect(work).toEqual({t:'B-Work',n:'Work Day',u:0,kind:'work',due:'',as:''});
@@ -76,7 +78,7 @@ describe('B Work Day generator',()=>{
   }
  });
  it('emits corrected unit ends, review ends and additive JSON workDays with no lesson entry',()=>{
-  const ends={B:['2026-10-13','2026-11-24','2027-01-21','2027-02-26','2027-03-15'],E:['2026-10-16','2026-11-30','2027-01-25','2027-03-03','2027-03-17']};
+  const ends={B:['2026-10-15','2026-11-30','2027-01-21','2027-02-26','2027-03-15'],E:['2026-10-19','2026-11-30','2027-01-25','2027-03-03','2027-03-17']};
   for(const path of ['data/lesson-schedule.json','roster-server/data/lesson-schedule.json']){
    const json=JSON.parse(readFileSync(path,'utf8'));
    expect(json.schemaVersion).toBe(2);expect(json.calendar.workDays).toEqual({B:fixture.map(r=>r[0]),E:[]});

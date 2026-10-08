@@ -1966,6 +1966,23 @@
 
 
 
+try{if(/[?&]home=park(?:&|$)/.test(location.search)||localStorage.getItem('apstats-pico-home')==='1')document.documentElement.classList.add('pico-home');}catch(_){}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -7210,6 +7227,9 @@ function updateUserRoleUI() {
     if (isTeacher) localStorage.setItem('apstats_user_role', 'teacher');
     else localStorage.removeItem('apstats_user_role');
   } catch (_) {}
+  // Period switch + any other .teacher-only chrome: follows _deskIsTeacher(), which is false in
+  // Preview-as-student and view-as even for a signed-in teacher (teacher 2026-10-06).
+  try { document.documentElement.classList.toggle('desk-teacher', (typeof _deskIsTeacher === 'function') && _deskIsTeacher()); } catch (_) {}
   if (!teacherMenu) return;
   teacherMenu.style.display = isTeacher ? '' : 'none';
   // Light up the Teacher-menu "Nightly Review" unseen badge (best-effort, teacher only).
@@ -10462,10 +10482,15 @@ function injectPcPosterEvents(pacing){
     // Kept inside the function so the schedule-generator test can run it in
     // isolation. PC_MAKEUP_PHASE3_SCHEDULE_SPEC.md.
     const PC_MCQ_A_SPLIT={1:'1.6',2:'4.5'};
+    // Poster meeting days per unit. Default 1. Unit 1 (Data, Graph, Sentence:
+    // five trio posters + gallery walk) was given a second day on 2026-10-07 so
+    // the PC never lands on a half-finished poster; a unit missing here is 1 day.
+    const POSTER_DAYS={1:2};
     const out=[];
     let prevU=0;
     function appendPcPosterFor(u){
         out.push({t:'U'+u+'-Poster',n:'Unit '+u+' Poster',u:u,kind:'poster'});
+        if((POSTER_DAYS[u]||1)>=2)out.push({t:'U'+u+'-Poster2',n:'Unit '+u+' Poster (Day 2)',u:u,kind:'poster',admin:2});
         out.push({t:'U'+u+'-PC1',n:'Unit '+u+' Progress Check (Day 1)',u:u,kind:'pc',admin:1});
         out.push({t:'U'+u+'-PC2',n:'Unit '+u+' Progress Check (Day 2)',u:u,kind:'pc',admin:2});
     }
@@ -25440,9 +25465,11 @@ const DeskRoster = {
                     } catch (_) {}
                 }
                 if (students.length === 0 && typeof _fetchSectionRoster === 'function') {
+                    // Teacher decision 2026-10-06: no barriers between Period B and Period E — resolve
+                    // real names for BOTH periods (+ the teacher's PeriodX), not just the viewer's own.
                     const sections = [];
                     if (who && who.section) sections.push(who.section);
-                    sections.push('PeriodX');
+                    ['PeriodB', 'PeriodE', 'PeriodX'].forEach(s => { if (!sections.includes(s)) sections.push(s); });
                     for (const s of sections) {
                         try { const arr = await _fetchSectionRoster(s); (arr || []).forEach(x => students.push(x)); } catch (_) {}
                     }
@@ -26476,7 +26503,7 @@ function htm(i,ds){
     if(i===NC||!i)return`<div class="dn" style="opacity:.4">${ds}</div>`;
     if(i.kind==='pc'&&i.part==='A')return`<div class="dn">${ds}</div><div class="tl">U${i.u} MCQ A</div><div class="tt">Progress Check · Part A</div>`;
     if(i.kind==='pc')return`<div class="dn">${ds}</div><div class="tl">U${i.u} PC ${i.admin||1}/2</div><div class="tt">Progress Check</div>`;
-    if(i.kind==='poster')return`<div class="dn">${ds}</div><div class="tl">U${i.u} Poster</div><div class="tt">Gallery walk</div>`;
+    if(i.kind==='poster')return`<div class="dn">${ds}</div><div class="tl">U${i.u} Poster${i.admin?' '+i.admin+'/2':''}</div><div class="tt">${i.admin===2?'Finish + gallery walk':'Gallery walk'}</div>`;
     if(i.kind==='orientation')return`<div class="dn">${ds}</div><div class="tl">Start Here</div><div class="tt">How grades &amp; makeups work</div>`;
     if(i.kind==='baseline')return`<div class="dn">${ds}</div><div class="tl">U${i.u} Baseline</div><div class="tt">No stakes — best score kept</div>`;
     if(i.t===R)return`<div class="dn">${ds}</div><div class="tl">Review</div><div class="tt">${i.n}</div>`;
@@ -26500,7 +26527,7 @@ function cellAria(i, ds){
     if(i===NC || !i) return ds;
     if(i.kind==='pc'&&i.part==='A') return ds + ', Unit ' + i.u + ' MCQ Part A';
     if(i.kind==='pc') return ds + ', Unit ' + i.u + ' Progress Check ' + (i.admin||1) + ' of 2';
-    if(i.kind==='poster') return ds + ', Unit ' + i.u + ' Poster gallery walk';
+    if(i.kind==='poster') return ds + ', Unit ' + i.u + ' Poster' + (i.admin ? ' day ' + i.admin + ' of 2' : '') + ' gallery walk';
     if(i.kind==='orientation') return ds + ', Start Here — how grades and makeups work';
     if(i.kind==='baseline') return ds + ', Unit ' + i.u + ' Baseline — no stakes, best score kept';
     const newLabels = typeof cYear==='undefined'||cYear==='SY26-27';
@@ -26906,6 +26933,7 @@ function rCal(){
         }_frag.appendChild(r);
     }
     g.replaceChildren(_frag);
+    window.DeskState = Object.assign(window.DeskState || {}, { nextUpTopic: _nextUpTopic, todayLessonInf: _todayLessonInf, gateMarks: _gateMarks }); // read by pico-home.js (PICO_DESK_SPEC Phase 1)
     // CALENDAR_NAV -- show/hide the prev/next arrow buttons above the grid.
     // _displayStart is the absolute clamped start of the displayed window
     // (set in the compaction block above), so the edges read directly from
@@ -27455,10 +27483,9 @@ function _mountClassroomBoard(){
     if (!mount) return;
     var wsUrl = (window.RAILWAY_SERVER_URL
       || 'https://curriculumrender-production.up.railway.app').replace(/^http/, 'ws');
-    // The Desk embed always mounts the student board (BUILD D4). The
-    // teacher real-name view lives in teacher-classroom.html.
     _classroomBoardHandle = window.ClassroomBoard.mount(mount, {
-      wsUrl: wsUrl, section: s.section, username: s.username, role: 'student',
+      wsUrl: wsUrl, section: s.section, username: s.username,
+      role: _deskIsTeacher() ? 'teacher' : 'student', playable: true,
       hue: (typeof s.spriteHue === 'number') ? s.spriteHue : null,
       // AVATAR_MENU: the Desk hides always-on floating names; a click reveals the
       // name, then a candy/challenge menu (handled by onAvatarClick → _avatarMenu).
@@ -27600,7 +27627,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-10-04-1hmt';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-10-08-krd1';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.
