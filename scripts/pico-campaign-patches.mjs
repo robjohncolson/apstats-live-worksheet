@@ -234,6 +234,41 @@ export const CAMPAIGN_PATCHES = [{
   evidence: ['FUN_7ff72bb64310 (WeightedLift family update): the step (0, d) is tested with FUN_7ff72bc16f50(this, step, 0, 0); only when it passes is the offset (+0x400) committed (FUN_7ff72bb31fc0) and the stack carried (FUN_7ff72bc17330); otherwise nothing moves this tick',
     'The port already applied this preflight to DarknessWeightedLift (FUN_7ff72bb62790)'],
   behavior: 'Every stage: a WeightedLift / Ex / Ex2 rising step is taken only if the slab and every cat or push box resting on it (transitively) can rise with it without entering a tile, a Rect, a MoveWall, a solid gate / bridge, another lift or another body; otherwise it waits this tick (a rider is never carried into the 1-4 wall or a ceiling). Descending steps keep descending-lift-stops-on-bodies.',
+}, {
+  // Fidelity audit 2026-10-07 batch 6 (Top 10 #4; audit-48 E-hazards section 1).
+  id: 'thunder-beam',
+  files: ['src/engine/actors/Thunder.ts', 'src/engine/GameRuntime.ts', 'src/engine/sprites.ts'],
+  evidence: ['FUN_7ff72bb4d330 (slot 12): p0 = direction (0 UP, 1 DOWN, 2 LEFT, 3 RIGHT; view rotation 0 / 0x8000 / 0xc000 / 0x4000); p1 != 0: no emitter cap and objects never shorten the beam; p2 != 0: the 32 x 32 aux body stays enabled',
+    'First update 0x7ff72bb4d600 (once, +0x3e8 & 1): the aux body {-16, -16, 32, 32} (DAT_7ff72bcba2e0) is swept from the row point 2400 along the direction against the map (FUN_7ff72bc2fca0(world + 0x51760, ...)); L0 = 32 + the travel (+0x4d4, copied to +0x4cc / +0x4d0): the beam stops at the first solid chip, ending 16 inside it. Map chips the box overlaps at its start are not hits (the emitters sit inside walls)',
+    'Every update: L = L0; FUN_7ff72bb4da00 (beam contact): players are listed; Thunder and the MagnetPlayer aux are ignored; ANY other body overlapping the beam (when p1 == 0) cuts L to the distance from the origin to its near edge, including the GuardPlayer shield (tag DAT_7ff72c62d0c0)',
+    'FUN_7ff72bb4d850 (kill): a listed player overlapping the 4-unit beam of length L on two consecutive steps, with the whole +0x4e8 mask clear, gets command 5 (death); no other actor is killed',
+    'FUN_7ff72bb4dc10 (draw): floor(L / 32) + 1 tiles 32 x 32 from atlas (160,400,32,32) / (192,400,32,32) (DAT_7ff72bcba170), x -16, from y -5 outward, the last cropped, the frame toggling every 0.1 s; the emitter cap {-16, -8, 32, 8} from atlas (192,436,16,4) (p1 == 0 only)'],
+  behavior: 'Every Thunder: its beam is as long as the native sweep (to the first solid map chip, ending 16 inside it; 2432 when nothing is hit), not a fixed 2400; bodies in its path still cut it each frame (now including guard shields); it is drawn as the native animated orange zigzag along its live length with the orange emitter cap, rotated to its direction (was: a small yellow bolt icon). The kill latch is unchanged (it already matched).',
+}, {
+  // Fidelity audit 2026-10-07 batch 7 (audit-48 G-players section 2).
+  id: 'guard-shields',
+  files: ['src/engine/GameRuntime.ts'],
+  evidence: ['FUN_7ff72bb72ae0 GuardPlayer branch 0x7ff72bb72de7: a normal avatar, then for each extra param p1, p2, p3 present a guard object FUN_7ff72bb56990(guard, avatar, dir) added to the scene',
+    'FUN_7ff72bb56990: shape = {UP: 1, DOWN: 1, LEFT: 0, RIGHT: 0} (offline table); body DAT_7ff72c62d050[shape] = {-3, -30, 6, 60} (vertical) / {-24, -3, 48, 6} (horizontal) (memory image), FUN_7ff72bc16bf0(..., 0, 1) with +4 = 2: a contact body, not a floor; colour = the owner colour (+0x404)',
+    'FUN_7ff72bb56c10 (update): position = the owner transform + DAT_7ff72c62d030[dir] = UP (0, -56), DOWN (0, 10), LEFT (-28, -24), RIGHT (30, -24); it copies the owner visibility; no button anywhere: the shield is always on and the guard moves and jumps normally'],
+  behavior: 'GuardPlayer rows (4-1, 12-1): each extra direction param gives the cat an always-on shield plank (6 x 60 beside it for LEFT / RIGHT, 48 x 6 above or below it for UP / DOWN) at the native offset from its row point, drawn in its colour; a plank cuts a Thunder beam like any other body, so it protects whoever is behind it. Was: holding JUMP made the guard alone immune and froze it, with no plank. Ambiguous: the offset is applied unmirrored (the owner transform copy may include its facing flip; not traced), and the plank is not solid for cats (contact body).',
+}, {
+  // Fidelity audit 2026-10-07 batch 16 (audit-48 E-hazards sections 2-4).
+  id: 'step-enemy-native',
+  files: ['src/engine/actors/StepEnemy.ts', 'src/engine/actors/UpDownEnemy.ts', 'src/engine/actors/BowwowEnemy.ts', 'src/engine/GameRuntime.ts', 'src/engine/sprites.ts'],
+  evidence: ['StepEnemy FUN_7ff72bb6c6c0: body DAT_7ff72c62d250 = {-24, -13, 48, 26}, mode 3 (moving physical body); view {-25, -14, 50, 28} from atlas (358,8,25,14); FUN_7ff72bb6ca10: p0 < 0 -> direction -1, otherwise the ctor default +1 (RIGHT)',
+    'FUN_7ff72bb6cbe0 (update): vx = direction * DAT_7ff72c61f5e0 (1.0 per tick, the unit of its 0.65 per tick gravity DAT_7ff72bcb69bc); no ground below -> vy += 0.65, else vy = 0',
+    'FUN_7ff72bb6ce10 (contact): a wall contact with a horizontal normal reverses it; a side contact with a player kills the player (command 4); a contact from above sends command 0 to the player (effect not traced) and does not hurt either',
+    'UpDownEnemy FUN_7ff72bb6d170: sensor DAT_7ff72c62d260 = {-28, -22, 56, 48}; view {-30, -26, 60, 52} from atlas (385,0,30,26); motion FUN_7ff72bb6d5c0 unchanged (already matched)',
+    'BowwowEnemy FUN_7ff72bb38ba0: sensors {-30, -39, 60, 78} (DAT_7ff72c61f358); FUN_7ff72bb39180 picks the candidate with the largest 30-frame average movement (FUN_7ff72bb67b10(player, out, 0x1e) averages the ring of per-frame deltas)'],
+  behavior: 'StepEnemy (5-1, 5-3, 7-2, 7-3, 7-4, 12-4): the native 48 x 26 body centred on its row point, falling at 0.65 per tick until it stands on a chip or a solid, walking 1 unit per tick (60 per second; was 100) to the right unless p0 < 0, turning back at walls (it walks off ledges); a side contact kills a cat, a cat from above is safe (unchanged). UpDownEnemy (5-1, 5-3, 7-3): the native 56 x 48 sensor {x-28, y-22}. BowwowEnemy (7-1): the native 60 x 78 sensor, and it wakes / chases on each cat\'s 30-frame average movement (was: one frame of velocity). Sprites: the atlas slug and spike for StepEnemy / UpDownEnemy; the Bowwow art is not decoded (a dark 60 x 78 placeholder). Not modelled: a StepEnemy reversing on a body, standing on a StepEnemy, Bowwow state 4.',
+}, {
+  // Codex batch-5 must-fix: guard planks, beam cut and kill judged on one frame's state.
+  id: 'thunder-frame-order',
+  files: ['src/engine/GameRuntime.ts'],
+  evidence: ['FUN_7ff72bb56c10 (the guard object update) places the plank from the owner transform (+0x3f0 -> +0x44) in the actor update pass, before the shared body/contact pass in which FUN_7ff72bb4da00 (Thunder beam contact) cuts L against bodies and lists players',
+    'FUN_7ff72bb4d850 (Thunder slot 27) then kills only listed players overlapping the beam of that same L: the plank, the cut and the kill all read one frame of body positions; Thunder slot 25 (0x7ff72bb4d600) only shifts the +0x4e0 / +0x4e4 / +0x4e8 latch and toggles the frame'],
+  behavior: 'Thunder stages with GuardPlayers (4-1, 12-1): planks are refreshed after every cat and body has moved this frame, and the beam cut, the drawn length and the kill judge all use those same positions (was: the plank was placed and the beam cut at the start of the frame, before the cats moved, so a guard walking into a beam left the beam at its old length for one frame and the cat behind it could die on the second contact). Thunder kills are judged for the same cats as before (those that reached the contact checks this frame), after the per-cat loop instead of inside it.',
 }];
 
 // Fail the build if upstream code changes: never silently skip a correction.
@@ -393,7 +428,7 @@ export function patchCampaignSource(file, source) {
   if (file === 'src/engine/sprites.ts') {
     const frames = Array.from({ length: 9 }, (_, i) =>
       `  push_box_${i}: [${464 + i % 3 * 16}, ${32 + Math.floor(i / 3) * 16}, 16, 16],`).join('\n');
-    return replaceOnce(source, 'export const PICO_ATLAS_FRAMES = {', 'export const PICO_ATLAS_FRAMES = {\n  door_closed: [96, 512, 48, 48],\n  updown_lift: [385, 49, 60, 10],\n  weighted_lift_wide: [351, 511, 98, 42],\n  weighted_lift_narrow: [383, 559, 34, 42],\n  move_wall: [500, 255, 9, 130],\n' + frames, file);
+    return replaceOnce(source, 'export const PICO_ATLAS_FRAMES = {', 'export const PICO_ATLAS_FRAMES = {\n  door_closed: [96, 512, 48, 48],\n  updown_lift: [385, 49, 60, 10],\n  weighted_lift_wide: [351, 511, 98, 42],\n  weighted_lift_narrow: [383, 559, 34, 42],\n  thunder_0: [160, 400, 32, 32],\n  thunder_1: [192, 400, 32, 32],\n  thunder_cap: [192, 436, 16, 4],\n  step_enemy: [358, 8, 25, 14],\n  updown_enemy: [385, 0, 30, 26],\n  move_wall: [500, 255, 9, 130],\n' + frames, file);
   }
   if (file === 'src/engine/actors/Goal.ts') {
     source = replaceOnce(source, '  readonly rect: Rect;', `  readonly rect: Rect;
@@ -790,6 +825,173 @@ export function drawNativeRectSlab(view: Container, rect: Rect, originX: number,
       return;
     }
     const g = new Graphics();`, file);
+  }
+  if (file === 'src/engine/actors/Thunder.ts') {
+    // thunder-beam: the swept base length (0x7ff72bb4d600) and the native zigzag beam (FUN_7ff72bb4dc10).
+    source = `import { Sprite, Texture, Rectangle } from 'pixi.js';
+import { frameTexture } from '../sprites';
+` + source;
+    source = replaceOnce(source, '  animationFrame = 0;\n', `  animationFrame = 0;
+  /** thunder-beam: L0 from the first-update sweep (2400 until swept); the live length is L0 cut by bodies. */
+  baseLength = THUNDER_STRIP_LENGTH;
+  swept = false;
+  private drawnLength = -1;
+
+  setBaseLength(length: number): void {
+    this.baseLength = length;
+    this.swept = true;
+    Object.assign(this.rect, getThunderRectForLength(this.spawn, this.direction, length));
+    this.setDrawLength(length);
+  }
+
+  activeLengthFor(blockerRects: readonly Rect[]): number {
+    if (this.blockShorteningDisabled) return this.baseLength;
+    return this.activeLengthForBlockers(blockerRects);
+  }
+
+  /** FUN_7ff72bb4dc10: floor(L / 32) + 1 zigzag tiles from y -5 outward (the last cropped), two frames, plus the cap. */
+  setDrawLength(length: number): void {
+    const rounded = Math.round(length);
+    if (rounded === this.drawnLength) return;
+    this.drawnLength = rounded;
+    for (const child of this.view.removeChildren()) child.destroy();
+    const angle = { DIR_UP: 0, DIR_RIGHT: Math.PI / 2, DIR_DOWN: Math.PI, DIR_LEFT: Math.PI * 1.5 }[this.direction as 'DIR_UP'] ?? 0;
+    const frames = [frameTexture('thunder_0' as any), frameTexture('thunder_1' as any)];
+    this.animationFrames.length = 0;
+    for (let frame = 0; frame < 2; frame += 1) {
+      const strip = new Graphics();
+      strip.rotation = angle;
+      const texture = frames[frame];
+      for (let start = 5, i = 0; start < length && i <= Math.floor(length / 32); start += 32, i += 1) {
+        const height = Math.min(32, length - start);
+        if (texture) {
+          const cropped = new Texture(texture.baseTexture, new Rectangle(texture.frame.x, texture.frame.y + (32 - height), 32, height));
+          const tile = new Sprite(cropped);
+          tile.x = -16; tile.y = -start - height;
+          strip.addChild(tile);
+        } else {
+          // Headless: the same zigzag geometry in the stage orange.
+          strip.lineStyle(2, 0xff864d, 1);
+          strip.moveTo(frame ? 6 : -6, -start);
+          strip.lineTo(frame ? -6 : 6, -start - height / 2);
+          strip.lineTo(frame ? 6 : -6, -start - height);
+        }
+      }
+      if (!this.blockShorteningDisabled) {
+        const capTexture = frameTexture('thunder_cap' as any);
+        if (capTexture) {
+          const cap = new Sprite(capTexture);
+          cap.x = -16; cap.y = -8; cap.width = 32; cap.height = 8;
+          strip.addChild(cap);
+        } else {
+          strip.lineStyle(0, 0, 0);
+          strip.beginFill(0xff864d, 1);
+          strip.drawRect(-16, -8, 32, 8);
+          strip.endFill();
+        }
+      }
+      this.animationFrames.push(strip);
+      this.view.addChild(strip);
+    }
+    this.applyAnimationFrame();
+  }
+`, file);
+    source = replaceOnce(source, '  private readonly animationFrames: Graphics[] = [];', '  private animationFrames: Graphics[] = [];', file);
+    source = replaceOnce(source, "    if (this.blockShorteningDisabled || blockerRects.length === 0) return { ...this.rect };",
+      "    if (this.blockShorteningDisabled || blockerRects.length === 0) return getThunderRectForLength(this.spawn, this.direction, this.baseLength);", file);
+    return replaceOnce(source, '    let activeLength = THUNDER_STRIP_LENGTH;\n', '    let activeLength = this.baseLength;\n', file);
+  }
+  if (file === 'src/engine/actors/StepEnemy.ts') {
+    // step-enemy-native: FUN_7ff72bb6c6c0 body {-24, -13, 48, 26}; FUN_7ff72bb6cbe0 walks 1 per tick and falls 0.65.
+    source = `import { Sprite } from 'pixi.js';
+import { frameTexture } from '../sprites';
+` + source;
+    source = replaceOnce(source, 'export const STEP_ENEMY_WIDTH = 20;', 'export const STEP_ENEMY_WIDTH = 48;', file);
+    source = replaceOnce(source, 'export const STEP_ENEMY_HEIGHT = 20;', 'export const STEP_ENEMY_HEIGHT = 26;', file);
+    source = replaceOnce(source, 'export const STEP_ENEMY_PATROL_SPEED = 100;', 'export const STEP_ENEMY_PATROL_SPEED = 60;', file);
+    source = replaceOnce(source, '    this.view.addChild(g);\n  }\n', `    this.view.addChild(g);
+    // FUN_7ff72bb6ca10: p0 < 0 walks left; otherwise (p0 absent too) the ctor default walks right.
+    this.walkDirection = (this.params?.direction ?? 0) < 0 ? -1 : 1;
+    const texture = frameTexture('step_enemy' as any);
+    if (texture) {
+      g.destroy();
+      const sprite = new Sprite(texture);
+      sprite.x = -25; sprite.y = -14; sprite.width = 50; sprite.height = 28;
+      if (this.walkDirection < 0) { sprite.scale.x *= -1; sprite.x = 25; }
+      this.view.addChild(sprite);
+    }
+  }
+`, file);
+    source = replaceOnce(source, '  readonly rect: Rect;\n', '  readonly rect: Rect;\n  walkDirection: -1 | 1 = 1;\n  fallVelocity = 0;\n', file);
+    const begin = source.indexOf('  update(dt: number, tileMap?: TileMap): void {');
+    const end = source.indexOf('\n  }\n}\n', begin);
+    if (begin < 0 || end < 0) throw new Error('Patch anchor changed: StepEnemy.update');
+    return source.slice(0, begin) + `  /** FUN_7ff72bb6cbe0: walk 1 unit per tick; reverse at a wall; fall 0.65 per tick squared while unsupported. */
+  update(dt: number, tileMap?: TileMap, solids: readonly Rect[] = []): void {
+    const blocked = (rect: Rect): boolean => !!tileMap?.rectHitsSolid(rect)
+      || solids.some((solid) => rect.x < solid.x + solid.width && rect.x + rect.width > solid.x
+        && rect.y < solid.y + solid.height && rect.y + rect.height > solid.y);
+    const ground = { ...this.rect, y: this.rect.y + this.rect.height, height: 0.5 };
+    if (blocked(ground)) {
+      this.fallVelocity = 0;
+    } else {
+      this.fallVelocity = Math.min(19.5 * 60, this.fallVelocity + 0.65 * 3600 * dt);
+      let fall = this.fallVelocity * dt;
+      while (fall > 1e-6) {
+        const stepY = Math.min(1, fall);
+        if (blocked({ ...this.rect, y: this.rect.y + stepY })) {
+          // land exactly on the support
+          let low = 0, high = stepY;
+          for (let pass = 0; pass < 16; pass += 1) {
+            const middle = (low + high) / 2;
+            if (blocked({ ...this.rect, y: this.rect.y + middle })) high = middle; else low = middle;
+          }
+          this.rect.y += low;
+          this.fallVelocity = 0;
+          break;
+        }
+        this.rect.y += stepY;
+        fall -= stepY;
+      }
+    }
+    const deltaX = this.walkDirection * STEP_ENEMY_PATROL_SPEED * dt;
+    const next = { ...this.rect, x: this.rect.x + deltaX };
+    if (blocked(next)) {
+      this.walkDirection = this.walkDirection > 0 ? -1 : 1;
+      const sprite = this.view.children[0] as { scale?: { x: number }; x: number } | undefined;
+      if (sprite?.scale) { sprite.scale.x *= -1; sprite.x = -sprite.x; }
+    } else {
+      this.rect.x = next.x;
+    }
+    this.view.x = this.rect.x + this.rect.width / 2;
+    this.view.y = this.rect.y + this.rect.height / 2;
+` + source.slice(end);
+  }
+  if (file === 'src/engine/actors/UpDownEnemy.ts') {
+    // step-enemy-native: FUN_7ff72bb6d170 sensor {-28, -22, 56, 48}; view {-30, -26, 60, 52} from atlas (385,0,30,26).
+    source = `import { Sprite } from 'pixi.js';
+import { frameTexture } from '../sprites';
+` + source;
+    source = replaceOnce(source, 'export const UP_DOWN_ENEMY_WIDTH = 22;', 'export const UP_DOWN_ENEMY_WIDTH = 56;', file);
+    source = replaceOnce(source, 'export const UP_DOWN_ENEMY_HEIGHT = 26;', 'export const UP_DOWN_ENEMY_HEIGHT = 48;', file);
+    source = replaceOnce(source, '    y: spawn.y - UP_DOWN_ENEMY_HEIGHT / 2,', '    y: spawn.y - 22,', file);
+    return replaceOnce(source, '    this.view.addChild(g);\n  }\n', `    this.view.addChild(g);
+    const texture = frameTexture('updown_enemy' as any);
+    if (texture) {
+      g.destroy();
+      const sprite = new Sprite(texture);
+      sprite.x = -30; sprite.y = -26; sprite.width = 60; sprite.height = 52;
+      this.view.addChild(sprite);
+    }
+  }
+`, file);
+  }
+  if (file === 'src/engine/actors/BowwowEnemy.ts') {
+    // step-enemy-native: FUN_7ff72bb38ba0 sensors {-30, -39, 60, 78}; the art is not decoded (dark placeholder).
+    source = replaceOnce(source, 'export const BOWWOW_ENEMY_WIDTH = 28;', 'export const BOWWOW_ENEMY_WIDTH = 60;', file);
+    source = replaceOnce(source, 'export const BOWWOW_ENEMY_HEIGHT = 22;', 'export const BOWWOW_ENEMY_HEIGHT = 78;', file);
+    return replaceOnce(source, "    g.beginFill(0x2b2f77, 0.72);\n    g.lineStyle(2, 0xf97316, 0.95);\n    g.drawRoundedRect(-14, -11, 28, 22, 5);",
+      "    g.beginFill(0x1b1b1b, 1);\n    g.lineStyle(2, 0x3a2418, 1);\n    g.drawEllipse(0, 0, 30, 39);", file);
   }
   if (file === 'src/engine/actors/FallBox.ts') {
     // bottom-anchored-boxes: FUN_7ff72bb42900 rect {-p0/2, -p1, p0, p1} (bottom-centre on the row point).
@@ -2054,6 +2256,165 @@ function createMoveWallState(spawn: ActorSpawnDef): MoveWallState {`, file);
   }
 
   private nativePartyCount(): number {`, file);
+    // thunder-beam: sweep each Thunder once (0x7ff72bb4d600) at spawn; the drawn beam follows its live length.
+    source = replaceOnce(source, `      const thunder = new Thunder(spawn);
+      this.thunders.push(thunder);`, `      const thunder = new Thunder(spawn);
+      thunder.setBaseLength(this.sweepThunderLength(thunder));
+      this.thunders.push(thunder);`, file);
+    source = replaceOnce(source, `  private updateThunders(dt: number): void {
+    for (const thunder of this.thunders) thunder.update(dt);
+  }`, `  private updateThunders(dt: number): void {
+    this.updateGuardShields();
+    for (const thunder of this.thunders) thunder.update(dt);
+    const blockers = this.thunderBlockerRects();
+    for (const thunder of this.thunders) thunder.setDrawLength(thunder.activeLengthFor(blockers));
+  }
+
+  /** thunder-beam: the aux 32 x 32 box swept from the row point up to 2400 against map chips (chips it overlaps at
+   *  the start are not hits); L0 = 32 + its travel (0x7ff72bb4d600). */
+  private sweepThunderLength(thunder: Thunder): number {
+    const map = this.tileMap;
+    const step = ({ DIR_UP: [0, -1], DIR_DOWN: [0, 1], DIR_LEFT: [-1, 0], DIR_RIGHT: [1, 0] } as Record<string, number[]>)[thunder.direction];
+    if (!map || !step) return 2400;
+    const chip = map.map.chipSize;
+    const tilesUnder = (x: number, y: number): string[] => {
+      const keys: string[] = [];
+      for (let ty = Math.floor(y / chip); ty <= Math.floor((y + 32 - 0.001) / chip); ty += 1) {
+        for (let tx = Math.floor(x / chip); tx <= Math.floor((x + 32 - 0.001) / chip); tx += 1) {
+          if (tx < 0 || ty < 0 || tx >= map.map.width || ty >= map.map.height) continue;
+          if (map.isSolidTile(tx, ty)) keys.push(tx + ',' + ty);
+        }
+      }
+      return keys;
+    };
+    const x0 = thunder.spawn.x - 16, y0 = thunder.spawn.y - 16;
+    const ignored = new Set(tilesUnder(x0, y0));
+    let travel = 0;
+    while (travel < 2400) {
+      const next = Math.min(2400, travel + 1);
+      if (tilesUnder(x0 + step[0] * next, y0 + step[1] * next).some((key) => !ignored.has(key))) break;
+      travel = next;
+    }
+    return 32 + travel;
+  }
+
+  /** guard-shields: FUN_7ff72bb56c10 places each plank at the owner + DAT_7ff72c62d030[dir] every frame. */
+  private updateGuardShields(): void {
+    for (const shield of this.guardShields) {
+      const owner = shield.owner;
+      const x = owner.rect.x + PLAYER_RECT_CENTER_OFFSET_X + shield.offset[0];
+      const y = owner.rect.y + PLAYER_RECT_CENTER_OFFSET_Y + shield.offset[1];
+      Object.assign(shield.rect, { x: x + shield.shape[0], y: y + shield.shape[1], width: shield.shape[2], height: shield.shape[3] });
+      shield.view.x = shield.rect.x;
+      shield.view.y = shield.rect.y;
+      shield.view.visible = owner.view.visible !== false && this.players.includes(owner);
+    }
+  }`, file);
+    source = replaceOnce(source, '  private thunderBlockerRects(): Rect[] {\n    return [\n',
+      '  private thunderBlockerRects(): Rect[] {\n    return [\n      ...this.guardShields.filter((shield) => this.players.includes(shield.owner)).map((shield) => shield.rect),\n', file);
+    // guard-shields: no hold-jump guarding (native has no button); every extra direction param is a plank.
+    source = replaceOnce(source, '      if (this.guardPlayers.has(this.player) && resolvedPlayerInput.jump) {',
+      '      if (false) {   // guard-shields: native GuardPlayers have no guard button (FUN_7ff72bb56990 / FUN_7ff72bb56c10)', file);
+    source = replaceOnce(source, `    if (spawn.actorName === 'GuardPlayer') {
+      this.guardPlayers.add(player);`, `    if (spawn.actorName === 'GuardPlayer') {
+      this.guardPlayers.add(player);
+      // FUN_7ff72bb72ae0 0x7ff72bb72de7: one plank per extra direction param p1..p3 (FUN_7ff72bb56990).
+      for (const value of spawn.raw.slice(7, 10)) {
+        if (typeof value !== 'number' || !Number.isFinite(value)) continue;
+        const dir = Math.trunc(value);
+        if (dir < 0 || dir > 3) continue;
+        const shape = dir <= 1 ? [-24, -3, 48, 6] : [-3, -30, 6, 60];
+        const offset = [[0, -56], [0, 10], [-28, -24], [30, -24]][dir];
+        const view = new Graphics();
+        view.beginFill(player.bodyColor, 1);
+        view.lineStyle(1, 0x3a2418, 1);
+        view.drawRect(0, 0, shape[2], shape[3]);
+        view.endFill();
+        this.actorLayer.addChild(view);
+        this.guardShields.push({ owner: player, dir, shape, offset, rect: { x: 0, y: 0, width: shape[2], height: shape[3] }, view });
+      }
+      this.updateGuardShields();`, file);
+    // step-enemy-native: the StepEnemy body is a moving physical body (mode 3): a cat landing on its top stands on it
+    // (contact from above: no harm, FUN_7ff72bb6ce10), instead of sinking in and dying on the next frame.
+    source = replaceOnce(source, `    if (this.stepEnemies.some((enemy) => shouldRespawnPlayerForStepEnemy(this.player!.rect, enemy.rect, previousPlayerRect))) {`,
+      `    for (const enemy of this.stepEnemies) {
+      const cat = this.player.rect;
+      const previousBottom = (previousPlayerRect ?? cat).y + (previousPlayerRect ?? cat).height;
+      const overlapsX = cat.x < enemy.rect.x + enemy.rect.width && cat.x + cat.width > enemy.rect.x;
+      if (overlapsX && previousBottom <= enemy.rect.y + 0.5 && cat.y + cat.height > enemy.rect.y && this.player.velocity.y >= 0) {
+        this.player.applyResolvedCollision({ ...cat, y: enemy.rect.y - cat.height }, { ...this.player.velocity, y: 0 }, true);
+      }
+    }
+    if (this.stepEnemies.some((enemy) => shouldRespawnPlayerForStepEnemy(this.player!.rect, enemy.rect, previousPlayerRect))) {`, file);
+    source = replaceOnce(source, '  private guardPlayers = new Set<Player>();',
+      '  private guardPlayers = new Set<Player>();\n  /** guard-shields: the always-on planks. */\n  guardShields: Array<{ owner: Player; dir: number; shape: number[]; offset: number[]; rect: Rect; view: Graphics }> = [];', file);
+    source = replaceOnce(source, '    this.thunders = [];', '    this.thunders = [];\n    this.guardShields = [];', file);
+    // step-enemy-native: StepEnemies fall and stand on solids too; the Bowwow reads 30-frame average movement.
+    source = replaceOnce(source, '      enemy.update(dt, this.tileMap);', `      enemy.update(dt, this.tileMap, [
+        ...this.staticRects.map((block) => block.rect),
+        ...this.gates.filter((gate) => gate.isSolid()).map((gate) => gate.rect),
+        ...this.bridges.filter((bridge) => bridge.isSolid()).map((bridge) => bridge.rect),
+        ...this.weightedLifts.map((lift) => lift.rect),
+        ...this.moveWalls.map((wall) => wall.rect),
+        ...this.pushBoxes.map((box) => box.rect),
+      ]);`, file);
+    source = replaceOnce(source, `      movementX: player.velocity.x * clampedDt,
+      movementY: player.velocity.y * clampedDt,`, `      ...this.bowwowAverageMovement(player),`, file);
+    source = replaceOnce(source, '  private nativePartyCount(): number {', `  /** step-enemy-native: FUN_7ff72bb67b10(player, out, 0x1e): the mean of the last 30 per-frame displacements. */
+  private bowwowMovementRings = new Map<Player, { last: { x: number; y: number }; deltas: Array<{ x: number; y: number }> }>();
+  private bowwowAverageMovement(player: Player): { movementX: number; movementY: number } {
+    const point = { x: player.rect.x + player.rect.width / 2, y: player.rect.y + player.rect.height };
+    let ring = this.bowwowMovementRings.get(player);
+    if (!ring) {
+      ring = { last: point, deltas: Array.from({ length: 30 }, () => ({ x: 0, y: 0 })) };
+      this.bowwowMovementRings.set(player, ring);
+    }
+    ring.deltas.shift();
+    ring.deltas.push({ x: point.x - ring.last.x, y: point.y - ring.last.y });
+    ring.last = point;
+    const sum = ring.deltas.reduce((acc, delta) => ({ x: acc.x + delta.x, y: acc.y + delta.y }), { x: 0, y: 0 });
+    return { movementX: sum.x / 30, movementY: sum.y / 30 };
+  }
+
+  private nativePartyCount(): number {`, file);
+    // thunder-frame-order: Thunder slot 25 keeps only the latch shift and frame toggle; planks, the cut,
+    // the drawn length and the kill run once every cat and body has moved (FUN_7ff72bb56c10 -> FUN_7ff72bb4da00 -> FUN_7ff72bb4d850).
+    source = replaceOnce(source, `  private updateThunders(dt: number): void {
+    this.updateGuardShields();
+    for (const thunder of this.thunders) thunder.update(dt);
+    const blockers = this.thunderBlockerRects();
+    for (const thunder of this.thunders) thunder.setDrawLength(thunder.activeLengthFor(blockers));
+  }`, `  private updateThunders(dt: number): void {
+    for (const thunder of this.thunders) thunder.update(dt);
+  }
+
+  /** thunder-frame-order: after all motion, place the planks (FUN_7ff72bb56c10), then cut and draw each beam
+   *  (FUN_7ff72bb4da00), then judge the kill (FUN_7ff72bb4d850), all on this frame's positions. */
+  private applyThundersAfterMotion(activePlayers: readonly Player[], contactIndexes: readonly number[]): void {
+    this.updateGuardShields();
+    if (this.thunders.length === 0) return;
+    const blockers = this.thunderBlockerRects();
+    for (const thunder of this.thunders) thunder.setDrawLength(thunder.activeLengthFor(blockers));
+    for (const index of contactIndexes) {
+      this.player = activePlayers[index];
+      this.currentPlayerIndex = index;
+      this.applyThunders();
+    }
+  }`, file);
+    source = replaceOnce(source, `    for (let index = 0; index < activePlayers.length; index += 1) {
+      if (this.cleared) break;
+      this.player = activePlayers[index];`, `    // thunder-frame-order: the cats that reach the contact checks; their Thunder kill is judged after all motion.
+    const thunderContactIndexes: number[] = [];
+    for (let index = 0; index < activePlayers.length; index += 1) {
+      if (this.cleared) break;
+      this.player = activePlayers[index];`, file);
+    source = replaceOnce(source, `      this.applyThunders();
+      this.applyStepEnemies(previousPlayerRect);`, `      thunderContactIndexes.push(index);
+      this.applyStepEnemies(previousPlayerRect);`, file);
+    source = replaceOnce(source, `    this.updatePushBoxDisplayCounts();
+    this.player = activePlayers[0];`, `    this.updatePushBoxDisplayCounts();
+    this.applyThundersAfterMotion(activePlayers, thunderContactIndexes);
+    this.player = activePlayers[0];`, file);
     source += `
 /** A copy of a stage row at a new point; raw x / y follow, because param parsers find their params after them. */
 function spawnMovedTo(spawn: ActorSpawnDef, x: number, y: number): ActorSpawnDef {

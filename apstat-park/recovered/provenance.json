@@ -389,6 +389,63 @@
         "The port already applied this preflight to DarknessWeightedLift (FUN_7ff72bb62790)"
       ],
       "behavior": "Every stage: a WeightedLift / Ex / Ex2 rising step is taken only if the slab and every cat or push box resting on it (transitively) can rise with it without entering a tile, a Rect, a MoveWall, a solid gate / bridge, another lift or another body; otherwise it waits this tick (a rider is never carried into the 1-4 wall or a ceiling). Descending steps keep descending-lift-stops-on-bodies."
+    },
+    {
+      "id": "thunder-beam",
+      "files": [
+        "src/engine/actors/Thunder.ts",
+        "src/engine/GameRuntime.ts",
+        "src/engine/sprites.ts"
+      ],
+      "evidence": [
+        "FUN_7ff72bb4d330 (slot 12): p0 = direction (0 UP, 1 DOWN, 2 LEFT, 3 RIGHT; view rotation 0 / 0x8000 / 0xc000 / 0x4000); p1 != 0: no emitter cap and objects never shorten the beam; p2 != 0: the 32 x 32 aux body stays enabled",
+        "First update 0x7ff72bb4d600 (once, +0x3e8 & 1): the aux body {-16, -16, 32, 32} (DAT_7ff72bcba2e0) is swept from the row point 2400 along the direction against the map (FUN_7ff72bc2fca0(world + 0x51760, ...)); L0 = 32 + the travel (+0x4d4, copied to +0x4cc / +0x4d0): the beam stops at the first solid chip, ending 16 inside it. Map chips the box overlaps at its start are not hits (the emitters sit inside walls)",
+        "Every update: L = L0; FUN_7ff72bb4da00 (beam contact): players are listed; Thunder and the MagnetPlayer aux are ignored; ANY other body overlapping the beam (when p1 == 0) cuts L to the distance from the origin to its near edge, including the GuardPlayer shield (tag DAT_7ff72c62d0c0)",
+        "FUN_7ff72bb4d850 (kill): a listed player overlapping the 4-unit beam of length L on two consecutive steps, with the whole +0x4e8 mask clear, gets command 5 (death); no other actor is killed",
+        "FUN_7ff72bb4dc10 (draw): floor(L / 32) + 1 tiles 32 x 32 from atlas (160,400,32,32) / (192,400,32,32) (DAT_7ff72bcba170), x -16, from y -5 outward, the last cropped, the frame toggling every 0.1 s; the emitter cap {-16, -8, 32, 8} from atlas (192,436,16,4) (p1 == 0 only)"
+      ],
+      "behavior": "Every Thunder: its beam is as long as the native sweep (to the first solid map chip, ending 16 inside it; 2432 when nothing is hit), not a fixed 2400; bodies in its path still cut it each frame (now including guard shields); it is drawn as the native animated orange zigzag along its live length with the orange emitter cap, rotated to its direction (was: a small yellow bolt icon). The kill latch is unchanged (it already matched)."
+    },
+    {
+      "id": "guard-shields",
+      "files": [
+        "src/engine/GameRuntime.ts"
+      ],
+      "evidence": [
+        "FUN_7ff72bb72ae0 GuardPlayer branch 0x7ff72bb72de7: a normal avatar, then for each extra param p1, p2, p3 present a guard object FUN_7ff72bb56990(guard, avatar, dir) added to the scene",
+        "FUN_7ff72bb56990: shape = {UP: 1, DOWN: 1, LEFT: 0, RIGHT: 0} (offline table); body DAT_7ff72c62d050[shape] = {-3, -30, 6, 60} (vertical) / {-24, -3, 48, 6} (horizontal) (memory image), FUN_7ff72bc16bf0(..., 0, 1) with +4 = 2: a contact body, not a floor; colour = the owner colour (+0x404)",
+        "FUN_7ff72bb56c10 (update): position = the owner transform + DAT_7ff72c62d030[dir] = UP (0, -56), DOWN (0, 10), LEFT (-28, -24), RIGHT (30, -24); it copies the owner visibility; no button anywhere: the shield is always on and the guard moves and jumps normally"
+      ],
+      "behavior": "GuardPlayer rows (4-1, 12-1): each extra direction param gives the cat an always-on shield plank (6 x 60 beside it for LEFT / RIGHT, 48 x 6 above or below it for UP / DOWN) at the native offset from its row point, drawn in its colour; a plank cuts a Thunder beam like any other body, so it protects whoever is behind it. Was: holding JUMP made the guard alone immune and froze it, with no plank. Ambiguous: the offset is applied unmirrored (the owner transform copy may include its facing flip; not traced), and the plank is not solid for cats (contact body)."
+    },
+    {
+      "id": "step-enemy-native",
+      "files": [
+        "src/engine/actors/StepEnemy.ts",
+        "src/engine/actors/UpDownEnemy.ts",
+        "src/engine/actors/BowwowEnemy.ts",
+        "src/engine/GameRuntime.ts",
+        "src/engine/sprites.ts"
+      ],
+      "evidence": [
+        "StepEnemy FUN_7ff72bb6c6c0: body DAT_7ff72c62d250 = {-24, -13, 48, 26}, mode 3 (moving physical body); view {-25, -14, 50, 28} from atlas (358,8,25,14); FUN_7ff72bb6ca10: p0 < 0 -> direction -1, otherwise the ctor default +1 (RIGHT)",
+        "FUN_7ff72bb6cbe0 (update): vx = direction * DAT_7ff72c61f5e0 (1.0 per tick, the unit of its 0.65 per tick gravity DAT_7ff72bcb69bc); no ground below -> vy += 0.65, else vy = 0",
+        "FUN_7ff72bb6ce10 (contact): a wall contact with a horizontal normal reverses it; a side contact with a player kills the player (command 4); a contact from above sends command 0 to the player (effect not traced) and does not hurt either",
+        "UpDownEnemy FUN_7ff72bb6d170: sensor DAT_7ff72c62d260 = {-28, -22, 56, 48}; view {-30, -26, 60, 52} from atlas (385,0,30,26); motion FUN_7ff72bb6d5c0 unchanged (already matched)",
+        "BowwowEnemy FUN_7ff72bb38ba0: sensors {-30, -39, 60, 78} (DAT_7ff72c61f358); FUN_7ff72bb39180 picks the candidate with the largest 30-frame average movement (FUN_7ff72bb67b10(player, out, 0x1e) averages the ring of per-frame deltas)"
+      ],
+      "behavior": "StepEnemy (5-1, 5-3, 7-2, 7-3, 7-4, 12-4): the native 48 x 26 body centred on its row point, falling at 0.65 per tick until it stands on a chip or a solid, walking 1 unit per tick (60 per second; was 100) to the right unless p0 < 0, turning back at walls (it walks off ledges); a side contact kills a cat, a cat from above is safe (unchanged). UpDownEnemy (5-1, 5-3, 7-3): the native 56 x 48 sensor {x-28, y-22}. BowwowEnemy (7-1): the native 60 x 78 sensor, and it wakes / chases on each cat's 30-frame average movement (was: one frame of velocity). Sprites: the atlas slug and spike for StepEnemy / UpDownEnemy; the Bowwow art is not decoded (a dark 60 x 78 placeholder). Not modelled: a StepEnemy reversing on a body, standing on a StepEnemy, Bowwow state 4."
+    },
+    {
+      "id": "thunder-frame-order",
+      "files": [
+        "src/engine/GameRuntime.ts"
+      ],
+      "evidence": [
+        "FUN_7ff72bb56c10 (the guard object update) places the plank from the owner transform (+0x3f0 -> +0x44) in the actor update pass, before the shared body/contact pass in which FUN_7ff72bb4da00 (Thunder beam contact) cuts L against bodies and lists players",
+        "FUN_7ff72bb4d850 (Thunder slot 27) then kills only listed players overlapping the beam of that same L: the plank, the cut and the kill all read one frame of body positions; Thunder slot 25 (0x7ff72bb4d600) only shifts the +0x4e0 / +0x4e4 / +0x4e8 latch and toggles the frame"
+      ],
+      "behavior": "Thunder stages with GuardPlayers (4-1, 12-1): planks are refreshed after every cat and body has moved this frame, and the beam cut, the drawn length and the kill judge all use those same positions (was: the plank was placed and the beam cut at the start of the frame, before the cats moved, so a guard walking into a beam left the beam at its old length for one frame and the cat behind it could die on the second contact). Thunder kills are judged for the same cats as before (those that reached the contact checks this frame), after the per-cat loop instead of inside it."
     }
   ],
   "hashes": {

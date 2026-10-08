@@ -1,0 +1,633 @@
+{
+  "note": "Written by re-running every campaign-solve solver (party 2 unless a row says otherwise). campaign-solvability.test.mjs asserts the SOLVED rows.",
+  "recorded": "2026-10-08",
+  "counts": {
+    "SOLVED": 16,
+    "BLOCKED": 14,
+    "SKIPPED-UNIMPLEMENTED": 18
+  },
+  "stages": [
+    {
+      "tag": "1-1",
+      "source": "stage_jump01",
+      "title": "HELLO PICO PARK",
+      "status": "SOLVED",
+      "party": 2,
+      "frames": 1472
+    },
+    {
+      "tag": "1-2",
+      "source": "stage_push02",
+      "title": "HELLO PICO PARK",
+      "status": "SOLVED",
+      "party": 2,
+      "frames": 1053
+    },
+    {
+      "tag": "1-3",
+      "source": "stage_jump02",
+      "title": "HELLO PICO PARK",
+      "status": "SOLVED",
+      "party": 2,
+      "frames": 1311
+    },
+    {
+      "tag": "1-4",
+      "source": "stage_weight01",
+      "title": "HELLO PICO PARK",
+      "status": "SOLVED",
+      "party": 2,
+      "frames": 2506
+    },
+    {
+      "tag": "2-1",
+      "source": "stage_constraint01",
+      "title": "GO TOGETHER",
+      "status": "BLOCKED",
+      "party": 2,
+      "frame": 623,
+      "reason": "DistanceConstraint rope (audit: params ok; mechanism unknown): rope corrections move cats through solid tiles (applyResolvedCollision with no tile test) -- the rope pulled cat 0 up into the bar tiles at {\"x\":1982.2,\"y\":183.6,\"feet\":229.6,\"grounded\":true,\"dead\":false} (cat 1 on the bar at x 2149) instead of letting it hang beneath the bar through the key",
+      "cats": [
+        {
+          "x": 1982.2,
+          "y": 183.6,
+          "feet": 229.6,
+          "grounded": true,
+          "dead": false
+        },
+        {
+          "x": 2148.6,
+          "y": 97.6,
+          "feet": 143.6,
+          "grounded": true,
+          "dead": false
+        }
+      ]
+    },
+    {
+      "tag": "2-2",
+      "source": "stage_fall01",
+      "title": "GO TOGETHER",
+      "status": "BLOCKED",
+      "party": 2,
+      "frame": 290,
+      "reason": "FallBox (audit: Misread, batch 8 fixed only its anchor): an armed FallBox is no longer solid during its 0.22 s arm delay -- cat 1 fell through the FallBox bridge at x 1154, 6 frames after landing on it at full speed; armed boxes (still in place, already non-solid): 1104, 1152",
+      "cats": [
+        {
+          "x": 924.1,
+          "y": 290,
+          "feet": 336,
+          "grounded": true,
+          "dead": false
+        },
+        {
+          "x": 1154.4,
+          "y": 301.7,
+          "feet": 347.7,
+          "grounded": false,
+          "dead": false
+        }
+      ]
+    },
+    {
+      "tag": "2-3",
+      "source": "stage_constraint02",
+      "title": "GO TOGETHER",
+      "status": "BLOCKED",
+      "party": 2,
+      "frame": 63,
+      "reason": "DistanceConstraint rope (audit: params ok; mechanism unknown): it never holds a hanging cat; it drags the standing partner through solid tiles -- the rope dragged the anchor (cat 1) into the roof tiles at {\"x\":213.2,\"y\":58.2,\"feet\":104.2,\"grounded\":true,\"dead\":false} while cat 0 kept falling (cat 0 feet 428); the party then falls into the WarpAll, which drops the key back to its spawn",
+      "cats": [
+        {
+          "x": 96.1,
+          "y": 382.4,
+          "feet": 428.4,
+          "grounded": false,
+          "dead": false
+        },
+        {
+          "x": 213.2,
+          "y": 58.2,
+          "feet": 104.2,
+          "grounded": true,
+          "dead": false
+        }
+      ]
+    },
+    {
+      "tag": "2-4",
+      "source": "stage_fall02",
+      "title": "GO TOGETHER",
+      "status": "BLOCKED",
+      "party": 2,
+      "frame": 229,
+      "reason": "FallBox (audit: Misread, batch 8 fixed only its anchor): an armed FallBox is no longer solid during its 0.22 s arm delay -- cat 1 fell through the FallBox bridge at x 1112, 7 frames after stepping onto it at full speed; armed boxes (still in place, already non-solid): 1056, 1104",
+      "cats": [
+        {
+          "x": 864.3,
+          "y": 241.2,
+          "feet": 287.2,
+          "grounded": true,
+          "dead": false
+        },
+        {
+          "x": 1111.9,
+          "y": 258.2,
+          "feet": 304.2,
+          "grounded": false,
+          "dead": false
+        }
+      ]
+    },
+    {
+      "tag": "3-1",
+      "source": "stage_coin01",
+      "title": "TIME LIMIT",
+      "status": "SOLVED",
+      "party": 2,
+      "frames": 2650
+    },
+    {
+      "tag": "3-2",
+      "source": "stage_time_limit02",
+      "title": "TIME LIMIT",
+      "status": "BLOCKED",
+      "party": 2,
+      "frame": 784,
+      "reason": "JumpStand (audit: partial; batch 25 jumpstand-launch-boxes): the p0 -10 launch (one -600/s impulse, no held-jump ramp) peaks at feet ~327, 105 above the pit floor; the key corridor floor is 144 above it -- JumpStand 2 bounces cat 1 to feet 326.9 at best (a rise of 71 from the stand top 398); the corridor floor is 288 (the pit floor 432), so the key corridor stays out of reach",
+      "cats": [
+        {
+          "x": 1705.4,
+          "y": 385.4,
+          "feet": 431.4,
+          "grounded": true,
+          "dead": false
+        },
+        {
+          "x": 658,
+          "y": 284.3,
+          "feet": 330.3,
+          "grounded": false,
+          "dead": false
+        }
+      ]
+    },
+    {
+      "tag": "3-3",
+      "source": "stage_coin02",
+      "title": "TIME LIMIT",
+      "status": "SOLVED",
+      "party": 2,
+      "frames": 1554
+    },
+    {
+      "tag": "3-4",
+      "source": "stage_time_limit01",
+      "title": "TIME LIMIT",
+      "status": "BLOCKED",
+      "party": 2,
+      "frame": 276,
+      "reason": "PushBox (audit: Match): an unsupported push box only falls in stage_jump02 or for the NormalBox/SmallBox family (nativeFall); elsewhere a box pushed off a ledge floats unless it fits a box-wide gap (findPushBoxGapSnapX) -- push box pushed off the slab edge (x 720) hangs in the air at {\"x\":669.3999999999999,\"y\":288,\"width\":48,\"height\":48} (falling false, wasSupported false); a cat jumping under it does not hop it either",
+      "cats": [
+        {
+          "x": 718.3,
+          "y": 290,
+          "feet": 336,
+          "grounded": true,
+          "dead": false
+        },
+        {
+          "x": 593.5,
+          "y": 385.7,
+          "feet": 431.7,
+          "grounded": true,
+          "dead": false
+        }
+      ]
+    },
+    {
+      "tag": "4-1",
+      "source": "stage_thunder01",
+      "title": "GIMMICK GIMMICK",
+      "status": "SKIPPED-UNIMPLEMENTED",
+      "party": 2,
+      "reason": "Thunder (audit: Misread -- not swept to the first solid, never cut by a body or guard shield, batch 6 thunder-beam) and GuardPlayer (audit: Misread -- no shield planks, batch 7 guard-shields): the beams the guards must block are always 2400 long and nothing cuts them."
+    },
+    {
+      "tag": "4-2",
+      "source": "stage_plane01",
+      "title": "GIMMICK GIMMICK",
+      "status": "SOLVED",
+      "party": 2,
+      "frames": 1231
+    },
+    {
+      "tag": "4-3",
+      "source": "stage_stopwatch01",
+      "title": "GIMMICK GIMMICK",
+      "status": "SOLVED",
+      "party": 2,
+      "frames": 763
+    },
+    {
+      "tag": "4-4",
+      "source": "stage_big_and_small",
+      "title": "GIMMICK GIMMICK",
+      "status": "BLOCKED",
+      "party": 2,
+      "frame": 535,
+      "reason": "ScaleSwitch growth (audit: Match; growth-with-rider not covered): a cat growing on a ScaleSwitch shoves the cat on its head sideways off it instead of lifting it -- growing on the 1488 ScaleSwitch, cat 1 (now 21.8 tall) shoved cat 0 off its head (cat 0 at x 1453.6, feet 419.5; cat 1 at x 1485.0); cat 0 cannot get back up (small jump 58), so the 20-unit slot at y 220..240 is out of reach",
+      "cats": [
+        {
+          "x": 1453.6,
+          "y": 401.1,
+          "feet": 419.5,
+          "grounded": false,
+          "dead": false
+        },
+        {
+          "x": 1485,
+          "y": 409.5,
+          "feet": 431.4,
+          "grounded": true,
+          "dead": false
+        }
+      ]
+    },
+    {
+      "tag": "5-1",
+      "source": "stage_majo01",
+      "title": "ALL FOR ONE",
+      "status": "SKIPPED-UNIMPLEMENTED",
+      "party": 2,
+      "reason": "MajorityPlayer / MajorityController (audit: Unimpl -- no vote, port debug box and a made-up goal rule; batch 18 majority-vote)."
+    },
+    {
+      "tag": "5-2",
+      "source": "stage_multijump01",
+      "title": "ALL FOR ONE",
+      "status": "SKIPPED-UNIMPLEMENTED",
+      "party": 2,
+      "reason": "MultiPlayer (audit: Unimpl -- one ground jump instead of the 2/10-jump relay; batch 19 multi-jump-relay) and JumpArea (audit: Misread -- centred instead of top-left, pits uncovered; batch 13 jumparea-top-left)."
+    },
+    {
+      "tag": "5-3",
+      "source": "stage_majo02",
+      "title": "ALL FOR ONE",
+      "status": "SKIPPED-UNIMPLEMENTED",
+      "party": 2,
+      "reason": "MajorityPlayer / MajorityController (audit: Unimpl; batch 18 majority-vote)."
+    },
+    {
+      "tag": "5-4",
+      "source": "stage_multijump02",
+      "title": "ALL FOR ONE",
+      "status": "SKIPPED-UNIMPLEMENTED",
+      "party": 2,
+      "reason": "MultiPlayer (audit: Unimpl; batch 19 multi-jump-relay) and Thunder (audit: Misread; batch 6 thunder-beam)."
+    },
+    {
+      "tag": "6-1",
+      "source": "stage_push01",
+      "title": "PUSH OR JUMP",
+      "status": "BLOCKED",
+      "party": 2,
+      "frame": 608,
+      "reason": "UNSOLVED: route stops on the first block; the 480-wide gap between the Rect at 2016 (top 112) and the goal tower (2688, top 71) has no party-2 crossing found by the solver",
+      "cats": [
+        {
+          "x": 876,
+          "y": 241.4,
+          "feet": 287.4,
+          "grounded": true,
+          "dead": false
+        },
+        {
+          "x": 908,
+          "y": 241.6,
+          "feet": 287.6,
+          "grounded": true,
+          "dead": false
+        }
+      ]
+    },
+    {
+      "tag": "6-2",
+      "source": "stage_auto_scroll01",
+      "title": "PUSH OR JUMP",
+      "status": "BLOCKED",
+      "party": 2,
+      "frame": 1087,
+      "reason": "UNSOLVED: no party-2 route found from the key to the goal block (tower cycles stall ~2050; goal block at 2448)",
+      "cats": [
+        {
+          "x": 2094.6,
+          "y": 50,
+          "feet": 96,
+          "grounded": true,
+          "dead": false
+        },
+        {
+          "x": 2067.3,
+          "y": 385.9,
+          "feet": 431.9,
+          "grounded": true,
+          "dead": false
+        }
+      ]
+    },
+    {
+      "tag": "6-3",
+      "source": "stage_weight02",
+      "title": "PUSH OR JUMP",
+      "status": "SOLVED",
+      "party": 2,
+      "frames": 1474
+    },
+    {
+      "tag": "6-4",
+      "source": "stage_jump06",
+      "title": "PUSH OR JUMP",
+      "status": "SOLVED",
+      "party": 2,
+      "frames": 989
+    },
+    {
+      "tag": "7-1",
+      "source": "stage_bowwow01",
+      "title": "MOVE AND STOP",
+      "status": "BLOCKED",
+      "party": 2,
+      "frame": 94,
+      "reason": "BowwowEnemy (audit: Misread, 28x22 vs 60x78; wake rule): chase state 3 is permanent and ignores whether the cats move -- the dog (state 3) killed cat 1 at x 457 on its way to the key; cat 1 froze as soon as the dog woke and was still caught",
+      "cats": [
+        {
+          "x": 84,
+          "y": 385.7,
+          "feet": 431.7,
+          "grounded": true,
+          "dead": false
+        },
+        {
+          "x": 457.4,
+          "y": 385.7,
+          "feet": 431.7,
+          "grounded": true,
+          "dead": true
+        }
+      ]
+    },
+    {
+      "tag": "7-2",
+      "source": "stage_traffic_light01",
+      "title": "MOVE AND STOP",
+      "status": "SOLVED",
+      "party": 2,
+      "frames": 3697
+    },
+    {
+      "tag": "7-3",
+      "source": "stage_ghost01",
+      "title": "MOVE AND STOP",
+      "status": "BLOCKED",
+      "party": 2,
+      "frame": 1685,
+      "reason": "MC_D* chips (7-3 red block under the UpDownEnemy): non-solid kill tiles in the port, so the second cat cannot cross -- cat 1 jumping the red block (MC_D* kill tiles, 96 wide): cat 1 died at {\"x\":1960.1,\"y\":205.4,\"feet\":251.4,\"grounded\":false,\"dead\":true} (ghost at 171)",
+      "cats": [
+        {
+          "x": 2057.8,
+          "y": 241.7,
+          "feet": 287.7,
+          "grounded": true,
+          "dead": false
+        },
+        {
+          "x": 1960.1,
+          "y": 205.4,
+          "feet": 251.4,
+          "grounded": false,
+          "dead": true
+        }
+      ]
+    },
+    {
+      "tag": "7-4",
+      "source": "stage_move01",
+      "title": "MOVE AND STOP",
+      "status": "SOLVED",
+      "party": 2,
+      "frames": 1644
+    },
+    {
+      "tag": "8-1",
+      "source": "stage_switch_puzzle01",
+      "title": "RETRO GAME",
+      "status": "SKIPPED-UNIMPLEMENTED",
+      "party": 2,
+      "reason": "Puzzle (audit: Unimpl -- sub-stage not simulated; batch 27 puzzle-substage, research first) and PuzzlePredictProxy (audit: Misread -- port solid 32x32 proxies as a win sensor)."
+    },
+    {
+      "tag": "8-2",
+      "source": "stage_breakout01",
+      "title": "RETRO GAME",
+      "status": "SKIPPED-UNIMPLEMENTED",
+      "party": 2,
+      "reason": "BreakoutPlayer (audit: Misread -- one ball per row), BreakoutSyncArea (audit: Misread -- made-up clear) and BreakoutKey (audit: Misread+unimpl -- visible from frame 0, never carried); batch 21 breakout-key-and-balls."
+    },
+    {
+      "tag": "8-3",
+      "source": "stage_switch_puzzle02",
+      "title": "RETRO GAME",
+      "status": "SKIPPED-UNIMPLEMENTED",
+      "party": 2,
+      "reason": "Puzzle (audit: Unimpl; batch 27 puzzle-substage) and PuzzlePredictProxy (audit: Misread)."
+    },
+    {
+      "tag": "8-4",
+      "source": "stage_breakout02",
+      "title": "RETRO GAME",
+      "status": "SKIPPED-UNIMPLEMENTED",
+      "party": 2,
+      "reason": "BreakoutPlayer / BreakoutSyncArea / BreakoutKey (audit: Misread / Misread+unimpl; batch 21 breakout-key-and-balls)."
+    },
+    {
+      "tag": "9-1",
+      "source": "stage_laser_ball01",
+      "title": "BALL PARK",
+      "status": "SKIPPED-UNIMPLEMENTED",
+      "party": 2,
+      "reason": "LaserBallPitcher (audit: Misread -- fires up not left, speed as seconds, no cannon; batch 22 ball-pitchers) and LaserKeyBox (audit: Misread+unimpl -- waits for an absent Key instead of breaking after 3 hits)."
+    },
+    {
+      "tag": "9-2",
+      "source": "stage_seesaw01",
+      "title": "BALL PARK",
+      "status": "SKIPPED-UNIMPLEMENTED",
+      "party": 2,
+      "reason": "SeesawParent (audit: Misread -- p1/p2 become a 365x915 wall), Balance (audit: Unimpl), PhysicsSwitch (audit: Misread+unimpl) and PhysicsBallPitcher (audit: motion); batches 22 ball-pitchers / 23 seesaw-balance."
+    },
+    {
+      "tag": "9-3",
+      "source": "stage_breakout03",
+      "title": "BALL PARK",
+      "status": "SKIPPED-UNIMPLEMENTED",
+      "party": 2,
+      "reason": "BreakoutPlayer (audit: Misread -- one ball per row, 9-3 party 4: 8 vs 4) and BreakoutSyncArea (audit: Misread); batch 21 breakout-key-and-balls."
+    },
+    {
+      "tag": "9-4",
+      "source": "stage_bound01",
+      "title": "BALL PARK",
+      "status": "SKIPPED-UNIMPLEMENTED",
+      "party": 2,
+      "reason": "BoundBallPitcher (audit: Misread -- jump-controlled instead of a launched bouncing ball; batch 22 ball-pitchers) and BallBox (audit: Misread -- 44x60 vs 48x48)."
+    },
+    {
+      "tag": "10-1",
+      "source": "stage_jump07",
+      "title": "TWO PLAYERS",
+      "status": "BLOCKED",
+      "party": 2,
+      "frame": 930,
+      "reason": "FallBox (audit: Misread, batch 8 fixed only its anchor): an armed FallBox stops being solid the tick it is armed -- cat 1 landed on the middle FallBox (x 2280, top 336) and dropped through it the same tick it armed (falling = true); it was never grounded, so it could not jump on to the far side (2400)",
+      "cats": [
+        {
+          "x": 2112.7,
+          "y": 289.4,
+          "feet": 335.4,
+          "grounded": true,
+          "dead": false
+        },
+        {
+          "x": 2288.2,
+          "y": 298.7,
+          "feet": 344.7,
+          "grounded": false,
+          "dead": false
+        }
+      ]
+    },
+    {
+      "tag": "10-2",
+      "source": "stage_jump04",
+      "title": "TWO PLAYERS",
+      "status": "BLOCKED",
+      "party": 2,
+      "frame": 148,
+      "reason": "Player jump height / Bridge \"1\" (audit: Bridge geometry ok, state/motion fixed in batch 3): a two-cat stack cannot reach the first block top -- cat 0 jumping from the head of cat 1 at the block's west face peaked with its feet at y 307.1; the block top is y 288 (the stack reaches 124.9 of the 144 needed)",
+      "cats": [
+        {
+          "x": 351.5,
+          "y": 339.7,
+          "feet": 385.7,
+          "grounded": true,
+          "dead": false
+        },
+        {
+          "x": 351.5,
+          "y": 385.7,
+          "feet": 431.7,
+          "grounded": true,
+          "dead": false
+        }
+      ]
+    },
+    {
+      "tag": "10-3",
+      "source": "stage_darkness01",
+      "title": "TWO PLAYERS",
+      "status": "BLOCKED",
+      "party": 2,
+      "frame": 920,
+      "reason": "DarknessWeightedLift (audit: Match): the port tests the sinking slab itself against map chips, so lift 2 cannot sink through the row under it -- lift 2 stopped at y 96 (offset 48 of its 144 travel): the port's chip preflight stops the slab on the row-144 chips under it, so the riders (feet 96) never reach the door slot (sensor y 112..144) below",
+      "cats": [
+        {
+          "x": 720.8,
+          "y": 50,
+          "feet": 96,
+          "grounded": true,
+          "dead": false
+        },
+        {
+          "x": 779.2,
+          "y": 50,
+          "feet": 96,
+          "grounded": true,
+          "dead": false
+        }
+      ]
+    },
+    {
+      "tag": "10-4",
+      "source": "stage_darkness02",
+      "title": "TWO PLAYERS",
+      "status": "SOLVED",
+      "party": 2,
+      "frames": 1882
+    },
+    {
+      "tag": "11-1",
+      "source": "stage_gun01",
+      "title": "HAND GIMMICK",
+      "status": "SKIPPED-UNIMPLEMENTED",
+      "party": 2,
+      "reason": "WarpGunPlayer (audit: Misread -- gun bound to jump, so gun cats cannot jump; native input bit 11; batch 20 warpgun-action-button)."
+    },
+    {
+      "tag": "11-2",
+      "source": "stage_magnet01",
+      "title": "HAND GIMMICK",
+      "status": "SKIPPED-UNIMPLEMENTED",
+      "party": 2,
+      "reason": "MagnetPlayer (audit: Unimpl -- the magnet does nothing; batch 20 magnet-grab) and Thunder (audit: Misread; batch 6)."
+    },
+    {
+      "tag": "11-3",
+      "source": "stage_gun02",
+      "title": "HAND GIMMICK",
+      "status": "SKIPPED-UNIMPLEMENTED",
+      "party": 2,
+      "reason": "WarpGunPlayer (audit: Misread; batch 20 warpgun-action-button), ForceColorBox (audit: Misread -- no recolour) and FallBox (armed boxes are non-solid at once, see 2-2)."
+    },
+    {
+      "tag": "11-4",
+      "source": "stage_magnet02",
+      "title": "HAND GIMMICK",
+      "status": "SKIPPED-UNIMPLEMENTED",
+      "party": 2,
+      "reason": "MagnetPlayer (audit: Unimpl; batch 20 magnet-grab) and DelaySwitch (audit: Misread -- fires at once instead of a 10 s countdown; batch 17 switch-family-native)."
+    },
+    {
+      "tag": "12-1",
+      "source": "stage_thunder02",
+      "title": "LAST PARK",
+      "status": "SKIPPED-UNIMPLEMENTED",
+      "party": 2,
+      "reason": "Thunder (audit: Misread, batch 6 thunder-beam), GuardPlayer (audit: Misread, batch 7 guard-shields) and JumpSwitch (audit: Misread+unimpl -- fires on touch, re-arms, never launches PushBox1 vy -9; batch 17 switch-family-native)."
+    },
+    {
+      "tag": "12-2",
+      "source": "stage_jump05",
+      "title": "LAST PARK",
+      "status": "SOLVED",
+      "party": 2,
+      "frames": 1191
+    },
+    {
+      "tag": "12-3",
+      "source": "stage_plane02",
+      "title": "LAST PARK",
+      "status": "SOLVED",
+      "party": 2,
+      "frames": 1762
+    },
+    {
+      "tag": "12-4",
+      "source": "stage_auto_scroll02",
+      "title": "LAST PARK",
+      "status": "SOLVED",
+      "party": 2,
+      "frames": 1417
+    }
+  ]
+}
