@@ -419,8 +419,56 @@
     'html.pico-home .pico-grade-head .grade-cap { display: block; font-size: 18px; }',
     'html.pico-home .pico-grade-head .grade-status { margin: 0; font-size: 18px; }',
     'html.pico-home #app-wallet-overlay.pico-mygrade #wallet-content { background: var(--paper); border: 0; margin: 0;',
-    '  font-size: 16px; font-family: var(--plain-font); }',
+    '  font-size: 16px; font-family: var(--plain-font); flex: none !important; overflow: visible !important; padding: 4px 16px 16px !important; }',
     'html.pico-home #app-wallet-overlay.pico-mygrade #wallet-content * { font-family: var(--plain-font) !important; }',
+    /* My Grade in the Pico style (renderLedgerZero / renderLedgerBalance / renderLedgerBonus): the
+       status strip under the orange bar, then one scroll area. The Desk's own Missing-work card,
+       the top of its balance card and its bonus block are drawn by the Pico ledger, so they are
+       hidden in the Desk's content; the rest of that card becomes a plain sub-panel. */
+    'html.pico-home .pico-ledger-status { flex: none; margin: 0; padding: 8px 16px; background: #FFFBF0;',
+    '  border-bottom: 2px solid #e4e4e4; font-size: 16px; font-weight: 800; line-height: 1.35; }',
+    'html.pico-home .pico-ledger-status[hidden] { display: none; }',
+    'html.pico-home .pico-mygrade-body { flex: 1 1 auto; min-height: 0; overflow: auto; background: var(--paper); }',
+    'html.pico-home #app-wallet-overlay.pico-mygrade #wallet-content .wallet-zero-card,',
+    'html.pico-home #app-wallet-overlay.pico-mygrade #wallet-content .pico-ledger-drawn { display: none !important; }',
+    'html.pico-home #app-wallet-overlay.pico-mygrade #wallet-content .pico-ledger-rest { background: var(--paper) !important;',
+    '  border: 3px solid #e4e4e4 !important; border-radius: 4px !important; box-shadow: none !important; }',
+    'html.pico-home #app-wallet-overlay.pico-mygrade #wallet-content .s7btn, html.pico-home .pico-ledger .s7btn {',
+    '  font: 700 15px/1.2 var(--plain-font) !important; min-height: 40px; padding: 4px 14px !important; background: var(--paper);',
+    '  color: var(--ink); border: 3px solid #3DA35D; border-radius: 4px; box-shadow: none; cursor: pointer; }',
+    'html.pico-home .pico-ledger { background: var(--paper); padding: 8px 16px 0; }',
+    'html.pico-home .pico-ledger [hidden] { display: none !important; }',
+    'html.pico-home .pico-ledger .pl-zero { display: flex; flex-direction: column; gap: 6px; margin: 0 0 12px; }',
+    'html.pico-home .pico-ledger .pl-tile { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; min-height: 56px;',
+    '  padding: 6px 12px; border: 3px solid; border-left-width: 10px; border-radius: 4px; }',
+    'html.pico-home .pico-ledger .pl-tile .wz-label { font-size: 18px; font-weight: 800; min-width: 0; }',
+    'html.pico-home .pico-ledger .pl-tile .wz-when { margin-left: auto; font-size: 15px; white-space: nowrap; }',
+    'html.pico-home .pico-ledger .pl-later-head { margin: 8px 0 0; font-size: 14px; font-weight: 800; letter-spacing: .06em; color: #555; }',
+    'html.pico-home .pico-ledger .pl-badge { display: inline-block; padding: 1px 8px; border: 2px solid currentColor; border-radius: 4px;',
+    '  font-size: 13px; font-weight: 700; line-height: 1.4; white-space: nowrap; }',
+    'html.pico-home .pico-ledger .pl-badge.wz-sgy { color: #555; font-weight: 400; }',
+    'html.pico-home .pico-ledger .pl-verb { flex: none; min-height: 44px; min-width: 44px; padding: 4px 16px; background: var(--orange);',
+    '  color: #fff; border: 0; border-radius: 4px; font: 800 16px/1.2 var(--plain-font); letter-spacing: .04em; cursor: pointer; }',
+    'html.pico-home .pico-ledger .pl-btn { min-height: 44px; padding: 4px 14px; background: var(--paper); color: var(--ink);',
+    '  border: 3px solid #3DA35D; border-radius: 4px; font: 700 15px/1.2 var(--plain-font); cursor: pointer; }',
+    'html.pico-home .pico-ledger .pl-link { min-height: 44px; min-width: 44px; padding: 0 4px; background: none; border: 0;',
+    '  color: #0645ad; text-decoration: underline; font: 15px var(--plain-font); cursor: pointer; }',
+    'html.pico-home .pico-ledger .pl-link:disabled { opacity: .45; cursor: default; }',
+    'html.pico-home .pico-ledger button:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }',
+    'html.pico-home .pico-ledger .snap-alist { margin: 0 0 6px 12px; font-family: var(--plain-font) !important; }',
+    'html.pico-home .pico-ledger .snap-alist * { font-family: var(--plain-font) !important; }',
+    'html.pico-home .pico-ledger .pl-panel { margin: 0 0 12px; padding: 12px 16px; background: #FFFBF0; border: 3px solid var(--orange); border-radius: 4px; }',
+    'html.pico-home .pico-ledger .pl-who { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; font-size: 15px; }',
+    'html.pico-home .pico-ledger .pl-name { font-weight: 700; }',
+    'html.pico-home .pico-ledger .pl-who .wallet-see-class { margin-left: auto; }',
+    'html.pico-home .pico-ledger .pl-grade-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; margin-top: 8px; }',
+    'html.pico-home .pico-ledger .pl-grade-num { font-size: 36px; font-weight: 800; line-height: 1; }',
+    'html.pico-home .pico-ledger .pl-line { margin: 6px 0 0; font-size: 15px; line-height: 1.4; }',
+    'html.pico-home .pico-ledger .wallet-grade-drop { font-weight: 800; }',
+    'html.pico-home .pico-ledger .wallet-effort-pc { padding-left: 8px; border-left: 4px solid #888; }',
+    'html.pico-home .pico-ledger .wallet-effort-ahead { padding-left: 8px; border-left: 4px solid #3DA35D; }',
+    'html.pico-home .pico-ledger .pl-note { margin: 8px 0 0; font-size: 14px; line-height: 1.4; color: #555; }',
+    'html.pico-home .pico-ledger .pl-head { margin: 0 0 4px; font-size: 16px; font-weight: 800; letter-spacing: .04em; }',
     /* Phase 3: every other Desk window in the plain frame. Position, size and stacking stay the
        Desk's; the frame adds the orange border, a paper interior and the Pico type and buttons. */
     'html.pico-home .pico-p3:not(.game-window)::after { content: ""; position: absolute; inset: 31px 12px 12px; z-index: -1; background: var(--paper); }',
@@ -2189,6 +2237,7 @@
     win.insertBefore(head, content);
     win.appendChild(bar);
     win.appendChild(close);
+    setupPicoLedger(win, head, content);
 
     var wasOpen = false;
     new MutationObserver(function () {
@@ -2204,6 +2253,306 @@
       if (!open) view.walletOpener = null;
       wasOpen = open;
     }).observe(overlay, { attributes: true, attributeFilter: ['style'] });
+  }
+
+  // ── My Grade drawn in the Pico style (teacher 2026-10-08) ───────────────────
+  // The ledger's grade surfaces are drawn here as Pico pieces: the status line (a strip under
+  // the orange bar), the Missing-work rows (tiles), the balance card (a sub-panel: grade, the
+  // official / "Today's estimate" badges, the drop sentence, the PC strategy and work-ahead
+  // lines, "how your grade is counted", See the class) and the bonus bank (a sub-panel).
+  //
+  // Every word and number comes from the SAME Desk function the System 7 window calls:
+  // _zeroCurrentWarnings, _pastDueCurrentWork, _zeroCardStatus, _zeroWhenText, _pastDueWhenText,
+  // _zeroSchoologyTitle, cedLabel, _walletCurrentGrade, _walletDisplayReadiness,
+  // _walletApplyZeroTint, _walletGradeDropText, _officialGradeTitle, _walletEffortBlock,
+  // _walletCountingNote, _walletBonusBlock. The buttons are the Desk's own builders
+  // (_zeroCardActionButton, _walletSeeClassButton) or call the Desk's handler
+  // (_snapOpenAssignment); the per-row class scores and graphs are attached by the Desk's own
+  // _zeroCardAttachScores. Nothing is computed here.
+  //
+  // The Desk still paints #wallet-content exactly as before (its text is identical with the flag
+  // on or off). The parts drawn here are hidden there by CSS; the rest of it (signed-records
+  // chip, effort points, rewards, export / print, the score breakdown, recorded work) stays
+  // below in Pico type. The Desk's _walletPaint and _walletPrependZeroCard are wrapped (original
+  // first, then this redraw), like rCal / renderDoNow in watchDesk; their bodies are untouched.
+
+  // The grey of the Desk's "Past due — not counting yet" rows (.wz-later). Red and yellow are the
+  // Desk's ZERO_TINT (= the Do Now CSS), read at draw time.
+  var LEDGER_LATER_TINT = { bg: '#eee', border: '#aaa' };
+
+  var ledgerState = { receipts: [], zeroSig: null };
+
+  function wrapDeskAfter(name, after) {
+    var original = window[name];
+    if (typeof original !== 'function' || original.picoLedgerWrapped) return;
+    var wrapped = function () {
+      var result = original.apply(this, arguments);
+      try { after.apply(null, arguments); } catch (_) {}
+      return result;
+    };
+    wrapped.picoLedgerWrapped = true;
+    window[name] = wrapped;
+  }
+
+  function setupPicoLedger(win, head, content) {
+    var status = el('p', 'pico-ledger-status');
+    status.id = 'pico-ledger-status';
+    status.hidden = true;
+    status.setAttribute('aria-live', 'polite');
+    win.insertBefore(status, head);
+
+    // One scroll area under the status strip: the official grade, the Pico ledger, then the
+    // rest of the Desk's own ledger content.
+    var body = el('div', 'pico-mygrade-body');
+    body.id = 'pico-mygrade-body';
+    win.insertBefore(body, head);
+    body.appendChild(head);
+
+    var ledger = el('div', 'pico-ledger');
+    ledger.id = 'pico-ledger';
+    var zero = el('div', 'pl-zero');
+    zero.id = 'pico-ledger-zero';
+    zero.hidden = true;
+    zero.setAttribute('role', 'group');
+    zero.setAttribute('aria-label', 'Missing work');
+    var balance = el('section', 'pl-panel pl-balance');
+    balance.id = 'pico-ledger-balance';
+    balance.setAttribute('aria-label', 'Your grade');
+    var bonus = el('section', 'pl-panel pl-bonus');
+    bonus.id = 'pico-ledger-bonus';
+    bonus.hidden = true;
+    ledger.appendChild(zero);
+    ledger.appendChild(balance);
+    ledger.appendChild(bonus);
+    body.appendChild(ledger);
+    body.appendChild(content);
+
+    wrapDeskAfter('_walletPaint', function (host, receipts) {
+      if (host !== byId('wallet-content')) return;
+      ledgerState.receipts = Array.isArray(receipts) ? receipts : [];
+      drawPicoLedger();
+    });
+    wrapDeskAfter('_walletPrependZeroCard', function (host) {
+      if (host !== byId('wallet-content')) return;
+      renderLedgerZero();
+    });
+  }
+
+  function drawPicoLedger() {
+    markDeskDrawn();
+    renderLedgerZero();
+    renderLedgerBalance();
+    renderLedgerBonus();
+  }
+
+  // The Desk's balance-card children up to and including "how your grade is counted", and its
+  // bonus block, are drawn by the Pico ledger: hide them in the Desk's content (CSS below). The
+  // Missing-work card (.wallet-zero-card) is hidden by CSS alone.
+  function markDeskDrawn() {
+    var host = byId('wallet-content');
+    if (!host) return;
+    var note = host.querySelector('.wallet-counting-note');
+    if (note && note.parentNode && note.parentNode.parentNode === host) {
+      var card = note.parentNode;
+      card.classList.add('pico-ledger-rest');
+      for (var node = card.firstElementChild; node; node = node.nextElementSibling) {
+        node.classList.add('pico-ledger-drawn');
+        if (node === note) break;
+      }
+    }
+    var bonus = host.querySelector(':scope > .wallet-bonus-block');
+    if (bonus) bonus.classList.add('pico-ledger-drawn');
+  }
+
+  function ledgerList(name) {
+    var list = callDesk(name);
+    return Array.isArray(list) ? list : [];
+  }
+
+  // The Desk card's data-sig: the same rows keep the tiles (and focus on a tile's button)
+  // across a grade poll; only the status line is refreshed (as the Desk does).
+  function zeroSignature(warns, later) {
+    var sig = warns.map(function (w) { return w.lessonKey + ':' + w.kind + ':' + (w.past ? 1 : 0); }).join('|');
+    if (later.length) sig += '#later:' + later.map(function (w) { return w.lessonKey + ':' + w.kind; }).join('|');
+    return sig;
+  }
+
+  function rowTrack(kind) {
+    if (kind === 'blooket') return 'blooket';
+    if (kind === 'quiz') return 'quiz';
+    return 'worksheet';
+  }
+
+  function lessonLabel(key) {
+    var label = callDesk('cedLabel', [key]);
+    return label ? label.text : key;
+  }
+
+  function tileTint(state) {
+    if (state === 'later') return LEDGER_LATER_TINT;
+    var tint = window.ZERO_TINT;
+    if (!tint || !tint.now || !tint.soon) return null;
+    return state === 'now' ? tint.now : tint.soon;
+  }
+
+  // One Missing-work tile. Classes are the Desk row's (wz-past = a 0 now, red; none = a 0 soon,
+  // yellow; wz-later = past due, not counting yet, grey); data-zero says the same in words.
+  function zeroTile(w, later) {
+    var state = later ? 'later' : (w.past ? 'now' : 'soon');
+    var className = 'pl-tile wz-row';
+    if (later) className += ' wz-later';
+    else className += (w.past ? ' wz-past' : '') + (w.kind === 'blooket' ? ' wz-blooket' : '') + (w.kind === 'quiz' ? ' wz-quiz' : '');
+    var tile = el('div', className);
+    tile.setAttribute('data-key', later ? w.lessonKey + ':' + w.kind + ':later' : w.lessonKey + ':' + rowTrack(w.kind));
+    tile.setAttribute('data-zero', state);
+    var tint = tileTint(state);
+    if (tint) {
+      tile.style.backgroundColor = tint.bg;
+      tile.style.borderColor = tint.border;
+    }
+
+    var label = lessonLabel(w.lessonKey);
+    var verb = callDesk('_zeroCardActionButton', [w, label]);
+    if (verb && verb.nodeType === 1) {
+      verb.className = 'pl-verb';
+      tile.appendChild(verb);
+    }
+    tile.appendChild(el('span', 'wz-label', label));
+    var title = callDesk('_zeroSchoologyTitle', [w]);
+    if (title) tile.appendChild(el('span', 'pl-badge wz-sgy', 'Schoology: ' + title));
+    tile.appendChild(el('span', 'wz-when', callDesk(later ? '_pastDueWhenText' : '_zeroWhenText', [w]) || ''));
+    if (later) return tile;
+
+    // "graph": enabled (and switched to the inline graph) by the Desk's _zeroCardAttachScores once
+    // the class picture has loaded; until then it opens the Snapshot app on this assignment.
+    var see = button('wz-see pl-link', 'graph');
+    see.title = 'The graphs of the class on this one (no names)';
+    see.disabled = true;
+    see.onclick = function () { callDesk('_snapOpenAssignment', [w.lessonKey, w.kind]); };
+    tile.appendChild(see);
+    return tile;
+  }
+
+  function renderLedgerZero() {
+    var box = byId('pico-ledger-zero');
+    var status = byId('pico-ledger-status');
+    if (!box || !status) return;
+    var warns = ledgerList('_zeroCurrentWarnings');
+    var later = ledgerList('_pastDueCurrentWork');
+    var any = Boolean(warns.length || later.length);
+
+    var text = any ? (callDesk('_zeroCardStatus', [warns, later]) || '') : '';
+    if (status.textContent !== text) status.textContent = text;
+    status.hidden = !text;
+
+    var sig = any ? zeroSignature(warns, later) : '';
+    if (sig === ledgerState.zeroSig) return;
+    ledgerState.zeroSig = sig;
+    box.textContent = '';
+    box.hidden = !any;
+    if (!any) {
+      box.removeAttribute('data-frame');
+      return;
+    }
+    // Same frame rule as the Desk card: red once something is a 0, yellow while everything is
+    // only "soon", grey when only past-due rows are left.
+    var frame = warns.some(function (w) { return w.past; }) ? 'now' : 'soon';
+    if (!warns.length) frame = 'calm';
+    box.setAttribute('data-frame', frame);
+
+    // Past first, then by date (the warnings are already date-ordered), as the Desk orders them.
+    var ordered = warns.filter(function (w) { return w.past; }).concat(warns.filter(function (w) { return !w.past; }));
+    ordered.forEach(function (w) { box.appendChild(zeroTile(w, false)); });
+    if (later.length) {
+      box.appendChild(el('p', 'pl-later-head', 'Past due — not counting yet'));
+      later.forEach(function (w) { box.appendChild(zeroTile(w, true)); });
+    }
+    callDesk('_zeroCardAttachScores', [box, ordered]);
+  }
+
+  function rosterName() {
+    try {
+      var client = window.rosterClient;
+      return client && client.username ? (client.username() || '') : '';
+    } catch (_) { return ''; }
+  }
+
+  // The balance card as a Pico sub-panel: the Desk card's tint and words, in Pico pieces.
+  function renderLedgerBalance() {
+    var box = byId('pico-ledger-balance');
+    if (!box) return;
+    box.textContent = '';
+    box.removeAttribute('style');
+    box.className = 'pl-panel pl-balance';
+
+    var grade = callDesk('_walletCurrentGrade') || { pct: null, q: null };
+    var readiness = callDesk('_walletDisplayReadiness');
+    var hued = Boolean(readiness && readiness.state !== 'nodue' && typeof readiness.hue === 'number');
+    var warns = ledgerList('_zeroCurrentWarnings');
+    if (hued) {
+      box.style.backgroundColor = 'hsl(' + readiness.hue + ',60%,88%)';
+      box.style.borderColor = 'hsl(' + readiness.hue + ',65%,45%)';
+    }
+    // The same zero tint as the Do Now (classes wallet-zeros-soon / wallet-zeros-now).
+    callDesk('_walletApplyZeroTint', [box, warns]);
+
+    var who = el('div', 'pl-who');
+    who.appendChild(el('span', 'pl-name', rosterName() || 'Your ledger'));
+    if (grade.q) who.appendChild(el('span', 'pl-badge pl-quarter', grade.q));
+    var seeClass = callDesk('_walletSeeClassButton');   // students only; opens the Snapshot app
+    if (seeClass && seeClass.nodeType === 1) {
+      seeClass.className = 'pl-btn wallet-see-class';
+      seeClass.removeAttribute('style');
+      who.appendChild(seeClass);
+    }
+    box.appendChild(who);
+
+    var row = el('div', 'pl-grade-row');
+    var num = el('span', 'pl-grade-num', grade.pct != null ? grade.pct + '%' : '—');
+    if (hued) num.style.color = 'hsl(' + readiness.hue + ',70%,35%)';
+    var labelText = grade.official ? 'Official grade (same as Schoology)' : 'Grade';
+    if (warns.length) {
+      num.style.color = callDesk('_zeroAnyPast', [warns]) ? '#a30000' : '#7a5c00';
+      if (!grade.official) labelText = 'Grade today';
+    }
+    if (grade.official) {
+      var title = callDesk('_officialGradeTitle', [grade.official]);
+      if (title) row.title = title;
+    }
+    row.appendChild(num);
+    row.appendChild(el('span', 'pl-badge pl-grade-label', labelText));
+    box.appendChild(row);
+
+    if (grade.official) {
+      box.appendChild(el('p', 'wallet-grade-estimate pl-line', "Today's estimate: " + (grade.estimate != null ? grade.estimate + '%' : '—')
+        + ' — moves as you work; the official grade updates every night.'));
+    }
+    if (warns.length) {
+      box.appendChild(el('p', 'wallet-grade-drop pl-line', callDesk('_walletGradeDropText', [warns]) || ''));
+    }
+
+    // The PC on file + strategy and the work done ahead: the Desk block's own lines, as text.
+    var effort = callDesk('_walletEffortBlock', [grade.q]);
+    if (effort && effort.children) {
+      Array.prototype.forEach.call(effort.children, function (line) {
+        box.appendChild(el('p', line.className + ' pl-line', line.textContent));
+      });
+    }
+    var note = callDesk('_walletCountingNote');
+    if (note && note.textContent) box.appendChild(el('p', 'wallet-counting-note pl-note', note.textContent));
+  }
+
+  // The bonus bank as a Pico sub-panel: the Desk's own block (same receipts), as text.
+  function renderLedgerBonus() {
+    var box = byId('pico-ledger-bonus');
+    if (!box) return;
+    box.textContent = '';
+    var block = callDesk('_walletBonusBlock', [ledgerState.receipts]);
+    box.hidden = !(block && block.children && block.children.length);
+    if (box.hidden) return;
+    Array.prototype.forEach.call(block.children, function (line, index) {
+      box.appendChild(index === 0 ? el('h3', 'pl-head', line.textContent) : el('p', 'pl-line', line.textContent));
+    });
   }
 
   // ── Phase 3: every other window in a plain Pico frame ───────────────────────
@@ -2244,8 +2593,8 @@
     { overlay: 'app-progress-overlay',    box: '.app-window', title: '.game-title-bar .title-text',    close: ['destroyProgress'] },        // My Progress (icon parked; kept framed)
     { overlay: 'override-gate-modal',     box: '.ogm-panel',  title: '#ogm-title',                     close: ['_hideOverrideGateModal'] }, // teacher view-as: override gate
     { overlay: 'verify-qr-overlay',       box: '#verify-qr-card', title: 'strong',                     close: ['_escHide', 'verify-qr-overlay'] },    // teacher: Verify a Record (built on first use)
-    { overlay: 'reconcile-qr-overlay',    box: '#reconcile-qr-card', title: 'strong',                  close: ['_escHide', 'reconcile-qr-overlay'] }, // teacher: Guest Reconcile (built on first use)
-    { overlay: 'guest-pass-overlay',      box: '#guest-pass-card', title: 'strong',                    close: ['_escHide', 'guest-pass-overlay'] },   // guest pass (guests retired; kept framed)
+    { overlay: 'reconcile-qr-overlay',    box: '#reconcile-qr-card', title: 'strong',                  close: ['_escHide', 'reconcile-qr-overlay'] }, // Guest Reconcile: no menu item since 2026-10-08 (dormant; kept framed)
+    { overlay: 'guest-pass-overlay',      box: '#guest-pass-card', title: 'strong',                    close: ['_escHide', 'guest-pass-overlay'] },   // guest pass: no menu item since 2026-10-08 (dormant; kept framed)
     { overlay: 'game-overlay',            box: '.game-window', title: '.game-title-bar .title-text',   close: ['closeGame'], ownClose: true }, // Study Break: frame only; its own close box (restyled in place) stays the ✕
   ];
 
@@ -2689,13 +3038,10 @@
     return li;
   }
 
-  // The Desk dropdown's footer items, same conditions and same calls.
+  // The Desk dropdown's footer items, same calls. Guest mode is retired: My Guest Pass and
+  // Guest Reconcile are gone from both menus (teacher 2026-10-08); only STUDY BREAK remains.
   function dogeFooter(list) {
-    var dp = doge();
-    var items = [];
-    if (/^guest_/i.test(String(dp.getUsername()))) items.push({ label: 'MY GUEST PASS', key: 'guest-pass', open: 'openGuestPass' });
-    if (callDesk('_isTeacher') === true) items.push({ label: 'GUEST RECONCILE', key: 'reconcile', open: 'openReconcileQR' });
-    items.push({ label: 'STUDY BREAK', key: 'study-break', open: 'openGame' });
+    var items = [{ label: 'STUDY BREAK', key: 'study-break', open: 'openGame' }];
     var head = el('li');
     head.appendChild(el('p', 'option-head', 'GAMES'));
     list.appendChild(head);

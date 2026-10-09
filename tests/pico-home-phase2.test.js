@@ -591,9 +591,12 @@ describe('Phase 2 -- My Grade', { timeout: 90_000 }, () => {
       const pill = doc.querySelector('#donow-grades .qpill:not(.qpill-missing) .qgrade').textContent;
       expect(doc.querySelector('#pico-grade-head .grade-num').textContent).toBe(pill);
       expect(doc.querySelector('#pico-sign .grade-num').textContent).toBe(pill);
-      // The head sits above the ledger's own content, which stays the first Desk child.
+      // The head sits above the Pico ledger (tests/pico-home-mygrade.test.js), then the Desk's
+      // own content, all in one scroll area under the status strip.
       const win = overlay.querySelector('.app-window');
-      expect(doc.getElementById('pico-grade-head').nextElementSibling).toBe(doc.getElementById('wallet-content'));
+      expect(doc.getElementById('pico-grade-head').nextElementSibling).toBe(doc.getElementById('pico-ledger'));
+      expect(doc.getElementById('pico-ledger').nextElementSibling).toBe(doc.getElementById('wallet-content'));
+      expect(doc.getElementById('wallet-content').parentElement).toBe(doc.getElementById('pico-mygrade-body'));
       expect(win.contains(doc.getElementById('pico-mygrade-close'))).toBe(true);
       // ✕ closes through the Desk's own destroyWallet; focus returns to MY GRADE.
       doc.getElementById('pico-mygrade-close').click();

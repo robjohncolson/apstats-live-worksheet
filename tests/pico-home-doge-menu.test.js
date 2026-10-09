@@ -260,6 +260,31 @@ describe('Pico PLAY window (the Doge menu in the Pico style)', { timeout: 120_00
     }
   });
 
+  it('guest items are gone (guests retired): GAMES lists only STUDY BREAK, in both menus, even for the teacher', async () => {
+    const harness = await boot();
+    try {
+      const { document: doc, window: win } = harness;
+      win._deskIsTeacher = () => true;
+      win._isTeacher = () => true;
+      const dp = seedPresence(win);
+      openFromPlay(doc);
+      const list = doc.getElementById('pico-doge-list');
+      const games = [...list.querySelectorAll('.action')].filter((b) => !b.classList.contains('pico-doge-peer'));
+      expect(games.map((b) => b.textContent.trim())).toEqual(['STUDY BREAK']);
+      expect(list.textContent).not.toMatch(/guest pass|reconcile/i);
+      // The classic System 7 dropdown (rendered by the Desk, hidden here) has no guest items either.
+      const dropdown = doc.getElementById('doge-dropdown');
+      expect([...dropdown.querySelectorAll('.doge-dd-footer')].map((n) => n.textContent.trim())).toEqual([String.fromCodePoint(127918) + ' Study Break']);
+      expect(dropdown.innerHTML).not.toMatch(/openGuestPass|openReconcileQR|Guest Pass|Guest Reconcile/);
+      // The functions stay defined, dormant.
+      expect(typeof win.openGuestPass).toBe('function');
+      expect(typeof win.openReconcileQR).toBe('function');
+      expect(PICO).not.toMatch(/GUEST RECONCILE|MY GUEST PASS/);
+    } finally {
+      closeAndTeardown(harness);
+    }
+  });
+
   it('Esc closes it (DogePresence.closeDropdown), and so do the ✕ and the backdrop', async () => {
     const harness = await boot();
     try {
