@@ -75,7 +75,7 @@
       "title": "TIME LIMIT",
       "status": "SOLVED",
       "party": 2,
-      "frames": 3400
+      "frames": 3703
     },
     {
       "tag": "3-2",
@@ -83,7 +83,7 @@
       "title": "TIME LIMIT",
       "status": "SOLVED",
       "party": 2,
-      "frames": 1174
+      "frames": 1188
     },
     {
       "tag": "3-3",
@@ -115,7 +115,7 @@
       "title": "GIMMICK GIMMICK",
       "status": "SOLVED",
       "party": 2,
-      "frames": 1947
+      "frames": 1539
     },
     {
       "tag": "4-3",
@@ -219,7 +219,7 @@
       "title": "MOVE AND STOP",
       "status": "SOLVED",
       "party": 2,
-      "frames": 4022
+      "frames": 4021
     },
     {
       "tag": "7-4",
@@ -283,7 +283,7 @@
       "title": "BALL PARK",
       "status": "SOLVED",
       "party": 2,
-      "frames": 9876
+      "frames": 14221
     },
     {
       "tag": "9-4",
@@ -331,7 +331,7 @@
       "title": "HAND GIMMICK",
       "status": "SOLVED",
       "party": 2,
-      "frames": 1642
+      "frames": 1618
     },
     {
       "tag": "11-2",
@@ -347,7 +347,7 @@
       "title": "HAND GIMMICK",
       "status": "SOLVED",
       "party": 2,
-      "frames": 1658
+      "frames": 1651
     },
     {
       "tag": "11-4",
@@ -355,7 +355,7 @@
       "title": "HAND GIMMICK",
       "status": "SOLVED",
       "party": 2,
-      "frames": 2576
+      "frames": 3024
     },
     {
       "tag": "12-1",
@@ -379,7 +379,7 @@
       "title": "LAST PARK",
       "status": "SOLVED",
       "party": 2,
-      "frames": 2732
+      "frames": 1333
     },
     {
       "tag": "12-4",
@@ -387,7 +387,7 @@
       "title": "LAST PARK",
       "status": "SOLVED",
       "party": 2,
-      "frames": 2156
+      "frames": 2005
     }
   ]
 }

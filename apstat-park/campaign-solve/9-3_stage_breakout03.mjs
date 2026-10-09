@@ -20,6 +20,7 @@ const TILE_SEP = 0.01;
 const FLOOR_ROW = 8;
 const CAT_W = 32;
 const WALK = 3;
+const SCREEN_REACH = 840;   // < 1280 / 1.5 between the two cats' centres
 
 // The bricks the cats must walk through (row 7 = cat height on the floor row).
 const DOOR_BRICKS = [[14, 7], [15, 7], [16, 7], [17, 7], [21, 7], [24, 7], [28, 7], [29, 7], [30, 7], [31, 7]];
@@ -290,7 +291,10 @@ function catchableSpots(world, ball, hanging, cats, paddle) {
     if (hanging.some((h) => Math.hypot(h.cx - (b.x + BALL_R), h.cy - (b.y + BALL_R)) < BALL_D)) break;
   }
   const from = cats[paddle].x;
-  return spots(world, cats, paddle).filter((x) => lowPoints.some((p) =>
+  // Native camera (batch 17): the camera follows the pair's midpoint and a walking cat cannot leave the screen
+  // (FUN_7ff72bb7b700), so the paddle stays within one screen (1280 / 1.5 = 853) of the parked cat.
+  const parked = cats[1 - paddle].x;
+  return spots(world, cats, paddle).filter((x) => Math.abs(x - parked) <= SCREEN_REACH).filter((x) => lowPoints.some((p) =>
     Math.abs(x + CAT_W / 2 - p.cx) <= 45 && Math.abs(x - from) <= WALK * p.t + WALK));
 }
 

@@ -327,11 +327,13 @@ function killByContactAndCompare(source, party, rect, { onTop, everyCat }) {
   const y = onTop ? rect.y - cat.rect.height : rect.y + rect.height / 2 - cat.rect.height / 2;
   cat.applyResolvedCollision({ ...cat.rect, x, y }, { x: 0, y: 0 }, onTop);
   const before = [...game.players];
+  // A plane rides the auto-scroll (FUN_7ff72bb708d0, batch 17): it moved by the scroll step in the hit tick.
+  const carry = cat.mode === 'plane' ? game.scrollCameraConfig.autoScrollSpeed : 0;
   tick(run);
   const hit = before.filter((c) => c.deathTimer > 0 || game.deathFallPlayers.has(c));
   assert.ok(hit.includes(cat), `${source} p${party}: the contact is a fatal hit`);
   if (everyCat) assert.equal(hit.length, before.length, `${source} p${party}: every cat takes the hit`);
-  assert.deepEqual({ x: cat.rect.x, y: cat.rect.y }, { x, y: cat.rect.y }, 'not respawned on its own');
+  assert.deepEqual({ x: cat.rect.x, y: cat.rect.y }, { x: x + carry, y: cat.rect.y }, 'not respawned on its own');
   let flagged = 0;
   for (let t = 0; t < 600 && !(game.stageResultFlags & 2); t++) { tick(run); flagged = t; }
   assert.ok(flagged > 55, `${source} p${party}: the 1 s hold and the fall run first (${flagged})`);

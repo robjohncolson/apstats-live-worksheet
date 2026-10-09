@@ -103,9 +103,13 @@ export default {
     if (A.rect.x + 51 >= B.rect.x) block(`A too close to B to fire (A.x ${A.rect.x}, B.x ${B.rect.x})`);
     fire(0);
     if (heldBy(A) !== B) block('A did not pick up B on the plateau');
-    // 6. The camera centres on both cats (held B counts where it was hit), so with both at the right end the wall x 1776
-    //    is on screen. A jumps and fires at the wall from the top of the jump: B appears in the key shaft against the wall
-    //    with bottom = shot.y - 1, overlapping the key (1712..1744, y 68..124) on the way down.
+    // 6. A held cat is hidden and leaves the camera's follow set (command 0xe payload 0 -> avatar vtable +0xc0 =
+    //    FUN_7ff72bb67cc0 clears +0x178 bit 8; FUN_7ff72bb7c150 skips a live cat with that bit clear), so the camera
+    //    centres on A alone: A walks to the plateau's right end (B's body is off) to bring the wall x 1776 on screen.
+    //    A jumps and fires at the wall from the top of the jump: B appears in the key shaft against the wall with
+    //    bottom = shot.y - 1, overlapping the key (1712..1744, y 68..124) on the way down.
+    until(() => A.rect.x + A.rect.width >= 1398, [{ right: true }], 60, 'A could not walk to the plateau end');
+    settle();
     until(() => game.scrollCameraState.scroll > 920, [], 120, () => `camera stuck at ${game.scrollCameraState.scroll}`);
     let fired = false;
     hold((f) => {

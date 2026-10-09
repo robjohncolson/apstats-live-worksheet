@@ -79,6 +79,10 @@ test('1-3: a cat walks under the square without being stopped', () => {
   const square = literalRects(game).find((block) => block.spawn.x === 1056).rect;
   Object.assign(cat.rect, { x: 1000, y: 432 - cat.rect.height }); cat.velocity.x = 0; cat.velocity.y = 0;
   Object.assign(other.rect, { x: 395, y: 432 - other.rect.height });
+  // native-camera (batch 17): re-snap the camera onto the moved cats, as a stage start does (FUN_7ff72bb7b9c0); a
+  // walking cat off the screen would be pulled back onto it (FUN_7ff72bb7b700).
+  game.scrollCameraState = { ...game.scrollCameraState, latched: false };
+  game.stepScrollCamera();
   for (let frame = 0; frame < 90; frame++) {
     game.update(1 / 60, RIGHT, [RIGHT, IDLE]);
     assert.equal(overlaps(cat.rect, square), false, 'never inside the square (frame ' + frame + ')');

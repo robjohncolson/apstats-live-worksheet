@@ -55,7 +55,9 @@ export default {
       'the StepEnemy never cleared the plateau landing');
     // Off the lift's east end onto the plateau (top 288), one at a time.
     api.walkTo(1, 1060, { hop: true, max: 200 }); faceGhost(1);
-    api.walkTo(0, 1010, { hop: true, max: 200 }); faceGhost(0);
+    // Native camera (batch 17): the cats stay within one screen (1280 / 1.5 = 853), so cat 0 stands far enough east
+    // for cat 1 to reach x 1872 below.
+    api.walkTo(0, 1030, { hop: true, max: 200 }); faceGhost(0);
     alive('onto the plateau');
     // The StepEnemy drops onto the plateau and patrols between the brown bumps (1008 / 1488) at 1 per tick: each cat
     // jumps it as it comes and keeps going over the second bump to the red block's west edge (1920).

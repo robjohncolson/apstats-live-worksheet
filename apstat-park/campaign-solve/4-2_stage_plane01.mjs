@@ -31,8 +31,10 @@ export default {
       const ty = pathY(cx + 24);
       const spec = {};
       if (cy < ty - 4) spec.down = true; else if (cy > ty + 4) spec.up = true;
-      // Hold back horizontally while far off the line (the corridor walls are DamageRects).
+      // Hold back horizontally while far off the line (the corridor walls are DamageRects). A plane is carried by the
+      // auto-scroll (FUN_7ff72bb708d0: its velocity starts at the scroll step), so holding back means holding LEFT.
       if (Math.abs(cy - ty) < 30 && cx < xTarget) spec.right = true;
+      else if (Math.abs(cy - ty) >= 30) spec.left = true;
       return spec;
     };
     // Plane 0 (upper at spawn) leads; plane 1 follows 70 units behind.

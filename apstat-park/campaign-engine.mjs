@@ -11,6 +11,32 @@ export const decodeInput = bits => ({ left: !!(bits & 1), right: !!(bits & 2), u
   jump: !!(bits & 16), jumpPressed: !!(bits & 32), action: !!(bits & 64), actionPressed: !!(bits & 256), upPressed: !!(bits & 512),
   resetPressed: false, prevStagePressed: false, nextStagePressed: false });
 
+// The first cat spawn's y is the stage's floor line (it sits on the Desk's common 700 line when the band allows).
+export function campaignSpawnFloor(definition) {
+  const spawn = definition.createTable.find(actor => /Player/.test(actor.actorName));
+  return spawn?.y ?? 432;
+}
+
+// The native screen: 1280 x 720 (DAT_7ff72bc7db94 / DAT_7ff72bc7db90) divided by the stage scale, in world px. The
+// native draw FUN_7ff72bc1a830 translates the world by (-(scroll), 0): x scrolls, y is a literal 0, and the stage
+// scale fills the window, so the band y 0..720/scale exactly fills the screen, with no letterbox and no zoom.
+export const nativeScreen = (definition) => ({ width: 1280 / (definition.scale || 1), height: 720 / (definition.scale || 1) });
+
+// Where render() draws the recovered world on the 750-tall Desk canvas (presentation only; the simulation keeps its
+// own transform). The native screen's width fills the 720 column (720 / (1280 / scale)), so the picture in that
+// column is exactly what the native screen shows and a walking cat can reach every x in it (the screen clamp
+// FUN_7ff72bb7b700 is the same 1280 / scale rect). A wider page (viewW > 720) shows more world at the same scale on
+// both sides, faded (render), because natively it is off the screen. The canvas is nearly square, so the 16:9 native
+// picture needs a letterbox: the band keeps the spawn floor on the Desk's common 700 line (its door and exit sit on
+// it), and the band's bottom never goes below the canvas (2-3 spawns at y 96: anchoring its floor hid the pit).
+// Every mode uses it: modes 0 / 2 natively start at scroll 0 (FUN_7ff72bb79d40), mode 0 never scrolls.
+export function campaignProjection(definition, floor, viewW = 720, scroll = 0) {
+  const pad = (viewW - 720) / 2;
+  const screen = nativeScreen(definition);
+  const scale = 720 / screen.width;
+  return { x: pad - scroll * scale, y: Math.min(700 - floor * scale, 750 - screen.height * scale), scale };
+}
+
 export async function createCampaignEngine({ onEvent = () => {} } = {}) {
   await recovered.loadPicoSpriteAtlas();
   const jumpArt = await createJump01Art(document);
@@ -43,9 +69,7 @@ export async function createCampaignEngine({ onEvent = () => {} } = {}) {
     jump01 = entry.source === 'stage_jump01'; ticks = 0;
     if (jump01) restoreJump01Steps(runtime);
     seed = recovered.getRandomState();
-    // Original map/physics units, displayed at the desk's existing half scale.
-    const spawn = definition.createTable.find(actor => /Player/.test(actor.actorName));
-    floor = spawn?.y ?? 432;
+    floor = campaignSpawnFloor(definition);
     app.stage.addChild(runtime.root);
   }
   function step(inputs) {
@@ -64,24 +88,10 @@ export async function createCampaignEngine({ onEvent = () => {} } = {}) {
     const pad = (viewW - 720) / 2;   // extra page width, split evenly so the centre never moves
     const overlayX = runtime.overlayLayer.x;
     runtime.overlayLayer.x = overlayX + pad;   // the port's own text was laid out for 720
-    if (definition.scrollable || definition.autoScroll) {
-      world.scale.set(.5);
-      world.x = pad - (runtime.scrollCameraState?.scroll || 0) * .5;
-      world.y = 700 - floor * .5;
-      if (jump01) {
-        const local = runtime.players.find((_, index) => runtime.playerInputSlots[index] === focusSlot) || runtime.players[0];
-        const centre = (local.rect.x + local.rect.width / 2) / 2;
-        const mapW = definition.map.width * definition.map.chipSize / 2;
-        world.x = mapW <= viewW ? (viewW - mapW) / 2 : -Math.max(0, Math.min(mapW - viewW, centre - viewW / 2));
-      }
-    } else {
-      // Fixed-screen puzzles fit entirely above the common floor line.
-      const size = Math.min(.5, 680 / (definition.map.width * definition.map.chipSize),
-        610 / (definition.map.height * definition.map.chipSize));
-      world.scale.set(size);
-      world.x = (viewW - definition.map.width * definition.map.chipSize * size) / 2;
-      world.y = 700 - (definition.map.height - 1) * definition.map.chipSize * size;
-    }
+    const placed = campaignProjection(definition, floor, viewW, runtime.scrollCameraState?.scroll || 0);
+    world.scale.set(placed.scale);
+    world.x = placed.x;
+    world.y = placed.y;
     projection = { x: world.x, y: world.y, scale: world.scale.x };
     // The desk owns the CLEAR celebration; suppress the port's debug instructions.
     runtime.overlayLayer.visible = !stats.cleared;
@@ -91,7 +101,8 @@ export async function createCampaignEngine({ onEvent = () => {} } = {}) {
       ...runtime.warps.map(actor => actor.view), ...runtime.players.map(player => player.view)] : [];
     const visibility = hidden.map(view => view.visible);
     if (jump01) {
-      ctx.save(); ctx.translate(projection.x, projection.y); ctx.imageSmoothingEnabled = false;
+      ctx.save(); ctx.translate(projection.x, projection.y); ctx.scale(projection.scale * 2, projection.scale * 2);
+      ctx.imageSmoothingEnabled = false;   // the 1-1 art is drawn in half-scale world units
       jumpArt.terrain(ctx, definition, runtime); ctx.restore();
       hidden.forEach(view => { view.visible = false; });
     }
@@ -99,8 +110,15 @@ export async function createCampaignEngine({ onEvent = () => {} } = {}) {
     ctx.drawImage(app.view, 0, 0);
     hidden.forEach((view, index) => { view.visible = visibility[index]; });
     if (jump01) {
-      ctx.save(); ctx.translate(projection.x, projection.y); ctx.imageSmoothingEnabled = false;
+      ctx.save(); ctx.translate(projection.x, projection.y); ctx.scale(projection.scale * 2, projection.scale * 2);
+      ctx.imageSmoothingEnabled = false;
       jumpArt.cats(ctx, runtime, ticks, colours, focusSlot); ctx.restore();
+    }
+    // A wider page shows the world beyond the native screen faded: natively it is off the screen, and a walking cat
+    // cannot go there (FUN_7ff72bb7b700).
+    if (pad > 0) {
+      ctx.save(); ctx.globalCompositeOperation = 'destination-out'; ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+      ctx.fillRect(0, 0, pad, 750); ctx.fillRect(pad + 720, 0, viewW - pad - 720, 750); ctx.restore();
     }
     // death-restarts-stage: the native 0.5 s fade-out before the stage rebuilds (runtime.restartFadeSeconds).
     const fade = runtime.restartFadeSeconds || 0;

@@ -41,13 +41,26 @@ function loadStage(source, seed = 1) {
   runtime.setRandomState(seed);
   const game = new runtime.GameRuntime(() => {}, () => {});
   game.loadStage(entry.data, 720, 750, { partySize: 2, simplifyPassivePlaceholders: false });
+  lastGame = game;
+  for (const cat of game.players) gameOf.set(cat, game);
   return game;
 }
 // Player 0 is the local cat (`update(dt, input, inputs)`); player 1 follows `inputs[1]`.
 function step(game, frames = 1, inputs = [IDLE, IDLE]) {
   for (let i = 0; i < frames; i++) game.update(1 / 60, inputs[0], inputs);
 }
-function place(player, x, y) { player.applyResolvedCollision({ ...player.rect, x, y }, { x: 0, y: 0 }, true); }
+// native-camera (batch 17): a teleported cat is off the native screen until the camera catches up (3 px per tick), and
+// a walking cat off the screen is pulled back onto it (FUN_7ff72bb7b700). Set-ups re-snap the camera onto the cats,
+// as a fresh stage start does (FUN_7ff72bb7b9c0).
+let lastGame = null;
+const gameOf = new WeakMap();
+function snapCamera(cat) {
+  const game = gameOf.get(cat) || lastGame;
+  if (game?.scrollCameraConfig?.mode !== 1) return;
+  game.scrollCameraState = { ...game.scrollCameraState, latched: false };
+  game.stepScrollCamera();
+}
+function place(player, x, y) { player.applyResolvedCollision({ ...player.rect, x, y }, { x: 0, y: 0 }, true); snapCamera(player); }
 // Put a box on a cat's head: box bottom on the cat's top, centred over the cat.
 function boxOnHead(box, player) {
   box.applyRect({ ...box.rect, x: player.rect.x + player.rect.width / 2 - box.rect.width / 2,
@@ -203,7 +216,7 @@ test('1-3: cat on cat: the lower cat does not rise and the upper cat is not laun
 test('1-2 (not jump02): a cat holds a box and carries it when it walks', () => {
   const game = loadStage('stage_push02');
   const [cat, other] = game.players;
-  place(cat, 1200, FLOOR_Y(cat)); place(other, 100, FLOOR_Y(other));
+  place(cat, 1200, FLOOR_Y(cat)); place(other, 500, FLOOR_Y(other));   // within one native screen (853)
   const box = game.pushBoxes[2];   // the 96 x 96 block
   boxOnHead(box, cat);
   step(game, 2);
@@ -280,7 +293,7 @@ test('1-3: a pushed box resting on a switch pad holds the switch down; the box a
 test('1-2: a box left on a cat that dies falls to the ground instead of floating', () => {
   const game = loadStage('stage_push02');
   const [cat, other] = game.players;
-  place(cat, 1200, FLOOR_Y(cat)); place(other, 100, FLOOR_Y(other));
+  place(cat, 1200, FLOOR_Y(cat)); place(other, 500, FLOOR_Y(other));   // within one native screen (853)
   const box = game.pushBoxes[2];
   boxOnHead(box, cat);
   step(game, 2);

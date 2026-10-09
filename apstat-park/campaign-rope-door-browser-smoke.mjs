@@ -47,7 +47,14 @@ try {
     document.getElementById('stage').append(game.canvas);
     game.load(campaignStages.findIndex(stage => stage.source === 'stage_constraint01'), 2, 100);
     const runtime = game.runtime, [a, b] = runtime.players;
-    const place = (player, x, y) => player.applyResolvedCollision({ ...player.rect, x, y }, { x: 0, y: 0 }, true);
+    // native-camera (batch 17): re-snap the camera onto teleported cats, as a stage start does (FUN_7ff72bb7b9c0); a
+    // walking cat off the native screen is pulled back onto it (FUN_7ff72bb7b700).
+    const place = (player, x, y) => {
+      player.applyResolvedCollision({ ...player.rect, x, y }, { x: 0, y: 0 }, true);
+      if (runtime.scrollCameraConfig?.mode !== 1) return;
+      runtime.scrollCameraState = { ...runtime.scrollCameraState, latched: false };
+      runtime.stepScrollCamera();
+    };
     place(a, 560, 240 - a.rect.height - 60); place(b, 700, 240 - b.rect.height);
     for (let tick = 0; tick < 3; tick++) game.step([0, 0]);
     game.render();

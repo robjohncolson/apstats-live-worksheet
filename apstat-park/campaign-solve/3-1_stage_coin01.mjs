@@ -10,10 +10,10 @@
 // over-pit coin, into the pit. Cat 1 follows; on the pyramid top cat 0 jumps from cat 1's head for the three middle
 // coins, then each cat leaps sideways off the pyramid top through the low over-pit coins. Both go up to the
 // upper-east floor and sweep it the same way (ending with cat 0's leap west through the last over-pit coin). Then
-// the lower floor: cat 0 sweeps the west half, cat 1 the east half; the Key appears; a cat jumps for it from the
-// pyramid top; both enter the door.
+// the lower floor, shared so the pair stays within one native screen (853): cat 0 runs to the west wall, cat 1 then
+// to the east end; the Key appears; cat 0 jumps for it from the pyramid top; both enter the door.
 // Native 3 px/tick: the climbs between the pyramid's 288 tier and the upper floors (48 up, 96 across) only work from
-// the tier's end (the jump is >= 48 up only from tick 8 to 27, dx 24..81); the route clears at ~frame 3400 of the
+// the tier's end (the jump is >= 48 up only from tick 8 to 27, dx 24..81); the route clears at ~frame 3700 of the
 // 3900-frame (65 s) DeadTimer.
 // NOTE: this stage maps cat 0 to input slot 1 and cat 1 to slot 0 (Player row "1" faces left, p0 = 1); the driver
 // places each cat's buttons in its slot, so specs here are in cat order.
@@ -124,15 +124,19 @@ export default {
     walk(1, 1026, { tol: 2 });
     jumpTo(0, 958);
     land(0);
-    // 5. Lower floor, both cats at once (a program of steps per cat): cat 0 sweeps the west half (walk the low row,
-    // jump at each high-row coin) and waits west of the pyramid; cat 1 drops into the pit, runs east along the low
-    // row, sweeps the high row coming back west, climbs the pyramid and jumps for the Key (848..880, 116..172) as
-    // soon as the last coin is taken.
+    // 5. Lower floor, both cats at once (a program of steps per cat). Native camera (batch 17): the camera follows
+    // the pair's midpoint and a walking cat cannot leave the screen, so the cats are never more than 1280 / 1.5 = 853
+    // apart: the west wall (96) and the east end (1640) are never reached at the same time. So each half is shared:
+    // cat 0 runs to the west wall and takes the 96 / 240 / 384 high coins coming back while cat 1 takes 672 / 528;
+    // then cat 1 runs to the east end (taking the low row) and takes 1632 / 1488 / 1344 coming back while cat 0
+    // takes 1056 / 1200, climbs the pyramid and jumps for the Key (848..880, 116..172) once the last coin is taken.
     const programs = [
-      [['walk', 700, true], ['land'], ...[672, 528, 384, 240, 96].flatMap((x) => [['walk', x], ['jump', x]]), ['walk', 600]],
-      [['walk', 990], ['land'], ['walk', 1100, true], ['land'], ['walk', 1640],
-        ...[1632, 1488, 1344, 1200, 1056].flatMap((x) => [['walk', x], ['jump', x]]),
+      [['walk', 700, true], ['land'], ['walk', 96], ...[96, 240, 384].flatMap((x) => [['walk', x], ['jump', x]]),
+        ['walk', 1056, true], ['land'], ['jump', 1056], ['walk', 1200], ['jump', 1200],
         ['walk', 880, true], ['land'], ['walk', 864], ['waitCoins'], ['jump', 864], ['land']],
+      [['walk', 990], ['land'], ['walk', 672, true], ['land'], ['jump', 672], ['walk', 528], ['jump', 528],
+        ['walk', 1100, true], ['land'], ['walk', 1640], ...[1632, 1488, 1344].flatMap((x) => [['walk', x], ['jump', x]]),
+        ['walk', 1662, false]],
     ];
     const state = cats.map(() => ({ step: 0, f: 0, air: false, lastX: NaN, still: 0, hopT: 0 }));
     const runProgram = (i) => {
@@ -141,9 +145,15 @@ export default {
         const [kind, x, hop] = prog[st.step];
         const next = () => { st.step++; st.f = 0; st.air = false; st.still = 0; st.hopT = 0; };
         if (kind === 'land') { if (cat.grounded) { next(); continue; } return {}; }
+        // Cat 1 waits on the pyramid until cat 0 has reached the west wall (cat 0's step 3).
+        if (kind === 'waitWest') { if (state[0].step >= 3) { next(); continue; } return {}; }
         if (kind === 'waitCoins') { if (!coinsLeft().length) { next(); continue; } return {}; }
         if (kind === 'walk') {
           if (Math.abs(x - cx(cat)) <= 2.5) { next(); continue; }
+          // Native camera (batch 17): the camera follows the pair's midpoint and a walking cat cannot leave the
+          // screen (FUN_7ff72bb7b700), so the cats stay within 1280 / 1.5 = 853 of each other: wait for the other.
+          const other = cats[1 - i], away = Math.sign(x - cx(cat)) * (cx(cat) - cx(other));
+          if (away > 840) { st.still = 0; st.lastX = cat.rect.x; return {}; }
           st.still = Math.abs(cat.rect.x - st.lastX) < 0.01 && cat.grounded ? st.still + 1 : 0;
           st.lastX = cat.rect.x;
           if (st.still > 90) api.block(`cat ${i} stalled walking to ${x} at ${JSON.stringify(api.snapshot()[i])}`);
@@ -164,27 +174,29 @@ export default {
     if (coinsLeft().length) {
       api.block(`${coinsLeft().length} coins left after the sweep: ` + coinsLeft().map((c) => `${Math.round(c.rect.x + 12)},${Math.round(c.rect.y + 12)}`).join(' '));
     }
-    if (api.carrierOfKey() !== 1) api.block('the key did not appear or was not reached from the pyramid top');
-    // 6. Both to the door (1608..1656, lower floor): cat 1 (the carrier) leads and opens it, both enter.
+    const K = api.carrierOfKey();
+    if (K !== 0) api.block('the key did not appear or was not reached from the pyramid top');
+    // 6. Both to the door (1608..1656, lower floor): cat 0 (the carrier) leads and opens it, both enter.
     const goal = game.goals[0];
     const gx = goal.rect.x + goal.rect.width / 2;
-    walk(1, 1100);   // down the pyramid's east steps (no hop, or it would jump up onto the upper floor)
-    land(1);
+    walk(K, 1100);   // down the pyramid's east steps (no hop, or it would jump up onto the upper floor)
+    land(K);
     let f = 0;
     const hopT = [0, 0], still = [0, 0];
     until(() => api.cleared, () => {
       f++;
       return cats.map((cat, i) => {
         if (game.goalClearedPlayers?.has(cat)) return {};   // entered: hidden and bodiless; no UP (it would come back out)
-        // Cat 1 (the carrier) stands in the door centre; cat 0 waits west, then squeezes into the west half.
-        const target = i === 1 ? gx : goal.opened ? gx - 16 : gx - 70;
+        // The carrier stands in the door centre; the other cat waits past it against the east wall, then squeezes
+        // into the east half.
+        const target = i === K ? gx : goal.opened ? gx + 16 : gx + 30;
         const near = Math.abs(target - cx(cat)) <= 6;
         // Blocked by a step: hold jump for 14 frames.
         still[i] = cat.grounded && Math.abs(cat.velocity.x) < 1 && !near ? still[i] + 1 : 0;
         const besideCat = cats.some((other) => other !== cat && Math.abs(other.rect.x - cat.rect.x) < 34 && Math.abs(feet(other) - feet(cat)) < 4);
         if (hopT[i] === 0 && still[i] > 3 && !besideCat) hopT[i] = 16;
         const jump = hopT[i] > 2; if (hopT[i] > 0) hopT[i]--;
-        const inDoor = (i === 1 || goal.opened) && cat.rect.x < goal.rect.x + goal.rect.width && goal.rect.x < cat.rect.x + cat.rect.width;
+        const inDoor = (i === K || goal.opened) && cat.rect.x < goal.rect.x + goal.rect.width && goal.rect.x < cat.rect.x + cat.rect.width;
         return { ...dir(cat, target, 6), up: (near || inDoor) && f % 2 === 0, jump };
       });
     }, 900, () => `at the door but no clear (door opened ${goal.opened})`);

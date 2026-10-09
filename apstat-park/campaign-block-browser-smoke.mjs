@@ -13,7 +13,11 @@ await page.goto('http://localhost:'+server.address().port+'/');
 await page.evaluate(async()=>{const {createCampaignEngine}=await import('/apstat-park/campaign-engine.mjs');window.game=await createCampaignEngine({});game.load(1,2,123);document.body.style.background='#edf3ee';document.body.append(game.canvas);game.render();});
 await page.screenshot({path:'test-results/push-after.png'});
 const result = await page.evaluate(() => {
-  const centerPixel = [...game.canvas.getContext('2d').getImageData(359, 560, 1, 1).data];
+  // World point (718, 152) (canvas 359, 560 at the old half scale), mapped through the Desk projection (batch 17: the
+  // native screen fills the 720 column).
+  const { projection } = game.getView();
+  const centerPixel = [...game.canvas.getContext('2d').getImageData(Math.round(projection.x + 718 * projection.scale),
+    Math.round(projection.y + 152 * projection.scale), 1, 1).data];
   const art = game.runtime.pushBoxes.map(box => ({pieces: box.view.children.length,
     alpha: box.view.alpha, width: box.view.children[0].width}));
   game.load(2, 2, 123);

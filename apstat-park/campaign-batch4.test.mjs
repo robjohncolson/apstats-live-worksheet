@@ -36,13 +36,26 @@ function load(source, partySize = 2, onStats = () => {}) {
   runtime.setRandomState(1);
   const game = new runtime.GameRuntime(onStats, () => {});
   game.loadStage(data, 720, 750, { partySize, simplifyPassivePlaceholders: false });
+  lastGame = game;
+  for (const cat of game.players) gameOf.set(cat, game);
   return game;
 }
 const idle = (n) => Array.from({ length: n }, () => IDLE);
 function step(game, frames, inputs) {
   for (let i = 0; i < frames; i++) game.update(1 / 60, inputs[0], inputs);
 }
-function place(player, x, y) { player.applyResolvedCollision({ ...player.rect, x, y }, { x: 0, y: 0 }, true); }
+// native-camera (batch 17): a teleported cat is off the native screen until the camera catches up (3 px per tick), and
+// a walking cat off the screen is pulled back onto it (FUN_7ff72bb7b700). Set-ups re-snap the camera onto the cats,
+// as a fresh stage start does (FUN_7ff72bb7b9c0).
+let lastGame = null;
+const gameOf = new WeakMap();
+function snapCamera(cat) {
+  const game = gameOf.get(cat) || lastGame;
+  if (game?.scrollCameraConfig?.mode !== 1) return;
+  game.scrollCameraState = { ...game.scrollCameraState, latched: false };
+  game.stepScrollCamera();
+}
+function place(player, x, y) { player.applyResolvedCollision({ ...player.rect, x, y }, { x: 0, y: 0 }, true); snapCamera(player); }
 const overlaps = (a, b) => a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -209,6 +222,9 @@ test('every stage at parties 2/4/8: no cat inside a wall / lift / bridge / gate 
           const puzzleFrozen = (entry.source === 'stage_switch_puzzle01' || entry.source === 'stage_switch_puzzle02')
             && game.puzzle && !game.puzzle.won;
           if (puzzleFrozen) { frozenRun[i] = 0; return; }
+          // A plane rides the auto-scroll (FUN_7ff72bb708d0, batch 17): holding left against a scroll as fast as its
+          // own 3 per tick keeps it still in the world (4-2).
+          if (cat.mode === 'plane' && Math.abs((cat.scrollCarryX ?? 0) + dir * 3) < 1e-9) { frozenRun[i] = 0; return; }
           frozenRun[i] = cat.rect.x === before[i].x && !blocked ? frozenRun[i] + 1 : 0;
           if (frozenRun[i] === 20) problems.push(`${entry.source} p${party} f${frame} cat ${i} frozen at ${Math.round(cat.rect.x)},${Math.round(cat.rect.y)}`);
         });

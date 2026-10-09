@@ -35,6 +35,8 @@ function load(source, partySize = 2, seed = 1) {
   runtime.setRandomState(seed);
   const game = new runtime.GameRuntime(() => {}, () => {});
   game.loadStage(data, 720, 750, { partySize, simplifyPassivePlaceholders: false });
+  lastGame = game;
+  for (const cat of game.players) gameOf.set(cat, game);
   return game;
 }
 const idle = (n) => Array.from({ length: Math.max(n, 8) }, () => IDLE);
@@ -46,7 +48,18 @@ function holdFor(game, catIndex, buttons) {
   const slot = game.playerInputSlots[catIndex];
   return idle(game.players.length).map((input, index) => (index === slot ? { ...IDLE, ...buttons } : IDLE));
 }
-function place(player, x, y) { player.applyResolvedCollision({ ...player.rect, x, y }, { x: 0, y: 0 }, true); }
+// native-camera (batch 17): a teleported cat is off the native screen until the camera catches up (3 px per tick), and
+// a walking cat off the screen is pulled back onto it (FUN_7ff72bb7b700). Set-ups re-snap the camera onto the cats,
+// as a fresh stage start does (FUN_7ff72bb7b9c0).
+let lastGame = null;
+const gameOf = new WeakMap();
+function snapCamera(cat) {
+  const game = gameOf.get(cat) || lastGame;
+  if (game?.scrollCameraConfig?.mode !== 1) return;
+  game.scrollCameraState = { ...game.scrollCameraState, latched: false };
+  game.stepScrollCamera();
+}
+function place(player, x, y) { player.applyResolvedCollision({ ...player.rect, x, y }, { x: 0, y: 0 }, true); snapCamera(player); }
 const rectOf = (actor) => ({ x: actor.rect.x, y: actor.rect.y, width: actor.rect.width, height: actor.rect.height });
 const close = (a, b, tol = 1e-6) => Math.abs(a - b) <= tol;
 const stagesWith = (name) => runtime.stages.filter((entry) => [entry.data, entry.largeParty?.data].filter(Boolean)

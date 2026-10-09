@@ -44,7 +44,14 @@ try {
     document.getElementById('stage').append(game.canvas);
     game.load(campaignStages.findIndex(stage => stage.source === 'stage_jump02'), 2, 100);
     const runtime = game.runtime, [bottom, top] = runtime.players, box = runtime.pushBoxes[0];
-    const place = (player, x, y) => player.applyResolvedCollision({ ...player.rect, x, y }, { x: 0, y: 0 }, true);
+    // native-camera (batch 17): re-snap the camera onto teleported cats, as a stage start does (FUN_7ff72bb7b9c0); a
+    // walking cat off the native screen is pulled back onto it (FUN_7ff72bb7b700).
+    const place = (player, x, y) => {
+      player.applyResolvedCollision({ ...player.rect, x, y }, { x: 0, y: 0 }, true);
+      if (runtime.scrollCameraConfig?.mode !== 1) return;
+      runtime.scrollCameraState = { ...runtime.scrollCameraState, latched: false };
+      runtime.stepScrollCamera();
+    };
     place(bottom, 1300, 432 - bottom.rect.height); place(top, 1300, bottom.rect.y - top.rect.height);
     for (let tick = 0; tick < 20; tick++) game.step([0, 0]);
     box.applyRect({ ...box.rect, x: top.rect.x + top.rect.width / 2 - box.rect.width / 2, y: top.rect.y - box.rect.height });

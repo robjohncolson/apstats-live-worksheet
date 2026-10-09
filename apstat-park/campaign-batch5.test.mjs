@@ -34,13 +34,26 @@ function load(source, partySize = 2, seed = 1) {
   runtime.setRandomState(seed);
   const game = new runtime.GameRuntime(() => {}, () => {});
   game.loadStage(data, 720, 750, { partySize, simplifyPassivePlaceholders: false });
+  lastGame = game;
+  for (const cat of game.players) gameOf.set(cat, game);
   return game;
 }
 const idle = (n) => Array.from({ length: Math.max(n, 8) }, () => IDLE);
 function step(game, frames, inputs = idle(game.players.length)) {
   for (let i = 0; i < frames; i++) game.update(1 / 60, inputs[0], inputs);
 }
-function place(player, x, y) { player.applyResolvedCollision({ ...player.rect, x, y }, { x: 0, y: 0 }, true); }
+// native-camera (batch 17): a teleported cat is off the native screen until the camera catches up (3 px per tick), and
+// a walking cat off the screen is pulled back onto it (FUN_7ff72bb7b700). Set-ups re-snap the camera onto the cats,
+// as a fresh stage start does (FUN_7ff72bb7b9c0).
+let lastGame = null;
+const gameOf = new WeakMap();
+function snapCamera(cat) {
+  const game = gameOf.get(cat) || lastGame;
+  if (game?.scrollCameraConfig?.mode !== 1) return;
+  game.scrollCameraState = { ...game.scrollCameraState, latched: false };
+  game.stepScrollCamera();
+}
+function place(player, x, y) { player.applyResolvedCollision({ ...player.rect, x, y }, { x: 0, y: 0 }, true); snapCamera(player); }
 const rectOf = (actor) => ({ x: actor.rect.x, y: actor.rect.y, width: actor.rect.width, height: actor.rect.height });
 const near = (a, b, tol = 1e-6) => Object.keys(b).every((k) => Math.abs(a[k] - b[k]) <= tol);
 const thunderStages = runtime.stages.filter((entry) => [entry.data, entry.largeParty?.data].filter(Boolean)
@@ -208,6 +221,9 @@ test('thunder-frame-order: a guard walking right under a 4-1 beam shields the ca
     const beam = game.thunders.find((thunder) => thunder.direction === 'DIR_DOWN' && thunder.spawn.x === 1680);
     const left = beam.spawn.x - 2;
     place(guard, 1600, 337.65);
+    // native-camera (batch 17): the cats not in the scene stand behind, within one native screen of the guard (a walking
+    // cat cannot leave the screen, FUN_7ff72bb7b700).
+    game.players.filter((cat) => cat !== guard && cat !== other).forEach((cat, k) => place(cat, 1500 - 40 * k, 337.65));
     step(game, 1);
     let lastX = guard.rect.x, speed = 0, contact = -1, died = false;
     const lengths = [];

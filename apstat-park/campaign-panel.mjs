@@ -191,7 +191,7 @@ export function mountCampaign({ container, getSocket, board, onClose, keyShop = 
     if (selecting && now - lastSelect > 1000 && send('campaign_select')) lastSelect = now;
     if (selecting) shop.tick();
     if (selecting && !joined) return;   // nobody joins a team until a stage is chosen
-    if (!joined && now - lastJoin > 1000) { lastJoin = now; send('campaign_join', { protocol: 33, active: activeJoin }); }
+    if (!joined && now - lastJoin > 1000) { lastJoin = now; send('campaign_join', { protocol: 34, active: activeJoin }); }
     if (!state || !game) return;
     if (now - lastPacket > 1500) resume();
     // Keyboard edges send immediately. A blocked write must retain the jump

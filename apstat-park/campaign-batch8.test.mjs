@@ -36,9 +36,22 @@ function load(source, partySize = 2, seed = 1) {
   runtime.setRandomState(seed);
   const game = new runtime.GameRuntime(() => {}, () => {});
   game.loadStage(data, 720, 750, { partySize, simplifyPassivePlaceholders: false });
+  lastGame = game;
+  for (const cat of game.players) gameOf.set(cat, game);
   return game;
 }
-function place(player, x, y) { player.applyResolvedCollision({ ...player.rect, x, y }, { x: 0, y: 0 }, true); }
+// native-camera (batch 17): a teleported cat is off the native screen until the camera catches up (3 px per tick), and
+// a walking cat off the screen is pulled back onto it (FUN_7ff72bb7b700). Set-ups re-snap the camera onto the cats,
+// as a fresh stage start does (FUN_7ff72bb7b9c0).
+let lastGame = null;
+const gameOf = new WeakMap();
+function snapCamera(cat) {
+  const game = gameOf.get(cat) || lastGame;
+  if (game?.scrollCameraConfig?.mode !== 1) return;
+  game.scrollCameraState = { ...game.scrollCameraState, latched: false };
+  game.stepScrollCamera();
+}
+function place(player, x, y) { player.applyResolvedCollision({ ...player.rect, x, y }, { x: 0, y: 0 }, true); snapCamera(player); }
 const relayOf = (game) => [...game.multiRelay.values()][0];
 
 /** A party driver: frame(buttonsBySlot) with the jump press edge derived per slot (as the desk relay sends it). */
@@ -269,6 +282,7 @@ test('a JumpArea launch sets vy = p3 on the next update, forces vx = p2 until la
   const area = game.jumpAreas[0];   // (-4, -18) per tick
   const frame = party(game, 2);
   cat.applyResolvedCollision({ ...cat.rect, x: 900, y: area.rect.y - cat.rect.height - 4 }, { x: 0, y: 300 }, false);
+  snapCamera(cat);
   let entered = -1;
   for (let i = 0; i < 10 && entered < 0; i++) {
     frame({ 0: { right: true } });

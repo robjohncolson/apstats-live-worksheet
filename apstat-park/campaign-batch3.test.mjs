@@ -37,13 +37,26 @@ function load(source, partySize = 2, seed = 1) {
   runtime.setRandomState(seed);
   const game = new runtime.GameRuntime(() => {}, () => {});
   game.loadStage(data, 720, 750, { partySize, simplifyPassivePlaceholders: false });
+  lastGame = game;
+  for (const cat of game.players) gameOf.set(cat, game);
   return game;
 }
 const idle = (n) => Array.from({ length: n }, () => IDLE);
 function step(game, frames, inputs) {
   for (let i = 0; i < frames; i++) game.update(1 / 60, inputs[0], inputs);
 }
-function place(player, x, y) { player.applyResolvedCollision({ ...player.rect, x, y }, { x: 0, y: 0 }, true); }
+// native-camera (batch 17): a teleported cat is off the native screen until the camera catches up (3 px per tick), and
+// a walking cat off the screen is pulled back onto it (FUN_7ff72bb7b700). Set-ups re-snap the camera onto the cats,
+// as a fresh stage start does (FUN_7ff72bb7b9c0).
+let lastGame = null;
+const gameOf = new WeakMap();
+function snapCamera(cat) {
+  const game = gameOf.get(cat) || lastGame;
+  if (game?.scrollCameraConfig?.mode !== 1) return;
+  game.scrollCameraState = { ...game.scrollCameraState, latched: false };
+  game.stepScrollCamera();
+}
+function place(player, x, y) { player.applyResolvedCollision({ ...player.rect, x, y }, { x: 0, y: 0 }, true); snapCamera(player); }
 function park(game, except) {
   // Move the cats not in use far away on the floor (they must not push or weigh anything).
   game.players.forEach((cat, i) => { if (!except.includes(i)) place(cat, 40 + 40 * i, 432 - cat.rect.height); });
@@ -81,7 +94,7 @@ test('7-2: the SmallBox falls to the floor; one cat pushes it; the NormalBox nee
   assert.ok(Math.abs(small.rect.y + small.rect.height - 264) <= 1, 'fell onto the Rect: ' + (small.rect.y + small.rect.height));
   assert.equal(small.falling, false);
   // One cat on the Rect, left of the SmallBox, walks right into it.
-  place(a, small.rect.x - a.rect.width - 2, 264 - a.rect.height); place(b, 3000, 432 - b.rect.height);
+  place(a, small.rect.x - a.rect.width - 2, 264 - a.rect.height); place(b, 3200, 432 - b.rect.height);   // within one native screen (853) of a
   const smallX = small.rect.x;
   // Native push speed: a pushed box moves at most 1/tick (was the 4.9/tick walk), so 40 frames -> ~38 px.
   step(game, 40, [RIGHT, IDLE]);

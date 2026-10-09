@@ -51,28 +51,44 @@ export default {
     if (api.feetY(cats[LEAD]) < 431 || cats[LEAD].rect.x + 32 < 1757) api.block('the rider did not land across the wide pit: ' + JSON.stringify(api.snapshot()[LEAD]));
     const bridge = game.bridges[0];
     api.walkTo(LEAD, 2064, { tol: 2 });
-    api.until(() => bridge.rect.x <= 1590, [], 300, () => 'the Bridge never reached the ledge side: ' + JSON.stringify(bridge.rect));
+    // Native camera (batch 17): the auto-scroll's left edge reaches the trailing cat at the ledge lip about when the
+    // Bridge starts to unfold, and the edge would push it off the lip into the pit (FUN_7ff72bb6f0e0). So it does not
+    // wait for the whole Bridge: a running jump from the lip comes down ~1714 on the floor level, so it jumps as soon
+    // as the unfolding Bridge reaches x 1700.
+    api.until(() => bridge.rect.x <= 1700, [], 300, () => 'the Bridge never unfolded: ' + JSON.stringify(bridge.rect));
+    let tf = 0, tAir = false;
+    api.until(() => tAir && cats[TRAIL].grounded, () => {
+      if (!cats[TRAIL].grounded) tAir = true;
+      return both({}, { jump: tf++ < 20, right: true });
+    }, 120, 'the trailing cat could not jump onto the Bridge');
+    alive();
     api.walkTo(TRAIL, 2000, { max: 300 });
     alive();
     // The lead cat bounces off the JumpStand (2096..2128) and steers through the key onto the platform (2208.., top
     // 288); then the trailing cat.
-    function bounce(i, target) {
+    // Native camera (batch 17): an idle trailing cat is pushed by the auto-scroll's left edge into the JumpStand's
+    // side and pinned there (fatal), so it follows at once: it walks to the stand as soon as the lead is launched,
+    // bounces, and the lead walks east from its landing meanwhile.
+    const bounceState = () => ({ launched: false, f: 0 });
+    const lb = bounceState(), tb = bounceState();
+    const bounceSpec = (i, st, target) => {
       const cat = cats[i];
-      let launched = false, f = 0;
-      api.until(() => launched && cat.grounded, () => {
-        if (cat.velocity.y < -600) launched = true;
-        const specs = [{}, {}];
-        specs[i] = { jump: f < 14 && !launched, ...steer(cat, launched ? target : 2112) };
-        f++;
-        alive();
-        return specs;
-      }, 200, `cat ${i} could not bounce from the JumpStand onto the high platform`);
-    }
-    bounce(LEAD, 2230);
+      if (cat.velocity.y < -600) st.launched = true;
+      const spec = { jump: st.f < 14 && !st.launched, ...steer(cat, st.launched ? target : 2112) };
+      st.f++;
+      return spec;
+    };
+    let trailGo = false;
+    api.until(() => tb.launched && cats[TRAIL].grounded && cx(cats[LEAD]) >= 2397, () => {
+      alive();
+      const leadDone = lb.launched && cats[LEAD].grounded;
+      const lead = leadDone ? steer(cats[LEAD], 2400) : bounceSpec(LEAD, lb, 2230);
+      if (lb.launched) trailGo = true;
+      let trail = {};
+      if (trailGo) trail = cx(cats[TRAIL]) < 2040 && !tb.launched && tb.f === 0 ? { right: true } : bounceSpec(TRAIL, tb, 2260);
+      return both(lead, trail);
+    }, 400, 'the cats could not bounce from the JumpStand onto the high platform');
     if (api.carrierOfKey() !== LEAD) api.block('the lead cat bounced past the key without taking it');
-    api.walkTo(LEAD, 2400);
-    api.walkTo(TRAIL, 2040);
-    bounce(TRAIL, 2260);
     // East along the platform; hop the StepEnemies and the stepping stones (gaps at 3360, 3456, 3552..3648).
     api.until(() => cx(cats[LEAD]) > 3300 && cx(cats[TRAIL]) > 3240, () => {
       alive();

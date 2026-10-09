@@ -689,6 +689,20 @@ export const CAMPAIGN_PATCHES = [{
     '(e) Rest length: maxDist = p[2N - 4], w = p[2N - 3], N = party (FUN_7ff72bb40be0, DAT_7ff72c629fa8 + 0xcc08): verified the port already does it (selectDistanceConstraintLinkForPlayerCount, N = the cat count): 2-1 170 / 1 (N 2), 160 / 0.7 (3), 150 / 0.5 (4-5), 140 / 0.5 (6-8); 2-3 310 / 1 (2-3), 160 / 0.4 (4-6), 110 / 0.3 (7-8). (f) No line-of-sight test anywhere: the pair uses the two origins; walls act only through the self cat map normals and the world sweep (the rope cuts through ledges, drawn straight). (g) A hanging cat cannot jump (down contact, the 0.07 s coyote +0x1c = 0x3d8f5c29, or multi-jump flag 2); an anchor jump moves the anchor alone (J = -5.1 DAT_7ff72bcbdf90)',
     'Port divergence (b15 snapshot, traces scratchpad b16/rope/traces.json): applyDistanceConstraints ran after the player loop (2425 vs 2161-2281: the first taut tick saw the extra fall and yanked A 3 px at once); Player.update set vx = input every tick (browser_port actors/Player.ts:186), so the rope x velocity (7224) was erased and the hanging cat steered; 7194 tested !cat.grounded; farSide (7136-7146) walked the last link; a tile-supported cat kept a rope-added vy (Player.ts:215). Reference with "rope after move + no coasting" reproduces the old port swing trace to 0.0 px for 120 ticks; momentum is the dominant cause'],
   behavior: 'Rope stages (2-1, 2-3): the rope runs once per tick BEFORE the cats move, on last tick\'s resolved positions (applyCollisionConstraintMoves stays after motion: the next tick\'s rope consumes its latch and clears it). Player.ropeCoast models native +0x3f8 bit 0 clear: the rope sets it when a cat\'s final pull is upward by more than 0.1 while the cat is not grounded; while it is set the cat ignores left / right and keeps its horizontal speed decaying x 0.98 per tick (the rope keeps adding position AND velocity), so a hanging cat swings like a pendulum and the anchor is dragged back and forth instead of off its ledge; it clears when the cat starts an update supported (tile, body or cat below; that landing tick still coasts, as native decides vx before the support test). A tile-supported cat starts its update with vy = 0. The flag zeroing for an upward redirect no longer tests grounded; the right-hand load walk stops at j < count - 2 (its hanging-run count too). Unchanged and confirmed: the share formula, the 0.2 spring, the map-only redirects, the 0.65 rule, the 20.15 y clamp, position + velocity apply, the solids sweep. Not applied: the spawn-without-steering of the avatar ctor; body-supported cats keep the port gravity-plus-resolution model (only tile support zeroes vy).',
+}, {
+  // batch 17: the native follow camera (teacher on 2-3: "starts with no view of the lower parts of the stage").
+  id: 'native-camera',
+  files: ['src/engine/stageScrollCamera.ts', 'src/engine/GameRuntime.ts', 'src/engine/actors/WeightedLift.ts', 'src/engine/actors/Player.ts'],
+  evidence: ['One horizontal scroll value: projection FUN_7ff72bc1a830 translates the world by (-(scene +0xb0 + scene +0xa8), 0, 0) with a literal 0 for y; the latch writes (x, 0) (FUN_7ff72bb935d0) and the integrator only adds (dx, 0) (FUN_7ff72bb93620). No zoom: the view is 1280 / scale x 720 / scale (DAT_7ff72bc7db94 / DAT_7ff72bc7db90). The Desk presentation (campaign-engine.mjs render) keeps that whole y band on the canvas',
+    'Stage ctor FUN_7ff72bb7a9b0: autoScroll checked first -> mode 2, then autoScrollEndOffset is stored * (playerCount (DAT_7ff72c629fa8 + 0xcc08) - 2) (decompile lines 148-150; never read in the scrollable branch -> 0 in mode 1); scrollable -> mode 1; unlimitScroll flag 0x8, unreturnScroll 0x10; pan cap +0x6acf8 = 3.0 (0x40400000); follow accumulator +0x6acfc = 1.0. INFERENCE: cc08 is the party count (it scales autoScrollSpeedOffset the same way)',
+    'First frame FUN_7ff72bb7b9c0 (mode 1, flag 0x4 clear): scroll = max(0, (minX + maxX) * 0.5 - (1280 / scale) * 0.5), flag 0x4 set; no right clamp',
+    'Integrator FUN_7ff72bb7c150: room = (flag 0x8 ? W : mapW * chip + endOffset) - (scroll + W) from the frame-start scroll. Mode 1 (scene pause FUN_7ff72bb7d120 not modelled): goal = flag 0x1000 ? 0 : 1, accum += sign(goal - accum) * 0.05 (FUN_7ff72bb31b00, DAT_7ff72bc7d460: LINEAR, starting at 1.0), d = lerp(1.0, 0.1, accum) * (max(0, target) - scroll) (FUN_7ff72bb26bf0, DAT_7ff72bc7d464), cap = lerp(|d|, 3.0, accum), step = clamp(d, -cap, cap): 10 % of the gap per frame, at most 3 px per frame. Mode 2: step = FUN_7ff72bb7b610 = min(autoScrollSpeed, room), 0 while any player is in state 3 (dying). Tail: flag 0x10 -> step = max(0, step); |step| > 1.19e-7 -> step = clamp(step, -scroll, room); scroll = max(0, scroll + step). Mode 0 returns at once. INFERENCE: the +0x6acec scripted pan and the flag 0x80 freeze have no campaign writer',
+    'Flag 0x1000 (stage +0x6ace0) = a switch-driven Lift on its trip: the base Lift event handler FUN_7ff72bb55700 (command 9 while the lift +0x3f8 bit 8 is set) sets it with the lift moving bit 4; the Lift driver FUN_7ff72bb55370 clears it when the trip ends; FUN_7ff72bb55830 mirrors it for network clients. While it is set c150 ramps the accumulator to 0 (LINEAR float32 0.05 steps: it ends oscillating 0.05 / -1.6e-7 and lands exactly back on 1.0 afterwards), so the camera snaps to the group with no cap, and FUN_7ff72bb6f0e0 applies the left-edge rule with a 0 step (FUN_7ff72bb7b610 returns 0 outside mode 2). Port: the 11-4 Lift (WeightedLift baseLiftActive while it waits for its switch); the accumulator is float32 (Math.fround)',
+    'Follow set (c150 / FUN_7ff72bb7ca90 / b9c0): every player except one with +0x410 == 2 (live) whose active bit +0x178 & 8 (FUN_7ff72bae7c40) is clear; entered (state 4) and dying (state 3) cats count. Port: a live cat with view.visible false = the warp gun\'s held cat (command 0xe zero disables its draw path, FUN_7ff72bb580a0; INFERENCE that it clears the same active bit). Teacher helper cats stay out (Desk adaptation)',
+    'Screen clamp FUN_7ff72bb7b700, applied by FUN_7ff72bb6f0e0 to the walk move (both L / R branches, only while +0x3f8 bit 0 is set): |move| <= 1.19e-7 -> 0; mode 0 / 2, one player, or 0 < scroll + move (+0x6ace8 = 0 never rewritten, INFERENCE) -> screen x + move clamped to [0, 1280 / scale] (move = -screenX past the left edge, W - screenX past the right); otherwise (mode 1 at the left stop, walking left) the group spread is capped: slack = W - 32 (DAT_7ff72bc7d7f8) - (hi - lo) over the FUN_7ff72bb7ca90 screen extents; left past lo -> move = max(-slack, screenX + move - lo); right past hi with slack <= move -> slack. Screen x = position + offset +0x138 - (camera base + scroll) (FUN_7ff72bc15b90). INFERENCE: the port uses the cat\'s own centre (FUN_7ff72bb7cd20 takes the extreme of the stack of type-1 bodies touching it) and the resolved displacement as the move',
+    'Auto-scroll left edge FUN_7ff72bb6f0e0 (decompile lines 128-152; mode 2 or flag 0x1000): s = FUN_7ff72bb7b610; f = screenX + move - s; f < 0 -> move -= f (FUN_7ff72bb93620), so the cat keeps up with the edge, and FUN_7ff72bb34f30(cat, (-screenX, 0), dir 3) passes the push to the bodies touching its right side; then (DAT_7ff72bc7d1b8 64 * 0.5 + screenX) - move < 0 and the can-die vtable +0x80 -> vtable +0x78(4) (fatal hit, the batch-16 hold / fall / restart). Port: the extra move goes through the chips + solid-actor sweep (rope-pull-solids), so a cat a wall or a solid (6-2 Rect) stops is pinned behind the edge and dies by the formula, never embedded; FUN_7ff72bb34f30 -> FUN_7ff72bc17330 passes the push to the touching bodies whose type bit is in mask 2 (local_140 = 2: type 1 = cats only, not boxes), modelled as a chain push of the cats in front (INFERENCE: each is moved just clear of the one behind)',
+    'PlanePlayer update FUN_7ff72bb708d0 (disassembly 0x7ff72bb70981..70994): the plane velocity starts each tick as (FUN_7ff72bb7b610(stage), 0) = the auto-scroll step, then L / R add the FUN_7ff72bb7b700-clamped walk speed (0x7ff72bb70a20..70a30) and U / D the vertical speed: a plane is carried by the auto-scroll and holds its screen position when idle. The same left-edge rule follows (decompile lines 95-123; the death goes straight to state 3, FUN_7ff72bb67800(plane, 3)). Port: Player.scrollCarryX, set by the runtime before each plane update'],
+  behavior: 'Every stage. Presentation (campaign-engine.mjs render): the world is drawn so the whole native band y 0..720 / scale is on the 750-px canvas (world.y = min(700 - spawnFloor * 0.5, 750 - 720 / scale * 0.5)); stages that already showed it are unchanged, 2-3 / 2-4 / 3-1 / 3-2 / 4-2 / 6-3 / 11-2 / 11-4 / 12-3 now show their lower rows. Runtime camera: mode 1 snaps to the group midpoint at frame 0, then eases 10 % of the gap per frame capped at 3 px per frame (no zoom, no vertical follow); mode 2 advances min(speed, room) per frame and stops while any cat is dying; the right stop is mapW + autoScrollEndOffset * (party - 2) on auto-scroll stages (12-3: +300 at 4 cats, +900 at 8); clamped to >= 0. A hidden live cat (held by a warp gun) is not followed; entered and dying cats are. While a switch-driven Lift travels (11-4) the camera snaps to the group (no 3 px cap) and a cat left off the west edge is carried back onto it. Cats cannot walk off the screen: a walking cat\'s centre stays within [0, 1280 / scale] of the view (in mode 1 at the left stop, the group spread is capped at W - 32 instead). Planes (4-2, 12-3) move with the auto-scroll (speed + their own 3 per tick when held right, the scroll speed when idle). On auto-scroll stages the left edge carries a cat along (the chips + solid-actor sweep, so a wall or a solid Rect pins it, never embeds it), and a cat pinned far enough behind the edge ((32 + screenX) - move < 0, about 15 px behind) takes a fatal hit, which restarts the stage.',
 }];
 
 // Fail the build if upstream code changes: never silently skip a correction.
@@ -873,6 +887,11 @@ export function patchCampaignSource(file, source) {
     this.ropeCoast = false;
     this.supportProbeRect = null;
 `, file);
+    // native-camera: FUN_7ff72bb708d0 starts a plane's velocity at (auto-scroll step, 0) each tick.
+    source = replaceOnce(source, '  ropeCoast = false;\n', '  ropeCoast = false;\n  /** native-camera: the auto-scroll step a plane is carried by this tick (px), set by the runtime. */\n  scrollCarryX = 0;\n', file);
+    source = replaceOnce(source, `        x: this.velocity.x * dt,
+        y: this.velocity.y * dt,`, `        x: this.velocity.x * dt + this.scrollCarryX,
+        y: this.velocity.y * dt,`, file);
     return source;
   }
   if (file === 'src/engine/physics.ts') {
@@ -960,6 +979,13 @@ function breakoutPaddleDomeNormal(ballCenter: Vector2, playerRect: Rect): Vector
       "  if (chip.startsWith('MC_BW')) return PICO_PLATFORM;\n  if (chip.startsWith('MC_B')) return 0xb0784f;", file);
   }
   if (file === 'src/engine/actors/WeightedLift.ts') {
+    // native-camera: a switch-driven Lift on its trip raises stage flag 0x1000 (FUN_7ff72bb55700 / FUN_7ff72bb55370).
+    source = replaceOnce(source, '  activateBaseLift(): void {',
+      `  get travellingForSwitch(): boolean {
+    return this.spawn.actorName === 'Lift' && this.baseLiftActive && this.baseLiftWaitsForSwitch();
+  }
+
+  activateBaseLift(): void {`, file);
     // native-lift-and-ledge-look: UpDownLift = native 118 x 18 body + orange atlas slab; weighted lifts orange.
     source = replaceOnce(source, `    const travel = this.params?.travel ?? 0;
     const guideX`, `    if (spawn.actorName === 'UpDownLift') {
@@ -8279,6 +8305,150 @@ const RESTART_FADE_SECONDS = 0.5;
       });
     }
 `, file);
+    // native-camera: follow set and auto-scroll pause (FUN_7ff72bb7c150 / FUN_7ff72bb7b610).
+    source = replaceOnce(source, `      this.players.filter(player => !player.parkHelper).map((player) => player.rect.x + player.rect.width / 2),
+      this.players.some((player) => !player.parkHelper && player.deathTimer > 0),`,
+    `      this.nativeCameraFollowPlayers().map((player) => player.rect.x + player.rect.width / 2),
+      this.nativeAutoScrollPaused(),
+      this.nativeCameraSnapFollow(),`, file);
+    // native-camera: FUN_7ff72bb7b700 screen clamp + auto-scroll left edge, on the cat's own move (FUN_7ff72bb6f0e0).
+    source = replaceOnce(source, `      this.applyIceChipSlide(clampedDt, activePlayerInput, previousHorizontalVelocity);
+`, `      this.applyIceChipSlide(clampedDt, activePlayerInput, previousHorizontalVelocity);
+      this.applyNativeScreenEdges(previousPlayerRect, activePlayerInput, playerInputSlot);
+`, file);
+    // native-camera: FUN_7ff72bb708d0 -- a plane's velocity starts each tick at (FUN_7ff72bb7b610 step, 0).
+    source = replaceOnce(source, `        this.player.update(clampedDt, activePlayerInput, this.tileMap);
+`, `        this.player.scrollCarryX = this.player.mode === 'plane' ? this.nativeAutoScrollStep() : 0;
+        // FUN_7ff72bb6f0e0 decides the walk (and its screen clamp) from +0x3f8 bit 0 at the START of the update: a
+        // rope-coasting or JumpArea-launched cat (forced vx) does not steer this tick (INFERENCE for the JumpArea lock).
+        this.nativeSteeringAtStart = !this.player.ropeCoast && this.player.lockedVx === null;
+        this.player.update(clampedDt, activePlayerInput, this.tileMap);
+`, file);
+    source = replaceOnce(source, `  resetStage(): void {
+`, `  // native-camera: the follow set of FUN_7ff72bb7c150 / FUN_7ff72bb7ca90 / FUN_7ff72bb7b9c0 skips only a LIVE cat
+  // (+0x410 == 2) whose active bit (+0x178 & 8) is off; entered (state 4) and dying (state 3) cats still count.
+  private nativeSteeringAtStart = true;
+
+  private nativeCameraFollowPlayers(): Player[] {
+    return this.players.filter((player) => !player.parkHelper && !this.isNativeHiddenLiveCat(player));
+  }
+
+  // A live cat with its view hidden: in the campaign, the cat a warp gun holds (INFERENCE: native clears its active bit).
+  private isNativeHiddenLiveCat(player: Player): boolean {
+    if (player.view.visible !== false) return false;
+    if (this.goalClearedPlayers.has(player)) return false;
+    if (player.deathTimer > 0 || this.deathFallPlayers.has(player)) return false;
+    return true;
+  }
+
+  // Stage flag 0x1000: set by a switch-driven Lift for its trip (FUN_7ff72bb55700 / cleared by FUN_7ff72bb55370).
+  private nativeCameraSnapFollow(): boolean {
+    return this.weightedLifts.some((lift) => lift.travellingForSwitch);
+  }
+
+  // Native state 3 = the whole fatal-hit sequence (the 1 s hold and the fall); it pauses auto-scroll.
+  private nativeAutoScrollPaused(): boolean {
+    return this.players.some((player) => !player.parkHelper && (player.deathTimer > 0 || this.deathFallPlayers.has(player)));
+  }
+
+  /** FUN_7ff72bb7b610: this frame's auto-scroll advance (0 outside mode 2 and while a cat is dying). */
+  private nativeAutoScrollStep(): number {
+    const config = this.scrollCameraConfig;
+    if (!config || config.mode !== 2 || this.nativeAutoScrollPaused()) return 0;
+    const viewWidth = stageScrollViewWidth(config);
+    const viewRight = this.scrollCameraState.scroll + viewWidth;
+    const end = config.unlimitScroll ? viewRight + viewWidth : config.mapPixelWidth + config.autoScrollEndOffset;
+    return Math.min(config.autoScrollSpeed, end - viewRight);
+  }
+
+  /** Move a cat sideways through the same sweep as every other displacement: the chips (1 px sub-steps), then the
+   *  solid actor bodies (Rect, gates, bridges, lifts, walls, boxes, other cats) from the tile-resolved x, as the rope
+   *  does (rope-pull-solids). What rides on the cat never blocks it. A cat a solid stops is pinned, never embedded. */
+  private nudgePlayerX(cat: Player, dx: number): void {
+    if (!this.tileMap || dx === 0) return;
+    const riding = [
+      ...this.players.filter((other) => other !== cat && rectRestsOnSupport(other.rect, cat.rect)).map((other) => other.rect),
+      ...this.pushBoxes.filter((box) => rectRestsOnSupport(box.rect, cat.rect)).map((box) => box.rect),
+    ];
+    const solids = this.magnetTargetSolids(cat).filter((solid) => !riding.includes(solid));
+    const tileX = moveRectWithTileCollisions(this.tileMap, cat.rect, { x: dx, y: 0 }, cat.grounded).rect;
+    const rect = sweepRectAgainstSolids(cat.rect, tileX.x - cat.rect.x, 0, solids);
+    cat.applyResolvedCollision(rect, cat.velocity, cat.grounded);
+  }
+
+  // FUN_7ff72bb34f30(cat, push, dir 3): the edge push is passed on to the bodies touching the cat's right side, so a
+  // file of cats is carried along together (INFERENCE: each is moved by what keeps it clear of the one behind).
+  private pushPlayerChainX(cat: Player, dx: number, depth = 0): void {
+    const right = cat.rect.x + cat.rect.width;
+    if (dx > 0 && depth < 16) {
+      for (const other of this.players) {
+        if (other === cat || other.parkHelper || this.isBodyOff(other)) continue;
+        if (other.deathTimer > 0 || this.deathFallPlayers.has(other)) continue;
+        const overlapY = other.rect.y < cat.rect.y + cat.rect.height && cat.rect.y < other.rect.y + other.rect.height;
+        if (!overlapY || other.rect.x < right - 1 || other.rect.x >= right + dx) continue;
+        this.pushPlayerChainX(other, right + dx - other.rect.x, depth + 1);
+      }
+    }
+    this.nudgePlayerX(cat, dx);
+  }
+
+  // native-camera, after the cat moved (before the body passes):
+  // (1) FUN_7ff72bb7b700 keeps a WALKING cat on the screen (both L / R branches of FUN_7ff72bb6f0e0, +0x3f8 bit 0 set);
+  // (2) on auto-scroll (mode 2) the left edge carries the cat along and kills one pinned behind it (decompile 128-152).
+  // Screen x = centre - scroll (FUN_7ff72bc15b90; the camera y term is 0).
+  private applyNativeScreenEdges(previous: Rect, input: InputState, inputSlot: number): void {
+    const cat = this.player;
+    const config = this.scrollCameraConfig;
+    if (!cat || !config || cat.parkHelper) return;
+    if (this.collisionChangePlayersCollisionOff.has(cat) || this.magnetHeldPlayers.has(cat)) return;
+    const scroll = config.mode ? this.scrollCameraState.scroll : 0;
+    const viewWidth = stageScrollViewWidth(config);
+    const screenX = previous.x + previous.width / 2 - scroll;
+    let move = cat.rect.x - previous.x;
+    // A plane's move includes the auto-scroll carry (FUN_7ff72bb708d0); the screen clamp acts on the walk part only.
+    const carry = cat.mode === 'plane' ? cat.scrollCarryX : 0;
+    const walking = !!input.left !== !!input.right && this.nativeSteeringAtStart;
+    if (walking && Math.abs(move - carry) > 1.1920928955078125e-7) {
+      move -= carry;
+      let clamped = move;
+      const catCount = this.players.filter((player) => !player.parkHelper).length;
+      // +0x6ace8 is 0 (never rewritten): the spread rule only runs in mode 1 when scroll + move <= 0.
+      const spreadRule = config.mode === 1 && catCount > 1 && !(0 < scroll + move);
+      if (!spreadRule) {
+        if (screenX + move < 0) clamped = -screenX;
+        else if (screenX + move > viewWidth) clamped = viewWidth - screenX;
+      } else {
+        const xs = this.nativeCameraFollowPlayers().map((player) => (
+          player === cat ? screenX : player.rect.x + player.rect.width / 2 - scroll));
+        const lo = Math.min(...xs);
+        const hi = Math.max(...xs);
+        const next = screenX + move;
+        const slack = viewWidth - 32 - (hi - lo);   // DAT_7ff72bc7d7f8
+        if (move >= 0) {
+          if (hi < next && slack <= move) clamped = slack;
+        } else if (next < lo) {
+          clamped = Math.max(-slack, next - lo);
+        }
+      }
+      if (clamped !== move) this.nudgePlayerX(cat, clamped - move);
+      move = cat.rect.x - previous.x;
+    }
+    if (config.mode !== 2 && !this.nativeCameraSnapFollow()) return;
+    const step = this.nativeAutoScrollStep();
+    const behind = screenX + move - step;
+    let intended = move;
+    if (behind < 0) {
+      this.pushPlayerChainX(cat, -behind);
+      intended = move - behind;
+    }
+    // (64 * 0.5 + screenX) - move < 0 -> vtable +0x78(4): the fatal hit (hold, fall, stage restart).
+    if (32 + screenX - intended < 0) {
+      this.startPlayerDeathSequence(cat, this.eventInputSlotForPlayer(cat, inputSlot));
+    }
+  }
+
+  resetStage(): void {
+`, file);
     source += `
 /** rope-draw: FUN_7ff72bba53b0, integer Bresenham from (x0, y0) to (x1, y1), both ends included, at most cap points. */
 function ropeLinePoints(x0: number, y0: number, x1: number, y1: number, cap: number): Array<{ x: number; y: number }> {
@@ -8338,6 +8508,91 @@ function spawnMovedTo(spawn: ActorSpawnDef, x: number, y: number): ActorSpawnDef
   return { ...spawn, raw, x, y };
 }
 `;
+    return source;
+  }
+  if (file === 'src/engine/stageScrollCamera.ts') {
+    // native-camera: FUN_7ff72bb7a9b0 multiplies autoScrollEndOffset by (playerCount - 2), auto-scroll stages only.
+    source = replaceOnce(source, '  pauseAutoScroll = false,\n): StageScrollCameraState {',
+      '  pauseAutoScroll = false,\n  snapFollow = false,\n): StageScrollCameraState {', file);
+    source = replaceOnce(source, '    autoScrollEndOffset: stage.autoScrollEndOffset ?? 0,',
+      '    autoScrollEndOffset: stage.autoScroll ? (playerCount - 2) * (stage.autoScrollEndOffset ?? 0) : 0,', file);
+    // native-camera: the follow accumulator +0x6acfc starts at 1.0 (stage ctor 8-byte write 0x3f800000).
+    source = replaceOnce(source, '  return { scroll: 0, accum: 0, latched: false };', '  return { scroll: 0, accum: 1, latched: false };', file);
+    source = replaceOnce(source, 'export const DEFAULT_FAIL_WINDOW_SCALE = 3.0;',
+      'export const DEFAULT_FAIL_WINDOW_SCALE = 3.0;\n// native-camera: pan cap +0x6acf8 = 3.0 px per frame; step epsilon DAT_7ff72bc7d458.\nexport const NATIVE_SCROLL_PAN_CAP = 3.0;\nexport const NATIVE_SCROLL_EPSILON = 1.1920928955078125e-7;', file);
+    // Mode 2 needs no positions; mode 1 with nobody to follow keeps the camera where it is.
+    source = replaceOnce(source, `  const foldXs = playerCenterXs.filter((x) => Number.isFinite(x));
+  if (config.mode === 0 || foldXs.length === 0) return state;
+`,
+      `  const foldXs = playerCenterXs.filter((x) => Number.isFinite(x));
+  if (config.mode === 0) return state;
+`, file);
+    source = replaceOnce(source, `  const viewWidth = stageScrollViewWidth(config);
+  let { scroll, accum, latched } = state;
+
+  if (config.mode === 1) {
+    const minX = Math.min(...foldXs);
+    const maxX = Math.max(...foldXs);
+    // Scroll target centers the player group: (minX+maxX)*0.5 - viewHalf*0.5.
+    const target = (minX + maxX) * 0.5 - viewWidth * 0.5;
+
+    if (!latched) {
+      // Pre-scroll latch (FUN_7ff72bb7b9c0): first frame SNAPS to the group,
+      // clamped >= 0, then latches flag 0x4 — no easing in from 0.
+      scroll = Math.max(0, target);
+      latched = true;
+    } else {
+      accum = accum + (1 - accum) * SCROLL_FOLLOW_ACCUM_LERP;
+      const factor = 1 + (SCROLL_FOLLOW_POSITION_LERP - 1) * accum;
+      let delta = (target - scroll) * factor;
+      if (config.unreturnScroll && delta < 0) delta = 0; // ratchet (flag 0x10)
+      scroll += delta;
+    }
+  } else {
+    // Mode 2 (autoScroll): the per-frame advance is CLAMPED to autoScrollSpeed
+    // (a max step, not an unconditional drag), toward the right-edge target.
+    latched = true;
+    if (!pauseAutoScroll) {
+      const remaining = config.unlimitScroll
+        ? Number.POSITIVE_INFINITY
+        : Math.max(0, rightScrollLimit(config) - scroll);
+      scroll += Math.min(config.autoScrollSpeed, remaining);
+    }
+  }
+
+  // Clamp >= 0 (FUN_7ff72bb7d090): the camera never scrolls left of origin.
+  scroll = Math.max(0, scroll);
+  if (!config.unlimitScroll) scroll = Math.min(scroll, rightScrollLimit(config));
+
+  return { scroll, accum, latched };
+}`,
+      `  const viewWidth = stageScrollViewWidth(config);
+  let { scroll, accum, latched } = state;
+  // native-camera (FUN_7ff72bb7c150 / FUN_7ff72bb7b610): room to the right stop, from the frame-start scroll.
+  const viewRight = scroll + viewWidth;
+  const roomRight = (config.unlimitScroll ? viewRight + viewWidth : config.mapPixelWidth + config.autoScrollEndOffset) - viewRight;
+  let step = 0;
+  if (config.mode === 1) {
+    if (foldXs.length === 0) return state;
+    const target = Math.max(0, (Math.min(...foldXs) + Math.max(...foldXs)) * 0.5 - viewWidth * 0.5);
+    // First-frame snap FUN_7ff72bb7b9c0 (flag 0x4): onto the group, >= 0, no right clamp.
+    if (!latched) return { scroll: target, accum, latched: true };
+    // The accumulator (float32, starts at 1) moves LINEARLY by 0.05 toward 1, or toward 0 while flag 0x1000 is set
+    // (a switch-driven Lift travelling): then the camera snaps with no cap.
+    const goal = snapFollow ? 0 : 1;
+    if (accum !== goal) accum = Math.fround(accum + Math.fround((goal - accum >= 0 ? 1 : -1) * Math.fround(SCROLL_FOLLOW_ACCUM_LERP)));
+    const gap = (1 + (SCROLL_FOLLOW_POSITION_LERP - 1) * accum) * (target - scroll);
+    const cap = Math.abs(gap) + (NATIVE_SCROLL_PAN_CAP - Math.abs(gap)) * accum;
+    step = Math.min(cap, Math.max(-cap, gap));
+  } else {
+    latched = true;
+    if (!pauseAutoScroll) step = Math.min(config.autoScrollSpeed, roomRight);
+  }
+  if (config.unreturnScroll) step = Math.max(0, step);
+  if (Math.abs(step) > NATIVE_SCROLL_EPSILON) step = Math.min(roomRight, Math.max(-scroll, step));
+  scroll = Math.max(0, scroll + step);
+  return { scroll, accum, latched };
+}`, file);
     return source;
   }
   // Select by identity: prepending another patch must not disable warp recovery.

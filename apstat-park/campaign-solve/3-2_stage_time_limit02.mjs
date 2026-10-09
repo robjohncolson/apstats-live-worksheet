@@ -48,6 +48,7 @@ export default {
       yield* until(() => air && cats[i].grounded, (f) => { if (!cats[i].grounded) air = true; return { jump: f < holdJump, ...dir(i, x, 2) }; },
         150, `cat ${i} jumping to ${x}`);
     }
+    let cat1Down = false;
     // --- cat 0: west floor, JumpStand 1, block-top switches, Rect steps, roof switches, east shaft ---------------
     function* cat0() {
       // Out of the pocket to the right, down to the west floor, left to JumpStand 1 (x 56..88).
@@ -80,6 +81,11 @@ export default {
       yield* until(() => cats[0].grounded && feet(cats[0]) < 97, (i) => ({ jump: i < 16, ...(feet(cats[0]) < 95.9 ? { right: true } : {}) }),
         80, 'cat 0 could not climb from the Rect onto the roof');
       // Along the roof over its switches (1464..1656), down the east shaft, and wait at its east wall, past the door.
+      // Native camera (batch 17): a walking cat cannot leave the screen (FUN_7ff72bb7b700) and the camera follows the
+      // pair's midpoint, so the cats are never more than 1280 / 1.5 = 853 apart. Cat 0 waits on the roof until cat 1
+      // has come back down from the key corridor and is heading east.
+      yield* walk(0, 1550, { tol: 4 });
+      yield* until(() => cat1Down && cx(cats[1]) > 1660 - 830, {}, 1200, 'cat 0 waited on the roof for cat 1 too long');
       yield* walk(0, 1660, { tol: 4 });
       yield* walk(0, 1720);
       yield* land(0);
@@ -120,6 +126,9 @@ export default {
       yield* land(1);
       yield* until(() => !cats[1].grounded, { left: true }, 60, 'cat 1 did not step off the ledge');
       yield* land(1);
+      cat1Down = true;
+      // East along the low corridor, so cat 0 can finish the roof within one screen of it.
+      yield* walk(1, 1000);
     }
     // --- both at once ------------------------------------------------------------------------------------------------
     const programs = [cat0(), cat1()];
