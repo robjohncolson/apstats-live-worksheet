@@ -787,6 +787,44 @@
       <div id="misconceptions-students"></div>
     </div>
 
+    <!-- Network probe (NET_PROBE_SPEC.md): what the school network permits, from student Desks -->
+    <div class="section" id="net-probe-section">
+      <h2 class="section-title">Network <span class="dim" style="font-size:0.8rem">(passive probe from student Desks — data only, no grades)</span></h2>
+      <label for="net-probe-days">Window</label>
+      <select id="net-probe-days">
+        <option value="7">7 days</option>
+        <option value="14" selected>14 days</option>
+        <option value="30">30 days</option>
+        <option value="90">90 days</option>
+      </select>
+      <button id="net-probe-refresh" type="button">Refresh</button>
+      <p id="net-probe-status" class="empty-note" role="status"></p>
+      <div class="table-wrap" id="net-probe-wrap" hidden>
+        <table class="grades">
+          <thead>
+            <tr>
+              <th>Section</th>
+              <th>Where</th>
+              <th>Samples</th>
+              <th>Students</th>
+              <th>Median RTT roster</th>
+              <th>Median RTT relay</th>
+              <th title="Of runs that found a classmate">P2P connected</th>
+              <th title="Of connected runs">Host↔host</th>
+              <th title="Of runs that gathered candidates">mDNS seen</th>
+              <th title="Of connected runs: connected only through a NAT-mapped address">srflx-only</th>
+              <th title="Of all runs: RTCPeerConnection unavailable">Policy-blocked</th>
+            </tr>
+          </thead>
+          <tbody id="net-probe-tbody"></tbody>
+        </table>
+      </div>
+      <div class="hint">
+        Host↔host connected in school hours ⇒ direct P2P is viable. srflx-only, or mDNS never seen ⇒ client isolation (consider the LAN relay).
+        Policy-blocked ⇒ the device forbids WebRTC. In school = weekdays 07:30–15:30 New York time.
+      </div>
+    </div>
+
     <!-- Remediation (Phase 4b) -->
     <div class="section">
       <h2 class="section-title">Remediation</h2>
@@ -3478,6 +3516,67 @@
     }
     loadRemediationSheets();
     // END MISCONCEPTIONS PANEL
+
+    // BEGIN NETWORK PROBE PANEL (NET_PROBE_SPEC.md)
+    // One table from GET /class/net-probes: per section, in school vs at home. Text only (textContent).
+    var netProbeRequest = 0;
+    function netMs(v) { return typeof v === 'number' ? Math.round(v) + ' ms' : '—'; }
+    function netPct(rate, of) {
+      if (typeof rate !== 'number') return '—';
+      return Math.round(rate * 100) + '%' + (typeof of === 'number' ? ' (n=' + of + ')' : '');
+    }
+    function netProbeRow(section, where, cell) {
+      var tr = document.createElement('tr');
+      var values = [
+        section, where, String(cell.samples), String(cell.students),
+        netMs(cell.medianRttRoster), netMs(cell.medianRttRelay),
+        netPct(cell.p2pConnected, cell.peerFound), netPct(cell.hostHost, cell.connectedRuns),
+        netPct(cell.mdnsSeen, cell.gatheredRuns), netPct(cell.srflxOnly, cell.connectedRuns),
+        netPct(cell.policyBlocked, cell.samples),
+      ];
+      values.forEach(function (text, i) {
+        var td = document.createElement('td');
+        td.textContent = text;
+        if (i >= 2) td.className = 'num';
+        tr.appendChild(td);
+      });
+      return tr;
+    }
+    async function loadNetProbes() {
+      var request = ++netProbeRequest;
+      var tbody = $('net-probe-tbody');
+      tbody.replaceChildren();
+      $('net-probe-wrap').hidden = true;
+      $('net-probe-status').textContent = 'Loading network probes…';
+      var section = $('section-filter').value || '';
+      var result = await fetchJson('/class/net-probes?section=' + encodeURIComponent(section) +
+        '&days=' + $('net-probe-days').value, teacherSecret());
+      if (request !== netProbeRequest) return;
+      if (result.status === 503) {
+        $('net-probe-status').textContent = 'Not provisioned yet: run roster-server migration 0040_net_probes.sql.';
+        return;
+      }
+      if (result.status !== 200 || !result.data || !result.data.ok) {
+        $('net-probe-status').textContent = 'Could not load network probes. Check your teacher sign-in and try again.';
+        return;
+      }
+      var summary = result.data.summary || [];
+      if (!summary.length) {
+        $('net-probe-status').textContent = 'No probe runs in this window yet.' + (result.data.enabled === false ? ' (The probe is switched off: NET_PROBE_ENABLED.)' : '');
+        return;
+      }
+      summary.forEach(function (s) {
+        if (s.inSchool && s.inSchool.samples) tbody.appendChild(netProbeRow(s.section, 'In school', s.inSchool));
+        if (s.atHome && s.atHome.samples) tbody.appendChild(netProbeRow(s.section, 'At home', s.atHome));
+      });
+      $('net-probe-wrap').hidden = false;
+      $('net-probe-status').textContent = result.data.enabled === false ? 'The probe is switched off (NET_PROBE_ENABLED); showing stored runs.' : '';
+    }
+    $('net-probe-refresh').addEventListener('click', loadNetProbes);
+    $('net-probe-days').addEventListener('change', loadNetProbes);
+    $('section-filter').addEventListener('change', loadNetProbes);
+    $('load-btn').addEventListener('click', loadNetProbes);
+    // END NETWORK PROBE PANEL
 
     function renderRemediation(payload) {
       var tbody = $('remediation-tbody');

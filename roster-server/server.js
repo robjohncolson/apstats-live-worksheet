@@ -44,6 +44,7 @@ import { createLivePcDb } from './pc-db.js';
 import { createLiveFiguresSigner } from './pc-figures.js';
 import { mountTrainer } from './trainer.js';
 import { mountDogeWallet } from './doge-wallet.js';
+import { mountNetProbe } from './net-probe.js';
 import { createLivePayoutDb, mountPayout } from './payout.js';
 import { createLiveTrainerDb } from './trainer-db.js';
 import {
@@ -1111,6 +1112,13 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
   // (teacher). 503 until migration 0019. Effort comes from the same ledger.
   if (db && ledgerDb) {
     mountDogeWallet(app, { db, ledgerDb, verifyToken });
+  }
+
+  // ── Passive classroom network probe (NET_PROBE_SPEC.md) ──────────────────────
+  // Data gathering only, not grade-affecting. 503 until migration 0040; kill-switch
+  // NET_PROBE_ENABLED. Tests may inject an in-memory store via ledgerDb.netProbeStore.
+  if (db) {
+    mountNetProbe(app, { db, verifyToken, store: (ledgerDb && ledgerDb.netProbeStore) || undefined });
   }
 
   // DOGE payout queue. Production resolves its own service-role adapter; tests

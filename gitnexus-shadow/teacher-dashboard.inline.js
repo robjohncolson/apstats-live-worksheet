@@ -1047,6 +1047,44 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     // ===== guardrails =====
     // The x-teacher-secret is NEVER auto-persisted client-side. It is read
     // fresh from the input on every fetch (see api()).
@@ -3478,6 +3516,67 @@
     }
     loadRemediationSheets();
     // END MISCONCEPTIONS PANEL
+
+    // BEGIN NETWORK PROBE PANEL (NET_PROBE_SPEC.md)
+    // One table from GET /class/net-probes: per section, in school vs at home. Text only (textContent).
+    var netProbeRequest = 0;
+    function netMs(v) { return typeof v === 'number' ? Math.round(v) + ' ms' : '—'; }
+    function netPct(rate, of) {
+      if (typeof rate !== 'number') return '—';
+      return Math.round(rate * 100) + '%' + (typeof of === 'number' ? ' (n=' + of + ')' : '');
+    }
+    function netProbeRow(section, where, cell) {
+      var tr = document.createElement('tr');
+      var values = [
+        section, where, String(cell.samples), String(cell.students),
+        netMs(cell.medianRttRoster), netMs(cell.medianRttRelay),
+        netPct(cell.p2pConnected, cell.peerFound), netPct(cell.hostHost, cell.connectedRuns),
+        netPct(cell.mdnsSeen, cell.gatheredRuns), netPct(cell.srflxOnly, cell.connectedRuns),
+        netPct(cell.policyBlocked, cell.samples),
+      ];
+      values.forEach(function (text, i) {
+        var td = document.createElement('td');
+        td.textContent = text;
+        if (i >= 2) td.className = 'num';
+        tr.appendChild(td);
+      });
+      return tr;
+    }
+    async function loadNetProbes() {
+      var request = ++netProbeRequest;
+      var tbody = $('net-probe-tbody');
+      tbody.replaceChildren();
+      $('net-probe-wrap').hidden = true;
+      $('net-probe-status').textContent = 'Loading network probes…';
+      var section = $('section-filter').value || '';
+      var result = await fetchJson('/class/net-probes?section=' + encodeURIComponent(section) +
+        '&days=' + $('net-probe-days').value, teacherSecret());
+      if (request !== netProbeRequest) return;
+      if (result.status === 503) {
+        $('net-probe-status').textContent = 'Not provisioned yet: run roster-server migration 0040_net_probes.sql.';
+        return;
+      }
+      if (result.status !== 200 || !result.data || !result.data.ok) {
+        $('net-probe-status').textContent = 'Could not load network probes. Check your teacher sign-in and try again.';
+        return;
+      }
+      var summary = result.data.summary || [];
+      if (!summary.length) {
+        $('net-probe-status').textContent = 'No probe runs in this window yet.' + (result.data.enabled === false ? ' (The probe is switched off: NET_PROBE_ENABLED.)' : '');
+        return;
+      }
+      summary.forEach(function (s) {
+        if (s.inSchool && s.inSchool.samples) tbody.appendChild(netProbeRow(s.section, 'In school', s.inSchool));
+        if (s.atHome && s.atHome.samples) tbody.appendChild(netProbeRow(s.section, 'At home', s.atHome));
+      });
+      $('net-probe-wrap').hidden = false;
+      $('net-probe-status').textContent = result.data.enabled === false ? 'The probe is switched off (NET_PROBE_ENABLED); showing stored runs.' : '';
+    }
+    $('net-probe-refresh').addEventListener('click', loadNetProbes);
+    $('net-probe-days').addEventListener('change', loadNetProbes);
+    $('section-filter').addEventListener('change', loadNetProbes);
+    $('load-btn').addEventListener('click', loadNetProbes);
+    // END NETWORK PROBE PANEL
 
     function renderRemediation(payload) {
       var tbody = $('remediation-tbody');

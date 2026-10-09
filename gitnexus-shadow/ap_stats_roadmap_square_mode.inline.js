@@ -2956,6 +2956,7 @@ try{if(/[?&]home=park(?:&|$)/.test(location.search)||localStorage.getItem('apsta
 
 
 
+
 /* ═══ BAKED REGISTRY (injected by build-roadmap-data.mjs) ═══ */
 const BAKED_REGISTRY = {
   "generatedAt": "2026-06-01T20:06:27.691Z",
@@ -5052,6 +5053,7 @@ async function loadRegistry() {
   }
   await loadSupabaseOverlay(cP);
   rCal();
+  try { if (window.NetProbe) window.NetProbe.afterCal(); } catch (_) {}  // NET_PROBE_SPEC: passive network probe, idle 5 s later
   rProg();
   if (typeof maybeForcePasswordChange === 'function') maybeForcePasswordChange(); // TR2 — gate BEFORE any feature render
   renderDoNow();
@@ -18338,11 +18340,31 @@ function _walletLedgerDetail(host, w) {
     if (inHand > 0.005) row(cg, 'In hand', '🍬 ' + cx(inHand));
     if (returned > 0.005) row(cg, 'Handed back', '🍬 ' + cx(returned));
     if (received > 0.005) row(cg, 'From friends', '🍬 +' + cx(received));
-    if (gifted > 0.005) row(cg, 'Gifted away', '🍬 −' + cx(gifted));
+    // PICO_DESK_SPEC "Candy economy": the server books key purchases inside candyGiftedOut
+    // (migration 0039); split them back out so "Gifted away" means gifts only.
+    var keySpent = Math.min(gifted, Math.max(0, w.candyKeySpent || 0));
+    if (gifted - keySpent > 0.005) row(cg, 'Gifted away', '🍬 −' + cx(gifted - keySpent));
+    if (keySpent > 0.005) row(cg, 'Park keys bought', '🍬 −' + cx(keySpent));
     if (converted > 0.005) row(cg, 'Turned into DOGE', '🍬 −' + cx(converted));
     if (Math.abs(realized) > 0.005) row(cg, 'Cashed out (net)', '🍬 ' + (realized >= 0 ? '+' : '−') + cx(Math.abs(realized)));
     row(cg, '▸ To spend or gift', '🍬 ' + cx(owed), true);
     host.appendChild(cg);
+    // Pico Park keys bought with candy (PICO_DESK_SPEC "Candy economy", item 10): each purchase in the
+    // recent wallet history is listed as "Key (−price)"; a refunded one (the park did not take it) as
+    // "Key refunded (+price)". Nothing is drawn when there are none.
+    var keyRows = (Array.isArray(w.history) ? w.history : []).filter(function (h) {
+        return h && (h.kind === 'key_buy' || h.kind === 'key_refund');
+    });
+    if (keyRows.length) {
+        var kg = document.createElement('div'); kg.style.cssText = 'margin-bottom:5px';
+        groupHead(kg, 'PARK KEYS');
+        keyRows.forEach(function (h) {
+            var amount = Math.abs(Number(h.candy_delta) || 0);
+            var when = h.ts ? new Date(h.ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '';
+            row(kg, h.kind === 'key_buy' ? 'Key (−' + amount + ')' : 'Key refunded (+' + amount + ')', when);
+        });
+        host.appendChild(kg);
+    }
     if (inApp > 0.0001 || w.dogeAddress) {
         var dg = document.createElement('div');
         groupHead(dg, 'DOGE');
@@ -25960,12 +25982,8 @@ const DogePresence = {
             if (peers.length === 0) html += '<div class="doge-dd-empty">No classmates online yet</div>';
         }
         html += '<div class="doge-dd-sep"></div>';
-        if (/^guest_/i.test(String(DogePresence.getUsername()))) {
-            html += '<div class="doge-dd-footer" onclick="DogePresence.closeDropdown();openGuestPass()">&#129701; My Guest Pass</div>';
-        }
-        if (_isTeacher()) {
-            html += '<div class="doge-dd-footer" onclick="DogePresence.closeDropdown();openReconcileQR()">&#128241; Guest Reconcile</div>';
-        }
+        // Guest mode is retired (2026-06-25): "My Guest Pass" and "Guest Reconcile" left this menu
+        // 2026-10-08. openGuestPass / openReconcileQR stay defined, dormant.
         html += '<div class="doge-dd-footer" onclick="DogePresence.closeDropdown();openGame()">&#127918; Study Break</div>';
         dd.innerHTML = html;
     },
@@ -27700,7 +27718,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-10-08-bun2';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-10-09-w8qm';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

@@ -2933,6 +2933,7 @@
 <script src="lib/flashcard-srs.js" onerror=""></script>
 <script src="lib/class-snapshot.js" onerror=""></script>
 <script src="lib/effort-facts.js" onerror=""></script>
+<script src="lib/net-probe.js" onerror=""></script>
 <script src="lib/flashcard-store.js" onerror=""></script>
 <script src="lib/flashcard-flags.js" onerror=""></script>
 <script src="lib/flashcard-sync.js" onerror=""></script>
@@ -2945,10 +2946,10 @@
 <script src="js/ced2026-crosswalk.js"></script>
 <script src="js/ced2026-labels.js"></script>
 <script src="lib/qrcode.min.js"></script>
-<script src="canvas_engine.js?v=2026-10-09-w8qm"></script>
-<script src="sprite_sheet.js?v=2026-10-09-w8qm"></script>
-<script src="classroom-board.js?v=2026-10-09-w8qm"></script>
-<script src="pico-home.js?v=2026-10-09-w8qm"></script>
+<script src="canvas_engine.js?v=2026-10-09-ke78"></script>
+<script src="sprite_sheet.js?v=2026-10-09-ke78"></script>
+<script src="classroom-board.js?v=2026-10-09-ke78"></script>
+<script src="pico-home.js?v=2026-10-09-ke78"></script>
 <script src="ti84-plot.js"></script>
 <script src="activity-bridge.js"></script>
 <script src="activity-colorbox.js"></script>
@@ -5052,6 +5053,7 @@ async function loadRegistry() {
   }
   await loadSupabaseOverlay(cP);
   rCal();
+  try { if (window.NetProbe) window.NetProbe.afterCal(); } catch (_) {}  // NET_PROBE_SPEC: passive network probe, idle 5 s later
   rProg();
   if (typeof maybeForcePasswordChange === 'function') maybeForcePasswordChange(); // TR2 — gate BEFORE any feature render
   renderDoNow();
@@ -27716,7 +27718,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-10-09-w8qm';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-10-09-ke78';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.
