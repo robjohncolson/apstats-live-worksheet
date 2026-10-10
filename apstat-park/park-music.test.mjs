@@ -182,6 +182,12 @@ test('park-music: playSfx only with a song, out of class, with sound enabled', a
   assert.equal(music.playSfx('nonsense'), false);
   enabled = false; assert.equal(music.playSfx('jump'), false, 'Sound off');
   enabled = true; cls = true; assert.equal(music.playSfx('jump'), false, 'in class');
+  cls = false; music.sync(); await tick();
+  assert.ok(music.isPlaying());
+  enabled = false; music.sync();
+  assert.equal(music.isPlaying(), false, 'Sound off stops the music');
+  enabled = true; music.sync(); await tick();
+  assert.ok(music.isPlaying(), 'Sound back on resumes it');
   music.dispose();
 });
 
@@ -213,6 +219,22 @@ test('park-music: a stored song is re-voiced on the next acquire; the swap stops
   assert.equal(music.engine.song.id, 'icecap');
   assert.ok(music.isPlaying(), 'kept playing on the new song');
   music.dispose();
+});
+
+test('park-music: the preview gate — off by default, ?music=1 turns it on for the device, ?music=0 off', async () => {
+  const { getParkMusic, musicEnabled, MUSIC_FLAG_KEY } = await import('./park-music.mjs');
+  const w = { location: { search: '' }, localStorage: win.localStorage };
+  win.localStorage.removeItem(MUSIC_FLAG_KEY);
+  assert.equal(musicEnabled(w), false);
+  assert.equal(getParkMusic(w), null);
+  w.location.search = '?home=park&music=1';
+  assert.equal(musicEnabled(w), true);
+  assert.equal(win.localStorage.getItem(MUSIC_FLAG_KEY), '1');
+  w.location.search = '';
+  assert.equal(musicEnabled(w), true, 'sticks on the device');
+  w.location.search = '?music=0';
+  assert.equal(musicEnabled(w), false);
+  assert.equal(win.localStorage.getItem(MUSIC_FLAG_KEY), null);
 });
 
 // ── 5. pico-audio routing ────────────────────────────────────────────────────────────────────────

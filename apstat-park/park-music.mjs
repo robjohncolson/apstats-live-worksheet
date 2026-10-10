@@ -120,7 +120,7 @@ export function createParkMusic(win, {
   async function play() {
     if (disposed || songId === ORIGINAL) return false;
     wantPlaying = true;
-    if (inClass()) { notify(); return false; }
+    if (inClass() || !sfxEnabled()) { notify(); return false; }
     const eng = await ensureEngine();
     if (!eng || !wantPlaying || !song) { notify(); return false; }
     eng.setMode(inClass() ? 'class' : 'solo'); eng.setLowPower(lowPower());
@@ -143,14 +143,17 @@ export function createParkMusic(win, {
     try { return vibe.playSfx(map.name, { quantize: map.quantize && isPlaying(), vel }) === true; } catch { return false; }
   }
 
-  // Class mode can change while a scene is open (the teacher goes Live): one check per second.
+  function sfxEnabled() { try { return !(sfx && sfx.isEnabled) || !!sfx.isEnabled(); } catch { return false; } }
+  // Class mode and the Desk's Sound option can change while a scene is open (the teacher goes
+  // Live; the student flips Sound): one check per second. The student's wish to play survives.
   function sync() {
     if (disposed) return;
-    const cls = inClass();
+    const cls = inClass(), enabled = sfxEnabled();
     if (engine) {
       engine.setMode(cls ? 'class' : 'solo');
       engine.setLowPower(lowPower());
-      if (!cls && wantPlaying && song && !engine.isPlaying()) play();
+      if (!enabled && engine.isPlaying()) engine.stop(0.2);
+      if (!cls && enabled && wantPlaying && song && !engine.isPlaying()) play();
     }
     if (sfx && sfx.setChannelMuted) sfx.setChannelMuted('park', cls);
   }
@@ -190,9 +193,21 @@ export function createParkMusic(win, {
   };
 }
 
-// One per window; the first park scene creates it.
+// Preview gate (teacher 2026-10-10, until the branch is signed off): the whole feature is off
+// unless the Desk URL has ?music=1 or this device stored apstat-park-music = 1. Off = the park
+// exactly as before (no bar, no shifter, no palette). Delete this gate at launch.
+export const MUSIC_FLAG_KEY = 'apstat-park-music';
+export function musicEnabled(win) {
+  try {
+    if (/[?&]music=1(&|$)/.test(win?.location?.search || '')) { try { win.localStorage.setItem(MUSIC_FLAG_KEY, '1'); } catch {} return true; }
+    if (/[?&]music=0(&|$)/.test(win?.location?.search || '')) { try { win.localStorage.removeItem(MUSIC_FLAG_KEY); } catch {} return false; }
+    return win?.localStorage?.getItem(MUSIC_FLAG_KEY) === '1';
+  } catch { return false; }
+}
+
+// One per window; the first park scene creates it. Null while the preview gate is off.
 export function getParkMusic(win, options) {
-  if (!win) return null;
+  if (!win || !musicEnabled(win)) return null;
   if (!win.__parkMusic) win.__parkMusic = createParkMusic(win, options);
   return win.__parkMusic;
 }
