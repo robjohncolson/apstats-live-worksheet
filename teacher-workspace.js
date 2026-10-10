@@ -388,11 +388,47 @@
     var frame = node('iframe'); frame.title = title; frame.src = path; frame.className = 'workspace-tool-frame'; host.appendChild(frame);
   }
 
+  // Pico Desk skin (teacher 2026-10-10). Opened from the Pico Desk (the parent page has
+  // html.pico-home), the workspace marks its own <html data-pico>; teacher-workspace.css styles
+  // the SAME nodes under that scope. ?pico=1 forces it (standalone checks). Nothing else changes:
+  // same data, same handlers, same read / unread semantics.
+  function picoSkin() {
+    if (/[?&]pico=1(&|$)/.test(location.search)) return true;
+    try { return window.parent !== window && window.parent.document.documentElement.classList.contains('pico-home'); }
+    catch (_) { return false; }
+  }
+  var VIEWS = ['class', 'attention', 'messages', 'recent', 'recovery'];
+  function drawerOpen() {
+    var drawer = $('tsc-drawer');
+    return Boolean(drawer && drawer.classList.contains('tsc-open'));
+  }
+  function closeWindow() {
+    if (window.parent !== window) window.parent.postMessage({ type: 'teacher-workspace', action: 'close' }, location.origin);
+  }
+  // Pico keys: Left / Right on the view strip move between views (wrapping); Esc closes the
+  // student pane first (the dashboard's own handler), then the whole window.
+  function onPicoKey(event) {
+    if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey) return;
+    var tab = event.target && event.target.closest && event.target.closest('[data-workspace-tab]');
+    if (tab && (event.key === 'ArrowLeft' || event.key === 'ArrowRight')) {
+      event.preventDefault();
+      var next = VIEWS[(VIEWS.indexOf(active) + (event.key === 'ArrowRight' ? 1 : -1) + VIEWS.length) % VIEWS.length];
+      selectView(next);
+      document.querySelector('[data-workspace-tab=' + next + ']').focus();
+      return;
+    }
+    if (event.key !== 'Escape') return;
+    var modal = $('tsc-remediation-modal');
+    if (drawerOpen() || (modal && modal.classList.contains('tsc-modal-open'))) return;   // the pane / modal closes first
+    window.teacherWorkspace.requestClose();
+  }
+
   function install() {
     document.body.classList.add('teacher-workspace');
+    if (picoSkin()) document.documentElement.setAttribute('data-pico', '');
     var main = document.querySelector('.main');
     var back = button('Back to Desk', function () {
-      if (window.parent !== window) window.parent.postMessage({ type: 'teacher-workspace', action: 'close' }, location.origin);
+      if (window.parent !== window) closeWindow();
       else location.href = 'ap_stats_roadmap_square_mode.html';
     });
     document.querySelector('.page-header').prepend(back);
@@ -400,7 +436,7 @@
     toolbar.innerHTML = '<label>Find a student<input id="workspace-search" type="search" placeholder="Name or username"></label>' +
       '<label>Period<select id="workspace-period"><option value="">All periods</option><option value="PeriodB">Period B</option><option value="PeriodE">Period E</option></select></label><span id="workspace-count" class="dim"></span>';
     main.prepend(toolbar);
-    var nav = node('nav', null, 'workspace-nav'); nav.setAttribute('aria-label', 'Teacher workspace');
+    var nav = node('nav', null, 'workspace-nav workspace-view-strip'); nav.setAttribute('aria-label', 'Teacher workspace');
     [['class', 'Class'], ['attention', 'Needs attention'], ['messages', 'Messages'], ['recent', 'Recent work'], ['recovery', 'More tools & recovery']].forEach(function (entry) {
       var b = button(entry[1], function () { selectView(entry[0]); }); b.dataset.workspaceTab = entry[0]; nav.appendChild(b);
     });
@@ -466,7 +502,7 @@
     });
 
     var body = document.querySelector('.tsc-drawer-body');
-    var tabs = node('nav', null, 'workspace-nav'); tabs.setAttribute('aria-label', 'Student details');
+    var tabs = node('nav', null, 'workspace-nav workspace-student-tabs'); tabs.setAttribute('aria-label', 'Student details');
     [['overview', 'Overview'], ['recent', 'Recent work'], ['evidence', 'Skill evidence'], ['worksheet', 'Worksheet'], ['account', 'Account'], ['messages', 'Messages']].forEach(function (entry) {
       var b = button(entry[1], function () { selectStudentTab(entry[0]); }); b.dataset.studentTab = entry[0]; tabs.appendChild(b);
     });
@@ -485,6 +521,8 @@
       if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
       else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
     });
+    // Capture phase: decide before the dashboard's own Esc closes the student pane.
+    if (document.documentElement.hasAttribute('data-pico')) document.addEventListener('keydown', onPicoKey, true);
     selectView(new URLSearchParams(location.search).get('view'));
     render();
     if (Object.keys(window.teacherAuthHeaders()).length) $('load-btn').click();
@@ -516,7 +554,8 @@
       });
       render();
     },
-    openStudent: openStudent, closeStudent: closeStudent, recent: renderRecent, selectView: selectView
+    openStudent: openStudent, closeStudent: closeStudent, recent: renderRecent, selectView: selectView,
+    requestClose: closeWindow
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', install);
   else install();

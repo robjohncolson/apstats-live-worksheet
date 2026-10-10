@@ -66,3 +66,52 @@
 .workspace-snapshot-box h3 { margin: 0 0 4px; font-size: 12px; }
 .workspace-snapshot-box canvas { display: block; max-width: 100%; height: auto; border: 1px solid #000; background: #fff; }
 .workspace-nav [aria-pressed="true"] { background: #000; color: #fff; }
+
+/* ── Pico Desk skin (teacher 2026-10-10) ─────────────────────────────────────────────────────
+   html[data-pico] is set by teacher-workspace.js when the workspace is opened from the Pico Desk.
+   Same nodes as the classic skin; only the look changes: plain text, the orange recovered
+   window for the student pane and the class picture, stage-select buttons (green = current,
+   orange = focus) for the view strip and the student tabs, the class list as tiles. */
+html[data-pico] { --pico-orange:#FF864D; --pico-green:#3DA35D; --pico-ink:#000040; --pico-paper:#FEFEFE; --pico-cream:#FFFBF0;
+  --pico-font:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
+html[data-pico] .teacher-workspace { background:var(--pico-paper); color:var(--pico-ink); font-family:var(--pico-font); }
+html[data-pico] .teacher-workspace button, html[data-pico] .teacher-workspace input, html[data-pico] .teacher-workspace select,
+html[data-pico] .teacher-workspace summary, html[data-pico] .teacher-workspace h1, html[data-pico] .teacher-workspace h2,
+html[data-pico] .teacher-workspace h3 { font-family:var(--pico-font); }
+html[data-pico] .teacher-workspace .page-header h1 { color:var(--pico-ink); font-weight:800; letter-spacing:.04em; }
+html[data-pico] .teacher-workspace .section { background:var(--pico-paper); border:3px solid #e4e4e4; border-radius:4px; }
+html[data-pico] .teacher-workspace :focus-visible { outline:3px solid var(--pico-ink); outline-offset:2px; }
+html[data-pico] .workspace-button { min-height:44px; padding:6px 14px; background:var(--pico-paper); color:var(--pico-ink);
+  border:3px solid var(--pico-green); border-radius:4px; font-weight:700; font-size:15px; }
+html[data-pico] .workspace-button:hover { background:var(--pico-cream); }
+html[data-pico] .workspace-nav [aria-pressed="true"], html[data-pico] .workspace-button[aria-pressed=true] { background:var(--pico-paper); color:var(--pico-ink); }
+/* View strip and student tabs: stage-select buttons. One green outline = the current one;
+   keyboard focus = orange. */
+html[data-pico] .workspace-view-strip .workspace-button, html[data-pico] .workspace-student-tabs .workspace-button {
+  min-height:48px; padding:6px 18px; border:4px solid #e4e4e4; font-size:16px; font-weight:800; letter-spacing:.04em; }
+html[data-pico] .workspace-view-strip .workspace-button[aria-pressed="true"],
+html[data-pico] .workspace-student-tabs .workspace-button[aria-pressed="true"] { border-color:var(--pico-green); }
+html[data-pico] .workspace-view-strip .workspace-button:focus-visible,
+html[data-pico] .workspace-student-tabs .workspace-button:focus-visible { outline:none; border-color:var(--pico-orange); }
+html[data-pico] .workspace-view-strip .workspace-unread { background:var(--pico-orange); color:#fff; border-color:var(--pico-orange); }
+html[data-pico] .workspace-student-tabs .workspace-button:disabled { opacity:.4; cursor:default; }
+/* The class list as tiles: name, period / last saved, the module's own status line and tags. */
+html[data-pico] #workspace-roster { display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:10px; }
+html[data-pico] #workspace-roster .workspace-row { display:flex; flex-direction:column; align-items:flex-start; gap:4px;
+  padding:10px 12px; border:3px solid #e4e4e4; border-radius:4px; background:var(--pico-cream); font-size:15px; }
+html[data-pico] #workspace-roster .workspace-row:focus-within { border-color:var(--pico-orange); }
+html[data-pico] #workspace-roster .workspace-empty { grid-column:1 / -1; }
+html[data-pico] .teacher-workspace .student-name { color:var(--pico-ink); font-size:18px; font-weight:800; text-decoration:none; min-height:32px; }
+html[data-pico] .teacher-workspace .student-name:hover { text-decoration:underline; }
+html[data-pico] .workspace-tag { display:inline-block; padding:1px 8px; border:2px solid #d9b400; border-radius:4px; background:#fff3b0; color:var(--pico-ink); font-size:13px; font-weight:700; }
+/* The class picture in the recovered window: orange frame, its heading on the orange bar. */
+html[data-pico] #workspace-snapshot-section { position:relative; padding:43px 16px 16px; border:0; background:var(--pico-paper);
+  box-shadow:inset 0 0 0 6px var(--pico-orange); border-radius:4px; }
+html[data-pico] #workspace-snapshot-section > h2 { position:absolute; top:0; left:0; right:0; height:31px; margin:0; padding:0 14px;
+  display:flex; align-items:center; background:var(--pico-orange); color:#fff; font-size:16px; font-weight:800; letter-spacing:.04em; border-radius:4px 4px 0 0; }
+html[data-pico] .workspace-snapshot-box canvas { border:3px solid #e4e4e4; border-radius:4px; }
+/* The student pane: an orange sub-window over the workspace. */
+html[data-pico] .teacher-workspace .tsc-drawer-panel { background:var(--pico-paper); border:6px solid var(--pico-orange); border-radius:6px; box-shadow:none; }
+html[data-pico] .teacher-workspace .tsc-drawer-header { background:var(--pico-orange); color:#fff; }
+html[data-pico] .teacher-workspace .tsc-drawer-header h2, html[data-pico] .teacher-workspace .tsc-drawer-subtitle { color:#fff; font-family:var(--pico-font); }
+html[data-pico] .teacher-workspace .tsc-drawer-close { min-width:44px; min-height:44px; }

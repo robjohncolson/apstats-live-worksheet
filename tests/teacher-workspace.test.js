@@ -10,10 +10,10 @@ const tick = () => new Promise(r => setTimeout(r, 20));
 const response = data => ({ ok: true, status: 200, json: async () => data });
 const saved = { itemId: 'WS-U1L1-Q1', source: 'worksheet', recordedAt: '2026-09-10T14:00:00Z', score: 1, response: '<img src=x onerror=alert(1)>' };
 const student = { studentId: 's1', username: 'apple_cat', realName: 'Same Name', section: 'PeriodB', schoologyUid: '123', savedWork: { available: true, recent: [saved], pendingGrading: 0 }, gradebook: { quarters: {} } };
-async function make() {
+async function make(url = 'https://example.test/teacher-dashboard.html') {
   const errors = [];
   const virtualConsole = new VirtualConsole(); virtualConsole.on('jsdomError', e => errors.push(e.message));
-  const dom = new JSDOM(html.replace(/<script[^>]*src=[\s\S]*?<\/script>/g, ''), { url: 'https://example.test/teacher-dashboard.html', runScripts: 'dangerously', pretendToBeVisual: true, virtualConsole });
+  const dom = new JSDOM(html.replace(/<script[^>]*src=[\s\S]*?<\/script>/g, ''), { url, runScripts: 'dangerously', pretendToBeVisual: true, virtualConsole });
   doms.push(dom);
   const w = dom.window;
   w.fetch = vi.fn(async url => {
@@ -200,5 +200,103 @@ describe('skill evidence navigation', () => {
     expect(doc.getElementById('workspace-evidence').textContent).toContain('Question text unavailable');
     expect(doc.getElementById('workspace-evidence').textContent).toContain('Saved FRQ score: 50%');
     expect(doc.getElementById('workspace-evidence').textContent).toContain(saved.response);
+  });
+});
+
+// Pico Desk skin (teacher 2026-10-10): the same workspace, the same nodes, a different look.
+describe('Pico skin', { timeout: 20_000 }, () => {
+  const PICO_URL = 'https://example.test/teacher-dashboard.html?workspace=1&pico=1';
+  const snapshot = (doc) => ({
+    tabs: [...doc.querySelectorAll('[data-workspace-tab]')].map((b) => [b.dataset.workspaceTab, b.textContent]),
+    roster: [...doc.querySelectorAll('#workspace-roster .workspace-row')].map((r) => r.textContent),
+    rosterButtons: [...doc.querySelectorAll('#workspace-roster button')].map((b) => b.textContent),
+    attention: [...doc.querySelectorAll('#workspace-attention-list .workspace-row')].map((r) => r.textContent),
+    feed: [...doc.querySelectorAll('#workspace-feed .workspace-row')].map((r) => r.textContent),
+    count: doc.getElementById('workspace-count').textContent,
+    studentTabs: [...doc.querySelectorAll('[data-student-tab]')].map((b) => [b.dataset.studentTab, b.textContent]),
+    snapshotHeading: doc.querySelector('#workspace-snapshot-section > h2').textContent,
+  });
+  it('is on only when asked (the Pico Desk parent or ?pico=1); the classic skin is untouched', async () => {
+    const classic = await make();
+    expect(classic.doc.documentElement.hasAttribute('data-pico')).toBe(false);
+    const pico = await make(PICO_URL);
+    expect(pico.doc.documentElement.hasAttribute('data-pico')).toBe(true);
+    expect(pico.errors).toEqual([]);
+    // The skin is CSS scoped to html[data-pico]; every new rule in the stylesheet is scoped.
+    const css = readFileSync(new URL('../teacher-workspace.css', import.meta.url), 'utf8');
+    const picoPart = css.slice(css.lastIndexOf('/*', css.indexOf('Pico Desk skin')));
+    const selectors = picoPart.replace(/\/\*[\s\S]*?\*\//g, '').split('}').map((r) => r.split('{')[0].trim()).filter(Boolean);
+    for (const sel of selectors) for (const one of sel.split(',')) expect(one.trim(), one).toMatch(/^html\[data-pico\]/);
+  });
+  it('renders the same students, rows, buttons, tabs and counts in both skins', async () => {
+    const withRows = async (url) => {
+      const made = await make(url);
+      const s = { ...student, studentId: 's3', username: 'plum_cat', schoologyUid: null, quarters: { Q1: { quarterGrade: 81 } },
+        savedWork: { available: true, recent: [saved], pendingGrading: 1 },
+        gradebook: { quarters: { Q1: { columns: [{ key: 'm', title: 'Due lesson', due: true }], cells: { m: null } } } } };
+      made.w.teacherWorkspace.loaded({ ok: true, students: [student, s] });
+      made.w.renderStudentInbox([{ senderUsername: student.username, text: 'hi', createdAt: saved.recordedAt }]);
+      await tick();
+      return made;
+    };
+    const classic = await withRows();
+    const pico = await withRows(PICO_URL);
+    const a = snapshot(classic.doc), b = snapshot(pico.doc);
+    expect(b).toEqual(a);
+    expect(b.tabs.find(([k]) => k === 'attention')[1]).toBe('Needs attention (3)');
+    expect(b.tabs.find(([k]) => k === 'messages')[1]).toBe('Messages (1)');
+    expect(b.rosterButtons).toContain('plot');
+    expect(pico.doc.querySelector('.workspace-view-strip [data-workspace-tab=class]')).not.toBeNull();
+    expect(pico.doc.querySelector('.workspace-student-tabs [data-student-tab=overview]')).not.toBeNull();
+    // Same student pane from a tile.
+    pico.doc.querySelectorAll('#workspace-roster .student-name')[1].click(); await tick();
+    expect(pico.w._tscCurrentStudentId).toBe('s3');
+    expect(pico.doc.querySelector('[data-student-tab=overview]').getAttribute('aria-pressed')).toBe('true');
+  });
+  it('opening Messages (tab or unread button) marks nothing read', async () => {
+    const { w, doc } = await make(PICO_URL);
+    w.renderStudentInbox([{ senderUsername: student.username, text: 'What am I missing?', createdAt: saved.recordedAt }]);
+    await tick();
+    doc.querySelector('[data-workspace-tab=messages]').click();
+    expect(doc.querySelector('[data-workspace-view=messages]').hidden).toBe(false);
+    doc.querySelector('button.workspace-unread').click();
+    expect(doc.querySelector('#inbox-list li').classList.contains('unread')).toBe(true);
+    expect(w.localStorage.getItem('tsc-inbox-seen-at:all')).toBeNull();
+    expect(doc.querySelector('[data-workspace-tab=messages]').textContent).toBe('Messages (1)');
+    expect(w.fetch.mock.calls.some(([, o]) => o && o.method && o.method !== 'GET')).toBe(false);
+  });
+  it('keys: Left / Right move views (wrapping); Esc closes the student pane first, then the window', async () => {
+    const { w, doc } = await make(PICO_URL);
+    const key = (target, k) => target.dispatchEvent(new w.KeyboardEvent('keydown', { key: k, bubbles: true, cancelable: true }));
+    const classTab = doc.querySelector('[data-workspace-tab=class]');
+    classTab.focus();
+    key(classTab, 'ArrowRight');
+    expect(doc.activeElement).toBe(doc.querySelector('[data-workspace-tab=attention]'));
+    expect(doc.querySelector('[data-workspace-view=attention]').hidden).toBe(false);
+    key(doc.activeElement, 'ArrowLeft');
+    key(doc.activeElement, 'ArrowLeft');
+    expect(doc.activeElement).toBe(doc.querySelector('[data-workspace-tab=recovery]'));
+    expect(doc.querySelector('[data-workspace-tab=recovery]').getAttribute('aria-pressed')).toBe('true');
+
+    const close = vi.fn();
+    w.teacherWorkspace.requestClose = close;
+    doc.querySelector('#workspace-roster .student-name').click(); await tick();
+    expect(doc.getElementById('tsc-drawer').classList.contains('tsc-open')).toBe(true);
+    key(doc.activeElement || doc.body, 'Escape');
+    expect(doc.getElementById('tsc-drawer').classList.contains('tsc-open')).toBe(false);
+    expect(close).not.toHaveBeenCalled();
+    key(doc.activeElement || doc.body, 'Escape');
+    expect(close).toHaveBeenCalledTimes(1);
+  });
+  it('classic skin: arrows and Esc keep their old behaviour (no view change, no window close)', async () => {
+    const { w, doc } = await make();
+    const close = vi.fn();
+    w.teacherWorkspace.requestClose = close;
+    const classTab = doc.querySelector('[data-workspace-tab=class]');
+    classTab.focus();
+    classTab.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true }));
+    expect(classTab.getAttribute('aria-pressed')).toBe('true');
+    doc.body.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+    expect(close).not.toHaveBeenCalled();
   });
 });
