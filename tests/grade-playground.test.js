@@ -39,7 +39,7 @@ it('Playground accepts 105 for lesson/Work inputs, caps bars and the quarter, an
     expect(document.body.textContent).toContain('+5 (E), +3 (P), or +1 (I)');
     // POSTER_BONUS_SPEC.md: no Posters input; posters read as banked bonus.
     expect(document.getElementById('gp-w-posters')).toBeNull();
-    expect(document.body.textContent).toContain('Unit posters are bonus: graded E/P/I, banked, applied at the end of the quarter.');
+    expect(document.body.textContent).toContain('Unit posters are bonus: graded E/P/I by Mr. Colson, banked, and added at the end of the quarter');
   } finally { dom.window.close(); }
 });
 

@@ -2548,12 +2548,15 @@
         <div class="chicago" style="font-size:12px;margin-bottom:8px;border-bottom:1px solid var(--black);padding-bottom:6px">How your grade works</div>
         <div class="geneva" style="font-size:11px;max-height:60vh;overflow-y:auto;line-height:1.5">
             <p style="margin:0 0 6px">Your quarter grade is the <b>higher of two tracks</b>:</p>
-            <p style="margin:0 0 4px">&#9312; <b>Your work</b> &mdash; worksheets, quizzes, and Blookets.</p>
-            <p style="margin:0 0 4px">Unit posters are <b>bonus</b>: graded E/P/I, banked, applied at the end of the quarter.</p>
-            <p style="margin:0 0 6px">&#9313; <b>Progress Checks</b> &mdash; one per unit, AP-exam-style, retakable until the quarter closes.</p>
-            <p style="margin:0 0 6px">You need at least about <b>40% on each</b> side, or your grade is <b>capped at 70%</b>. Clear that low bar and you keep the higher of the two &mdash; either track can reach 100%.</p>
+            <p style="margin:0 0 4px">&#9312; <b>Your work</b> &mdash; worksheets <b>50%</b>, quizzes <b>35%</b>, Blookets <b>15%</b>. A lesson's flashcard deck earns its Blooket credit.</p>
+            <p style="margin:0 0 6px">&#9313; <b>Progress Checks</b> &mdash; one per unit, AP-exam-style, retakable until the quarter closes. Your <b>best score</b> counts.</p>
+            <p style="margin:0 0 6px">Your grade starts as your <b>Work</b> track. Once Work (with bonus) is at least <b>40%</b>, your <b>Progress Check</b> score replaces it <b>if it's higher</b>. A low Progress Check <b>never lowers</b> you &mdash; either track can reach 100%.</p>
+            <p style="margin:0 0 6px"><b>Missing work becomes a 0</b> 13 days after its class day (worksheets and Blookets). The Desk warns you <b>3 days</b> before. Nothing locks &mdash; finish it later and the 0 goes away.</p>
+            <p style="margin:0 0 6px"><b>Worksheets stay open</b>: change an answer and Check again. <b>Grade with AI</b> only ever raises your score. <b>Quizzes</b>: miss a question and you get <b>one retry</b> with a short explanation &mdash; that answer counts. Still wrong? <b>Talk it through</b> can earn back <b>half credit</b>.</p>
+            <p style="margin:0 0 6px"><b>Bonus only goes up.</b> An exit ticket adds <b>+5 / +3 / +1</b> (E/P/I) to its lesson. Bonus sheets (DOK sheets and unit posters) add <b>+7.5 / +4.5 / +1.5</b>, banked and added at the end of the quarter to whichever track helps you more. A worksheet finished by its class day adds <b>+1</b> (up to +5 a quarter). Quarters still top out at 100%.</p>
+            <p style="margin:0 0 6px"><b>One official grade.</b> Every night your grade is written to Schoology, and the Desk shows that same number marked <b>official</b>. <b>Today's estimate</b> moves as you work, so it's <b>a step ahead of Schoology</b> until tonight's sync. It uses a slightly stricter formula (it also asks for 40% on the Progress Check side, and otherwise is capped at 70% of the better track), so it can differ from the official number until the nightly write. A score Mr. Colson types into Schoology by hand is never lowered by the sync.</p>
             <p style="margin:0 0 6px">The <b>&uarr;</b> next to a quarter is your <b>ceiling</b> &mdash; the best grade you can still reach if you ace what's left.</p>
-            <p style="margin:0 0 6px">This is your <b>live grade</b> &mdash; it updates the moment you finish something, so it's usually <b>a step ahead of Schoology</b>'s once-a-day sync. Schoology shows a <b>report-card version</b> that's blended a little differently, so the two can differ slightly &mdash; tap <b>&#128202; My Gradebook</b> to see both side by side and why.</p>
+            <p style="margin:0 0 6px"><b>Practice never counts</b>: the Review deck, the TI-84 Trainer and Study Break. <b>Candy, keys and games never change your grade.</b></p>
             <p style="margin:6px 0 0"><a href="start-here.html#how-your-grade" target="_blank" rel="noopener" style="color:var(--accent-ink);text-decoration:underline">Full explanation &rarr;</a></p>
         </div>
         <div style="text-align:right;margin-top:10px">
@@ -2947,10 +2950,10 @@
 <script src="js/ced2026-crosswalk.js"></script>
 <script src="js/ced2026-labels.js"></script>
 <script src="lib/qrcode.min.js"></script>
-<script src="canvas_engine.js?v=2026-10-10-g7xj"></script>
-<script src="sprite_sheet.js?v=2026-10-10-g7xj"></script>
-<script src="classroom-board.js?v=2026-10-10-g7xj"></script>
-<script src="pico-home.js?v=2026-10-10-g7xj"></script>
+<script src="canvas_engine.js?v=2026-10-10-esmf"></script>
+<script src="sprite_sheet.js?v=2026-10-10-esmf"></script>
+<script src="classroom-board.js?v=2026-10-10-esmf"></script>
+<script src="pico-home.js?v=2026-10-10-esmf"></script>
 <script src="ti84-plot.js"></script>
 <script src="activity-bridge.js"></script>
 <script src="activity-colorbox.js"></script>
@@ -18861,7 +18864,7 @@ function _walletEffortBlock(curQ) {
     }
     return box;
 }
-// "How your grade is counted": three sentences, small grey text, always on the balance card.
+// "How your grade is counted": three short sentences, small grey text, always on the balance card.
 // The words live in lib/effort-facts.js (shared with the slip footer); the copy here is the
 // fallback when the lib failed to load.
 function _walletCountingNote() {
@@ -18870,9 +18873,8 @@ function _walletCountingNote() {
     note.style.cssText = 'font-size:10px;line-height:1.35;margin-top:6px;color:#666';
     note.textContent = (typeof EffortFacts !== 'undefined' && EffortFacts && EffortFacts.COUNTING_NOTE)
         ? EffortFacts.COUNTING_NOTE
-        : 'Work is worksheets 50%, quizzes 35%, Blookets 15%. '
-            + 'The Desk counts every lesson you have done, ahead of the calendar or not. '
-            + 'Schoology is a rolling snapshot of what the class has covered so far, so early work shows up there when its column opens. '
+        : 'Work is worksheets 50%, quizzes 35%, Blookets 15%; once Work (with bonus) is at least 40%, a higher Progress Check score replaces it, and a low one never lowers you. '
+            + 'The Desk counts work you did ahead of the calendar now; Schoology counts it when its column opens. '
             + 'Bonus sheets (DOK sheets and unit posters) are banked and added at the end of the quarter to whichever track helps you more — they can only raise your grade.';
     return note;
 }
@@ -27723,7 +27725,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-10-10-g7xj';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-10-10-esmf';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

@@ -442,7 +442,7 @@ describe('Balance card effort lines (EFFORT_VISIBILITY_SPEC §3: "they don’t f
 });
 
 describe('"How your grade is counted" note + bonus footer wording (teacher 2026-09-27)', () => {
-  const NOTE = 'Work is worksheets 50%, quizzes 35%, Blookets 15%. The Desk counts every lesson you have done, ahead of the calendar or not. Schoology is a rolling snapshot of what the class has covered so far, so early work shows up there when its column opens. Bonus sheets (DOK sheets and unit posters) are banked and added at the end of the quarter to whichever track helps you more — they can only raise your grade.';
+  const NOTE = 'Work is worksheets 50%, quizzes 35%, Blookets 15%; once Work (with bonus) is at least 40%, a higher Progress Check score replaces it, and a low one never lowers you. The Desk counts work you did ahead of the calendar now; Schoology counts it when its column opens. Bonus sheets (DOK sheets and unit posters) are banked and added at the end of the quarter to whichever track helps you more — they can only raise your grade.';
   function noteSandbox(lib) {
     const dom = new JSDOM('<div></div>');
     const s = { document: dom.window.document, window: dom.window };
@@ -451,7 +451,7 @@ describe('"How your grade is counted" note + bonus footer wording (teacher 2026-
     runInContext(fnSrc('_walletCountingNote'), s);
     return { s, close: () => dom.window.close() };
   }
-  it('the balance card always carries the note: small grey text, four sentences, even without the lib', async () => {
+  it('the balance card always carries the note: small grey text, three sentences, even without the lib', async () => {
     await import('../lib/effort-facts.js');
     for (const lib of [globalThis.EffortFacts, null]) {
       const t = noteSandbox(lib);

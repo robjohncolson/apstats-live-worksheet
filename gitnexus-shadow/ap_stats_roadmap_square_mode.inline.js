@@ -2958,6 +2958,9 @@ try{if(/[?&]home=park(?:&|$)/.test(location.search)||localStorage.getItem('apsta
 
 
 
+
+
+
 /* ═══ BAKED REGISTRY (injected by build-roadmap-data.mjs) ═══ */
 const BAKED_REGISTRY = {
   "generatedAt": "2026-06-01T20:06:27.691Z",
@@ -18861,7 +18864,7 @@ function _walletEffortBlock(curQ) {
     }
     return box;
 }
-// "How your grade is counted": three sentences, small grey text, always on the balance card.
+// "How your grade is counted": three short sentences, small grey text, always on the balance card.
 // The words live in lib/effort-facts.js (shared with the slip footer); the copy here is the
 // fallback when the lib failed to load.
 function _walletCountingNote() {
@@ -18870,9 +18873,8 @@ function _walletCountingNote() {
     note.style.cssText = 'font-size:10px;line-height:1.35;margin-top:6px;color:#666';
     note.textContent = (typeof EffortFacts !== 'undefined' && EffortFacts && EffortFacts.COUNTING_NOTE)
         ? EffortFacts.COUNTING_NOTE
-        : 'Work is worksheets 50%, quizzes 35%, Blookets 15%. '
-            + 'The Desk counts every lesson you have done, ahead of the calendar or not. '
-            + 'Schoology is a rolling snapshot of what the class has covered so far, so early work shows up there when its column opens. '
+        : 'Work is worksheets 50%, quizzes 35%, Blookets 15%; once Work (with bonus) is at least 40%, a higher Progress Check score replaces it, and a low one never lowers you. '
+            + 'The Desk counts work you did ahead of the calendar now; Schoology counts it when its column opens. '
             + 'Bonus sheets (DOK sheets and unit posters) are banked and added at the end of the quarter to whichever track helps you more — they can only raise your grade.';
     return note;
 }
@@ -27723,7 +27725,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-10-10-7h5g';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-10-10-esmf';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.
