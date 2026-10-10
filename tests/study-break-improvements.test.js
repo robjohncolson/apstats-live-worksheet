@@ -135,7 +135,7 @@ describe('rules — bag, level curve, garbage', () => {
     receiveGarbage.call(ctx, 2, 'other-room');     // SB-4 stale-room guard still in force
     expect(ctx.mpState.pendingGarbage).toBe(12);
   });
-  it('Q6 (teacher decision 2026-09-09): a row through a square pays and the REST of the square stays a square', () => {
+  it('Q6 (teacher decision 2026-09-09) + TETRIS_SQUARES_SPEC: a row through a gold square pays 1000 and the REST of the square stays a square', () => {
     const clearLines = method('clearLines');
     const TOTAL_ROWS = 24, COLS = 10;
     const board = Array.from({ length: TOTAL_ROWS }, () => Array(COLS).fill(null));
@@ -144,14 +144,14 @@ describe('rules — bag, level curve, garbage', () => {
     for (let x = 4; x < COLS; x++) board[23][x] = { kind: 'fragment', pieceId: null, pieceType: null, squareId: null, material: null, color: '#888' };
     const ctx = { board, TOTAL_ROWS, COLS };
     const r1 = clearLines.call(ctx);
-    expect(r1).toEqual({ lines: 1, points: 11, goldStrips: 1, silverStrips: 0 });
+    expect(r1).toEqual({ lines: 1, points: 1000, goldStrips: 1, silverStrips: 0 });   // gold line 1000 (lockPiece × level)
     const remainder = ctx.board.flat().filter((c) => c && c.squareId === 7);
     expect(remainder.length).toBe(12);
     remainder.forEach((c) => { expect(c.kind).toBe('square'); expect(c.material).toBe('gold'); });   // NOT fragments
     // the 4x3 remainder collapsed to rows 21-23; another single through its bottom row pays again
     for (let x = 4; x < COLS; x++) ctx.board[23][x] = { kind: 'fragment', pieceId: null, pieceType: null, squareId: null, material: null, color: '#888' };
     const r2 = clearLines.call(ctx);
-    expect(r2).toEqual({ lines: 1, points: 11, goldStrips: 1, silverStrips: 0 });
+    expect(r2).toEqual({ lines: 1, points: 1000, goldStrips: 1, silverStrips: 0 });
     expect(ctx.board.flat().filter((c) => c && c.squareId === 7).length).toBe(8);
     expect(sb).not.toMatch(/brokenSquareIds/);
   });

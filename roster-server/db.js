@@ -539,7 +539,8 @@ export function createDb(client) {
   }
   // Settled bets (for Casino Stats). The (small) caller intersects with a section's students.
   async function listSettledBets() {
-    return client.from('tetris_bet').select('player_a, player_b, winner, stake, resolved_at').eq('status', 'settled');
+    // '*' so the 0041 columns (premium, premium_paid) come back once that migration has run.
+    return client.from('tetris_bet').select('*').eq('status', 'settled');
   }
 
   // ── Nightly Review (migration 0025) ───────────────────────────────────────────

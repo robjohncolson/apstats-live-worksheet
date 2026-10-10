@@ -174,12 +174,34 @@ const BET_TIMEOUT_MIN = 30;     // an un-resolved bet older than this is swept �
 // Candy the teacher is treated as holding for Tetris bets (they earn no effort candy). 2026-09-29.
 const TEACHER_STAKE_ALLOWANCE = Number(process.env.TEACHER_STAKE_ALLOWANCE || 100);
 const stakesOff = () => ['false', '0', 'no', 'off'].includes(String(process.env.STAKES_ENABLED || 'true').trim().toLowerCase());
+// Gold premium (TETRIS_SQUARES_SPEC §3, migration 0041): each player also holds 1 premium candy;
+// it moves to the winner only when BOTH reports say the winner made >= 1 gold square clear,
+// otherwise it is refunded. Kill-switch STAKES_GOLD_PREMIUM (default on; off = escrow 1, no premium).
+const BET_PREMIUM = 1;
+const premiumOff = () => ['false', '0', 'no', 'off'].includes(String(process.env.STAKES_GOLD_PREMIUM || 'true').trim().toLowerCase());
+// Before 0041 runs, the RPCs only know their old parameter lists: call those (no premium).
+const isMissingRpcSignature = (error) => {
+  const code = String((error && error.code) || '');
+  const message = String((error && error.message) || '').toLowerCase();
+  return code === 'PGRST202' || code === '42883' || (message.includes('function') && message.includes('does not exist'));
+};
+// The reporter's count of the WINNER's gold lines from { username: n } (null when absent / bad).
+function winnerGoldOf(goldClears, winnerUsername) {
+  if (!goldClears || typeof goldClears !== 'object' || Array.isArray(goldClears)) return null;
+  const want = String(winnerUsername).toLowerCase();
+  for (const [name, value] of Object.entries(goldClears)) {
+    if (String(name).toLowerCase() !== want) continue;
+    const n = Number(value);
+    return Number.isInteger(n) && n >= 0 && n <= 1000 ? n : null;
+  }
+  return null;
+}
 // Per-student win/loss/net from the settled-bet rows (Casino Stats; EV/variance computed client-side).
 function tallyCasino(bets, sid) {
   let wins = 0, losses = 0, net = 0;
   for (const b of bets) {
     if (b.player_a !== sid && b.player_b !== sid) continue;
-    const stake = num(b.stake);
+    const stake = num(b.stake) + (b.premium_paid ? num(b.premium) : 0);   // a paid gold premium moved too
     if (b.winner === sid) { wins++; net += stake; } else { losses++; net -= stake; }
   }
   return { wins, losses, games: wins + losses, netCandy: net };
@@ -810,16 +832,19 @@ export function mountDogeWallet(app, { db, ledgerDb, verifyToken, getPrice, fetc
     // The teacher earns no effort candy, so a fixed allowance stands in as their stake budget —
     // "the rules apply to the teacher too": they can win candy from students and lose it to them.
     const ea = meRes.data.role === 'teacher' ? { candy: TEACHER_STAKE_ALLOWANCE } : await earnedCandyOf(sid);
-    const r = await db.tetrisBetOpen({ p_match: matchId, p_caller: sid, p_opp: oppId, p_stake: BET_STAKE, p_earned_caller: ea.candy });
+    const base = { p_match: matchId, p_caller: sid, p_opp: oppId, p_stake: BET_STAKE, p_earned_caller: ea.candy };
+    let premium = premiumOff() ? 0 : BET_PREMIUM;
+    let r = await db.tetrisBetOpen(premium ? { ...base, p_premium: premium } : base);
+    if (r.error && premium && isMissingRpcSignature(r.error)) { premium = 0; r = await db.tetrisBetOpen(base); }   // 0041 not run yet
     if (r.error) { if (isDogeMissing(r.error)) return notProvisioned(res); console.error('POST /wallet/bet/open:', r.error); return res.status(500).json({ ok: false, error: 'Database error' }); }
     const status = r.data;   // 'waiting' | 'opened' | 'insufficient' | 'bad' | 'not-a-player' | resolved status
-    if (status === 'insufficient') return res.status(400).json({ ok: false, error: 'both players need ' + BET_STAKE + ' candy to play' });
+    if (status === 'insufficient') return res.status(400).json({ ok: false, error: 'both players need ' + (BET_STAKE + premium) + ' candy to play' });
     // Opaque 404 for not-a-player (a 3rd party guessed/collided a matchId) so it can't be told
     // apart from a non-existent match — a non-participant learns nothing about others' matches.
     if (status === 'not-a-player') return res.status(404).json({ ok: false, error: 'no such match' });
     if (status === 'bad') return res.status(400).json({ ok: false, error: 'bad bet' });
     const { earned, accRes } = await loadState(sid);
-    return res.json({ ok: true, status, stake: BET_STAKE, matchId, ...(accRes && accRes.data ? deriveBalances(earned, accRes.data) : {}) });
+    return res.json({ ok: true, status, stake: BET_STAKE, premium, escrow: BET_STAKE + premium, matchId, ...(accRes && accRes.data ? deriveBalances(earned, accRes.data) : {}) });
   });
 
   // POST /wallet/bet/resolve — report the match winner. When BOTH players report: agree → the
@@ -836,14 +861,21 @@ export function mountDogeWallet(app, { db, ledgerDb, verifyToken, getPrice, fetc
     const winRes = await db.findByUsername(winnerUsername);
     if (winRes && winRes.error && winRes.error.code !== 'PGRST116') { console.error('bet/resolve findByUsername:', winRes.error); return res.status(500).json({ ok: false, error: 'Database error' }); }
     if (!winRes || !winRes.data) return res.status(404).json({ ok: false, error: 'unknown winner' });
-    const r = await db.tetrisBetResolve({ p_match: matchId, p_reporter: sid, p_winner: winRes.data.student_id });
+    // goldClears (optional, { username: lines }): this reporter's count of the winner's gold lines.
+    // The server pays the premium only when BOTH reports put the winner at >= 1 (migration 0041).
+    const winnerGold = winnerGoldOf(req.body && req.body.goldClears, winnerUsername);
+    const base = { p_match: matchId, p_reporter: sid, p_winner: winRes.data.student_id };
+    let r = await db.tetrisBetResolve({ ...base, p_winner_gold: winnerGold });
+    if (r.error && isMissingRpcSignature(r.error)) r = await db.tetrisBetResolve(base);   // 0041 not run yet
     if (r.error) { if (isDogeMissing(r.error)) return notProvisioned(res); console.error('POST /wallet/bet/resolve:', r.error); return res.status(500).json({ ok: false, error: 'Database error' }); }
-    const status = r.data;   // 'pending' | 'settled' | 'refunded' | 'no-bet' | 'not-a-player' | 'bad-winner'
+    // 'pending' | 'settled' | 'settled-premium' | 'refunded' | 'no-bet' | 'not-a-player' | 'bad-winner'
+    const premiumPaid = r.data === 'settled-premium';
+    const status = premiumPaid ? 'settled' : r.data;
     // Opaque 404 for both no-bet and not-a-player (don't reveal a match exists to a non-participant).
     if (status === 'no-bet' || status === 'not-a-player') return res.status(404).json({ ok: false, error: 'no such match' });
     if (status === 'bad-winner') return res.status(400).json({ ok: false, error: 'winner must be a player' });
     const { earned, accRes } = await loadState(sid);
-    return res.json({ ok: true, status, ...(accRes && accRes.data ? deriveBalances(earned, accRes.data) : {}) });
+    return res.json({ ok: true, status, premiumPaid, ...(accRes && accRes.data ? deriveBalances(earned, accRes.data) : {}) });
   });
 
   // GET /wallet/casino — the student's own Tetris-betting record (Casino Stats lab).

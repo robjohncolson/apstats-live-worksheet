@@ -101,10 +101,20 @@ describe('POST /wallet/bet/open', () => {
     expect(r.status).toBe(400);
     expect(r.body.error).toMatch(/active player/);
   });
-  it('400 + "need 1 candy" when the escrow guard fails (insufficient)', async () => {
+  it('400 + "need 2 candy" when the escrow guard fails (insufficient): stake 1 + gold premium hold 1 (TETRIS_SQUARES_SPEC §3)', async () => {
     const r = await req(start({ betOpen: 'insufficient' }), 'POST', '/wallet/bet/open', { token: 'tok:' + UID, body: openBody });
     expect(r.status).toBe(400);
-    expect(r.body.error).toMatch(/1 candy/);
+    expect(r.body.error).toMatch(/2 candy/);
+  });
+  it('400 + "need 1 candy" with the gold premium switched off (STAKES_GOLD_PREMIUM=off)', async () => {
+    process.env.STAKES_GOLD_PREMIUM = 'off';
+    try {
+      const r = await req(start({ betOpen: 'insufficient' }), 'POST', '/wallet/bet/open', { token: 'tok:' + UID, body: openBody });
+      expect(r.status).toBe(400);
+      expect(r.body.error).toMatch(/1 candy/);
+    } finally {
+      delete process.env.STAKES_GOLD_PREMIUM;
+    }
   });
   it('404 (opaque) when the caller is not a player in that match', async () => {
     const r = await req(start({ betOpen: 'not-a-player' }), 'POST', '/wallet/bet/open', { token: 'tok:' + UID, body: openBody });

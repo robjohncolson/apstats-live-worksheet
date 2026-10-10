@@ -61,8 +61,8 @@ describe('Batch A', () => {
     sb.draw.mockClear();
     await vi.advanceTimersByTimeAsync(1000);
     expect(_dogeWalletAction.mock.calls).toEqual([
-      ['/wallet/bet/resolve', { matchId: 'r1', winnerUsername: 'Me' }],
-      ['/wallet/bet/resolve', { matchId: 'r1', winnerUsername: 'Me' }],
+      ['/wallet/bet/resolve', { matchId: 'r1', winnerUsername: 'Me', goldClears: { Me: 0, Bob: 0 } }],   // + gold lines (TETRIS_SQUARES_SPEC §3)
+      ['/wallet/bet/resolve', { matchId: 'r1', winnerUsername: 'Me', goldClears: { Me: 0, Bob: 0 } }],
     ]);
     expect(ms._resolved).toBe(true);
     expect(ms.candyOutcome).toBe('+1');

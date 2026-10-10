@@ -110,7 +110,8 @@ describe('resolve (_studyBreakResolveStakes) — reports the series winner', () 
     resolveStakes.call(t);
     expect(ms._resolved).toBe(false);
     expect(posts[0].path).toBe('/wallet/bet/resolve');
-    expect(posts[0].body).toEqual({ matchId: 'R1', winnerUsername: 'Me_Self' });
+    // TETRIS_SQUARES_SPEC §3: the same report now also carries each player's gold lines (HTTP body only).
+    expect(posts[0].body).toEqual({ matchId: 'R1', winnerUsername: 'Me_Self', goldClears: { Me_Self: 0, Ana_Fox: 0 } });
     delete globalThis._dogeWalletAction;
   });
   it('reports the OPPONENT as winner when they won more', () => {
