@@ -58,6 +58,7 @@ function makeFakeAudio() {
     createStereoPanner() { return node('panner', ['pan']); }
     createBuffer(channels, length, rate) {
       const data = Array.from({ length: channels }, () => new Float32Array(length));
+      FakeAudioContext.buffers.push(channels);
       return { numberOfChannels: channels, length, sampleRate: rate, duration: length / rate, getChannelData: (c) => data[c] };
     }
     createOscillator() {
@@ -74,6 +75,7 @@ function makeFakeAudio() {
     }
   }
   FakeAudioContext.instances = [];
+  FakeAudioContext.buffers = [];
   return { FakeAudioContext, created };
 }
 
@@ -99,6 +101,8 @@ beforeEach(() => {
   fake = makeFakeAudio();
   window.AudioContext = fake.FakeAudioContext;
   try { window.localStorage.clear(); } catch (_) {}
+  // The full-quality path unless a test turns low power on (jsdom reports few CPU cores).
+  window.localStorage.setItem('apstats-sfx-lowpower', 'off');
   loadEngine();
   sfx.define('t:blip', blip);
 });
@@ -200,6 +204,7 @@ describe('the graph and the quieter level', () => {
 
   it('quiet level sets the master gain (and persists per device); normal restores it', () => {
     gesture();
+    sfx.setLevel('normal');
     sfx.play('t:blip');
     expect(graph().master.gain.value).toBe(1);
     sfx.setLevel('quiet');
@@ -355,6 +360,161 @@ describe('envelopes reproduce the old hand-built sounds', () => {
     expect(ev[1][0]).toBe('linear'); expect(ev[1][1]).toBeCloseTo(0.08, 9); expect(ev[1][2]).toBeCloseTo(t + 0.01, 9);
     expect(ev[2][0]).toBe('exp'); expect(ev[2][1]).toBeCloseTo(0.0001, 9);
     expect(oscs()[0].stopAt).toBeCloseTo(t + 0.2, 9);
+  });
+});
+
+describe('low power (AUDIO_IDEAS_HANDOFF §0)', () => {
+  it('on: no convolver / reverb send and no panner nodes, even with x, width and reverb', () => {
+    gesture();
+    sfx.setLowPower('on');
+    expect(sfx.isLowPower()).toBe(true);
+    sfx.define('t:wide', { bus: 'sfx', reverb: 0.5, width: 0.4, body: [
+      { osc: 'sine', freq: 440, dur: 0.1, gain: 1 }, { osc: 'sine', freq: 660, dur: 0.1, gain: 1 }] });
+    sfx.play('t:wide', { x: 0, width: 800 });
+    sfx.play('t:blip', { pan: 1 });
+    expect(fake.created.filter((n) => n.kind === 'convolver')).toHaveLength(0);
+    expect(fake.created.filter((n) => n.kind === 'panner')).toHaveLength(0);
+    expect(graph().reverbIn).toBeUndefined();
+  });
+
+  it('on: the voice cap is 6', () => {
+    gesture();
+    sfx.setLowPower('on');
+    sfx.define('t:long', { bus: 'sfx', body: [{ osc: 'sine', freq: 200, dur: 5, gain: 1 }] });
+    for (let i = 0; i < 9; i++) sfx.play('t:long');
+    expect(sfx._test.voices()).toHaveLength(6);
+    expect(oscs().filter((o) => o.stopAt === 0)).toHaveLength(3);   // the three oldest were dropped
+  });
+
+  it('on: no pitch or level jitter, whatever the recipe asks for', () => {
+    gesture();
+    sfx.setLowPower('on');
+    sfx.define('t:var', { bus: 'sfx', detune: 80, gainJitter: 6, body: [{ osc: 'sine', freq: 500, dur: 0.05, gain: 1 }] });
+    for (let i = 0; i < 50; i++) sfx.play('t:var');
+    expect(oscs().every((o) => o.detune.events.length === 0)).toBe(true);
+    expect(oscs().every((o) => o.outputs[0].outputs[0].gain.value === 1)).toBe(true);
+  });
+
+  it('auto follows the device (<= 4 cores or <= 4 GB); on / off override it; bad values are refused', () => {
+    const nav = window.navigator;
+    const cores = vi.spyOn(nav, 'hardwareConcurrency', 'get').mockReturnValue(8);
+    sfx.setLowPower('auto');
+    expect(sfx.getLowPower()).toBe('auto');
+    expect(sfx.isLowPower()).toBe(false);
+    cores.mockReturnValue(4);
+    expect(sfx.isLowPower()).toBe(true);
+    cores.mockReturnValue(8);
+    Object.defineProperty(nav, 'deviceMemory', { value: 2, configurable: true });
+    expect(sfx.isLowPower()).toBe(true);
+    sfx.setLowPower('off');
+    expect(sfx.isLowPower()).toBe(false);
+    expect(window.localStorage.getItem('apstats-sfx-lowpower')).toBe('off');
+    delete nav.deviceMemory;
+    expect(sfx.setLowPower('maybe')).toBe(false);
+  });
+
+  it('turning low power off later builds the reverb on the next sound that needs it', () => {
+    gesture();
+    sfx.setLowPower('on');
+    sfx.play('t:blip');
+    expect(graph().reverbIn).toBeUndefined();
+    sfx.setLowPower('off');
+    sfx.play('t:blip');
+    expect(fake.created.filter((n) => n.kind === 'convolver')).toHaveLength(1);
+  });
+});
+
+describe('the reverb impulse is built once (AUDIO_IDEAS_HANDOFF §0)', () => {
+  it('one buffer across two resumes and a second context', () => {
+    gesture();
+    sfx.play('t:blip');
+    const first = fake.created.find((n) => n.kind === 'convolver').buffer;
+    const ctx = graph().ctx;
+    ctx.state = 'suspended'; sfx._test.resume();
+    sfx.play('t:blip');
+    ctx.state = 'suspended'; sfx._test.resume();
+    sfx.play('t:blip');
+    sfx._test.useContext(new fake.FakeAudioContext());           // a fresh context (e.g. after a reload of audio)
+    sfx.play('t:blip');
+    const convolvers = fake.created.filter((n) => n.kind === 'convolver');
+    expect(convolvers).toHaveLength(2);
+    expect(convolvers[1].buffer).toBe(first);
+    expect(fake.FakeAudioContext.buffers.filter((ch) => ch === 2)).toHaveLength(1);
+  });
+});
+
+describe('default level by role (AUDIO_IDEAS_HANDOFF §0)', () => {
+  const start = DESK.indexOf('function _sfxApplyRoleDefault(');
+  const end = DESK.indexOf('\n}\n', start) + 2;
+  const applyRoleDefault = new Function('window', DESK.slice(start, end) + '\nreturn _sfxApplyRoleDefault;')(window);
+
+  it('the engine starts at quiet when nothing is stored', () => {
+    expect(sfx.hasStoredLevel()).toBe(false);
+    expect(sfx.getLevel()).toBe('quiet');
+  });
+
+  it('a signed-in student is stored as quiet; a teacher as normal', () => {
+    applyRoleDefault({ username: 'apple_fox' }, false);
+    expect(window.localStorage.getItem('apstats-sfx-level')).toBe('quiet');
+    window.localStorage.removeItem('apstats-sfx-level');
+    applyRoleDefault({ username: 'mr_c', role: 'teacher' }, true);
+    expect(window.localStorage.getItem('apstats-sfx-level')).toBe('normal');
+    expect(sfx.getLevel()).toBe('normal');
+  });
+
+  it('signed out: the default applies but nothing is stored; a level the user chose is never overwritten', () => {
+    applyRoleDefault(null, true);
+    expect(sfx.getLevel()).toBe('normal');
+    expect(sfx.hasStoredLevel()).toBe(false);
+    sfx.setLevel('quiet');                                         // a teacher who picked Quieter
+    applyRoleDefault({ username: 'mr_c', role: 'teacher' }, true);
+    expect(sfx.getLevel()).toBe('quiet');
+  });
+
+  it('updateUserRoleUI applies the role default', () => {
+    expect(DESK).toMatch(/function updateUserRoleUI\(\) \{[\s\S]*?_sfxApplyRoleDefault\(who, isTeacher\)/);
+  });
+});
+
+describe('families (AUDIO_IDEAS_HANDOFF §0): character from waveform and envelope', () => {
+  function deskRecipes(objStart) {
+    const start = DESK.indexOf(objStart);
+    const src = DESK.slice(start, DESK.indexOf('\n};\n', start)) + '\n};';
+    const name = objStart.match(/const (\w+)/)[1];
+    window.MacSFX = window.MacSFX || { muted: false };
+    return new Function(src + '\nreturn ' + name + '.recipes;')();
+  }
+  const oscTypes = (r) => [...new Set((r.body || []).filter((n) => !n.noise).map((n) => n.osc))];
+
+  it('game cues are square / pulse with fast strikes; rewards are triangle bells with an octave', () => {
+    const sb = deskRecipes('const SFX = {');
+    for (const name of ['droplet', 'boing', 'sosumi', 'quack', 'wildEep', 'moof', 'monkey', 'logjam']) {
+      expect(oscTypes(sb[name]), name).toEqual(['square']);
+      expect(sb[name].body.filter((n) => !n.noise).every((n) => n.env === 'strike' && n.attack <= 0.001 && n.dur <= 0.2), name).toBe(true);
+    }
+    for (const name of ['indigo', 'koWin', 'goldChime', 'silverShimmer']) {
+      expect(oscTypes(sb[name]), name).toEqual(['triangle']);
+      const freqs = sb[name].body.map((n) => n.freq);
+      expect(freqs.some((f) => freqs.some((g) => Math.abs(g - 2 * f) <= 1)), name).toBe(true);
+    }
+  });
+
+  it('the Tetris bells and chimes keep their exact spec sines', () => {
+    const sb = deskRecipes('const SFX = {');
+    const sines = (name) => sb[name].body.filter((n) => !n.noise).map((n) => [n.osc, n.freq]);
+    expect(sines('fuseSilver')).toEqual([['sine', 1318], ['sine', 1976]]);
+    expect(sines('fuseGold')).toEqual([['sine', 1760], ['sine', 2637], ['sine', 3520]]);
+    expect(sines('squareChimeSilver')).toEqual([['sine', 1318], ['sine', 1976]]);
+    expect(sines('squareChimeGold')).toEqual([['sine', 1760], ['sine', 2637]]);
+  });
+
+  it('UI is short sine blips: click (closes) sweeps down, wildEep (app opens) sweeps up', () => {
+    const ui = deskRecipes('const MacSFX = {');
+    for (const name of ['click', 'wildEep', 'nudgeChime']) expect(oscTypes(ui[name]), name).toEqual(['sine']);
+    expect(ui.click.body[0].freqEnd).toBeLessThan(ui.click.body[0].freq);
+    expect(ui.wildEep.body.every((n) => n.freqEnd > n.freq)).toBe(true);
+    expect(oscTypes(ui.candyChime)).toEqual(['triangle']);                 // a reward
+    expect(ui.candyChime.body.map((n) => n.freq)).toEqual([880, 1760]);
   });
 });
 
