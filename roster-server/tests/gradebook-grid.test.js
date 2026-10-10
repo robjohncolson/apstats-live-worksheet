@@ -1,6 +1,6 @@
 // gradebook-grid.test.js — pure-function unit tests for the in-app "1:1 Schoology
 // gradebook" deriver. Tests column generation (opener-no-quiz, combined dedup,
-// PC/Poster per unit), cell extraction (Follow-Along = lessonGradeNoQuiz, the v3
+// PC per unit; no Poster columns), cell extraction (Follow-Along = lessonGradeNoQuiz, the v3
 // Lessons-track value, with Cws fallback), category averages, the Schoology
 // category-weighted total, the v3 passthrough, and the reconciliation breakdown.
 // NO network, NO server, NO I/O.
@@ -52,9 +52,14 @@ describe('buildGradebookColumns', () => {
     expect(keys).not.toContain('BL:1.3-4');
   });
 
-  it('adds a Progress Check + Poster column per band unit', () => {
+  it('adds a Progress Check column per band unit, and NO Poster column (posters are bonus)', () => {
     expect(keys).toContain('PC:U1');
-    expect(keys).toContain('POSTER:U1');
+    expect(keys).not.toContain('POSTER:U1');
+    expect(cols.some((c) => c.kind === 'poster' || c.category === 'Posters')).toBe(false);
+  });
+
+  it('category weights are Work 50 x 50/35/15 + PC 50, no Posters category', () => {
+    expect(SCHOOLOGY_CATEGORY_WEIGHTS).toEqual({ Lesson: 25, Quizzes: 17.5, Blooket: 7.5, 'Progress Check': 50 });
   });
 
   it('maps component kinds to Schoology categories', () => {
@@ -130,7 +135,7 @@ describe('buildGradebookColumns — date-gating `due` flag', () => {
     expect(byKey['FA:1.3-4'].due).toBe(false); // latest 10-01 > 09-20
     expect(byKey['QUIZ:1.4'].due).toBe(false); // 10-01 > 09-20
     expect(byKey['PC:U1'].due).toBe(true);     // unit underway (earliest 09-09)
-    expect(byKey['POSTER:U1'].due).toBe(true);
+    expect(byKey['POSTER:U1']).toBe(undefined); // no Poster columns
   });
 
   it('omits the due field entirely when no schedule/today is given (degrade to show-all)', () => {
@@ -157,11 +162,11 @@ describe('buildGradebookRow', () => {
     expect(row.cells['FA:1.3-4']).toBe(66); // combined, shared
   });
 
-  it('Quiz / Blooket / PC cells unchanged; Poster null', () => {
+  it('Quiz / Blooket / PC cells unchanged; no Poster cell', () => {
     expect(row.cells['QUIZ:1.2']).toBe(78);
     expect(row.cells['BL:1.1']).toBe(95);
     expect(row.cells['PC:U1']).toBe(80);
-    expect(row.cells['POSTER:U1']).toBe(null);
+    expect('POSTER:U1' in row.cells).toBe(false);
   });
 
   it('falls back to Cws when lessonGradeNoQuiz is absent (old server)', () => {
@@ -183,9 +188,9 @@ describe('buildGradebookRow', () => {
   });
 
   it('Schoology total = category-weighted blend over present categories', () => {
-    // num = 15*78.7 + 15*71.5 + 5*97.5 + 50*80 = 1180.5 + 1072.5 + 487.5 + 4000 = 6740.5
-    // den = 85 -> 79.3
-    expect(row.schoologyTotal).toBeCloseTo(79.3, 1);
+    // num = 25*78.667 + 17.5*71.5 + 7.5*97.5 + 50*80 = 1966.7 + 1251.25 + 731.25 + 4000 = 7949.2
+    // den = 100 -> 79.5
+    expect(row.schoologyTotal).toBeCloseTo(79.5, 1);
   });
 });
 
@@ -220,10 +225,10 @@ describe('buildGradebookRow — ahead-work projection (AHEAD_WORK_PROJECTION_SPE
     const q = gb.quarters.Q1;
     // Ahead: FA:1.3-4 (66) and QUIZ:1.4 (65).
     // Today: Lesson (84+86)/2 = 85, Quizzes 78, Blooket 97.5, PC 80
-    //   → (15×85 + 15×78 + 5×97.5 + 50×80) / 85 = 6932.5 / 85 = 81.56 → 81.6
-    // Projected = every completed cell = the unfiltered row pinned above → 79.3
-    expect(q.schoologyTotal).toBe(81.6);
-    expect(q.schoologyProjectedTotal).toBe(79.3);
+    //   → (25×85 + 17.5×78 + 7.5×97.5 + 50×80) / 100 = 8221.25 / 100 = 82.21 → 82.2
+    // Projected = every completed cell = the unfiltered row pinned above → 79.5
+    expect(q.schoologyTotal).toBe(82.2);
+    expect(q.schoologyProjectedTotal).toBe(79.5);
     expect(q.categoryAveragesProjected.Lesson).toBe(78.7);
     expect(q.categoryAveragesProjected.Quizzes).toBe(71.5);
     expect(q.aheadCells).toBe(2);
@@ -329,8 +334,8 @@ describe('buildGradebook', () => {
 
   it('surfaces both totals + the reconciliation', () => {
     expect(gb.quarters.Q1.v3Total).toBe(90);
-    expect(gb.quarters.Q1.schoologyTotal).toBeCloseTo(79.3, 1);
+    expect(gb.quarters.Q1.schoologyTotal).toBeCloseTo(79.5, 1);
     expect(gb.quarters.Q1.reconciliation.branch).toBe('max');
-    expect(gb.quarters.Q1.reconciliation.delta).toBeCloseTo(10.7, 1);
+    expect(gb.quarters.Q1.reconciliation.delta).toBeCloseTo(10.5, 1);
   });
 });

@@ -52,16 +52,28 @@ describe('quarterGradeV3 — boundary worked examples (spec §Worked examples)',
 // ── workAvgV3 — renormalize over present tracks ───────────────────────────────
 
 describe('workAvgV3 — present-track renormalization', () => {
-  it('only lessons + quizzes present → plain mean of the two', () => {
-    // (0.30·L + 0.30·Q) / 0.60 = (L + Q) / 2
-    expect(workAvgV3({ lessons: 0.90, quizzes: 0.60, posters: null, blooket: null }))
-      .toBeCloseTo(0.75, 6);
+  it('only lessons + quizzes present → renormalized 50:35 blend', () => {
+    // (0.50·0.90 + 0.35·0.60) / 0.85 = 0.66 / 0.85 = 0.776471
+    expect(workAvgV3({ lessons: 0.90, quizzes: 0.60, blooket: null }))
+      .toBeCloseTo(0.66 / 0.85, 6);
   });
 
-  it('all four present → full weighted blend', () => {
-    const v = workAvgV3({ lessons: 1.0, quizzes: 0.0, posters: 0.5, blooket: 1.0 });
-    // 0.30·1 + 0.30·0 + 0.30·0.5 + 0.10·1 = 0.30 + 0 + 0.15 + 0.10 = 0.55
-    expect(v).toBeCloseTo(0.55, 6);
+  it('all three present → full weighted blend', () => {
+    const v = workAvgV3({ lessons: 1.0, quizzes: 0.0, blooket: 1.0 });
+    // 0.50·1 + 0.35·0 + 0.15·1 = 0.65
+    expect(v).toBeCloseTo(0.65, 6);
+  });
+
+  it('a posters key is ignored (posters are banked bonus, not a Work track)', () => {
+    const base = workAvgV3({ lessons: 1.0, quizzes: 0.0, blooket: 1.0 });
+    expect(workAvgV3({ lessons: 1.0, quizzes: 0.0, posters: 0.0, blooket: 1.0 })).toBeCloseTo(base, 6);
+    expect(workAvgV3({ lessons: 1.0, quizzes: 0.0, posters: 1.0, blooket: 1.0 })).toBeCloseTo(base, 6);
+    expect(workAvgV3({ lessons: null, quizzes: null, posters: 0.9, blooket: null })).toBe(null);
+  });
+
+  it('the default weights are 50/35/15 with no posters key', () => {
+    expect(V3_WORK_WEIGHTS).toEqual({ lessons: 0.50, quizzes: 0.35, blooket: 0.15 });
+    expect('posters' in V3_WORK_WEIGHTS).toBe(false);
   });
 
   it('a single present track returns that track verbatim', () => {
@@ -111,10 +123,10 @@ describe('computeQuarterV3 — aggregation', () => {
       quarterKey: 'Q1', config: CFG, lessonMap, schedule,
       todayDateStr: '2026-09-15', section: 'PeriodB', unitPcData: {},
     });
-    // lessonsAvg = 0.93333, quizzesAvg = 0.60 → workAvg = mean = 0.76667 → 76.7
+    // lessonsAvg = 0.93333, quizzesAvg = 0.60 → workAvg = (.50·.93333 + .35·.60)/.85 = 0.79608 → 79.6
     expect(r.pcAvg).toBe(null);
-    expect(r.workAvg).toBeCloseTo(76.7, 1);
-    expect(r.quarterGrade).toBeCloseTo(76.7, 1);
+    expect(r.workAvg).toBeCloseTo(79.6, 1);
+    expect(r.quarterGrade).toBeCloseTo(79.6, 1);
     expect(r.lessonsDue).toBe(1);
     expect(r.lessonsTotal).toBe(2);
     expect(r.pcDue).toBe(false);   // PCs not open yet (the unit's last lesson is future)
@@ -133,9 +145,9 @@ describe('computeQuarterV3 — aggregation', () => {
       quarterKey: 'Q1', config: CFG, lessonMap, schedule,
       todayDateStr: '2026-09-20', section: 'PeriodB', unitPcData: { 1: 80 },
     });
-    // lessonsAvg=1.0, quizzesAvg=0.5 → workAvg=0.75; pcAvg=0.80 → max=0.80
+    // lessonsAvg=1.0, quizzesAvg=0.5 → workAvg=(.50 + .175)/.85=0.7941; pcAvg=0.80 → max=0.80
     expect(r.pcAvg).toBeCloseTo(80.0, 1);
-    expect(r.workAvg).toBeCloseTo(75.0, 1);
+    expect(r.workAvg).toBeCloseTo(79.4, 1);
     expect(r.quarterGrade).toBeCloseTo(80.0, 1);
     expect(r.pcDue).toBe(true);    // the unit's PCs are due-by-today
   });
@@ -239,7 +251,7 @@ describe('computeQuarterV3 — aggregation', () => {
       todayDateStr: '2026-09-15', section: 'PeriodB', unitPcData: {},
     });
     // lessonsAvg uses lessonGrade=50 → 0.50 (not the noQuiz 100).
-    expect(r.workAvg).toBeCloseTo(25.0, 1); // mean(0.50 lessons, 0.0 quizzes) = 0.25
+    expect(r.workAvg).toBeCloseTo(29.4, 1); // (.50·0.50 lessons + .35·0.0 quizzes)/.85 = 0.294
   });
 
   it('buckets a lesson by its CALENDAR DATE (quarterOfLesson), not its old-unit band', () => {
@@ -357,16 +369,16 @@ describe('computeQuarterV3 — Blooket make-up track', () => {
 
   it('a due Blooket-bearing lesson with NO evidence counts as 0 (drops workAvg)', () => {
     const r = run(['1.1'], null); // 1.1 has a Blooket, student has no game/flashcard
-    // blooketAvg = 0 → workAvg = (.30·1 + .30·1 + .10·0)/.70 = 85.7
-    expect(r.workAvg).toBeCloseTo(85.7, 1);
+    // blooketAvg = 0 → workAvg = .50·1 + .35·1 + .15·0 = 85.0
+    expect(r.workAvg).toBeCloseTo(85.0, 1);
     expect(r.workAvg).toBeLessThan(100); // strictly below the no-Blooket case
   });
 
   it('the flashcard make-up (r.blooket=80) lifts workAvg above the 0 case', () => {
     const zero = run(['1.1'], null);
     const made = run(['1.1'], 80); // flashcard pass pinned at 80%
-    // blooketAvg = 0.8 → workAvg = (.30·1 + .30·1 + .10·0.8)/.70 = 97.1
-    expect(made.workAvg).toBeCloseTo(97.1, 1);
+    // blooketAvg = 0.8 → workAvg = .50·1 + .35·1 + .15·0.8 = 97.0
+    expect(made.workAvg).toBeCloseTo(97.0, 1);
     expect(made.workAvg).toBeGreaterThan(zero.workAvg); // make-up helps
     expect(made.workAvg).toBeLessThan(100);             // but never a full 100 (no game)
   });
@@ -388,7 +400,7 @@ describe('computeQuarterV3 — Blooket make-up track', () => {
     expect(made.workTracks.lessons).toBeCloseTo(100, 1);
     expect(made.workTracks.quizzes).toBeCloseTo(100, 1);
     expect(made.workTracks.blooket).toBeCloseTo(80, 1);
-    expect(made.workTracks.posters).toBe(null); // no poster source yet
+    expect(made.workTracks.posters).toBe(null); // posters are banked bonus, never a track
     expect(made.blooketDue).toBe(1);
     expect(made.blooketDone).toBe(1);
     expect(made.blooketTodo).toEqual([]);
@@ -466,7 +478,7 @@ describe('computeQuarterV3 — quiz-bearing denominator', () => {
     // The fix only RAISES the grade.
     expect(fixed.quarterGrade).toBeGreaterThanOrEqual(old.quarterGrade);
     expect(fixed.quarterGrade).toBeCloseTo(100, 1);
-    expect(old.quarterGrade).toBeCloseTo(75, 1);
+    expect(old.quarterGrade).toBeCloseTo(79.4, 1); // (.50·1 + .35·.5)/.85
   });
 
   it('an un-taken quiz on a quiz-BEARING due lesson still counts as 0 (engagement preserved)', () => {
@@ -523,5 +535,27 @@ describe('computeGrade — quiz/blooket surface threading', () => {
     expect(q1.quizDue).toBe(1);    // only 1.2 is quiz-bearing (opener 1.1 excluded)
     // Blooket surface stays threaded too (same serializer slot).
     expect(typeof q1.blooketDue).toBe('number');
+  });
+});
+
+// POSTER_BONUS_SPEC.md (2026-10-09): posters are banked bonus, not a Work track.
+// computeQuarterV3 still ACCEPTS workTracks.posters (back-compat) but ignores it.
+describe('computeQuarterV3 — workTracks.posters is accepted but ignored', () => {
+  it('a posters value never moves workAvg or the quarter grade', () => {
+    const schedule = {
+      '1.1': { unit: 1, periods: { B: '2026-09-09', E: '2026-09-09' } },
+      '1.2': { unit: 1, periods: { B: '2026-09-30', E: '2026-09-30' } }, // future
+    };
+    const lessonMap = lessonMapOf({ '1.1': { Cws: 100, W: 100, Q: 50, lessonGrade: 100 } });
+    const args = {
+      quarterKey: 'Q1', config: CFG, lessonMap, schedule,
+      todayDateStr: '2026-09-15', section: 'PeriodB', unitPcData: {},
+    };
+    const none = computeQuarterV3(args);
+    const zero = computeQuarterV3({ ...args, workTracks: { posters: 0 } });
+    const full = computeQuarterV3({ ...args, workTracks: { posters: 1 } });
+    expect(zero.workAvg).toBeCloseTo(none.workAvg, 6);
+    expect(full.workAvg).toBeCloseTo(none.workAvg, 6);
+    expect(full.quarterGrade).toBeCloseTo(none.quarterGrade, 6);
   });
 });

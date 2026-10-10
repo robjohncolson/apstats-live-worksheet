@@ -148,8 +148,9 @@ Weights sum to 100%. **Weight Categories: ENABLED.**
 
 One-time teacher actions in Schoology Grade Setup:
 1. Check the `Weight Categories` checkbox
-2. Set the weights: Lesson=15, Quizzes=15, Posters=15, Blooket=5,
-   Progress Check=50
+2. Set the weights: Lesson=25, Quizzes=17.5, Blooket=7.5, Progress Check=50
+   (superseded 2026-10-09 by `POSTER_BONUS_SPEC.md`; the original setup was
+   Lesson=15, Quizzes=15, Posters=15, Blooket=5 — Posters is now weight 0)
 3. Rename `Tests` -> `Quizzes`
 4. Rename `Classwork` -> `Blooket`
 5. Create a NEW category `Posters` (15% weight)

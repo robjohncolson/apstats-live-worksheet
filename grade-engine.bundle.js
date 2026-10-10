@@ -7,7 +7,7 @@
  *
  * Regenerate after any engine edit:  node scripts/build-grade-engine.mjs
  * Parity is pinned by tests/grade-engine-bundle-parity.test.js.
- * engine-version: 6a14267f2b72
+ * engine-version: 99d09cc68981
  */
 ;(function (root) {
   'use strict';
@@ -130,15 +130,16 @@
       useV3: process.env.USE_V3_GRADING === 'true',
     
       // v3: exclude the curriculum-quiz feeder from the Lessons track. In v3's
-      // 5-category model Quizzes is its own 15% track, so counting quizzes inside
+      // model Quizzes is its own Work track, so counting quizzes inside
       // Lessons too would double-count. Default true (the defensible reading; the
       // spec prose is ambiguous on this one point — see GRADING_MODEL_V3_BUILD.md).
       v3LessonsExcludeQuiz: true,
     
       // v3 Work-track weights (renormalized over present tracks) — formerly a
       // hardcoded const in lesson-grade.js (GRADE_SIMULATION FINDING F2). Now a
-      // pilot-tunable knob; these defaults are byte-identical to the old constant.
-      v3WorkWeights: { lessons: 0.30, quizzes: 0.30, posters: 0.30, blooket: 0.10 },
+      // pilot-tunable knob; these defaults match the constant. Posters are bonus,
+      // not a Work track (POSTER_BONUS_SPEC.md, 2026-10-09).
+      v3WorkWeights: { lessons: 0.50, quizzes: 0.35, blooket: 0.15 },
     
       // v3 quarter-grade gates: `floor` = the both-tracks-cleared threshold that
       // unlocks max(pc, work); `ceiling` = the single-track gaming bound (0.7·track).
@@ -1555,9 +1556,11 @@
     
     // Work-track weights. A track contributes only when present (non-null); the
     // weights renormalize over present tracks (same pattern as computeLessonGrades'
-    // B blend). Posters + Blooket have no data source yet (v3.4 / v3.5), so today
-    // only Lessons + Quizzes are present → workAvg = mean(lessons, quizzes).
-    const V3_WORK_WEIGHTS = { lessons: 0.30, quizzes: 0.30, posters: 0.30, blooket: 0.10 };
+    // B blend). Work = lessons 50 / quizzes 35 / blooket 15 (POSTER_BONUS_SPEC.md,
+    // 2026-10-09). Posters are NOT a Work track: a poster is a banked Bonus Bank row
+    // applied at quarter close, so it can only raise a grade. A `posters` value in
+    // workTracks is still accepted but ignored (no weight key).
+    const V3_WORK_WEIGHTS = { lessons: 0.50, quizzes: 0.35, blooket: 0.15 };
     
     // The two gating constants for quarterGradeV3, default values. `floor` is the
     // 40% both-tracks-cleared threshold that unlocks max(pc, work); `ceiling` is the
@@ -1578,8 +1581,9 @@
       return Math.max(ceiling * pcAvg, ceiling * workAvg, (pcAvg + workAvg) / 2);
     }
     
-    // Weighted blend of the four work tracks, renormalized over present tracks.
-    // tracks: { lessons, quizzes, posters, blooket } each [0,1] or null (absent).
+    // Weighted blend of the work tracks, renormalized over present tracks.
+    // tracks: { lessons, quizzes, blooket } each [0,1] or null (absent). Only keys
+    // in `weights` count, so an extra key (e.g. legacy `posters`) is ignored.
     // Returns [0,1], or null when no track is present.
     function workAvgV3(tracks, weights = V3_WORK_WEIGHTS) {
       let num = 0, den = 0;
@@ -1668,7 +1672,7 @@
     //   section      -- "PeriodB" / "PeriodE" / "B" / "E" / null
     //   unitPcData   -- { [unitNum]: rawPct|null }  (raw PC % per unit, or null)
     //   gradingWindowStart -- cohort window start (or null)
-    //   workTracks   -- { posters, blooket } each [0,1] or null (future; default null)
+    //   workTracks   -- { posters } legacy input, accepted but ignored (posters are bonus)
     //
     // Returns { quarterGrade, ceiling, lessonsDue, lessonsGraded, lessonsTotal,
     //           pcAvg, workAvg } — quarterGrade/ceiling/pcAvg/workAvg on 0..100.
@@ -2265,7 +2269,7 @@
     // They can differ; showing both is the point (reconciliation).
     //
     // Columns mirror the fine-grained Schoology push EXACTLY — Follow-Along / Quiz /
-    // Blooket per lesson + Progress Check + Poster per unit — derived from the SAME
+    // Blooket per lesson + Progress Check per unit — derived from the SAME
     // engine signals the Schoology producer fills (lesson.quizTotal, lesson.hasBlooket),
     // so the in-app grid and the Schoology gradebook never disagree on which columns
     // exist. (This is also why the Python generator's quiz-presence should be sourced
@@ -2273,22 +2277,24 @@
     
     // Schoology category weights — the teacher's real gradesetup values, deliberately
     // chosen to REPLICATE the v3 grade engine's weighting linearly:
-    //   Progress Check 50%  +  Work 50% (Lesson 15 / Quizzes 15 / Posters 15 / Blooket 5).
-    // The Work split 15:15:15:5 == 3:3:3:1 == V3_WORK_WEIGHTS {lessons .30, quizzes .30,
-    // posters .30, blooket .10}. So schoologyTotal is a linear stand-in for the v3
+    //   Progress Check 50%  +  Work 50% (Lesson 25 / Quizzes 17.5 / Blooket 7.5).
+    // The Work split 25:17.5:7.5 == 50:35:15 == V3_WORK_WEIGHTS {lessons .50, quizzes .35,
+    // blooket .15}. So schoologyTotal is a linear stand-in for the v3
     // model; the only thing it can't express is v3's max/mean conditional (40% floors /
     // 70% ceilings) — which is exactly the divergence the side-by-side v3Total reveals.
-    // schoologyWeightedTotal renormalizes over PRESENT categories (Posters has no data
-    // source yet, so it's simply absent from today's blend).
+    // schoologyWeightedTotal renormalizes over PRESENT categories. Posters are NOT a
+    // category: they are banked bonus rows (POSTER_BONUS_SPEC.md, 2026-10-09).
     const { sectionToPeriod } = __reg["lesson-grade"];
     
     const SCHOOLOGY_CATEGORY_WEIGHTS = {
-      Lesson: 15,
-      Quizzes: 15,
-      Blooket: 5,
+      Lesson: 25,
+      Quizzes: 17.5,
+      Blooket: 7.5,
       'Progress Check': 50,
-      Posters: 15,
     };
+    
+    // KIND_CATEGORY / KIND_RANK keep their `poster` entries so old POSTER:U{n} column
+    // data still parses; buildGradebookColumns no longer emits poster columns.
     
     const KIND_CATEGORY = {
       followalong: 'Lesson',
@@ -2418,14 +2424,13 @@
         }
       }
     
-      // Per-unit Progress Check + Poster columns — SY2627: the NEW units whose PC
-      // lands in this quarter (quarter.pcUnits); legacy: the old-unit band.
+      // Per-unit Progress Check columns — SY2627: the NEW units whose PC lands in
+      // this quarter (quarter.pcUnits); legacy: the old-unit band. No Poster columns:
+      // posters are banked bonus, not a gradebook category (POSTER_BONUS_SPEC.md).
       const pcUnits = quarter && Array.isArray(quarter.pcUnits) ? quarter.pcUnits : band;
       for (const n of pcUnits) {
         cols.push({ key: `PC:U${n}`, kind: 'pc', category: 'Progress Check',
           title: `Unit ${n} Progress Check`, unit: n, topicKeys: [] });
-        cols.push({ key: `POSTER:U${n}`, kind: 'poster', category: 'Posters',
-          title: `Unit ${n} Poster`, unit: n, topicKeys: [] });
       }
     
       cols.sort((a, b) => (
@@ -2454,7 +2459,7 @@
         return u && u.pcRawPct != null ? u.pcRawPct : null;
       }
       if (col.kind === 'poster') {
-        return null; // no Poster data source yet (track is future)
+        return null; // legacy column kind: posters are banked bonus, never a cell
       }
       if (col.kind === 'quiz') {
         const L = lessonsByKey[col.topicKeys[0]];
@@ -3163,7 +3168,7 @@
     isCorrect: __reg["scoring"].isCorrect,
     normalizeResponse: __reg["scoring"].normalizeResponse,
     scoreAgainstKey: __reg["scoring"].scoreAgainstKey,
-    _engineVersion: "6a14267f2b72",
+    _engineVersion: "99d09cc68981",
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = __api;

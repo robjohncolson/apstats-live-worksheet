@@ -12,7 +12,7 @@
 // They can differ; showing both is the point (reconciliation).
 //
 // Columns mirror the fine-grained Schoology push EXACTLY — Follow-Along / Quiz /
-// Blooket per lesson + Progress Check + Poster per unit — derived from the SAME
+// Blooket per lesson + Progress Check per unit — derived from the SAME
 // engine signals the Schoology producer fills (lesson.quizTotal, lesson.hasBlooket),
 // so the in-app grid and the Schoology gradebook never disagree on which columns
 // exist. (This is also why the Python generator's quiz-presence should be sourced
@@ -20,22 +20,24 @@
 
 // Schoology category weights — the teacher's real gradesetup values, deliberately
 // chosen to REPLICATE the v3 grade engine's weighting linearly:
-//   Progress Check 50%  +  Work 50% (Lesson 15 / Quizzes 15 / Posters 15 / Blooket 5).
-// The Work split 15:15:15:5 == 3:3:3:1 == V3_WORK_WEIGHTS {lessons .30, quizzes .30,
-// posters .30, blooket .10}. So schoologyTotal is a linear stand-in for the v3
+//   Progress Check 50%  +  Work 50% (Lesson 25 / Quizzes 17.5 / Blooket 7.5).
+// The Work split 25:17.5:7.5 == 50:35:15 == V3_WORK_WEIGHTS {lessons .50, quizzes .35,
+// blooket .15}. So schoologyTotal is a linear stand-in for the v3
 // model; the only thing it can't express is v3's max/mean conditional (40% floors /
 // 70% ceilings) — which is exactly the divergence the side-by-side v3Total reveals.
-// schoologyWeightedTotal renormalizes over PRESENT categories (Posters has no data
-// source yet, so it's simply absent from today's blend).
+// schoologyWeightedTotal renormalizes over PRESENT categories. Posters are NOT a
+// category: they are banked bonus rows (POSTER_BONUS_SPEC.md, 2026-10-09).
 import { sectionToPeriod } from './lesson-grade.js';
 
 export const SCHOOLOGY_CATEGORY_WEIGHTS = {
-  Lesson: 15,
-  Quizzes: 15,
-  Blooket: 5,
+  Lesson: 25,
+  Quizzes: 17.5,
+  Blooket: 7.5,
   'Progress Check': 50,
-  Posters: 15,
 };
+
+// KIND_CATEGORY / KIND_RANK keep their `poster` entries so old POSTER:U{n} column
+// data still parses; buildGradebookColumns no longer emits poster columns.
 
 const KIND_CATEGORY = {
   followalong: 'Lesson',
@@ -165,14 +167,13 @@ export function buildGradebookColumns(gradeObj, quarterKey, dueOpts) {
     }
   }
 
-  // Per-unit Progress Check + Poster columns — SY2627: the NEW units whose PC
-  // lands in this quarter (quarter.pcUnits); legacy: the old-unit band.
+  // Per-unit Progress Check columns — SY2627: the NEW units whose PC lands in
+  // this quarter (quarter.pcUnits); legacy: the old-unit band. No Poster columns:
+  // posters are banked bonus, not a gradebook category (POSTER_BONUS_SPEC.md).
   const pcUnits = quarter && Array.isArray(quarter.pcUnits) ? quarter.pcUnits : band;
   for (const n of pcUnits) {
     cols.push({ key: `PC:U${n}`, kind: 'pc', category: 'Progress Check',
       title: `Unit ${n} Progress Check`, unit: n, topicKeys: [] });
-    cols.push({ key: `POSTER:U${n}`, kind: 'poster', category: 'Posters',
-      title: `Unit ${n} Poster`, unit: n, topicKeys: [] });
   }
 
   cols.sort((a, b) => (
@@ -201,7 +202,7 @@ function cellValue(col, lessonsByKey, units) {
     return u && u.pcRawPct != null ? u.pcRawPct : null;
   }
   if (col.kind === 'poster') {
-    return null; // no Poster data source yet (track is future)
+    return null; // legacy column kind: posters are banked bonus, never a cell
   }
   if (col.kind === 'quiz') {
     const L = lessonsByKey[col.topicKeys[0]];

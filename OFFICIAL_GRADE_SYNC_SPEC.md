@@ -67,7 +67,8 @@ Dry-run prints the table and writes nothing.
 ### 4.2 Work after the PC column exists
 
 Compute Work from the student's own Schoology cells: mean of each work category's graded cells, weighted
-Lesson 15 / Quizzes 15 / Posters 15 / Blooket 5, renormalised over categories that have grades. This
+Lesson 25 / Quizzes 17.5 / Blooket 7.5 (since 2026-10-09, `POSTER_BONUS_SPEC.md`; posters are banked bonus, never a
+category; was 15/15/15/5), renormalised over categories that have grades. This
 matches Schoology's "calculate by percent" category math (verified to the decimal on 10/2 for the three
 current categories).
 

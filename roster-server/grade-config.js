@@ -102,15 +102,16 @@ export const PHASE3_CONFIG = {
   useV3: process.env.USE_V3_GRADING === 'true',
 
   // v3: exclude the curriculum-quiz feeder from the Lessons track. In v3's
-  // 5-category model Quizzes is its own 15% track, so counting quizzes inside
+  // model Quizzes is its own Work track, so counting quizzes inside
   // Lessons too would double-count. Default true (the defensible reading; the
   // spec prose is ambiguous on this one point — see GRADING_MODEL_V3_BUILD.md).
   v3LessonsExcludeQuiz: true,
 
   // v3 Work-track weights (renormalized over present tracks) — formerly a
   // hardcoded const in lesson-grade.js (GRADE_SIMULATION FINDING F2). Now a
-  // pilot-tunable knob; these defaults are byte-identical to the old constant.
-  v3WorkWeights: { lessons: 0.30, quizzes: 0.30, posters: 0.30, blooket: 0.10 },
+  // pilot-tunable knob; these defaults match the constant. Posters are bonus,
+  // not a Work track (POSTER_BONUS_SPEC.md, 2026-10-09).
+  v3WorkWeights: { lessons: 0.50, quizzes: 0.35, blooket: 0.15 },
 
   // v3 quarter-grade gates: `floor` = the both-tracks-cleared threshold that
   // unlocks max(pc, work); `ceiling` = the single-track gaming bound (0.7·track).

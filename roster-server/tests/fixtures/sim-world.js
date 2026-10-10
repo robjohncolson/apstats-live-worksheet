@@ -25,7 +25,7 @@ export const CONFIG = {
   // F2: explicit v3 work weights + gates (mirror grade-config.js defaults), so
   // the Layer-B sweep can vary them. Same values as the engine fallbacks, so
   // grading stays byte-identical.
-  v3WorkWeights: { lessons: 0.30, quizzes: 0.30, posters: 0.30, blooket: 0.10 },
+  v3WorkWeights: { lessons: 0.50, quizzes: 0.35, blooket: 0.15 },
   v3Gates: { floor: 0.40, ceiling: 0.70 },
   quarters: {
     Q1: { units: [1, 2], start: '2026-09-01', end: '2026-12-31', pcAnchor: { p85: 40, p100: 60 } },

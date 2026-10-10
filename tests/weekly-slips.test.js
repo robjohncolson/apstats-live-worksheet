@@ -381,7 +381,7 @@ describe('effort lines under the header (EFFORT_VISIBILITY_SPEC §2)', () => {
   it('the footer says how the grade is counted (teacher 2026-09-27)', async () => {
     const { renderTex } = await import('../scripts/weekly-slips.mjs');
     const tex = renderTex([kid], [kid], 'PeriodB', '2026-09-27', 'Q1');
-    expect(tex).toContain('{\\small Printed Sun 9/27. The Desk counts every lesson you have done, ahead of the calendar or not. Schoology is a rolling snapshot of what the class has covered so far, so early work shows up there when its column opens. Bonus sheets are banked and added at the end of the quarter to whichever track helps you more --- they can only raise your grade.}');
+    expect(tex).toContain('{\\small Printed Sun 9/27. Work is worksheets 50\\%, quizzes 35\\%, Blookets 15\\%. The Desk counts every lesson you have done, ahead of the calendar or not. Schoology is a rolling snapshot of what the class has covered so far, so early work shows up there when its column opens. Bonus sheets (DOK sheets and unit posters) are banked and added at the end of the quarter to whichever track helps you more --- they can only raise your grade.}');
     expect(tex).not.toContain('see the Desk for the graphs');
   });
 });

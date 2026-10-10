@@ -37,6 +37,9 @@ it('Playground accepts 105 for lesson/Work inputs, caps bars and the quarter, an
     input('gp-w-lessons', '110');
     expect(document.getElementById('gp-real-work').textContent).toBe('105.0%');
     expect(document.body.textContent).toContain('+5 (E), +3 (P), or +1 (I)');
+    // POSTER_BONUS_SPEC.md: no Posters input; posters read as banked bonus.
+    expect(document.getElementById('gp-w-posters')).toBeNull();
+    expect(document.body.textContent).toContain('Unit posters are bonus: graded E/P/I, banked, applied at the end of the quarter.');
   } finally { dom.window.close(); }
 });
 
@@ -93,7 +96,7 @@ describe('Grade Playground — engine is present and verbatim-shaped', () => {
     expect(typeof engine.workAvgV3).toBe('function');
     expect(typeof engine.combineV3).toBe('function');
     expect(engine.V3_WORK_WEIGHTS).toEqual({
-      lessons: 0.30, quizzes: 0.30, posters: 0.30, blooket: 0.10,
+      lessons: 0.50, quizzes: 0.35, blooket: 0.15,
     });
   });
 });
@@ -124,24 +127,30 @@ describe('quarterGradeV3 — worked examples (pc, work -> expected) within 1e-9'
 });
 
 describe('workAvgV3 — renormalizes over present components', () => {
-  it('one missing pair renormalizes (lessons+quizzes only) -> 0.7', () => {
-    const v = engine.workAvgV3({ lessons: 0.8, quizzes: 0.6, posters: null, blooket: null });
-    expect(Math.abs(v - 0.7)).toBeLessThan(EPS);
+  it('a missing blooket renormalizes (lessons+quizzes only) -> 0.61/0.85', () => {
+    // (0.50*0.8 + 0.35*0.6) / 0.85 = 0.61 / 0.85
+    const v = engine.workAvgV3({ lessons: 0.8, quizzes: 0.6, blooket: null });
+    expect(Math.abs(v - 0.61 / 0.85)).toBeLessThan(EPS);
   });
 
   it('all present uses the full weighting', () => {
-    // 0.30*1 + 0.30*1 + 0.30*1 + 0.10*1 = 1.0 over den 1.0 -> 1.0
-    const v = engine.workAvgV3({ lessons: 1, quizzes: 1, posters: 1, blooket: 1 });
-    expect(Math.abs(v - 1)).toBeLessThan(EPS);
+    // 0.50*1 + 0.35*0 + 0.15*1 = 0.65 over den 1.0
+    const v = engine.workAvgV3({ lessons: 1, quizzes: 0, blooket: 1 });
+    expect(Math.abs(v - 0.65)).toBeLessThan(EPS);
   });
 
-  it('blooket-only returns the blooket value (den == 0.10)', () => {
-    const v = engine.workAvgV3({ lessons: null, quizzes: null, posters: null, blooket: 0.42 });
+  it('a posters value is ignored (posters are banked bonus)', () => {
+    const v = engine.workAvgV3({ lessons: 1, quizzes: 0, posters: 0, blooket: 1 });
+    expect(Math.abs(v - 0.65)).toBeLessThan(EPS);
+  });
+
+  it('blooket-only returns the blooket value (den == 0.15)', () => {
+    const v = engine.workAvgV3({ lessons: null, quizzes: null, blooket: 0.42 });
     expect(Math.abs(v - 0.42)).toBeLessThan(EPS);
   });
 
   it('all-null returns null', () => {
-    expect(engine.workAvgV3({ lessons: null, quizzes: null, posters: null, blooket: null })).toBeNull();
+    expect(engine.workAvgV3({ lessons: null, quizzes: null, blooket: null })).toBeNull();
   });
 });
 

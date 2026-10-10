@@ -80,10 +80,9 @@
     "useV3": false,
     "v3LessonsExcludeQuiz": true,
     "v3WorkWeights": {
-      "lessons": 0.3,
-      "quizzes": 0.3,
-      "posters": 0.3,
-      "blooket": 0.1
+      "lessons": 0.5,
+      "quizzes": 0.35,
+      "blooket": 0.15
     },
     "v3Gates": {
       "floor": 0.4,

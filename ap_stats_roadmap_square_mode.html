@@ -2548,7 +2548,8 @@
         <div class="chicago" style="font-size:12px;margin-bottom:8px;border-bottom:1px solid var(--black);padding-bottom:6px">How your grade works</div>
         <div class="geneva" style="font-size:11px;max-height:60vh;overflow-y:auto;line-height:1.5">
             <p style="margin:0 0 6px">Your quarter grade is the <b>higher of two tracks</b>:</p>
-            <p style="margin:0 0 4px">&#9312; <b>Your work</b> &mdash; worksheets, quizzes, posters, and Blookets.</p>
+            <p style="margin:0 0 4px">&#9312; <b>Your work</b> &mdash; worksheets, quizzes, and Blookets.</p>
+            <p style="margin:0 0 4px">Unit posters are <b>bonus</b>: graded E/P/I, banked, applied at the end of the quarter.</p>
             <p style="margin:0 0 6px">&#9313; <b>Progress Checks</b> &mdash; one per unit, AP-exam-style, retakable until the quarter closes.</p>
             <p style="margin:0 0 6px">You need at least about <b>40% on each</b> side, or your grade is <b>capped at 70%</b>. Clear that low bar and you keep the higher of the two &mdash; either track can reach 100%.</p>
             <p style="margin:0 0 6px">The <b>&uarr;</b> next to a quarter is your <b>ceiling</b> &mdash; the best grade you can still reach if you ace what's left.</p>
@@ -2946,10 +2947,10 @@
 <script src="js/ced2026-crosswalk.js"></script>
 <script src="js/ced2026-labels.js"></script>
 <script src="lib/qrcode.min.js"></script>
-<script src="canvas_engine.js?v=2026-10-09-ke78"></script>
-<script src="sprite_sheet.js?v=2026-10-09-ke78"></script>
-<script src="classroom-board.js?v=2026-10-09-ke78"></script>
-<script src="pico-home.js?v=2026-10-09-ke78"></script>
+<script src="canvas_engine.js?v=2026-10-10-7h5g"></script>
+<script src="sprite_sheet.js?v=2026-10-10-7h5g"></script>
+<script src="classroom-board.js?v=2026-10-10-7h5g"></script>
+<script src="pico-home.js?v=2026-10-10-7h5g"></script>
 <script src="ti84-plot.js"></script>
 <script src="activity-bridge.js"></script>
 <script src="activity-colorbox.js"></script>
@@ -9091,8 +9092,9 @@ function _gradePillRule(pcAvg, workAvg, pcDay, pcOnFile) {
 
 // Mirrors of the server's weights (roster-server/lesson-grade.js V3_WORK_WEIGHTS and
 // roster-server/gradebook-grid.js SCHOOLOGY_CATEGORY_WEIGHTS) — pinned equal by a test.
-var DESK_V3_WORK_WEIGHTS = { lessons: 0.30, quizzes: 0.30, posters: 0.30, blooket: 0.10 };
-var DESK_SCHOOLOGY_WEIGHTS = { Lesson: 15, Quizzes: 15, Blooket: 5, 'Progress Check': 50, Posters: 15 };
+// Posters are banked bonus, not a Work track or a Schoology category (POSTER_BONUS_SPEC.md).
+var DESK_V3_WORK_WEIGHTS = { lessons: 0.50, quizzes: 0.35, blooket: 0.15 };
+var DESK_SCHOOLOGY_WEIGHTS = { Lesson: 25, Quizzes: 17.5, Blooket: 7.5, 'Progress Check': 50 };
 // The grade, shown as the system it is (teacher 2026-09-27: "explain using a system of
 // inequalities … and why Schoology is different from either Work or PC"). Pure: returns lines.
 //   ctx: { grade, pcAvg, workAvg, pcDay, pcOnFile, workTracks, schoologyTotal, categoryAverages }
@@ -9105,14 +9107,14 @@ function _gradeMathLines(ctx) {
   var wt = ctx.workTracks || null;
   if (wt && hasWork) {
     var parts = [], num = 0, den = 0;
-    [['lessons', 'worksheets'], ['quizzes', 'quizzes'], ['blooket', 'flashcards'], ['posters', 'posters']].forEach(function (p) {
+    [['lessons', 'worksheets'], ['quizzes', 'quizzes'], ['blooket', 'flashcards']].forEach(function (p) {
       var v = wt[p[0]];
       if (typeof v !== 'number') return;
       var w = DESK_V3_WORK_WEIGHTS[p[0]];
       parts.push(Math.round(w * 100) + '\u00b7' + n(v) + ' (' + p[1] + ')');
       num += w * v; den += w;
     });
-    if (den > 0) lines.push('Work = [' + parts.join(' + ') + '] / ' + Math.round(den * 100) + ' = ' + n(num / den) + (den < 0.999 ? '   (posters join later)' : ''));
+    if (den > 0) lines.push('Work = [' + parts.join(' + ') + '] / ' + Math.round(den * 100) + ' = ' + n(num / den));
   }
   // The rule.
   lines.push('If Work \u2265 40 and PC \u2265 40:  Grade = max(Work, PC)');
@@ -9144,7 +9146,7 @@ function _gradeMathLines(ctx) {
       lines.push('Once ' + aheadWhat + ' due: Schoology ≈ ' + n(ctx.schoologyProjectedTotal) + ' (the ahead cells join their categories).');
     }
     lines.push('Schoology is different because it averages only the columns already in Schoology, by category weight'
-      + (missing.length ? ' (' + missing.join(', ') + ' join when their columns open)' : '')
+      + (missing.length ? ' (' + missing.join(', ') + (missing.length === 1 ? ' joins when its columns open' : ' join when their columns open') + ')' : '')
       + '; it leaves out work done ahead of the calendar and uses different weights from the Desk\u2019s Work track. The Desk number is the one that follows the rule above.');
   }
   return lines;
@@ -9605,7 +9607,7 @@ function _buildCoachContext(curQ, q) {
     // missing field never invents PC work.
     pcDue: !!(q && q.pcDue === true),
     workAvg: (q && typeof q.workAvg === 'number') ? q.workAvg : null,
-    // Work sub-track breakdown {lessons,quizzes,blooket,posters} so the coach can
+    // Work sub-track breakdown {lessons,quizzes,blooket} so the coach can
     // explain what's INSIDE the Work track (esp. Blooket, otherwise invisible).
     workTracks: (q && q.workTracks && typeof q.workTracks === 'object') ? q.workTracks : null,
     lessonsGraded: (q && typeof q.lessonsGraded === 'number') ? q.lessonsGraded : null,
@@ -10139,7 +10141,7 @@ async function renderDoNow() {
     }
     if (typeof _todayLessonInf !== 'undefined' && _todayLessonInf && _todayLessonInf.kind === 'poster') {
       var posterLinks = (typeof posterLinksFor === 'function') ? posterLinksFor(_todayLessonInf.t) : null;
-      show('Today: ' + _todayLessonInf.n + ' — groups of three.\n'
+      show('Today: ' + _todayLessonInf.n + ' — groups of three. Bonus (banked).\n'
         + (posterLinks ? 'Click today’s tile for your group sheet and the example poster.' : 'Your teacher hands out the group sheets in class.'), 'todo');
       return;
     }
@@ -18868,9 +18870,10 @@ function _walletCountingNote() {
     note.style.cssText = 'font-size:10px;line-height:1.35;margin-top:6px;color:#666';
     note.textContent = (typeof EffortFacts !== 'undefined' && EffortFacts && EffortFacts.COUNTING_NOTE)
         ? EffortFacts.COUNTING_NOTE
-        : 'The Desk counts every lesson you have done, ahead of the calendar or not. '
+        : 'Work is worksheets 50%, quizzes 35%, Blookets 15%. '
+            + 'The Desk counts every lesson you have done, ahead of the calendar or not. '
             + 'Schoology is a rolling snapshot of what the class has covered so far, so early work shows up there when its column opens. '
-            + 'Bonus sheets are banked and added at the end of the quarter to whichever track helps you more — they can only raise your grade.';
+            + 'Bonus sheets (DOK sheets and unit posters) are banked and added at the end of the quarter to whichever track helps you more — they can only raise your grade.';
     return note;
 }
 function _walletPaint(host, receipts, loading) {
@@ -20699,7 +20702,9 @@ var _myGradebookKeyHandler = null;
 function _myGradebookCatOrder() {
     // Local (not a top-level const) so the render never depends on top-level eval
     // order — keeps it self-contained + testable.
-    return ['Lesson', 'Quizzes', 'Blooket', 'Progress Check', 'Posters'];
+    // No Posters: posters are banked bonus, not a category (a stray legacy category
+    // still renders, appended after these).
+    return ['Lesson', 'Quizzes', 'Blooket', 'Progress Check'];
 }
 
 function _attachMyGradebookKeyHandler() {
@@ -27179,7 +27184,7 @@ function sTip(ev,dt,inf,ds){if(inf===NC||!inf)return;
         if(inf.as)h+=`<div class="th">Assign: ${_resourcePanelEsc(newLabels?cedDisplayText(inf.as):inf.as)}</div>`;
         if(inf.db)h+='<div class="th">** Double topic day **</div>';
         if(inf.kind==='pc')h+='<div class="th" style="color:#2b6cb0">'+((typeof PC_LINKS!=='undefined'&&PC_LINKS[inf.t])?'Click to open in AP Classroom':'Taken in AP Classroom')+'</div>';
-        if(inf.kind==='poster')h+='<div class="th" style="color:#2b6cb0">'+((typeof posterLinksFor==='function'&&posterLinksFor(inf.t))?'Click for the group sheets + example poster':'Groups of three, Data / Graph / Sentence')+'</div>';
+        if(inf.kind==='poster')h+='<div class="th" style="color:#2b6cb0">'+((typeof posterLinksFor==='function'&&posterLinksFor(inf.t))?'Click for the group sheets + example poster':'Groups of three, Data / Graph / Sentence')+'</div><div class="th">Bonus (banked)</div>';
         const keys=inf.group?groupTopics(inf):[inf.t];
         const re=keys.map(getRegistryEntry).find(Boolean);
         if(re){
@@ -27718,7 +27723,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-10-09-ke78';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-10-10-7h5g';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

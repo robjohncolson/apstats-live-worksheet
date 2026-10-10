@@ -208,14 +208,14 @@ describe('computeQuarterV3 -- Blooket track (make-up; missing-due = 0)', () => {
       quarterKey: 'Q1', config: CFG, lessonMap, schedule,
       todayDateStr: '2026-09-20', section: 'PeriodB', unitPcData: {},
     });
-    // lessons .8, quizzes .6 -> mean = .7 -> 70.0
-    expect(r.workAvg).toBeCloseTo(70.0, 1);
+    // lessons .8, quizzes .6 -> (.50*.8 + .35*.6)/.85 = .61/.85 = .717647 -> 71.8
+    expect(r.workAvg).toBeCloseTo(71.8, 1);
   });
 
   it('a played game score on a Blooket-bearing due lesson engages the track', () => {
     // blooketLessons = ['1.1']: only 1.1 counts toward the Blooket denominator.
     // lessons .8, quizzes .6, blooket 1.0 ->
-    //   workAvg = (.30*.8 + .30*.6 + .10*1.0)/.70 = .52/.70 = .742857 -> 74.3
+    //   workAvg = .50*.8 + .35*.6 + .15*1.0 = .76 -> 76.0
     const lessonMap = lessonMapOf({
       '1.1': { Cws: 80, W: null, Q: 60, lessonGrade: 80, blooket: 100 },
       '1.2': { Cws: 80, W: null, Q: 60, lessonGrade: 80, blooket: null },
@@ -225,7 +225,7 @@ describe('computeQuarterV3 -- Blooket track (make-up; missing-due = 0)', () => {
       todayDateStr: '2026-09-20', section: 'PeriodB', unitPcData: {},
       blooketLessons: ['1.1'],
     });
-    expect(r.workAvg).toBeCloseTo(74.3, 1);
+    expect(r.workAvg).toBeCloseTo(76.0, 1);
   });
 
   it('MISSING-DUE = 0: a Blooket-bearing due lesson with no score drags the track', () => {
@@ -242,8 +242,8 @@ describe('computeQuarterV3 -- Blooket track (make-up; missing-due = 0)', () => {
       blooketLessons: ['1.1', '1.2'],
     });
     // blooket track = (0.4 + 0)/2 = 0.2 (missing counted as 0, NOT excluded) ->
-    //   (.30*1 + .30*1 + .10*.2)/.70 = .62/.70 = .885714 -> 88.6
-    expect(r.workAvg).toBeCloseTo(88.6, 1);
+    //   .50*1 + .35*1 + .15*.2 = .88 -> 88.0
+    expect(r.workAvg).toBeCloseTo(88.0, 1);
   });
 
   it('a due lesson WITHOUT a Blooket is excluded from the denominator (no unfair 0)', () => {
@@ -258,7 +258,7 @@ describe('computeQuarterV3 -- Blooket track (make-up; missing-due = 0)', () => {
       todayDateStr: '2026-09-20', section: 'PeriodB', unitPcData: {},
       blooketLessons: ['1.1'], // only 1.1 has a Blooket
     });
-    // blooket track = mean(1.0) = 1.0 -> (.30*1 + .30*1 + .10*1)/.70 = 1.0 -> 100.0
+    // blooket track = mean(1.0) = 1.0 -> .50*1 + .35*1 + .15*1 = 1.0 -> 100.0
     expect(r.workAvg).toBeCloseTo(100.0, 1);
   });
 
@@ -282,8 +282,8 @@ describe('computeQuarterV3 -- Blooket track (make-up; missing-due = 0)', () => {
       blooketLessons: ['1.1', '1.2', '1.3'],
     });
     // Collapsed: blooket track = mean(60, 100) = 0.80 (NOT (60+60+100)/3 = 73.3).
-    // workAvg = (.30*1 + .30*1 + .10*.80)/.70 = .68/.70 = .971429 -> 97.1
-    expect(r.workAvg).toBeCloseTo(97.1, 1);
+    // workAvg = .50*1 + .35*1 + .15*.80 = .97 -> 97.0
+    expect(r.workAvg).toBeCloseTo(97.0, 1);
   });
 
   it('two played Blookets -> the track is their MEAN', () => {
@@ -297,8 +297,8 @@ describe('computeQuarterV3 -- Blooket track (make-up; missing-due = 0)', () => {
       blooketLessons: ['1.1', '1.2'],
     });
     // blooket track = mean(1.0, 0.0) = 0.5
-    // workAvg = (.30*1 + .30*1 + .10*.5)/.70 = .65/.70 = .928571 -> 92.9
-    expect(r.workAvg).toBeCloseTo(92.9, 1);
+    // workAvg = .50*1 + .35*1 + .15*.5 = .925 -> 92.5
+    expect(r.workAvg).toBeCloseTo(92.5, 1);
   });
 
   it('blooket ceiling does NOT inflate: the ceiling uses the recorded mean, not 100', () => {

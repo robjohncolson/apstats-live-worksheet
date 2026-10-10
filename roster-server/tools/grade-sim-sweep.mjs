@@ -15,10 +15,9 @@ const RANDOM_STUDENT_COUNT = 40;
 const RANDOM_SEED = 0x5eed2026;
 
 const KNOBS = {
-  'v3WorkWeights.lessons': [0.10, 0.20, 0.30, 0.40, 0.50],
-  'v3WorkWeights.quizzes': [0.10, 0.20, 0.30, 0.40, 0.50],
-  'v3WorkWeights.posters': [0.10, 0.20, 0.30, 0.40, 0.50],
-  'v3WorkWeights.blooket': [0.00, 0.05, 0.10, 0.20, 0.30],
+  'v3WorkWeights.lessons': [0.30, 0.40, 0.50, 0.60, 0.70],
+  'v3WorkWeights.quizzes': [0.15, 0.25, 0.35, 0.45, 0.55],
+  'v3WorkWeights.blooket': [0.00, 0.05, 0.15, 0.20, 0.30],
   'v3Gates.floor': [0.30, 0.35, 0.40, 0.45, 0.50],
   'v3Gates.ceiling': [0.50, 0.60, 0.70, 0.80, 0.90],
   C: [75, 80, 85, 90, 95],

@@ -107,6 +107,7 @@
     ],
     "config": {
       "C": 85,
+      "bonusMultiplier": 1.5,
       "diagnosticTheta": 0.65,
       "dueAfterLessonDay": true,
       "dueLagDays": 13,
@@ -202,10 +203,9 @@
       "v3LessonsByDate": true,
       "v3LessonsExcludeQuiz": true,
       "v3WorkWeights": {
-        "blooket": 0.1,
-        "lessons": 0.3,
-        "posters": 0.3,
-        "quizzes": 0.3
+        "blooket": 0.15,
+        "lessons": 0.5,
+        "quizzes": 0.35
       }
     },
     "lessonSchedule": {

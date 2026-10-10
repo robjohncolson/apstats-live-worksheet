@@ -730,19 +730,16 @@
 
 
 
-
-
-
     (function () {
       'use strict';
 
       // === v3 ENGINE (copied verbatim; displayed numbers MUST equal the server's) ===
-      var V3_WORK_WEIGHTS = { lessons: 0.30, quizzes: 0.30, posters: 0.30, blooket: 0.10 };
+      var V3_WORK_WEIGHTS = { lessons: 0.50, quizzes: 0.35, blooket: 0.15 };
       function quarterGradeV3(pc, work) { // both on 0..1
         if (pc >= 0.40 && work >= 0.40) return Math.max(pc, work);
         return Math.max(0.7 * pc, 0.7 * work, (pc + work) / 2);
       }
-      function workAvgV3(tracks) { // {lessons,quizzes,posters,blooket} each 0..1 or null; renormalizes over present
+      function workAvgV3(tracks) { // {lessons,quizzes,blooket} each 0..1 or null; renormalizes over present
         var num = 0, den = 0;
         for (var k in V3_WORK_WEIGHTS) {
           var v = tracks[k]; if (v == null) continue;
@@ -868,7 +865,7 @@
       var realGradeOut = document.getElementById('gp-real-grade');
       var realInputIds = [
         'gp-pc-u1', 'gp-pc-u2', 'gp-pc-u3',
-        'gp-w-lessons', 'gp-w-quizzes', 'gp-w-posters', 'gp-w-blooket'
+        'gp-w-lessons', 'gp-w-quizzes', 'gp-w-blooket'
       ];
 
       function meanOf(vals) { // vals already filtered to non-null
@@ -894,7 +891,6 @@
         var tracks = {
           lessons: readPct('gp-w-lessons'),
           quizzes: readPct('gp-w-quizzes'),
-          posters: readPct('gp-w-posters'),
           blooket: readPct('gp-w-blooket')
         };
         var workAvg = workAvgV3(tracks);

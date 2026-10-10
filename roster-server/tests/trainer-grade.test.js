@@ -253,9 +253,9 @@ describe('computeQuarterV3 — trainer track (visible-but-uncounted by default)'
       schedule, todayDateStr: '2026-09-20', section: 'PeriodB', unitPcData: {},
       trainerLessons: Object.keys(TRAINER_MAP),
     });
-    // lessons 1.0 (.30), quizzes 1.0 (.30), trainer mean(1.0, 0)=0.5 (.05):
-    // (.30 + .30 + .05*.5) / .65 = .625/.65 = .961538 → 96.2
-    expect(r.workAvg).toBeCloseTo(96.2, 1);
+    // lessons 1.0 (.50), quizzes 1.0 (.35), trainer mean(1.0, 0)=0.5 (.05):
+    // (.50 + .35 + .05*.5) / .90 = .875/.90 = .972222 → 97.2
+    expect(r.workAvg).toBeCloseTo(97.2, 1);
   });
 });
 

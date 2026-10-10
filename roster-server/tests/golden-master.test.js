@@ -156,7 +156,7 @@ describe('synthetic golden master has teeth', () => {
       inputs: syntheticFixture.inputs,
       configOverrides: {
         ...syntheticFixture.inputs.configOverrides,
-        v3WorkWeights: { lessons: 0.05, quizzes: 0.75, posters: 0.10, blooket: 0.10 },
+        v3WorkWeights: { lessons: 0.05, quizzes: 0.85, blooket: 0.10 },
       },
     });
     expectReadableDifference(difference, 'v3WorkWeights perturbation');

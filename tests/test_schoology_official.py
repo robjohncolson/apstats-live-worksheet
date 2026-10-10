@@ -60,15 +60,24 @@ class TestWorkGrade(unittest.TestCase):
     }
 
     def test_matches_schoologys_calculation(self):
-        # Allison's Period B row on 2026-10-01: Schoology showed 78.54.
-        self.assertAlmostEqual(so.work_from_cells(self.cells), 78.54, places=1)
+        # Allison's Period B row on 2026-10-01: Schoology showed 78.54 under the old
+        # 15/15/5 weights. Under 25/17.5/7.5 (POSTER_BONUS_SPEC.md) the same cells give
+        # (25*83.48 + 17.5*88.9 + 7.5*32.6) / 50 = 77.75.
+        self.assertAlmostEqual(so.work_from_cells(self.cells), 77.75, places=1)
+
+    def test_work_weights_are_50_35_15_with_no_posters(self):
+        self.assertEqual(so.WORK_WEIGHTS, {"Lesson": 25, "Quizzes": 17.5, "Blooket": 7.5})
+
+    def test_a_poster_column_is_ignored(self):
+        cells = dict(self.cells, **{"Unit 1 Poster": 0})
+        self.assertAlmostEqual(so.work_from_cells(cells), 77.75, places=1)
 
     def test_calc_is_used_until_a_progress_check_column_exists(self):
         self.assertEqual(so.work_grade(78.54, self.cells), 78.54)
 
     def test_progress_check_column_is_left_out_of_work(self):
         cells = dict(self.cells, **{"Unit 1 Progress Check": 30})
-        self.assertAlmostEqual(so.work_grade(60.0, cells), 78.54, places=1)
+        self.assertAlmostEqual(so.work_grade(60.0, cells), 77.75, places=1)
 
 
 class TestPcForQuarter(unittest.TestCase):

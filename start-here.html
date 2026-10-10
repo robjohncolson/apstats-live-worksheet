@@ -602,6 +602,7 @@
 
     <!-- THE GRADE PLAYGROUND -->
     <p>A graded exit ticket adds +5 (E), +3 (P), or +1 (I) without lowering your lesson grade: lessons can reach 105%; quarters still cap at 100%.</p>
+    <p>Unit posters are bonus: graded E/P/I, banked, applied at the end of the quarter.</p>
     <div class="gp" id="grade-playground">
       <div class="gp-tabs" role="tablist" aria-label="Grade playground">
         <button class="gp-tab" id="gp-tab-toy" role="tab" type="button"
@@ -677,10 +678,6 @@
             <input type="number" id="gp-w-quizzes" min="0" max="100" step="any" inputmode="decimal" placeholder="blank">
           </div>
           <div class="gp-field">
-            <label for="gp-w-posters">Posters</label>
-            <input type="number" id="gp-w-posters" min="0" max="100" step="any" inputmode="decimal" placeholder="blank">
-          </div>
-          <div class="gp-field">
             <label for="gp-w-blooket">Blooket</label>
             <input type="number" id="gp-w-blooket" min="0" max="100" step="any" inputmode="decimal" placeholder="blank">
           </div>
@@ -709,7 +706,7 @@
       <summary>The full rules, in words</summary>
       <p><strong>The whole course is open to you from day one</strong>, and you work at your own pace. The work has a destination, not a nightly deadline.</p>
       <p>Your grade is built from <strong>two tracks</strong>, and it takes <strong>whichever one you're stronger at</strong>:</p>
-      <p><strong>① Your work</strong> — your everyday graded pieces: each lesson's <strong>worksheet</strong> and <strong>quiz</strong>, your unit <strong>posters</strong>, and each lesson's <strong>Blooket</strong> (a small slice, scored on how many questions you answer and how accurate you are — answer them all correctly and it's full marks; the in-game points you race for are just for fun). Steady effort, banked as you go.</p>
+      <p><strong>① Your work</strong> — your everyday graded pieces: each lesson's <strong>worksheet</strong> and <strong>quiz</strong>, and each lesson's <strong>Blooket</strong> (a small slice, scored on how many questions you answer and how accurate you are — answer them all correctly and it's full marks; the in-game points you race for are just for fun). Steady effort, banked as you go.</p>
       <p><strong>② The Progress Checks</strong> — one per unit, in class, AP-exam-style, and <strong>retakable until the quarter closes</strong>. Pure mastery: prove you know the material and this alone can carry you.</p>
       <p><strong>Your grade is the higher of the two.</strong> Lead with your strength — ace the AP checks <em>or</em> put in the steady work, and either path goes all the way to 100%.</p>
       <p><strong>One catch, and it's a low bar:</strong> you have to at least <strong>show up</strong> for both sides — about <strong>40% on each</strong> (roughly D-level; an honest attempt clears it). Blow off a whole side once it's in play — never take a Progress Check that's due, or stop doing the work — and your grade is <strong>capped at 70%</strong> until you put in that minimum. It isn't a punishment for struggling; it's so no one can skip half the class and still claim full marks. Make a real attempt at both and the cap is gone — you keep the higher of your two scores.</p>
@@ -737,12 +734,12 @@
       'use strict';
 
       // === v3 ENGINE (copied verbatim; displayed numbers MUST equal the server's) ===
-      var V3_WORK_WEIGHTS = { lessons: 0.30, quizzes: 0.30, posters: 0.30, blooket: 0.10 };
+      var V3_WORK_WEIGHTS = { lessons: 0.50, quizzes: 0.35, blooket: 0.15 };
       function quarterGradeV3(pc, work) { // both on 0..1
         if (pc >= 0.40 && work >= 0.40) return Math.max(pc, work);
         return Math.max(0.7 * pc, 0.7 * work, (pc + work) / 2);
       }
-      function workAvgV3(tracks) { // {lessons,quizzes,posters,blooket} each 0..1 or null; renormalizes over present
+      function workAvgV3(tracks) { // {lessons,quizzes,blooket} each 0..1 or null; renormalizes over present
         var num = 0, den = 0;
         for (var k in V3_WORK_WEIGHTS) {
           var v = tracks[k]; if (v == null) continue;
@@ -868,7 +865,7 @@
       var realGradeOut = document.getElementById('gp-real-grade');
       var realInputIds = [
         'gp-pc-u1', 'gp-pc-u2', 'gp-pc-u3',
-        'gp-w-lessons', 'gp-w-quizzes', 'gp-w-posters', 'gp-w-blooket'
+        'gp-w-lessons', 'gp-w-quizzes', 'gp-w-blooket'
       ];
 
       function meanOf(vals) { // vals already filtered to non-null
@@ -894,7 +891,6 @@
         var tracks = {
           lessons: readPct('gp-w-lessons'),
           quizzes: readPct('gp-w-quizzes'),
-          posters: readPct('gp-w-posters'),
           blooket: readPct('gp-w-blooket')
         };
         var workAvg = workAvgV3(tracks);

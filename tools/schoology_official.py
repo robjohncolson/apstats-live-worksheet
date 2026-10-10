@@ -37,7 +37,10 @@ GRADE_FLOOR = 40.0
 # Mirrors roster-server/grade-config.js BONUS_MULTIPLIER -- pinned equal by a test.
 BONUS_MULTIPLIER = 1.5
 # Schoology "calculate by percent" category weights (both SY26-27 sections).
-WORK_WEIGHTS = {"Lesson": 15, "Quizzes": 15, "Posters": 15, "Blooket": 5}
+# Work 50 x lessons 50 / quizzes 35 / blooket 15 (POSTER_BONUS_SPEC.md, 2026-10-09).
+# Posters are banked bonus, not a category: a stray Poster column maps to "Posters",
+# which is not in WORK_WEIGHTS, so work_from_cells ignores it.
+WORK_WEIGHTS = {"Lesson": 25, "Quizzes": 17.5, "Blooket": 7.5}
 
 
 # --------------------------------------------------------------------------- #

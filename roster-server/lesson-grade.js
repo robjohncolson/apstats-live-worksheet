@@ -1032,9 +1032,11 @@ export function computeQuarterFromLessons({
 
 // Work-track weights. A track contributes only when present (non-null); the
 // weights renormalize over present tracks (same pattern as computeLessonGrades'
-// B blend). Posters + Blooket have no data source yet (v3.4 / v3.5), so today
-// only Lessons + Quizzes are present → workAvg = mean(lessons, quizzes).
-export const V3_WORK_WEIGHTS = { lessons: 0.30, quizzes: 0.30, posters: 0.30, blooket: 0.10 };
+// B blend). Work = lessons 50 / quizzes 35 / blooket 15 (POSTER_BONUS_SPEC.md,
+// 2026-10-09). Posters are NOT a Work track: a poster is a banked Bonus Bank row
+// applied at quarter close, so it can only raise a grade. A `posters` value in
+// workTracks is still accepted but ignored (no weight key).
+export const V3_WORK_WEIGHTS = { lessons: 0.50, quizzes: 0.35, blooket: 0.15 };
 
 // The two gating constants for quarterGradeV3, default values. `floor` is the
 // 40% both-tracks-cleared threshold that unlocks max(pc, work); `ceiling` is the
@@ -1055,8 +1057,9 @@ export function quarterGradeV3(pcAvg, workAvg, gates = V3_GATES) {
   return Math.max(ceiling * pcAvg, ceiling * workAvg, (pcAvg + workAvg) / 2);
 }
 
-// Weighted blend of the four work tracks, renormalized over present tracks.
-// tracks: { lessons, quizzes, posters, blooket } each [0,1] or null (absent).
+// Weighted blend of the work tracks, renormalized over present tracks.
+// tracks: { lessons, quizzes, blooket } each [0,1] or null (absent). Only keys
+// in `weights` count, so an extra key (e.g. legacy `posters`) is ignored.
 // Returns [0,1], or null when no track is present.
 export function workAvgV3(tracks, weights = V3_WORK_WEIGHTS) {
   let num = 0, den = 0;
@@ -1145,7 +1148,7 @@ function to100(x) { return x == null ? null : Math.round(x * 1000) / 10; }
 //   section      -- "PeriodB" / "PeriodE" / "B" / "E" / null
 //   unitPcData   -- { [unitNum]: rawPct|null }  (raw PC % per unit, or null)
 //   gradingWindowStart -- cohort window start (or null)
-//   workTracks   -- { posters, blooket } each [0,1] or null (future; default null)
+//   workTracks   -- { posters } legacy input, accepted but ignored (posters are bonus)
 //
 // Returns { quarterGrade, ceiling, lessonsDue, lessonsGraded, lessonsTotal,
 //           pcAvg, workAvg } — quarterGrade/ceiling/pcAvg/workAvg on 0..100.
