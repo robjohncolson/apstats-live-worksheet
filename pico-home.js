@@ -431,8 +431,9 @@
     'html.pico-home .pico-mygrade-body { flex: 1 1 auto; min-height: 0; overflow: auto; background: var(--paper); }',
     'html.pico-home #app-wallet-overlay.pico-mygrade #wallet-content .wallet-zero-card,',
     'html.pico-home #app-wallet-overlay.pico-mygrade #wallet-content .pico-ledger-drawn { display: none !important; }',
-    'html.pico-home #app-wallet-overlay.pico-mygrade #wallet-content .pico-ledger-rest { background: var(--paper) !important;',
-    '  border: 3px solid #e4e4e4 !important; border-radius: 4px !important; box-shadow: none !important; }',
+    /* v2: the rest of the Desk's balance card moved into the folds; what is left is hidden. */
+    'html.pico-home #app-wallet-overlay.pico-mygrade #wallet-content .pico-ledger-rest { display: none !important; }',
+    'html.pico-home #app-wallet-overlay.pico-mygrade #wallet-content { padding: 0 !important; }',
     'html.pico-home #app-wallet-overlay.pico-mygrade #wallet-content .s7btn, html.pico-home .pico-ledger .s7btn {',
     '  font: 700 15px/1.2 var(--plain-font) !important; min-height: 40px; padding: 4px 14px !important; background: var(--paper);',
     '  color: var(--ink); border: 3px solid #3DA35D; border-radius: 4px; box-shadow: none; cursor: pointer; }',
@@ -469,6 +470,34 @@
     'html.pico-home .pico-ledger .wallet-effort-ahead { padding-left: 8px; border-left: 4px solid #3DA35D; }',
     'html.pico-home .pico-ledger .pl-note { margin: 8px 0 0; font-size: 14px; line-height: 1.4; color: #555; }',
     'html.pico-home .pico-ledger .pl-head { margin: 0 0 4px; font-size: 16px; font-weight: 800; letter-spacing: .04em; }',
+    /* v2: HERO (grade | candy · keys) and the bucket NAV stay above the scroll area. */
+    'html.pico-home .pico-ledger-top { flex: none; padding: 8px 16px 6px; border-bottom: 2px solid #e4e4e4; }',
+    'html.pico-home .pico-ledger-top .pl-hero { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: stretch; }',
+    'html.pico-home .pico-ledger-top .pl-panel { margin: 0; padding: 8px 14px; }',
+    'html.pico-home .pico-ledger-top .pl-balance { flex: 1 1 300px; }',
+    'html.pico-home .pico-ledger-top .pl-balance .wallet-grade-drop, html.pico-home .pico-ledger-top .pl-balance .pl-line { font-size: 14px; margin-top: 4px; }',
+    'html.pico-home .pico-ledger-top .pl-wallet { flex: 0 1 auto; display: flex; gap: 20px; align-items: center; border-color: #C9A227; }',
+    'html.pico-home .pico-ledger-top .pl-stat { display: flex; flex-direction: column; align-items: center; min-width: 88px; text-align: center; }',
+    'html.pico-home .pico-ledger-top .pl-stat-label { font-size: 14px; font-weight: 800; letter-spacing: .08em; }',
+    'html.pico-home .pico-ledger-top .pl-stat-num { font-size: 40px; font-weight: 800; line-height: 1.05; }',
+    'html.pico-home .pico-ledger-top .pl-stat-note { font-size: 13px; color: #555; }',
+    'html.pico-home .pico-ledger-top .pl-nav { display: flex; flex-wrap: wrap; gap: 6px 10px; margin-top: 8px; }',
+    'html.pico-home .pico-ledger-top .pl-nav-btn { position: relative; min-height: 44px; padding: 4px 14px; background: var(--paper);',
+    '  color: var(--ink); border: 4px solid #e4e4e4; border-radius: 4px; font: 800 16px/1.2 var(--plain-font); letter-spacing: .04em; cursor: pointer; }',
+    'html.pico-home .pico-ledger-top .pl-nav-btn.is-current { border-color: #3DA35D; }',
+    'html.pico-home .pico-ledger-top .pl-nav-btn:focus-visible { outline: none; border-color: var(--orange); }',
+    'html.pico-home .pico-ledger .pl-tile.wz-done .wz-when { color: #1f6b3a; font-weight: 700; }',
+    'html.pico-home .pico-ledger .pl-tile[hidden] + .snap-alist { display: none !important; }',
+    'html.pico-home .pico-ledger .pl-empty { margin: 8px 0; font-size: 16px; color: #555; }',
+    /* v2 folds: closed by default (state per device), the Desk's own nodes inside. */
+    'html.pico-home .pl-folds { padding: 0 16px 16px; }',
+    'html.pico-home .pl-folds * { font-family: var(--plain-font) !important; }',
+    'html.pico-home .pl-folds .pl-fold { border-top: 2px solid #e4e4e4; }',
+    'html.pico-home .pl-folds .pl-fold-head { width: 100%; min-height: 44px; padding: 0 4px; text-align: left; background: none; border: 0;',
+    '  font: 800 15px/1.2 var(--plain-font); letter-spacing: .04em; color: var(--ink); cursor: pointer; }',
+    'html.pico-home .pl-folds .pl-fold-head:focus-visible { outline: 3px solid var(--ink); outline-offset: -3px; }',
+    'html.pico-home .pl-folds .pl-fold-body { padding: 4px 4px 12px; }',
+    'html.pico-home #app-wallet-overlay.pico-mygrade .pico-grade-head { display: none; }',
     /* Phase 3: every other Desk window in the plain frame. Position, size and stacking stay the
        Desk's; the frame adds the orange border, a paper interior and the Pico type and buttons. */
     'html.pico-home .pico-p3:not(.game-window)::after { content: ""; position: absolute; inset: 31px 12px 12px; z-index: -1; background: var(--paper); }',
@@ -1653,6 +1682,11 @@
   function onCaptureKey(event) {
     var target = event.target;
     if (isEditable(target)) return;
+    // My Grade's bucket nav: Left / Right move between ZEROED / DUE SOON / NOT YET / DONE.
+    if (target && target.closest && target.closest('#pico-ledger-nav')) {
+      if (onLedgerNavKey(event)) event.stopPropagation();
+      return;
+    }
     var inPico = Boolean(target && target.closest && target.closest('#pico-home'));
     var onPage = !target || target === document || target === document.body || target === document.documentElement;
     if (dogeMenuOpen()) {
@@ -2247,6 +2281,8 @@
         cancelScrollClaim();
         if (!view.walletOpener) view.walletOpener = openerRef(document.activeElement);
         renderGradeHead();
+        resetLedgerBucket();
+        renderLedgerWallet();
         close.focus();
       }
       if (!open && wasOpen) restoreFocus(view.walletOpener);
@@ -2272,13 +2308,16 @@
   //
   // The Desk still paints #wallet-content exactly as before (its text is identical with the flag
   // on or off). The parts drawn here are hidden there by CSS; the rest of it (signed-records
-  // chip, effort points, rewards, export / print, the score breakdown, recorded work) stays
-  // below in Pico type. The Desk's _walletPaint and _walletPrependZeroCard are wrapped (original
+  // chip, effort points, rewards, export / print, the score breakdown, recorded work) is moved,
+  // node by node, into the closed MORE folds (v2). The Desk's _walletPaint and
+  // _walletPrependZeroCard (and, for the hero, _walletDogePanel / _dogeWalletRender) are wrapped (original
   // first, then this redraw), like rCal / renderDoNow in watchDesk; their bodies are untouched.
 
   // The grey of the Desk's "Past due — not counting yet" rows (.wz-later). Red and yellow are the
   // Desk's ZERO_TINT (= the Do Now CSS), read at draw time.
   var LEDGER_LATER_TINT = { bg: '#eee', border: '#aaa' };
+  // DONE tiles: the Pico green (#3DA35D) used for every secondary marker; "caught up".
+  var LEDGER_DONE_TINT = { bg: '#e7f5ec', border: '#3DA35D' };
 
   var ledgerState = { receipts: [], zeroSig: null };
 
@@ -2294,37 +2333,66 @@
     window[name] = wrapped;
   }
 
+  function idEl(tag, className, id) {
+    var node = el(tag, className);
+    node.id = id;
+    return node;
+  }
+
+  // v2 (teacher 2026-10-10: "quite lengthy… put a pico park style menu in there for
+  // navigation… the candy/doge balance should be at the forefront"). Layout, top to bottom:
+  //   status strip                      (always visible)
+  //   HERO: grade block | CANDY · KEYS  (always visible)
+  //   NAV:  ZEROED · DUE SOON · NOT YET · DONE, each with its count (always visible)
+  //   scroll area: the tiles of the chosen bucket, the effort + bonus lines, then closed folds
+  //   (MORE ▸ HOW IT IS COUNTED / REWARDS / SCORE BREAKDOWN / RECEIPTS / EXPORT / PRINT / SUMMER)
+  //   holding the Desk's own nodes (moved, handlers intact), open state remembered per device.
   function setupPicoLedger(win, head, content) {
-    var status = el('p', 'pico-ledger-status');
-    status.id = 'pico-ledger-status';
+    var status = idEl('p', 'pico-ledger-status', 'pico-ledger-status');
     status.hidden = true;
     status.setAttribute('aria-live', 'polite');
     win.insertBefore(status, head);
 
-    // One scroll area under the status strip: the official grade, the Pico ledger, then the
-    // rest of the Desk's own ledger content.
-    var body = el('div', 'pico-mygrade-body');
-    body.id = 'pico-mygrade-body';
+    var top = idEl('div', 'pico-ledger pico-ledger-top', 'pico-ledger-top');
+    var hero = el('div', 'pl-hero');
+    var balance = idEl('section', 'pl-panel pl-balance', 'pico-ledger-balance');
+    balance.setAttribute('aria-label', 'Your grade');
+    var wallet = idEl('section', 'pl-panel pl-wallet', 'pico-ledger-wallet');
+    wallet.setAttribute('aria-label', 'Candy and keys');
+    hero.appendChild(balance);
+    hero.appendChild(wallet);
+    top.appendChild(hero);
+    var nav = idEl('div', 'pl-nav', 'pico-ledger-nav');
+    nav.setAttribute('role', 'toolbar');
+    nav.setAttribute('aria-label', 'Show work');
+    LEDGER_BUCKETS.forEach(function (bucket) {
+      var btn = button('pl-nav-btn', null);
+      btn.setAttribute('data-bucket', bucket.key);
+      btn.setAttribute('aria-pressed', 'false');
+      btn.addEventListener('click', function () { selectLedgerBucket(bucket.key, false); });
+      nav.appendChild(btn);
+    });
+    top.appendChild(nav);
+    win.insertBefore(top, head);
+
+    // One scroll area under the hero and the nav.
+    var body = idEl('div', 'pico-mygrade-body', 'pico-mygrade-body');
     win.insertBefore(body, head);
     body.appendChild(head);
 
-    var ledger = el('div', 'pico-ledger');
-    ledger.id = 'pico-ledger';
-    var zero = el('div', 'pl-zero');
-    zero.id = 'pico-ledger-zero';
-    zero.hidden = true;
+    var ledger = idEl('div', 'pico-ledger', 'pico-ledger');
+    var zero = idEl('div', 'pl-zero', 'pico-ledger-zero');
     zero.setAttribute('role', 'group');
-    zero.setAttribute('aria-label', 'Missing work');
-    var balance = el('section', 'pl-panel pl-balance');
-    balance.id = 'pico-ledger-balance';
-    balance.setAttribute('aria-label', 'Your grade');
-    var bonus = el('section', 'pl-panel pl-bonus');
-    bonus.id = 'pico-ledger-bonus';
+    zero.setAttribute('aria-label', 'Work');
+    var about = idEl('section', 'pl-panel pl-about', 'pico-ledger-about');
+    about.hidden = true;
+    var bonus = idEl('section', 'pl-panel pl-bonus', 'pico-ledger-bonus');
     bonus.hidden = true;
     ledger.appendChild(zero);
-    ledger.appendChild(balance);
+    ledger.appendChild(about);
     ledger.appendChild(bonus);
     body.appendChild(ledger);
+    body.appendChild(idEl('div', 'pico-ledger pl-folds', 'pico-ledger-folds'));
     body.appendChild(content);
 
     wrapDeskAfter('_walletPaint', function (host, receipts) {
@@ -2336,6 +2404,26 @@
       if (host !== byId('wallet-content')) return;
       renderLedgerZero();
     });
+    // The rewards box the Desk appends to its balance card: tagged for the REWARDS fold.
+    wrapDeskAfter('_walletDogePanel', function (host, pts) {
+      if (!host || !host.querySelector(':scope > .wallet-counting-note')) return;
+      // The Desk adds no rewards box when its preview is off (a student's explicit opt-out).
+      if (callDesk('_dogeWalletPreviewOn') !== true) {
+        ledgerState.wallet = { off: true };
+        renderLedgerWallet();
+        return;
+      }
+      var box = host.lastElementChild;
+      if (box) box.setAttribute('data-pico-fold', 'rewards');
+      ledgerState.wallet = { pending: true };
+      renderLedgerWallet();
+    });
+    // The Desk's /wallet answer, as its own rewards panel received it: the candy hero reads it.
+    wrapDeskAfter('_dogeWalletRender', function (box, w, pts) {
+      if (!box || box.getAttribute('data-pico-fold') !== 'rewards') return;
+      ledgerState.wallet = { w: w || null, pts: pts || null };
+      renderLedgerWallet();
+    });
   }
 
   function drawPicoLedger() {
@@ -2343,6 +2431,8 @@
     renderLedgerZero();
     renderLedgerBalance();
     renderLedgerBonus();
+    renderLedgerWallet();
+    renderLedgerFolds();
   }
 
   // The Desk's balance-card children up to and including "how your grade is counted", and its
@@ -2371,10 +2461,57 @@
 
   // The Desk card's data-sig: the same rows keep the tiles (and focus on a tile's button)
   // across a grade poll; only the status line is refreshed (as the Desk does).
-  function zeroSignature(warns, later) {
+  function zeroSignature(warns, later, done) {
     var sig = warns.map(function (w) { return w.lessonKey + ':' + w.kind + ':' + (w.past ? 1 : 0); }).join('|');
     if (later.length) sig += '#later:' + later.map(function (w) { return w.lessonKey + ':' + w.kind; }).join('|');
+    if (done.length) sig += '#done:' + done.map(function (w) { return w.lessonKey + ':' + w.kind; }).join('|');
     return sig;
+  }
+
+  // ── The four buckets (v2 nav). Every row sits in exactly one, decided by the Desk's own lists:
+  //   ZEROED   = _zeroCurrentWarnings() rows with past: true      (the ledger's red rows; a 0 now)
+  //   DUE SOON = _zeroCurrentWarnings() rows with past: false     (yellow; inside ZERO_WARN_DAYS)
+  //   NOT YET  = _pastDueCurrentWork() rows                       (grey; past due, the 0 is further
+  //                                                                than ZERO_WARN_DAYS away)
+  //   DONE     = the /grade lesson tracks that HAVE work, by the exact fields the two Desk lists
+  //              test for "missing" (worksheet: lessonGradeNoQuiz or Cws; quiz: Q when quizTotal > 0;
+  //              Blooket: blooket when the deck counts) — so no track can be both missing and done.
+  //              No score is shown on a DONE tile (per-lesson grades live in SCORE BREAKDOWN, which
+  //              is the Desk's lessonGradeNoQuiz grid).
+  var LEDGER_BUCKETS = [
+    { key: 'zeroed', label: 'ZEROED' },
+    { key: 'soon', label: 'DUE SOON' },
+    { key: 'notyet', label: 'NOT YET' },
+    { key: 'done', label: 'DONE' },
+  ];
+
+  function deskLessons() {
+    try { return Array.isArray(_gradeLessonsCache) ? _gradeLessonsCache : []; } catch (_) {
+      return Array.isArray(window._gradeLessonsCache) ? window._gradeLessonsCache : [];
+    }
+  }
+
+  function doneRows() {
+    var out = [];
+    deskLessons().forEach(function (L) {
+      if (!L || !L.lessonKey) return;
+      var row = function (kind) { return { lessonKey: L.lessonKey, kind: kind, unit: L.unit, worksheetKey: L.worksheetKey }; };
+      if (L.lessonGradeNoQuiz != null || L.Cws != null) out.push(row('worksheet'));
+      if ((L.quizTotal || 0) > 0 && L.Q != null) out.push(row('quiz'));
+      if (L.hasBlooket && !L.blooketBonus && L.blooket != null) out.push(row('blooket'));
+    });
+    return out;
+  }
+
+  function ledgerBuckets() {
+    var warns = ledgerList('_zeroCurrentWarnings');
+    return {
+      warns: warns,
+      zeroed: warns.filter(function (w) { return w.past; }),
+      soon: warns.filter(function (w) { return !w.past; }),
+      notyet: ledgerList('_pastDueCurrentWork'),
+      done: doneRows(),
+    };
   }
 
   function rowTrack(kind) {
@@ -2390,6 +2527,7 @@
 
   function tileTint(state) {
     if (state === 'later') return LEDGER_LATER_TINT;
+    if (state === 'done') return LEDGER_DONE_TINT;
     var tint = window.ZERO_TINT;
     if (!tint || !tint.now || !tint.soon) return null;
     return state === 'now' ? tint.now : tint.soon;
@@ -2397,14 +2535,21 @@
 
   // One Missing-work tile. Classes are the Desk row's (wz-past = a 0 now, red; none = a 0 soon,
   // yellow; wz-later = past due, not counting yet, grey); data-zero says the same in words.
-  function zeroTile(w, later) {
-    var state = later ? 'later' : (w.past ? 'now' : 'soon');
+  var BUCKET_OF_STATE = { now: 'zeroed', soon: 'soon', later: 'notyet', done: 'done' };
+
+  function zeroTile(w, state) {
+    var later = state === 'later';
     var className = 'pl-tile wz-row';
     if (later) className += ' wz-later';
+    else if (state === 'done') className += ' wz-done';
     else className += (w.past ? ' wz-past' : '') + (w.kind === 'blooket' ? ' wz-blooket' : '') + (w.kind === 'quiz' ? ' wz-quiz' : '');
     var tile = el('div', className);
-    tile.setAttribute('data-key', later ? w.lessonKey + ':' + w.kind + ':later' : w.lessonKey + ':' + rowTrack(w.kind));
+    var key = w.lessonKey + ':' + rowTrack(w.kind);
+    if (later) key = w.lessonKey + ':' + w.kind + ':later';
+    if (state === 'done') key = w.lessonKey + ':' + rowTrack(w.kind) + ':done';
+    tile.setAttribute('data-key', key);
     tile.setAttribute('data-zero', state);
+    tile.setAttribute('data-bucket', BUCKET_OF_STATE[state]);
     var tint = tileTint(state);
     if (tint) {
       tile.style.backgroundColor = tint.bg;
@@ -2420,6 +2565,10 @@
     tile.appendChild(el('span', 'wz-label', label));
     var title = callDesk('_zeroSchoologyTitle', [w]);
     if (title) tile.appendChild(el('span', 'pl-badge wz-sgy', 'Schoology: ' + title));
+    if (state === 'done') {
+      tile.appendChild(el('span', 'wz-when', 'Done'));
+      return tile;
+    }
     tile.appendChild(el('span', 'wz-when', callDesk(later ? '_pastDueWhenText' : '_zeroWhenText', [w]) || ''));
     if (later) return tile;
 
@@ -2437,37 +2586,131 @@
     var box = byId('pico-ledger-zero');
     var status = byId('pico-ledger-status');
     if (!box || !status) return;
-    var warns = ledgerList('_zeroCurrentWarnings');
-    var later = ledgerList('_pastDueCurrentWork');
+    var b = ledgerBuckets();
+    var warns = b.warns;
+    var later = b.notyet;
     var any = Boolean(warns.length || later.length);
 
     var text = any ? (callDesk('_zeroCardStatus', [warns, later]) || '') : '';
     if (status.textContent !== text) status.textContent = text;
     status.hidden = !text;
 
-    var sig = any ? zeroSignature(warns, later) : '';
-    if (sig === ledgerState.zeroSig) return;
-    ledgerState.zeroSig = sig;
-    box.textContent = '';
-    box.hidden = !any;
-    if (!any) {
-      box.removeAttribute('data-frame');
-      return;
-    }
-    // Same frame rule as the Desk card: red once something is a 0, yellow while everything is
-    // only "soon", grey when only past-due rows are left.
-    var frame = warns.some(function (w) { return w.past; }) ? 'now' : 'soon';
-    if (!warns.length) frame = 'calm';
-    box.setAttribute('data-frame', frame);
+    var sig = zeroSignature(warns, later, b.done);
+    if (sig !== ledgerState.zeroSig) {
+      ledgerState.zeroSig = sig;
+      box.textContent = '';
+      // Same frame rule as the Desk card: red once something is a 0, yellow while everything is
+      // only "soon", grey when only past-due rows are left.
+      var frame = null;
+      if (any) frame = warns.length ? (b.zeroed.length ? 'now' : 'soon') : 'calm';
+      if (frame) box.setAttribute('data-frame', frame);
+      else box.removeAttribute('data-frame');
 
-    // Past first, then by date (the warnings are already date-ordered), as the Desk orders them.
-    var ordered = warns.filter(function (w) { return w.past; }).concat(warns.filter(function (w) { return !w.past; }));
-    ordered.forEach(function (w) { box.appendChild(zeroTile(w, false)); });
-    if (later.length) {
-      box.appendChild(el('p', 'pl-later-head', 'Past due — not counting yet'));
-      later.forEach(function (w) { box.appendChild(zeroTile(w, true)); });
+      // Past first, then by date (the warnings are already date-ordered), as the Desk orders them.
+      var ordered = b.zeroed.concat(b.soon);
+      ordered.forEach(function (w) { box.appendChild(zeroTile(w, w.past ? 'now' : 'soon')); });
+      if (later.length) {
+        var head = el('p', 'pl-later-head', 'Past due — not counting yet');
+        head.setAttribute('data-bucket', 'notyet');
+        box.appendChild(head);
+        later.forEach(function (w) { box.appendChild(zeroTile(w, 'later')); });
+      }
+      b.done.forEach(function (w) { box.appendChild(zeroTile(w, 'done')); });
+      LEDGER_BUCKETS.forEach(function (bucket) {
+        var empty = el('p', 'pl-empty', LEDGER_EMPTY[bucket.key]);
+        empty.setAttribute('data-bucket', bucket.key);
+        empty.setAttribute('data-empty', '');
+        box.appendChild(empty);
+      });
+      if (any) callDesk('_zeroCardAttachScores', [box, ordered]);
     }
-    callDesk('_zeroCardAttachScores', [box, ordered]);
+    renderLedgerNav(b);
+  }
+
+  var LEDGER_EMPTY = {
+    zeroed: 'No zeros. Nothing here counts as a 0.',
+    soon: 'Nothing becomes a 0 in the next few days.',
+    notyet: 'Nothing is past due.',
+    done: 'No recorded work yet.',
+  };
+
+  function bucketCounts(b) {
+    return { zeroed: b.zeroed.length, soon: b.soon.length, notyet: b.notyet.length, done: b.done.length };
+  }
+
+  // Default: the first non-empty bucket in nav order (ZEROED if every bucket is empty).
+  function defaultBucket(counts) {
+    for (var i = 0; i < LEDGER_BUCKETS.length; i++) if (counts[LEDGER_BUCKETS[i].key]) return LEDGER_BUCKETS[i].key;
+    return LEDGER_BUCKETS[0].key;
+  }
+
+  function renderLedgerNav(b) {
+    var nav = byId('pico-ledger-nav');
+    if (!nav) return;
+    var counts = bucketCounts(b);
+    ledgerState.counts = counts;
+    if (!ledgerState.bucket) ledgerState.bucket = defaultBucket(counts);
+    Array.prototype.forEach.call(nav.querySelectorAll('.pl-nav-btn'), function (btn) {
+      var key = btn.getAttribute('data-bucket');
+      var bucket = LEDGER_BUCKETS.filter(function (x) { return x.key === key; })[0];
+      var text = bucket.label + ' (' + counts[key] + ')';
+      if (btn.textContent !== text) btn.textContent = text;
+    });
+    applyLedgerFilter();
+  }
+
+  // The filter only hides / shows the tiles already built (same nodes, same Desk buttons).
+  function applyLedgerFilter() {
+    var bucket = ledgerState.bucket;
+    var nav = byId('pico-ledger-nav');
+    if (nav) {
+      Array.prototype.forEach.call(nav.querySelectorAll('.pl-nav-btn'), function (btn) {
+        var on = btn.getAttribute('data-bucket') === bucket;
+        btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+        btn.classList.toggle('is-current', on);
+        btn.tabIndex = on ? 0 : -1;
+      });
+    }
+    var box = byId('pico-ledger-zero');
+    if (!box) return;
+    var shown = 0;
+    Array.prototype.forEach.call(box.children, function (node) {
+      var own = node.getAttribute('data-bucket');
+      if (!own) return;   // a Desk score list follows its tile (CSS: hidden with a hidden tile)
+      if (node.hasAttribute('data-empty')) return;
+      node.hidden = own !== bucket;
+      if (!node.hidden && node.classList.contains('pl-tile')) shown++;
+    });
+    Array.prototype.forEach.call(box.querySelectorAll('[data-empty]'), function (node) {
+      node.hidden = node.getAttribute('data-bucket') !== bucket || shown > 0;
+    });
+    box.setAttribute('data-showing', bucket);
+  }
+
+  function selectLedgerBucket(key, moveFocus) {
+    ledgerState.bucket = key;
+    applyLedgerFilter();
+    if (moveFocus) {
+      var btn = document.querySelector('#pico-ledger-nav .pl-nav-btn[data-bucket="' + key + '"]');
+      if (btn) btn.focus();
+    }
+  }
+
+  // Left / Right move between the buckets (wrapping), from a nav button.
+  function onLedgerNavKey(event) {
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return false;
+    event.preventDefault();
+    var keys = LEDGER_BUCKETS.map(function (x) { return x.key; });
+    var at = keys.indexOf(ledgerState.bucket);
+    var next = (at + (event.key === 'ArrowRight' ? 1 : -1) + keys.length) % keys.length;
+    selectLedgerBucket(keys[next], true);
+    return true;
+  }
+
+  // A fresh open starts on the default bucket again.
+  function resetLedgerBucket() {
+    ledgerState.bucket = null;
+    renderLedgerNav(ledgerBuckets());
   }
 
   function rosterName() {
@@ -2531,15 +2774,176 @@
       box.appendChild(el('p', 'wallet-grade-drop pl-line', callDesk('_walletGradeDropText', [warns]) || ''));
     }
 
-    // The PC on file + strategy and the work done ahead: the Desk block's own lines, as text.
+    // Under the tiles: the PC on file + strategy and the work done ahead (the Desk block's own
+    // lines, as text). "How your grade is counted" goes in its fold (renderLedgerFolds).
+    var about = byId('pico-ledger-about');
+    if (!about) return;
+    about.textContent = '';
     var effort = callDesk('_walletEffortBlock', [grade.q]);
     if (effort && effort.children) {
       Array.prototype.forEach.call(effort.children, function (line) {
-        box.appendChild(el('p', line.className + ' pl-line', line.textContent));
+        about.appendChild(el('p', line.className + ' pl-line', line.textContent));
       });
     }
+    about.hidden = !about.children.length;
+  }
+
+  // ── HERO right: CANDY (and KEYS) ───────────────────────────────────────────
+  // CANDY = the Desk rewards panel's own number: the /wallet answer its _dogeWalletRender received
+  // (candyOwed, else candyBalance = spendable), formatted by the Desk's _candyFmt. When the
+  // rewards backend is not provisioned / offline, the Desk shows its preview (candy from effort
+  // points via WalletLogic.candyFromPoints) — so does this, marked "preview". No request is made
+  // here. KEYS = the park's unspent campaign key count for this player, as the classroom board's
+  // calculator room reports it (getView().keyCounts, from the relay lobby); omitted until the
+  // board has that lobby.
+  function walletCandy() {
+    var state = ledgerState.wallet;
+    if (!state) return null;
+    if (state.off) return { off: true };
+    if (state.pending) return { text: '…', note: 'loading' };
+    var w = state.w;
+    if (!w || w._notProvisioned || !w.ok) {
+      var logic = window.WalletLogic;
+      if (!logic || typeof logic.candyFromPoints !== 'function') return null;
+      var total = (state.pts && typeof state.pts.total === 'number') ? state.pts.total : 0;
+      return { text: logic.candyFromPoints(total).toFixed(0), note: 'preview' };
+    }
+    var owed = (typeof w.candyOwed === 'number') ? w.candyOwed : (w.candyBalance || 0);
+    var text = callDesk('_candyFmt', [owed]);
+    return { text: text == null ? String(owed) : text, note: 'to spend' };
+  }
+
+  function parkKeyCount() {
+    var scene = parkScene();
+    if (!scene || typeof scene.getView !== 'function') return null;
+    var roomView = null;
+    try { roomView = scene.getView(); } catch (_) { return null; }
+    if (!roomView || !roomView.lobby || !roomView.lobby.campaignKeys || !roomView.keyCounts) return null;
+    var name = boardUsername();
+    if (!name || !(name in roomView.keyCounts)) return null;
+    var count = roomView.keyCounts[name];
+    return typeof count === 'number' ? count : null;
+  }
+
+  // The name the classroom board joined the park with (_mountClassroomBoard: rosterClient.current()).
+  function boardUsername() {
+    try {
+      var client = window.rosterClient;
+      var current = client && typeof client.current === 'function' ? client.current() : null;
+      return current && current.username ? current.username : '';
+    } catch (_) { return ''; }
+  }
+
+  function heroStat(className, label, value, note) {
+    var stat = el('div', 'pl-stat ' + className);
+    stat.appendChild(el('span', 'pl-stat-label', label));
+    stat.appendChild(el('span', 'pl-stat-num', value));
+    if (note) stat.appendChild(el('span', 'pl-stat-note', note));
+    return stat;
+  }
+
+  function renderLedgerWallet() {
+    var box = byId('pico-ledger-wallet');
+    if (!box) return;
+    box.textContent = '';
+    var candy = walletCandy();
+    if (candy && !candy.off) box.appendChild(heroStat('pl-candy', 'CANDY', candy.text, candy.note));
+    var keys = parkKeyCount();
+    if (keys != null) box.appendChild(heroStat('pl-keys', 'KEYS', String(keys), 'park keys'));
+    box.hidden = !box.children.length;
+  }
+
+  // ── Folds: everything else, closed by default, open state remembered per device ──
+  var FOLD_KEY = 'apstats-pico-mygrade-folds';
+  var LEDGER_FOLDS = [
+    { key: 'counted', label: 'HOW YOUR GRADE IS COUNTED' },
+    { key: 'rewards', label: 'REWARDS' },
+    { key: 'breakdown', label: 'SCORE BREAKDOWN' },
+    { key: 'receipts', label: 'RECEIPTS' },
+    { key: 'export', label: 'EXPORT / PRINT' },
+    { key: 'summer', label: 'SUMMER FOUNDATIONS' },
+  ];
+
+  function readFoldState() {
+    try {
+      var raw = localStorage.getItem(FOLD_KEY);
+      var parsed = raw ? JSON.parse(raw) : null;
+      return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch (_) { return {}; }
+  }
+
+  function writeFoldState(state) {
+    try { localStorage.setItem(FOLD_KEY, JSON.stringify(state)); } catch (_) {}
+  }
+
+  // Which fold each of the Desk's painted nodes belongs to. The Desk's own nodes are MOVED into
+  // the folds (handlers, async fills and ids travel with them); the parts the Pico ledger draws
+  // stay in #wallet-content, hidden. Unknown nodes go to RECEIPTS (never dropped).
+  function deskFoldNodes() {
+    var host = byId('wallet-content');
+    var groups = {};
+    LEDGER_FOLDS.forEach(function (fold) { groups[fold.key] = []; });
+    if (!host) return groups;
+    var note = host.querySelector('.wallet-counting-note');
+    var card = note && note.parentNode && note.parentNode.parentNode === host ? note.parentNode : null;
+    if (card) {
+      var after = false;
+      Array.prototype.slice.call(card.children).forEach(function (node) {
+        if (node === note) { after = true; return; }
+        if (!after) return;
+        if (node.getAttribute('data-pico-fold') === 'rewards') { groups.rewards.push(node); return; }
+        var buttons = Array.prototype.map.call(node.querySelectorAll('button'), function (b) { return b.textContent; });
+        if (buttons.indexOf('Export sealed transcript') >= 0) { groups['export'].push(node); return; }
+        if (!node.textContent.trim()) return;   // the separator rule
+        if (/Summer Foundations|Catching up|Take a breather|ready for lesson/.test(node.textContent)) { groups.summer.push(node); return; }
+        groups.receipts.push(node);   // signed-records chip, effort points
+      });
+    }
+    Array.prototype.slice.call(host.children).forEach(function (node) {
+      if (node === card || node.classList.contains('wallet-zero-card') || node.classList.contains('wallet-bonus-block')) return;
+      if (node.querySelector('.bd-caret')) { groups.breakdown.push(node); return; }
+      groups.receipts.push(node);   // legend, "Recorded work" header, the grouped feed
+    });
+    return groups;
+  }
+
+  function renderLedgerFolds() {
+    var holder = byId('pico-ledger-folds');
+    if (!holder) return;
+    var groups = deskFoldNodes();
     var note = callDesk('_walletCountingNote');
-    if (note && note.textContent) box.appendChild(el('p', 'wallet-counting-note pl-note', note.textContent));
+    if (note && note.textContent) groups.counted = [el('p', 'wallet-counting-note pl-note', note.textContent)];
+    var open = readFoldState();
+    holder.textContent = '';
+    LEDGER_FOLDS.forEach(function (fold) {
+      var nodes = groups[fold.key];
+      if (!nodes.length) return;
+      var section = el('section', 'pl-fold');
+      section.setAttribute('data-fold', fold.key);
+      var head = button('pl-fold-head', null);
+      var bodyNode = el('div', 'pl-fold-body');
+      bodyNode.id = 'pico-fold-' + fold.key;
+      head.setAttribute('aria-controls', bodyNode.id);
+      var paint = function (isOpen) {
+        head.textContent = 'MORE ' + (isOpen ? '▾ ' : '▸ ') + fold.label;
+        head.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        bodyNode.hidden = !isOpen;
+      };
+      paint(Boolean(open[fold.key]));
+      head.addEventListener('click', function () {
+        var state = readFoldState();
+        state[fold.key] = bodyNode.hidden;
+        writeFoldState(state);
+        paint(Boolean(state[fold.key]));
+      });
+      nodes.forEach(function (node) {
+        if (node.parentNode) node.setAttribute('data-pico-moved', fold.key);
+        bodyNode.appendChild(node);
+      });
+      section.appendChild(head);
+      section.appendChild(bodyNode);
+      holder.appendChild(section);
+    });
   }
 
   // The bonus bank as a Pico sub-panel: the Desk's own block (same receipts), as text.

@@ -555,10 +555,20 @@ describe('Phase 2 -- My Grade', { timeout: 90_000 }, () => {
     const { document: doc, window: win } = harness;
     win.openWallet();
     const content = doc.getElementById('wallet-content');
+    // With the flag on (My Grade v2) the Desk's painted nodes below the grade are MOVED into the
+    // Pico folds (marked data-pico-moved); the Desk's text is #wallet-content + those nodes.
+    // Compared as the sorted list of the Desk's text nodes, so moving a whole node changes nothing.
+    const textNodes = (root) => {
+      const out = [];
+      const walk = doc.createTreeWalker(root, 4);
+      while (walk.nextNode()) { const t = norm(walk.currentNode.nodeValue); if (t) out.push(t); }
+      return out;
+    };
+    const deskText = () => [content, ...doc.querySelectorAll('[data-pico-moved]')].flatMap(textNodes).sort().join(' | ');
     let last = '';
     await harness.waitFor(async () => {
       await new Promise((r) => setTimeout(r, 120));
-      const now = norm(content.textContent);
+      const now = norm(deskText());
       const stable = now && now === last;
       last = now;
       return stable;
@@ -583,6 +593,7 @@ describe('Phase 2 -- My Grade', { timeout: 90_000 }, () => {
       myGrade.focus();
       myGrade.click();
       const onText = await ledgerText(on);
+      // Same text nodes (the folds reorder whole Desk nodes, never their text).
       expect(onText).toBe(offText);
       const overlay = doc.getElementById('app-wallet-overlay');
       expect(overlay.classList.contains('pico-mygrade')).toBe(true);
@@ -595,7 +606,8 @@ describe('Phase 2 -- My Grade', { timeout: 90_000 }, () => {
       // own content, all in one scroll area under the status strip.
       const win = overlay.querySelector('.app-window');
       expect(doc.getElementById('pico-grade-head').nextElementSibling).toBe(doc.getElementById('pico-ledger'));
-      expect(doc.getElementById('pico-ledger').nextElementSibling).toBe(doc.getElementById('wallet-content'));
+      expect(doc.getElementById('pico-ledger').nextElementSibling).toBe(doc.getElementById('pico-ledger-folds'));
+      expect(doc.getElementById('pico-ledger-folds').nextElementSibling).toBe(doc.getElementById('wallet-content'));
       expect(doc.getElementById('wallet-content').parentElement).toBe(doc.getElementById('pico-mygrade-body'));
       expect(win.contains(doc.getElementById('pico-mygrade-close'))).toBe(true);
       // ✕ closes through the Desk's own destroyWallet; focus returns to MY GRADE.
