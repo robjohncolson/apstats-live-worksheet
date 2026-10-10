@@ -581,6 +581,49 @@
     'html.pico-home #bf-overlay #bf-actions:empty { display: none; }',
     'html.pico-home #bf-overlay #bf-actions .s7btn, html.pico-home #bf-overlay #bf-result .s7btn { min-height: 48px; min-width: 96px; margin: 0 !important;',
     '  padding: 4px 18px !important; font: 800 18px/1.2 var(--plain-font) !important; letter-spacing: .04em; text-transform: uppercase; }',
+    /* Study Break (teacher 2026-10-10: "should the study break window be refactored as well in pico
+       park style?" — yes). The Phase 3 frame (orange ring + title strip, its own close box) stays;
+       this restyles the Desk's DOM parts inside it: the score and help lines, the 1v1 labels, the
+       lobby (title, bet line, classmate rows, status, Back), the in-game challenge (bet) dialog and
+       the buttons. The canvas (board, preview, mode card, countdown, game-over card) is drawn by the
+       game and is untouched. Geometry rule (PICO_DESK_SPEC Phase 3): nothing here changes the game
+       window's box or the canvas; the score / help lines keep their fixed heights, and the touch
+       strip keeps its padding and size (colour only). Scoped to the framed overlay (flag on). */
+    'html.pico-home #game-overlay.pico-framed { background: rgba(0, 0, 64, .45); }',
+    'html.pico-home #game-overlay.pico-framed .game-content { border-color: var(--orange); background: var(--paper); }',
+    'html.pico-home #game-overlay.pico-framed .game-score { background: #FFFBF0; border-top-color: var(--orange); color: var(--ink);',
+    '  font: 800 11px/14px var(--plain-font) !important; letter-spacing: .02em; }',
+    'html.pico-home #game-overlay.pico-framed .game-help { border-top-color: #e4e4e4; color: #333; font-family: var(--plain-font) !important; }',
+    'html.pico-home #game-overlay.pico-framed #game-split .split-label { font: 800 12px/1.3 var(--plain-font) !important; letter-spacing: .04em; color: var(--ink); }',
+    'html.pico-home #game-overlay.pico-framed #game-split > div > div:nth-child(2) { background: var(--orange) !important; }',
+    /* The lobby: a Pico list of classmates. */
+    'html.pico-home #game-overlay.pico-framed #game-lobby { background: var(--paper); color: var(--ink); font-family: var(--plain-font); }',
+    'html.pico-home #game-overlay.pico-framed #game-lobby > .chicago { font: 800 16px/1.3 var(--plain-font) !important; letter-spacing: .06em; text-transform: uppercase; }',
+    'html.pico-home #game-overlay.pico-framed #lobby-casino, html.pico-home #game-overlay.pico-framed #lobby-status {',
+    '  font: 13px/1.35 var(--plain-font) !important; color: #555 !important; }',
+    'html.pico-home #game-overlay.pico-framed #lobby-players { border-top: 2px solid #e4e4e4; }',
+    'html.pico-home #game-overlay.pico-framed #lobby-players > button { min-height: 44px; margin: 0; background: var(--paper); color: var(--ink);',
+    '  border: 0; border-bottom: 2px solid #e4e4e4 !important; font: 800 15px/1.2 var(--plain-font) !important; cursor: pointer; }',
+    'html.pico-home #game-overlay.pico-framed #lobby-players > button > span:last-child { font: 700 13px/1.2 var(--plain-font) !important; color: #555; }',
+    'html.pico-home #game-overlay.pico-framed #lobby-players > button:not(:disabled):hover,',
+    'html.pico-home #game-overlay.pico-framed #lobby-players > button:not(:disabled):focus-visible { outline: 3px solid var(--orange); outline-offset: -3px; }',
+    'html.pico-home #game-overlay.pico-framed #lobby-players > button:not(:disabled) > span:last-child { color: #1f6b3a; }',
+    'html.pico-home #game-overlay.pico-framed #lobby-players > button:disabled { opacity: .55; cursor: default; }',
+    'html.pico-home #game-overlay.pico-framed #lobby-players > div { font: 14px/1.35 var(--plain-font) !important; color: #555 !important; }',
+    /* The in-game challenge (bet) dialog: the recovered window look on its own box (no frame bar). */
+    'html.pico-home #game-overlay.pico-framed #challenge-dialog { background: var(--paper) !important; border: 4px solid var(--orange) !important;',
+    '  border-radius: 4px; box-shadow: none !important; color: var(--ink); font-family: var(--plain-font); }',
+    'html.pico-home #game-overlay.pico-framed #challenge-title { font: 800 18px/1.3 var(--plain-font) !important; letter-spacing: .04em; }',
+    'html.pico-home #game-overlay.pico-framed #challenge-msg { font: 15px/1.4 var(--plain-font) !important; }',
+    'html.pico-home #game-overlay.pico-framed #challenge-timer { font: 800 20px/1.2 var(--plain-font) !important; color: var(--ink) !important; }',
+    /* Buttons (Back, Accept / Decline): Pico buttons. The touch strip keeps its size (colours only). */
+    'html.pico-home #game-overlay.pico-framed .s7btn:not(.game-touch-btn) { min-height: 44px; padding: 4px 14px !important;',
+    '  font: 700 15px/1.2 var(--plain-font) !important; background: var(--paper); color: var(--ink);',
+    '  border: 3px solid var(--orange); border-radius: 4px; box-shadow: none; cursor: pointer; }',
+    'html.pico-home #game-overlay.pico-framed .s7btn.s7btn-default:not(.game-touch-btn) { background: var(--orange); color: #fff; }',
+    'html.pico-home #game-overlay.pico-framed .s7btn:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }',
+    'html.pico-home #game-overlay.pico-framed .game-touch { background: #FFFBF0; border-top-color: var(--orange); }',
+    'html.pico-home #game-overlay.pico-framed .game-touch-btn { background: var(--paper); color: var(--ink); border-color: var(--orange); font-family: var(--plain-font); }',
     '@media (max-width: 700px) {',
     '  #pico-home .player { margin-left: 0; }',
     '  #pico-home .tile { width: 140px; }',
@@ -3308,6 +3351,91 @@
     syncDeck();
   }
 
+  // ── Study Break owns the keyboard while it is open ─────────────────────────
+  // Teacher 2026-10-10: "when I do Study Break my keystrokes are still going to the Pico Park cat;
+  // they should be contained within the Study Break window." Every key listener involved sits on
+  // `document` in the bubble phase: Study Break's (studyBreak.init), the board's cat
+  // (classroom-board.js) and the park scenes (apstat-park calculator room / campaign), so no
+  // ordering of document listeners can separate them. Instead, while Study Break is the top
+  // window, one window-level capture listener (registered before any other Pico listener) stops
+  // the event before it reaches `document` and hands it to Study Break's own handler, unchanged.
+  // Nothing else is re-dispatched. The handler is the one studyBreak.init registers: init is
+  // wrapped (call the original; while it runs, note the first keydown / keyup listener it adds to
+  // `document`). Its body, the Tetris engine and the relay messages are untouched.
+  //
+  // Not taken (everything flows exactly as before): Study Break closed; Tab (focus moves as
+  // usual); a typing field outside the game; a Desk dialog stacked above the game (Study Break's
+  // own "covered" rule); a key aimed at another open dialog; the Doge challenge alert while it is
+  // up (it owns Enter / Esc); Study Break initialised before this file could wrap it.
+  var studyBreakKeys = { keydown: null, keyup: null };
+
+  function wrapStudyBreakInit() {
+    var sb = window.studyBreak;
+    if (!sb || typeof sb.init !== 'function' || sb.init.picoKeysWrapped || sb.initialized) return;
+    var original = sb.init;
+    var wrapped = function () {
+      if (this.initialized) return original.apply(this, arguments);
+      var hadOwn = Object.prototype.hasOwnProperty.call(document, 'addEventListener');
+      var add = document.addEventListener;
+      document.addEventListener = function (type, listener) {
+        if ((type === 'keydown' || type === 'keyup') && !studyBreakKeys[type] && typeof listener === 'function') studyBreakKeys[type] = listener;
+        return add.apply(this, arguments);
+      };
+      try {
+        return original.apply(this, arguments);
+      } finally {
+        if (hadOwn) document.addEventListener = add;
+        else delete document.addEventListener;
+      }
+    };
+    wrapped.picoKeysWrapped = true;
+    sb.init = wrapped;
+  }
+
+  function overlayZ(node) {
+    return parseInt(window.getComputedStyle(node).zIndex, 10) || 0;
+  }
+
+  // Study Break's own Escape rule (a visibly higher Desk modal owns the key), applied to every key.
+  function studyBreakCovered(game) {
+    var gameZ = overlayZ(game);
+    return Array.prototype.some.call(document.querySelectorAll('[id$="-overlay"], [id$="-modal"]'), function (node) {
+      if (node === game || game.contains(node)) return false;
+      var style = window.getComputedStyle(node);
+      return style.display !== 'none' && style.visibility !== 'hidden' && overlayZ(node) > gameZ;
+    });
+  }
+
+  function inOtherDialog(target, game) {
+    var dialog = target.closest('[id$="-overlay"], [id$="-modal"], [role="dialog"], #pico-menu-backdrop, #pico-doge-backdrop, #pico-doge-layer');
+    return Boolean(dialog && dialog !== game && !game.contains(dialog) && isShown(dialog));
+  }
+
+  function studyBreakOwnsKey(event) {
+    var sb = window.studyBreak;
+    if (!sb || typeof sb.isOpen !== 'function' || !sb.isOpen() || !sb.overlay) return false;
+    if (!studyBreakKeys[event.type] || event.key === 'Tab') return false;
+    if (window.DogePresence && window.DogePresence.incomingChallenge) return false;
+    var game = sb.overlay;
+    var target = event.target && event.target.nodeType === 1 ? event.target : null;
+    if (target && !game.contains(target)) {
+      if (isEditable(target) || inOtherDialog(target, game)) return false;
+    }
+    return !studyBreakCovered(game);
+  }
+
+  function onStudyBreakKey(event) {
+    if (!studyBreakOwnsKey(event)) return;
+    event.stopImmediatePropagation();   // never reaches document: not the cat, not the park
+    studyBreakKeys[event.type].call(document, event);
+  }
+
+  function setupStudyBreakKeys() {
+    wrapStudyBreakInit();
+    window.addEventListener('keydown', onStudyBreakKey, true);
+    window.addEventListener('keyup', onStudyBreakKey, true);
+  }
+
   // ── The flag ───────────────────────────────────────────────────────────────
   function useOriginalDesk() {
     cancelPollReturn();
@@ -4127,6 +4255,7 @@
   function init() {
     if (byId('pico-home')) return;
     injectStyle();
+    setupStudyBreakKeys();   // first window capture listener: Study Break keys never reach the floor
     buildRoot();
     wire();
     setupLessonPanel();
@@ -4157,6 +4286,7 @@
     floorConstants: { BOARD_FLOOR_H: BOARD_FLOOR_H, ROOM_WORLD_W: ROOM_WORLD_W, ROOM_WORLD_FLOOR: ROOM_WORLD_FLOOR, VEIL_MAX_MS: VEIL_MAX_MS, ROOM_IDLE_HEADROOM: ROOM_IDLE_HEADROOM, STRIP_IDLE_HEADROOM: STRIP_IDLE_HEADROOM },
     days: function () { return view.days; },
     syncDeck: syncDeck,
+    studyBreakOwnsKey: studyBreakOwnsKey,
   };
 
   // The Desk's own functions are defined by later scripts on the page, so start once the
