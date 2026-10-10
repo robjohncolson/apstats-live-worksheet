@@ -520,6 +520,67 @@
     'html.pico-home .pico-p3:not(.game-window) .s7btn.s7btn-default { background: var(--orange); color: #fff; }',
     'html.pico-home .pico-p3:not(.game-window) .s7btn:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }',
     'html.pico-home .pico-p3:not(.game-window) .s7btn[disabled] { opacity: .5; cursor: default; }',
+    /* Flashcards (teacher 2026-10-10: "also refactor the flashcards!!!"). The Desk's own deck window
+       (#bf-overlay: the timed deck, its finish screen, and the Review deck) in the Pico style. Its
+       ids, text, buttons, handlers, keys and timer are the Desk's; this is CSS plus two read-only
+       additions (setupFlashcards): the "n / N" counter and the timer bar. The frame bar carries the
+       deck's own title (two lines allowed), so the System 7 header row and its ✕ are hidden; the
+       frame's ✕ calls the same closeBlooketFlashcards(). One grid row holds counter · bar · seconds. */
+    'html.pico-home #bf-overlay.pico-framed { background: rgba(0, 0, 64, .45); }',
+    'html.pico-home #bf-overlay .dialog-box.pico-p3 { width: min(600px, calc(100vw - 32px)) !important; max-width: none !important;',
+    '  padding: 60px 28px 28px !important; display: grid; grid-template-columns: auto minmax(0, 1fr) auto;',
+    '  column-gap: 12px; align-items: center; }',
+    'html.pico-home #bf-overlay .dialog-box.pico-p3 > * { grid-column: 1 / -1; min-width: 0; }',
+    'html.pico-home #bf-overlay .dialog-box.pico-p3::after { inset: 44px 12px 12px; }',
+    'html.pico-home #bf-overlay .dialog-box.pico-p3 > .win-bar { height: 44px; font-size: 15px; line-height: 1.25;',
+    '  white-space: normal; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; padding-top: 4px; }',
+    'html.pico-home #bf-overlay .bf-modal-header { display: none !important; }',
+    'html.pico-home #bf-overlay #bf-note { margin: 0 0 12px !important; padding: 8px 12px; background: #FFFBF0;',
+    '  border-left: 6px solid #3DA35D; color: var(--ink) !important; font-size: 15px !important; line-height: 1.4; }',
+    'html.pico-home #bf-overlay .pico-fc-count { grid-column: 1; min-width: 72px; padding: 2px 10px; text-align: center;',
+    '  border: 3px solid var(--orange); border-radius: 4px; font: 800 20px/1.3 var(--plain-font); letter-spacing: .04em; white-space: nowrap; }',
+    'html.pico-home #bf-overlay .pico-fc-time { grid-column: 2; height: 20px; padding: 3px; border: 3px solid var(--orange);',
+    '  border-radius: 4px; background: var(--paper); }',
+    'html.pico-home #bf-overlay .pico-fc-fill { display: block; height: 100%; background: var(--orange); }',
+    'html.pico-home #bf-overlay .pico-fc-time.is-low .pico-fc-fill { background: #B03A2E; }',
+    'html.pico-home #bf-overlay .pico-fc-count[hidden], html.pico-home #bf-overlay .pico-fc-time[hidden] { display: none; }',
+    'html.pico-home #bf-overlay #bf-timer { grid-column: 3; margin: 0 !important; min-width: 56px; text-align: right;',
+    '  font: 800 20px/1.3 var(--plain-font) !important; white-space: nowrap; }',
+    'html.pico-home #bf-overlay #bf-progress { margin: 6px 0 10px !important; font-size: 14px !important; color: #555; }',
+    /* The card face: plain text on a cream card in an orange frame. */
+    'html.pico-home #bf-overlay #bf-question:not(:empty) { margin: 0 0 12px !important; min-height: 96px; padding: 16px 20px;',
+    '  display: flex; flex-direction: column; justify-content: center; background: #FFFBF0; border: 4px solid var(--orange);',
+    '  border-radius: 4px; font: 700 20px/1.35 var(--plain-font) !important; text-align: center; }',
+    'html.pico-home #bf-overlay #bf-question .geneva { font-size: 14px !important; font-weight: 800; color: #555 !important; letter-spacing: .04em; }',
+    /* Choices: stage-select items. Pointer hover or keyboard focus = the orange stepped outline;
+       the Desk's own marks after answering: right = green #3DA35D, wrong = the Desk's red. */
+    'html.pico-home #bf-overlay .bf-choice { position: relative; min-height: 52px; margin: 4px 0; padding: 6px 14px;',
+    '  background: var(--paper); border: 6px solid transparent; border-radius: 0; color: var(--ink);',
+    '  font: 700 18px/1.3 var(--plain-font); text-align: left; --frame-w: 6px; }',
+    'html.pico-home #bf-overlay .bf-choice:focus-visible { outline: none; }',
+    'html.pico-home #bf-overlay .bf-choice:not(:disabled):hover, html.pico-home #bf-overlay .bf-choice.bf-correct,',
+    'html.pico-home #bf-overlay .bf-choice.bf-wrong { background: var(--paper); }',
+    'html.pico-home #bf-overlay .bf-choice::after { content: none; }',
+    'html.pico-home #bf-overlay .bf-choice:not(:disabled):hover::after, html.pico-home #bf-overlay .bf-choice:not(:disabled):focus-visible::after,',
+    'html.pico-home #bf-overlay .bf-choice.bf-correct::after, html.pico-home #bf-overlay .bf-choice.bf-wrong::after {',
+    '  content: ""; position: absolute; inset: calc(-1 * var(--frame-w)); border: var(--frame-w) solid var(--frame-colour, var(--orange));',
+    '  pointer-events: none; box-sizing: border-box;',
+    '  clip-path: polygon(4px 0, calc(100% - 4px) 0, calc(100% - 4px) 2px, calc(100% - 2px) 2px, calc(100% - 2px) 4px, 100% 4px,',
+    '    100% calc(100% - 4px), calc(100% - 2px) calc(100% - 4px), calc(100% - 2px) calc(100% - 2px),',
+    '    calc(100% - 4px) calc(100% - 2px), calc(100% - 4px) 100%, 4px 100%, 4px calc(100% - 2px),',
+    '    2px calc(100% - 2px), 2px calc(100% - 4px), 0 calc(100% - 4px), 0 4px, 2px 4px, 2px 2px, 4px 2px); }',
+    'html.pico-home #bf-overlay .bf-choice.bf-correct { --frame-colour: #3DA35D; }',
+    'html.pico-home #bf-overlay .bf-choice.bf-wrong { --frame-colour: #B03A2E; }',
+    'html.pico-home #bf-overlay #bf-feedback { min-height: 1.4em; margin: 8px 0 0; text-align: center; font: 800 18px/1.35 var(--plain-font) !important; font-style: normal !important; }',
+    /* Finish screen: the Desk's recap and outcome line, unchanged text, on a cream board. */
+    'html.pico-home #bf-overlay #bf-result { margin-top: 12px !important; padding: 12px 16px !important; max-height: 45vh; overflow: auto;',
+    '  background: #FFFBF0 !important; border: 4px solid var(--orange) !important; border-radius: 4px; font-size: 16px; line-height: 1.4; }',
+    'html.pico-home #bf-overlay #bf-result > div:first-child { font-size: 20px; font-weight: 800; }',
+    'html.pico-home #bf-overlay #bf-result .bf-outcome { font-size: 17px; }',
+    'html.pico-home #bf-overlay #bf-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; margin-top: 14px !important; }',
+    'html.pico-home #bf-overlay #bf-actions:empty { display: none; }',
+    'html.pico-home #bf-overlay #bf-actions .s7btn, html.pico-home #bf-overlay #bf-result .s7btn { min-height: 48px; min-width: 96px; margin: 0 !important;',
+    '  padding: 4px 18px !important; font: 800 18px/1.2 var(--plain-font) !important; letter-spacing: .04em; text-transform: uppercase; }',
     '@media (max-width: 700px) {',
     '  #pico-home .player { margin-left: 0; }',
     '  #pico-home .tile { width: 140px; }',
@@ -3169,6 +3230,84 @@
     }).observe(document.body, { childList: true });
   }
 
+  // ── Flashcards: the Desk's deck window in the Pico style ────────────────────
+  // The timed deck (_ft*), its finish screen and the Review deck (_rv*) all run in the Desk's
+  // #bf-overlay. Nothing here runs, scores, orders, times, logs or saves a card: the Desk does.
+  // The skin is CSS (above) plus two read-only additions placed before #bf-timer:
+  //   counter  "n / N" — timed: cards cleared of the deck (_ftState.round); Review: this card of
+  //            the session (_rvState). The Desk's own progress line stays under it.
+  //   bar      the timer as a bar: _ftState.remaining of BLOOKET_FULLDECK_SECONDS, turning the
+  //            Desk's warning red exactly when the Desk paints its seconds red.
+  // Both repaint from a MutationObserver on the window (the Desk rewrites the timer text every
+  // second and the progress line every card), and write only when a value changed.
+  var REVIEW_SESSION_MAX = 20;   // the Desk's Review stop (_rvRate: ratings >= 20; "of up to 20")
+  var DESK_TIMER_WARN = /^(#b03a2e|rgb\(176,\s*58,\s*46\))$/i;   // _ftRenderTimer's colour at <= 10 s
+
+  function deckSeconds() {
+    // A top-level const in the Desk's script: shared global scope, not a window property.
+    return (typeof BLOOKET_FULLDECK_SECONDS === 'number') ? BLOOKET_FULLDECK_SECONDS : null;
+  }
+
+  // What the counter shows, read from the Desk's own deck state. null = no counter.
+  function deckCounter() {
+    var rv = window._rvState;
+    if (rv && rv.current && (rv.stage === 'answer' || rv.stage === 'rate' || rv.stage === 'saving')) {
+      var queued = Array.isArray(rv.queue) ? rv.queue.length : 0;
+      var at = rv.ratings + 1;
+      var of = Math.min(REVIEW_SESSION_MAX, at + queued);
+      return { text: at + ' / ' + of, label: 'Card ' + at + ' of ' + of };
+    }
+    var ft = window._ftState;
+    var round = ft && ft.round;
+    if (!round || !Array.isArray(round.order) || !round.order.length) return null;
+    var cleared = round.total - round.order.length;
+    return { text: cleared + ' / ' + round.total, label: cleared + ' of ' + round.total + ' cards cleared' };
+  }
+
+  // The timer bar's state, or null when the Desk is not showing its timer.
+  function deckTimer(timer) {
+    var ft = window._ftState;
+    var total = deckSeconds();
+    if (!timer || timer.style.display === 'none' || !ft || !ft.round || !total) return null;
+    var left = Math.max(0, Math.min(total, Number(ft.remaining) || 0));
+    return { percent: (left / total) * 100, low: DESK_TIMER_WARN.test(String(timer.style.color || '').trim()) };
+  }
+
+  function syncDeck() {
+    var count = byId('pico-fc-count');
+    var bar = byId('pico-fc-time');
+    if (!count || !bar) return;
+    var counter = deckCounter();
+    if (count.hidden !== !counter) count.hidden = !counter;
+    if (counter && count.textContent !== counter.text) count.textContent = counter.text;
+    if (counter && count.title !== counter.label) count.title = counter.label;
+    var timer = deckTimer(byId('bf-timer'));
+    if (bar.hidden !== !timer) bar.hidden = !timer;
+    if (!timer) return;
+    var width = timer.percent + '%';
+    var fill = bar.firstChild;
+    if (fill.style.width !== width) fill.style.width = width;
+    if (bar.classList.contains('is-low') !== timer.low) bar.classList.toggle('is-low', timer.low);
+  }
+
+  function setupFlashcards() {
+    var timer = byId('bf-timer');
+    var box = timer && timer.closest('.dialog-box');
+    if (!box || byId('pico-fc-count')) return;
+    var count = idEl('div', 'pico-fc-count', 'pico-fc-count');
+    count.hidden = true;
+    var bar = idEl('div', 'pico-fc-time', 'pico-fc-time');
+    bar.setAttribute('aria-hidden', 'true');   // the Desk's own "⏱ Ns" text is the readable timer
+    bar.hidden = true;
+    bar.appendChild(el('span', 'pico-fc-fill'));
+    box.insertBefore(count, timer);
+    box.insertBefore(bar, timer);
+    new MutationObserver(syncDeck).observe(box, {
+      childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['style'],
+    });
+    syncDeck();
+  }
+
   // ── The flag ───────────────────────────────────────────────────────────────
   function useOriginalDesk() {
     cancelPollReturn();
@@ -3993,6 +4132,7 @@
     setupLessonPanel();
     setupMyGrade();
     setupFrames();
+    setupFlashcards();
     setupDogeMenu();
     watchFloor();
     watchOutlines();
@@ -4016,6 +4156,7 @@
     stopFloorWatch: function () { stopFloorWatch(); },
     floorConstants: { BOARD_FLOOR_H: BOARD_FLOOR_H, ROOM_WORLD_W: ROOM_WORLD_W, ROOM_WORLD_FLOOR: ROOM_WORLD_FLOOR, VEIL_MAX_MS: VEIL_MAX_MS, ROOM_IDLE_HEADROOM: ROOM_IDLE_HEADROOM, STRIP_IDLE_HEADROOM: STRIP_IDLE_HEADROOM },
     days: function () { return view.days; },
+    syncDeck: syncDeck,
   };
 
   // The Desk's own functions are defined by later scripts on the page, so start once the
