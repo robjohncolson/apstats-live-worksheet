@@ -133,6 +133,7 @@ test('park-music: pick persists, loads the song, applies the palette; ORIGINAL c
   const sfx = fakeSfx();
   const music = createParkMusic(win, { sfx, loadModules: modules, fetchSong });
   assert.equal(music.view().songId, ORIGINAL);
+  const release = music.acquire();
   assert.equal(await music.pick('launchbase'), true);
   assert.equal(win.localStorage.getItem(SONG_KEY), 'launchbase');
   assert.equal(music.song.id, 'launchbase');
@@ -141,6 +142,29 @@ test('park-music: pick persists, loads the song, applies the palette; ORIGINAL c
   assert.equal(await music.pick(ORIGINAL), true);
   for (const v of PALETTE_VARS) assert.equal(win.document.documentElement.style.getPropertyValue(v), '');
   assert.equal(await music.pick('nope'), false);
+  // A palette tween in flight is cancelled when the last scene lets go.
+  await music.pick('icecap'); release();
+  await new Promise(r => setTimeout(r, 500));
+  for (const v of PALETTE_VARS) assert.equal(win.document.documentElement.style.getPropertyValue(v), '', v + ' cleared after release');
+  music.dispose();
+});
+
+test('park-music: a song that fails to load is reported, never stuck on LOADING; a malformed song is refused', async () => {
+  win.localStorage.clear();
+  const sfx = fakeSfx();
+  const bad = async id => { if (id === 'icecap') throw new Error('404'); if (id === 'starlight') return { id, bogus: true }; return fetchSong(id); };
+  const music = createParkMusic(win, { sfx, loadModules: modules, fetchSong: bad });
+  assert.equal(await music.pick('icecap'), false);
+  assert.equal(music.view().loading, false);
+  assert.equal(music.view().failed, true);
+  assert.equal(music.view().hasSong, false);
+  assert.equal(await music.play(), false);
+  assert.equal(await music.pick('starlight'), false, 'malformed');
+  assert.equal(music.view().failed, true);
+  assert.equal(await music.pick('park-bounce'), true);
+  assert.equal(music.view().failed, false);
+  const { musicBarView } = await import('./campaign-select.mjs');
+  assert.match(musicBarView({ title: 'X', hasSong: false, failed: true }).caption, /COULD NOT LOAD/);
   music.dispose();
 });
 
@@ -176,7 +200,7 @@ test('park-music: playSfx only with a song, out of class, with sound enabled', a
   const music = createParkMusic(win, { sfx, loadModules: modules, fetchSong, classMode: () => cls });
   assert.equal(music.playSfx('jump'), false, 'ORIGINAL: the .ogg plays instead');
   await music.pick('starlight');
-  assert.equal(music.playSfx('jump'), false, 'no engine yet (no gesture / bus)');
+  assert.equal(music.playSfx('jump'), true, 'the pick (a gesture) built the shifter: re-voiced before PLAY');
   await music.play();
   assert.equal(music.playSfx('jump'), true);
   assert.equal(music.playSfx('nonsense'), false);
@@ -235,6 +259,20 @@ test('park-music: the preview gate — off by default, ?music=1 turns it on for 
   w.location.search = '?music=0';
   assert.equal(musicEnabled(w), false);
   assert.equal(win.localStorage.getItem(MUSIC_FLAG_KEY), null);
+});
+
+test('park-music: before any gesture the .ogg plays; the first sound after a bus appears builds the shifter', async () => {
+  win.localStorage.clear();
+  let bus = false;
+  const sfx = fakeSfx(); const real = sfx.musicBus; sfx.musicBus = () => bus ? real() : null;
+  const music = createParkMusic(win, { sfx, loadModules: modules, fetchSong });
+  await music.pick('launchbase');
+  assert.equal(music.playSfx('jump'), false, 'no bus yet');
+  bus = true;
+  assert.equal(music.playSfx('jump'), false, 'kicks the build; this one is still the .ogg');
+  await tick(); await tick();
+  assert.equal(music.playSfx('jump'), true);
+  music.dispose();
 });
 
 // ── 5. pico-audio routing ────────────────────────────────────────────────────────────────────────

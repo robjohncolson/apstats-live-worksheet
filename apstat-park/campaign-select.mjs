@@ -171,6 +171,7 @@ export function musicBarView(music) {
   const title = music.title || 'ORIGINAL SOUNDS';
   if (music.inClass) return { title, playLabel: 'IN CLASS', canPlay: false, playing: false, caption: 'MUSIC IS OFF IN CLASS' };
   if (!music.hasSong && music.loading) return { title, playLabel: 'LOADING', canPlay: false, playing: false, caption: 'LOADING THE SONG...' };
+  if (!music.hasSong && music.failed) return { title, playLabel: 'PLAY', canPlay: false, playing: false, caption: 'COULD NOT LOAD THIS SONG. M = NEXT SONG' };
   if (!music.hasSong) return { title, playLabel: 'PLAY', canPlay: false, playing: false, caption: 'PICK A SONG TO HEAR MUSIC. M = NEXT SONG' };
   const playing = !!music.playing;
   return { title, playLabel: playing ? 'STOP' : 'PLAY', canPlay: true, playing,
@@ -179,6 +180,7 @@ export function musicBarView(music) {
 
 export function createStageSelect(doc) {
   let atlas = null, atlasReady = false;
+  let ink = INK;   // the song palette's fg while a song is picked (render's `ink`), the park's ink otherwise
   try {
     atlas = new doc.defaultView.Image();
     atlas.onload = () => { atlasReady = true; };
@@ -215,7 +217,7 @@ export function createStageSelect(doc) {
     const dim = greyed || entry.state === 'locked';
     ctx.save();
     if (dim) ctx.globalAlpha *= 0.45;
-    pixelText(ctx, entry.label, tile.x + tile.w / 2, tile.y + 20, 14, INK, 'center');
+    pixelText(ctx, entry.label, tile.x + tile.w / 2, tile.y + 20, 14, ink, 'center');
     const markX = tile.x + tile.w / 2 - 16, markY = tile.y + 26;
     if (entry.clearedByYou) tick(ctx, markX, markY);
     else if (entry.state === 'waiting') {
@@ -227,7 +229,7 @@ export function createStageSelect(doc) {
       ctx.fillStyle = ORANGE; ctx.fillRect(tile.x + 6, tile.y + tile.h - 14, 64, 6);
     }
     ctx.restore();
-    if (entry.state === 'waiting') pixelText(ctx, entry.needs.length + ' NEED', tile.x + tile.w / 2, tile.y + tile.h + 2, 7, INK, 'center');
+    if (entry.state === 'waiting') pixelText(ctx, entry.needs.length + ' NEED', tile.x + tile.w / 2, tile.y + tile.h + 2, 7, ink, 'center');
     if (entry.openable) {
       pixelText(ctx, 'OPEN WITH', tile.x + tile.w / 2, tile.y + 38, 7, KEY_GOLD, 'center');
       pixelText(ctx, 'A KEY', tile.x + tile.w / 2, tile.y + 50, 7, KEY_GOLD, 'center');
@@ -254,7 +256,7 @@ export function createStageSelect(doc) {
     const text = view.enabled ? '#ffffff' : MUTED;
     pixelText(ctx, view.label, button.x + 12, button.y + 20, 14, text);
     if (view.price != null) candyMark(ctx, button.x + button.w - 26, button.y + 8, text);
-    pixelText(ctx, view.caption, button.x + button.w + 10, button.y + 17, 7, view.enabled ? INK : MUTED);
+    pixelText(ctx, view.caption, button.x + button.w + 10, button.y + 17, 7, view.enabled ? ink : MUTED);
   }
 
   function drawMusicBar(ctx, view, left) {
@@ -275,27 +277,29 @@ export function createStageSelect(doc) {
   // left: the world's left edge of the 720-wide column. Never translates the context.
   // shop: the key shop state (key-shop.mjs), or null to hide the BUY KEY button.
   // music: park-music.mjs view(), or null to hide the music bar.
-  function render(ctx, { progress, username, cursor, rejected, message, left = 0, shop = null, hoverBuy = false, music = null }) {
+  // ink: the text colour (the song palette's fg; defaults to the park's ink).
+  function render(ctx, { progress, username, cursor, rejected, message, left = 0, shop = null, hoverBuy = false, music = null, ink: inkIn = INK }) {
+    ink = inkIn || INK;
     const states = stageStates(progress, username);
     const mine = states.filter(entry => entry.clearedByYou).length;
-    pixelText(ctx, 'STAGE SELECT (' + mine + '/' + STAGE_COUNT + ')', left + 28, 40, 21, INK);
+    pixelText(ctx, 'STAGE SELECT (' + mine + '/' + STAGE_COUNT + ')', left + 28, 40, 21, ink);
     const keys = progress?.keys?.[username] || 0;
     pixelText(ctx, 'YOUR KEYS: ' + keys, left + 28, 70, 14, keys ? KEY_GOLD : MUTED);
     const shopView = shop ? keyShopView(shop) : null;
     if (shopView) drawBuyButton(ctx, shopView, left);
     if (progress?.team) pixelText(ctx, 'YOUR TEAM: ' + stageLabel(progress.team.stageIndex) + '  ' + (progress.team.roster || []).join(' + ').slice(0, 60),
-      left + 28, 92, 7, INK);
-    if (!progress) pixelText(ctx, 'LOADING STAGES...', left + 28, 92, 7, INK);
+      left + 28, 92, 7, ink);
+    if (!progress) pixelText(ctx, 'LOADING STAGES...', left + 28, 92, 7, ink);
     for (const entry of states) {
       drawTile(ctx, entry, tileRect(entry.stage, left), { selected: entry.stage === cursor,
         greyed: rejected?.get(entry.stage) === entry.state });
     }
     const info = hoverBuy && shopView ? shopView.reason : describe(states[cursor], states);
-    pixelText(ctx, info.slice(0, 100), left + 28, 630, 7, INK);
+    pixelText(ctx, info.slice(0, 100), left + 28, 630, 7, ink);
     const shopNote = shop?.message ? String(shop.message) : '';
     if (message) pixelText(ctx, String(message).slice(0, 100), left + 28, 646, 7, '#c0392b');
     else if (shopNote) pixelText(ctx, shopNote.slice(0, 100), left + 28, 646, 7, shop.error ? '#c0392b' : '#479b67');
-    pixelText(ctx, 'ARROWS MOVE . ENTER CHOOSES . ESC BACK TO THE PARK', left + 28, 664, 7, INK);
+    pixelText(ctx, 'ARROWS MOVE . ENTER CHOOSES . ESC BACK TO THE PARK', left + 28, 664, 7, ink);
     const musicView = musicBarView(music);
     if (musicView) drawMusicBar(ctx, musicView, left);
     return { states, info, shop: shopView, music: musicView };

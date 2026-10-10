@@ -87,8 +87,8 @@ export function mountCampaign({ container, getSocket, board, onClose, keyShop = 
     const key = event.key;
     if (key === 'Escape') { event.preventDefault(); dispose(); return; }
     if (key === 'Enter' || key === ' ') { event.preventDefault(); if (!event.repeat && cursor != null) choose(cursor); return; }
-    if (key === 'm' || key === 'M') { event.preventDefault(); if (!event.repeat) nextSong(1); return; }
-    if (key === 'p' || key === 'P') { event.preventDefault(); if (!event.repeat) musicButton('play'); return; }
+    if (music && (key === 'm' || key === 'M')) { event.preventDefault(); if (!event.repeat) nextSong(1); return; }
+    if (music && (key === 'p' || key === 'P')) { event.preventDefault(); if (!event.repeat) musicButton('play'); return; }
     if (!key.startsWith('Arrow')) return;
     event.preventDefault();
     cursor = moveCursor(cursor ?? 0, key);
@@ -123,7 +123,7 @@ export function mountCampaign({ container, getSocket, board, onClose, keyShop = 
     if (!selecting) return;
     const point = pointerWorld(event);
     if (onBuyButton(point.x, point.y, pad())) { event.preventDefault(); buyKey(); return; }
-    const musicHit = musicButtonAt(point.x, point.y, pad());
+    const musicHit = music ? musicButtonAt(point.x, point.y, pad()) : null;
     if (musicHit) { event.preventDefault(); musicButton(musicHit); return; }
     const stage = pointerStage(event);
     if (stage < 0) return;
@@ -289,18 +289,19 @@ export function mountCampaign({ container, getSocket, board, onClose, keyShop = 
     ctx.fillStyle = pal.accent; ctx.fillRect(0, 700, width, 50);
     if (cursor == null && progress) cursor = startCursor(states());
     const { info, shop: buy } = select.render(ctx, { progress, username: board.username, cursor: cursor ?? 0, rejected, left,
-      message: selectMessage || error, shop: shop.state, hoverBuy, music: music ? music.view() : null });
+      message: selectMessage || error, shop: shop.state, hoverBuy, music: music ? music.view() : null, ink: pal.fg });
     status.textContent = 'Stage select. ' + info + buyStatus(buy);
     ctx.restore();
     dissolve.render(ctx);
   }
   function parkPalette() {
-    let bg = '', accent = '';
+    let bg = '', fg = '', accent = '';
     try {
       const style = win.getComputedStyle(doc.documentElement);
-      bg = style.getPropertyValue('--park-bg').trim(); accent = style.getPropertyValue('--park-accent').trim();
+      bg = style.getPropertyValue('--park-bg').trim(); fg = style.getPropertyValue('--park-fg').trim();
+      accent = style.getPropertyValue('--park-accent').trim();
     } catch {}
-    return { bg: bg || '#ffffff', accent: accent || '#ff864d' };
+    return { bg: bg || '#ffffff', fg: fg || null, accent: accent || '#ff864d' };
   }
   function render(ctx) {
     if (selecting) { renderSelect(ctx); return; }

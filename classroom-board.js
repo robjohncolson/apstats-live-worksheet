@@ -7183,6 +7183,12 @@
         safeSend({ type: 'classroom_arm_gate', theme: theme || '' });
       },
 
+      // Park music (2026-10-10): class sound on / off for this room; the relay accepts it from a
+      // joined teacher socket only.
+      setClassSound: function (on) {
+        safeSend({ type: 'classroom_sound_set', on: on === true });
+      },
+
       greenLight: function (opts) {
         var o = opts || {};
         safeSend({

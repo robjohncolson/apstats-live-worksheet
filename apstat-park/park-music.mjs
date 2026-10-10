@@ -55,7 +55,7 @@ export function createParkMusic(win, {
 } = {}) {
   const doc = win?.document;
   let songId = storedSong(win), song = null, engine = null, vibe = null, bus = null, mods = null;
-  let wantPlaying = false, holders = 0, releaseTimer = null, loadSeq = 0, disposed = false;
+  let wantPlaying = false, holders = 0, releaseTimer = null, loadSeq = 0, disposed = false, loadFailed = null;
   const listeners = new Set();
   const songs = new Map();
   let classModeFn = classMode;
@@ -72,27 +72,47 @@ export function createParkMusic(win, {
     if (!songs.has(id)) songs.set(id, fetchSong(id, V).catch(err => { songs.delete(id); throw err; }));
     return songs.get(id);
   }
-  // The engine needs the Desk's audio graph, which exists only after a user gesture.
+  // The engine needs the Desk's audio graph, which exists only after a user gesture. Built as soon
+  // as a bus exists (a pick click is a gesture), so the sound effects are re-voiced before PLAY.
+  let building = null;
   async function ensureEngine() {
     if (engine) return engine;
+    if (building) return building;
     if (!sfx || typeof sfx.musicBus !== 'function') return null;
     const next = sfx.musicBus();
     if (!next) return null;
-    const { TrackerEngine, VibeShifter } = await modules();
-    if (engine) return engine;
-    bus = next;
-    engine = TrackerEngine.create(bus.ctx, bus.input, { unlocked: true, mode: inClass() ? 'class' : 'solo', lowPower: lowPower() });
-    vibe = VibeShifter.create(bus.ctx, bus.input, engine);
-    if (song) { engine.load(song); vibe.setSong(song); }
-    return engine;
+    building = (async () => {
+      try {
+        const { TrackerEngine, VibeShifter } = await modules();
+        if (engine || disposed) return engine;
+        bus = next;
+        engine = TrackerEngine.create(bus.ctx, bus.input, { unlocked: true, mode: inClass() ? 'class' : 'solo', lowPower: lowPower() });
+        vibe = VibeShifter.create(bus.ctx, bus.input, engine);
+        if (song && !loadSong(song)) song = null;
+        return engine;
+      } catch { return null; } finally { building = null; }
+    })();
+    return building;
+  }
+  // A malformed song must never throw into a scene: false = unusable.
+  function loadSong(s) {
+    try { engine.load(s); vibe.setSong(s); return true; } catch { loadFailed = s.id; return false; }
   }
   function lowPower() { try { return !!(sfx && sfx.isLowPower && sfx.isLowPower()); } catch { return false; } }
 
+  // The palette shows only while a scene holds the music; clearing it also cancels a running tween
+  // (Palette.apply with nothing to tween cancels its animation frame).
   function applyPalette(pal) {
     if (!doc?.documentElement) return;
     const el = doc.documentElement;
-    if (!pal) { for (const v of PALETTE_VARS) el.style.removeProperty(v); return; }
-    modules().then(({ Palette }) => { if (!disposed && song && song.palette === pal) Palette.apply(pal, { el, ms: 400 }); }).catch(() => {});
+    if (!pal || !holders) {
+      if (mods) { try { mods.Palette.apply({}, { el, ms: 0 }); } catch {} }
+      for (const v of PALETTE_VARS) el.style.removeProperty(v);
+      return;
+    }
+    modules().then(({ Palette }) => {
+      if (!disposed && holders && song && song.palette === pal) Palette.apply(pal, { el, ms: 400 });
+    }).catch(() => {});
   }
 
   async function pick(id) {
@@ -100,17 +120,20 @@ export function createParkMusic(win, {
     songId = id;
     try { win.localStorage.setItem(SONG_KEY, id); } catch {}
     const seq = ++loadSeq;
+    loadFailed = null;
     if (id === ORIGINAL) {
       song = null; applyPalette(null);
       if (engine) { engine.stop(0.3); vibe?.setSong(null); }
       notify(); return true;
     }
+    ensureEngine().catch(() => {});   // the pick is a gesture: re-voice the sound effects now
     let next;
-    try { next = await songData(id); } catch { if (seq === loadSeq) notify(); return false; }
+    try { next = await songData(id); } catch { if (seq === loadSeq) { loadFailed = id; notify(); } return false; }
     if (seq !== loadSeq || disposed) return false;
+    if (!next || typeof next !== 'object' || !next.patterns || !Array.isArray(next.order)) { loadFailed = id; notify(); return false; }
     song = next; applyPalette(song.palette);
     if (engine) {
-      engine.load(song); vibe.setSong(song);
+      if (!loadSong(song)) { song = null; applyPalette(null); notify(); return false; }
       if (wantPlaying) play();
     }
     notify(); return true;
@@ -137,7 +160,8 @@ export function createParkMusic(win, {
 
   // Park sound effects through the vibe shifter. False = not handled (play the .ogg instead).
   function playSfx(name, { vel = 1 } = {}) {
-    if (!hasSong() || inClass() || !vibe) return false;
+    if (!hasSong() || inClass()) return false;
+    if (!vibe) { ensureEngine().catch(() => {}); return false; }   // first sound after a gesture: the .ogg, then the shifter
     const map = VIBE_FOR[name]; if (!map) return false;
     if (sfx && sfx.isEnabled && !sfx.isEnabled()) return false;
     try { return vibe.playSfx(map.name, { quantize: map.quantize && isPlaying(), vel }) === true; } catch { return false; }
@@ -166,7 +190,7 @@ export function createParkMusic(win, {
     holders++; clearTimeout(releaseTimer); releaseTimer = null;
     // Re-voice straight away: a scene opened with a song picked earlier needs it loaded.
     if (songId !== ORIGINAL && !song) pick(songId);
-    else if (song) applyPalette(song.palette);
+    else if (song) { applyPalette(song.palette); ensureEngine().catch(() => {}); }
     return release;
   }
   function release() {
@@ -176,7 +200,7 @@ export function createParkMusic(win, {
     releaseTimer = setTimeout(() => { if (!holders) { stop(0.4); applyPalette(null); } }, 300);
   }
   function view() {
-    return { songId, title: SONGS.find(s => s.id === songId)?.title || '', playing: isPlaying(), wantPlaying, inClass: inClass(), hasSong: hasSong(), loading: songId !== ORIGINAL && !song };
+    return { songId, title: SONGS.find(s => s.id === songId)?.title || '', playing: isPlaying(), wantPlaying, inClass: inClass(), hasSong: hasSong(), loading: songId !== ORIGINAL && !song && loadFailed !== songId, failed: loadFailed === songId };
   }
   function dispose() {
     disposed = true; clearInterval(syncTimer); clearTimeout(releaseTimer);
