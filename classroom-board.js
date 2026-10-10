@@ -4550,6 +4550,8 @@
           onPark: function () { enterPark(7); },
           board: {
             engine: engine, input: playerInput, presses: parkPresses, username: username, role: role, api: root.ClassroomBoard,
+            // Park music / re-voiced sounds are off while the room is live unless the teacher allowed sound.
+            classroom: { isLive: function () { return !!(state && state.live); }, soundAllowed: function () { return classSound; } },
             viewportW: _viewportW,
             roomPresentation: { width: 720, height: 750, floor: 700, doorX: 30, doorSize: 40 },
             transitionFrame: transitionFrame,
@@ -6708,6 +6710,7 @@
     // --- state --------------------------------------------------------
 
     var state          = emptyState();
+    var classSound     = false;   // the teacher's class-sound switch (relay classroom_sound_state)
     var destroyed      = false;
     var ws             = null;
     var heartbeatTimer = null;
@@ -6814,6 +6817,12 @@
       if (msg && msg.type === 'classroom_pos') {
         applyPos(msg);
         return;
+      }
+      // Teacher 2026-10-10 (park music): the room's "class sound" switch rides on the snapshot
+      // (`sound`) and on classroom_sound_state; kept beside the reducer, which rebuilds state per
+      // message type. Default off: a live room silences park music and park sounds.
+      if (msg && (msg.type === 'classroom_state' || msg.type === 'classroom_sound_state')) {
+        classSound = msg.sound === true;
       }
       var prevState = state;
       var newState  = _reduce(state, msg);

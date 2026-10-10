@@ -2,8 +2,9 @@
 // toggle: the Desk's MacSFX mute writes localStorage 'macsound-muted', and the study-break game
 // mirrors its mute there too, so 'true' silences the park as well. Sounds play only after the
 // page has had a user gesture, and every failure is swallowed: gameplay never waits on audio.
-// No stage music: the site has no music preference to keep it off by default, and thirty
-// Chromebooks looping it in one classroom is the wrong default.
+// Music and re-voiced sounds (teacher 2026-10-10): park-music.mjs owns the tracker engine and the
+// vibe shifter. With a song picked, every sound here goes through the shifter (the song's key,
+// timbre and beat grid) instead of the .ogg; with ORIGINAL picked, or in class, the .ogg plays.
 // Inside the Desk the sounds go through the shared engine (lib/sfx.js, window.sfx; SFX_SPEC.md):
 // panned by where they happened and quieter the farther they are from the player's own cat.
 // Without the engine (a page that does not load it, node tests) they fall back to <audio>.
@@ -11,6 +12,7 @@
 // park module passes its own query on, so a deploy never mixes old and new modules (HTTP/CDN cache).
 const V = new URL(import.meta.url).search;
 const { SOUNDS } = await import('./assets/pico-atlas.mjs' + V);
+const { getParkMusic } = await import('./park-music.mjs' + V);
 
 export const SOUND_MUTE_KEY = 'macsound-muted';
 const BASE = new URL('./assets/', import.meta.url).href;
@@ -30,9 +32,15 @@ export function placeSound(source, listener, span) {
   return { pan, distance };
 }
 
-export function createPicoAudio(win, { volume = 0.4 } = {}) {
+// music: optional (tests); defaults to the window's shared park music, held while this scene
+// lives. classMode (optional): () => true while the room is live and the teacher has not allowed
+// sound (board.classroom) — music and re-voiced sounds are off then.
+export function createPicoAudio(win, { volume = 0.4, music = getParkMusic(win), classMode = null } = {}) {
   const cache = new Map();
-  let gestured = false, disposed = false;
+  let gestured = false, disposed = false, releaseMusic = null;
+  if (music) {
+    try { if (classMode) music.setClassMode(classMode); releaseMusic = music.acquire(); } catch { releaseMusic = null; }
+  }
   const mark = () => { gestured = true; };
   try { win?.addEventListener?.('keydown', mark, true); win?.addEventListener?.('pointerdown', mark, true); } catch {}
   const engine = win?.sfx && typeof win.sfx.play === 'function' && typeof win.sfx.define === 'function' ? win.sfx : null;
@@ -75,9 +83,20 @@ export function createPicoAudio(win, { volume = 0.4 } = {}) {
       return true;
     } catch { return false; }
   }
+  // The vibe shifter voices the sound to the picked song; `then` chains (clear -> fanfare) run on
+  // a timer there because the shifter has no onEnded. The .ogg path is unchanged.
+  function playVibe(name, then, where) {
+    if (!music || typeof music.playSfx !== 'function' || !music.hasSong()) return false;
+    const vel = where && typeof where.distance === 'number' ? 1 - 0.6 * Math.max(0, Math.min(1, where.distance)) : 1;
+    let played = false;
+    try { played = music.playSfx(name, { vel }); } catch { played = false; }
+    if (played && then) setTimeout(() => { if (!disposed) play(then); }, 900);
+    return played;
+  }
   // where (optional): { pan, distance } from placeSound(); omitted = the player's own cat.
   function play(name, then, where) {
     if (disposed || !win || muted() || !activated()) return false;
+    if (playVibe(name, then, where)) return true;
     return engine ? playEngine(name, then, where) : playElement(name, then);
   }
   return {
@@ -85,8 +104,10 @@ export function createPicoAudio(win, { volume = 0.4 } = {}) {
     // Stage clear: the goal jingle, then the fanfare.
     clear: () => play('clear', 'fanfare'),
     muted,
+    music,
     dispose() {
       disposed = true;
+      try { releaseMusic?.(); } catch {}
       try { win?.removeEventListener?.('keydown', mark, true); win?.removeEventListener?.('pointerdown', mark, true); } catch {}
       for (const audio of cache.values()) { try { audio?.pause(); } catch {} }
     },

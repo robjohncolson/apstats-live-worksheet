@@ -147,6 +147,36 @@ export function keyShopView(shop) {
     reason: 'CLICK BUY KEY: 1 KEY FOR ' + price + ' CANDY. EACH KEY TODAY COSTS MORE.' };
 }
 
+// ── MUSIC (teacher 2026-10-10, park-music.mjs) ─────────────────────────────────────────────────────
+// A bar in the orange strip: < SONG > and PLAY / STOP. Mouse on the buttons, or M (next song) and
+// P (play / stop) on the keyboard. The song is the student's own pick (solo play); in class the bar
+// says so and nothing plays.
+export const MUSIC_BAR = {
+  prev: { x: 28, y: 712, w: 26, h: 26 },
+  next: { x: 334, y: 712, w: 26, h: 26 },
+  play: { x: 380, y: 712, w: 92, h: 26 },
+};
+
+export function musicButtonAt(x, y, left = 0) {
+  for (const name of Object.keys(MUSIC_BAR)) {
+    const b = MUSIC_BAR[name];
+    if (x >= left + b.x && x < left + b.x + b.w && y >= b.y && y < b.y + b.h) return name;
+  }
+  return null;
+}
+
+// music: park-music.mjs view() or null. What the bar draws and what a click would do.
+export function musicBarView(music) {
+  if (!music) return null;
+  const title = music.title || 'ORIGINAL SOUNDS';
+  if (music.inClass) return { title, playLabel: 'IN CLASS', canPlay: false, playing: false, caption: 'MUSIC IS OFF IN CLASS' };
+  if (!music.hasSong && music.loading) return { title, playLabel: 'LOADING', canPlay: false, playing: false, caption: 'LOADING THE SONG...' };
+  if (!music.hasSong) return { title, playLabel: 'PLAY', canPlay: false, playing: false, caption: 'PICK A SONG TO HEAR MUSIC. M = NEXT SONG' };
+  const playing = !!music.playing;
+  return { title, playLabel: playing ? 'STOP' : 'PLAY', canPlay: true, playing,
+    caption: playing ? 'P = STOP . M = NEXT SONG' : 'P = PLAY . M = NEXT SONG' };
+}
+
 export function createStageSelect(doc) {
   let atlas = null, atlasReady = false;
   try {
@@ -227,9 +257,25 @@ export function createStageSelect(doc) {
     pixelText(ctx, view.caption, button.x + button.w + 10, button.y + 17, 7, view.enabled ? INK : MUTED);
   }
 
+  function drawMusicBar(ctx, view, left) {
+    const B = MUSIC_BAR, white = '#ffffff';
+    const button = (b, label, enabled) => {
+      const r = { ...b, x: left + b.x };
+      ctx.save(); ctx.globalAlpha = enabled ? 1 : 0.5;
+      ctx.fillStyle = white; ctx.fillRect(r.x, r.y, r.w, r.h);
+      pixelText(ctx, label, r.x + r.w / 2, r.y + 19, 14, ORANGE, 'center');
+      ctx.restore();
+    };
+    button(B.prev, '<', true); button(B.next, '>', true);
+    pixelText(ctx, view.title.slice(0, 24), left + (B.prev.x + B.prev.w + B.next.x) / 2, 731, 14, white, 'center');
+    button(B.play, view.playLabel, view.canPlay);
+    pixelText(ctx, view.caption.slice(0, 48), left + B.play.x + B.play.w + 12, 729, 7, white);
+  }
+
   // left: the world's left edge of the 720-wide column. Never translates the context.
   // shop: the key shop state (key-shop.mjs), or null to hide the BUY KEY button.
-  function render(ctx, { progress, username, cursor, rejected, message, left = 0, shop = null, hoverBuy = false }) {
+  // music: park-music.mjs view(), or null to hide the music bar.
+  function render(ctx, { progress, username, cursor, rejected, message, left = 0, shop = null, hoverBuy = false, music = null }) {
     const states = stageStates(progress, username);
     const mine = states.filter(entry => entry.clearedByYou).length;
     pixelText(ctx, 'STAGE SELECT (' + mine + '/' + STAGE_COUNT + ')', left + 28, 40, 21, INK);
@@ -250,7 +296,9 @@ export function createStageSelect(doc) {
     if (message) pixelText(ctx, String(message).slice(0, 100), left + 28, 646, 7, '#c0392b');
     else if (shopNote) pixelText(ctx, shopNote.slice(0, 100), left + 28, 646, 7, shop.error ? '#c0392b' : '#479b67');
     pixelText(ctx, 'ARROWS MOVE . ENTER CHOOSES . ESC BACK TO THE PARK', left + 28, 664, 7, INK);
-    return { states, info, shop: shopView };
+    const musicView = musicBarView(music);
+    if (musicView) drawMusicBar(ctx, musicView, left);
+    return { states, info, shop: shopView, music: musicView };
   }
 
   return { render, ready: () => atlasReady };

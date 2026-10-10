@@ -1,0 +1,442 @@
+{
+ "ch1": {
+  "oplChannel": 1,
+  "regs": [
+   "21",
+   "21",
+   "15",
+   "97",
+   "D3",
+   "C3",
+   "2C",
+   "2C",
+   "00",
+   "00",
+   "0A"
+  ],
+  "patches": 22,
+  "mod": {
+   "mul": 1,
+   "tl": 21,
+   "ar": 13,
+   "dr": 3,
+   "sl": 2,
+   "rr": 12,
+   "eg": true,
+   "wave": "sine"
+  },
+  "car": {
+   "mul": 1,
+   "tl": 23,
+   "ar": 12,
+   "dr": 3,
+   "sl": 2,
+   "rr": 12,
+   "eg": true,
+   "wave": "sine"
+  },
+  "connection": "fm",
+  "fm": {
+   "ratio": 1.0,
+   "index": 0.652,
+   "addLevel": 0,
+   "fb": 5,
+   "modWave": "sine",
+   "carWave": "sine",
+   "modAttack": 0.003,
+   "modDecay": 1.5,
+   "modSus": 0.501,
+   "adsr": [
+    0.003,
+    1.5,
+    0.501,
+    0.02
+   ]
+  }
+ },
+ "ch2": {
+  "oplChannel": 2,
+  "regs": [
+   "09",
+   "01",
+   "4E",
+   "26",
+   "DA",
+   "F1",
+   "25",
+   "15",
+   "00",
+   "00",
+   "0A"
+  ],
+  "patches": 4,
+  "mod": {
+   "mul": 9,
+   "tl": 14,
+   "ar": 13,
+   "dr": 10,
+   "sl": 2,
+   "rr": 5,
+   "eg": false,
+   "wave": "sine"
+  },
+  "car": {
+   "mul": 1,
+   "tl": 38,
+   "ar": 15,
+   "dr": 1,
+   "sl": 1,
+   "rr": 5,
+   "eg": false,
+   "wave": "sine"
+  },
+  "connection": "fm",
+  "fm": {
+   "ratio": 9.0,
+   "index": 1.194,
+   "addLevel": 0,
+   "fb": 5,
+   "modWave": "sine",
+   "carWave": "sine",
+   "modAttack": 0.003,
+   "modDecay": 0.0117,
+   "modSus": 0.501,
+   "adsr": [
+    0.002,
+    2,
+    0.5,
+    0.375
+   ]
+  }
+ },
+ "ch3": {
+  "oplChannel": 3,
+  "regs": [
+   "09",
+   "01",
+   "4E",
+   "26",
+   "DA",
+   "F1",
+   "25",
+   "15",
+   "00",
+   "00",
+   "0A"
+  ],
+  "patches": 2,
+  "mod": {
+   "mul": 9,
+   "tl": 14,
+   "ar": 13,
+   "dr": 10,
+   "sl": 2,
+   "rr": 5,
+   "eg": false,
+   "wave": "sine"
+  },
+  "car": {
+   "mul": 1,
+   "tl": 38,
+   "ar": 15,
+   "dr": 1,
+   "sl": 1,
+   "rr": 5,
+   "eg": false,
+   "wave": "sine"
+  },
+  "connection": "fm",
+  "fm": {
+   "ratio": 9.0,
+   "index": 1.194,
+   "addLevel": 0,
+   "fb": 5,
+   "modWave": "sine",
+   "carWave": "sine",
+   "modAttack": 0.003,
+   "modDecay": 0.0117,
+   "modSus": 0.501,
+   "adsr": [
+    0.002,
+    2,
+    0.5,
+    0.375
+   ]
+  }
+ },
+ "ch4": {
+  "oplChannel": 4,
+  "regs": [
+   "09",
+   "01",
+   "4E",
+   "26",
+   "DA",
+   "F1",
+   "25",
+   "15",
+   "00",
+   "00",
+   "0A"
+  ],
+  "patches": 2,
+  "mod": {
+   "mul": 9,
+   "tl": 14,
+   "ar": 13,
+   "dr": 10,
+   "sl": 2,
+   "rr": 5,
+   "eg": false,
+   "wave": "sine"
+  },
+  "car": {
+   "mul": 1,
+   "tl": 38,
+   "ar": 15,
+   "dr": 1,
+   "sl": 1,
+   "rr": 5,
+   "eg": false,
+   "wave": "sine"
+  },
+  "connection": "fm",
+  "fm": {
+   "ratio": 9.0,
+   "index": 1.194,
+   "addLevel": 0,
+   "fb": 5,
+   "modWave": "sine",
+   "carWave": "sine",
+   "modAttack": 0.003,
+   "modDecay": 0.0117,
+   "modSus": 0.501,
+   "adsr": [
+    0.002,
+    2,
+    0.5,
+    0.375
+   ]
+  }
+ },
+ "ch5": {
+  "oplChannel": 5,
+  "regs": [
+   "00",
+   "00",
+   "0D",
+   "15",
+   "E8",
+   "A5",
+   "EF",
+   "FF",
+   "00",
+   "00",
+   "06"
+  ],
+  "patches": 4,
+  "mod": {
+   "mul": 0.5,
+   "tl": 13,
+   "ar": 14,
+   "dr": 8,
+   "sl": 14,
+   "rr": 15,
+   "eg": false,
+   "wave": "sine"
+  },
+  "car": {
+   "mul": 0.5,
+   "tl": 21,
+   "ar": 10,
+   "dr": 5,
+   "sl": 15,
+   "rr": 15,
+   "eg": false,
+   "wave": "sine"
+  },
+  "connection": "fm",
+  "fm": {
+   "ratio": 1.0,
+   "index": 1.302,
+   "addLevel": 0,
+   "fb": 3,
+   "modWave": "sine",
+   "carWave": "sine",
+   "modAttack": 0.003,
+   "modDecay": 0.0469,
+   "modSus": 0.008,
+   "adsr": [
+    0.003,
+    0.375,
+    0.5,
+    0.02
+   ]
+  }
+ },
+ "ch6": {
+  "oplChannel": 6,
+  "regs": [
+   "05",
+   "00",
+   "00",
+   "24",
+   "F0",
+   "F6",
+   "FF",
+   "FF",
+   "00",
+   "00",
+   "0E"
+  ],
+  "patches": 4,
+  "mod": {
+   "mul": 5,
+   "tl": 0,
+   "ar": 15,
+   "dr": 0,
+   "sl": 15,
+   "rr": 15,
+   "eg": false,
+   "wave": "sine"
+  },
+  "car": {
+   "mul": 0.5,
+   "tl": 36,
+   "ar": 15,
+   "dr": 6,
+   "sl": 15,
+   "rr": 15,
+   "eg": false,
+   "wave": "sine"
+  },
+  "connection": "fm",
+  "fm": {
+   "ratio": 10.0,
+   "index": 4.0,
+   "addLevel": 0,
+   "fb": 7,
+   "modWave": "sine",
+   "carWave": "sine",
+   "modAttack": 0.001,
+   "modDecay": 10.0,
+   "modSus": 0.006,
+   "adsr": [
+    0.002,
+    0.1875,
+    0.5,
+    0.02
+   ]
+  }
+ },
+ "ch7": {
+  "oplChannel": 7,
+  "regs": [
+   "07",
+   "05",
+   "40",
+   "15",
+   "09",
+   "F6",
+   "53",
+   "94",
+   "00",
+   "00",
+   "0E"
+  ],
+  "patches": 17,
+  "mod": {
+   "mul": 7,
+   "tl": 0,
+   "ar": 0,
+   "dr": 9,
+   "sl": 5,
+   "rr": 3,
+   "eg": false,
+   "wave": "sine"
+  },
+  "car": {
+   "mul": 5,
+   "tl": 21,
+   "ar": 15,
+   "dr": 6,
+   "sl": 9,
+   "rr": 4,
+   "eg": false,
+   "wave": "sine"
+  },
+  "connection": "fm",
+  "fm": {
+   "ratio": 1.4,
+   "index": 4.0,
+   "addLevel": 0,
+   "fb": 7,
+   "modWave": "sine",
+   "carWave": "sine",
+   "modAttack": 10.0,
+   "modDecay": 0.0234,
+   "modSus": 0.178,
+   "adsr": [
+    0.002,
+    0.1875,
+    0.5,
+    0.75
+   ]
+  }
+ },
+ "ch8": {
+  "oplChannel": 8,
+  "regs": [
+   "E2",
+   "E1",
+   "CA",
+   "16",
+   "F8",
+   "C0",
+   "E5",
+   "0E",
+   "00",
+   "00",
+   "08"
+  ],
+  "patches": 1,
+  "mod": {
+   "mul": 2,
+   "tl": 10,
+   "ar": 15,
+   "dr": 8,
+   "sl": 14,
+   "rr": 5,
+   "eg": true,
+   "wave": "sine"
+  },
+  "car": {
+   "mul": 1,
+   "tl": 22,
+   "ar": 12,
+   "dr": 0,
+   "sl": 0,
+   "rr": 14,
+   "eg": true,
+   "wave": "sine"
+  },
+  "connection": "fm",
+  "fm": {
+   "ratio": 2.0,
+   "index": 1.687,
+   "addLevel": 0,
+   "fb": 4,
+   "modWave": "sine",
+   "carWave": "sine",
+   "modAttack": 0.001,
+   "modDecay": 0.0469,
+   "modSus": 0.008,
+   "adsr": [
+    0.003,
+    2,
+    1.0,
+    0.02
+   ]
+  }
+ }
+}

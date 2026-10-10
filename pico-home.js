@@ -60,7 +60,9 @@
   // ── Styles (Phase 0 sketch CSS, scoped under #pico-home) ──────────────────
   var CSS = [
     '#pico-home {',
-    '  --orange: #FF864D; --cream: #FFFBF0; --paper: #FEFEFE; --ink: #000040; --warn: #d9b400;',
+    // Park music (apstat-park/park-music.mjs) sets --park-* on <html> for the picked song's palette;
+    // the Pico Desk follows it (the classic Desk never does). Without a song: Pico Park's own colours.
+    '  --orange: var(--park-accent, #FF864D); --cream: var(--park-hud, #FFFBF0); --paper: var(--park-bg, #FEFEFE); --ink: var(--park-fg, #000040); --warn: #d9b400;',
     '  --plain-font: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;',
     '  position: fixed; inset: 0; z-index: 4; overflow-x: hidden; overflow-y: auto;',
     '  background: var(--paper); color: var(--ink); font: 16px/1.35 var(--plain-font);',
@@ -140,7 +142,7 @@
        content, ids and buttons untouched; only its look changes. Orange stepped frame, the title
        ("Challenge!") on the orange top bar, paper interior, plain text, orange YES and an
        orange-outlined NO. Scoped to the Pico top layer, so the original Desk's alert is unchanged. */
-    '#pico-doge-layer { --orange: #FF864D; --paper: #FEFEFE; --ink: #000040;',
+    '#pico-doge-layer { --orange: var(--park-accent, #FF864D); --paper: var(--park-bg, #FEFEFE); --ink: var(--park-fg, #000040);',
     '  --plain-font: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }',
     '#pico-doge-layer > #doge-challenge-panel { isolation: isolate; width: min(400px, calc(100vw - 32px)); padding: 43px 24px 24px;',
     '  background: none; border: 0; box-shadow: none; color: var(--ink); font-family: var(--plain-font); font-size: 16px; }',

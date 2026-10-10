@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>APStat Park — tracker engine demo</title>
+<style>
+:root{--park-bg:#222;--park-fg:#eee;--park-accent:#888;--park-accent2:#666;--park-hud:#333}
+body{margin:0;font:15px/1.4 system-ui,sans-serif;background:var(--park-bg);color:var(--park-fg)}
+header{background:var(--park-hud);padding:12px 18px;border-bottom:3px solid var(--park-accent)}
+h1{margin:0;font-size:18px} main{padding:16px 18px;display:grid;gap:14px;max-width:900px}
+section{background:color-mix(in srgb,var(--park-hud) 70%,transparent);border:1px solid var(--park-accent2);border-radius:8px;padding:10px 12px}
+button{background:var(--park-accent);color:var(--park-bg);border:0;border-radius:6px;padding:7px 12px;margin:3px;font-weight:600;cursor:pointer}
+button.alt{background:var(--park-accent2);color:var(--park-fg)} label{margin-right:12px;white-space:nowrap}
+#pos{font-family:ui-monospace,monospace} .beat{display:inline-block;width:14px;height:14px;border-radius:50%;background:var(--park-accent2);margin-right:4px}
+.beat.on{background:var(--park-accent)} small{opacity:.75}
+</style></head><body>
+<header><h1>APStat Park tracker engine — <span id="title"></span></h1><small id="meta"></small></header>
+<main>
+<section><b>Song</b> <select id="song"></select><br><br><b>Transport</b><br>
+ <label><input type="checkbox" id="unlock"> Easter egg unlocked (game calls <code>engine.unlock(true)</code>)</label>
+ <label><input type="checkbox" id="solo" checked> Solo play (music is off in class mode)</label><br>
+ <button id="play">Play</button><button id="stop" class="alt">Stop</button>
+ <label><input type="checkbox" id="lowpower"> lowPower (max 5 melodic voices: drops doubles/inner harmony, fixed FM index, no snare body/tom osc)</label>
+ <label>Tempo <input type="range" id="tempo" min="0.75" max="1.25" step="0.01" value="1"></label>
+ <div id="pos">stopped</div><div id="beats"><span class="beat"></span><span class="beat"></span><span class="beat"></span><span class="beat"></span></div>
+ <div id="status"></div>
+</section>
+<section><b>Mixer</b> <small>(live; per original channel)</small> <button id="export">Export song JSON</button> <button id="resetmix" class="alt">Reset mix</button>
+ <table id="mixer" style="width:100%;border-collapse:collapse;margin-top:6px"></table>
+ <small>Solo: click a radio; double-click it to clear. vol = dB trim · gate = note length × · bright = FM modulator index × (no effect on PSG/NES pulse) · oct = octave shift. Export saves these in the song's "mix" block; drop the file into songs\ and rebuild demo.html.</small></section>
+<section><b>Vibe shifter SFX</b> <label><input type="checkbox" id="quant" checked> quantize to next 1/16</label><br><span id="sfx"></span>
+ <br><small>SFX use the song's key/scale and instrument timbres; with no song playing they fall back to C major / square.</small></section>
+</main>
+<script>window.__selftest={errors:[],rows:0,beats:0,bars:0};window.addEventListener("error",function(e){window.__selftest.errors.push(String(e.message));document.title="JSERROR "+e.message;});</script>
+<script>/*ENGINE*/</script>
+<script>/*VIBE*/</script>
+<script>/*PALETTE*/</script>
+<script>var SONGS = /*SONGS*/; var SONG = SONGS[Object.keys(SONGS)[0]];</script>
+<script>
+(function(){
+  var AC = window.AudioContext || window.webkitAudioContext, ctx = null, engine = null, vibe = null;
+  var $ = function(id){ return document.getElementById(id); };
+  function status(m){ $('status').textContent = m; }
+  function ensure(){
+    if (ctx) return;
+    ctx = new AC();
+    var out = ctx.destination;
+    if (/selftest/.test(location.search)) { window.__an = ctx.createAnalyser(); __an.fftSize = 2048; __an.connect(ctx.destination); out = __an; }
+    engine = TrackerEngine.create(ctx, out, { mode: 'solo' });
+    engine.load(SONG);
+    vibe = VibeShifter.create(ctx, ctx.destination, engine); vibe.setSong(SONG);
+    engine.on('row', function(r){ $('pos').textContent = 'order ' + r.order + ' (' + r.pattern + ')  row ' + String(r.row).padStart(2,'0'); });
+    engine.on('beat', function(b){ var els = document.querySelectorAll('.beat'); els.forEach(function(e,i){ e.classList.toggle('on', i === b.beatInBar); }); });
+    applyToggles();
+  }
+  function applyToggles(){
+    if (!engine) return;
+    engine.unlock($('unlock').checked); engine.setMode($('solo').checked ? 'solo' : 'class');
+    engine.setLowPower($('lowpower').checked); engine.setTempoScale(+$('tempo').value); vibe.setQuantize($('quant').checked);
+  }
+  var PLAT = { genesis: 'Genesis FM', opl2: 'AdLib OPL2', nes: 'NES 2A03' };
+  function showSong(){
+    $('title').textContent = SONG.title;
+    $('meta').textContent = SONG.bpm.toFixed(2) + ' BPM · ' + PLAT[SONG.instrumentSet] + ' · ' + SONG.key + ' ' + SONG.scale + ' · ' + SONG.order.length + ' bars · ' + SONG.rowsPerBeat + ' rows/beat · palette ' + Object.values(SONG.palette).join(' ');
+    Palette.apply(SONG.palette, { ms: 600 });
+  }
+  function switchSong(id){
+    SONG = SONGS[id]; showSong(); buildStems();
+    if (!engine) return;
+    var was = engine.isPlaying(); engine.stop(0.15);
+    setTimeout(function(){ engine.load(SONG); vibe.setSong(SONG); applyToggles(); if (was) engine.play(); }, was ? 200 : 0);
+  }
+  Object.keys(SONGS).forEach(function(id){ var o = document.createElement('option'); o.value = id; o.textContent = SONGS[id].title + '  [' + PLAT[SONGS[id].instrumentSet] + ']'; $('song').appendChild(o); });
+  $('song').addEventListener('change', function(e){ switchSong(e.target.value); });
+  showSong();
+  ['unlock','solo','lowpower','tempo','quant'].forEach(function(id){ $(id).addEventListener('input', function(){ ensure(); applyToggles(); }); });
+  $('play').onclick = function(){ ensure(); applyToggles(); var ok = engine.play(); status(ok ? 'playing' : (engine.isUnlocked() ? 'blocked: class mode (tick "Solo play")' : 'locked: tick "Easter egg unlocked" first')); };
+  $('stop').onclick = function(){ if (engine) { engine.stop(0.4); status('stopped'); } };
+  var DEF = { vol: 0, gate: 1, bright: 1, oct: 0, mute: false, solo: false }, ORIG = {};
+  Object.keys(SONGS).forEach(function(id){ ORIG[id] = JSON.parse(JSON.stringify(SONGS[id].mix || {})); });
+  function mixFor(c){ SONG.mix = SONG.mix || {}; var m = SONG.mix[c] = SONG.mix[c] || {}; Object.keys(DEF).forEach(function(k){ if (m[k] == null) m[k] = DEF[k]; }); return m; }
+  function setMix(c, o){ var m = mixFor(c); Object.keys(o).forEach(function(k){ m[k] = o[k]; }); if (engine && engine.song === SONG) engine.setMix(c, o); }
+  function buildStems(){
+    var tb = $('mixer'); tb.innerHTML = '<tr><th align=left>channel</th><th>vol dB</th><th>gate</th><th>bright</th><th>oct</th><th>mute</th><th>solo</th></tr>';
+    (SONG.channels || TrackerEngine.CHANNELS).forEach(function(c){
+      var m = mixFor(c), info = (SONG.channelInfo || {})[c] || (c === 'drums' ? 'original drum data' : c), drum = c === 'drums';
+      var tr = document.createElement('tr'); tr.title = info;
+      function sl(k, min, max, step){ return '<td><input type="range" data-k="' + k + '" min="' + min + '" max="' + max + '" step="' + step + '" value="' + m[k] + '"' + (drum && k !== 'vol' ? ' disabled' : '') + '> <span>' + m[k] + '</span></td>'; }
+      tr.innerHTML = '<td><b>' + c + '</b><br><small>' + info + '</small></td>' + sl('vol', -24, 6, 0.5) + sl('gate', 0.1, 1.5, 0.05) + sl('bright', 0, 2, 0.05) + sl('oct', -2, 2, 1) +
+        '<td align=center><input type="checkbox" data-k="mute"' + (m.mute ? ' checked' : '') + '></td><td align=center><input type="radio" name="solo" data-k="solo"' + (m.solo ? ' checked' : '') + '></td>';
+      tr.querySelectorAll('input').forEach(function(inp){
+        inp.addEventListener('input', function(){
+          var k = inp.dataset.k, o = {};
+          if (k === 'mute') o.mute = inp.checked;
+          else if (k === 'solo') { (SONG.channels || []).forEach(function(x){ if (x !== c) setMix(x, { solo: false }); }); o.solo = true; }
+          else { o[k] = +inp.value; inp.nextElementSibling.textContent = inp.value; }
+          ensure(); setMix(c, o);
+        });
+        if (inp.dataset.k === 'solo') inp.addEventListener('dblclick', function(){ inp.checked = false; setMix(c, { solo: false }); });
+      });
+      $('mixer').appendChild(tr);
+    });
+    // SFX row: pitch offset (semitones, -12..+12) and volume (dB) for the vibe-shifter sound effects; saved in mix.sfx
+    SONG.mix = SONG.mix || {}; var sx = SONG.mix.sfx = SONG.mix.sfx || {}; if (sx.pitch == null) sx.pitch = 0; if (sx.vol == null) sx.vol = 0;
+    var tr = document.createElement('tr'); tr.title = 'sound effects (vibe shifter)';
+    tr.innerHTML = '<td><b>SFX</b><br><small>game sound effects</small></td><td><input type="range" data-k="vol" min="-24" max="6" step="0.5" value="' + sx.vol + '"> <span>' + sx.vol + '</span></td>' +
+      '<td colspan=2>pitch <input type="range" data-k="pitch" min="-12" max="12" step="1" value="' + sx.pitch + '"> <span>' + sx.pitch + '</span> st</td><td></td><td></td><td></td>';
+    tr.querySelectorAll('input').forEach(function(inp){ inp.addEventListener('input', function(){ sx[inp.dataset.k] = +inp.value; inp.nextElementSibling.textContent = inp.value; }); });
+    $('mixer').appendChild(tr);
+  }
+  $('export').onclick = function(){
+    (SONG.channels || []).forEach(mixFor);
+    var blob = new Blob([JSON.stringify(SONG)], { type: 'application/json' }), a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = SONG.id + '.json'; document.body.appendChild(a); a.click(); a.remove();
+    status('exported ' + SONG.id + '.json (mix block saved)');
+  };
+  $('resetmix').onclick = function(){
+    var id = $('song').value || SONG.id; SONG.mix = JSON.parse(JSON.stringify(ORIG[id] || {}));
+    (SONG.channels || []).forEach(function(c){ var m = mixFor(c); if (engine && engine.song === SONG) engine.setMix(c, m); });
+    buildStems();
+  };
+  buildStems();
+  Object.keys(VibeShifter.SFX).forEach(function(n){
+    var b = document.createElement('button'); b.className = 'alt'; b.textContent = n; b.onclick = function(){ ensure(); vibe.playSfx(n); }; $('sfx').appendChild(b);
+  });
+  // headless self-test: demo.html?selftest
+  if (/selftest/.test(location.search)) {
+    ensure(); $('unlock').checked = true; applyToggles();
+    var ids = Object.keys(SONGS), res = {}, k = 0, rows = 0;
+    engine.on('row', function(){ rows++; });
+    function next(){
+      if (k >= ids.length) { document.title = 'SELFTEST ' + JSON.stringify({ songs: res, errors: __selftest.errors }); return; }
+      var id = ids[k++]; $('song').value = id; SONG = SONGS[id]; showSong(); engine.stop(0); engine.load(SONG); vibe.setSong(SONG);
+      rows = 0; var t0 = ctx.currentTime, ok = engine.play(), rd = engine.getClock().rowDur;
+      vibe.playSfx('coin'); setTimeout(function(){ vibe.playSfx('jump'); }, 700);
+      var pk = 0, buf = new Float32Array(2048), iv = setInterval(function(){ __an.getFloatTimeDomainData(buf); for (var i = 0; i < buf.length; i++) pk = Math.max(pk, Math.abs(buf[i])); }, 20);
+      setTimeout(function(){
+        var el = ctx.currentTime - t0, exp = (el - 0.05) / rd, vc = engine.getVoiceCount();
+        clearInterval(iv); engine.stop(0);
+        engine.setLowPower(true); engine.play(); var vlp = engine.getVoiceCount(); engine.stop(0); engine.setLowPower(false);
+        res[id] = { platform: SONG.instrumentSet, played: ok, rows: rows, expected: +exp.toFixed(1), voices: vc, voicesLowPower: vlp,
+                    peakDb: +(20 * Math.log10(pk || 1e-9)).toFixed(2), bg: getComputedStyle(document.documentElement).getPropertyValue('--park-bg').trim() };
+        setTimeout(next, 300);
+      }, 3000);
+    }
+    next();
+  }
+})();
+</script>
+</body></html>

@@ -28,7 +28,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   const doc = container.ownerDocument, win = doc.defaultView;
   const { engine, input, api } = board;
   const art = createPicoArt(doc);
-  const audio = createPicoAudio(win);
+  const audio = createPicoAudio(win, { classMode: () => !!(board.classroom?.isLive?.() && !board.classroom?.soundAllowed?.()) });
   art.load(board.atlas?.());
   const savedCamera = { ...api._camera };
   const entities = new Map(), peers = new Map(), lobbyPeers = new Map();

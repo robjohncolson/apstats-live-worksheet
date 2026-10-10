@@ -1,0 +1,274 @@
+{
+ "launchbase": {
+  "src": "/workspace/sonic/out/sonic3-launchbase.js",
+  "opts": {
+   "id": "launchbase",
+   "title": "Launch Base Zone Act 1",
+   "source": "Sonic 3 (1994), SMPS data",
+   "palette": {
+    "bg": "#1d2440",
+    "fg": "#f4ead8",
+    "accent": "#f08a24",
+    "accent2": "#5f86b3",
+    "hud": "#2a3a5c"
+   },
+   "platform": "genesis",
+   "patches": {
+    "path": "/workspace/sonic/out/fm-patches.json",
+    "key": "sonic3-launchbase"
+   }
+  },
+  "note": "was frozen at the approved prototype; now rebuilt faithfully from SMPS (approved lead/bass lines verified identical, generated arp/pad removed)",
+  "faithful": {
+   "job": "sonic3-launchbase",
+   "keep": [
+    "FM1",
+    "FM2",
+    "FM3",
+    "FM4",
+    "FM5",
+    "PSG1"
+   ],
+   "roles": {
+    "lead": "FM1",
+    "bass": "FM2",
+    "arp": "FM3",
+    "pad": "FM4"
+   },
+   "lowPowerOff": [
+    "FM4"
+   ]
+  }
+ },
+ "starlight": {
+  "src": "/workspace/sonic/out/sonic1-starlight.js",
+  "opts": {
+   "id": "starlight",
+   "title": "Star Light Zone",
+   "source": "Sonic 1 REV01 (1991), SMPS data",
+   "palette": {
+    "bg": "#0b0f2e",
+    "fg": "#eef0ff",
+    "accent": "#ffd34d",
+    "accent2": "#d45bd8",
+    "hud": "#1a1f52"
+   },
+   "platform": "genesis",
+   "patches": {
+    "path": "/workspace/sonic/out/fm-patches.json",
+    "key": "sonic1-starlight"
+   }
+  },
+  "faithful": {
+   "job": "sonic1-starlight",
+   "keep": [
+    "FM1",
+    "FM2",
+    "FM3",
+    "FM4",
+    "FM5",
+    "PSG1",
+    "PSG2"
+   ],
+   "roles": {
+    "lead": "FM5",
+    "bass": "FM2",
+    "arp": "FM3",
+    "pad": "FM4"
+   },
+   "lowPowerOff": [
+    "FM4",
+    "PSG2"
+   ],
+   "volumes": "smps",
+   "tweak": {
+    "FM1": {
+     "indexMul": 0.45,
+     "modSusMul": 0.6
+    },
+    "FM3": {
+     "indexMul": 0.45,
+     "modSusMul": 0.6
+    },
+    "FM4": {
+     "indexMul": 0.45,
+     "modSusMul": 0.6
+    }
+   }
+  }
+ },
+ "icecap": {
+  "src": "/workspace/sonic/out/sonic3-icecap.js",
+  "opts": {
+   "id": "icecap",
+   "title": "IceCap Zone Act 1",
+   "source": "Sonic 3 (1994), SMPS data; lead=PSG1, pad=FM2",
+   "palette": {
+    "bg": "#dff1ff",
+    "fg": "#14324f",
+    "accent": "#2bb6e8",
+    "accent2": "#7a5fd1",
+    "hud": "#b9dcf5"
+   },
+   "platform": "genesis",
+   "patches": {
+    "path": "/workspace/sonic/out/fm-patches.json",
+    "key": "sonic3-icecap"
+   }
+  },
+  "faithful": {
+   "job": "sonic3-icecap",
+   "keep": [
+    "FM1",
+    "FM2",
+    "FM3",
+    "FM4",
+    "FM5",
+    "PSG1"
+   ],
+   "roles": {
+    "lead": "PSG1",
+    "bass": "FM1",
+    "arp": "FM4",
+    "pad": "FM2"
+   },
+   "lowPowerOff": [
+    "FM5"
+   ],
+   "volumes": "smps",
+   "noteRules": {
+    "PSG1": [
+     {
+      "minNote": 88,
+      "shift": -12,
+      "v": 0.35
+     }
+    ]
+   }
+  }
+ },
+ "mushroomhill": {
+  "src": "/workspace/sonic/out/sk-mushroomhill.js",
+  "opts": {
+   "id": "mushroomhill",
+   "title": "Mushroom Hill Zone Act 1",
+   "source": "Sonic & Knuckles (1994), SMPS data; 116.6 BPM 4/4, triplet-16th grid",
+   "rowsPerBeat": 6,
+   "palette": {
+    "bg": "#1e3a22",
+    "fg": "#f6efd6",
+    "accent": "#e9472f",
+    "accent2": "#f2a23a",
+    "hud": "#2f5a32"
+   },
+   "platform": "genesis",
+   "patches": {
+    "path": "/workspace/sonic/out/fm-patches.json",
+    "key": "sk-mushroomhill"
+   }
+  },
+  "faithful": {
+   "job": "sk-mushroomhill",
+   "keep": [
+    "FM1",
+    "FM2",
+    "FM3",
+    "FM4"
+   ],
+   "roles": {
+    "lead": "FM1",
+    "bass": "FM2",
+    "arp": "FM3",
+    "pad": "FM4"
+   },
+   "volumes": "smps",
+   "tweak": {
+    "FM3": {
+     "indexMul": 0.45,
+     "modSusMul": 0.4,
+     "sus": 0.35,
+     "release": 0.05
+    },
+    "FM4": {
+     "indexMul": 0.45,
+     "modSusMul": 0.4,
+     "sus": 0.35,
+     "release": 0.05
+    }
+   },
+   "mix": {
+    "FM3": {
+     "gate": 0.55
+    },
+    "FM4": {
+     "gate": 0.55
+    }
+   },
+   "trimDb": {
+    "FM3": -8,
+    "FM4": -8
+   }
+  }
+ },
+ "keen-wotb": {
+  "src": "/workspace/parkmusic/score-v3.1.json",
+  "opts": {
+   "id": "keen-wotb",
+   "title": "Wednesday On the Beach (Commander Keen 5)",
+   "source": "Commander Keen 5 (1991), IMF data (all original channels, no added bridge)",
+   "palette": {
+    "bg": "#f3dfb2",
+    "fg": "#2b2a3a",
+    "accent": "#18a5a0",
+    "accent2": "#f2704a",
+    "hud": "#e8c48a"
+   },
+   "key": "G",
+   "scale": "mixolydian",
+   "platform": "opl2",
+   "patches": {
+    "path": "/workspace/parkmusic/keen5/opl-patches.json"
+   }
+  },
+  "faithful": {
+   "src": "/workspace/parkmusic/keen5/wotb_q31.json",
+   "patches": "/workspace/tracker/tools/patches/opl-patches-ch.json",
+   "bpm": 156,
+   "bars": 36,
+   "keep": [
+    "ch1",
+    "ch2",
+    "ch3",
+    "ch4",
+    "ch7",
+    "ch8"
+   ],
+   "roles": {
+    "lead": "ch8",
+    "bass": "ch1",
+    "arp": "ch2",
+    "pad": "ch3"
+   },
+   "lowPowerOff": [
+    "ch4"
+   ]
+  }
+ },
+ "park-bounce": {
+  "src": "/workspace/parkmusic/score-v2.json",
+  "opts": {
+   "id": "park-bounce",
+   "title": "Park Bounce (hook A)",
+   "source": "Original APStat Park theme v2, hook A",
+   "platform": "nes",
+   "leadDuty": 0.25,
+   "palette": {
+    "bg": "#fff4dc",
+    "fg": "#3a2e2a",
+    "accent": "#ff8a3d",
+    "accent2": "#8fd3c8",
+    "hud": "#ffd9b0"
+   }
+  }
+ }
+}

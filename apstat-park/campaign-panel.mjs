@@ -6,13 +6,14 @@ const { createSceneDissolve } = await import('./scene-transition.mjs' + V);
 const { createPicoAudio, placeSound } = await import('./pico-audio.mjs' + V);
 const { pixelText } = await import('./pixel-text.mjs' + V);
 const { catBodyForHue, rgbHex } = await import('./pico-rules.mjs' + V);
-const { createStageSelect, stageStates, choiceFor, startCursor, stageAt, moveCursor, describe, onBuyButton, keyShopView } = await import('./campaign-select.mjs' + V);
+const { createStageSelect, stageStates, choiceFor, startCursor, stageAt, moveCursor, describe, onBuyButton, keyShopView, musicButtonAt } = await import('./campaign-select.mjs' + V);
+const { SONGS } = await import('./park-music.mjs' + V);
 const { createKeyShop } = await import('./key-shop.mjs' + V);
 
 // keyShop: optional (tests); defaults to the candy wallet on roster-server (key-shop.mjs).
 export function mountCampaign({ container, getSocket, board, onClose, keyShop = null }) {
   const doc = container.ownerDocument, win = doc.defaultView;
-  const audio = createPicoAudio(win), clear = createStageClear();
+  const audio = createPicoAudio(win, { classMode: () => !!(board.classroom?.isLive?.() && !board.classroom?.soundAllowed?.()) }), clear = createStageClear();
   let game = null, disposed = false, socket = null, joined = false, state = null, error = '';
   let lastPacket = 0, lastJoin = -Infinity, lastInput = -Infinity, lastClear = -Infinity, lastResume = -Infinity;
   let bits = 0, buddy = 0, sentBits = -1, sentBuddy = -1, frame = null;
@@ -86,6 +87,8 @@ export function mountCampaign({ container, getSocket, board, onClose, keyShop = 
     const key = event.key;
     if (key === 'Escape') { event.preventDefault(); dispose(); return; }
     if (key === 'Enter' || key === ' ') { event.preventDefault(); if (!event.repeat && cursor != null) choose(cursor); return; }
+    if (key === 'm' || key === 'M') { event.preventDefault(); if (!event.repeat) nextSong(1); return; }
+    if (key === 'p' || key === 'P') { event.preventDefault(); if (!event.repeat) musicButton('play'); return; }
     if (!key.startsWith('Arrow')) return;
     event.preventDefault();
     cursor = moveCursor(cursor ?? 0, key);
@@ -103,10 +106,25 @@ export function mountCampaign({ container, getSocket, board, onClose, keyShop = 
     if (!keyShopView(shop.state).enabled) return;
     shop.buy().then(bought => { if (bought && !disposed) lastSelect = -Infinity; });
   }
+  // Music bar (park-music.mjs): the student's own song, re-voicing the park's sounds and colours.
+  const music = audio.music || null;
+  function nextSong(step) {
+    if (!music) return;
+    const ids = SONGS.map(s => s.id), at = ids.indexOf(music.view().songId);
+    music.pick(ids[(at + step + ids.length) % ids.length]);
+  }
+  function musicButton(name) {
+    if (!music) return;
+    if (name === 'prev') nextSong(-1);
+    else if (name === 'next') nextSong(1);
+    else if (name === 'play') music.toggle();
+  }
   function selectClick(event) {
     if (!selecting) return;
     const point = pointerWorld(event);
     if (onBuyButton(point.x, point.y, pad())) { event.preventDefault(); buyKey(); return; }
+    const musicHit = musicButtonAt(point.x, point.y, pad());
+    if (musicHit) { event.preventDefault(); musicButton(musicHit); return; }
     const stage = pointerStage(event);
     if (stage < 0) return;
     event.preventDefault(); cursor = stage; choose(stage);
@@ -265,14 +283,24 @@ export function mountCampaign({ container, getSocket, board, onClose, keyShop = 
     ctx.save(); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.scale(scale(), scale());
     ctx.imageSmoothingEnabled = false;
     const width = viewW(), left = pad();
-    ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, width, 700);
-    ctx.fillStyle = '#ff864d'; ctx.fillRect(0, 700, width, 50);
+    // The picked song's palette (park-music.mjs sets --park-* on <html>); the park's own colours otherwise.
+    const pal = parkPalette();
+    ctx.fillStyle = pal.bg; ctx.fillRect(0, 0, width, 700);
+    ctx.fillStyle = pal.accent; ctx.fillRect(0, 700, width, 50);
     if (cursor == null && progress) cursor = startCursor(states());
     const { info, shop: buy } = select.render(ctx, { progress, username: board.username, cursor: cursor ?? 0, rejected, left,
-      message: selectMessage || error, shop: shop.state, hoverBuy });
+      message: selectMessage || error, shop: shop.state, hoverBuy, music: music ? music.view() : null });
     status.textContent = 'Stage select. ' + info + buyStatus(buy);
     ctx.restore();
     dissolve.render(ctx);
+  }
+  function parkPalette() {
+    let bg = '', accent = '';
+    try {
+      const style = win.getComputedStyle(doc.documentElement);
+      bg = style.getPropertyValue('--park-bg').trim(); accent = style.getPropertyValue('--park-accent').trim();
+    } catch {}
+    return { bg: bg || '#ffffff', accent: accent || '#ff864d' };
   }
   function render(ctx) {
     if (selecting) { renderSelect(ctx); return; }

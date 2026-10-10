@@ -1,0 +1,120 @@
+{
+ "starlight": {
+  "levels": {
+   "FM1": 0.077,
+   "FM2": 0.336,
+   "FM3": 0.06,
+   "FM4": 0.06,
+   "FM5": 0.2,
+   "PSG1": 0.071,
+   "PSG2": 0.071
+  },
+  "bars": 22,
+  "bpm": 125.0,
+  "patterns": 17,
+  "kept": [
+   "FM1",
+   "FM2",
+   "FM3",
+   "FM4",
+   "FM5",
+   "PSG1",
+   "PSG2"
+  ],
+  "dropped": {},
+  "notes": {
+   "FM1": 63,
+   "FM2": 119,
+   "FM3": 92,
+   "FM4": 92,
+   "FM5": 119,
+   "PSG1": 92,
+   "PSG2": 92
+  },
+  "drumHits": {
+   "H": 264,
+   "K": 88
+  },
+  "voices": 7,
+  "voicesLowPower": 5,
+  "loopSec": 42.24,
+  "key": "B major"
+ },
+ "icecap": {
+  "levels": {
+   "FM1": 0.423,
+   "FM2": 0.082,
+   "FM3": 0.082,
+   "FM4": 0.082,
+   "FM5": 0.082,
+   "PSG1": 0.2
+  },
+  "bars": 48,
+  "bpm": 138.281,
+  "patterns": 14,
+  "kept": [
+   "FM1",
+   "FM2",
+   "FM3",
+   "FM4",
+   "FM5",
+   "PSG1"
+  ],
+  "dropped": {
+   "PSG2": 204
+  },
+  "notes": {
+   "FM1": 486,
+   "FM2": 90,
+   "FM3": 149,
+   "FM4": 420,
+   "FM5": 408,
+   "PSG1": 204
+  },
+  "drumHits": {
+   "K": 202,
+   "H": 366,
+   "T": 12,
+   "S": 6
+  },
+  "voices": 6,
+  "voicesLowPower": 5,
+  "loopSec": 83.31,
+  "key": "G minor"
+ },
+ "mushroomhill": {
+  "levels": {
+   "FM1": 0.2,
+   "FM2": 0.119,
+   "FM3": 0.067,
+   "FM4": 0.067
+  },
+  "bars": 20,
+  "bpm": 116.602,
+  "patterns": 15,
+  "kept": [
+   "FM1",
+   "FM2",
+   "FM3",
+   "FM4"
+  ],
+  "dropped": {
+   "FM5": 102
+  },
+  "notes": {
+   "FM1": 102,
+   "FM2": 200,
+   "FM3": 113,
+   "FM4": 113
+  },
+  "drumHits": {
+   "S": 42,
+   "K": 28,
+   "T": 70
+  },
+  "voices": 4,
+  "voicesLowPower": 4,
+  "loopSec": 41.17,
+  "key": "A# major"
+ }
+}

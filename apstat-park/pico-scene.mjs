@@ -22,7 +22,7 @@ export function createPicoScene({ board, replica, member, player, peers, status,
   const doc = board.engine?.canvas?.ownerDocument || globalThis.document;
   const win = doc?.defaultView || globalThis.window;
   const art = createPicoArt(doc); art.load(typeof board.atlas === 'function' ? board.atlas() : null);
-  const audio = createPicoAudio(win);
+  const audio = createPicoAudio(win, { classMode: () => !!(board.classroom?.isLive?.() && !board.classroom?.soundAllowed?.()) });
   // A tab hidden for HIDDEN_LEAVE_MS leaves the park (rAF, and so the fixed step, stops while hidden).
   let hiddenTimer = null;
   const timers = win && typeof win.setTimeout === 'function' ? win : globalThis;

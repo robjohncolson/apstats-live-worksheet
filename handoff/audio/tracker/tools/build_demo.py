@@ -1,0 +1,9 @@
+import json,os
+here=os.path.dirname(os.path.abspath(__file__)); root=os.path.dirname(here)
+t=open(os.path.join(root,'demo.template.html')).read()
+for k,f in (('ENGINE','tracker-engine.js'),('VIBE','vibe.js'),('PALETTE','palette.js')):
+    t=t.replace('/*%s*/'%k,open(os.path.join(root,f)).read().replace('</script','<\\/script'))
+order=['park-bounce','launchbase','starlight','icecap','mushroomhill','keen-wotb']
+songs={i:json.load(open(os.path.join(root,'songs',i+'.json'))) for i in order}
+t=t.replace('/*SONGS*/',json.dumps(songs,separators=(',',':')))
+open(os.path.join(root,'demo.html'),'w').write(t); print('demo.html',len(t))
