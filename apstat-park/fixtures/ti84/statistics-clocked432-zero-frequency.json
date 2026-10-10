@@ -1,0 +1,103 @@
+{
+  "source": {
+    "repo": "ti84-transpile (github.com/robjohncolson/ti84-transpile)",
+    "repoHead": "27ef30c84c14e3063aeee8cd65ee942a6be482f2",
+    "path": "logs/curriculum-statistics-clocked432-zero-frequency-evidence-1.json",
+    "sha256": "4a4811aa7eab7bc703fe49cf396495997d96f34b6ffe7027ac720fd5cf791d81",
+    "tracked": false,
+    "supportingReports": []
+  },
+  "status": "cold-zero-frequency-statistics-fixture-verified",
+  "textNote": "Screen text as decoded by the source's exact-glyph matcher; '?' marks a glyph its decoder could not name (for example x-bar, Sigma, sigma, subscripts, superscript 2). The numeric 'value' field is the verified number.",
+  "cases": [
+    {
+      "scenario": "zero-frequency",
+      "dataset": [
+        2,
+        4,
+        6
+      ],
+      "frequencies": [
+        1,
+        0,
+        1
+      ],
+      "expandedValues": [
+        2,
+        6
+      ],
+      "expected": {
+        "mean": 4,
+        "sum": 8,
+        "squares": 40,
+        "sample": 2.8284271247461903,
+        "population": 2,
+        "n": 2,
+        "min": 2,
+        "q1": 2,
+        "median": 4,
+        "q3": 6,
+        "max": 6
+      },
+      "observed": {
+        "mean": {
+          "text": "?=4",
+          "value": 4,
+          "stage": "one-var-calculate"
+        },
+        "sum": {
+          "text": "?x=8",
+          "value": 8,
+          "stage": "one-var-calculate"
+        },
+        "squares": {
+          "text": "?x?=40",
+          "value": 40,
+          "stage": "one-var-calculate"
+        },
+        "sample": {
+          "text": "Sx=2.828427125",
+          "value": 2.828427125,
+          "stage": "one-var-calculate"
+        },
+        "population": {
+          "text": "?x=2",
+          "value": 2,
+          "stage": "one-var-calculate"
+        },
+        "n": {
+          "text": "n=2",
+          "value": 2,
+          "stage": "one-var-calculate"
+        },
+        "min": {
+          "text": "minX=2",
+          "value": 2,
+          "stage": "one-var-calculate"
+        },
+        "q1": {
+          "text": "?Q?=2",
+          "value": 2,
+          "stage": "one-var-calculate"
+        },
+        "median": {
+          "text": "?Med=4",
+          "value": 4,
+          "stage": "one-var-scroll"
+        },
+        "q3": {
+          "text": "?Q?=6",
+          "value": 6,
+          "stage": "one-var-upper-quartile"
+        },
+        "max": {
+          "text": "maxX=6",
+          "value": 6,
+          "stage": "one-var-maximum"
+        }
+      }
+    }
+  ],
+  "scope": "Actualcoldlistentry/STATCALCwizard/calculate/scrollthroughmaximum; noCPU/RAMpatches. Recomputedmoments andmedian-of-halves five-number summaries fromexpandedinputdata, verifiedvaluesagainfromsavedVRAM withzero-distanceglyphmatches and1e-9 relative-or-absolute displaytolerance. Currentinstalledregistry coversallobservednonbootblocks.",
+  "limits": "One fixture with a zero-frequency row only. Controlledclock1ms peradvance2000blockbudget, no wallclockproductfix. Otherdatasets/zeroorinvalidfrequencies/graphs/persistence/hardware/fullcalculator remainunproven."
+}

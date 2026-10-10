@@ -977,6 +977,151 @@ describe('TI84Native Orchestrator', function () {
     });
   });
 
+  // ── ROM fixtures (ti84-transpile logs/*.json, see comments in source) ──
+
+  describe('ROM fixtures', function () {
+    var ONE_VAR_WITH_L2 = ['STAT', 'RIGHT', 'ENTER', 'DOWN', '2ND', '2', 'DOWN', 'ENTER'];
+
+    function plotKeys(typeRights, freqKeys) {
+      return ['2ND', 'Y=', 'ENTER', 'ENTER', 'DOWN']
+        .concat(Array(typeRights).fill('RIGHT'))
+        .concat(['ENTER', 'DOWN', 'DOWN'])
+        .concat(freqKeys || [])
+        .concat(['ZOOM', '9']);
+    }
+
+    function press(keys) {
+      keys.forEach(function (key) { calc.pressKey(key); });
+    }
+
+    function traceTexts(presses) {
+      var label = loadModules().TI84ScreenRenderer.traceLabel;
+      var texts = [];
+      presses.forEach(function (key) {
+        calc.pressKey(key);
+        texts.push(label(calc.getScreen().state.traceInfo));
+      });
+      return texts;
+    }
+
+    it('1-Var Stats [2,4,6]: Q1=2, Q3=6 (median excluded from halves)', function () {
+      calc.setList('L1', [2, 4, 6]);
+      press(['STAT', 'RIGHT', 'ENTER', 'DOWN', 'DOWN', 'ENTER']);
+      var v = calc.getComputedValues();
+      expect([v.minX, v.Q1, v.Med, v.Q3, v.maxX]).toEqual([2, 2, 4, 6, 6]);
+    });
+
+    it('all-zero FreqList shows the division-by-0 error screen', function () {
+      calc.setList('L1', [2, 4, 6]);
+      calc.setList('L2', [0, 0, 0]);
+      press(ONE_VAR_WITH_L2);
+      expect(calc.getScreen().type).toBe('result');
+      expect(calc.getScreen().id).toBe('one-var-stats-error');
+      expect(calc.getComputedValues()).toBeNull();
+    });
+
+    it('error screen lines come from the ROM and render through renderResult', function () {
+      var rendered = null;
+      var renderer = { renderHome: function () {}, renderMenu: function () {}, renderWizard: function () {},
+        renderEditor: function () {}, renderGraph: function () {}, clear: function () {},
+        renderResult: function (payload) { rendered = payload; } };
+      calc = TI84Native.create(null, { renderer: renderer });
+      calc.setList('L1', [2, 4, 6]);
+      calc.setList('L2', [0, 0, 0]);
+      press(ONE_VAR_WITH_L2);
+      expect(rendered.lines).toEqual(['Attempted calculation', 'contains division by 0.', 'Calculation fails.']);
+    });
+
+    it('error screen ignores other keys; ENTER returns to the 1-Var Stats screen (unverified dismissal)', function () {
+      calc.setList('L1', [2, 4, 6]);
+      calc.setList('L2', [0, 0, 0]);
+      press(ONE_VAR_WITH_L2);
+      press(['DOWN', 'UP', '5']);
+      expect(calc.getScreen().id).toBe('one-var-stats-error');
+      calc.pressKey('ENTER');
+      expect(calc.getScreen().type).toBe('wizard');
+      expect(calc.getScreen().id).toBe('one-var-stats-wizard');
+      expect(calc.getWizardValues().FreqList).toBe('L2');
+
+      // Correct the frequency list and calculate again from the same screen.
+      calc.setList('L2', [1, 2, 1]);
+      calc.pressKey('ENTER');
+      expect(calc.getScreen().id).toBe('one-var-stats-result-page1');
+      expect(calc.getComputedValues().n).toBe(4);
+    });
+
+    it('CLEAR also dismisses the error screen back to the wizard', function () {
+      calc.setList('L1', [2, 4, 6]);
+      calc.setList('L2', [0, 0, 0]);
+      press(ONE_VAR_WITH_L2);
+      calc.pressKey('CLEAR');
+      expect(calc.getScreen().id).toBe('one-var-stats-wizard');
+    });
+
+    it('binomcdf(10, 0, 0) pastes 1 to the home screen', function () {
+      press(['2ND', 'VARS'].concat(Array(11).fill('DOWN')).concat(['ENTER',
+        '1', '0', 'DOWN', '0', 'DOWN', '0', 'DOWN', 'ENTER', 'ENTER']));
+      var lines = calc._getHomeLines();
+      expect(lines[lines.length - 1]).toBe('1');
+    });
+
+    it('modified boxplot TRACE [1,2,2,3,3,9]: Med=2.5, Q3=3, X=3, maxX=9, then stays', function () {
+      calc.setList('L1', [1, 2, 2, 3, 3, 9]);
+      press(plotKeys(3));
+      expect(calc.getScreen().state.type).toBe('ModBoxplot');
+      expect(traceTexts(['TRACE', 'RIGHT', 'RIGHT', 'RIGHT', 'RIGHT', 'RIGHT']))
+        .toEqual(['Med=2.5', 'Q3=3', 'X=3', 'maxX=9', 'maxX=9', 'maxX=9']);
+    });
+
+    it('modified boxplot TRACE leftward mirrors the right (UNVERIFIED convention)', function () {
+      calc.setList('L1', [1, 2, 2, 3, 3, 9]);
+      press(plotKeys(3));
+      expect(traceTexts(['TRACE', 'LEFT', 'LEFT', 'LEFT']))
+        .toEqual(['Med=2.5', 'Q1=2', 'minX=1', 'minX=1']);
+    });
+
+    it('histogram without a fixture window keeps the legacy layout (general ZoomStat rule unknown)', function () {
+      calc.setList('L1', [1, 2, 2, 3, 3, 9]);
+      press(plotKeys(2));
+      var bins = calc.getScreen().state.points;
+      // width = range / ceil(sqrt(n)) = 8/3; no trailing empty bin.
+      expect(bins.map(function (b) { return b.y; })).toEqual([5, 0, 0, 1]);
+      expect(bins[0].x).toBe(1);
+      expect(bins[1].x).toBeCloseTo(1 + 8 / 3, 12);
+    });
+
+    it('histogram ZoomStat + TRACE [1,2,2,3,3,9] with the ROM fixture window: width 2 bins, trailing empty bin', function () {
+      calc.setList('L1', [1, 2, 2, 3, 3, 9]);
+      calc.setHistogramWindow({ xmin: 1, xscl: 2, bins: 6 });
+      press(plotKeys(2));
+      var bins = calc.getScreen().state.points.map(function (b) { return [b.x, b.upper, b.y]; });
+      expect(bins).toEqual([[1, 3, 3], [3, 5, 2], [5, 7, 0], [7, 9, 0], [9, 11, 1], [11, 13, 0]]);
+      expect(traceTexts(['TRACE', 'RIGHT', 'RIGHT', 'RIGHT', 'RIGHT', 'RIGHT', 'RIGHT'])).toEqual([
+        'min=1 max<3 n=3', 'min=3 max<5 n=2', 'min=5 max<7 n=0', 'min=7 max<9 n=0',
+        'min=9 max<11 n=1', 'min=11 max<13 n=0', 'min=11 max<13 n=0'
+      ]);
+    });
+
+    it('histogram honours the Freq list of the plot setup', function () {
+      calc.setList('L1', [2, 4, 6]);
+      calc.setList('L2', [1, 2, 1]);
+      press(plotKeys(2, ['2ND', '2']));
+      var state = calc.getScreen().state;
+      expect(state.settings.Freq).toBe('L2');
+      expect(state.stats.n).toBe(4);
+      var total = state.points.reduce(function (sum, b) { return sum + b.y; }, 0);
+      expect(total).toBe(4);
+    });
+
+    it('modified boxplot honours the Freq list of the plot setup', function () {
+      calc.setList('L1', [2, 4, 6]);
+      calc.setList('L2', [1, 0, 1]);
+      press(plotKeys(3, ['2ND', '2']));
+      var stats = calc.getScreen().state.stats;
+      expect([stats.n, stats.minX, stats.Q1, stats.Med, stats.Q3, stats.maxX]).toEqual([2, 2, 2, 4, 6, 6]);
+    });
+  });
+
   // ── mountCanvas ────────────────────────────────────────────────────
 
   describe('mountCanvas', function () {

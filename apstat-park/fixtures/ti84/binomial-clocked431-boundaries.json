@@ -1,0 +1,85 @@
+{
+  "source": {
+    "repo": "ti84-transpile (github.com/robjohncolson/ti84-transpile)",
+    "repoHead": "27ef30c84c14e3063aeee8cd65ee942a6be482f2",
+    "path": "logs/curriculum-binomial-clocked431-boundaries-evidence-1.json",
+    "sha256": "facc9fb7a2eebbb5a4389fb218276331a4050d36743dfa41bef494f4390ea053",
+    "tracked": false,
+    "supportingReports": []
+  },
+  "status": "three-controlled-clock-cold-fixtures-verified",
+  "cases": [
+    {
+      "label": "curriculum-binomial-pdf-clocked431-1",
+      "procedure": "binompdf",
+      "scenario": "interior",
+      "trials": 10,
+      "probability": 0.5,
+      "x": 3,
+      "expected": 0.1171875,
+      "terms": [
+        {
+          "k": 3,
+          "choose": 120,
+          "probability": 0.1171875
+        }
+      ],
+      "observed": "0.1171875",
+      "commandPartialDecode": "binompdf(10,0.5,3?"
+    },
+    {
+      "label": "curriculum-binomial-cdf-clocked431-zero-1",
+      "procedure": "binomcdf",
+      "scenario": "zero-probability",
+      "trials": 10,
+      "probability": 0,
+      "x": 0,
+      "expected": 1,
+      "terms": [
+        {
+          "k": 0,
+          "choose": 1,
+          "probability": 1
+        }
+      ],
+      "observed": "1",
+      "commandPartialDecode": "binomcdf(10,0,0?"
+    },
+    {
+      "label": "curriculum-binomial-cdf-clocked431-unit-1",
+      "procedure": "binomcdf",
+      "scenario": "unit-probability",
+      "trials": 10,
+      "probability": 1,
+      "x": 3,
+      "expected": 0,
+      "terms": [
+        {
+          "k": 0,
+          "choose": 1,
+          "probability": 0
+        },
+        {
+          "k": 1,
+          "choose": 10,
+          "probability": 0
+        },
+        {
+          "k": 2,
+          "choose": 45,
+          "probability": 0
+        },
+        {
+          "k": 3,
+          "choose": 120,
+          "probability": 0
+        }
+      ],
+      "observed": "0",
+      "commandPartialDecode": "binomcdf(10,1,3?"
+    }
+  ],
+  "renderMethod": "Exact ROMglyph matching distance0, home result row57/column1/stride12/width10. Home command row37/column2; closing glyph mayremainunknown; allarguments alsoassertedonwizard.",
+  "clockSchedule": "Allfourdeviceclocks start0 andadvance1ms peradvance(2000) budget.",
+  "limits": "One PDF and two CDF endpoints only; originalwallclockPaste timeout unresolved. No generalnumerical/invalidinput/fullcalculator/decompile claim."
+}

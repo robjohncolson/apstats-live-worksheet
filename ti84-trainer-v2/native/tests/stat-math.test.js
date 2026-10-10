@@ -45,9 +45,10 @@ describe('oneVarStats', () => {
     approx(r.Sx, 1.5811388301, 8);
     approx(r.sigmaX, Math.sqrt(2), 10);
     expect(r.minX).toBe(1);
-    expect(r.Q1).toBe(2);
+    // TI median-of-halves excludes the median for odd n: {1,2} and {4,5}
+    expect(r.Q1).toBe(1.5);
     expect(r.Med).toBe(3);
-    expect(r.Q3).toBe(4);
+    expect(r.Q3).toBe(4.5);
     expect(r.maxX).toBe(5);
   });
 
@@ -77,11 +78,38 @@ describe('oneVarStats', () => {
     approx(r.xbar, 11 / 6, 10);
   });
 
-  it('TI quartiles for n=7: [1,2,3,4,5,6,7]', () => {
+  it('TI quartiles for n=7: [1,2,3,4,5,6,7] exclude the median', () => {
     const r = SM.oneVarStats([1, 2, 3, 4, 5, 6, 7]);
     expect(r.Med).toBe(4);
-    expect(r.Q1).toBe(2.5);
-    expect(r.Q3).toBe(5.5);
+    expect(r.Q1).toBe(2);
+    expect(r.Q3).toBe(6);
+  });
+
+  // ROM fixtures: ti84-transpile logs/curriculum-statistics-clocked432-evidence-1.json
+  // (cases basic + frequency) and ...clocked432-zero-frequency-evidence-1.json.
+  it('ROM fixture: [2,4,6] -> Q1=2, Med=4, Q3=6 (median excluded from halves)', () => {
+    const r = SM.oneVarStats([2, 4, 6]);
+    expect([r.minX, r.Q1, r.Med, r.Q3, r.maxX]).toEqual([2, 2, 4, 6, 6]);
+    expect(r.Sx).toBe(2);
+    approx(r.sigmaX, Math.sqrt(8 / 3), 12);
+  });
+
+  it('ROM fixture: [2,4,6] freq [1,2,1] -> expands to [2,4,4,6]', () => {
+    const r = SM.oneVarStats([2, 4, 6], [1, 2, 1]);
+    expect(r.n).toBe(4);
+    expect(r.sumX2).toBe(72);
+    expect([r.minX, r.Q1, r.Med, r.Q3, r.maxX]).toEqual([2, 3, 4, 5, 6]);
+  });
+
+  it('ROM fixture: [2,4,6] freq [1,0,1] -> expands to [2,6]', () => {
+    const r = SM.oneVarStats([2, 4, 6], [1, 0, 1]);
+    expect(r.n).toBe(2);
+    expect(r.sigmaX).toBe(2);
+    expect([r.minX, r.Q1, r.Med, r.Q3, r.maxX]).toEqual([2, 2, 4, 6, 6]);
+  });
+
+  it('all-zero frequency list has no observations (null)', () => {
+    expect(SM.oneVarStats([2, 4, 6], [0, 0, 0])).toBeNull();
   });
 
   it('handles two elements', () => {
@@ -430,6 +458,32 @@ describe('binomcdf', () => {
 
   it('binomcdf(10, 0.5, 0) = (0.5)^10', () => {
     approx(SM.binomcdf(10, 0.5, 0), Math.pow(0.5, 10), 12);
+  });
+
+  // ROM fixtures: ti84-transpile logs/curriculum-binomial-clocked431-boundaries-evidence-1.json
+  // and logs/curriculum-binomial-cdf-clocked431-evidence-1.json.
+  it('ROM interior fixtures: binompdf(10,.5,3) and binomcdf(10,.5,3)', () => {
+    expect(SM.formatTI(SM.binompdf(10, 0.5, 3))).toBe('0.1171875');
+    expect(SM.formatTI(SM.binomcdf(10, 0.5, 3))).toBe('0.171875');
+  });
+
+  it('ROM boundary fixture: binomcdf(10, 0, 0) = 1 (0 * log 0 handled exactly)', () => {
+    expect(SM.binomcdf(10, 0, 0)).toBe(1);
+    expect(SM.formatTI(SM.binomcdf(10, 0, 0))).toBe('1');
+  });
+
+  it('ROM boundary fixture: binomcdf(10, 1, 3) = 0', () => {
+    expect(SM.binomcdf(10, 1, 3)).toBe(0);
+    expect(SM.formatTI(SM.binomcdf(10, 1, 3))).toBe('0');
+  });
+
+  it('p = 0 and p = 1 put all mass on one outcome (binompdf)', () => {
+    expect(SM.binompdf(10, 0, 0)).toBe(1);
+    expect(SM.binompdf(10, 0, 4)).toBe(0);
+    expect(SM.binompdf(10, 1, 10)).toBe(1);
+    expect(SM.binompdf(10, 1, 9)).toBe(0);
+    expect(SM.binomcdf(10, 1, 10)).toBe(1);
+    expect(SM.binomcdf(10, 0, 7)).toBe(1);
   });
 });
 

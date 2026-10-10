@@ -1,0 +1,33 @@
+{
+  "source": {
+    "repo": "ti84-transpile (github.com/robjohncolson/ti84-transpile)",
+    "repoHead": "27ef30c84c14e3063aeee8cd65ee942a6be482f2",
+    "path": "logs/curriculum-binomial-cdf-clocked431-evidence-1.json",
+    "sha256": "83a60c90a005e26f6c09ae10405c51b3fdea881c59fc9f2c7c8ccbcfb5acb440",
+    "tracked": false,
+    "supportingReports": []
+  },
+  "status": "verified-one-fixture-under-controlled-clock",
+  "procedure": "binomcdf",
+  "fixture": {
+    "n": 10,
+    "p": 0.5,
+    "x": 3
+  },
+  "expected": {
+    "terms": [
+      1,
+      10,
+      45,
+      120
+    ],
+    "numerator": 176,
+    "denominator": 1024,
+    "value": 0.171875
+  },
+  "observed": "0.171875",
+  "commandPartialDecode": "binomcdf(10,0.5,3?",
+  "commandNote": "'?' is the closing parenthesis glyph the automated decoder could not name; the source reports it visually confirmed.",
+  "clockSchedule": "Allfourdeviceclocks start0 andadvance1ms perruntime.advance(2000) budget, constantwithinadvance. Controlled simulationclock; doesnotvalidatewallclockperformance.",
+  "limits": "One coldboot fixture on controlled device clocks, not wallclockperformance or all binomialcases. Original wallclockPaste timeout remains unresolved. Differential resumes same recovered prePaste snapshot; not baselinecoldboot. No assertion that all calculator functionality or full decompile is complete."
+}

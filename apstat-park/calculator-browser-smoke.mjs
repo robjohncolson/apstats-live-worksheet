@@ -7,7 +7,7 @@ import { createReadStream, mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { PNG } from 'pngjs';
-import { DEFAULT_LEVEL } from './calculator-curriculum.mjs';
+import { DEFAULT_LEVEL, levelById, challengeFor } from './calculator-curriculum.mjs';
 import { WebSocketServer } from '../../curriculum_render/railway-server/node_modules/ws/wrapper.mjs';
 
 const relayRoot = process.env.PARK_RELAY_ROOT
@@ -31,9 +31,23 @@ function delayed(map, ws, fn) {
   map.set(ws, at); setTimeout(fn, at - performance.now());
 }
 const send = (ws, message) => delayed(outAt, ws, () => { if (ws.readyState === 1) ws.send(JSON.stringify(message)); });
-const service = createParkService({ registry, wallNow: () => hour * 3600000,
-  calculatorOptions: { available: () => [DEFAULT_LEVEL] },
+// The relay's wallet persists through this in-memory store (the Supabase store's interface):
+// it receives absolute key counts, so a double award would show up as a 2 where a 1 belongs.
+const persisted = new Map(), walletWrites = [];
+const keyStore = {
+  async load() { return { wallets: [], open: [] }; },
+  saveWallets(section, rows) {
+    walletWrites.push(rows.map(row => ({ ...row })));
+    for (const row of rows) persisted.set(row.username, row.keys);
+    return Promise.resolve();
+  },
+  saveSpend() { return Promise.resolve(); },
+};
+let selectedLevel = DEFAULT_LEVEL;
+const service = createParkService({ registry, keyStore, wallNow: () => hour * 3600000,
+  calculatorOptions: { available: () => [selectedLevel] },
   now: () => performance.now() + timeOffset, send });
+const keyCounts = page => page.evaluate(() => board.getParkScene().getView().keyCounts);
 const server = createServer((request, response) => {
   const url = new URL(request.url, 'http://localhost');
   if (url.pathname === '/') {
@@ -79,9 +93,9 @@ async function clickKey(page, key) {
     return Math.abs(board.getParkScene().getView().cameraX - target) < 0.5;
   });
   const point = await page.evaluate(async key => {
-    const { tilesFor } = await import('/apstat-park/calculator-mission.mjs');
+    const { tilesFor, missionFor } = await import('/apstat-park/calculator-mission.mjs');
     const scene = board.getParkScene();
-    const tile = tilesFor(scene.getState().step).find(tile => tile.key === key);
+    const tile = tilesFor(scene.getState().step, missionFor(scene.getState())).find(tile => tile.key === key);
     const rect = document.querySelector('canvas').getBoundingClientRect();
     const scale = Math.min(1, rect.width / 720);
     return { x: rect.left + (720 + tile.x + tile.w / 2 - Math.round(scene.getView().cameraX)) * scale,
@@ -90,9 +104,121 @@ async function clickKey(page, key) {
   await page.mouse.click(point.x, point.y);
 }
 
+// The entrance opens the stage select (2026-10-07 economy); 1-1 is always open: choose it.
+async function startStageOne(page) {
+  await page.waitForFunction(() => board.getParkScene()?.kind === 'campaign' && board.getParkScene().getSelect?.().selecting);
+  await page.keyboard.press('ArrowLeft');
+  await page.keyboard.press('Enter');
+  await page.waitForFunction(() => board.getParkScene()?.kind === 'campaign' && board.getParkScene().getView().frame > 30);
+}
+// UP at the 1-1 door returns to the calculator room. Walk left onto the door first (the cat
+// spawns beside it), and retry: a first key press may only wake the player.
+async function leavePico(page) {
+  for (let i = 0; i < 4 && await page.evaluate(() => board.getParkScene()?.kind) !== 'calculator'; i++) {
+    await page.keyboard.down('ArrowLeft'); await page.waitForTimeout(400); await page.keyboard.up('ArrowLeft');
+    await page.keyboard.press('ArrowUp');
+    await page.waitForTimeout(400);
+  }
+  await page.waitForFunction(() => board.getParkScene()?.kind === 'calculator');
+}
+// Keyboard path: an answer tile's number key.
+async function pressChoice(page, key) {
+  const digit = await page.evaluate(async key => {
+    const { tilesFor, missionFor } = await import('/apstat-park/calculator-mission.mjs');
+    const state = board.getParkScene().getState();
+    return String(tilesFor(state.step, missionFor(state)).findIndex(tile => tile.key === key) + 1);
+  }, key);
+  assert.notEqual(digit, '0', 'answer tile ' + key);
+  await page.keyboard.press(digit);
+}
+async function waitFor(check, message, timeout = 5000) {
+  const until = performance.now() + timeout;
+  while (!check()) {
+    if (performance.now() > until) throw new Error('Timed out: ' + message);
+    await new Promise(resolve => setTimeout(resolve, 50));
+  }
+}
+
+let alice, bob;
+// A full cooperative interpretation round: block, calculator route (FreqList L2), a wrong
+// answer with its specific feedback, a keyboard retry, the authoritative +1 key per member,
+// persistence, and no double award on reload.
+async function interpretationRound() {
+  const level = selectedLevel, answers = challengeFor(level).answers.map(String);
+  for (const page of [alice, bob]) { await page.keyboard.down('Shift'); await page.keyboard.down('ArrowRight'); }
+  for (const page of [alice, bob]) {
+    await page.waitForSelector('[data-calculator-participating]', { timeout: 30000 });
+    await page.keyboard.up('ArrowRight'); await page.keyboard.up('Shift');
+    await page.waitForFunction(id => board.getParkScene()?.getState()?.missionId === id, level.id);
+  }
+  await alice.waitForFunction(() => board.getParkScene().getState().members.length === 2);
+  for (const page of [alice, bob]) {
+    for (const [step, key] of level.route.entries()) {
+      await clickKey(page, key);
+      await page.waitForFunction(step => board.getParkScene().getState().step === step + 1, step);
+    }
+    assert.equal(await page.evaluate(() => board.getParkScene().getCalculatorScreen().id), 'one-var-stats-result-page1');
+    assert.match((await page.evaluate(() => board.getParkScene().getView().lines.map(line => line.text))).join(' '), /n = 4/);
+  }
+  await alice.waitForFunction(() => Math.abs(board.getParkScene().getView().playerY - 676) < 0.1);
+  await alice.screenshot({ path: path.join(output, 'interpretation-question.png'), fullPage: true });
+  const deadline = await alice.evaluate(() => board.getParkScene().getState().startedAt);
+  // Wrong: 3 rows is not 3 observations. Click one, number-key the other.
+  await clickKey(alice, '3');
+  await alice.waitForFunction(() => board.getParkScene().getState().boxValues.length === 1);
+  await pressChoice(alice, answers[1]);
+  await alice.waitForFunction(() => board.getParkScene().getState().boxAttempts === 1);
+  const wrong = await alice.evaluate(() => board.getParkScene().getState());
+  assert.match(wrong.lastPlot.feedback, /3 is the number of rows/);
+  assert.equal(wrong.startedAt, deadline, 'a wrong answer does not renew the clock');
+  assert.equal(wrong.solved, false);
+  assert.match(await alice.evaluate(() => document.querySelector('[data-calculator-controls] [role="status"]').textContent), /Not yet: 3 is the number of rows/);
+  await alice.screenshot({ path: path.join(output, 'interpretation-feedback.png'), fullPage: true });
+  // Retry by keyboard only; Bob answers by clicking.
+  for (const key of answers) {
+    const count = await alice.evaluate(() => board.getParkScene().getState().boxValues.length);
+    await pressChoice(alice, key);
+    await alice.waitForFunction(count => board.getParkScene().getState().boxValues.length === count + 1
+      || board.getParkScene().getState().solved, count);
+  }
+  await alice.waitForFunction(() => board.getParkScene().getState().solved);
+  assert.equal((await keyCounts(alice)).alice, 1, 'still one key while Bob is answering');
+  for (const key of answers) {
+    const revision = await bob.evaluate(() => board.getParkScene().getState().revision);
+    await clickKey(bob, key);
+    await bob.waitForFunction(revision => board.getParkScene().getState().revision > revision, revision);
+  }
+  await Promise.all([alice, bob].map(page => page.waitForFunction(() => {
+    const view = board.getParkScene().getView();
+    return view.keyReward && view.keyCounts.alice === 2 && view.keyCounts.bob === 2;
+  })));
+  await waitFor(() => persisted.get('alice') === 2 && persisted.get('bob') === 2, 'the second award is persisted');
+  await alice.waitForTimeout(300);
+  await alice.screenshot({ path: path.join(output, 'interpretation-complete-key.png'), fullPage: true });
+  // Reload: the completed round and the counts come back; nothing is paid twice.
+  const writes = walletWrites.length;
+  await bob.reload();
+  await bob.waitForFunction(() => board.getParkScene()?.kind === 'calculator');
+  await bob.evaluate(() => board.openCalculatorMission());
+  await bob.waitForFunction(() => board.getParkScene()?.getState()?.complete);
+  await bob.waitForFunction(() => board.getParkScene().getView().keyCounts.bob === 2);
+  await alice.waitForTimeout(500);
+  assert.deepEqual([persisted.get('alice'), persisted.get('bob')], [2, 2], 'no double award after a reload');
+  assert(walletWrites.slice(writes).every(rows => rows.every(row => row.keys === 2)), 'no later write raises a count');
+  // Leave through the reset door for the rest of the smoke.
+  await alice.keyboard.down('ArrowRight');
+  await alice.waitForFunction(() => board.getParkScene().getView().playerX >= 1378);
+  await alice.keyboard.up('ArrowRight');
+  await alice.keyboard.press('ArrowUp');
+  for (const page of [alice, bob]) {
+    await page.waitForFunction(() => !board.getParkScene().getState() && !board.getParkScene().getView().participating);
+  }
+  selectedLevel = DEFAULT_LEVEL;
+}
+
 try {
-  const alice = await browser.newPage({ viewport: { width: 900, height: 1000 } });
-  const bob = await browser.newPage({ viewport: { width: 900, height: 1000 } });
+  alice = await browser.newPage({ viewport: { width: 900, height: 1000 } });
+  bob = await browser.newPage({ viewport: { width: 900, height: 1000 } });
   for (const [page, name] of [[alice, 'alice'], [bob, 'bob']]) {
     page.on('pageerror', error => errors.push(error.message));
     await page.addInitScript(() => {
@@ -111,10 +237,11 @@ try {
     await page.goto(origin + '/?user=' + name);
     await page.waitForFunction(() => board.getSpritePosition(new URL(location).searchParams.get('user')));
     await page.waitForFunction(() => board.getParkScene()?.kind === 'calculator');
-    assert.equal(await page.evaluate(() => board.getParkScene().getView().campaignUnlocked), false);
-    await page.evaluate(() => board.openNativeGameplay(0));
-    await page.waitForTimeout(200);
-    assert.equal(await page.evaluate(() => board.getParkScene()?.kind), 'calculator', 'campaign entrance stays locked before earning a key');
+    // Teacher 2026-10-07: the PICO PARK entrance is open to everyone (1-1 always startable);
+    // keys are a spendable count for later stages, not a door lock.
+    await page.waitForFunction(() => board.getParkScene().getView().lobby?.campaignOpen);
+    assert.equal(await page.evaluate(() => board.getParkScene().getView().campaignUnlocked), true, 'the shared entrance is open with zero keys');
+    assert.equal((await keyCounts(page))[name], 0);
     assert.ok(await page.evaluate(() => bootHeights.length > 0 && bootHeights.every(height => height === board.getBoardHeight())),
       'every startup frame reserves the full calculator height, including delayed module loading');
     await page.evaluate(() => { window.originalRoom = board.getParkScene(); window.originalHeight = board.getBoardHeight(); });
@@ -198,8 +325,8 @@ try {
       'clicking a boxplot value leaves the character on the ground');
   }
   await alice.waitForFunction(() => board.getParkScene().getState().solved);
-  assert.equal(await alice.evaluate(() => board.getParkScene().getView().campaignUnlocked), false,
-    'one finished student does not unlock an unfinished team');
+  assert.equal((await keyCounts(alice)).alice, 0, 'one finished student earns nothing for an unfinished team');
+  assert.equal(await alice.evaluate(() => board.getParkScene().getView().keyReward), false, 'no key celebration before the relay completes the team');
   assert.equal(await alice.evaluate(() => board.getParkScene().getState().complete), false);
   assert.equal(await alice.evaluate(() => board.getParkScene().getState().readyCount), 1);
   assert.equal(await alice.evaluate(() => board.getParkScene().getView().resetDoor), null);
@@ -259,7 +386,12 @@ try {
     }
   }
   await alice.waitForFunction(() => board.getParkScene().getState().complete);
-  await Promise.all([alice, bob].map(page => page.waitForFunction(() => board.getParkScene().getView().campaignUnlocked)));
+  // The relay's completion pays +1 key per roster member; every page shows the same gold counts.
+  await Promise.all([alice, bob].map(page => page.waitForFunction(() => {
+    const view = board.getParkScene().getView();
+    return view.keyReward && view.keyCounts.alice === 1 && view.keyCounts.bob === 1;
+  })));
+  await waitFor(() => persisted.get('alice') === 1 && persisted.get('bob') === 1, 'the award is written to the store');
   assert.equal(await alice.evaluate(() => board.getParkScene().getCalculatorScreen().id), 'one-var-stats-result-page2');
   assert.equal(await bob.evaluate(() => board.getParkScene().getState().complete), true);
   for (const page of [alice, bob]) {
@@ -301,14 +433,13 @@ try {
   });
   await alice.evaluate(() => board.openNativeGameplay(0));
   await alice.waitForSelector('[data-park-active]');
-  await alice.waitForFunction(() => board.getParkScene()?.kind === 'campaign' && board.getParkScene().getView().frame > 30);
+  await startStageOne(alice);
   await alice.waitForTimeout(400);
   assert.equal(await alice.evaluate(() => board.getBoardHeight()), roomHeight);
   assert.ok(await alice.evaluate(height => transitionHeights.every(value => value === height), roomHeight),
     'loading and entering Pico never flashes the old short board');
   await alice.screenshot({ path: path.join(output, 'calculator-pico-aligned.png'), fullPage: true });
-  await alice.keyboard.press('ArrowUp');
-  await alice.waitForFunction(() => board.getParkScene()?.kind === 'calculator');
+  await leavePico(alice);
   await alice.waitForTimeout(400);
   assert.ok(await alice.evaluate(height => transitionHeights.every(value => value === height), roomHeight),
     'returning to the calculator keeps the same canvas height');
@@ -321,6 +452,8 @@ try {
   await alice.keyboard.down('ArrowRight');
   await alice.waitForFunction(() => board.getParkScene().getView().playerX >= 1378);
   await alice.keyboard.up('ArrowRight');
+  // The next round is an interpretation variant (frequency list): pick it before the door resets the room.
+  selectedLevel = levelById('one-var-stats@freq');
   await alice.keyboard.press('ArrowUp');
   for (const page of [alice, bob]) {
     await page.waitForFunction(() => !board.getParkScene().getState() && !board.getParkScene().getView().participating);
@@ -328,6 +461,7 @@ try {
     assert.equal(await page.evaluate(() => board.getParkScene().getView().playerX), 65);
     assert.deepEqual(await page.evaluate(() => board.getParkScene().getView().lobby.roster), []);
   }
+  await interpretationRound();
   await alice.keyboard.down('Shift');
   await alice.keyboard.down('ArrowRight');
   await alice.waitForFunction(() => board.getParkScene().getState()?.teamSize === 1, null, { timeout: 30000 });
@@ -346,13 +480,12 @@ try {
   await alice.waitForFunction(() => board.getParkScene().getView().cameraX < 0.1);
   const mobileHeight = await alice.evaluate(() => board.getBoardHeight());
   await alice.evaluate(() => board.openNativeGameplay(0));
-  await alice.waitForFunction(() => board.getParkScene()?.kind === 'campaign' && board.getParkScene().getView().frame > 30);
+  await startStageOne(alice);
   await alice.waitForTimeout(400);
   assert.equal(await alice.evaluate(() => board.getBoardHeight()), mobileHeight,
     'mobile Pico keeps the calculator scale and floor position');
   await alice.screenshot({ path: path.join(output, 'calculator-pico-mobile.png'), fullPage: true });
-  await alice.keyboard.press('ArrowUp');
-  await alice.waitForFunction(() => board.getParkScene()?.kind === 'calculator');
+  await leavePico(alice);
   for (const [ws, who] of sockets) {
     if (who.username === 'alice') send(ws, { ...registry.stateFor('B', 'student', 'alice'),
       poll: { id: 'recall', question: 'Return to class', options: ['Ready'], votes: {} } });

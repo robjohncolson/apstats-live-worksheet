@@ -848,8 +848,9 @@ window.TI84_PROCEDURES = {
       "type": "graph",
       "description": "Histogram graph created with ZoomStat.",
       "tracePrompts": [
-        "x = {bin center}",
-        "y = {bin count}"
+        "min = {lower boundary}",
+        "max< {exclusive upper boundary}",
+        "n = {bin count}"
       ]
     },
     {
@@ -857,8 +858,9 @@ window.TI84_PROCEDURES = {
       "type": "graph",
       "description": "Histogram in TRACE mode; left and right arrows move from bar to bar.",
       "tracePrompts": [
-        "x = {bin center}",
-        "y = {bin count}"
+        "min = {lower boundary}",
+        "max< {exclusive upper boundary}",
+        "n = {bin count}"
       ]
     },
     {
@@ -3291,7 +3293,7 @@ window.TI84_PROCEDURES = {
           "key": "RIGHT",
           "screen": "histogram-trace",
           "highlight": "next bar",
-          "narration": "Move along the bars; TRACE reports the current bin center and count.",
+          "narration": "Move along the bins; TRACE reports the lower boundary, exclusive upper boundary, and count.",
           "skillType": "navigation",
           "repeatable": true
         }

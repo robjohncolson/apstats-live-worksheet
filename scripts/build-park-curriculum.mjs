@@ -4,6 +4,8 @@ import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import { nativeScriptFilenames } from '../ti84-trainer-v2/native/manifest.mjs';
 import { curriculumCoverage, firstCoveredDates } from './park-curriculum-coverage.mjs';
+import { PARK_CALCULATOR_VARIANTS } from './park-calculator-variants.mjs';
+import { closeEnough, oneVarStats, modifiedBoxplot, histogramBins, binompdf, binomcdf } from '../apstat-park/calculator-oracles.mjs';
 
 const read = path => JSON.parse(readFileSync(new URL('../' + path, import.meta.url), 'utf8'));
 const procedures = read('ti84-procedures-data.json').procedures;
@@ -23,15 +25,15 @@ const keyAlias = { Y_EQUALS: 'Y=', X_INVERSE: 'x⁻¹', STO: 'STO→' };
 const numberKeys = value => [...String(value)].flatMap(char => char === '-' ? ['(−)'] : /e/i.test(char) ? ['2ND', ','] : char === '+' ? [] : [char]);
 const levels = [];
 
-for (const procedure of procedures) {
- for (let variant = 0; variant < Math.max(2, problems[procedure.id].length); variant++) {
-  const id = procedure.id, problem = problems[id][variant % problems[id].length], v = structuredClone(problem.values);
-  if (procedure.data) v.data = variant ? [2, 2, 3, 4, 4, 4, 5, 5, 6, 6] : procedure.data;
-  if (id === 'one-var-stats' && variant === 0) v.data = [4, 6, 7, 8, 10, 12, 13, 14, 18, 20];
-  if (id === 'matrix-entry' && variant) v.data = v.data.map(row => row.map(value => value + variant * 3));
-  if (id === 'matrix-entry') { v.matrix = v.data; delete v.data; }
+// Drive the real trainer through one problem and record its engine checkpoints.
+// options: freqList (set the 1-Var FreqList, e.g. 'L2'), summaryPage (one-var-stats:
+// scroll to the five-number summary), traceRights (plots: RIGHT presses after TRACE).
+// histogramWindow: the ZoomStat window a real TI-84 showed (fixture-backed problems only).
+function buildLevel(procedure, { levelId, v, stem, freqList = null, summaryPage = false, traceRights = 1, histogramWindow = null }) {
+  const id = procedure.id;
   const lists = {}, matrices = {};
   if (v.data) lists.L1 = v.data;
+  if (v.freq) lists.L2 = v.freq;
   if (v.x_values) { lists.L1 = v.x_values; lists.L2 = v.y_values; }
   if (v.observed && !Array.isArray(v.observed[0])) {
     lists.L1 = v.observed;
@@ -44,6 +46,7 @@ for (const procedure of procedures) {
     const calc = sandbox.window.TI84Native.create(null, { renderer });
     for (const [name, values] of Object.entries(lists)) calc.setList(name, values);
     for (const [name, values] of Object.entries(matrices)) calc.setMatrix(name, values);
+    if (histogramWindow) calc.setHistogramWindow(histogramWindow);
     return calc;
   }
   let calculator = freshCalculator();
@@ -70,7 +73,8 @@ for (const procedure of procedures) {
     for (let i = 0; i < count; i++) press('RIGHT', 'Choose the ' + id + ' plot type.');
     press('ENTER'); press('DOWN'); press('DOWN');
     if (id === 'residual-plot') for (const key of ['2ND', 'STAT', '7']) press(key, 'Use RESID as the vertical list.');
-    for (const key of ['ZOOM', '9', 'TRACE', 'RIGHT']) press(key);
+    for (const key of ['ZOOM', '9', 'TRACE']) press(key);
+    for (let i = 0; i < traceRights; i++) press('RIGHT');
     assert.equal(calculator.getScreen().type, 'graph', id);
     assert.equal(rendered.settings.Type, ['Histogram', 'ModBoxplot', 'Scatter'][count === 2 ? 0 : count === 3 ? 1 : 2], id);
   } else if (id === 'matrix-entry') {
@@ -105,7 +109,13 @@ for (const procedure of procedures) {
         if (id.startsWith('randint')) press('ENTER', 'Evaluate the random draw.');
         break;
       }
-      if (field.type === 'number' || field.type === 'integer') {
+      if (field.type === 'list-selector' && label === 'FreqList' && freqList) {
+        // 2ND then the list's number key names a list (2ND 2 = L2), as on a real TI-84.
+        const digit = freqList.replace(/^L/, '');
+        press('2ND', 'Set FreqList to ' + freqList + ': press 2ND, then ' + digit + '.');
+        press(digit, 'Set FreqList to ' + freqList + ': press ' + digit + ' (' + freqList + ').');
+        assert.equal(calculator.getWizardValues().FreqList, freqList, id + ': FreqList');
+      } else if (field.type === 'number' || field.type === 'integer') {
         const names = { 'μ': 'mu', 'σ': v.sigma_xbar == null ? 'sigma' : 'sigma_xbar', 'μ0': 'mu0',
           'x̄': 'xbar', Sx: 'sx', 'x̄1': 'xbar1', Sx1: 'sx1', 'x̄2': 'xbar2', Sx2: 'sx2',
           'C-Level': 'cLevel', trials: v.trials == null ? 'n' : 'trials',
@@ -126,20 +136,97 @@ for (const procedure of procedures) {
       }
       press('DOWN', 'Move to the next field.');
     }
-    if (id === 'one-var-stats') press('DOWN', 'Read the five-number summary.');
+    if (summaryPage) press('DOWN', 'Read the five-number summary.');
     assert(['home', 'result'].includes(calculator.getScreen().type), id + ': did not calculate');
   }
   const computed = calculator.getComputedValues();
-  console.log(id + ': ' + route.length + ' engine checkpoints');
+  console.log(levelId + ': ' + route.length + ' engine checkpoints');
   const coverage = curriculumCoverage(id, lessonMap, schedule, workManifest, procedure.topics);
   const skillId = procedure.activityId || id;
-  levels.push({ id: variant ? skillId + '@' + variant : skillId, skillId, procedureId: id, challenge: procedure.challenge,
+  return { id: levelId, skillId, procedureId: id, challenge: procedure.challenge,
     title: procedure.name, topic: coverage[0]?.topic, coverage, dates: firstCoveredDates(coverage),
+    stem, values: v, setup: { lists, matrices, ...(histogramWindow ? { histogramWindow } : {}) }, route, hints,
+    computed: JSON.parse(JSON.stringify(computed)), finalView: JSON.parse(JSON.stringify(rendered)),
+    screenId: calculator.getScreen().id };
+}
+
+for (const procedure of procedures) {
+ for (let variant = 0; variant < Math.max(2, problems[procedure.id].length); variant++) {
+  const id = procedure.id, problem = problems[id][variant % problems[id].length], v = structuredClone(problem.values);
+  if (procedure.data) v.data = variant ? [2, 2, 3, 4, 4, 4, 5, 5, 6, 6] : procedure.data;
+  if (id === 'one-var-stats' && variant === 0) v.data = [4, 6, 7, 8, 10, 12, 13, 14, 18, 20];
+  if (id === 'matrix-entry' && variant) v.data = v.data.map(row => row.map(value => value + variant * 3));
+  if (id === 'matrix-entry') { v.matrix = v.data; delete v.data; }
+  const skillId = procedure.activityId || id;
+  const level = buildLevel(procedure, { levelId: variant ? skillId + '@' + variant : skillId, v,
     stem: id === 'one-var-stats' ? 'Find the five-number summary for L1.' : problem.stem,
-    values: v, setup: { lists, matrices }, route, hints,
-    computed: JSON.parse(JSON.stringify(computed)), finalView: JSON.parse(JSON.stringify(rendered)) });
+    summaryPage: id === 'one-var-stats' });
+  delete level.screenId;
+  levels.push(level);
  }
 }
+
+// The trainer's own result must agree with the independent oracle before a variant ships.
+function checkAgainstOracle(level, oracle) {
+  const near = (actual, expected, what) => assert(closeEnough(actual, expected), level.id + ': ' + what + ' ' + actual + ' != ' + expected);
+  if (oracle.kind === 'one-var') {
+    const expected = oneVarStats(oracle.values, oracle.freq);
+    if (expected.divisionByZero) {
+      assert.equal(level.screenId, 'one-var-stats-error', level.id + ': no observations must end on the error screen');
+      assert.equal(level.computed, null, level.id + ': no numerical result');
+      return;
+    }
+    const c = level.computed;
+    near(c.n, expected.n, 'n'); near(c.xbar, expected.mean, 'mean'); near(c.sumX, expected.sum, 'sum');
+    near(c.sumX2, expected.sumOfSquares, 'sum of squares'); near(c.Sx, expected.Sx, 'Sx'); near(c.sigmaX, expected.sigmaX, 'sigma x');
+    const five = expected.fiveNumber;
+    for (const [key, value] of [['minX', five.min], ['Q1', five.q1], ['Med', five.median], ['Q3', five.q3], ['maxX', five.max]]) near(c[key], value, key);
+  } else if (oracle.kind === 'modified-boxplot') {
+    const expected = modifiedBoxplot(oracle.values), stats = level.finalView.stats;
+    for (const [key, value] of [['minX', expected.min], ['Q1', expected.q1], ['Med', expected.median], ['Q3', expected.q3], ['maxX', expected.max]]) near(stats[key], value, key);
+    assert.deepEqual({ label: level.finalView.traceInfo.label, x: level.finalView.traceInfo.x }, oracle.endStop, level.id + ': TRACE end stop');
+  } else if (oracle.kind === 'histogram') {
+    const expected = histogramBins(oracle.values, oracle.start, oracle.width, oracle.binCount);
+    assert.deepEqual(level.finalView.points.map(bin => ({ lo: bin.x, hi: bin.upper, count: bin.y })), expected, level.id + ': bins');
+  } else if (oracle.kind === 'binompdf' || oracle.kind === 'binomcdf') {
+    const expected = (oracle.kind === 'binompdf' ? binompdf : binomcdf)(oracle.n, oracle.p, oracle.x);
+    near(level.computed.value, expected, oracle.kind);
+  } else throw new Error(level.id + ': unknown oracle ' + oracle.kind);
+}
+
+function checkInterpretation(level) {
+  const { questions } = level.interpretation;
+  assert(questions.length >= 1 && questions.length <= 3, level.id + ': one small challenge per round');
+  for (const question of questions) {
+    const keys = question.options.map(option => option.key);
+    assert.equal(new Set(keys).size, keys.length, level.id + ': duplicate option keys');
+    assert(question.options.length >= 2 && question.options.length <= 4, level.id + ': 2-4 options');
+    const correct = question.options.filter(option => option.key === String(question.answer));
+    assert.equal(correct.length, 1, level.id + ': exactly one correct option for ' + question.label);
+    assert.equal(correct[0].feedback, null, level.id + ': the correct option has no feedback');
+    for (const option of question.options) {
+      assert(option.text.length <= 44, level.id + ': option text fits its tile: ' + option.text);
+      assert(/^[\x20-\x7e]+$/.test(option.text + question.prompt + (option.feedback || '')), level.id + ': ASCII only (pixel font)');
+      if (option.key !== String(question.answer)) assert(option.feedback, level.id + ': every distractor explains itself');
+    }
+  }
+}
+
+for (const variant of PARK_CALCULATOR_VARIANTS) {
+  const procedure = procedures.find(item => (item.activityId || item.id) === variant.skillId);
+  assert(procedure, 'variant of an unknown skill: ' + variant.skillId);
+  const level = buildLevel(procedure, { levelId: variant.skillId + '@' + variant.suffix, v: structuredClone(variant.values),
+    stem: variant.stem, freqList: variant.freqList, summaryPage: variant.summaryPage, traceRights: variant.traceRights,
+    histogramWindow: variant.histogramWindow });
+  if (variant.title) level.title = variant.title;
+  if (variant.hints) level.hints = level.hints.map(hint => variant.hints[hint] ?? hint);
+  checkAgainstOracle(level, variant.oracle);
+  delete level.screenId;
+  level.interpretation = variant.interpretation;
+  checkInterpretation(level);
+  levels.push(level);
+}
+
 writeFileSync(new URL('../apstat-park/calculator-catalog.mjs', import.meta.url),
   '// Generated by scripts/build-park-curriculum.mjs. Do not edit.\nexport const CALCULATOR_PROBLEMS = ' + JSON.stringify(levels, null, 2)
   + ';\nexport const CALCULATOR_LEVELS = CALCULATOR_PROBLEMS.filter(level => level.id === level.skillId);\n');

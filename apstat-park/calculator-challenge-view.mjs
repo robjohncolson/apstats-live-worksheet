@@ -1,7 +1,12 @@
 // All drawings use the submitted values, even when the completed answer is wrong.
-export function drawChallenge(ctx, { level, challenge, values, rejected, solved, text, ink }) {
+// feedback: the relay's explanation of the first wrong pick in the last whole answer.
+export function drawChallenge(ctx, { level, challenge, values, rejected, solved, feedback = null, text, ink }) {
   const { kind, labels } = challenge;
   text(ctx, solved ? 'TOGETHER! RESULT MATCHED.' : challenge.title, 360, 310, 17, ink, 'center');
+  if (kind === 'interpret') {
+    drawInterpretation(ctx, { challenge, values, solved, feedback, text, ink });
+    return;
+  }
   text(ctx, solved ? challenge.note : 'CHOOSE: ' + labels[values.length % labels.length], 360, 339, 10, ink, 'center');
   const colour = rejected ? '#d88673' : '#69ad91';
   ctx.strokeStyle = ink; ctx.lineWidth = 2; ctx.fillStyle = colour;
@@ -32,9 +37,11 @@ export function drawChallenge(ctx, { level, challenge, values, rejected, solved,
     });
   } else if (kind === 'histogram') {
     const height = scale(0, Math.max(1, ...challenge.answers, ...values), 0, 120);
+    // ZoomStat can add a trailing empty bin: share the axis instead of a fixed 100px bar.
+    const step = 510 / Math.max(1, labels.length);
     line(100, 480, 620, 480);
-    values.forEach((value, i) => ctx.fillRect(105 + i * 100, 480 - height(value), 96, height(value)));
-    labels.forEach((label, i) => text(ctx, label, 151 + i * 100, 500, 8, ink, 'center'));
+    values.forEach((value, i) => ctx.fillRect(105 + i * step, 480 - height(value), step - 4, height(value)));
+    labels.forEach((label, i) => text(ctx, label, 105 + i * step + step / 2, 500, labels.length > 5 ? 7 : 8, ink, 'center'));
   } else if (kind === 'scatter' || kind === 'regression') {
     const points = level.finalView.points || level.values.x_values.map((x, i) => ({ x, y: level.values.y_values[i] }));
     const x = scale(Math.min(...points.map(p => p.x)), Math.max(...points.map(p => p.x)));
@@ -72,5 +79,41 @@ export function drawChallenge(ctx, { level, challenge, values, rejected, solved,
     text(ctx, labels[i], 100 + i * 125, 373, 9, ink, 'center');
     text(ctx, String(value), 100 + i * 125, 396, 13, ink, 'center');
   });
-  text(ctx, rejected ? 'TRY AGAIN. THE CLOCK KEEPS RUNNING.' : 'CHECKED AFTER THE WHOLE ANSWER. VALUES ROUNDED TO 5 SIGNIFICANT DIGITS.', 360, 535, 9, ink, 'center');
+  text(ctx, feedback ? feedback : rejected ? 'TRY AGAIN. THE CLOCK KEEPS RUNNING.'
+    : 'CHECKED AFTER THE WHOLE ANSWER. VALUES ROUNDED TO 5 SIGNIFICANT DIGITS.', 360, 535, 9, ink, 'center');
+}
+
+// Interpretation rounds: the current question, the picks so far, and specific feedback.
+// Size-14 lettering (two pixels per dot) wrapped to the 680px stage stays readable on phones.
+function drawInterpretation(ctx, { challenge, values, solved, feedback, text, ink }) {
+  const { questions } = challenge;
+  if (solved) wrap(challenge.note, 52).forEach((line, i) => text(ctx, line, 360, 345 + i * 20, 14, ink, 'center'));
+  else {
+    const index = values.length % questions.length;
+    text(ctx, 'QUESTION ' + (index + 1) + ' OF ' + questions.length, 360, 337, 10, ink, 'center');
+    wrap(questions[index].prompt, 52).forEach((line, i) => text(ctx, line, 360, 362 + i * 20, 14, ink, 'center'));
+  }
+  // Picks already made in this attempt (nothing is judged until the whole answer is in).
+  values.forEach((value, i) => {
+    const option = questions[i].options.find(option => option.key === String(value));
+    text(ctx, (i + 1) + '. ' + questions[i].label + ': ' + (option?.text ?? value), 360, 412 + i * 18, 10, ink, 'center');
+  });
+  if (feedback) {
+    const lines = wrap('NOT YET. ' + feedback, 52);
+    lines.forEach((line, i) => text(ctx, line, 360, 548 - (lines.length - 1 - i) * 20, 14, '#b4442c', 'center'));
+    return;
+  }
+  text(ctx, solved ? 'YOUR ANSWERS MATCH.' : 'CHECKED AFTER THE LAST QUESTION. CLICK A CHOICE, PRESS ITS NUMBER, OR STAND ON IT.',
+    360, 548, 9, ink, 'center');
+}
+
+// Greedy word wrap for pixel lettering.
+function wrap(value, max) {
+  const lines = [];
+  for (const word of String(value).split(' ')) {
+    const last = lines.length - 1;
+    if (last >= 0 && (lines[last] + ' ' + word).length <= max) lines[last] += ' ' + word;
+    else lines.push(word);
+  }
+  return lines;
 }

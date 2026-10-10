@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import { nativeScriptFilenames } from '../ti84-trainer-v2/native/manifest.mjs';
 import { curriculumCoverage, firstCoveredDates } from '../scripts/park-curriculum-coverage.mjs';
-import { CALCULATOR_LEVELS, CALCULATOR_PROBLEMS, DEFAULT_LEVEL, eligibleLevels, schoolDate, createLevelRotation, challengeFor, initializeCalculator } from './calculator-curriculum.mjs';
+import { CALCULATOR_LEVELS, CALCULATOR_PROBLEMS, DEFAULT_LEVEL, eligibleLevels, schoolDate, createLevelRotation, challengeFor, initializeCalculator, answerMatches } from './calculator-curriculum.mjs';
 import { createMissionEngine } from './calculator-engine.mjs';
 import { createMission, pressMissionKey, KEYS, tilesFor, timeLimitFor, BOXPLOT_MS } from './calculator-mission.mjs';
 
@@ -93,8 +93,9 @@ for (const level of CALCULATOR_PROBLEMS) test(level.id + ': engine route, comple
   assert.equal(timeLimitFor(state), BOXPLOT_MS);
   const deadline = state.startedAt;
   const challenge = challengeFor(level);
-  assert(challenge.answers.every(Number.isFinite));
-  const wrong = tilesFor(state.step, level).find(tile => Number(tile.key) !== challenge.answers[0]);
+  assert(challenge.answers.every(answer => typeof answer === 'string' ? answer.length > 0 : Number.isFinite(answer)));
+  const asValue = (key, i) => typeof challenge.answers[i] === 'number' ? Number(key) : key;
+  const wrong = tilesFor(state.step, level).find(tile => !answerMatches(asValue(tile.key, 0), challenge.answers[0]));
   pressMissionKey(state, wrong.key, ++time);
   for (const value of challenge.answers.slice(1)) pressMissionKey(state, String(value), ++time);
   assert.equal(state.boxAttempts, 1);
@@ -114,7 +115,14 @@ test('reference results protect numerical input, scientific notation, and one-si
   assert(Math.abs(result('normalcdf').value - .17172554) < 1e-7);
   assert(Math.abs(result('two-propztest').p - .01901438) < 1e-7);
   assert.equal(result('t-test-stats').t, -2);
+  // The general ZoomStat bin rule is unknown: ordinary problems keep the legacy layout.
+  // Only the fixture-backed histogram@bins carries the ROM's own window (calculator-variants.test.mjs).
   assert.deepEqual(CALCULATOR_LEVELS.find(level => level.id === 'histogram').finalView.points.map(p => p.y), [2, 4, 4, 4, 1]);
+  assert.equal(CALCULATOR_PROBLEMS.filter(level => level.setup.histogramWindow).map(level => level.id).join(), 'histogram@bins');
+  // TI quartiles leave the median out of both halves for odd n.
+  const box = id => CALCULATOR_PROBLEMS.find(level => level.id === id).finalView.stats;
+  assert.deepEqual([box('modified-boxplot').Q1, box('modified-boxplot').Q3], [28, 38]);
+  assert.deepEqual([box('modified-boxplot@1').Q1, box('modified-boxplot@1').Q3], [16.5, 31]);
 });
 
 test('wrong keys do not renew the deadline on long numeric routes', () => {

@@ -36,7 +36,8 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   const updates = createUpdateGate(), smoothing = createPoseSmoothing();
   let scenery = null, sceneryInk = null, sceneryAtlas = null, sceneryReady = false, sceneryUnlocked = false;
   let arrivalPending = true;
-  const display = createWorldDisplay();
+  // TRACE text comes from the trainer's own renderer: what the calculator shows is what the Park shows.
+  const display = createWorldDisplay({ traceLabel: win.TI84ScreenRenderer?.traceLabel });
   let level = DEFAULT_LEVEL, challenge = challengeFor(level);
   let calculator = win.TI84Native.create(null, { renderer: display });
   initializeCalculator(calculator, level);
@@ -45,6 +46,8 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   let joinedAt = 0, poseAt = 0, receivedAt = 0, clockOffset = 0, needsRelease = false;
   const openedAt = performance.now();
   let selected = null, lastRevision = -1;
+  // When this page first saw the relay's authoritative team completion (key celebration).
+  let rewardShownAt = null;
   const keyQueue = [];
   let pendingPress = null, pressAt = 0;
   let participating = false, cameraX = 0;
@@ -74,8 +77,9 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
       ? [{ x: lobby.blockX, y: TEAM_BLOCK.y, w: TEAM_BLOCK.w, h: TEAM_BLOCK.h }] : []),
     // Key platforms are one-way: jump through from below, land from above.
     // A dense physical keypad must not trap cats underneath a row of keys.
-    // Once the boxplot appears, every ledge becomes scenery; only the floor is solid.
-    ...(state?.step >= level.route.length ? [] : [...approachSteps(false), ...tilesFor(state?.step || 0, level)])
+    // Answer tiles stay climbable too (two floor ledges, then rows <= 34px apart), so a
+    // team can stand on a choice; clicking or a number key works just as well.
+    ...[...approachSteps(answering()), ...tilesFor(state?.step || 0, level)]
       .filter(tile => player.vy >= 0 && player.y + 24 <= tile.y + 1)
       .map(tile => ({ ...tile, x: tile.x + ENTRY_WIDTH, h: 8 })),
   ];
@@ -93,6 +97,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   // One world and one player. Only the camera moves at the mission boundary.
   Object.assign(api._camera, { enabled: false, x: 0 });
   function scale() { return Math.min(1, board.viewportW() / WORLD.width); }
+  function answering(step = state?.step || 0) { return step >= level.route.length; }
   function campaignUnlocked() {
     // Teacher 2026-10-07: keys are a spendable count and no longer gate the door (1-1 is always
     // startable; keys open later stages). A relay that sends campaignOpen has that rule.
@@ -222,7 +227,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     const incomingLevel = levelById(packet.missionId);
     if (!incomingLevel) { status.textContent = 'Reload to load this calculator skill.'; return; }
     level = incomingLevel; challenge = challengeFor(level);
-    if (packet.complete && !state?.complete) audio.clear();
+    if (packet.complete && !state?.complete) { audio.clear(); rewardShownAt = performance.now(); }
     else if (state?.epoch === packet.epoch && packet.revision > state.revision) {
       if (packet.solved && !state.solved) audio.play('switch');
       else if ((packet.keys?.length || 0) > (state.keys?.length || 0)) audio.play('switch');
@@ -248,6 +253,10 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     if (timedOut || teamReset) {
       Object.assign(player, { x: ENTRY_WIDTH + 65, y: WORLD.floor - 24, vx: 0, vy: 0, standingOn: null });
       for (const key in input) input[key] = false;
+    } else if (answering(packet.step) && !(state && answering(state.step) && state.epoch === packet.epoch)) {
+      // The keypad just turned into answer choices: start on the floor so nobody
+      // lands on a choice by accident (choices are climbed on purpose, from the ledges).
+      Object.assign(player, { y: WORLD.floor - 24, vx: 0, vy: 0, standingOn: null });
     }
     if (lastRevision >= 0 && packet.revision !== lastRevision) {
       needsRelease = true; selected = null;
@@ -265,17 +274,21 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
       Object.assign(peers.get(member.name), member.pose);
     }
     for (const name of peers.keys()) if (!state.members.some(member => member.name === name)) peers.delete(name);
+    const answerIndex = state.step - level.route.length;
     const hint = state.solved ? 'Your result is ready. Help your teammates finish.'
       : state.step < level.route.length ? keyInstruction(level.route[state.step], level.hints[state.step], keyboardLayer(calculator.save()), level.route[state.step + 1])
-      : 'Choose ' + challenge.labels[state.step - level.route.length] + '. Click its value.';
+      : challenge.prompts ? challenge.prompts[answerIndex] + ' Click a choice, press its number key, or stand on it.'
+      : 'Choose ' + challenge.labels[answerIndex] + '. Click its value.';
+    const feedback = answerFeedback();
     const text = state.failure ? (state.step >= level.route.length
       ? 'Time is up. Returning to your result checkpoint with a fresh timer.'
       : 'Time is up. Restarting the calculator portion.')
-      : state.complete ? 'Together! ' + level.title + ' complete.'
+      : state.complete ? 'Together! ' + level.title + ' complete. +1 key for everyone on the team.'
       : state.solved ? hint + ' ' + state.readyCount + '/' + state.teamSize + ' ready.'
       : 'Step ' + (state.step + 1) + '/' + (level.route.length + challenge.answers.length) + ' · ' + state.teamSize + ' on the team. ' + hint
         + (state.lastPress && !state.lastPress.advanced ? ' Pressed ' + state.lastPress.key + '. The countdown keeps running. Reach the next checkpoint before time runs out.' : '')
-        + (state.hintKeys?.length ? ' Hint: choose ' + state.hintKeys.join(' or ') + '. Step reset—30 seconds to try again.' : '');
+        + (state.hintKeys?.length ? ' Hint: choose ' + state.hintKeys.join(' or ') + '. Step reset—30 seconds to try again.' : '')
+        + (feedback ? ' Not yet: ' + feedback : '');
     if (status.textContent !== text) status.textContent = text;
     if (restarted) returnToStart();
   }
@@ -439,6 +452,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
       text(ctx, label, 28, (showingBoxplot ? 123 : 106) + i * 18, label.length > 25 ? 7 : 14, ink);
     }
     text(ctx, state?.complete ? 'MISSION COMPLETE!' : 'ONE TEAM · ONE GOAL', 350, 112, 17);
+    if (state?.complete) drawKeyReward(ctx, atlas);
     const elapsed = state ? clock() - state.startedAt : 0;
     const remain = Math.max(0, Math.ceil((timeLimitFor(state || { step: 0 }) - elapsed) / 1000));
     text(ctx, state?.failure ? 'TIME UP! TEAM RESTART.'
@@ -466,25 +480,23 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     else if (!state?.failure && state?.lastPress && !state.lastPress.advanced) {
       text(ctx, state.lastPress.key + ' PRESSED · KEEP TRYING', 350, 269, 10);
     }
-    ctx.save();
-    if (showingBoxplot) ctx.globalAlpha *= 0.22;
+    // Ledges and answer choices are solid platforms in both phases.
     for (const ledge of approachSteps(showingBoxplot)) keyPlatform(ctx, ledge, '#494458');
-    ctx.restore();
-    for (const tile of tilesFor(step, level)) {
+    for (const [index, tile] of tilesFor(step, level).entries()) {
       const hint = state?.hintKeys?.includes(tile.key);
-      ctx.save();
-      if (showingBoxplot) ctx.globalAlpha *= 0.22;
       keyPlatform(ctx, tile, selected === tile.key ? '#f9c45f' : hint ? '#9bdfae' : '#494458');
-      ctx.restore();
       ctx.save();
       if (state?.solved) ctx.globalAlpha *= 0.22;
-      const label = showingBoxplot ? tile.key : keyLabel(tile.key, layer);
-      const color = showingBoxplot ? ink : selected === tile.key || hint ? '#30263b'
+      const label = showingBoxplot ? plainText(tile.label ?? tile.key) : keyLabel(tile.key, layer);
+      const color = selected === tile.key || hint ? '#30263b'
+        : showingBoxplot ? '#fff'
         : layer === 'second' || tile.key === '2ND' ? '#a9daff'
         : layer === 'alpha' || tile.key === 'ALPHA' ? '#b7edab' : '#fff';
       // Use whole pixel sizes: no horizontally squeezed letters or crowded sublabels.
       const size = label.length * 12 - 2 <= tile.w - 8 ? 14 : 7;
       pixelText(ctx, label, tile.x + tile.w / 2, tile.y + (size === 7 ? 16 : 20), size, color, 'center');
+      // The number key that chooses this answer.
+      if (showingBoxplot && index < 9) pixelText(ctx, String(index + 1), tile.x + 7, tile.y + 11, 7, '#f9c45f', 'left');
       ctx.restore();
     }
     if (step >= level.route.length) drawBoxplot(ctx, step - level.route.length);
@@ -526,6 +538,17 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     drawKeyCount(ctx, board.username, player.x + 10, player.y - 20);
     ctx.restore();
   }
+  // Teacher 2026-10-07 economy: a completed round pays +1 key to every roster member. Only the
+  // relay decides completion (state.complete), so the celebration never runs on a local guess;
+  // the gold counts above every cat come from the relay's own key counts.
+  function drawKeyReward(ctx, atlas) {
+    const key = ATLAS.key;
+    // Row 269 holds hold/retry messages, which never show once the team is complete.
+    if (atlas && key) ctx.drawImage(atlas, key.x, key.y, key.w, key.h, 350, 258, key.w, key.h);
+    text(ctx, '+1 KEY FOR EVERY TEAMMATE', 350 + (atlas && key ? key.w + 8 : 0), 272, 12, KEY_GOLD);
+    const age = rewardShownAt == null ? Infinity : (performance.now() - rewardShownAt) / 1000;
+    if (age < 3) text(ctx, '+1', player.x - ENTRY_WIDTH + 10, player.y - 36 - age * 12, 14, KEY_GOLD, 'center');
+  }
   function drawCharacter(ctx, character, name) {
     if (state?.failure?.name !== name) { character.render(ctx); return; }
     const elapsed = Math.max(0, clock() - state.failure.at) / 1000;
@@ -536,10 +559,21 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   function drawBoxplot(ctx, filled) {
     const rejected = state.lastPlot?.correct === false && !state.boxValues.length
       && clock() - state.lastPlot.at < 650;
-    drawChallenge(ctx, { level, challenge, rejected, solved: state.solved, text, ink,
+    drawChallenge(ctx, { level, challenge, rejected, solved: state.solved, feedback: answerFeedback(), text, ink,
       values: rejected ? state.lastPlot.values : state.boxValues });
   }
+  // The relay's explanation of the last wrong answer, until the team starts a new attempt.
+  function answerFeedback() {
+    if (!state || state.failure || state.solved || state.boxValues?.length) return null;
+    return state.lastPlot?.correct === false ? state.lastPlot.feedback || null : null;
+  }
+  // Pixel lettering has no sigma / x-bar / <= glyphs.
+  function plainText(value) {
+    return String(value).replace(/x̄/g, 'xbar').replace(/σ/g, 'sigma ').replace(/≤/g, '<=').replace(/≥/g, '>=');
+  }
   function inputCaption() {
+    // A frequency list is part of the data: show it, not just "ready".
+    if (level.values?.freq) return 'L1={' + level.setup.lists.L1.join(',') + '}  L2={' + level.setup.lists.L2.join(',') + '} (frequencies)';
     if (level.setup.lists.L1) return 'L1={' + level.setup.lists.L1.join(',') + '}' + (level.setup.lists.L2 ? '  L2 ready' : '');
     return Object.entries(level.values).map(([key, value]) => key + '=' + JSON.stringify(value)).join('  ');
   }
@@ -559,6 +593,12 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     }
     if (event.type === 'keyup') return;
     if (event.key === 'Escape') { event.preventDefault(); returnToStart(); }
+    // Number keys choose answer tiles (keyboard equivalent of clicking or standing on one).
+    if (/^[1-9]$/.test(event.key) && !event.repeat && participating && state && answering() && !state.solved
+      && !event.target?.closest?.('input, textarea, select, [contenteditable="true"]')) {
+      const tile = tilesFor(state.step, level)[Number(event.key) - 1];
+      if (tile) { event.preventDefault(); choose(tile); }
+    }
     // Handle brief taps even when keydown and keyup fall between physics steps.
     if (event.key === 'ArrowUp' && !event.repeat && !event.target?.closest?.('input, textarea, select, [contenteditable="true"]')
       && state?.complete && besideResetDoor()) {
@@ -593,7 +633,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   const timer = setInterval(pump, peerMotion.supported ? 50 : 100); pump();
   return { kind: 'calculator', dispose, startMission, returnToStart, getState: () => state,
     getNetworkStats: () => peerMotion.stats(),
-    getView: () => ({ cameraX, playerX: player.x, playerY: player.y, participating, campaignUnlocked: campaignUnlocked(), entranceX: ENTRY_WIDTH, lobby, missionId: level.id, challenge,
+    getView: () => ({ keyReward: !!state?.complete, cameraX, playerX: player.x, playerY: player.y, participating, campaignUnlocked: campaignUnlocked(), entranceX: ENTRY_WIDTH, lobby, missionId: level.id, challenge,
       keyCounts: Object.fromEntries([board.username, ...lobbyPeers.keys(), ...peers.keys()].map(name => [name, keyCount(name)])),
       resetDoor: state?.complete ? { ...RESET_DOOR } : null, lines: display.getLines() }),
     getCalculatorScreen: () => calculator.getScreen(),

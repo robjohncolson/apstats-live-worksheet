@@ -1,0 +1,47 @@
+{
+  "source": {
+    "repo": "ti84-transpile (github.com/robjohncolson/ti84-transpile)",
+    "repoHead": "27ef30c84c14e3063aeee8cd65ee942a6be482f2",
+    "path": "logs/curriculum-statistics-clocked433-all-zero-frequency-evidence-1.json",
+    "sha256": "a06dbefbf1f1ff91a27369b854fca875bd8104759c17c582a165cf73db400185",
+    "tracked": false,
+    "supportingReports": [
+      {
+        "path": "logs/curriculum-statistics-clocked433-all-zero-frequency-1-report.json",
+        "sha256": "be19a2483e6f0a799e0c874e3a6a81421ba12904fd1aaec3f10ee7082b1d0efc"
+      }
+    ]
+  },
+  "status": "cold-all-zero-frequency-error-verified",
+  "reportStatus": "passed-division-by-zero-error",
+  "dataset": [
+    2,
+    4,
+    6
+  ],
+  "frequencies": [
+    0,
+    0,
+    0
+  ],
+  "observedLines": [
+    {
+      "row": 79,
+      "text": "2:Goto"
+    },
+    {
+      "row": 119,
+      "text": "Attempted calculation"
+    },
+    {
+      "row": 139,
+      "text": "contains division by 0."
+    },
+    {
+      "row": 159,
+      "text": "Calculation fails."
+    }
+  ],
+  "scope": "Cold list and frequency entry through real keys; saved VRAM independently decoded with exact glyph matching. All-zero frequencies display division-by-zero explanation and Goto option.",
+  "limits": "Error dismissal, Goto execution, other invalid inputs, real-time timing and hardware remain unproven. Controlled logical clock, 1 ms per 2000-block budget."
+}

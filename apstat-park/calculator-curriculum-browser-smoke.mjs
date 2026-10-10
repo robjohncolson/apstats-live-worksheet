@@ -91,6 +91,16 @@ async function clickKey(page, key) {
   }, key);
   await page.mouse.click(point.x, point.y);
 }
+// Keyboard path: an answer tile's number key.
+async function pressChoice(page, key) {
+  const digit = await page.evaluate(async key => {
+    const { tilesFor, missionFor } = await import('/apstat-park/calculator-mission.mjs');
+    const state = board.getParkScene().getState();
+    return String(tilesFor(state.step, missionFor(state)).findIndex(tile => tile.key === key) + 1);
+  }, key);
+  assert.notEqual(digit, '0', 'answer tile ' + key);
+  await page.keyboard.press(digit);
+}
 
 try {
   const page = await browser.newPage({ viewport: { width: 900, height: 1000 } });
@@ -144,17 +154,33 @@ try {
     assert.equal(await page.evaluate(() => board.getParkScene().getState().step), level.route.length, level.id);
     await page.waitForFunction(() => Math.abs(board.getParkScene().getView().playerY - 676) < 0.1);
     await page.screenshot({ path: path.join(output, level.id + '-result-reference.png'), fullPage: true });
-    if (level.procedureId === 'one-var-stats') {
+    if (level.procedureId === 'one-var-stats' && !level.interpretation) {
       const lines = await page.evaluate(() => board.getParkScene().getView().lines.map(line => line.text));
       assert(lines.some(line => line.includes('minX')), 'five-number summary stays available at the challenge');
       assert(lines.some(line => line.includes('maxX')));
     }
     const challenge = challengeFor(level);
-    for (const value of challenge.answers) {
+    async function pick(key, keyboard = false) {
       const revision = await page.evaluate(() => board.getParkScene().getState().revision);
-      await clickKey(page, String(value));
+      if (keyboard) await pressChoice(page, key); else await clickKey(page, key);
       await page.waitForFunction(revision => board.getParkScene().getState().revision > revision, revision);
     }
+    if (level.interpretation) {
+      // Interpretation round: a whole wrong answer first (specific feedback, same clock), then the
+      // right answer by number keys, with a picture after the first pick (e.g. the binomial event).
+      const deadline = await page.evaluate(() => board.getParkScene().getState().startedAt);
+      const distractor = challenge.questions[0].options.find(option => option.key !== String(challenge.answers[0]));
+      for (const [i, value] of challenge.answers.entries()) await pick(i === 0 ? distractor.key : String(value));
+      await page.waitForFunction(() => board.getParkScene().getState().boxAttempts === 1);
+      const state = await page.evaluate(() => board.getParkScene().getState());
+      assert.equal(state.lastPlot.feedback, distractor.feedback, level.id + ': specific feedback');
+      assert.equal(state.startedAt, deadline, level.id + ': the retry keeps the clock');
+      await page.screenshot({ path: path.join(output, level.id + '-feedback.png'), fullPage: true });
+      for (const [i, value] of challenge.answers.entries()) {
+        await pick(String(value), true);
+        if (i === 0) await page.screenshot({ path: path.join(output, level.id + '-first-pick.png'), fullPage: true });
+      }
+    } else for (const value of challenge.answers) await pick(String(value));
     await page.waitForFunction(() => board.getParkScene().getState().complete);
     await page.screenshot({ path: path.join(output, level.id + '.png'), fullPage: true });
     if (['histogram', 't-test-stats', 'matrix-entry'].includes(level.id)) {

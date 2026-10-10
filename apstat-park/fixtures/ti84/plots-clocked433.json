@@ -1,0 +1,227 @@
+{
+  "source": {
+    "repo": "ti84-transpile (github.com/robjohncolson/ti84-transpile)",
+    "repoHead": "27ef30c84c14e3063aeee8cd65ee942a6be482f2",
+    "path": "logs/curriculum-plots-clocked433-evidence-1.json",
+    "sha256": "899e6ec4da402d0606b81318ae1fd24ab2deac4ec81e62d6d25c16a2d6692db6",
+    "tracked": false,
+    "supportingReports": [
+      {
+        "path": "logs/curriculum-boxplot-clocked433-outlier-1-report.json",
+        "sha256": "40d3e9bc7feabcbfe149320179a29a099962c025dab9e946b56f93c534d70370"
+      },
+      {
+        "path": "logs/curriculum-histogram-clocked433-outlier-1-report.json",
+        "sha256": "09077c663b6e4bb12ff38fbaa739ee580b61db70df5b5e4cbe8b52fa1b1244d1"
+      },
+      {
+        "path": "logs/curriculum-plots-clocked433-trace-contact-sheet-1.png",
+        "sha256": "83d6d861c4b8f515f42cea210084d1ee86967ad1cdca7a5285bc94bc756a184c"
+      }
+    ]
+  },
+  "status": "two-cold-graph-fixtures-and-rightward-trace-verified",
+  "traceNote": "visually transcribed, not decoded: labels were read by eye from the saved screens (see the contact sheet); no automatic small-font OCR was run. Histogram entries are [min=, maxX<, n=] as read. sha256 identifies the saved screen in the source repo.",
+  "cases": [
+    {
+      "flow": "boxplot",
+      "dataset": [
+        1,
+        2,
+        2,
+        3,
+        3,
+        9
+      ],
+      "frequencies": null,
+      "reportExpected": {
+        "mean": 3.3333333333333335,
+        "sum": 20,
+        "squares": 108,
+        "sample": 2.8751811537130436,
+        "population": 2.6246692913372702,
+        "n": 6,
+        "min": 1,
+        "q1": 2,
+        "median": 2.5,
+        "q3": 3,
+        "max": 9
+      },
+      "geometry": {
+        "q1": 2,
+        "median": 2.5,
+        "q3": 3,
+        "lowerFence": 0.5,
+        "upperFence": 4.5,
+        "outliers": [
+          9
+        ],
+        "whiskers": [
+          1,
+          3
+        ]
+      },
+      "geometryNote": "whiskers are [lower end, upper end]",
+      "traceScreens": [
+        {
+          "stage": "boxplot-trace",
+          "sha256": "6af516dfb2fb85ac58320b3ebc4994e3491e07885089edff438e3554f7d07263",
+          "visuallyTranscribed": "Med=2.5"
+        },
+        {
+          "stage": "boxplot-trace-right-1",
+          "sha256": "7cc0702822871abbdc7dd8201848f90111c07ebc35af9b13a41af19831523f9f",
+          "visuallyTranscribed": "Q3=3"
+        },
+        {
+          "stage": "boxplot-trace-right-2",
+          "sha256": "97fabd6e350c411bbeff63bb811358d20644086877797f6c49918b200226671d",
+          "visuallyTranscribed": "X=3"
+        },
+        {
+          "stage": "boxplot-trace-right-3",
+          "sha256": "465cbc1cb97ef2bf65586c73a5e32a0414e1aeedc2dba92a6933881f9aa1df01",
+          "visuallyTranscribed": "maxX=9"
+        },
+        {
+          "stage": "boxplot-trace-right-4",
+          "sha256": "465cbc1cb97ef2bf65586c73a5e32a0414e1aeedc2dba92a6933881f9aa1df01",
+          "visuallyTranscribed": "maxX=9"
+        },
+        {
+          "stage": "boxplot-trace-right-5",
+          "sha256": "465cbc1cb97ef2bf65586c73a5e32a0414e1aeedc2dba92a6933881f9aa1df01",
+          "visuallyTranscribed": "maxX=9"
+        }
+      ]
+    },
+    {
+      "flow": "histogram",
+      "dataset": [
+        1,
+        2,
+        2,
+        3,
+        3,
+        9
+      ],
+      "frequencies": null,
+      "reportExpected": {
+        "mean": 3.3333333333333335,
+        "sum": 20,
+        "squares": 108,
+        "sample": 2.8751811537130436,
+        "population": 2.6246692913372702,
+        "n": 6,
+        "min": 1,
+        "q1": 2,
+        "median": 2.5,
+        "q3": 3,
+        "max": 9
+      },
+      "geometry": {
+        "bins": [
+          [
+            1,
+            3,
+            3
+          ],
+          [
+            3,
+            5,
+            2
+          ],
+          [
+            5,
+            7,
+            0
+          ],
+          [
+            7,
+            9,
+            0
+          ],
+          [
+            9,
+            11,
+            1
+          ],
+          [
+            11,
+            13,
+            0
+          ]
+        ]
+      },
+      "geometryNote": "bins are [lower, exclusive upper, count]",
+      "traceScreens": [
+        {
+          "stage": "histogram-trace",
+          "sha256": "cbfa8fc47a792f8d35457a48ad0c8eb02acbb60eb0a4c2432f6c90c76e0af834",
+          "visuallyTranscribed": [
+            1,
+            3,
+            3
+          ]
+        },
+        {
+          "stage": "histogram-trace-right-1",
+          "sha256": "9403a73aca15c98d153c6e0155f3125118a75ae7be5af5bdb1fc6ee0c573f868",
+          "visuallyTranscribed": [
+            3,
+            5,
+            2
+          ]
+        },
+        {
+          "stage": "histogram-trace-right-2",
+          "sha256": "2e77b8ae95bb4890b48214f7fad10d870cfb52cd0d9dbef007c64d75bc503896",
+          "visuallyTranscribed": [
+            5,
+            7,
+            0
+          ]
+        },
+        {
+          "stage": "histogram-trace-right-3",
+          "sha256": "1a63e4fab5e7403d140e3c4b462c6c1351f88069d3cfed006220dfa1b9adbf5d",
+          "visuallyTranscribed": [
+            7,
+            9,
+            0
+          ]
+        },
+        {
+          "stage": "histogram-trace-right-4",
+          "sha256": "cbb019c711b26e7c53f5343541a101d842c811f272eb7d616dfb8f65b924bee5",
+          "visuallyTranscribed": [
+            9,
+            11,
+            1
+          ]
+        },
+        {
+          "stage": "histogram-trace-right-5",
+          "sha256": "98247c03e7c8ce4b471ddfcd46bf7e86391a41614d76a167e7e5d2f652ad7fc9",
+          "visuallyTranscribed": [
+            11,
+            13,
+            0
+          ]
+        }
+      ]
+    }
+  ],
+  "contactSheet": "plots-clocked433-trace-contact-sheet.png",
+  "curriculumDiscrepancy": {
+    "path": "ti84-procedures-data.json (follow-alongs root)",
+    "procedure": "histogram",
+    "step": 16,
+    "actualNarration": "Move along the bars; TRACE reports the current bin center and count.",
+    "observed": "TRACE shows min=<lower boundary>, maxX<upper boundary>, n=<count>; it does not show the bin center.",
+    "proposedNarration": "Move along the bins; TRACE reports the lower boundary, exclusive upper boundary, and count.",
+    "sourceModified": false
+  },
+  "scope": "Saved graph pixels rechecked; summaries, fences and bin counts independently calculated from input. TRACE labels visually inspected and transcribed from saved screens with hashes. All observed nonboot blocks installed.",
+  "limits": "Single outlier dataset, rightward navigation only; leftward boxplot Q1/min not exercised. Fixed ZoomStat pixel geometry. No automatic small-font OCR. Controlled clocks do not prove wall-clock or hardware timing. Full decompile incomplete."
+}

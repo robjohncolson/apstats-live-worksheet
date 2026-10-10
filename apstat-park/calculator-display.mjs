@@ -1,5 +1,14 @@
+// Fallback when the trainer's TI84ScreenRenderer.traceLabel is not loaded (plain tests).
+function plainTraceLabel(info) {
+  if (info.label !== undefined) return info.label + '=' + info.x;
+  if (info.upper !== undefined) return 'min=' + info.x + ' max<' + info.upper + ' n=' + info.y;
+  return 'x=' + info.x + ' y=' + Number(Number(info.y).toPrecision(5));
+}
+
 // Consume the trainer's render payloads without constructing a green LCD canvas.
-export function createWorldDisplay() {
+// traceLabel: the trainer's TRACE readout (TI84ScreenRenderer.traceLabel), so the Park
+// shows exactly what the calculator shows (Med=2.5, min=3 max<5 n=2).
+export function createWorldDisplay({ traceLabel = plainTraceLabel } = {}) {
   let lines = [{ text: 'READY', selected: false }];
   return {
     getLines: () => lines,
@@ -42,10 +51,11 @@ export function createWorldDisplay() {
       lines = [{ text: graph?.title || 'GRAPH' }];
       if (graph?.type === 'ModBoxplot') {
         for (const key of ['minX', 'Q1', 'Med', 'Q3', 'maxX']) lines.push({ text: key + '=' + graph.stats[key] });
-      } else for (const point of graph?.points?.slice(0, 5) || []) {
-        lines.push({ text: 'x=' + point.x + ' y=' + Number(point.y.toPrecision(5)) });
+      } else for (const point of graph?.points?.slice(0, 6) || []) {
+        // Histogram bins read like TRACE: lower boundary, exclusive upper boundary, count.
+        lines.push({ text: point.upper !== undefined ? traceLabel(point) : 'x=' + point.x + ' y=' + Number(point.y.toPrecision(5)) });
       }
-      if (graph?.traceInfo) lines.push({ text: 'TRACE x=' + graph.traceInfo.x + ' y=' + Number(graph.traceInfo.y.toPrecision(5)), selected: true });
+      if (graph?.traceInfo) lines.push({ text: 'TRACE ' + traceLabel(graph.traceInfo), selected: true });
     },
     clear() { lines = []; },
   };
