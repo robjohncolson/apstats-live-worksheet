@@ -23,6 +23,7 @@
 //                            periods:{B,E} (Day 1), adminDay2:{B,E},
 //                            mcqPartA:{B,E}|null }
 //   posters[newUnit]      = { unit(NEW CED), title, kind:'poster', periods:{B,E} }
+//                            SPARSE: only units with poster tiles (Desk POSTER_UNITS)
 //   calendar              = { schoolYear, firstDay, examDate, breaks[],
 //                            meetingDays, quarters, events }
 //
@@ -244,9 +245,12 @@ for (const u of newUnits) {
   const day2 = eventDates((x) => x.t === `U${u}-PC2` && x.kind === 'pc' && x.admin === 2);
   const partA = eventDates((x) => x.t === `U${u}-PCA` && x.part === 'A');
   const poster = eventDates((x) => x.t === `U${u}-Poster` && x.kind === 'poster');
-  for (const [label, ev] of [['PC day 1', day1], ['PC day 2', day2], ['poster', poster]]) {
+  for (const [label, ev] of [['PC day 1', day1], ['PC day 2', day2]]) {
     if (!ev.B || !ev.E) fail(`U${u} ${label} missing for a period (B=${ev.B} E=${ev.E})`);
   }
+  // Posters are sparse (one per quarter, POSTER_UNITS in the Desk): a unit with no
+  // poster tile in EITHER period is simply left out. One period only is a bug.
+  if ((poster.B == null) !== (poster.E == null)) fail(`U${u} poster present for only one period (B=${poster.B} E=${poster.E})`);
   if ((partA.B == null) !== (partA.E == null)) fail(`U${u} MCQ Part A present for only one period`);
   progressChecks[String(u)] = {
     unit: u,
@@ -257,6 +261,7 @@ for (const u of newUnits) {
     adminDay2: day2,
     mcqPartA: (partA.B || partA.E) ? partA : null,
   };
+  if (!poster.B) continue;
   posters[String(u)] = {
     unit: u,
     title: `Unit ${u} Poster`,
@@ -325,7 +330,7 @@ const output = {
 const json = JSON.stringify(output, null, 2) + '\n';
 
 const coreCount = Object.values(lessons).filter((l) => l.periods.B).length;
-console.log(`build-lesson-schedule-sy2627: ${Object.keys(lessons).length} lessons (${coreCount} dated core, ${Object.keys(lessons).length - coreCount} bonus/null), ${newUnits.length} PCs + posters`);
+console.log(`build-lesson-schedule-sy2627: ${Object.keys(lessons).length} lessons (${coreCount} dated core, ${Object.keys(lessons).length - coreCount} bonus/null), ${newUnits.length} PCs, ${Object.keys(posters).length} poster(s)`);
 console.log(`  first day ${FIRST_ISO}, exam ${EXAM_ISO}; slack before exam B +${calendar.slackMeetingsBeforeExam.B} / E +${calendar.slackMeetingsBeforeExam.E} meetings`);
 for (const period of ['B', 'E']) {
   console.log(`  ${period} first 12: ` + placed[period].slice(0, 12).map((x) => `${x.date.slice(5)}=${x.t}`).join(' '));
@@ -333,7 +338,9 @@ for (const period of ['B', 'E']) {
 }
 for (const u of newUnits) {
   const pc = progressChecks[String(u)];
-  console.log(`  U${u}: poster B ${posters[String(u)].periods.B} E ${posters[String(u)].periods.E} · PC B ${pc.periods.B}/${pc.adminDay2.B} E ${pc.periods.E}/${pc.adminDay2.E}` + (pc.mcqPartA ? ` · MCQ-A B ${pc.mcqPartA.B} E ${pc.mcqPartA.E}` : ''));
+  const poster = posters[String(u)];
+  const posterText = poster ? `poster B ${poster.periods.B} E ${poster.periods.E}` : 'no poster';
+  console.log(`  U${u}: ${posterText} · PC B ${pc.periods.B}/${pc.adminDay2.B} E ${pc.periods.E}/${pc.adminDay2.E}` + (pc.mcqPartA ? ` · MCQ-A B ${pc.mcqPartA.B} E ${pc.mcqPartA.E}` : ''));
 }
 
 if (CHECK_ONLY) {

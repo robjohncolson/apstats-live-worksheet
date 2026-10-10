@@ -2961,6 +2961,8 @@ try{if(/[?&]home=park(?:&|$)/.test(location.search)||localStorage.getItem('apsta
 
 
 
+
+
 /* ═══ BAKED REGISTRY (injected by build-roadmap-data.mjs) ═══ */
 const BAKED_REGISTRY = {
   "generatedAt": "2026-06-01T20:06:27.691Z",
@@ -5670,22 +5672,11 @@ var MAX_NUDGE_STACK = 4;
 //   { fromUsername: string, toastEl: HTMLElement, createdAt: number }
 var _activeNudges = new Map();
 
-// Soft chime helper. Single short sine-wave tone via Web Audio API; mirrors
-// the TI-84 keystroke beep at low volume. Tolerates missing AudioContext.
+// Soft chime helper: one short 880 Hz sine (MacSFX.recipes.nudgeChime) through the
+// shared engine (lib/sfx.js). Silent when the engine or audio is unavailable.
 function _playNudgeChime() {
   try {
-    var AC = window.AudioContext || window.webkitAudioContext;
-    if (!AC) return;
-    var ctx = new AC();
-    var osc = ctx.createOscillator();
-    var gain = ctx.createGain();
-    osc.connect(gain); gain.connect(ctx.destination);
-    osc.type = 'sine'; osc.frequency.value = 880;
-    gain.gain.setValueAtTime(0, ctx.currentTime);
-    gain.gain.linearRampToValueAtTime(0.08, ctx.currentTime + 0.01);
-    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.18);
-    osc.start();
-    osc.stop(ctx.currentTime + 0.2);
+    if (window.sfx) window.sfx.play('mac:nudgeChime');
   } catch (_) { /* audio disabled / context unavailable -> silent */ }
 }
 
@@ -10303,155 +10294,120 @@ function getAllRegistryEntries(topicKey) {
 }
 
 /* ═══ SOUND ENGINE (Mac System 7-style synthesized sounds) ═══ */
+// Study Break's cues, played through the shared engine in lib/sfx.js (SFX_SPEC.md). Each recipe
+// keeps the frequencies, start times and envelopes of the hand-built oscillators it replaced
+// (TETRIS_SQUARES_SPEC §4 for the bells and chimes); the engine adds the reverb tail, a little
+// stereo width, pitch / level variation and the ducker. Gold fuse / gold clear are priority.
 const SFX = {
-    ctx: null,
     muted: false,
+    ready: false,
 
+    // Plain data for sfx.define (see lib/sfx.js). `gain` on a note is the multiplier of the
+    // caller's volume, exactly as the old `vol * 0.4` arguments were.
+    recipes: {
+        // Piece lock - short water droplet sound
+        droplet: { bus: 'sfx', channel: 'game', reverb: 0.08, body: [
+            { osc: 'sine', freq: 1400, freqEnd: 400, at: 0, dur: 0.06, gain: 0.4 },
+            { osc: 'sine', freq: 800, freqEnd: 300, at: 0.02, dur: 0.05, gain: 0.2 }] },
+        // Single line clear - springy boing
+        boing: { bus: 'sfx', channel: 'game', reverb: 0.12, detune: 10, body: [
+            { osc: 'sine', freq: 200, freqEnd: 800, at: 0, dur: 0.15, gain: 0.5 },
+            { osc: 'sine', freq: 250, freqEnd: 600, at: 0.05, dur: 0.12, gain: 0.3 }] },
+        // Double line clear - two-tone alert (Sosumi-like); also the challenge alert (priority)
+        sosumi: { bus: 'sfx', channel: 'game', reverb: 0.15, detune: 10, body: [
+            { osc: 'sine', freq: 880, at: 0, dur: 0.12, gain: 0.5 },
+            { osc: 'sine', freq: 660, at: 0.15, dur: 0.12, gain: 0.5 }] },
+        // Triple line clear - quack
+        quack: { bus: 'sfx', channel: 'game', reverb: 0.1, body: [
+            { osc: 'sawtooth', freq: 300, freqEnd: 200, at: 0, dur: 0.08, gain: 0.3 },
+            { osc: 'square', freq: 250, freqEnd: 180, at: 0.02, dur: 0.1, gain: 0.2 },
+            { noise: true, amp: 0.5, at: 0, dur: 0.06, gain: 0.1 }] },
+        // Tetris (4 lines) - excited ascending chirp (Wild Eep-like)
+        wildEep: { bus: 'sfx', channel: 'game', reverb: 0.18, detune: 10, width: 0.3, body: [
+            { osc: 'sine', freq: 600, freqEnd: 1800, at: 0, dur: 0.08, gain: 0.4 },
+            { osc: 'sine', freq: 800, freqEnd: 2200, at: 0.1, dur: 0.08, gain: 0.5 },
+            { osc: 'sine', freq: 1000, freqEnd: 2400, at: 0.2, dur: 0.1, gain: 0.4 }] },
+        // Level up - pleasant ascending chord (Indigo-like)
+        indigo: { bus: 'sfx', channel: 'game', reverb: 0.2, detune: 10, width: 0.3, body: [
+            { osc: 'sine', freq: 440, at: 0, dur: 0.2, gain: 0.3 },
+            { osc: 'sine', freq: 554, at: 0.1, dur: 0.2, gain: 0.3 },
+            { osc: 'sine', freq: 659, at: 0.2, dur: 0.25, gain: 0.4 }] },
+        // Hold swap - soft click (Moof-like)
+        moof: { bus: 'sfx', channel: 'game', reverb: 0.05, body: [
+            { osc: 'square', freq: 800, at: 0, dur: 0.02, gain: 0.2 },
+            { osc: 'sine', freq: 600, at: 0.01, dur: 0.03, gain: 0.15 }] },
+        // Game over - descending sad sound (Monkey-like)
+        monkey: { bus: 'sfx', channel: 'game', reverb: 0.2, detune: 10, body: [
+            { osc: 'sine', freq: 600, freqEnd: 200, at: 0, dur: 0.15, gain: 0.4 },
+            { osc: 'sine', freq: 500, freqEnd: 150, at: 0.2, dur: 0.15, gain: 0.3 },
+            { osc: 'sine', freq: 400, freqEnd: 100, at: 0.4, dur: 0.2, gain: 0.3 }] },
+        // Garbage received - heavy thud (Logjam-like)
+        logjam: { bus: 'sfx', channel: 'game', reverb: 0.1, body: [
+            { osc: 'sine', freq: 100, freqEnd: 40, at: 0, dur: 0.15, gain: 0.5 },
+            { noise: true, amp: 0.5, at: 0, dur: 0.08, gain: 0.3 }] },
+        // KO / Win - double sosumi staggered
+        koWin: { bus: 'sfx', channel: 'game', reverb: 0.2, detune: 10, width: 0.2, body: [
+            { osc: 'sine', freq: 880, at: 0, dur: 0.12, gain: 0.5 },
+            { osc: 'sine', freq: 1100, at: 0.15, dur: 0.15, gain: 0.6 },
+            { osc: 'sine', freq: 880, at: 0.4, dur: 0.12, gain: 0.5 },
+            { osc: 'sine', freq: 1100, at: 0.55, dur: 0.15, gain: 0.6 }] },
+        // Gold square - bright ascending major chord chime (C5 E5 G5)
+        goldChime: { bus: 'sfx', channel: 'game', reverb: 0.25, detune: 0, width: 0.3, body: [
+            { osc: 'sine', freq: 523, at: 0, dur: 0.3, gain: 0.5 },
+            { osc: 'sine', freq: 659, at: 0.08, dur: 0.28, gain: 0.45 },
+            { osc: 'sine', freq: 784, at: 0.16, dur: 0.35, gain: 0.5 }] },
+        // Silver square - shorter metallic shimmer (C6 E6)
+        silverShimmer: { bus: 'sfx', channel: 'game', reverb: 0.25, detune: 0, width: 0.3, body: [
+            { osc: 'sine', freq: 1047, at: 0, dur: 0.15, gain: 0.4 },
+            { osc: 'sine', freq: 1319, at: 0.05, dur: 0.18, gain: 0.35 }] },
+        // TETRIS_SQUARES_SPEC §4. Fuse (silver): a bell, E6 + B6 sine partials, 2 ms attack,
+        // 350 ms exponential decay (each partial a little quieter than the one below it), plus an
+        // 80 ms noise sparkle band-passed to 6-9 kHz (centre 7.5 kHz, Q = 7500 / 3000 = 2.5).
+        fuseSilver: { bus: 'sfx', channel: 'game', reverb: 0.3, detune: 0, width: 0.25, body: [
+            { osc: 'sine', env: 'strike', attack: 0.002, freq: 1318, at: 0, dur: 0.35, gain: 0.4 },
+            { osc: 'sine', env: 'strike', attack: 0.002, freq: 1976, at: 0, dur: 0.35, gain: 0.2 },
+            { noise: true, amp: 1, at: 0, dur: 0.08, gain: 0.25, filter: { type: 'bandpass', freq: 7500, q: 2.5 } }] },
+        // Fuse (gold): the same bell a fourth higher (A6 + E7) with a third partial (3520 Hz) and
+        // a 450 ms decay — brighter and longer. Priority: ducks the rest.
+        fuseGold: { bus: 'sfx', channel: 'game', priority: true, reverb: 0.35, detune: 0, width: 0.3, body: [
+            { osc: 'sine', env: 'strike', attack: 0.002, freq: 1760, at: 0, dur: 0.45, gain: 0.4 },
+            { osc: 'sine', env: 'strike', attack: 0.002, freq: 2637, at: 0, dur: 0.45, gain: 0.4 / 2 },
+            { osc: 'sine', env: 'strike', attack: 0.002, freq: 3520, at: 0, dur: 0.45, gain: 0.4 / 3 },
+            { noise: true, amp: 1, at: 0, dur: 0.08, gain: 0.25, filter: { type: 'bandpass', freq: 7500, q: 2.5 } }] },
+        // Square clear: plays alongside today's line-clear cue; 60 ms later a rising two-note
+        // chime, 200 ms per note. Silver E6 → B6, gold A6 → E7 (gold is priority).
+        squareChimeSilver: { bus: 'sfx', channel: 'game', reverb: 0.3, detune: 0, width: 0.25, body: [
+            { osc: 'sine', env: 'strike', attack: 0.002, freq: 1318, at: 0.06, dur: 0.2, gain: 0.4 },
+            { osc: 'sine', env: 'strike', attack: 0.002, freq: 1976, at: 0.26, dur: 0.2, gain: 0.4 }] },
+        squareChimeGold: { bus: 'sfx', channel: 'game', priority: true, reverb: 0.35, detune: 0, width: 0.3, body: [
+            { osc: 'sine', env: 'strike', attack: 0.002, freq: 1760, at: 0.06, dur: 0.2, gain: 0.4 },
+            { osc: 'sine', env: 'strike', attack: 0.002, freq: 2637, at: 0.26, dur: 0.2, gain: 0.4 }] }
+    },
+
+    // Registers the recipes once and reads the game's own mute.
     init() {
-        if (this.ctx) return;
-        this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-        this.muted = localStorage.getItem('studybreak-muted') === 'true';
+        if (this.ready) return;
+        this.ready = true;
+        try { this.muted = localStorage.getItem('studybreak-muted') === 'true'; } catch (_) {}
+        const engine = window.sfx;
+        if (!engine) return;
+        for (const name of Object.keys(this.recipes)) engine.define('sb:' + name, this.recipes[name]);
     },
 
-    ensureCtx() {
-        if (!this.ctx) this.init();
-        if (this.ctx.state === 'suspended') this.ctx.resume();
-    },
-
-    play(name, volume = 0.5) {
+    // opts (optional): { priority, x, width, pan, distance } — passed to sfx.play.
+    play(name, volume = 0.5, opts) {
         if (this.muted || (typeof MacSFX !== 'undefined' && MacSFX.muted)) return;   // one mute (see studyBreak.toggleMute)
-        this.ensureCtx();
-        const fn = this.sounds[name];
-        if (fn) fn.call(this, volume);
+        this.init();
+        const engine = window.sfx;
+        if (!engine) return;
+        const o = opts || {};
+        engine.play('sb:' + name, { gain: volume, priority: !!o.priority, x: o.x, width: o.width, pan: o.pan, distance: o.distance });
     },
 
     toggleMute() {
         this.muted = !this.muted;
         localStorage.setItem('studybreak-muted', this.muted);
         return this.muted;
-    },
-
-    // Helper: create an oscillator note
-    osc(type, freq, startTime, duration, volume, freqEnd) {
-        const o = this.ctx.createOscillator();
-        const g = this.ctx.createGain();
-        o.type = type;
-        o.frequency.setValueAtTime(freq, startTime);
-        if (freqEnd) o.frequency.exponentialRampToValueAtTime(freqEnd, startTime + duration);
-        g.gain.setValueAtTime(volume, startTime);
-        g.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
-        o.connect(g).connect(this.ctx.destination);
-        o.start(startTime);
-        o.stop(startTime + duration);
-    },
-
-    // Helper: noise burst
-    noise(startTime, duration, volume) {
-        const bufferSize = this.ctx.sampleRate * duration;
-        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-        const data = buffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1) * 0.5;
-        const src = this.ctx.createBufferSource();
-        const g = this.ctx.createGain();
-        src.buffer = buffer;
-        g.gain.setValueAtTime(volume, startTime);
-        g.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
-        src.connect(g).connect(this.ctx.destination);
-        src.start(startTime);
-        src.stop(startTime + duration);
-    },
-
-    sounds: {
-        // Piece lock - short water droplet sound
-        droplet(vol) {
-            const t = this.ctx.currentTime;
-            this.osc('sine', 1400, t, 0.06, vol * 0.4, 400);
-            this.osc('sine', 800, t + 0.02, 0.05, vol * 0.2, 300);
-        },
-
-        // Single line clear - springy boing
-        boing(vol) {
-            const t = this.ctx.currentTime;
-            this.osc('sine', 200, t, 0.15, vol * 0.5, 800);
-            this.osc('sine', 250, t + 0.05, 0.12, vol * 0.3, 600);
-        },
-
-        // Double line clear - two-tone alert (Sosumi-like)
-        sosumi(vol) {
-            const t = this.ctx.currentTime;
-            this.osc('sine', 880, t, 0.12, vol * 0.5);
-            this.osc('sine', 660, t + 0.15, 0.12, vol * 0.5);
-        },
-
-        // Triple line clear - quack
-        quack(vol) {
-            const t = this.ctx.currentTime;
-            this.osc('sawtooth', 300, t, 0.08, vol * 0.3, 200);
-            this.osc('square', 250, t + 0.02, 0.1, vol * 0.2, 180);
-            this.noise(t, 0.06, vol * 0.1);
-        },
-
-        // Tetris (4 lines) - excited ascending chirp (Wild Eep-like)
-        wildEep(vol) {
-            const t = this.ctx.currentTime;
-            this.osc('sine', 600, t, 0.08, vol * 0.4, 1800);
-            this.osc('sine', 800, t + 0.1, 0.08, vol * 0.5, 2200);
-            this.osc('sine', 1000, t + 0.2, 0.1, vol * 0.4, 2400);
-        },
-
-        // Level up - pleasant ascending chord (Indigo-like)
-        indigo(vol) {
-            const t = this.ctx.currentTime;
-            this.osc('sine', 440, t, 0.2, vol * 0.3);
-            this.osc('sine', 554, t + 0.1, 0.2, vol * 0.3);
-            this.osc('sine', 659, t + 0.2, 0.25, vol * 0.4);
-        },
-
-        // Hold swap - soft click (Moof-like)
-        moof(vol) {
-            const t = this.ctx.currentTime;
-            this.osc('square', 800, t, 0.02, vol * 0.2);
-            this.osc('sine', 600, t + 0.01, 0.03, vol * 0.15);
-        },
-
-        // Game over - descending sad sound (Monkey-like)
-        monkey(vol) {
-            const t = this.ctx.currentTime;
-            this.osc('sine', 600, t, 0.15, vol * 0.4, 200);
-            this.osc('sine', 500, t + 0.2, 0.15, vol * 0.3, 150);
-            this.osc('sine', 400, t + 0.4, 0.2, vol * 0.3, 100);
-        },
-
-        // Garbage received - heavy thud (Logjam-like)
-        logjam(vol) {
-            const t = this.ctx.currentTime;
-            this.osc('sine', 100, t, 0.15, vol * 0.5, 40);
-            this.noise(t, 0.08, vol * 0.3);
-        },
-
-        // KO / Win - double sosumi staggered
-        koWin(vol) {
-            const t = this.ctx.currentTime;
-            this.osc('sine', 880, t, 0.12, vol * 0.5);
-            this.osc('sine', 1100, t + 0.15, 0.15, vol * 0.6);
-            this.osc('sine', 880, t + 0.4, 0.12, vol * 0.5);
-            this.osc('sine', 1100, t + 0.55, 0.15, vol * 0.6);
-        },
-
-        // Gold square - bright ascending major chord chime
-        goldChime(vol) {
-            const t = this.ctx.currentTime;
-            this.osc('sine', 523, t, 0.3, vol * 0.5);        // C5 root
-            this.osc('sine', 659, t + 0.08, 0.28, vol * 0.45); // E5 major third
-            this.osc('sine', 784, t + 0.16, 0.35, vol * 0.5);  // G5 fifth
-        },
-
-        // Silver square - shorter metallic shimmer
-        silverShimmer(vol) {
-            const t = this.ctx.currentTime;
-            this.osc('sine', 1047, t, 0.15, vol * 0.4);       // C6
-            this.osc('sine', 1319, t + 0.05, 0.18, vol * 0.35); // E6
-        }
     }
 };
 
@@ -10519,11 +10475,19 @@ function injectPcPosterEvents(pacing){
     // five trio posters + gallery walk) was given a second day on 2026-10-07 so
     // the PC never lands on a half-finished poster; a unit missing here is 1 day.
     const POSTER_DAYS={1:2};
+    // Units that get poster days at all (POSTER_BONUS_SPEC.md section 4, 2026-10-10).
+    // One poster per quarter, and posters are banked bonus. Unit 1 is Q1's. The
+    // teacher picks each later quarter's unit from the misconception tracker, so
+    // no future poster is pre-scheduled: add the unit here and regenerate
+    // (scripts/build-lesson-schedule-sy2627.mjs) to schedule one.
+    const POSTER_UNITS=new Set([1]);
     const out=[];
     let prevU=0;
     function appendPcPosterFor(u){
-        out.push({t:'U'+u+'-Poster',n:'Unit '+u+' Poster',u:u,kind:'poster'});
-        if((POSTER_DAYS[u]||1)>=2)out.push({t:'U'+u+'-Poster2',n:'Unit '+u+' Poster (Day 2)',u:u,kind:'poster',admin:2});
+        if(POSTER_UNITS.has(u)){
+            out.push({t:'U'+u+'-Poster',n:'Unit '+u+' Poster',u:u,kind:'poster'});
+            if((POSTER_DAYS[u]||1)>=2)out.push({t:'U'+u+'-Poster2',n:'Unit '+u+' Poster (Day 2)',u:u,kind:'poster',admin:2});
+        }
         out.push({t:'U'+u+'-PC1',n:'Unit '+u+' Progress Check (Day 1)',u:u,kind:'pc',admin:1});
         out.push({t:'U'+u+'-PC2',n:'Unit '+u+' Progress Check (Day 2)',u:u,kind:'pc',admin:2});
     }
@@ -11275,7 +11239,19 @@ function _renderMenuChecks() {
         var muted = !!(typeof MacSFX !== 'undefined' && MacSFX.muted);
         sound.textContent = (muted ? '\u2003' : '\u2713') + ' Sound';
     }
+    var quiet = document.getElementById('menu-sound-quiet');
+    if (quiet) quiet.textContent = (_sfxIsQuiet() ? '\u2713' : '\u2003') + ' Quieter';
 }
+// The per-device "quieter" level (SFX_SPEC \u00a71: localStorage apstats-sfx-level, applied on the
+// engine's master). The Sound option stays the on/off switch.
+function _sfxIsQuiet() {
+    try { return !!(window.sfx && window.sfx.getLevel() === 'quiet'); } catch (_) { return false; }
+}
+function _toggleSfxQuiet() {
+    try { if (window.sfx) window.sfx.setLevel(_sfxIsQuiet() ? 'normal' : 'quiet'); } catch (_) {}
+    try { _renderMenuChecks(); } catch (_) {}
+}
+try { window._toggleSfxQuiet = _toggleSfxQuiet; window._sfxIsQuiet = _sfxIsQuiet; } catch (_) {}
 function _menuShowDoNow() {
     var card = document.getElementById('donow-card');
     if (!card || card.style.display === 'none') { openSignInModal(); return; }
@@ -17680,16 +17656,10 @@ function _candyToast(opts) {
   return { dismiss: dismiss };
 }
 function _candyMiniToast(text) { _candyToast({ text: text, ttlMs: 2200 }); }
+// The candy chime (MacSFX.recipes.candyChime) through the shared engine (lib/sfx.js).
 function _candyChime() {
   try {
-    var AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
-    var ctx = new AC(), o = ctx.createOscillator(), g = ctx.createGain();
-    o.type = 'sine'; o.frequency.value = 880; o.connect(g); g.connect(ctx.destination);
-    g.gain.setValueAtTime(0.0001, ctx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.12, ctx.currentTime + 0.01);
-    g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.18);
-    o.start(); o.stop(ctx.currentTime + 0.2);
-    setTimeout(function () { try { ctx.close(); } catch (_) {} }, 400);
+    if (window.sfx) window.sfx.play('mac:candyChime');
   } catch (_) {}
 }
 function _candyRefreshWalletUI() {
@@ -21398,37 +21368,47 @@ async function copyTutorPromptPc(unit, statusId) {
 }
 
 /* ═══ MAC OS UI SOUND EFFECTS ═══ */
+// The Desk's UI sounds, played through the shared engine in lib/sfx.js (SFX_SPEC.md) on its `ui`
+// bus. 'click' is the UI instrument: a short triangle blip on a 3 ms noise transient. The alert
+// beep, quack, laugh and Wild Eep stay today's Mac recordings. The Sound option (this.muted) is
+// the engine's master switch: nothing plays anywhere while it is off.
 const MacSFX = {
-    sounds: {},
     muted: false,
     started: false,
+
+    recipes: {
+        click:   { bus: 'ui', reverb: 0.04, detune: 25,
+                   transient: { dur: 0.003, gain: 0.5, filter: { type: 'highpass', freq: 2500 } },
+                   body: [{ osc: 'triangle', env: 'strike', attack: 0.002, freq: 1320, dur: 0.04, gain: 0.7 }] },
+        sosumi:  { bus: 'ui', reverb: 0.08, detune: 0, sample: 'Mac-OS-Sounds/PowerMacBeep.wav' },
+        crash:   { bus: 'ui', reverb: 0.1, detune: 0, sample: 'Mac-OS-Sounds/Quack.wav' },
+        laugh:   { bus: 'ui', reverb: 0.1, detune: 0, sample: 'Mac-OS-Sounds/Laugh.wav' },
+        wildEep: { bus: 'ui', reverb: 0.12, detune: 0, sample: 'Mac-OS-Sounds/Wild-Eep.wav' },
+        // Teacher nudge arrival: one soft 880 Hz sine (10 ms rise, gone by 180 ms).
+        nudgeChime: { bus: 'ui', reverb: 0.12, detune: 0, body: [{ osc: 'sine', freq: 880, dur: 0.2, gain: 0.08, env: 'points',
+                      points: [['set', 0, 0], ['linear', 1, 0.01], ['exp', 0.00125, 0.18]] }] },
+        // Candy gift / poke: the same 880 Hz sine, a little louder, exponential rise.
+        candyChime: { bus: 'ui', reverb: 0.12, detune: 0, body: [{ osc: 'sine', freq: 880, dur: 0.2, gain: 0.12, env: 'points',
+                      points: [['set', 0.0001 / 0.12, 0], ['exp', 1, 0.01], ['exp', 0.0001 / 0.12, 0.18]] }] }
+    },
 
     init() {
         if (this.started) return;
         this.started = true;
         this.muted = localStorage.getItem('macsound-muted') === 'true';
-        const files = {
-            sosumi:   'Mac-OS-Sounds/PowerMacBeep.wav',
-            crash:    'Mac-OS-Sounds/Quack.wav',
-            laugh:    'Mac-OS-Sounds/Laugh.wav',
-            wildEep:  'Mac-OS-Sounds/Wild-Eep.wav',
-            click:    'Mac-OS-Sounds/Single-Click.wav'
-        };
-        for (const [name, src] of Object.entries(files)) {
-            const a = new Audio(src);
-            a.preload = 'auto';
-            this.sounds[name] = a;
-        }
+        const engine = window.sfx;
+        if (!engine) return;
+        for (const name of Object.keys(this.recipes)) engine.define('mac:' + name, this.recipes[name]);
+        engine.setGate(function () { return !MacSFX.muted; });
     },
 
-    play(name, volume = 0.5) {
+    // opts (optional): { priority } — the challenge alert ducks everything else.
+    play(name, volume = 0.5, opts) {
         if (this.muted) return;
         if (!this.started) this.init();
-        const a = this.sounds[name];
-        if (!a) return;
-        a.currentTime = 0;
-        a.volume = volume;
-        a.play().catch(() => {});
+        const engine = window.sfx;
+        if (!engine) return;
+        engine.play('mac:' + name, { gain: volume, priority: !!(opts && opts.priority) });
     },
 
     toggleMute() {
@@ -21575,7 +21555,8 @@ const studyBreak = {
     _outgoing: null,           // { target, sentAt, status, text } — one outgoing challenge at a time
     _buffered: null,           // rotate/hold pressed during the entry delay, applied at spawn
     pieceCounts: {},           // per-type spawn counts (solo game-over histogram)
-    clearFx: null,             // { board, rows, timer } — 120ms line-clear flash
+    clearFx: null,             // { board, rows, squareRows, timer } — 120ms line-clear flash
+    fuseFx: null,              // { squareIds, timer } — 250ms flash over a just-fused slab (TETRIS_SQUARES_SPEC)
     _boardVersion: 0,          // bumps on every board mutation (ghost-square cache key)
     openedAt: 0,               // break clock
     _classroomNote: '',        // Arm Gate / Green Light mirrored from Live Classroom
@@ -21591,8 +21572,8 @@ const studyBreak = {
         Z: '#ff6b6b',
         J: '#4f7cff',
         L: '#f0973a',
-        gold: '#d8b44b',
-        silver: '#d2d2d2',
+        gold: '#F2C14E',     // TETRIS_SQUARES_SPEC: warm gold slab
+        silver: '#C9D1D9',   // cool silver slab
         ghost: '#7f7f7f'
     },
     pieces: {
@@ -22205,7 +22186,7 @@ const studyBreak = {
         this.mode = 'solo';
         this.overlay.style.display = 'none';
         this.clearKeys();
-        this.clearFx = null;
+        this.clearFx = null; this.fuseFx = null;
         this.openedAt = 0;
         this._classroomNote = '';
         if (was1v1) { this.state = 'idle'; this.resetBoardState(); }   // a 1v1 board never resumes as solo
@@ -22242,6 +22223,7 @@ const studyBreak = {
             this._acc = Math.min(this._acc, 250);
         }
         if (this.clearFx) { this.clearFx.timer -= delta; if (this.clearFx.timer <= 0) this.clearFx = null; }
+        if (this.fuseFx) { this.fuseFx.timer -= delta; if (this.fuseFx.timer <= 0) this.fuseFx = null; }
         // Light opponent updates at ~10Hz (active piece / hold / next, no board): the rival's screen
         // used to be a 2.5s slideshow between locks. Full-board sends still happen at lock + heartbeat.
         if (this._mpDirty && this._inLiveMatch() && this.state === 'running' && ts - (this._mpLastSend || 0) >= 100) {
@@ -22278,6 +22260,8 @@ const studyBreak = {
         this.active = null;
         this.nextPieceId = 1;
         this.nextSquareId = 1;
+        this.tick = 0;            // fixed-step game tick (update()): drives the slab highlight phase
+        this._slabBornAt = {};    // squareId → tick it fused at
         this.spawnTimer = 0;
         this.fallTimer = 0;
         this.lockTimer = 0;
@@ -22294,7 +22278,7 @@ const studyBreak = {
         this._escArmedUntil = 0;
         this._since = null;
         this._buffered = null;
-        this.clearFx = null;
+        this.clearFx = null; this.fuseFx = null;
         this.pieceCounts = {};
         this.keys.lastDir = null;
         this._boardVersion++;
@@ -22331,6 +22315,7 @@ const studyBreak = {
             ms.pendingGarbage = 0;   // garbage queued during the last game must not land in this one
             ms.roundStartedAt = Date.now();
             ms.oppSeenThisRound = false;
+            ms._oppWitness = null;  // the opponent's score restarts: the gold witness starts over
             this._seedRng(ms.roomId + ':' + ms.gameNumber);   // shared piece sequence for this game
         } else {
             this._rand = null;   // solo: plain Math.random
@@ -22658,7 +22643,7 @@ const studyBreak = {
             this._announce('The invitation was superseded.');
             return;
         }
-        SFX.play('sosumi', 0.5);
+        SFX.play('sosumi', 0.5, { priority: true });   // the challenge alert ducks the rest (SFX_SPEC §2)
         document.body.classList.add('challenge-waiting');   // STUDY_BREAK_CHALLENGE_ALERT_SPEC §3
         const dialog = document.getElementById('challenge-dialog');
         document.getElementById('challenge-msg').textContent = fromUser + ' wants to play Study Break! (one game · 1 candy at stake, winner takes 2 🍬)';
@@ -22724,7 +22709,7 @@ const studyBreak = {
         this._clearOutgoingChallenge(false);
         this._rematchNote = '';
         this._declinePendingChallenge();   // a dialog from a THIRD student is stale once this match starts
-        this.clearFx = null;
+        this.clearFx = null; this.fuseFx = null;
         SFX.play('wildEep', 0.6);
         document.getElementById('challenge-dialog').style.display = 'none';
         document.getElementById('game-lobby').style.display = 'none';
@@ -22923,7 +22908,7 @@ const studyBreak = {
     // the personal record.
     _endGame(message) {
         this.state = 'gameover';
-        this.clearFx = null;
+        this.clearFx = null; this.fuseFx = null;
         if (this.mode === '1v1') {
             if (this.mpState) this.mpState.gameOverAt = Date.now();   // 1500ms cross-KO window (see opponentKO)
             this.sendGameMessage({ type: 'game_over', score: this.score, lines: this.lines });
@@ -23033,6 +23018,7 @@ const studyBreak = {
             }
             this.mpState.opponentBoard = board;   // a light (board-less) update keeps the last board
         }
+        if (typeof this._witnessOpponentGold === 'function') this._witnessOpponentGold(data);
         this.mpState.opponentScore = Math.max(0, Number(data.score) || 0);
         this.mpState.opponentLines = Math.max(0, Number(data.lines) || 0);
         this.mpState.opponentLevel = Math.max(1, Number(data.level) || 1);
@@ -23043,6 +23029,49 @@ const studyBreak = {
         this.mpState.opponentQueue = Array.isArray(data.queue) ? data.queue.filter((t) => typeof t === 'string' && !!this.pieces[t]).slice(0, 3) : [];
         // Render opponent board
         this.drawOpponentBoard();
+    },
+
+    // TETRIS_SQUARES_SPEC §3: the opponent's gold lines, derived from the score / lines / level
+    // values every game_state message already carries (no new relay field; the relay forwards the
+    // same message shape). Score changes only through a line clear, by L × (100·plain + 500·silver
+    // + 1000·gold) at the level L the clear happened at (= the level in their previous message),
+    // plus 10 for a perfect clear. With n = the lines delta and U = (Δscore − perfect) / (100·L):
+    //   U − n = 4·silver + 9·gold,  silver + gold ≤ n ≤ 4,
+    // which has exactly one solution (4·Δs = 9·Δg has none with |Δg| < 4), so a fuse + tetris in
+    // one lock counts its gold lines and a double silver never reads as gold. Each lock sends a
+    // full state at once, so one message carries at most one clear; anything that does not decode
+    // (a lost message, a new game resetting the score) counts nothing.
+    // Trust (Codex review 2026-10-10): these are the opponent client's own reported values — the
+    // same trust level as the base stake, which already rests on both clients' reports of the win.
+    // A forged score can claim a gold clear exactly as a forged report can claim the win; the
+    // premium adds no new trust surface, and the server pays only when both reports agree.
+    _witnessOpponentGold(data) {
+        const ms = this.mpState;
+        if (!ms || !data) return;
+        const score = Number(data.score), lines = Number(data.lines), level = Number(data.level);
+        if (!Number.isFinite(score) || !Number.isFinite(lines) || !Number.isFinite(level)) return;
+        const prev = ms._oppWitness;
+        ms._oppWitness = { score, lines, level };
+        if (!prev) return;
+        const gold = this._goldLinesFromDeltas(score - prev.score, lines - prev.lines, prev.level);
+        if (gold) ms.oppGoldClears = (ms.oppGoldClears || 0) + gold;
+    },
+
+    // Gold lines in ONE clear from its score delta, lines delta and the level it was cleared at
+    // (0 when the deltas are not exactly one clear). Pure; see _witnessOpponentGold.
+    _goldLinesFromDeltas(dScore, dLines, level) {
+        if (!Number.isInteger(dLines) || dLines < 1 || dLines > 4) return 0;
+        if (!Number.isInteger(level) || level < 1 || !Number.isInteger(dScore)) return 0;
+        let points = dScore;
+        if (points % 100 === 10) points -= 10;   // a perfect clear's +10
+        if (points <= 0 || points % (100 * level) !== 0) return 0;
+        const extra = points / (100 * level) - dLines;   // = 4·silver + 9·gold
+        for (let gold = 0; gold <= dLines; gold++) {
+            const rest = extra - 9 * gold;
+            if (rest < 0 || rest % 4 !== 0) continue;
+            if (gold + rest / 4 <= dLines) return gold;
+        }
+        return 0;
     },
 
     drawOpponentBoard() {
@@ -23144,7 +23173,7 @@ const studyBreak = {
             return;
         }
         this._boardVersion++;
-        this.clearFx = null;
+        this.clearFx = null; this.fuseFx = null;
 
         // ONE hole column per batch (standard): a per-row random hole made 2+ rows of garbage
         // effectively undiggable. Local Math.random on purpose — the shared match RNG (_rng)
@@ -23194,7 +23223,7 @@ const studyBreak = {
         ms._wonThisGame = true;   // I won this game of the series
         SFX.play('koWin', 0.7);
         this.state = 'gameover';
-        this.clearFx = null;
+        this.clearFx = null; this.fuseFx = null;
         this.flash(`YOU WIN! You: ${this.score} | ${opponentName}: ${theirScore}`);
         this.updateHud();
         this.draw();
@@ -23223,7 +23252,7 @@ const studyBreak = {
         }
         SFX.play('koWin', 0.7);
         this.state = 'gameover';
-        this.clearFx = null;
+        this.clearFx = null; this.fuseFx = null;
         const opponentName = this.mpState.opponent || 'Opponent';
         const myScore = this.score;
         const theirScore = this.mpState.opponentScore || 0;
@@ -23299,7 +23328,12 @@ const studyBreak = {
         clearTimeout(ms._advanceTimer);
         const iWon = (ms.myWins || 0) > (ms.oppWins || 0);
         const winnerUsername = iWon ? (this.mpUsername || '') : ms.opponent;
-        const body = { matchId: ms.roomId, winnerUsername };
+        // Gold lines per player (TETRIS_SQUARES_SPEC §3): mine counted by lockPiece, the opponent's
+        // witnessed from their board snapshots. HTTP body only; no relay message changes.
+        const goldClears = {};
+        if (this.mpUsername) goldClears[this.mpUsername] = ms.myGoldClears || 0;
+        if (ms.opponent) goldClears[ms.opponent] = ms.oppGoldClears || 0;
+        const body = { matchId: ms.roomId, winnerUsername, goldClears };
         ms.candyOutcome = 'pending';
         this.draw();
         // These room-scoped retries intentionally survive close() and rematches (a financial
@@ -23318,7 +23352,9 @@ const studyBreak = {
             const terminal = !!(res && ((res.ok && (res.status === 'settled' || res.status === 'refunded')) || permanent));
             if (terminal) {
                 ms._resolved = true;
-                ms.candyOutcome = !res.ok ? 'none' : (res.status === 'settled' ? (iWon ? '+1' : '-1') : 'refunded');
+                // A paid gold premium moves a second candy (the server says so: premiumPaid).
+                const moved = res.ok && res.premiumPaid ? 2 : 1;
+                ms.candyOutcome = !res.ok ? 'none' : (res.status === 'settled' ? (iWon ? '+' : '-') + moved : 'refunded');
                 clearTimeout(pending.timer); pending.timer = null;
                 delete this._pendingSettlements[ms.roomId];
                 if (this.mpState === ms) this.draw();
@@ -23369,6 +23405,7 @@ const studyBreak = {
     },
 
     update(delta, now) {
+        this.tick = (this.tick || 0) + 1;   // one per fixed 16.67 ms step (TETRIS_SQUARES_SPEC slab sheen)
         if (!this.active) {
             this.spawnTimer -= delta;
             if (this.spawnTimer <= 0) this.spawnNext();
@@ -23665,9 +23702,13 @@ const studyBreak = {
         let perfect = false;
 
         if (clear.lines) {
-            this.clearFx = { board: snapshot, rows: fullRows, timer: 120 };
+            // squareRows: the cleared rows that held slab cells (a square clear) flash fully white.
+            const squareRows = fullRows.filter((y) => snapshot[y].some((c) => c && c.kind === 'square'));
+            this.clearFx = { board: snapshot, rows: fullRows, squareRows, timer: 120 };
             this.lines += clear.lines;
-            this.score += clear.points;
+            this.score += clear.points * this.level;   // 100 / 500 / 1000 per line × the level it was cleared at
+            // Gold lines this game: the stakes' gold premium report (TETRIS_SQUARES_SPEC §3).
+            if (this.mpState && clear.goldStrips) this.mpState.myGoldClears = (this.mpState.myGoldClears || 0) + clear.goldStrips;
             perfect = this.board.every((row) => row.every((c) => !c));   // empty well after the clear
             if (perfect) this.score += 10;
             const prevLevel = this.level;
@@ -23682,8 +23723,9 @@ const studyBreak = {
             }
         }
 
-        // Send garbage to opponent in 1v1 mode. Squares matter here too: a row through a gold square
-        // adds 2 rows, through a silver square 1 (capped at MAX_GARBAGE; the receive side clamps the same).
+        // Send garbage to opponent in 1v1 mode. Squares matter here too: each gold line adds 2 rows,
+        // each silver line 1 (TETRIS_SQUARES_SPEC §2; capped at MAX_GARBAGE, the receive side clamps
+        // the same). Same game_garbage message, only the value grows.
         let sentGarbage = 0;
         if (this.mode === '1v1' && this.mpState && clear.lines > 0) {
             const garbageTable = { 1: 0, 2: 1, 3: 2, 4: 4 };
@@ -23706,9 +23748,10 @@ const studyBreak = {
         const totalGold = firstSquares.gold + secondSquares.gold;
         const totalSilver = firstSquares.silver + secondSquares.silver;
         // One cue per lock: the plain 'droplet' only when nothing else happened (no four-deep stack of
-        // oscillators on a gold tetris); otherwise the square chime and/or the clear cue below.
-        if (totalGold) SFX.play('goldChime', 0.7);
-        else if (totalSilver) SFX.play('silverShimmer', 0.6);
+        // oscillators on a gold tetris); otherwise the fuse bell and/or the clear cue below
+        // (TETRIS_SQUARES_SPEC §4: the gold bell when any gold fused, else the silver bell).
+        if (totalGold) SFX.play('fuseGold', 0.7);
+        else if (totalSilver) SFX.play('fuseSilver', 0.6);
         else if (!clear.lines) SFX.play('droplet', 0.3);
 
         const messages = [];
@@ -23716,8 +23759,8 @@ const studyBreak = {
         if (totalSilver) messages.push(totalSilver === 1 ? 'Silver square!' : `${totalSilver} silver squares!`);
         if (clear.lines) {
             messages.push(clear.lines === 4 ? 'TETRIS' : `${clear.lines} line${clear.lines > 1 ? 's' : ''}`);
-            if (clear.goldStrips) messages.push(`gold bonus +${clear.goldStrips * 10}`);
-            if (clear.silverStrips) messages.push(`silver bonus +${clear.silverStrips * 5}`);
+            if (clear.goldStrips) messages.push(clear.goldStrips === 1 ? 'gold line ×1000' : `${clear.goldStrips} gold lines ×1000`);
+            if (clear.silverStrips) messages.push(clear.silverStrips === 1 ? 'silver line ×500' : `${clear.silverStrips} silver lines ×500`);
         }
         if (perfect) messages.push('PERFECT CLEAR +10');
         if (sentGarbage) messages.push(`+${sentGarbage} garbage sent`);
@@ -23728,6 +23771,9 @@ const studyBreak = {
         else if (clear.lines === 3) SFX.play('quack', 0.7);
         else if (clear.lines === 2) SFX.play('sosumi', 0.6);
         else if (clear.lines === 1) SFX.play('boing', 0.5);
+        // A square clear: the line-clear cue above, then (60 ms later, inside the sound) the rising chime.
+        if (clear.goldStrips) SFX.play('squareChimeGold', 0.6);
+        else if (clear.silverStrips) SFX.play('squareChimeSilver', 0.6);
 
         this.active = null;
         this.spawnTimer = this.ENTRY_DELAY + (this.clearFx ? 120 : 0);   // let the clear flash play
@@ -23746,68 +23792,69 @@ const studyBreak = {
         this.updateHud();
     },
 
+    // TETRIS_SQUARES_SPEC §1. A 4x4 region fuses when its 16 cells are exactly four WHOLE pieces
+    // (every cell a locked piece cell with a pieceId; four distinct pieces, each with all four of
+    // its cells inside the region). Fused-square cells and garbage / fragment cells never qualify.
+    // One pass, top row first then left column first: when candidate regions overlap, the
+    // top-left one fuses and the overlapping one no longer qualifies (its cells are now slab).
+    // Material: gold when all four pieces are the same shape, else silver.
     detectSquares() {
         let formedGold = 0;
         let formedSilver = 0;
-        const claimed = new Set();
-        const passes = ['gold', 'silver'];
-
-        for (const material of passes) {
-            for (let y = this.HIDDEN_ROWS; y <= this.TOTAL_ROWS - 4; y++) {
-                for (let x = 0; x <= this.COLS - 4; x++) {
-                    const region = [];
-                    let ok = true;
-                    for (let dy = 0; dy < 4 && ok; dy++) {
-                        for (let dx = 0; dx < 4; dx++) {
-                            const key = `${x + dx},${y + dy}`;
-                            if (claimed.has(key)) { ok = false; break; }
-                            const cell = this.board[y + dy][x + dx];
-                            if (!cell || cell.kind !== 'piece' || cell.pieceId == null) { ok = false; break; }
-                            region.push({ ...cell, x: x + dx, y: y + dy });
-                        }
-                    }
-                    if (!ok) continue;
-
-                    const pieceIds = [...new Set(region.map((cell) => cell.pieceId))];
-                    if (pieceIds.length !== 4) continue;
-                    let wholePieces = true;
-                    for (const pieceId of pieceIds) {
-                        if (region.filter((cell) => cell.pieceId === pieceId).length !== 4) {
-                            wholePieces = false;
-                            break;
-                        }
-                    }
-                    if (!wholePieces) continue;
-
-                    if (material === 'gold') {
-                        const pieceTypes = new Set(region.map((cell) => cell.pieceType));
-                        if (pieceTypes.size !== 1) continue;
-                    }
-
-                    const squareId = this.nextSquareId++;
-                    const color = material === 'gold' ? this.colors.gold : this.colors.silver;
-                    for (const cell of region) {
-                        this.board[cell.y][cell.x] = {
-                            kind: 'square',
-                            pieceId: null,
-                            pieceType: null,
-                            squareId,
-                            material,
-                            color
-                        };
-                        claimed.add(`${cell.x},${cell.y}`);
-                    }
-                    if (material === 'gold') {
-                        formedGold++;
-                        this.goldCount++;
-                    } else {
-                        formedSilver++;
-                        this.silverCount++;
-                    }
+        const fused = [];
+        for (let y = this.HIDDEN_ROWS; y <= this.TOTAL_ROWS - 4; y++) {
+            for (let x = 0; x <= this.COLS - 4; x++) {
+                const region = this._wholePieceRegion(x, y);
+                if (!region) continue;
+                const material = new Set(region.map((cell) => cell.pieceType)).size === 1 ? 'gold' : 'silver';
+                const squareId = this.nextSquareId++;
+                if (!this._slabBornAt) this._slabBornAt = {};
+                this._slabBornAt[squareId] = this.tick || 0;
+                const color = material === 'gold' ? this.colors.gold : this.colors.silver;
+                for (const cell of region) {
+                    this.board[cell.y][cell.x] = {
+                        kind: 'square',
+                        pieceId: null,
+                        pieceType: null,
+                        squareId,
+                        material,
+                        color
+                    };
+                }
+                fused.push(squareId);
+                if (material === 'gold') {
+                    formedGold++;
+                    this.goldCount++;
+                } else {
+                    formedSilver++;
+                    this.silverCount++;
                 }
             }
         }
+        // The fuse flash: 250 ms over each new slab, found by squareId so it follows the slab when a
+        // clear in the same lock moves it (see draw()).
+        if (fused.length) {
+            const live = this.fuseFx && this.fuseFx.timer > 0 ? this.fuseFx.squareIds : [];
+            this.fuseFx = { squareIds: live.concat(fused), timer: 250 };
+        }
         return { gold: formedGold, silver: formedSilver };
+    },
+
+    // The region's 16 cells when they are exactly four whole locked pieces, else null.
+    _wholePieceRegion(x, y) {
+        const region = [];
+        const counts = new Map();
+        for (let dy = 0; dy < 4; dy++) {
+            for (let dx = 0; dx < 4; dx++) {
+                const cell = this.board[y + dy][x + dx];
+                if (!cell || cell.kind !== 'piece' || cell.pieceId == null) return null;
+                region.push({ x: x + dx, y: y + dy, pieceId: cell.pieceId, pieceType: cell.pieceType });
+                counts.set(cell.pieceId, (counts.get(cell.pieceId) || 0) + 1);
+            }
+        }
+        if (counts.size !== 4) return null;
+        for (const n of counts.values()) if (n !== 4) return null;
+        return region;
     },
 
     // ── Square hint: 4x4 regions that are ONE piece drop away from a square ──────────────
@@ -23890,34 +23937,26 @@ const studyBreak = {
         }
         if (!fullRows.length) return { lines: 0, points: 0, goldStrips: 0, silverStrips: 0 };
 
-        let points = fullRows.length + (fullRows.length === 4 ? 1 : 0);
+        // TETRIS_SQUARES_SPEC §1: each cleared row pays by the best slab material in it — plain
+        // line 100, silver line 500, gold line 1000 (lockPiece multiplies by the level). A row that
+        // holds any slab cell is a square clear; goldStrips / silverStrips count gold / silver LINES
+        // (a row through two gold squares is one gold line). The REST of the square stays a square
+        // (a 4x3, then 4x2, then 4x1 remainder — rows only ever leave whole), so every later row
+        // through it pays again. (Squares stopped shattering: teacher decision 2026-09-09.)
+        const LINE_POINTS = { plain: 100, silver: 500, gold: 1000 };
+        let points = 0;
         let goldStrips = 0;
         let silverStrips = 0;
-
-        // A row through a finished square pays the strip bonus (+10 gold / +5 silver). The REST of
-        // the square stays a square (a 4x3, then 4x2, then 4x1 remainder — rows only ever leave whole),
-        // so every later row through it pays again: four singles through a gold square ≈ a tetris.
-        // It used to shatter into dead X fragments, which made squares pay only for Tetris veterans
-        // who could dig a well and clear all four rows at once. (Teacher decision 2026-09-09.)
         for (const y of fullRows) {
-            const groups = {};
+            let material = 'plain';
             for (const cell of this.board[y]) {
-                if (cell && cell.kind === 'square' && cell.squareId != null) {
-                    groups[cell.squareId] = groups[cell.squareId] || { count: 0, material: cell.material };
-                    groups[cell.squareId].count++;
-                }
+                if (!cell || cell.kind !== 'square' || cell.squareId == null) continue;
+                if (cell.material === 'gold') material = 'gold';
+                else if (material === 'plain') material = 'silver';
             }
-            for (const square of Object.values(groups)) {
-                if (square.count === 4) {
-                    if (square.material === 'gold') {
-                        goldStrips++;
-                        points += 10;
-                    } else {
-                        silverStrips++;
-                        points += 5;
-                    }
-                }
-            }
+            points += LINE_POINTS[material];
+            if (material === 'gold') goldStrips++;
+            else if (material === 'silver') silverStrips++;
         }
 
         const survivors = this.board.filter((_, index) => !fullRows.includes(index));
@@ -23975,7 +24014,7 @@ const studyBreak = {
             else prefix = `Game over • Final score ${this.score} • Enter, R, or click to play again`;
         }
         else if (live) prefix = this.flashText || `vs ${opp} • Game ${ms.gameNumber || 1} of 3 • 2→1, 3→2, 4→4 garbage, squares add more • red = incoming`;
-        else prefix = this.flashText || 'Marathon mode • Gold strips are worth +10, silver strips +5';
+        else prefix = this.flashText || 'Marathon mode • A line through gold pays 1000, through silver 500 (× level)';
         if (this._classroomNote) prefix = `${this._classroomNote} • ${prefix}`;
         const legend = live
             ? '←→ move • Z/X rotate • ↓ soft • ↑ firm • Space hard • C/Shift hold • Esc×2 forfeit'
@@ -24050,8 +24089,8 @@ const studyBreak = {
                 '4 WHOLE pieces in 4\u00d74',
                 'same shape = gold',
                 'mixed shapes = silver',
-                'row thru gold +10',
-                'row thru silver +5',
+                'gold line 1000',
+                'silver line 500',
                 'X = broken piece'
             ];
             squareText.forEach((line, idx) => ctx.fillText(line, 18, 208 + idx * 12));
@@ -24081,7 +24120,7 @@ const studyBreak = {
             this._drawSplitGutters(ctx, this, this.hold, this.queue, this.holdLocked);
             const wellBottom = this.BOARD_Y + this.VISIBLE_ROWS * this.CELL;
             ctx.textAlign = 'center';
-            ctx.fillText(`Game ${ms.gameNumber || 1} of 3 \u00b7 you ${ms.myWins || 0}\u2013${ms.oppWins || 0} ${String(ms.opponent || '').slice(0, 10)}${ms.staked ? ' \u00b7 pot 2 \ud83c\udf6c' : ms.stakePending ? ' \u00b7 pot pending' : ' \u00b7 free'}`, this.CANVAS_W / 2, wellBottom + 16);
+            ctx.fillText(`Game ${ms.gameNumber || 1} of 3 \u00b7 you ${ms.myWins || 0}\u2013${ms.oppWins || 0} ${String(ms.opponent || '').slice(0, 10)}${ms.staked ? ' \u00b7 pot 2 \ud83c\udf6c \u00b7 gold \u00d72' : ms.stakePending ? ' \u00b7 pot pending' : ' \u00b7 free'}`, this.CANVAS_W / 2, wellBottom + 16);
             ctx.fillStyle = '#666666';
             ctx.font = '8px Geneva, Arial, sans-serif';
             ctx.fillText('red = incoming garbage \u00b7 clear a line to cancel', this.CANVAS_W / 2, wellBottom + 28);
@@ -24110,15 +24149,18 @@ const studyBreak = {
             this.board = this.clearFx.board;
             this.drawBoardCells();
             this.board = liveBoard;
-            ctx.fillStyle = 'rgba(255,255,255,0.85)';
+            const squareRows = this.clearFx.squareRows || [];
             for (const row of this.clearFx.rows) {
                 if (row < this.HIDDEN_ROWS) continue;
+                // A square clear lights its whole row solid white; a plain clear keeps today's 85%.
+                ctx.fillStyle = squareRows.includes(row) ? '#ffffff' : 'rgba(255,255,255,0.85)';
                 const pos = this.boardToPixel(0, row);
                 ctx.fillRect(pos.x, pos.y, this.COLS * this.CELL, this.CELL);
             }
         } else {
             this.drawBoardCells();
         }
+        if (!reducedMotion && this.fuseFx) this._drawFuseFlash();
         this.drawHints();
 
         if (this.active) {
@@ -24231,7 +24273,7 @@ const studyBreak = {
                 }
             }
         }
-        for (const square of squareGroups.values()) {
+        for (const [squareId, square] of squareGroups) {
             const xs = square.cells.map((cell) => cell.x);
             const ys = square.cells.map((cell) => cell.y);
             const minX = Math.min(...xs);
@@ -24239,7 +24281,7 @@ const studyBreak = {
             const minY = Math.min(...ys);
             const maxY = Math.max(...ys);
             const pos = this.boardToPixel(minX, minY);
-            this.drawSquareBlock(pos.x, pos.y, (maxX - minX + 1) * this.CELL, (maxY - minY + 1) * this.CELL, square.material);
+            this.drawSquareBlock(pos.x, pos.y, (maxX - minX + 1) * this.CELL, (maxY - minY + 1) * this.CELL, square.material, squareId);
         }
     },
 
@@ -24265,29 +24307,84 @@ const studyBreak = {
         }
     },
 
-    drawSquareBlock(x, y, w, h, material) {
+    // The fuse flash (TETRIS_SQUARES_SPEC §1): each just-fused slab glows white, fading over 250 ms.
+    _drawFuseFlash() {
+        const fx = this.fuseFx;
+        if (!fx || !fx.squareIds || !fx.squareIds.length) return;
+        const ids = new Set(fx.squareIds);
         const ctx = this.ctx;
-        const base = material === 'gold' ? this.colors.gold : this.colors.silver;
-        const hi = material === 'gold' ? '#f3e1a1' : '#ffffff';
-        const lo = material === 'gold' ? '#a47e21' : '#a0a0a0';
+        ctx.fillStyle = `rgba(255,255,255,${(0.9 * Math.max(0, fx.timer) / 250).toFixed(3)})`;
+        for (let y = this.HIDDEN_ROWS; y < this.TOTAL_ROWS; y++) {
+            for (let x = 0; x < this.COLS; x++) {
+                const cell = this.board[y][x];
+                if (!cell || cell.kind !== 'square' || !ids.has(cell.squareId)) continue;
+                const pos = this.boardToPixel(x, y);
+                ctx.fillRect(pos.x, pos.y, this.CELL, this.CELL);
+            }
+        }
+    },
+
+    // TETRIS_SQUARES_SPEC §1 Visual, metallic (teacher 2026-10-10: "gold shouldn't just be yellow and
+    // silver grey — it needs metallic sheen"). One block per slab, clipped to the slab's CURRENT
+    // bounding rows (a slab cut by a clear keeps the effect on what is left):
+    //   (a) a vertical five-stop base gradient,
+    //   (b) a soft-edged diagonal specular band (~18% of the slab width) that sweeps once over
+    //       1.2 s at fuse, then drifts across once every 6 s — its phase comes from the game's own
+    //       fixed-step tick (this.tick, 16.67 ms), never the wall clock, so every client and both
+    //       skins draw the same frame,
+    //   (c) a 1 px darker outer bevel and a 1 px light bevel on the top / left inner edge,
+    //   (d) a faint brushed texture: four thin horizontal lines at 8% alpha.
+    // Cost per slab per frame: one gradient fill, one band fill, a few 1 px lines.
+    METAL: {
+        gold:   { stops: ['#7A4F00', '#F2C14E', '#FFF1B0', '#D9A62E', '#6E4400'], spec: '255,246,213', specAlpha: 0.6,  dark: '#4A3000', light: '#FFF1B0' },
+        silver: { stops: ['#4A4F57', '#C9D1D9', '#F4F7FA', '#AEB6C0', '#3E434A'], spec: '255,255,255', specAlpha: 0.55, dark: '#2A2E34', light: '#F4F7FA' }
+    },
+    SWEEP_TICKS: 72,     // the first pass at fuse: 1.2 s of 16.67 ms ticks
+    DRIFT_TICKS: 360,    // then one pass every 6 s
+
+    // 0..1 position of a slab's highlight band, from the game tick and the tick the slab fused at.
+    _slabSweepPhase(squareId) {
+        const born = (this._slabBornAt && this._slabBornAt[squareId] != null) ? this._slabBornAt[squareId] : 0;
+        const age = Math.max(0, (this.tick || 0) - born);
+        if (age < this.SWEEP_TICKS) return age / this.SWEEP_TICKS;
+        return ((age - this.SWEEP_TICKS) % this.DRIFT_TICKS) / this.DRIFT_TICKS;
+    },
+
+    drawSquareBlock(x, y, w, h, material, squareId) {
+        const ctx = this.ctx;
+        const metal = material === 'gold' ? this.METAL.gold : this.METAL.silver;
+        // (a) base gradient, top to bottom of the slab as it stands now.
+        const base = ctx.createLinearGradient(x, y, x, y + h);
+        metal.stops.forEach((color, i) => base.addColorStop(i / (metal.stops.length - 1), color));
         ctx.fillStyle = base;
         ctx.fillRect(x, y, w, h);
-        ctx.strokeStyle = '#000000';
+        // (d) brushed texture.
+        ctx.fillStyle = 'rgba(255,255,255,0.08)';
+        for (let i = 1; i <= 4; i++) ctx.fillRect(x + 1, y + Math.round((h * i) / 5), w - 2, 1);
+        // (b) the specular band: a gradient across the 45° diagonal (isolines x + y = const), soft
+        // at both edges, positioned by the tick phase; one fill clipped to the slab.
+        const band = w * 0.18;
+        const s0 = (x + y - band) + this._slabSweepPhase(squareId) * (w + h + band);
+        const spec = ctx.createLinearGradient(s0 - y, y, s0 - y + band / 2, y + band / 2);
+        spec.addColorStop(0, `rgba(${metal.spec},0)`);
+        spec.addColorStop(0.5, `rgba(${metal.spec},${metal.specAlpha})`);
+        spec.addColorStop(1, `rgba(${metal.spec},0)`);
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(x, y, w, h);
+        ctx.clip();
+        ctx.fillStyle = spec;
+        ctx.fillRect(x, y, w, h);
+        ctx.restore();
+        // (c) bevels: darker 1 px outer edge, light 1 px top/left inner edge.
+        ctx.strokeStyle = metal.dark;
         ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
-        ctx.strokeStyle = hi;
+        ctx.strokeStyle = metal.light;
         ctx.beginPath();
         ctx.moveTo(x + 1.5, y + h - 1.5);
         ctx.lineTo(x + 1.5, y + 1.5);
         ctx.lineTo(x + w - 1.5, y + 1.5);
         ctx.stroke();
-        ctx.strokeStyle = lo;
-        ctx.beginPath();
-        ctx.moveTo(x + w - 1.5, y + 1.5);
-        ctx.lineTo(x + w - 1.5, y + h - 1.5);
-        ctx.lineTo(x + 1.5, y + h - 1.5);
-        ctx.stroke();
-        ctx.strokeStyle = material === 'gold' ? '#6f5512' : '#8a8a8a';
-        ctx.strokeRect(x + 4.5, y + 4.5, w - 9, h - 9);
     },
 
     drawPiece(piece, drawY = piece.y, ghost = false) {
@@ -24467,6 +24564,8 @@ const studyBreak = {
                 title = won ? 'YOU WIN!' : 'YOU LOSE';
                 if (ms.candyOutcome === '+1') statusLine = '🍬 +1 candy to your wallet!';
                 else if (ms.candyOutcome === '-1') statusLine = '🍬 −1 candy (you lost the bet)';
+                else if (ms.candyOutcome === '+2') statusLine = '🍬 +2 candy — gold premium!';
+                else if (ms.candyOutcome === '-2') statusLine = '🍬 −2 candy (lost the bet + gold premium)';
                 else if (ms.candyOutcome === 'refunded') statusLine = 'bet refunded — no agreement';
                 else if (ms.candyOutcome === 'pending') statusLine = 'settling the bet…';
                 else if (ms.candyOutcome === 'none') statusLine = 'no bet to settle — no candy moved';
@@ -24496,7 +24595,7 @@ const studyBreak = {
         if (ms) {
             ctx.fillStyle = '#333333'; ctx.font = '9px Geneva, Arial, sans-serif';
             ctx.fillText(seriesLine, x + w / 2, y + 48);
-            ctx.fillStyle = ms.candyOutcome === '+1' ? '#0a6b2e' : (ms.candyOutcome === '-1' ? '#b00000' : '#000000');
+            ctx.fillStyle = (ms.candyOutcome === '+1' || ms.candyOutcome === '+2') ? '#0a6b2e' : ((ms.candyOutcome === '-1' || ms.candyOutcome === '-2') ? '#b00000' : '#000000');
             ctx.font = '10px Chicago, Arial, sans-serif';
             ctx.fillText(statusLine, x + w / 2, y + 68);
             ctx.fillStyle = '#666666'; ctx.font = '9px Geneva, Arial, sans-serif';
@@ -26259,7 +26358,7 @@ const DogePresence = {
     _challengeTitleBefore: null,
 
     onChallengeReceived(from) {
-        MacSFX.play('sosumi', 0.5);
+        MacSFX.play('sosumi', 0.5, { priority: true });   // the challenge alert ducks the rest (SFX_SPEC §2)
         const el = document.getElementById('doge-presence');
         el.classList.add('doge-wiggle');
         el.classList.remove('doge-dim');
@@ -27725,7 +27824,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-10-10-esmf';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-10-10-cy35';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

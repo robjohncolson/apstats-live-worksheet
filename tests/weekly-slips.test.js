@@ -298,8 +298,8 @@ describe('current quarter selection (2026-09-26 fix)', () => {
 });
 
 describe('effort lines under the header (EFFORT_VISIBILITY_SPEC §2)', () => {
-  // Today Sun 9/27: the Unit 1 PC (paper) is on file but counts from Period B's Day 2, Tue 10/13
-  // (data/lesson-schedule.json), and 1.6 is scored ahead of its Mon 10/5 class day.
+  // Today Sun 9/27: the Unit 1 PC (paper) is on file but counts from Period B's Day 2, Thu 10/15
+  // (data/lesson-schedule.json; Day 1 is Tue 10/13), and 1.6 is scored ahead of its Mon 10/5 class day.
   const lessons = [
     { lessonKey: '1.2', due: { B: '2026-09-09' }, zeroDate: { B: '2026-09-22' }, lessonGradeNoQuiz: 70 },
     { lessonKey: '1.6', due: { B: '2026-10-05' }, zeroDate: { B: '2026-10-18' }, lessonGradeNoQuiz: 100, Q: 67 },
@@ -310,12 +310,12 @@ describe('effort lines under the header (EFFORT_VISIBILITY_SPEC §2)', () => {
   it('a PC on file and one early-scored lesson render both lines, between the header and Missing work', async () => {
     const { renderTex, effortLines } = await import('../scripts/weekly-slips.mjs');
     expect(effortLines(kid, 'PeriodB', '2026-09-27', 'Q1')).toEqual({
-      pc: 'Progress Check so far: 67% (paper) — counts from Tue 10/13. To finish the quarter with your 67%, your Work average has to reach 40% — you are at 31%, so bring it up by at least 9 points. Once both tracks are at least 40%, your grade is the higher one, and yours would be the Progress Check.',
+      pc: 'Progress Check so far: 67% (paper) — counts from Thu 10/15. To finish the quarter with your 67%, your Work average has to reach 40% — you are at 31%, so bring it up by at least 9 points. Once both tracks are at least 40%, your grade is the higher one, and yours would be the Progress Check.',
       ahead: 'Ahead of the calendar: 1 lesson already done (1.6). It already counts in your Desk grade; Schoology catches up when its column opens.',
     });
     const tex = renderTex([kid], [kid], 'PeriodB', '2026-09-27', 'Q1');
     expect(tex).toContain('\\definecolor{deskgreen}{HTML}{2A8A2A}');
-    expect(tex).toContain('{\\small Progress Check so far: 67\\% (paper) --- counts from Tue 10/13. To finish the quarter with your 67\\%, your Work average has to reach 40\\%');
+    expect(tex).toContain('{\\small Progress Check so far: 67\\% (paper) --- counts from Thu 10/15. To finish the quarter with your 67\\%, your Work average has to reach 40\\%');
     expect(tex).toContain('{\\small\\textcolor{deskgreen}{\\rule{5pt}{5pt}}\\hspace{4pt}Ahead of the calendar: 1 lesson already done (1.6).');
     const at = ['Q1 so far: 45\\%.', 'Progress Check so far', 'Ahead of the calendar', 'Missing work'].map(text => tex.indexOf(text));
     expect(at.every((value, index) => value > 0 && (index === 0 || value > at[index - 1]))).toBe(true);
@@ -366,16 +366,16 @@ describe('effort lines under the header (EFFORT_VISIBILITY_SPEC §2)', () => {
   it('the PC line carries no strategy below 40%, and says "counting" once Day 2 has come', async () => {
     const { effortLines } = await import('../scripts/weekly-slips.mjs');
     const low = { ...kid, units: { U1: { pcRawPct: 35 } } };
-    expect(effortLines(low, 'PeriodB', '2026-09-27', 'Q1').pc).toBe('Progress Check so far: 35% (paper) — counts from Tue 10/13.');
+    expect(effortLines(low, 'PeriodB', '2026-09-27', 'Q1').pc).toBe('Progress Check so far: 35% (paper) — counts from Thu 10/15.');
     // Counting: the engine's pcAvg is the track, not the unit score.
     const counting = { ...kid, quarters: { Q1: { ...kid.quarters.Q1, pcAvg: 66.7 } } };
-    expect(effortLines(counting, 'PeriodB', '2026-10-13', 'Q1').pc).toMatch(/^Progress Check so far: 67% \(paper\) — counting in your grade now\. To keep your 67%, your Work average has to reach 40% /);
-    expect(effortLines({ ...kid, quarters: { Q1: { ...kid.quarters.Q1, pcAvg: 30 } } }, 'PeriodB', '2026-10-13', 'Q1').pc)
+    expect(effortLines(counting, 'PeriodB', '2026-10-15', 'Q1').pc).toMatch(/^Progress Check so far: 67% \(paper\) — counting in your grade now\. To keep your 67%, your Work average has to reach 40% /);
+    expect(effortLines({ ...kid, quarters: { Q1: { ...kid.quarters.Q1, pcAvg: 30 } } }, 'PeriodB', '2026-10-15', 'Q1').pc)
       .toBe('Progress Check so far: 67% (paper) — counting in your grade now.');
     // the gate reads the unrounded Work average
     const edge = { ...kid, units: { U1: { pcRawPct: 100 } }, quarters: { Q1: { ...kid.quarters.Q1, workAvg: 39.96, pcAvg: 100 } } };
-    expect(effortLines(edge, 'PeriodB', '2026-10-13', 'Q1').pc).toContain('you are at 39.9%, so bring it up by at least 1 point.');
-    expect(effortLines(kid, 'PeriodE', '2026-09-27', 'Q1').pc).toContain('counts from Fri 10/16');
+    expect(effortLines(edge, 'PeriodB', '2026-10-15', 'Q1').pc).toContain('you are at 39.9%, so bring it up by at least 1 point.');
+    expect(effortLines(kid, 'PeriodE', '2026-09-27', 'Q1').pc).toContain('counts from Mon 10/19');
   });
 
   it('the footer says how the grade is counted (teacher 2026-09-27)', async () => {

@@ -2952,10 +2952,10 @@
 <script src="js/ced2026-crosswalk.js"></script>
 <script src="js/ced2026-labels.js"></script>
 <script src="lib/qrcode.min.js"></script>
-<script src="canvas_engine.js?v=2026-10-10-jxim"></script>
-<script src="sprite_sheet.js?v=2026-10-10-jxim"></script>
-<script src="classroom-board.js?v=2026-10-10-jxim"></script>
-<script src="pico-home.js?v=2026-10-10-jxim"></script>
+<script src="canvas_engine.js?v=2026-10-10-cy35"></script>
+<script src="sprite_sheet.js?v=2026-10-10-cy35"></script>
+<script src="classroom-board.js?v=2026-10-10-cy35"></script>
+<script src="pico-home.js?v=2026-10-10-cy35"></script>
 <script src="ti84-plot.js"></script>
 <script src="activity-bridge.js"></script>
 <script src="activity-colorbox.js"></script>
@@ -10475,11 +10475,19 @@ function injectPcPosterEvents(pacing){
     // five trio posters + gallery walk) was given a second day on 2026-10-07 so
     // the PC never lands on a half-finished poster; a unit missing here is 1 day.
     const POSTER_DAYS={1:2};
+    // Units that get poster days at all (POSTER_BONUS_SPEC.md section 4, 2026-10-10).
+    // One poster per quarter, and posters are banked bonus. Unit 1 is Q1's. The
+    // teacher picks each later quarter's unit from the misconception tracker, so
+    // no future poster is pre-scheduled: add the unit here and regenerate
+    // (scripts/build-lesson-schedule-sy2627.mjs) to schedule one.
+    const POSTER_UNITS=new Set([1]);
     const out=[];
     let prevU=0;
     function appendPcPosterFor(u){
-        out.push({t:'U'+u+'-Poster',n:'Unit '+u+' Poster',u:u,kind:'poster'});
-        if((POSTER_DAYS[u]||1)>=2)out.push({t:'U'+u+'-Poster2',n:'Unit '+u+' Poster (Day 2)',u:u,kind:'poster',admin:2});
+        if(POSTER_UNITS.has(u)){
+            out.push({t:'U'+u+'-Poster',n:'Unit '+u+' Poster',u:u,kind:'poster'});
+            if((POSTER_DAYS[u]||1)>=2)out.push({t:'U'+u+'-Poster2',n:'Unit '+u+' Poster (Day 2)',u:u,kind:'poster',admin:2});
+        }
         out.push({t:'U'+u+'-PC1',n:'Unit '+u+' Progress Check (Day 1)',u:u,kind:'pc',admin:1});
         out.push({t:'U'+u+'-PC2',n:'Unit '+u+' Progress Check (Day 2)',u:u,kind:'pc',admin:2});
     }
@@ -27816,7 +27824,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-10-10-jxim';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-10-10-cy35';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

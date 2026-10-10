@@ -113,7 +113,7 @@
       "enabled": false
     }
   },
-  "artHash": "62fefd211c28e57e2a823fc24388d6f6131a85b34ae885db286716daecc23072",
+  "artHash": "4a285167fc68eb48d0facab9b4e67c8eee589aef6d5f69c84a9769519e7088df",
   "grade": {
     "units": {},
     "quarters": {
@@ -186,7 +186,7 @@
         "ceiling": null,
         "lessonsDue": 0,
         "lessonsGraded": 0,
-        "lessonsTotal": 27,
+        "lessonsTotal": 28,
         "pcAvg": null,
         "workAvg": null,
         "pcAvgRaw": null,
@@ -227,7 +227,7 @@
         "ceiling": null,
         "lessonsDue": 0,
         "lessonsGraded": 0,
-        "lessonsTotal": 16,
+        "lessonsTotal": 15,
         "pcAvg": null,
         "workAvg": null,
         "pcAvgRaw": null,

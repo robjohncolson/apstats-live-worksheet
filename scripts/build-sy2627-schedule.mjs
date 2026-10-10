@@ -20,6 +20,15 @@
 //
 // Run: node scripts/build-sy2627-schedule.mjs
 //
+// Poster mirror only (SAFE; the estimator does not run, lesson-schedule.json is
+// read, never written):
+//   node scripts/build-sy2627-schedule.mjs --mirror-posters
+// Copies the real generator's sparse `posters` map (one poster per quarter,
+// Desk POSTER_UNITS) into roadmap-data.json and DELETES roadmap poster entries
+// for units that no longer have a poster, so the baked file never advertises a
+// poster date the calendar does not have. Run it after
+// scripts/build-lesson-schedule-sy2627.mjs.
+//
 // Algorithm (BUILD doc Section 4):
 //   1. School-day test: Mon-Fri and not a closure (UTC date methods).
 //   2. For each quarter, schoolDays(Q) = ordered school days in the window.
@@ -41,6 +50,7 @@ import path from 'path';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SCHEDULE_PATH = path.join(__dirname, '../roster-server/data/lesson-schedule.json');
 const ROADMAP_PATH = path.join(__dirname, '../roadmap-data.json');
+const MIRROR_POSTERS_ONLY = process.argv.includes('--mirror-posters');
 
 // ── Calendar constants ────────────────────────────────────────────────────────
 
@@ -137,6 +147,7 @@ function main() {
   const doc = JSON.parse(raw);
   const lessons = doc.lessons;
   const pcMap = doc.progressChecks || {};
+  // Sparse since POSTER_BONUS_SPEC.md section 4: only poster units present.
   const posterMap = doc.posters || {};
 
   // ── PACK-LEFT ALGORITHM (Grading Model v3, s121 refinement) ────────────────
@@ -271,19 +282,55 @@ function main() {
       roadmapDirty = true;
     }
   }
-  if (roadmap.posters) {
-    for (const u of Object.keys(posterMap)) {
-      if (!roadmap.posters[u]) continue;
-      roadmap.posters[u].periods = posterMap[u].periods;
-      roadmapDirty = true;
-    }
-  }
+  if (mirrorPosters(roadmap, posterMap)) roadmapDirty = true;
 
-  if (roadmapDirty) {
-    const roadmapOut = JSON.stringify(roadmap, null, 2) + '\n';
-    writeFileSync(ROADMAP_PATH, roadmapOut.replace(/\r\n/g, '\n'), 'utf8');
-    console.log(`Mirrored PC + Poster dates to ${ROADMAP_PATH}`);
-  }
+  if (roadmapDirty) writeRoadmap(roadmap, 'PC + Poster dates');
 }
 
-main();
+// Mirror the sparse poster map into roadmap.posters: delete units no longer
+// scheduled, update units still scheduled, and ADD units scheduled later (the
+// quarter poster is picked after the fact, so a unit can appear in the schedule
+// that the roadmap has never seen). Returns true when anything changed.
+function mirrorPosters(roadmap, posterMap) {
+  if (!roadmap.posters) roadmap.posters = {};
+  let dirty = false;
+  for (const u of Object.keys(roadmap.posters)) {
+    if (posterMap[u]) continue;
+    delete roadmap.posters[u];
+    console.log(`Removed roadmap-data.json poster U${u} (no poster scheduled)`);
+    dirty = true;
+  }
+  for (const u of Object.keys(posterMap)) {
+    const scheduled = posterMap[u];
+    const existing = roadmap.posters[u];
+    if (existing && JSON.stringify(existing.periods) === JSON.stringify(scheduled.periods)) continue;
+    roadmap.posters[u] = existing
+      ? { ...existing, periods: scheduled.periods }
+      : { unit: Number(u), title: scheduled.title || `Unit ${u} Poster`, kind: 'poster', periods: scheduled.periods };
+    if (!existing) console.log(`Added roadmap-data.json poster U${u}`);
+    dirty = true;
+  }
+  return dirty;
+}
+
+function writeRoadmap(roadmap, what) {
+  const roadmapOut = JSON.stringify(roadmap, null, 2) + '\n';
+  writeFileSync(ROADMAP_PATH, roadmapOut.replace(/\r\n/g, '\n'), 'utf8');
+  console.log(`Mirrored ${what} to ${ROADMAP_PATH}`);
+}
+
+// --mirror-posters: no estimator, no lesson-schedule.json write.
+function mirrorPostersOnly() {
+  const doc = JSON.parse(readFileSync(SCHEDULE_PATH, 'utf8'));
+  const roadmap = JSON.parse(readFileSync(ROADMAP_PATH, 'utf8'));
+  const posterMap = doc.posters || {};
+  console.log(`Scheduled poster units: ${Object.keys(posterMap).join(', ') || '(none)'}`);
+  if (!mirrorPosters(roadmap, posterMap)) {
+    console.log('roadmap-data.json posters already match');
+    return;
+  }
+  writeRoadmap(roadmap, 'poster dates');
+}
+
+if (MIRROR_POSTERS_ONLY) mirrorPostersOnly();
+else main();

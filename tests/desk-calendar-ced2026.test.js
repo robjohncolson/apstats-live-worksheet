@@ -13,8 +13,8 @@ const schedulePaths = [
   'data/lesson-schedule.json',
   'roster-server/data/lesson-schedule.json'
 ];
-// Date-column fixture after B_WORK_DAYS_SPEC.md + the 2026-09-18 B Break Day + the two-day Unit 1 Poster (2026-10-07, POSTER_DAYS); CED labels keep grade identities.
-const scheduleSha256 = 'ffdc26a1d36b0f8090deac073ba1860a45856fcafbc3cbf2a70f7694c9a7df0a';
+// Date-column fixture after B_WORK_DAYS_SPEC.md + the 2026-09-18 B Break Day + the two-day Unit 1 Poster (2026-10-07, POSTER_DAYS) + only Unit 1 keeps a poster (2026-10-10, POSTER_UNITS); CED labels keep grade identities.
+const scheduleSha256 = '5b360bb0537b626f1af704f0bff62bfd5000ed39382d7ad84d0024de910c850f';
 function bColumn(bytes) {
   return bytes.toString('utf8').split(/\r?\n/).filter(line => /^\s*"B":/.test(line) && !/^\s*"B": \[\]/.test(line)).join('\n');
 }
@@ -295,8 +295,10 @@ describe('student calendar CED labels', () => {
       const visible = collectCalendar(win);
       for (let unit = 1; unit <= 5; unit += 1) {
         expect(visible.get('U' + unit + '-PC1').text).toContain('U' + unit + ' PC 1/2');
-        expect(visible.get('U' + unit + '-Poster').text).toContain('U' + unit + ' Poster');
       }
+      // One poster per quarter (POSTER_UNITS): only Unit 1 is scheduled today.
+      expect(visible.get('U1-Poster').text).toContain('U1 Poster');
+      for (let unit = 2; unit <= 5; unit += 1) expect(visible.has('U' + unit + '-Poster')).toBe(false);
       expect([...visible.values()].some(cell => /Unit [6-9]|U[6-9]\b/.test(cell.text))).toBe(false);
       const baked = declarationSource('BAKED_REGISTRY', '{', '}');
       expect(baked).not.toMatch(/"progressChecks"\s*:|"posters"\s*:/);

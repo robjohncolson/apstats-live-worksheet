@@ -400,13 +400,17 @@ describe('lesson-schedule.json — SY26-27 date sanity', () => {
 
   it('progress checks + posters are keyed by the NEW CED unit (1-5) with per-period dates', () => {
     expect(Object.keys(doc.progressChecks)).toEqual(['1', '2', '3', '4', '5']);
-    expect(Object.keys(doc.posters)).toEqual(['1', '2', '3', '4', '5']);
+    // Posters are sparse: one per quarter, unit chosen later (POSTER_BONUS_SPEC.md section 4).
+    expect(Object.keys(doc.posters)).toEqual(['1']);
     for (const u of ['1', '2', '3', '4', '5']) {
       const pc = doc.progressChecks[u];
       expect(pc.periods.B < pc.adminDay2.B, `U${u} PC B day1 < day2`).toBe(true);
       expect(pc.periods.E < pc.adminDay2.E, `U${u} PC E day1 < day2`).toBe(true);
-      expect(doc.posters[u].periods.B < pc.periods.B, `U${u} poster before PC (B)`).toBe(true);
       expect(pc.adminDay2.E < doc.calendar.examDate).toBe(true);
+      const poster = doc.posters[u];
+      if (!poster) continue;
+      expect(poster.periods.B < pc.periods.B, `U${u} poster before PC (B)`).toBe(true);
+      expect(poster.periods.E < pc.periods.E, `U${u} poster before PC (E)`).toBe(true);
     }
   });
 });
