@@ -1517,6 +1517,10 @@
     var muted = false;
     try { muted = Boolean(MacSFX && MacSFX.muted); } catch (_) { muted = false; }
     items.push({ label: 'SOUND: ' + (muted ? 'OFF' : 'ON'), keepOpen: true, run: function () { callDesk('_toggleSound'); } });
+    // The per-device quieter level (SFX_SPEC §1), the Desk's Sound → Quieter.
+    var quiet = false;
+    try { quiet = Boolean(window.sfx && window.sfx.getLevel() === 'quiet'); } catch (_) { quiet = false; }
+    items.push({ label: 'QUIETER: ' + (quiet ? 'ON' : 'OFF'), keepOpen: true, run: function () { callDesk('_toggleSfxQuiet'); } });
     items.push({ label: 'MESSAGE TEACHER', badge: badgeCount('menu-message-teacher-badge'), run: function () { callDesk('_openStudentDmModal'); } });
     items.push({ label: 'HOW GRADES WORK', run: function () { callDesk('openGradeHelp'); } });
     items.push({ label: 'START HERE', run: function () { window.open('start-here.html', '_blank', 'noopener'); } });

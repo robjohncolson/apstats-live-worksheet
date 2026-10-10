@@ -3,7 +3,7 @@
  * tests/study-break-squares.test.js — TETRIS_SQUARES_SPEC (teacher 2026-10-10): gold and silver
  * squares in Study Break. Runs the REAL studyBreak and SFX object literals from the Desk in jsdom
  * (as tests/study-break-smoke.test.js does), with a recording 2D context and a recording
- * AudioContext.
+ * AudioContext injected into the shared engine (lib/sfx.js, SFX_SPEC.md).
  *   §1 detection (exactly four whole pieces; negatives: five pieces, a straddling piece, garbage,
  *      already-fused cells; overlap → top-left first), gold vs silver, clear scoring 100/500/1000
  *      × level, gravity after a partial slab clear, the fuse flash, determinism of a seeded run;
@@ -19,6 +19,7 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const html = fs.readFileSync(path.join(__dirname, '..', 'ap_stats_roadmap_square_mode.html'), 'utf8');
+const sfxLib = fs.readFileSync(path.join(__dirname, '..', 'lib', 'sfx.js'), 'utf8');
 
 // A 2D context that records every call (method name + args) and every gradient's colour stops.
 function makeCtx(log) {
@@ -111,6 +112,7 @@ beforeAll(() => {
   window.cancelAnimationFrame = () => {};
   globalThis.MacSFX = { muted: false, init() {}, play() {} };
   globalThis._deskEsc = (s) => String(s == null ? '' : s);
+  globalThis.eval(sfxLib);                                   // window.sfx, the shared engine
   globalThis.eval(sfxSrc);
   SFXobj = window.__SFX;
   globalThis.SFX = SFXobj;
@@ -123,7 +125,7 @@ afterAll(() => { vi.useRealTimers(); });
 const originals = {};
 beforeEach(() => {
   for (const [name, fn] of Object.entries(originals)) sb[name] = fn;   // undo any per-test stub
-  SFXobj.ctx = makeAudio().ctx;                                       // jsdom has no Web Audio
+  window.sfx._test.useContext(makeAudio().ctx);                       // jsdom has no Web Audio
   sb.init();
   sb.mode = 'solo';
   sb.mpState = null;
@@ -509,7 +511,8 @@ describe('§4 sounds', () => {
   let audio;
   beforeEach(() => {
     audio = makeAudio();
-    SFXobj.ctx = audio.ctx;
+    window.sfx._test.useContext(audio.ctx);
+    audio.nodes.length = 0;   // only the nodes a play creates (not the engine's buses)
     SFXobj.muted = false;
     globalThis.MacSFX.muted = false;
   });

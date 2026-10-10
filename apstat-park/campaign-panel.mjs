@@ -3,7 +3,7 @@ const { CAMPAIGN } = await import('./campaign-catalog.mjs' + V);
 const { createCampaignReplay } = await import('./campaign-replay.mjs' + V);
 const { createStageClear } = await import('./stage-clear.mjs' + V);
 const { createSceneDissolve } = await import('./scene-transition.mjs' + V);
-const { createPicoAudio } = await import('./pico-audio.mjs' + V);
+const { createPicoAudio, placeSound } = await import('./pico-audio.mjs' + V);
 const { pixelText } = await import('./pixel-text.mjs' + V);
 const { catBodyForHue, rgbHex } = await import('./pico-rules.mjs' + V);
 const { createStageSelect, stageStates, choiceFor, startCursor, stageAt, moveCursor, describe, onBuyButton, keyShopView } = await import('./campaign-select.mjs' + V);
@@ -319,6 +319,15 @@ export function mountCampaign({ container, getSocket, board, onClose, keyShop = 
     ctx.filter = 'none'; clear.render(ctx, frame); ctx.restore();
     dissolve.render(ctx);
   }
+  // A teammate's jump / key / fall sounds from their cat's place on screen, relative to ours
+  // (SFX_SPEC §2: panned, quieter with distance). Unknown player: no placement (centre).
+  function heardFrom(playerIndex) {
+    if (playerIndex == null || !game || !state) return undefined;
+    const cats = game.getView?.().screenPlayers || [];
+    const them = cats[playerIndex], me = cats[playerSlot(state)];
+    if (!them || !me) return undefined;
+    return placeSound({ x: them.x, y: them.feet }, { x: me.x, y: me.feet }, viewW() / 2);
+  }
   function dispose() {
     if (disposed) return; disposed = true; send('campaign_leave');
     clearInterval(timer); clearTimeout(hiddenTimer); game?.dispose(); audio.dispose();
@@ -338,7 +347,7 @@ export function mountCampaign({ container, getSocket, board, onClose, keyShop = 
   const timer = setInterval(pump, 16); pump();
   import('./campaign-engine.mjs' + V).then(module => module.createCampaignEngine({ onEvent(event) {
     if (!game || replay.received - replay.frame > 120 || event.type === 'clear') return;
-    audio.play(({ get: 'key', coin: 'key', dead: 'dead', hit: 'dead' })[event.type] || event.type);
+    audio.play(({ get: 'key', coin: 'key', dead: 'dead', hit: 'dead' })[event.type] || event.type, heardFrom(event.playerIndex));
   } })).then(next => {
     if (disposed) { next.dispose(); return; }
     game = next; if (loadingState) { const packet = loadingState; loadingState = null; start(packet); }

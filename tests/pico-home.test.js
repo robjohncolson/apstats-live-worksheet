@@ -133,7 +133,7 @@ function createDesk({ flag = 'url', signedIn = true, teacher = false, marks = {}
   win.MacSFX = { muted: false };
 
   const spies = {};
-  ['maybeBumpThenOpen', 'openWallet', 'openSignInModal', 'signOutStudent', 'changeMyPassword', '_toggleSound',
+  ['maybeBumpThenOpen', 'openWallet', 'openSignInModal', 'signOutStudent', 'changeMyPassword', '_toggleSound', '_toggleSfxQuiet',
     'setP', '_openStudentDmModal', 'openGradeHelp', 'openTeacherTools', 'openTeacherInbox', 'openApp',
     '_togglePreviewAsStudent', 'restoreWindow', 'closeCalendar', '_focusTodayLessonVideo', '_menuShowDoNow',
     'openDayGrade', '_openBaselineInfo', 'openBulletin', 'openReview', 'paintLocalDoneCells',
@@ -442,7 +442,7 @@ describe('pico-home -- the sign mirrors the Do Now', () => {
 
 describe('pico-home -- navigation and OPTION', () => {
   // Teacher 2026-10-06: students never see a period switch (a B student sees only B's schedule).
-  const STUDENT_ITEMS = ['SIGN OUT', 'CHANGE PASSWORD', 'SOUND: ON', 'MESSAGE TEACHER',
+  const STUDENT_ITEMS = ['SIGN OUT', 'CHANGE PASSWORD', 'SOUND: ON', 'QUIETER: OFF', 'MESSAGE TEACHER',
     'HOW GRADES WORK', 'START HERE', 'USE ORIGINAL DESK'];
 
   function optionLabels(doc) {
@@ -592,6 +592,7 @@ describe('pico-home -- navigation and OPTION', () => {
     run('SIGN OUT'); expect(spies.signOutStudent).toHaveBeenCalled();
     run('CHANGE PASSWORD'); expect(spies.changeMyPassword).toHaveBeenCalled();
     run('SOUND: ON'); expect(spies._toggleSound).toHaveBeenCalled();
+    run('QUIETER: OFF'); expect(spies._toggleSfxQuiet).toHaveBeenCalled();
     run('MESSAGE TEACHER'); expect(spies._openStudentDmModal).toHaveBeenCalled();
     run('HOW GRADES WORK'); expect(spies.openGradeHelp).toHaveBeenCalled();
   });

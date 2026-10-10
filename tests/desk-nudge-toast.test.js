@@ -86,7 +86,7 @@ describe('nudge toast -- structure (T2 stacked)', () => {
   });
 
   it('_playNudgeChime, _showNudgeToast, _hideNudgeToast, _sendNudgeReply functions exist', () => {
-    expect(fnBody(html, '_playNudgeChime')).toMatch(/AudioContext|webkitAudioContext/);
+    expect(fnBody(html, '_playNudgeChime')).toMatch(/window\.sfx\.play\('mac:nudgeChime'\)/);   // SFX_SPEC: the shared engine
     expect(fnBody(html, '_showNudgeToast')).toMatch(/_activeNudges/);
     expect(fnBody(html, '_hideNudgeToast')).toMatch(/_hideNudgeToastById/);
     expect(fnBody(html, '_sendNudgeReply')).toMatch(/oldestId/);

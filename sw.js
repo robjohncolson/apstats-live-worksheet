@@ -13,7 +13,7 @@
 // is just `self.addEventListener('install',()=>self.skipWaiting()); self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.map(x=>caches.delete(x)))).then(()=>self.clients.claim())));`
 // to unregister-by-emptying (clears caches; pages fall back to plain network).
 
-const BUILD = '2026-10-10-o2sr'; // scripts/bump-build.mjs replaces this stamp
+const BUILD = '2026-10-10-e9jy'; // scripts/bump-build.mjs replaces this stamp
 const CACHE = 'apstats-pwa-' + BUILD;
 
 const CORE = [
@@ -22,7 +22,7 @@ const CORE = [
   'roster-client.js', 'roster_config.js', 'railway_client.js', 'railway_config.js',
   'roadmap-data.json', 'manifest.webmanifest', 'icon.svg', 'pwa-register.js',
   'flashcards.js', 'lib/flashcard-srs.js', 'lib/flashcard-store.js', 'lib/class-snapshot.js',
-  'lib/effort-facts.js', 'lib/flashcard-flags.js', 'lib/flashcard-sync.js', 'mobile-home.html',
+  'lib/effort-facts.js', 'lib/flashcard-flags.js', 'lib/flashcard-sync.js', 'lib/sfx.js', 'mobile-home.html',
   'data/blooket-difficulty.json', 'data/blooket-topic-csv.json',
   'data/flashcard-flags.json',
   'js/ced2026-crosswalk.js', 'js/ced2026-labels.js',

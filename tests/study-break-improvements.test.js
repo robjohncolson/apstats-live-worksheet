@@ -357,7 +357,7 @@ describe('Desk-side guards + a11y + sound (source pins)', () => {
     expect(sb).not.toMatch(/this\.setupWebRTC\(\);/);
   });
   it('Q15: one mute — SFX honours the Desk mute; the game button/M key toggle both', () => {
-    expect(html).toMatch(/play\(name, volume = 0\.5\) \{\s*if \(this\.muted \|\| \(typeof MacSFX !== 'undefined' && MacSFX\.muted\)\) return;/);
+    expect(html).toMatch(/play\(name, volume = 0\.5(?:, opts)?\) \{\s*if \(this\.muted \|\| \(typeof MacSFX !== 'undefined' && MacSFX\.muted\)\) return;/);
     expect(html).toMatch(/<button type="button" class="mute-btn" id="mute-btn" aria-label="Mute game sounds" aria-pressed="false"/);
     expect(sb).toMatch(/if \(key === 'm' \|\| key === 'M'\) \{ this\.toggleMute\(\); return; \}/);
   });

@@ -7,7 +7,7 @@
 const V = new URL(import.meta.url).search;
 const R = await import('./pico-rules.mjs' + V);
 const { createPicoArt } = await import('./pico-art.mjs' + V);
-const { createPicoAudio } = await import('./pico-audio.mjs' + V);
+const { createPicoAudio, placeSound } = await import('./pico-audio.mjs' + V);
 const { WALK_CELLS, WALK_TICKS, IDLE_CELL, JUMP_CELL, PLAYER_COLOURS } = await import('./assets/pico-atlas.mjs' + V);
 
 const CAT_H = 24, BODY_H = 23, HEAD = 1;   // board sprite 24 tall; pico hitbox 23 tall from y + 1
@@ -174,11 +174,16 @@ export function createPicoScene({ board, replica, member, player, peers, status,
     walkTick = player.vx !== 0 && grounded() ? walkTick + 1 : 0;
   }
 
+  // A teammate's key / door / switch sounds from where it happened, relative to our own cat
+  // (panned, quieter with distance). The board is 240 px tall; ~400 px is "far away".
+  const HEARING_SPAN = 400;
+  const heard = at => placeSound(at, pose(), HEARING_SPAN);
+
   function sounds() {
     const next = snapshot();
-    if (!seen.keyHolder && next.keyHolder && !next.doorOpen) audio.play('key');
-    if (!seen.doorOpen && next.doorOpen) audio.play('key');
-    if (!seen.latched && next.latched && !switchPressedLocally) audio.play('switch');
+    if (!seen.keyHolder && next.keyHolder && !next.doorOpen) audio.play('key', heard(key));
+    if (!seen.doorOpen && next.doorOpen) audio.play('key', heard(level?.goal));
+    if (!seen.latched && next.latched && !switchPressedLocally) audio.play('switch', heard(level?.switches?.[0]));
     if (!seen.complete && next.complete) audio.clear();
     seen = next;
   }
