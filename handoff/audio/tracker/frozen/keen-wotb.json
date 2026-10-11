@@ -1,0 +1,15 @@
+{
+ "id": "keen-wotb",
+ "sampleRate": 44100,
+ "introSeconds": 0,
+ "loopSeconds": 55.62677,
+ "introRows": 0,
+ "loopRows": 576,
+ "renderedFrom": "songs/keen-wotb.json",
+ "songSha1": "701a4411b253459f6b34d8008a71c99068598159",
+ "lowPower": "keen-wotb.lowpower.ogg",
+ "renderMaster": 0.27,
+ "engineSha1": "6d168f9d92d020452e308be8bd6686291ca15c1d",
+ "seamCrossfadeMs": 10,
+ "codec": "vorbis q5"
+}

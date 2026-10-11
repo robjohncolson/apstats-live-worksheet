@@ -17,6 +17,33 @@ window.renderSfx = async function (refs, gap, o) {
   const buf = await ctx.startRendering();
   return Object.assign(pack(buf, o), { worklet: ok, at: at });
 };
+function b64(u8) { let s = ''; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); }
+function packFloat(buf) {        // interleaved float32, no normalisation, no clipping
+  const L = buf.getChannelData(0), R = buf.getChannelData(1), n = L.length, out = new Float32Array(n * 2); let pk = 0;
+  for (let i = 0; i < n; i++) { out[2 * i] = L[i]; out[2 * i + 1] = R[i]; pk = Math.max(pk, Math.abs(L[i]), Math.abs(R[i])); }
+  return { f32: b64(new Uint8Array(out.buffer)), peakDb: 20 * Math.log10(pk), frames: n };
+}
+// decode a file (e.g. a frozen .ogg) the way the park will (decodeAudioData) -> interleaved float32
+window.decodeFile = async function (url) {
+  const ab = await (await fetch(url)).arrayBuffer(); const ctx = new OfflineAudioContext(2, 44100, 44100);
+  const buf = await ctx.decodeAudioData(ab); return Object.assign(packFloat(buf), { sampleRate: buf.sampleRate, duration: buf.duration });
+};
+// frozen playback THROUGH THE ENGINE: load(song, {frozen}) + play() (+ optional mid-song setLowPower toggles), rendered offline
+window.renderFrozen = async function (id, dur, o) {
+  o = o || {}; await kits();
+  const song = await loadJSON('../../songs/' + id + '.json'), side = await loadJSON('../../frozen/' + id + '.json');
+  const ctx = new OfflineAudioContext(2, Math.round(dur * 44100), 44100);
+  const dec = async f => ctx.decodeAudioData(await (await fetch('../../frozen/' + f)).arrayBuffer());
+  const frozen = { buffer: await dec(id + '.ogg'), introSeconds: side.introSeconds, loopSeconds: side.loopSeconds, renderMaster: side.renderMaster,
+                   lowPowerBuffer: side.lowPower ? await dec(side.lowPower) : null };
+  const eng = TrackerEngine.create(ctx, ctx.destination, { unlocked: true, allowInClass: true, lookahead: dur + 2, timerMs: 1e7, lowPower: !!o.lowPower, skipIntro: !!o.skipIntro });
+  await eng.ready(); eng.load(song, { frozen }); eng.play();
+  const clk = eng.getClock(), info = { frozen: eng.isFrozen(), usesWorklet: eng.usesWorklet(), rowDur: clk.rowDur, rowsScheduled: clk.abs };
+  if (o.toggleAt) for (const [t, on] of o.toggleAt) ctx.suspend(t).then(() => { eng.setLowPower(on); ctx.resume(); });
+  await new Promise(r => setTimeout(r, 300));
+  const buf = await ctx.startRendering();
+  return Object.assign(packFloat(buf), info);
+};
 function pack(buf, o) {
   const L = buf.getChannelData(0), R = buf.getChannelData(1), n = L.length, out = new Int16Array(n * 2); let pk = 0;
   for (let i = 0; i < n; i++) { pk = Math.max(pk, Math.abs(L[i]), Math.abs(R[i])); }
@@ -34,6 +61,7 @@ window.renderSong = async function (id, dur, o) {
   eng.load(song); eng.play();
   await new Promise(r => setTimeout(r, 300));
   const t0 = performance.now(); const buf = await ctx.startRendering(); const ms = performance.now() - t0;
+  if (o.float) return Object.assign(packFloat(buf), { worklet: ok && eng.usesWorklet(), renderMs: ms, voices: eng.getVoiceCount() });
   const L = buf.getChannelData(0), R = buf.getChannelData(1), n = L.length, out = new Int16Array(n * 2); let pk = 0;
   for (let i = 0; i < n; i++) { pk = Math.max(pk, Math.abs(L[i]), Math.abs(R[i])); }
   const g = o.normalize ? Math.pow(10, o.normalize / 20) / Math.max(pk, 1e-9) : 1;

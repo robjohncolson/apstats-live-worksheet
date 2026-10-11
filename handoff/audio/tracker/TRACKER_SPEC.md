@@ -233,6 +233,47 @@ Per FM channel the levels match the reference within about 1 dB.
 ### Offline renders = the real engine
 `node tools/offline/render_offline.js <id> 40 out.wav [--normalize=-4] [--lowpower]` and `... --sfx s1:B5,s3k:33 out.wav` render with tracker-engine.js itself in headless Chrome (OfflineAudioContext, including the AudioWorklet). previews/*.mp3 and the SFX sampler come from this. render_preview.py is now legacy, and tools/render_v2.py + render_chip.js (same ChipDSP code in Node) feed the comparisons.
 
+### 7e. Frozen songs (tools/offline/freeze.js, Oct 11 2026)
+Why: live row scheduling depends on the main thread, so page stalls drop notes (IceCap the worst). A frozen song is the
+same engine output rendered once and looped by one `AudioBufferSourceNode`; nothing is scheduled per note.
+
+- `node tools/offline/freeze.js <id> | --all [--no-check]` renders, via `offline.html` (headless Chrome, OfflineAudioContext +
+  chip AudioWorklet, i.e. the real engine), **intro + 2 passes of `song.order`** (+0.5 s) at 44.1 kHz stereo, with
+  `gainTrim`, `levels`, and `mix` applied exactly as live, no normalisation.
+- Trim: `frozen/<id>.ogg` = `[intro][pass 2]`. Pass 2 starts with pass 1's release tails. The chip is not
+  sample-periodic from pass to pass (the free-running YM EG counter, OPL LFO phase, PSG LFSR, NES noise/oscillator
+  phase), so the last 10 ms of pass 2 are crossfaded into the last 10 ms of pass 1. Those are the samples that really
+  precede pass 2's first sample in the render, so the wrap `loopEnd -> loopStart` continues exactly as the render did.
+  When there is an intro, its last 10 ms get the same fade into the end of pass 1, because the loop region starts
+  with pass 2.
+- Vorbis q5 (`ffmpeg -c:a libvorbis -q:a 5`), not mp3. Chrome's `decodeAudioData` returns exactly intro+loop frames with lag 0 (checked).
+- Level: the default engine master (0.27) is baked in, so peaks are -6.7 to -11.6 dBFS (a live play at default volume).
+  The engine plays a frozen buffer through `master` at `opts.volume / renderMaster`, which gives the same loudness as live
+  at any volume, with no clipping in the file.
+- `frozen/<id>.lowpower.ogg`: the same render with `lowPower`, only for songs with a non-empty `lowPowerOff`.
+- `frozen/<id>.json`: `{id, sampleRate, introSeconds, loopSeconds, introRows, loopRows, renderedFrom, songSha1, lowPower,
+  renderMaster, engineSha1, seamCrossfadeMs, codec}`. The `introSeconds`/`loopSeconds` values are computed from the song (sum of
+  pattern rows x 60/bpm/rowsPerBeat, honouring the per-pattern `rows`), not measured. **Re-render whenever
+  `songs/<id>.json` changes** (sha1 of the file differs from `songSha1`) or the engine's synthesis changes (`engineSha1`).
+  Re-render deliberately: every re-render adds about 1 MB per file to git history.
+- Checks (`freeze_check.py`, run by freeze.js; results in `frozen/freeze-check.json`): decoded length and lag, seam step
+  |x[loopEnd-1]-x[loopStart]|, the seam's 2nd difference compared with the file's 99.9th percentile, frozen-through-engine
+  vs a live render (lag, spectral), click ratio at each wrap vs the same boundary in the continuous render, low-power
+  swap clicks, peaks, sha1 freshness, and console errors.
+
+Engine API:
+```js
+engine.load(song, { frozen: { buffer, introSeconds, loopSeconds, lowPowerBuffer /* or null */, renderMaster /* sidecar, 0.27 */ } })
+```
+`play()` starts one looping buffer source at `t + 0.05` (`loopStart = introSeconds`, `loopEnd = intro + loop`; with
+`skipIntro` the offset is `introSeconds`) through `master`. No song voices or song chip node are built. The row clock
+still runs from the same start time with no notes, so `row`/`beat`/`bar`/`loop` events, `getClock()`, and
+`nextGridTime()` are identical to live, and vibe.js is unchanged. `stop(fade)` uses the same master ramp, then
+`source.stop`. `setLowPower(on)` while playing swaps to the other buffer at the same song position with a 20 ms
+crossfade; with no `lowPowerBuffer`, it keeps the full mix. `setTempoScale` is ignored while frozen. `isFrozen()` is new.
+`usesWorklet()` stays true (the SFX use the chip worklet). `load(song)` without `frozen` is unchanged; this is the
+fallback.
+
 ### CPU
 Offline render cost on the box (one Xeon core, 40 s of song): normal 1.6-2.4 s (4-6% of a core), lowPower 0.9-1.3 s (2-3%). On a Chromebook-class CPU (roughly 3-4x slower per core), estimate about 15-25% of one core in normal mode and about 9-13% in lowPower. Voice/node counts per selftest: 25-37 normal, 18-21 lowPower.
 

@@ -305,6 +305,7 @@ function create(ctx, dest, opts) {
   var unlocked = !!opts.unlocked, mode = opts.mode || 'class', allowInClass = !!opts.allowInClass, lowPower = !!opts.lowPower;
   var tempoScale = 1, listeners = { row: [], beat: [], bar: [], loop: [] };
   var pos = { order: 0, row: 0, abs: 0, time: 0 }, anchor = { time: 0, row: 0 };
+  var frozen = null, fz = null;   // frozen song (pre-rendered audio, see load(song, {frozen})) and its playing source
   var waveCache = {}, noiseBufs = {}, voiceCount = 0, kitBufs = {};
   function kitBuffer(kitName, sname) {          // decode 8-bit PCM once per context
     var k = kitName + '/' + sname; if (kitBufs[k]) return kitBufs[k];
@@ -321,7 +322,7 @@ function create(ctx, dest, opts) {
     return true;
   }
 
-  function rowDur() { return 60 / (song.bpm * tempoScale) / song.rowsPerBeat; }
+  function rowDur() { return 60 / (song.bpm * (frozen ? 1 : tempoScale)) / song.rowsPerBeat; }
   function tickDur() { return rowDur() / (song.ticksPerRow || 6); }
   function emit(evt, data, t) {
     var fns = listeners[evt]; if (!fns.length) return;
@@ -338,8 +339,13 @@ function create(ctx, dest, opts) {
       var p = stem[c].gain; p.cancelScheduledValues(t); p.setValueAtTime(p.value, t); p.linearRampToValueAtTime(lvl, t + r);
     });
   }
-  function load(s) {
+  // load(song)            -> live: every row scheduled on the chip worklet / node voices (unchanged behaviour)
+  // load(song, {frozen})  -> frozen: play() loops one pre-rendered AudioBuffer (tools/offline/freeze.js output)
+  //   frozen = { buffer, introSeconds, loopSeconds, lowPowerBuffer (or null), renderMaster (master gain baked in, default 0.27) }
+  //   The row clock, row/beat/bar/loop events, getClock() and nextGridTime() still run (no notes), so vibe.js is unchanged.
+  function load(s, o) {
     if (playing) stop(0);
+    frozen = (o && o.frozen && o.frozen.buffer) ? o.frozen : null;
     song = s; pats = {}; patRows = {}; CHS = (s.channels || CH).slice(); CHS.forEach(ensureChan); applyMixGains();
     Object.keys(s.patterns).forEach(function (name) {
       var P = s.patterns[name], byRow = {};
@@ -880,7 +886,7 @@ function create(ctx, dest, opts) {
   function scheduleRow(t) {
     var name = seq()[pos.order], byRow = pats[name], rd = rowDur();
     var swingOff = (pos.row % 2 === 1) ? (song.swing || 0) * rd : 0, tr = t + swingOff;
-    (byRow[pos.row] || []).forEach(function (e) {
+    if (!frozen) (byRow[pos.row] || []).forEach(function (e) {
       var tt = tr + e.frac * rd;
       if (e.ch === 'drums') playDrum(e.cell, tt); else playNote(e.ch, e.cell, tt);
     });
@@ -911,11 +917,21 @@ function create(ctx, dest, opts) {
   function play() {
     if (!song || playing || !allowed()) return false;
     if (ctx.state === 'suspended' && ctx.resume && !(typeof OfflineAudioContext !== 'undefined' && ctx instanceof OfflineAudioContext)) ctx.resume();
-    voices = buildVoices();
-    var t = ctx.currentTime;
-    master.gain.cancelScheduledValues(t); master.gain.setValueAtTime((opts.volume != null ? opts.volume : 0.27) * (song.gainTrim || 1), t);
+    var t = ctx.currentTime, vol = opts.volume != null ? opts.volume : 0.27;
     phase = (song.intro && song.intro.length && !opts.skipIntro) ? 'intro' : 'loop';
-    pos = { order: 0, row: 0, abs: 0, time: t + 0.05 }; playing = true; applyGains(0); tick(); return true;
+    pos = { order: 0, row: 0, abs: 0, time: t + 0.05 };
+    master.gain.cancelScheduledValues(t);
+    if (frozen) {                                       // the buffer already contains gainTrim and the render-time master
+      voices = null; voiceCount = 1;
+      master.gain.setValueAtTime(vol / (frozen.renderMaster || 0.27), t);
+      var off0 = phase === 'loop' && song.intro && song.intro.length ? frozen.introSeconds : 0;
+      fz = { t0: pos.time, off0: off0, src: null, g: null };
+      startFrozen(pos.time, off0, 0);
+    } else {
+      voices = buildVoices();
+      master.gain.setValueAtTime(vol * (song.gainTrim || 1), t);
+    }
+    playing = true; applyGains(0); tick(); return true;
   }
   function stop(fade) {
     if (!playing) return;
@@ -923,6 +939,26 @@ function create(ctx, dest, opts) {
     var t = ctx.currentTime, f = fade == null ? 0.3 : fade, v0 = master.gain.value;
     master.gain.cancelScheduledValues(t); master.gain.setValueAtTime(v0, t); master.gain.linearRampToValueAtTime(0, t + f + 0.001);
     killVoices(t + f + 0.02);
+    if (fz) { var z = fz; fz = null; try { z.src.stop(t + f + 0.02); } catch (e) {} setTimeout(function () { try { z.g.disconnect(); } catch (e) {} }, (f + 0.1) * 1000); }
+  }
+  function frozenBuf() { return (lowPower && frozen.lowPowerBuffer) ? frozen.lowPowerBuffer : frozen.buffer; }
+  function startFrozen(at, offset, fade) {
+    var src = ctx.createBufferSource(), g = ctx.createGain(), F = frozen;
+    src.buffer = frozenBuf(); src.loop = true; src.loopStart = F.introSeconds; src.loopEnd = F.introSeconds + F.loopSeconds;
+    src.connect(g); g.connect(master);
+    if (fade) { g.gain.setValueAtTime(0, at); g.gain.linearRampToValueAtTime(1, at + fade); }
+    src.start(at, offset); fz.src = src; fz.g = g; fz.buf = src.buffer;
+  }
+  function frozenOffset(at) {                          // song position (seconds into the buffer) at context time `at`
+    var e = Math.max(0, at - fz.t0) + fz.off0, I = frozen.introSeconds, L = frozen.loopSeconds;
+    return e < I + L ? e : I + ((e - I) % L);
+  }
+  function setLowPowerFrozen() {
+    if (!fz || !playing || fz.buf === frozenBuf()) return;
+    var at = ctx.currentTime + 0.01, X = 0.02, old = fz.src, og = fz.g;
+    og.gain.setValueAtTime(1, at); og.gain.linearRampToValueAtTime(0, at + X); old.stop(at + X + 0.01);
+    setTimeout(function () { try { og.disconnect(); } catch (e) {} }, 200);
+    startFrozen(at, frozenOffset(at), X);
   }
   function nextGridTime(div) {
     var now = ctx.currentTime;
@@ -940,7 +976,8 @@ function create(ctx, dest, opts) {
     unlock: function (on) { unlocked = on !== false; if (!allowed()) stop(0.3); return unlocked; },
     isUnlocked: function () { return unlocked; },
     setMode: function (m) { mode = m === 'solo' ? 'solo' : 'class'; if (!allowed()) stop(0.3); },
-    setLowPower: function (on) { lowPower = !!on; applyGains(0.2); },
+    setLowPower: function (on) { lowPower = !!on; if (frozen) setLowPowerFrozen(); else applyGains(0.2); },
+    isFrozen: function () { return !!frozen; },
     on: function (e, fn) { if (listeners[e]) listeners[e].push(fn); return engine; },
     off: function (e, fn) { if (listeners[e]) listeners[e] = listeners[e].filter(function (f) { return f !== fn; }); },
     getClock: function () { return song ? { playing: playing, bpm: song.bpm * tempoScale, rowDur: rowDur(), rowsPerBeat: song.rowsPerBeat, order: pos.order, row: pos.row, abs: pos.abs, anchor: anchor } : { playing: false }; },
@@ -952,7 +989,7 @@ function create(ctx, dest, opts) {
     getChannels: function () { return CHS.slice(); },
     getPhase: function () { return phase; },
     ready: function () { return readyP; },
-    usesWorklet: function () { return !!(voices && voices._chipNode); },
+    usesWorklet: function () { return !!(voices && voices._chipNode) || (!!frozen && chipReady); },   // frozen: the SFX still use the chip worklet
     getMix: function () { return song ? song.mix || {} : {}; },
     setMix: function (c, o) {
       if (!song) return; song.mix = song.mix || {}; var m = song.mix[c] = song.mix[c] || {};

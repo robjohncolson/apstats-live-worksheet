@@ -1,0 +1,15 @@
+{
+ "id": "park-bounce",
+ "sampleRate": 44100,
+ "introSeconds": 0,
+ "loopSeconds": 34.285714,
+ "introRows": 0,
+ "loopRows": 320,
+ "renderedFrom": "songs/park-bounce.json",
+ "songSha1": "f0a12a2a0ff4cc90db95b5da91f00ed62c047d8a",
+ "lowPower": null,
+ "renderMaster": 0.27,
+ "engineSha1": "6d168f9d92d020452e308be8bd6686291ca15c1d",
+ "seamCrossfadeMs": 10,
+ "codec": "vorbis q5"
+}

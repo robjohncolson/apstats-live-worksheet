@@ -1,0 +1,15 @@
+{
+ "id": "icecap",
+ "sampleRate": 44100,
+ "introSeconds": 0,
+ "loopSeconds": 83.308505,
+ "introRows": 0,
+ "loopRows": 768,
+ "renderedFrom": "songs/icecap.json",
+ "songSha1": "60096d7540cb2a43136b95516cd014da1caffdfd",
+ "lowPower": "icecap.lowpower.ogg",
+ "renderMaster": 0.27,
+ "engineSha1": "6d168f9d92d020452e308be8bd6686291ca15c1d",
+ "seamCrossfadeMs": 10,
+ "codec": "vorbis q5"
+}
