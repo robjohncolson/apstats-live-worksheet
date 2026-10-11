@@ -1965,8 +1965,8 @@
         .tnm-send { background: #5a5045; color: #fff; }
         .tnm-send[disabled] { opacity: 0.55; cursor: not-allowed; }
     </style>
-    <!-- Pico Desk live home (PICO_DESK_SPEC.md Phase 1): opt-in flag (?home=park or localStorage), checked before first paint; pico-home.js renders it. -->
-    <script>try{if(/[?&]home=park(?:&|$)/.test(location.search)||localStorage.getItem('apstats-pico-home')==='1')document.documentElement.classList.add('pico-home');}catch(_){}</script>
+    <!-- Pico Desk live home (PICO_DESK_SPEC.md Phase 4, teacher 2026-10-11): the DEFAULT. ?home=classic (this load) or localStorage 'apstats-pico-home' = '0' (OPTION -> Use Original Desk) gives the original Desk; ?home=park / '1' force it on. Checked before first paint; pico-home.js renders it. -->
+    <script>try{var _ph=/[?&]home=(park|classic)(?:&|$)/.exec(location.search),_ps=null;try{_ps=localStorage.getItem('apstats-pico-home')}catch(_){}if(_ph?_ph[1]==='park':_ps!=='0')document.documentElement.classList.add('pico-home');}catch(_){}</script>
     <style>html.pico-home .app-icon,html.pico-home .desktop-icon,html.pico-home:not(.pico-lessons-open) #window-wrap{display:none!important}html.pico-home #menubar{visibility:hidden!important}html.pico-home #doge-challenge-panel{visibility:visible!important}</style>
 </head>
 <body>
@@ -2107,7 +2107,7 @@
             <div class="menu-dd-item" role="menuitem" data-sfx onclick="showDialog('&#128202;','You are viewing it right now. What more do you want?','Good Point')">by Icon</div>
             <div class="menu-dd-sep"></div>
             <div class="menu-dd-item" role="menuitem" data-sfx onclick="closeMenus();window.open('pico-desk-preview.html','_blank','noopener')">Pico Desk Preview&hellip;</div>
-            <div class="menu-dd-item" role="menuitem" data-sfx onclick="closeMenus();try{localStorage.setItem('apstats-pico-home','1')}catch(_){}location.reload()">Pico Desk (live)&hellip;</div>
+            <div class="menu-dd-item" role="menuitem" data-sfx onclick="closeMenus();try{localStorage.setItem('apstats-pico-home','1')}catch(_){}var _u=new URL(location.href);_u.searchParams.delete('home');location.href=_u.toString()">Pico Desk&hellip;</div>
         </div>
     </span>
     <span class="menu-item" data-menu="go">Go
@@ -2953,10 +2953,10 @@
 <script src="js/ced2026-crosswalk.js"></script>
 <script src="js/ced2026-labels.js"></script>
 <script src="lib/qrcode.min.js"></script>
-<script src="canvas_engine.js?v=2026-10-11-9dvg"></script>
-<script src="sprite_sheet.js?v=2026-10-11-9dvg"></script>
-<script src="classroom-board.js?v=2026-10-11-9dvg"></script>
-<script src="pico-home.js?v=2026-10-11-9dvg"></script>
+<script src="canvas_engine.js?v=2026-10-11-2grx"></script>
+<script src="sprite_sheet.js?v=2026-10-11-2grx"></script>
+<script src="classroom-board.js?v=2026-10-11-2grx"></script>
+<script src="pico-home.js?v=2026-10-11-2grx"></script>
 <script src="ti84-plot.js"></script>
 <script src="activity-bridge.js"></script>
 <script src="activity-colorbox.js"></script>
@@ -27876,7 +27876,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-10-11-9dvg';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-10-11-2grx';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

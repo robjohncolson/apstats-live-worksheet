@@ -527,6 +527,10 @@ export async function bootDesk(opts = {}) {
   const viewAsContext = normalizeViewAs(opts.viewAs, roster);
   const url = new URL(opts.url || DESK_URL, DESK_URL);
   if (viewAsContext) url.searchParams.set('viewAsUserId', viewAsContext.studentId);
+  // The Pico Desk is the default home (2026-10-11). The journeys were written against the
+  // original Desk, so a boot that names no home gets ?home=classic; `home: 'default'` boots
+  // the Desk exactly as a student's URL does.
+  if (!url.searchParams.has('home') && opts.home !== 'default') url.searchParams.set('home', 'classic');
 
   const virtualConsole = new VirtualConsole();
   virtualConsole.on('error', (...args) => consoleErrors.push(args));

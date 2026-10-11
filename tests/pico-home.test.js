@@ -34,7 +34,7 @@ function functionSource(name) {
 
 // The <head> flag check, exactly as the Desk ships it.
 const FLAG_SCRIPT = (() => {
-  const match = /<script>(try\{if\(\/\[\?&\]home=park[\s\S]*?)<\/script>/.exec(deskSource);
+  const match = /<script>(try\{var _ph=\/\[\?&\]home=\(park\|classic\)[\s\S]*?)<\/script>/.exec(deskSource);
   if (!match) throw new Error('Pico flag check not found in the Desk <head>');
   return match[1];
 })();
@@ -97,7 +97,7 @@ const CED_NAMES = {
 };
 
 function createDesk({ flag = 'url', signedIn = true, teacher = false, marks = {}, nextUp = '2.4', zeros = [] } = {}) {
-  const url = 'https://desk.test/ap_stats_roadmap_square_mode.html' + (flag === 'url' ? '?home=park' : '');
+  const url = 'https://desk.test/ap_stats_roadmap_square_mode.html' + (flag === 'url' ? '?home=park' : flag === 'off' ? '?home=classic' : '');
   const fetchSpy = vi.fn(() => Promise.reject(new Error('no network in this test')));
   const dom = new JSDOM(DESK_MARKUP, {
     url,
@@ -105,6 +105,7 @@ function createDesk({ flag = 'url', signedIn = true, teacher = false, marks = {}
     beforeParse(window) {
       window.fetch = fetchSpy;
       if (flag === 'storage') window.localStorage.setItem('apstats-pico-home', '1');
+      if (flag === 'storage-off') window.localStorage.setItem('apstats-pico-home', '0');
       if (teacher) window.localStorage.setItem('apstats_user_role', 'teacher');
     },
   });
@@ -207,7 +208,30 @@ describe('pico-home -- the flag', () => {
     expect(doc.documentElement.classList.contains('pico-home')).toBe(true);
   });
 
-  it('flag off: no class, the chrome is not hidden', () => {
+  it('the default (no flag anywhere) is the Pico Desk (Phase 4, 2026-10-11)', () => {
+    const { doc } = createDesk({ flag: 'default' });
+    expect(doc.documentElement.classList.contains('pico-home')).toBe(true);
+    expect(hiddenByFlag(doc.getElementById('menubar'))).toBe(true);
+  });
+
+  it("localStorage 'apstats-pico-home' = '0' (Use Original Desk) keeps the original Desk", () => {
+    const { doc } = createDesk({ flag: 'storage-off' });
+    expect(doc.documentElement.classList.contains('pico-home')).toBe(false);
+    expect(hiddenByFlag(doc.getElementById('menubar'))).toBe(false);
+  });
+
+  it('?home=park wins over a stored opt-out; ?home=classic wins over a stored opt-in', () => {
+    const park = new JSDOM(DESK_MARKUP, { url: 'https://desk.test/ap_stats_roadmap_square_mode.html?home=park', runScripts: 'outside-only',
+      beforeParse(window) { window.localStorage.setItem('apstats-pico-home', '0'); } });
+    park.window.eval(FLAG_SCRIPT);
+    expect(park.window.document.documentElement.classList.contains('pico-home')).toBe(true);
+    const classic = new JSDOM(DESK_MARKUP, { url: 'https://desk.test/ap_stats_roadmap_square_mode.html?home=classic', runScripts: 'outside-only',
+      beforeParse(window) { window.localStorage.setItem('apstats-pico-home', '1'); } });
+    classic.window.eval(FLAG_SCRIPT);
+    expect(classic.window.document.documentElement.classList.contains('pico-home')).toBe(false);
+  });
+
+  it('flag off (?home=classic): no class, the chrome is not hidden', () => {
     const { doc, win } = createDesk({ flag: 'off' });
     expect(doc.documentElement.classList.contains('pico-home')).toBe(false);
     expect(hiddenByFlag(doc.getElementById('menubar'))).toBe(false);
@@ -667,14 +691,14 @@ describe('pico-home -- wiring and art', () => {
     expect(bumpSource).toMatch(/'classroom-board\.js', 'pico-home\.js'\]/);
   });
 
-  it('the View menu has "Pico Desk (live)…" right after "Pico Desk Preview…", setting the flag and reloading', () => {
+  it('the View menu has "Pico Desk…" right after "Pico Desk Preview…", clearing the opt-out and leaving ?home=classic behind', () => {
     const preview = deskSource.indexOf('>Pico Desk Preview&hellip;</div>');
-    const live = deskSource.indexOf('>Pico Desk (live)&hellip;</div>');
+    const live = deskSource.indexOf('>Pico Desk&hellip;</div>');
     expect(preview).toBeGreaterThan(0);
     expect(live).toBeGreaterThan(preview);
     const item = deskSource.slice(deskSource.lastIndexOf('<div', live), live);
     expect(item).toMatch(/localStorage\.setItem\('apstats-pico-home','1'\)/);
-    expect(item).toMatch(/location\.reload\(\)/);
+    expect(item).toMatch(/searchParams\.delete\('home'\)/);
   });
 
   it('rCal exposes its closure values on window.DeskState right after rebuilding the grid', () => {
@@ -705,7 +729,20 @@ describe('pico-home -- inside the real Desk', { timeout: 60_000 }, () => {
     if (dialog && dialog.style.display !== 'none') harness.document.getElementById('dialog-btn').click();
   }
 
-  it('flag off: the real Desk boots without the Pico home', async () => {
+  it('the real Desk boots INTO the Pico home by default (home: "default")', async () => {
+    const { bootDesk } = await import('./journeys/harness.js');
+    const harness = await bootDesk({ now: NOW, home: 'default' });
+    try {
+      expect(harness.windowErrors).toEqual([]);
+      expect(harness.document.documentElement.classList.contains('pico-home')).toBe(true);
+      expect(harness.document.getElementById('pico-home')).toBeTruthy();
+      expect(harness.window.PicoHome).toBeTruthy();
+    } finally {
+      harness.teardown();
+    }
+  });
+
+  it('flag off (?home=classic, the journeys baseline): the real Desk boots without the Pico home', async () => {
     const { bootDesk } = await import('./journeys/harness.js');
     const harness = await bootDesk({ now: NOW });
     try {

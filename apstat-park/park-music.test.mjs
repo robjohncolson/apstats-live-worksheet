@@ -274,20 +274,15 @@ test('park-music: a stored song is re-voiced on the next acquire; the swap stops
   music.dispose();
 });
 
-test('park-music: the preview gate — off by default, ?music=1 turns it on for the device, ?music=0 off', async () => {
-  const { getParkMusic, musicEnabled, MUSIC_FLAG_KEY } = await import('./park-music.mjs');
-  const w = { location: { search: '' }, localStorage: win.localStorage };
-  win.localStorage.removeItem(MUSIC_FLAG_KEY);
-  assert.equal(musicEnabled(w), false);
-  assert.equal(getParkMusic(w), null);
-  w.location.search = '?home=park&music=1';
-  assert.equal(musicEnabled(w), true);
-  assert.equal(win.localStorage.getItem(MUSIC_FLAG_KEY), '1');
-  w.location.search = '';
-  assert.equal(musicEnabled(w), true, 'sticks on the device');
-  w.location.search = '?music=0';
-  assert.equal(musicEnabled(w), false);
-  assert.equal(win.localStorage.getItem(MUSIC_FLAG_KEY), null);
+test('park-music: music is on for every window (the ?music=1 preview gate is gone); one instance per window', async () => {
+  const mod = await import('./park-music.mjs');
+  assert.equal(mod.musicEnabled, undefined); assert.equal(mod.MUSIC_FLAG_KEY, undefined);
+  const w = { location: { search: '' }, localStorage: win.localStorage, document: win.document, sfx: fakeSfx() };
+  const music = mod.getParkMusic(w, { loadModules: modules, fetchSong, fetchData });
+  assert.ok(music, 'a music instance without any flag');
+  assert.equal(mod.getParkMusic(w), music, 'the same instance for the window');
+  assert.equal(mod.getParkMusic(null), null);
+  music.dispose(); delete w.__parkMusic;
 });
 
 test('park-music: before any gesture the .ogg plays; the first sound after a bus appears builds the shifter', async () => {

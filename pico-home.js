@@ -1,9 +1,10 @@
 /* pico-home.js — Pico Desk Phase 1, "the live home" (PICO_DESK_SPEC.md).
  *
- * A second view inside the Desk. It is opt-in: the Desk's <head> adds the class `pico-home` to
- * <html> when the URL has ?home=park or localStorage 'apstats-pico-home' is '1', and the same
- * <head> block hides the System 7 chrome (menu bar, desktop icons, main window) with CSS. With
- * the flag off this file does nothing at all.
+ * The Desk's home since 2026-10-11 (Phase 4): the Desk's <head> adds the class `pico-home` to
+ * <html> unless the URL has ?home=classic or localStorage 'apstats-pico-home' is '0' (OPTION ->
+ * Use Original Desk; ?home=park / '1' force it on), and the same <head> block hides the System 7
+ * chrome (menu bar, desktop icons, main window) with CSS. With the class absent this file does
+ * nothing at all.
  *
  * Presentation only. Every value shown here is read from the Desk's own state and functions
  * (S, cP, tdy, htm, cellAria, localLessonState, window.DeskState from rCal, the Do Now card, the
@@ -3450,7 +3451,7 @@
   function useOriginalDesk() {
     cancelPollReturn();
     stopFloorWatch();
-    try { localStorage.removeItem(FLAG_KEY); } catch (_) {}
+    try { localStorage.setItem(FLAG_KEY, '0'); } catch (_) {}
     var url = new URL(window.location.href);
     url.searchParams.delete('home');
     window.location.href = url.toString();

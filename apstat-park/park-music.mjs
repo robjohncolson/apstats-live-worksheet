@@ -258,21 +258,10 @@ export function createParkMusic(win, {
   };
 }
 
-// Preview gate (teacher 2026-10-10, until the branch is signed off): the whole feature is off
-// unless the Desk URL has ?music=1 or this device stored apstat-park-music = 1. Off = the park
-// exactly as before (no bar, no shifter, no palette). Delete this gate at launch.
-export const MUSIC_FLAG_KEY = 'apstat-park-music';
-export function musicEnabled(win) {
-  try {
-    if (/[?&]music=1(&|$)/.test(win?.location?.search || '')) { try { win.localStorage.setItem(MUSIC_FLAG_KEY, '1'); } catch {} return true; }
-    if (/[?&]music=0(&|$)/.test(win?.location?.search || '')) { try { win.localStorage.removeItem(MUSIC_FLAG_KEY); } catch {} return false; }
-    return win?.localStorage?.getItem(MUSIC_FLAG_KEY) === '1';
-  } catch { return false; }
-}
-
-// One per window; the first park scene creates it. Null while the preview gate is off.
+// One per window; the first park scene creates it. (The ?music=1 preview gate was removed on
+// 2026-10-11: music is on for everyone; ORIGINAL SOUNDS in the picker is the per-device opt-out.)
 export function getParkMusic(win, options) {
-  if (!win || !musicEnabled(win)) return null;
+  if (!win) return null;
   if (!win.__parkMusic) win.__parkMusic = createParkMusic(win, options);
   return win.__parkMusic;
 }
