@@ -163,8 +163,20 @@ test('park-music: a song that fails to load is reported, never stuck on LOADING;
   assert.equal(music.view().failed, true);
   assert.equal(await music.pick('park-bounce'), true);
   assert.equal(music.view().failed, false);
+  // A failed REPLACEMENT keeps the previous song (still playing) and names the failure.
+  await music.play();
+  assert.equal(await music.pick('icecap'), false);
+  const v = music.view();
+  assert.equal(v.songId, 'park-bounce', 'the pick falls back to the song that works');
+  assert.equal(win.localStorage.getItem(SONG_KEY), 'park-bounce');
+  assert.equal(v.hasSong, true); assert.equal(v.failed, true); assert.equal(v.failedTitle, 'ICECAP ZONE');
+  assert.ok(music.isPlaying(), 'the previous song keeps playing');
+  assert.equal(music.engine.song.id, 'park-bounce');
   const { musicBarView } = await import('./campaign-select.mjs');
-  assert.match(musicBarView({ title: 'X', hasSong: false, failed: true }).caption, /COULD NOT LOAD/);
+  assert.match(musicBarView(v).caption, /COULD NOT LOAD ICECAP ZONE/);
+  assert.equal(musicBarView(v).playLabel, 'STOP');
+  assert.equal(await music.pick('launchbase'), true);
+  assert.equal(music.view().failed, false);
   music.dispose();
 });
 

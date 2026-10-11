@@ -171,11 +171,11 @@ export function musicBarView(music) {
   const title = music.title || 'ORIGINAL SOUNDS';
   if (music.inClass) return { title, playLabel: 'IN CLASS', canPlay: false, playing: false, caption: 'MUSIC IS OFF IN CLASS' };
   if (!music.hasSong && music.loading) return { title, playLabel: 'LOADING', canPlay: false, playing: false, caption: 'LOADING THE SONG...' };
-  if (!music.hasSong && music.failed) return { title, playLabel: 'PLAY', canPlay: false, playing: false, caption: 'COULD NOT LOAD THIS SONG. M = NEXT SONG' };
-  if (!music.hasSong) return { title, playLabel: 'PLAY', canPlay: false, playing: false, caption: 'PICK A SONG TO HEAR MUSIC. M = NEXT SONG' };
+  const failed = music.failed ? 'COULD NOT LOAD ' + (music.failedTitle || 'THAT SONG') + '. ' : '';
+  if (!music.hasSong) return { title, playLabel: 'PLAY', canPlay: false, playing: false, caption: failed + 'PICK A SONG TO HEAR MUSIC. M = NEXT SONG' };
   const playing = !!music.playing;
   return { title, playLabel: playing ? 'STOP' : 'PLAY', canPlay: true, playing,
-    caption: playing ? 'P = STOP . M = NEXT SONG' : 'P = PLAY . M = NEXT SONG' };
+    caption: failed + (playing ? 'P = STOP . M = NEXT SONG' : 'P = PLAY . M = NEXT SONG') };
 }
 
 export function createStageSelect(doc) {

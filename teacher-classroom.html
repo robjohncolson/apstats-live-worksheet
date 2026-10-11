@@ -1329,6 +1329,12 @@
           // cockpit's existing tests don't need to inject the helpers.
           onClassroomMessage: function (msg) {
             if (!msg || !msg.type) return;
+            // Park music (2026-10-10): in Live mode the monitor socket is gone; the room's sound
+            // state arrives on this joined socket (the snapshot and classroom_sound_state).
+            if (msg.type === 'classroom_state' || msg.type === 'classroom_sound_state') {
+              _liveClassSound = msg.sound === true;
+              _renderClassSound();
+            }
             if (msg.type === 'classroom_student_nudge_reply' && typeof _renderReplyInList === 'function') {
               try { _renderReplyInList(msg); } catch (_) {}
             } else if (msg.type === 'classroom_teacher_nudge_ack' && typeof _renderNudgeAck === 'function') {
@@ -2599,7 +2605,9 @@
 
     // Teacher 2026-10-10 (park music): while a room is live, student devices keep park music and
     // park sounds off unless this switch is on. Durable on the relay, default off.
+    var _liveClassSound = false;   // the live room's switch, from the joined board socket (authoritative in Live mode)
     function _classSoundOn() {
+      if (_cockpitMode === 'live' && boardHandle) return _liveClassSound;
       var sections = _globalState.sections || [];
       for (var i = 0; i < sections.length; i++) {
         if (sections[i].section === _liveSectionRef) return !!sections[i].sound;
@@ -2674,6 +2682,7 @@
       // Tell the server this section is Live now.
       _sendLiveStart(section);
       _liveSectionRef = section;
+      _liveClassSound = false;   // until this room's snapshot arrives on the board socket
       _renderClassSound();
       // v3 P3: open WebRTC to every student currently in the section.
       // _globalState carries the monitor snapshot per section; pull the
@@ -2947,6 +2956,7 @@
       if (prev && prev !== section) _sendLiveStop(prev);
       if (section) _sendLiveStart(section);
       _liveSectionRef = section;
+      _liveClassSound = false;   // until this room's snapshot arrives on the board socket
       _renderClassSound();
       mountBoard(section, session);
     }

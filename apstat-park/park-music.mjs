@@ -115,10 +115,19 @@ export function createParkMusic(win, {
     }).catch(() => {});
   }
 
+  function persist(id) { try { win.localStorage.setItem(SONG_KEY, id); } catch {} }
+  // A replacement that fails to load leaves the previous pick in place (and playing) and names
+  // the failure in view().failed until the next successful pick.
+  function failPick(id, previous) {
+    loadFailed = id;
+    if (songId === id) { songId = previous; persist(previous); }
+    notify();
+    return false;
+  }
   async function pick(id) {
     if (!isSongId(id) || disposed) return false;
-    songId = id;
-    try { win.localStorage.setItem(SONG_KEY, id); } catch {}
+    const previous = songId;
+    songId = id; persist(id);
     const seq = ++loadSeq;
     loadFailed = null;
     if (id === ORIGINAL) {
@@ -128,12 +137,17 @@ export function createParkMusic(win, {
     }
     ensureEngine().catch(() => {});   // the pick is a gesture: re-voice the sound effects now
     let next;
-    try { next = await songData(id); } catch { if (seq === loadSeq) { loadFailed = id; notify(); } return false; }
+    try { next = await songData(id); } catch { return seq === loadSeq ? failPick(id, previous) : false; }
     if (seq !== loadSeq || disposed) return false;
-    if (!next || typeof next !== 'object' || !next.patterns || !Array.isArray(next.order)) { loadFailed = id; notify(); return false; }
+    if (!next || typeof next !== 'object' || !next.patterns || !Array.isArray(next.order)) return failPick(id, previous);
+    const before = song;
     song = next; applyPalette(song.palette);
     if (engine) {
-      if (!loadSong(song)) { song = null; applyPalette(null); notify(); return false; }
+      if (!loadSong(song)) {
+        song = before;
+        if (song) { loadSong(song); applyPalette(song.palette); if (wantPlaying) play(); } else applyPalette(null);
+        return failPick(id, previous);
+      }
       if (wantPlaying) play();
     }
     notify(); return true;
@@ -200,7 +214,8 @@ export function createParkMusic(win, {
     releaseTimer = setTimeout(() => { if (!holders) { stop(0.4); applyPalette(null); } }, 300);
   }
   function view() {
-    return { songId, title: SONGS.find(s => s.id === songId)?.title || '', playing: isPlaying(), wantPlaying, inClass: inClass(), hasSong: hasSong(), loading: songId !== ORIGINAL && !song && loadFailed !== songId, failed: loadFailed === songId };
+    return { songId, title: SONGS.find(s => s.id === songId)?.title || '', playing: isPlaying(), wantPlaying, inClass: inClass(), hasSong: hasSong(), loading: songId !== ORIGINAL && !song, failed: loadFailed != null,
+      failedTitle: loadFailed != null ? SONGS.find(s => s.id === loadFailed)?.title || '' : '' };
   }
   function dispose() {
     disposed = true; clearInterval(syncTimer); clearTimeout(releaseTimer);
