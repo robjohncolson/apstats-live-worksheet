@@ -1,0 +1,101 @@
+{
+ "launchbase": {
+  "part": "drums",
+  "dacRef": 472,
+  "tick_ms": 20.41,
+  "dacExport": 472,
+  "dacExportMissing": [],
+  "noiseRef": 767,
+  "noiseHwModeMismatch": 0,
+  "noiseExport": 767,
+  "noiseKeylog": 767,
+  "noiseKeylogMissing": [],
+  "dacEngineLog": 472,
+  "dacEngineLogMissing": [],
+  "dacAudio": 472,
+  "dacAudioErrors": [],
+  "noiseAudio": 767,
+  "dacLowPowerSynth": 472,
+  "dacLowPowerSynthMissing": [],
+  "dacAudioLowPower": 472,
+  "dacAudioLowPowerErrors": [],
+  "noiseAudioLowPower": 767
+ },
+ "icecap": {
+  "part": "drums",
+  "dacRef": 396,
+  "tick_ms": 18.08,
+  "dacExport": 396,
+  "dacExportMissing": [],
+  "noiseRef": 190,
+  "noiseHwModeMismatch": 0,
+  "noiseExport": 190,
+  "noiseKeylog": 190,
+  "noiseKeylogMissing": [],
+  "dacEngineLog": 396,
+  "dacEngineLogMissing": [],
+  "dacAudio": 396,
+  "dacAudioErrors": [],
+  "noiseAudio": 190,
+  "dacLowPowerSynth": 396,
+  "dacLowPowerSynthMissing": [],
+  "dacAudioLowPower": 392,
+  "dacAudioLowPowerErrors": [],
+  "noiseAudioLowPower": 190
+ },
+ "mushroomhill": {
+  "part": "drums",
+  "dacRef": 154,
+  "tick_ms": 21.44,
+  "dacExport": 154,
+  "dacExportMissing": [],
+  "noiseRef": 0,
+  "noiseHwModeMismatch": 0,
+  "noiseExport": 0,
+  "dacEngineLog": 154,
+  "dacEngineLogMissing": [],
+  "dacAudio": 154,
+  "dacAudioErrors": [],
+  "dacLowPowerSynth": 154,
+  "dacLowPowerSynthMissing": [],
+  "dacAudioLowPower": 153,
+  "dacAudioLowPowerErrors": []
+ },
+ "keen-wotb": {
+  "part": "drums",
+  "channels": {
+   "ch5": {
+    "ref": 52,
+    "ghost": 1,
+    "export": 52,
+    "keylog": 52,
+    "audio": 52,
+    "audioErrors": [],
+    "audioLowPower": 52,
+    "audioLowPowerErrors": []
+   },
+   "ch6": {
+    "ref": 225,
+    "ghost": 0,
+    "export": 225,
+    "keylog": 225,
+    "audio": 225,
+    "audioErrors": [],
+    "audioLowPower": 225,
+    "audioLowPowerErrors": []
+   }
+  }
+ },
+ "park-bounce": {
+  "part": "drums",
+  "ref": 81,
+  "hatsInScoreDroppedByArrangement": 79,
+  "export": 81,
+  "engineLog": 81,
+  "audio": 81,
+  "audioErrors": [],
+  "engineLogLowPower": 81,
+  "audioLowPower": 81,
+  "audioLowPowerErrors": []
+ }
+}

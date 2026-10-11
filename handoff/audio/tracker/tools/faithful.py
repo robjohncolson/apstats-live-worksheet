@@ -150,7 +150,7 @@ def build_nes(name,c):
     o=c['opts']; src=json.load(open(o['src'] if 'src' in o else c['src'])); bpm=src['bpm']; RPB=4; row=60/bpm/RPB
     NR=round(src['loopSeconds']/row); T=src['tracks']; notes={'lead':[],'bass':[]}; drums=[]
     for k in ('lead','bass'):
-        for s0,d,p,v in sorted(T[k]): notes[k].append([round(s0/row,3),round(max(0.25,d/row*0.9),3),p])
+        for s0,d,p,v in sorted(T[k]): notes[k].append([round(s0/row,3),round(max(0.05,d/row),3),p])   # score durations exactly (was x0.9, min 1/4 row)
     for s0,d,p,v in T['drum']:
         if p in (36,38): drums.append({'r':round(s0/row),'n':'K' if p==36 else 'S','v':round(v*0.8,2)})
     ins=J(PRESETS['nes']); ins['lead']['duty']=o.get('leadDuty',0.25)
@@ -168,7 +168,7 @@ def finish(name,o,bpm,RPB,NR,keep,notes,drums,ins,roles,plat,dropped,f):
         out=[]
         for i,(r,l,p,*vv) in enumerate(L):       # monophonic channel: a note ends where the next one starts
             if out and out[-1]['r']==r: continue
-            if i+1<len(L): l=min(l,max(0.25,L[i+1][0]-r))
+            if i+1<len(L) and L[i+1][0]>r: l=min(l,L[i+1][0]-r)
             out.append({'r':r,'n':p,'l':l,**({'v':vv[0]} if vv and vv[0]!=1.0 else {})})
         cells[ch]=out
     pats={}; order=[]; seen={}

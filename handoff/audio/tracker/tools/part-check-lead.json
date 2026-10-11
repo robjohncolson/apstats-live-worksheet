@@ -1,0 +1,173 @@
+{
+ "launchbase": {
+  "part": "lead",
+  "channel": "FM1",
+  "source": "driver YM2612 key-on writes ($28) + A0/A4 freq, FM1",
+  "ref": 127,
+  "tick_ms": 20.41,
+  "ghost": 0,
+  "ruled": 0,
+  "chordsInSource": 0,
+  "export": 127,
+  "exportMissing": [],
+  "exportDurWithin1Tick": 127,
+  "exportDurMaxErrTicks": 0.002,
+  "keylog": 127,
+  "keylogCut": 0,
+  "keylogMissing": [],
+  "keyedDurWithin1Tick": 127,
+  "keyedDurMaxErrTicks": 0.002,
+  "audio": 127,
+  "audioMissing": [],
+  "audioErrors": [],
+  "audioLowPower": 127,
+  "audioLowPowerMissing": [],
+  "audioLowPowerErrors": [],
+  "originalAudio": 127,
+  "audioMatchesOriginal": 127
+ },
+ "icecap": {
+  "part": "lead",
+  "channel": "PSG1",
+  "source": "SMPS driver PSG note events (+SN76489 period check), PSG1",
+  "ref": 204,
+  "tick_ms": 18.08,
+  "ghost": 0,
+  "ruled": 138,
+  "chordsInSource": 0,
+  "psgHwMismatch": 0,
+  "export": 204,
+  "exportMissing": [],
+  "exportDurWithin1Tick": 204,
+  "exportDurMaxErrTicks": 0.002,
+  "keylog": 204,
+  "keylogCut": 0,
+  "keylogMissing": [],
+  "keyedDurWithin1Tick": 204,
+  "keyedDurMaxErrTicks": 0.003,
+  "audio": 204,
+  "audioMissing": [],
+  "audioErrors": [],
+  "audioLowPower": 204,
+  "audioLowPowerMissing": [],
+  "audioLowPowerErrors": []
+ },
+ "mushroomhill": {
+  "part": "lead",
+  "channel": "FM1",
+  "source": "driver YM2612 key-on writes ($28) + A0/A4 freq, FM1",
+  "ref": 102,
+  "tick_ms": 21.44,
+  "ghost": 0,
+  "ruled": 0,
+  "chordsInSource": 0,
+  "export": 102,
+  "exportMissing": [],
+  "exportDurWithin1Tick": 102,
+  "exportDurMaxErrTicks": 0.0,
+  "keylog": 102,
+  "keylogCut": 0,
+  "keylogMissing": [],
+  "keyedDurWithin1Tick": 102,
+  "keyedDurMaxErrTicks": 0.001,
+  "audio": 84,
+  "audioMissing": [
+   [
+    14.129,
+    70.01
+   ],
+   [
+    16.445,
+    70.01
+   ],
+   [
+    16.509,
+    72.01
+   ],
+   [
+    16.531,
+    73.02
+   ],
+   [
+    22.362,
+    70.01
+   ],
+   [
+    24.678,
+    70.01
+   ],
+   [
+    24.742,
+    72.01
+   ],
+   [
+    24.764,
+    73.02
+   ],
+   [
+    28.795,
+    70.01
+   ],
+   [
+    29.566,
+    72.01
+   ]
+  ],
+  "audioErrors": [],
+  "audioLowPower": 102,
+  "audioLowPowerMissing": [],
+  "audioLowPowerErrors": [],
+  "originalAudio": 90,
+  "audioMatchesOriginal": 82
+ },
+ "keen-wotb": {
+  "part": "lead",
+  "channel": "ch8",
+  "source": "IMF OPL2 key-on, ch8",
+  "ref": 158,
+  "tick_ms": 1.79,
+  "ghost": 0,
+  "ruled": 0,
+  "chordsInSource": 0,
+  "export": 158,
+  "exportMissing": [],
+  "exportDurWithin1Tick": 158,
+  "exportDurMaxErrTicks": 0.704,
+  "keylog": 158,
+  "keylogCut": 0,
+  "keylogMissing": [],
+  "keyedDurWithin1Tick": 158,
+  "keyedDurMaxErrTicks": 0.705,
+  "audio": 157,
+  "audioMissing": [
+   [
+    34.112,
+    74.0
+   ]
+  ],
+  "audioErrors": [],
+  "audioLowPower": 158,
+  "audioLowPowerMissing": [],
+  "audioLowPowerErrors": []
+ },
+ "park-bounce": {
+  "part": "lead",
+  "channel": "lead",
+  "source": "score-v2 lead track",
+  "ref": 69,
+  "tick_ms": 17.86,
+  "ghost": 0,
+  "ruled": 0,
+  "chordsInSource": 0,
+  "export": 69,
+  "exportMissing": [],
+  "exportDurWithin1Tick": 69,
+  "exportDurMaxErrTicks": 0.002,
+  "audio": 69,
+  "audioMissing": [],
+  "audioErrors": [],
+  "audioLowPower": 69,
+  "audioLowPowerMissing": [],
+  "audioLowPowerErrors": []
+ }
+}

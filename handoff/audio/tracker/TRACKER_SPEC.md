@@ -274,6 +274,60 @@ crossfade; with no `lowPowerBuffer`, it keeps the full mix. `setTempoScale` is i
 `usesWorklet()` stays true (the SFX use the chip worklet). `load(song)` without `frozen` is unchanged; this is the
 fallback.
 
+### 7f. Bass fidelity (Oct 11 2026): `tools/bass_check.py`
+Robert heard bass notes missing in Launch Base. The cause was in the engine, not the songs. Each chip note is an
+`on` event plus an `off` event at `t + l*rd*gate`. When notes are back to back, the previous note's `off` landed at the
+same time as the next note's `on`, or a rounding hair after it (`r` is rounded to 4 decimals and `l` to 3), so the
+emulator keyed the new note off within a sample or two. Whether a note survived depended on float rounding.
+- **Fix:** `chipEvents()` gives every note an id (`on`/`off`/`cents` carry it), and `ChipDSP` ignores an `off`/`cents` whose id is not
+  the channel's current note. Same-pitch repeats retrigger like the original: key-off, then key-on with phase reset
+  and envelope attack from the current level, as on the YM2612/OPL2.
+- **Guards:** the `roles.bass` channel is never lowPower-muted (`lpOff`), never dropped by the voice caps (chip node
+  and node-graph paths), and never put in `lowPowerOff` by `smps_export.py`. The SFX run on their own 6-slot worklet node, so they
+  cannot take the bass chip channel.
+- `keen_export.py` no longer runs on import (it rewrote `songs/keen-wotb.json` when imported).
+- **Check** (`python3 tools/bass_check.py [ids] [--json tools/bass-check.json]`). Reference bass notes come from the source: SMPS driver YM2612
+  `$28` key-on writes plus the A0/A4 frequency (Sega), IMF OPL2 B0 key-on (Keen), and the score's bass track (Park Bounce).
+  They are compared within ±1 source tick and ±50 cents against (a) the exported JSON, (b) the emulator's key-on log
+  (`tools/bass_log.js`; a note counts if it stays keyed ≥ 8 ms), and (c) the real engine's audio with the bass soloed,
+  normal and lowPower (attack plus YIN pitch; octave-tolerant, because voices with a MUL=½ operator really repeat at f/2).
+  For Sega songs, (c) is also run on the ORIGINAL bass (register stream through Nuked OPN2) and compared note for note.
+- **Results:** every reference note is in the export (timing error ≤ 0.013 tick) and keyed in the emulator. Before the fix,
+  the key-on log had 272/302, 442/486, 200/208, and 148/150 (Launch Base, IceCap, Mushroom Hill, Keen). In the audio, Launch Base
+  went from 277 to 302/302, IceCap from 449 to 486/486, Mushroom Hill from 172 to 202/208, and Keen from 139 to 150/150.
+  The 6 Mushroom Hill notes are one-tick same-pitch retriggers that make no audible attack in the original either: the same 6 are
+  undetected in the Nuked OPN2 render, so the match with the original is 208/208. The 11 Keen notes counted as found are
+  ghost notes: the IMF keys them with carrier TL 63, inaudible in the original, and they are equally quiet here.
+  Park Bounce: 160/160.
+- `previews/launchbase-bass-check.mp3`: 30 s of the original bass (Nuked OPN2), 1 s of silence, then 30 s of the fixed engine's bass, RMS-matched.
+  The original runs in real 60 Hz frames, so it drifts slightly against the tracker's uniform grid over 30 s.
+- Frozen songs were re-rendered with the fixed engine. The song JSON did not change, so `songSha1` is the same, and
+  `engineSha1` is new.
+
+### 7g. Lead and drums fidelity (Oct 11 2026): `tools/part_check.py <bass|lead|drums>`
+This generalises `bass_check.py`. **Lead reference:** the SMPS FM key-ons (Launch Base and Mushroom Hill FM1), the driver's PSG note events
+checked against the SN76489 period (IceCap PSG1, with the approved `noteRules` bell fold applied to the expectation; 138 notes),
+IMF ch8 (Keen), and the score (Park Bounce). Pitch is checked to ±50 cents, onset to ±1 tick, and duration (export and emulator
+keyed span) to ±1 tick. **Drums reference:** SMPS DAC triggers (sample id per frame), PSG3 noise notes (mode byte, checked
+against the SN76489 noise register), Keen IMF ch5/ch6, and the Park Bounce score kit (36/38).
+- **Fix: one DAC channel.** `playSample` stops the previous DAC sample when the next starts, as the Genesis has one DAC
+  channel. Before, tails overlapped: 266/472 Launch Base, 299/396 IceCap, and 68/154 Mushroom Hill hits started while the previous
+  sample was still sounding.
+- **Fix: Park Bounce durations** (`faithful.py build_nes`). Lead and bass notes now use the score's exact lengths. Before, they were
+  ×0.9, with a ¼-row minimum and a ¼-row legato floor; 0/69 lead and 0/160 bass durations were within 1 tick, and now all are.
+- **Protected parts:** the engine never voice-caps, steals, or lowPower-mutes the lead, the bass, or the PSG3 noise (hat) channel. `smps_export.py`
+  never puts the lead or bass in `lowPowerOff`.
+- **Debug hooks:** `opts.debugLog` (an array) records each drum event (`dac` id/sample/rate or the `syn` substitute). `ChipDSP.log` now also records
+  the noise mode.
+- **Unchanged and verified:** every lead note and drum hit is in the export and keyed in the emulator. Noise modes match the
+  hardware in all 957 noise hits. In lowPower the DAC is replaced by the synth kit (documented); the engine log shows a
+  substitute for 100% of hits. Park Bounce's 79 score hats remain the documented faithful-arrangement drop.
+- **Audio check limits:** a few lowPower synth hits (IceCap 4, Mushroom Hill 1) are masked by the hit just before; they are logged as played.
+  Mushroom Hill legato lead retriggers have no audible attack in the original either: with the pitch-only check, 102/102
+  are present. The Keen 34.11 s lead note is 3.6 ms long in the IMF.
+- `previews/launchbase-lead-check.mp3` / `launchbase-drums-check.mp3`: 30 s of the original (Nuked OPN2 FM1 / ROM DAC + SN76489 noise), 1 s gap,
+  then 30 s of the fixed engine, RMS-matched.
+
 ### CPU
 Offline render cost on the box (one Xeon core, 40 s of song): normal 1.6-2.4 s (4-6% of a core), lowPower 0.9-1.3 s (2-3%). On a Chromebook-class CPU (roughly 3-4x slower per core), estimate about 15-25% of one core in normal mode and about 9-13% in lowPower. Voice/node counts per selftest: 25-37 normal, 18-21 lowPower.
 

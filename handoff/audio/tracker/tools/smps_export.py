@@ -128,7 +128,7 @@ def build(name,c):
           **({'sfxMap':f['sfxMap']} if f.get('sfxMap') else {}),'instrumentSet':'genesis','arrangement':'faithful-v2',
           'channels':['drums']+chans,'roles':roles,'levels':LEVELS,'voices':voices,
           'channelInfo':{ch:('YM2612 '+ch if ch.startswith('FM') else 'SN76489 '+ch+(' (noise)' if any('nz' in x for x in cells[ch]) else '')) for ch in chans},
-          'lowPowerOff':[ch for ch in chans if ins[ch].get('lowPowerOff')],
+          'lowPowerOff':[ch for ch in chans if ins[ch].get('lowPowerOff') and ch not in (roles.get('bass'),roles.get('lead'))],   # the bass is never lowPower-muted
           'mix':mix,'instruments':ins,'patterns':patterns,'intro':intro,'order':order}
     info={'introTf':S,'introRows':IR,'introSec':round(IR*60/bpm/RPB,2),'loopRows':NR,'loopSec':round(NR*60/bpm/RPB,2),'bpm':round(bpm,3),
           'channels':chans,'notes':{ch:len(cells[ch]) for ch in chans},'dac':len(drums),'voices':sorted(vused),'modNotes':stats['modNotes'],

@@ -56,12 +56,13 @@ window.renderSong = async function (id, dur, o) {
   o = o || {}; await kits();
   const song = await loadJSON('../../songs/' + id + '.json');
   const ctx = new OfflineAudioContext(2, Math.round(dur * 44100), 44100);
-  const eng = TrackerEngine.create(ctx, ctx.destination, { unlocked: true, allowInClass: true, lookahead: dur + 2, timerMs: 1e7, lowPower: !!o.lowPower, skipIntro: !!o.skipIntro, noWorklet: !!o.noWorklet });
+  const eng = TrackerEngine.create(ctx, ctx.destination, { unlocked: true, allowInClass: true, lookahead: dur + 2, timerMs: 1e7, lowPower: !!o.lowPower, skipIntro: !!o.skipIntro, noWorklet: !!o.noWorklet, debugLog: o.log ? (window.__dbg = []) : null });
   const ok = await eng.ready();
-  eng.load(song); eng.play();
+  eng.load(song); if (o.solo) eng.solo(o.solo); eng.play();
+  if (o.sfx) { for (const k of ['s3k']) TrackerEngine.registerSfx(await loadJSON('../../sfx/genesis-' + k + '.json')); for (const [r, t] of o.sfx) eng.playOriginalSfx(r, t, {}); }
   await new Promise(r => setTimeout(r, 300));
   const t0 = performance.now(); const buf = await ctx.startRendering(); const ms = performance.now() - t0;
-  if (o.float) return Object.assign(packFloat(buf), { worklet: ok && eng.usesWorklet(), renderMs: ms, voices: eng.getVoiceCount() });
+  if (o.float) return Object.assign(packFloat(buf), { worklet: ok && eng.usesWorklet(), renderMs: ms, voices: eng.getVoiceCount(), log: o.log ? window.__dbg : null });
   const L = buf.getChannelData(0), R = buf.getChannelData(1), n = L.length, out = new Int16Array(n * 2); let pk = 0;
   for (let i = 0; i < n; i++) { pk = Math.max(pk, Math.abs(L[i]), Math.abs(R[i])); }
   const g = o.normalize ? Math.pow(10, o.normalize / 20) / Math.max(pk, 1e-9) : 1;

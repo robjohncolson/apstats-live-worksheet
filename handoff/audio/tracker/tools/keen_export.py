@@ -83,4 +83,4 @@ def main():
     info={'imfSec':round(L,3),'bpm':round(bpm,3),'rows':NR,'channels':chans,'notes':{c:len(cells[c]) for c in chans},'voices':len(voices),
           'pitchCurves':sum(1 for c in chans for x in cells[c] if 'pc' in x),'BD':hex(bd)}
     print(json.dumps(info)); json.dump(info,open(os.path.join(HERE,'keen-export-report.json'),'w'),indent=1)
-main()
+if __name__ == "__main__": main()

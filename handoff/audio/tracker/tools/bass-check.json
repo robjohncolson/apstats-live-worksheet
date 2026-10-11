@@ -1,0 +1,161 @@
+{
+ "launchbase": {
+  "channel": "FM2",
+  "source": "driver YM2612 key-on writes ($28) + A0/A4 freq, FM2",
+  "ref": 302,
+  "ghostNotesInSource": 0,
+  "tick_ms": 20.41,
+  "exported": 302,
+  "export": 302,
+  "exportMissing": [],
+  "keylog": 302,
+  "keylogCut": 0,
+  "keylogMissing": [],
+  "originalAudio": 302,
+  "originalAudioMissing": [],
+  "audio": 302,
+  "audioMissing": [],
+  "audioErrors": [],
+  "audioMatchesOriginal": 302,
+  "audioLowPower": 302,
+  "audioLowPowerMissing": [],
+  "audioLowPowerErrors": [],
+  "audioWithSfxErrors": []
+ },
+ "icecap": {
+  "channel": "FM1",
+  "source": "driver YM2612 key-on writes ($28) + A0/A4 freq, FM1",
+  "ref": 486,
+  "ghostNotesInSource": 0,
+  "tick_ms": 18.08,
+  "exported": 486,
+  "export": 486,
+  "exportMissing": [],
+  "keylog": 486,
+  "keylogCut": 0,
+  "keylogMissing": [],
+  "originalAudio": 485,
+  "originalAudioMissing": [
+   [
+    82.767,
+    46.01
+   ]
+  ],
+  "audio": 486,
+  "audioMissing": [],
+  "audioErrors": [],
+  "audioMatchesOriginal": 485,
+  "audioLowPower": 486,
+  "audioLowPowerMissing": [],
+  "audioLowPowerErrors": [],
+  "audioWithSfxErrors": []
+ },
+ "mushroomhill": {
+  "channel": "FM2",
+  "source": "driver YM2612 key-on writes ($28) + A0/A4 freq, FM2",
+  "ref": 208,
+  "ghostNotesInSource": 0,
+  "tick_ms": 21.44,
+  "exported": 208,
+  "export": 208,
+  "exportMissing": [],
+  "keylog": 208,
+  "keylogCut": 0,
+  "keylogMissing": [],
+  "originalAudio": 202,
+  "originalAudioMissing": [
+   [
+    4.8,
+    50.01
+   ],
+   [
+    8.917,
+    50.01
+   ],
+   [
+    13.033,
+    50.01
+   ],
+   [
+    17.15,
+    50.01
+   ],
+   [
+    21.267,
+    50.01
+   ],
+   [
+    25.383,
+    50.01
+   ]
+  ],
+  "audio": 202,
+  "audioMissing": [
+   [
+    4.867,
+    50.01
+   ],
+   [
+    8.984,
+    50.01
+   ],
+   [
+    13.1,
+    50.01
+   ],
+   [
+    17.217,
+    50.01
+   ],
+   [
+    21.333,
+    50.01
+   ],
+   [
+    25.45,
+    50.01
+   ]
+  ],
+  "audioErrors": [],
+  "audioMatchesOriginal": 208,
+  "audioLowPower": 208,
+  "audioLowPowerMissing": [],
+  "audioLowPowerErrors": [],
+  "audioWithSfxErrors": []
+ },
+ "keen-wotb": {
+  "channel": "ch1",
+  "source": "IMF OPL2 key-on (B0 bit 5), ch1",
+  "ref": 150,
+  "ghostNotesInSource": 11,
+  "tick_ms": 1.79,
+  "exported": 150,
+  "export": 150,
+  "exportMissing": [],
+  "keylog": 150,
+  "keylogCut": 0,
+  "keylogMissing": [],
+  "audio": 150,
+  "audioMissing": [],
+  "audioErrors": [],
+  "audioLowPower": 150,
+  "audioLowPowerMissing": [],
+  "audioLowPowerErrors": []
+ },
+ "park-bounce": {
+  "channel": "bass",
+  "source": "score-v2 bass track",
+  "ref": 160,
+  "ghostNotesInSource": 0,
+  "tick_ms": 17.86,
+  "exported": 160,
+  "export": 160,
+  "exportMissing": [],
+  "audio": 160,
+  "audioMissing": [],
+  "audioErrors": [],
+  "audioLowPower": 160,
+  "audioLowPowerMissing": [],
+  "audioLowPowerErrors": []
+ }
+}
