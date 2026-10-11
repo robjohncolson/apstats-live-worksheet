@@ -37,7 +37,16 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   let scenery = null, sceneryInk = null, sceneryAtlas = null, sceneryReady = false, sceneryUnlocked = false;
   let arrivalPending = true;
   // TRACE text comes from the trainer's own renderer: what the calculator shows is what the Park shows.
-  const display = createWorldDisplay({ traceLabel: win.TI84ScreenRenderer?.traceLabel });
+  // The real CE screen (same 26x10 geometry, cursor and inverse rows as the trainer) in Pico
+  // paper and ink, drawn at 2x and shown at 0.75 (240x180) above the keypad; a 16 px face keeps
+  // the CE's 26 columns readable at that size. The text lines
+  // stay for the screen reader, the relay and graphs (APSTAT_PARK_CALCULATOR_FEEL_SPEC §A).
+  const PAPER = '#d5c5ae';
+  const SCREEN = { x: 28, w: 240, h: 180 };
+  const screenCanvas = doc.createElement('canvas');
+  const screen = win.TI84ScreenRenderer?.create
+    ? win.TI84ScreenRenderer.create(screenCanvas, { scale: 2, bg: PAPER, fg: '#30263b', invertBg: '#30263b', invertFg: PAPER, font: '16px monospace' }) : null;
+  const display = createWorldDisplay({ traceLabel: win.TI84ScreenRenderer?.traceLabel, screen });
   let level = DEFAULT_LEVEL, challenge = challengeFor(level);
   let calculator = win.TI84Native.create(null, { renderer: display });
   initializeCalculator(calculator, level);
@@ -359,6 +368,22 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     const maxStep = (input.run ? 180 : 90) * dt;
     cameraX += Math.max(-maxStep, Math.min(maxStep, cameraStep));
   }
+  // The calculator screen as a Pico prop: a 2 px ink outline, no bezel, square corners; the
+  // 2nd (blue) / ALPHA (green) flag in the corner uses the keypad's layer colours.
+  function drawScreen(ctx, top, layer) {
+    ctx.save();
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(screenCanvas, SCREEN.x, top, SCREEN.w, SCREEN.h);
+    ctx.strokeStyle = ink; ctx.lineWidth = 2;
+    ctx.strokeRect(SCREEN.x - 1, top - 1, SCREEN.w + 2, SCREEN.h + 2);
+    if (layer === 'second' || layer === 'alpha') {
+      const colour = layer === 'second' ? '#a9daff' : '#b7edab';
+      ctx.fillStyle = colour; ctx.fillRect(SCREEN.x + SCREEN.w - 34, top + 4, 30, 12);
+      ctx.strokeRect(SCREEN.x + SCREEN.w - 34, top + 4, 30, 12);
+      pixelText(ctx, layer === 'second' ? '2ND' : 'A', SCREEN.x + SCREEN.w - 19, top + 7, 7, ink, 'center');
+    }
+    ctx.restore();
+  }
   function text(ctx, value, x, y, size = 14, color = ink, align = 'left') {
     value = String(value).replace(/x\u0304/g, 'xbar').replace(/μ/g, 'mu').replace(/σ/g, 'sigma')
       .replace(/β/g, 'beta').replace(/ρ/g, 'rho').replace(/≠/g, '!=');
@@ -413,6 +438,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     if (performance.now() - inkAt > 1000) {
       ink = win.getComputedStyle(container).color || '#30263b';
       inkAt = performance.now();
+      if (screen) { screen.palette.fg = ink; screen.palette.invertBg = ink; }   // applies at the next key
     }
     ctx.save(); ctx.scale(scale(), scale()); ctx.translate(-Math.round(cameraX), 0);
     ctx.imageSmoothingEnabled = false;
@@ -445,11 +471,13 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
       ? 'No calculator skills are scheduled yet for this class.' : 'Connecting to your class curriculum...';
     text(ctx, caption.slice(0, 106), 28, 76, 10);
     if (caption.length > 106) text(ctx, caption.slice(106), 28, 89, 10);
-    // No bezel or LCD background: live menu text is part of the scenery.
     if (showingBoxplot) text(ctx, 'CALCULATOR RESULT', 28, 103, 10);
-    for (const [i, line] of display.getLines().slice(0, 8).entries()) {
+    const screenTop = showingBoxplot ? 123 : 106;
+    if (screen && display.kind() !== 'graph') drawScreen(ctx, screenTop, layer);
+    else for (const [i, line] of display.getLines().slice(0, 8).entries()) {
+      // Graphs keep the text lines: the trainer's graph screen is an illustration, not the data.
       const label = (line.selected ? '> ' : '  ') + line.text;
-      text(ctx, label, 28, (showingBoxplot ? 123 : 106) + i * 18, label.length > 25 ? 7 : 14, ink);
+      text(ctx, label, 28, screenTop + i * 18, label.length > 25 ? 7 : 14, ink);
     }
     text(ctx, state?.complete ? 'MISSION COMPLETE!' : 'ONE TEAM · ONE GOAL', 350, 112, 17);
     if (state?.complete) drawKeyReward(ctx, atlas);

@@ -5,21 +5,31 @@ function plainTraceLabel(info) {
   return 'x=' + info.x + ' y=' + Number(Number(info.y).toPrecision(5));
 }
 
-// Consume the trainer's render payloads without constructing a green LCD canvas.
+// Consume the trainer's render payloads as text lines (tests, the relay's interpretation,
+// the screen-reader output) and, when a screen is given, also as the real calculator screen.
 // traceLabel: the trainer's TRACE readout (TI84ScreenRenderer.traceLabel), so the Park
 // shows exactly what the calculator shows (Med=2.5, min=3 max<5 n=2).
-export function createWorldDisplay({ traceLabel = plainTraceLabel } = {}) {
+// screen: a TI84ScreenRenderer instance (APSTAT_PARK_CALCULATOR_FEEL_SPEC §A) that draws
+// the same menu/wizard/result/editor geometry as the TI-84 CE on its own canvas. Graphs are
+// not forwarded: the trainer's renderGraph is a static illustration, not the data, so the
+// room keeps the text lines for them (kind() === 'graph').
+export function createWorldDisplay({ traceLabel = plainTraceLabel, screen = null } = {}) {
   let lines = [{ text: 'READY', selected: false }];
+  let kind = 'home';
+  const show = (name, payload) => { kind = name; if (screen && name !== 'graph') screen['render' + name[0].toUpperCase() + name.slice(1)](payload); };
   return {
     getLines: () => lines,
-    renderHome(values) { lines = (values.length ? values : ['READY']).map(text => ({ text })); },
+    kind: () => kind,
+    renderHome(values) { show('home', values); lines = (values.length ? values : ['READY']).map(text => ({ text })); },
     renderMenu(menu) {
+      show('menu', menu);
       const tabs = menu.tabs?.map(tab => tab === menu.activeTab ? '[' + tab + ']' : tab).join('  ');
       const first = Math.max(0, menu.cursorIndex - 6);
       lines = [{ text: tabs || menu.title || 'MENU' },
         ...menu.items.slice(first, first + 7).map((text, i) => ({ text, selected: first + i === menu.cursorIndex }))];
     },
     renderWizard(wizard) {
+      show('wizard', wizard);
       const first = Math.max(0, wizard.cursorIndex - 5);
       lines = [{ text: wizard.title.replace(/-wizard$/, '').replaceAll('-', ' ') },
         ...wizard.fields.slice(first, first + 6).map((field, i) => ({
@@ -28,8 +38,9 @@ export function createWorldDisplay({ traceLabel = plainTraceLabel } = {}) {
           selected: first + i === wizard.cursorIndex,
         }))];
     },
-    renderResult(result) { lines = result.lines.map(text => ({ text })); },
+    renderResult(result) { show('result', result); lines = result.lines.map(text => ({ text })); },
     renderEditor(editor) {
+      show('editor', editor);
       if (editor.dimensions && editor.dimension !== null) {
         lines = [{ text: editor.name + ' dimensions' }, { text: 'Rows: ' + editor.dimensions[0], selected: editor.dimension === 0 },
           { text: 'Columns: ' + editor.dimensions[1], selected: editor.dimension === 1 }, { text: 'Entry: ' + (editor.entry ?? '') }];
@@ -48,6 +59,7 @@ export function createWorldDisplay({ traceLabel = plainTraceLabel } = {}) {
       lines.push({ text: editor.columns[editor.cursorCol] + '(' + (editor.cursorRow + 1) + ')=' + value });
     },
     renderGraph(graph) {
+      show('graph', graph);
       lines = [{ text: graph?.title || 'GRAPH' }];
       if (graph?.type === 'ModBoxplot') {
         for (const key of ['minX', 'Q1', 'Med', 'Q3', 'maxX']) lines.push({ text: key + '=' + graph.stats[key] });
@@ -57,6 +69,6 @@ export function createWorldDisplay({ traceLabel = plainTraceLabel } = {}) {
       }
       if (graph?.traceInfo) lines.push({ text: 'TRACE ' + traceLabel(graph.traceInfo), selected: true });
     },
-    clear() { lines = []; },
+    clear() { kind = 'clear'; lines = []; if (screen) screen.clear(); },
   };
 }
