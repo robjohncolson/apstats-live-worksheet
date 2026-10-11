@@ -45,6 +45,13 @@ export const VIBE_FOR = {
   ui: { name: 'ui', quantize: false },
 };
 
+// The engine schedules rows from a main-thread timer (default: 100 ms ahead, every 25 ms). Inside
+// the park that thread also renders the game, and a stall longer than the lookahead lands a
+// short note's key-on AND key-off in the past, so the note vanishes ("the tracker drops notes
+// here and there", teacher 2026-10-11). Scheduling 400 ms ahead rides out those stalls; mix and
+// mode changes still apply at once (they are gain changes, not scheduled events).
+export const SCHEDULER = { lookahead: 0.4, timerMs: 40 };
+
 export function isSongId(id) { return SONGS.some(s => s.id === id); }
 
 export function storedSong(win) {
@@ -109,7 +116,7 @@ export function createParkMusic(win, {
         await registerSega();
         if (engine || disposed) return engine;
         bus = next;
-        const eng = TrackerEngine.create(bus.ctx, bus.input, { unlocked: true, mode: inClass() ? 'class' : 'solo', lowPower: lowPower() });
+        const eng = TrackerEngine.create(bus.ctx, bus.input, { unlocked: true, mode: inClass() ? 'class' : 'solo', lowPower: lowPower(), ...SCHEDULER });
         try { await eng.ready(); } catch {}
         if (engine || disposed) return engine;
         engine = eng;

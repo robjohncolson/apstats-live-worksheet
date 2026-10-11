@@ -320,6 +320,19 @@ test('park-music: the original Sega kits and SFX are registered before the engin
   music.dispose();
 });
 
+test('park-music: the engine is created with the long lookahead (main-thread stalls must not drop notes)', async () => {
+  win.localStorage.clear();
+  const { SCHEDULER } = await import('./park-music.mjs');
+  assert.ok(SCHEDULER.lookahead >= 0.3 && SCHEDULER.timerMs <= SCHEDULER.lookahead * 1000 / 4);
+  const seen = [];
+  const spied = { ...TrackerEngine, create: (ctx, dest, opts) => { seen.push(opts); return TrackerEngine.create(ctx, dest, opts); } };
+  const music = createParkMusic(win, { sfx: fakeSfx(), loadModules: async () => ({ TrackerEngine: spied, VibeShifter, Palette }), fetchSong, fetchData });
+  await music.pick('park-bounce'); await tick(); await tick();
+  assert.equal(seen.length, 1);
+  assert.equal(seen[0].lookahead, SCHEDULER.lookahead); assert.equal(seen[0].timerMs, SCHEDULER.timerMs);
+  music.dispose();
+});
+
 test('park-music: when the Sega data cannot be fetched the engine still builds (synthesized kit / vibe SFX)', async () => {
   win.localStorage.clear();
   const sfx = fakeSfx();
