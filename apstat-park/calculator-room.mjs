@@ -538,7 +538,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
       ctx.fillStyle = '#d5c5ae'; ctx.fillRect(350, 234, 315, 12);
       ctx.fillStyle = '#479b67'; ctx.fillRect(350, 234, 315 * hold, 12);
     }
-    if (state?.holdAt != null) text(ctx, 'HOLD TO PRESS', 350, 269, 10);
+    if (state?.holdAt != null) text(ctx, 'HOLD TO PRESS . DOWN PRESSES NOW', 350, 269, 10);
     else if (!state?.failure && showingBoxplot && state?.lastPlot?.correct === false && !state.boxValues.length) {
       text(ctx, 'RESULT DID NOT MATCH. TRY AGAIN.', 350, 269, 10);
     }
@@ -672,6 +672,14 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     if (/^[1-9]$/.test(event.key) && !event.repeat && participating && state && answering() && !state.solved
       && !event.target?.closest?.('input, textarea, select, [contenteditable="true"]')) {
       const tile = tilesFor(state.step, level)[Number(event.key) - 1];
+      if (tile) { event.preventDefault(); choose(tile); }
+    }
+    // Stomp (CALCULATOR_FEEL_SPEC §B3): DOWN or the park's action key (X / K) presses the cap
+    // the cat stands on right away; standing still keeps the relay's hold as the patient path.
+    if ((event.key === 'ArrowDown' || /^[xk]$/i.test(event.key)) && !event.repeat && participating && state && !state.solved
+      && !event.target?.closest?.('input, textarea, select, [contenteditable="true"]')) {
+      const key = tileAt(localPose(), state.step, level);
+      const tile = key && tilesFor(state.step, level).find(tile => tile.key === key);
       if (tile) { event.preventDefault(); choose(tile); }
     }
     // Handle brief taps even when keydown and keyup fall between physics steps.

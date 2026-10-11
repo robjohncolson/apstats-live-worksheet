@@ -1,6 +1,6 @@
 # APStat Park calculator activities: real screen, Pico feel (spec)
 
-Status: draft 2026-10-11, for the teacher's review. Nothing built yet.
+Status: 2026-10-11 — A shipped, B1+B2 and B3 built (see B3 for the revision), B4+B5 in progress.
 
 Teacher's brief (2026-10-11): keep the activities as they are ("currently pretty good"), make the screen show the
 same menu geometry as the real TI-84 CE but in Pico colours — not green and black — and make the keypresses more
@@ -61,11 +61,15 @@ park's keypad reads like the one in their hands.
   green. The status text "2ND ACTIVE - CHOOSE A FUNCTION" stays.
 - The depress is cosmetic: `tileAt()` (hit test) and the relay's consensus are unchanged.
 
-### B3. Hold scales with team size (shared module → protocol bump)
-Today `HOLD_MS = 900` for everyone. New: `holdMsFor(teamSize) = teamSize <= 1 ? 300 : 900` in
-`calculator-mission.mjs`, used by `advanceMission` and by the room's hold bar. Solo play becomes a stomp; a team
-still has to agree for 900 ms. Because the module is mirrored, this is `CALCULATOR_PROTOCOL = 10` and a relay push
-(client first, then relay, as always). `ROUND_MS` / `BOXPLOT_MS` unchanged.
+### B3. The stomp (client only — revised while building, 2026-10-11)
+As specified: `holdMsFor(teamSize) = teamSize <= 1 ? 300 : 900` in `calculator-mission.mjs`, protocol 10.
+Dropped, for two reasons found in the code: the relay already runs `advanceMission(state, [member])` per
+student (everyone solves independently; the team agrees on *results*, not on holds), so the hold was never a
+team agreement; and a 300 ms hold fires while a cat walks across a row of caps (~420 ms per cap at walk
+speed), pressing keys nobody meant. Built instead: **DOWN, X or K while standing on a cap presses it now**
+(the same `choose()` path as a click, so the relay sees an ordinary press). Standing still keeps the 900 ms
+hold as the patient path; the status line says `HOLD TO PRESS . DOWN PRESSES NOW`. No shared-module change,
+`CALCULATOR_PROTOCOL` stays 9, no relay push.
 
 ### B4. The timer is a hazard (client only)
 `ROUND_MS` stays 15 s (30 s for the challenge). Instead of only a countdown number, the floor under the keypad
@@ -93,7 +97,7 @@ the water drains over ~400 ms.
 
 1. A (renderer options → display → room blit). Client only. Show the teacher.
 2. B1 + B2 together (keycaps, depress, tint). Client only.
-3. B3 (protocol 10, client + relay push on go).
+3. B3 (stomp; client only).
 4. B4, B5. Client only.
 
 Each step is its own Desk push (bump-build), so the teacher can stop after any of them.
