@@ -16,7 +16,8 @@
    "patches": {
     "path": "/workspace/sonic/out/fm-patches.json",
     "key": "sonic3-launchbase"
-   }
+   },
+   "gainTrim": 1.758
   },
   "note": "was frozen at the approved prototype; now rebuilt faithfully from SMPS (approved lead/bass lines verified identical, generated arp/pad removed)",
   "faithful": {
@@ -37,63 +38,17 @@
    },
    "lowPowerOff": [
     "FM4"
-   ]
-  }
- },
- "starlight": {
-  "src": "/workspace/sonic/out/sonic1-starlight.js",
-  "opts": {
-   "id": "starlight",
-   "title": "Star Light Zone",
-   "source": "Sonic 1 REV01 (1991), SMPS data",
-   "palette": {
-    "bg": "#0b0f2e",
-    "fg": "#eef0ff",
-    "accent": "#ffd34d",
-    "accent2": "#d45bd8",
-    "hud": "#1a1f52"
-   },
-   "platform": "genesis",
-   "patches": {
-    "path": "/workspace/sonic/out/fm-patches.json",
-    "key": "sonic1-starlight"
-   }
-  },
-  "faithful": {
-   "job": "sonic1-starlight",
-   "keep": [
-    "FM1",
-    "FM2",
-    "FM3",
-    "FM4",
-    "FM5",
-    "PSG1",
-    "PSG2"
    ],
-   "roles": {
-    "lead": "FM5",
-    "bass": "FM2",
-    "arp": "FM3",
-    "pad": "FM4"
-   },
-   "lowPowerOff": [
-    "FM4",
-    "PSG2"
-   ],
-   "volumes": "smps",
-   "tweak": {
-    "FM1": {
-     "indexMul": 0.45,
-     "modSusMul": 0.6
-    },
-    "FM3": {
-     "indexMul": 0.45,
-     "modSusMul": 0.6
-    },
-    "FM4": {
-     "indexMul": 0.45,
-     "modSusMul": 0.6
-    }
+   "drumKit": "s3",
+   "sfxMap": {
+    "coin": "s3k:33",
+    "jump": "s3k:62",
+    "key": "s3k:63",
+    "door": "s3k:B1",
+    "stageClear": "s3k:B8",
+    "error": "s3k:37",
+    "ui": "s3k:5B",
+    "land": "s3k:36"
    }
   }
  },
@@ -114,7 +69,8 @@
    "patches": {
     "path": "/workspace/sonic/out/fm-patches.json",
     "key": "sonic3-icecap"
-   }
+   },
+   "gainTrim": 1.445
   },
   "faithful": {
    "job": "sonic3-icecap",
@@ -144,6 +100,17 @@
       "v": 0.35
      }
     ]
+   },
+   "drumKit": "s3",
+   "sfxMap": {
+    "coin": "s3k:33",
+    "jump": "s3k:62",
+    "key": "s3k:63",
+    "door": "s3k:B1",
+    "stageClear": "s3k:B8",
+    "error": "s3k:37",
+    "ui": "s3k:5B",
+    "land": "s3k:36"
    }
   }
  },
@@ -165,7 +132,8 @@
    "patches": {
     "path": "/workspace/sonic/out/fm-patches.json",
     "key": "sk-mushroomhill"
-   }
+   },
+   "gainTrim": 2.427
   },
   "faithful": {
    "job": "sk-mushroomhill",
@@ -207,6 +175,30 @@
    "trimDb": {
     "FM3": -8,
     "FM4": -8
+   },
+   "drumKit": "sk",
+   "sfxMap": {
+    "coin": "s3k:33",
+    "jump": "s3k:62",
+    "key": "s3k:63",
+    "door": "s3k:B1",
+    "stageClear": "s3k:B8",
+    "error": "s3k:37",
+    "ui": "s3k:5B",
+    "land": "s3k:36"
+   },
+   "approvedMix": {
+    "_why": "original: FM3/FM4 chords already ~8 dB under lead FM1; approved: short (55% gate), a bit lower, softer",
+    "FM3": {
+     "vol": -3,
+     "gate": 0.55,
+     "bright": 0.6
+    },
+    "FM4": {
+     "vol": -3,
+     "gate": 0.55,
+     "bright": 0.6
+    }
    }
   }
  },
@@ -228,7 +220,8 @@
    "platform": "opl2",
    "patches": {
     "path": "/workspace/parkmusic/keen5/opl-patches.json"
-   }
+   },
+   "gainTrim": 6.166
   },
   "faithful": {
    "src": "/workspace/parkmusic/keen5/wotb_q31.json",

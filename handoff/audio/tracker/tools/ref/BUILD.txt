@@ -1,0 +1,3 @@
+Reference renderer build (box): gcc -O2 -Ivendor -o ym_ref ym_ref.c vendor/emu/cores/ym3438.c -lm
+vendor/ = Nuked OPN2 (YM3438/YM2612) core as shipped in libvgm (github.com/ValleyBell/libvgm), LGPL-2.1+, unmodified.
+Keen reference: pyopl (DOSBox OPL core) driven by the raw IMF register stream.

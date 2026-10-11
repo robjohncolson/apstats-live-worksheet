@@ -1,0 +1,242 @@
+{
+ "s1:B5": {
+  "name": "Ring",
+  "before": {
+   "spectral": 0.446,
+   "chroma": 0.701,
+   "onset": 0.964,
+   "levelDb": 26.45
+  },
+  "after": {
+   "spectral": 0.841,
+   "chroma": 0.733,
+   "onset": 0.957,
+   "levelDb": 6.25
+  }
+ },
+ "s1:A0": {
+  "name": "Jump",
+  "before": {
+   "spectral": 0.987,
+   "chroma": 0.645,
+   "onset": 0.975,
+   "levelDb": 1.1
+  },
+  "after": {
+   "spectral": 0.995,
+   "chroma": 1.0,
+   "onset": 0.994,
+   "levelDb": 0.48
+  }
+ },
+ "s1:A1": {
+  "name": "Lamppost (checkpoint)",
+  "before": {
+   "spectral": 0.541,
+   "chroma": 0.758,
+   "onset": 0.948,
+   "levelDb": 22.93
+  },
+  "after": {
+   "spectral": 0.835,
+   "chroma": 0.952,
+   "onset": 0.997,
+   "levelDb": 1.06
+  }
+ },
+ "s1:CC": {
+  "name": "Spring",
+  "before": {
+   "spectral": 0.162,
+   "chroma": 0.22,
+   "onset": 0.755,
+   "levelDb": 45.74
+  },
+  "after": {
+   "spectral": 0.896,
+   "chroma": 0.976,
+   "onset": 0.982,
+   "levelDb": 10.23
+  }
+ },
+ "s1:CF": {
+  "name": "Signpost",
+  "before": {
+   "spectral": 0.631,
+   "chroma": 0.099,
+   "onset": 0.647,
+   "levelDb": 16.5
+  },
+  "after": {
+   "spectral": 0.926,
+   "chroma": 0.256,
+   "onset": 0.812,
+   "levelDb": 6.69
+  }
+ },
+ "s1:A6": {
+  "name": "Hit spikes (hurt)",
+  "before": {
+   "spectral": 0.355,
+   "chroma": 0.228,
+   "onset": 0.785,
+   "levelDb": 31.47
+  },
+  "after": {
+   "spectral": 0.895,
+   "chroma": 0.926,
+   "onset": 0.958,
+   "levelDb": 2.94
+  }
+ },
+ "s1:CD": {
+  "name": "Switch",
+  "before": {
+   "spectral": 0.979,
+   "chroma": 1.0,
+   "onset": 1.0,
+   "levelDb": 3.24
+  },
+  "after": {
+   "spectral": 0.979,
+   "chroma": 1.0,
+   "onset": 1.0,
+   "levelDb": 3.24
+  }
+ },
+ "s1:A4": {
+  "name": "Skid",
+  "before": {
+   "spectral": 0.988,
+   "chroma": 0.966,
+   "onset": 0.722,
+   "levelDb": 1.24
+  },
+  "after": {
+   "spectral": 0.991,
+   "chroma": 0.949,
+   "onset": 0.845,
+   "levelDb": 0.51
+  }
+ },
+ "s3k:33": {
+  "name": "Ring (right)",
+  "before": {
+   "spectral": 0.481,
+   "chroma": 0.782,
+   "onset": 0.962,
+   "levelDb": 22.4
+  },
+  "after": {
+   "spectral": 0.893,
+   "chroma": 0.789,
+   "onset": 0.923,
+   "levelDb": 7.86
+  }
+ },
+ "s3k:62": {
+  "name": "Jump",
+  "before": {
+   "spectral": 0.987,
+   "chroma": 0.645,
+   "onset": 0.975,
+   "levelDb": 1.1
+  },
+  "after": {
+   "spectral": 0.994,
+   "chroma": 1.0,
+   "onset": 0.997,
+   "levelDb": 0.38
+  }
+ },
+ "s3k:63": {
+  "name": "Starpost (checkpoint)",
+  "before": {
+   "spectral": 0.53,
+   "chroma": 0.799,
+   "onset": 0.967,
+   "levelDb": 27.38
+  },
+  "after": {
+   "spectral": 0.828,
+   "chroma": 0.948,
+   "onset": 0.999,
+   "levelDb": 1.16
+  }
+ },
+ "s3k:B1": {
+  "name": "Spring",
+  "before": {
+   "spectral": 0.252,
+   "chroma": 0.862,
+   "onset": 0.966,
+   "levelDb": 28.16
+  },
+  "after": {
+   "spectral": 0.907,
+   "chroma": 0.977,
+   "onset": 0.998,
+   "levelDb": 4.13
+  }
+ },
+ "s3k:B8": {
+  "name": "Signpost",
+  "before": {
+   "spectral": 0.964,
+   "chroma": 0.981,
+   "onset": 0.98,
+   "levelDb": 2.92
+  },
+  "after": {
+   "spectral": 0.982,
+   "chroma": 1.0,
+   "onset": 0.974,
+   "levelDb": 1.55
+  }
+ },
+ "s3k:37": {
+  "name": "Spike hit (hurt)",
+  "before": {
+   "spectral": 0.416,
+   "chroma": 0.562,
+   "onset": 0.848,
+   "levelDb": 25.97
+  },
+  "after": {
+   "spectral": 0.897,
+   "chroma": 0.939,
+   "onset": 0.979,
+   "levelDb": 2.87
+  }
+ },
+ "s3k:5B": {
+  "name": "Switch / blip (matches S1 Switch)",
+  "before": {
+   "spectral": 0.977,
+   "chroma": 0.999,
+   "onset": 1.0,
+   "levelDb": 5.81
+  },
+  "after": {
+   "spectral": 0.992,
+   "chroma": 1.0,
+   "onset": 1.0,
+   "levelDb": 4.04
+  }
+ },
+ "s3k:36": {
+  "name": "Skid",
+  "before": {
+   "spectral": 0.988,
+   "chroma": 0.966,
+   "onset": 0.722,
+   "levelDb": 1.24
+  },
+  "after": {
+   "spectral": 0.99,
+   "chroma": 0.93,
+   "onset": 0.687,
+   "levelDb": 0.51
+  }
+ }
+}

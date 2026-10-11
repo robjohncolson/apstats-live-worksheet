@@ -92,7 +92,7 @@ def build_genesis(name,c):
         r=round((a-S0)/fpr,3); l=round(min(b,S0+P)-a)/fpr
         if kind in ('dac','dacx'):
             d=dac_drum(var,p)
-            if d: drums.append({'r':r,'n':d,'v':1.0 if d!='H' else 0.6,**({'f':TOM_HZ.get(p,160)} if d=='T' else {})})
+            if d: drums.append({'r':r,'n':d,'v':1.0 if d!='H' else 0.6,'d':'%02X'%p,**({'f':TOM_HZ.get(p,160)} if d=='T' else {})})
         elif p=='noise': drums.append({'r':r,'n':'H','v':0.45})
         elif p is not None:
             v=1.0
@@ -181,7 +181,7 @@ def finish(name,o,bpm,RPB,NR,keep,notes,drums,ins,roles,plat,dropped,f):
     chans=(['drums'] if drums else [])+list(keep)
     song={'id':o['id'],'title':o['title'],'source':o.get('source',''),'bpm':round(bpm,4),'rowsPerBeat':RPB,'rowsPerPattern':RPP,
           'ticksPerRow':6 if RPB==4 else 4,'swing':0,'key':o.get('key','C'),'scale':o.get('scale','major'),'loop':True,
-          'palette':o['palette'],'instrumentSet':plat,'arrangement':'faithful','channels':chans,'roles':roles,
+          'palette':o['palette'],**({'drumKit':f['drumKit']} if f.get('drumKit') else {}),**({'sfxMap':f['sfxMap']} if f.get('sfxMap') else {}),'instrumentSet':plat,'arrangement':'faithful','channels':chans,'roles':roles,
           'channelInfo':{ch:ins[ch].get('from',ch) for ch in keep},
           'mix':{ch:{**{'vol':0,'gate':1,'bright':1,'oct':0,'mute':False,'solo':False},**f.get('mix',{}).get(ch,{})} for ch in chans},'instruments':ins,'patterns':pats,'order':order}
     lp=[ch for ch in keep if ins[ch].get('lowPowerOff')]

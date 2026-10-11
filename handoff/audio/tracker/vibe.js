@@ -61,6 +61,13 @@ function create(ctx, dest, engine) {
     var def = SFX[name]; if (!def) return false;
     var s = cur(), bpm = s.bpm || 120, t32 = 60 / bpm / 8, mx = (s.mix && s.mix.sfx) || {};
     var vel = (opt.vel != null ? opt.vel : 1) * Math.pow(10, (mx.vol || 0) / 20);
+    // Genesis songs: original SFX via song.sfxMap ("set:id"), native pitch unless mix.sfx.transpose; mix.sfx.original=false -> synth
+    var ref = s.sfxMap && s.sfxMap[name];
+    if (ref && mx.original !== false && engine && engine.hasOriginalSfx && engine.hasOriginalSfx(ref)) {
+      var semis = Math.max(-12, Math.min(12, mx.pitch || 0));
+      if (mx.transpose) { var kk = KEYS[s.key] || 0; if (kk > 6) kk -= 12; semis = Math.max(-12, Math.min(12, semis + kk)); }
+      return engine.playOriginalSfx(ref, startTime(opt.quantize != null ? opt.quantize : quantize), { semis: semis, vol: vel });
+    }
     var notes = sfxNotes(def, s.key || 'C', s.scale || 'major', Math.max(-12, Math.min(12, mx.pitch || 0))), si = 0;
     var q = opt.quantize != null ? opt.quantize : quantize, t = startTime(q);
     var tones = {}, gains = {};

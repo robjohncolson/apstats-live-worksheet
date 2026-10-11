@@ -27,11 +27,18 @@ button.alt{background:var(--park-accent2);color:var(--park-fg)} label{margin-rig
  <small>Solo: click a radio; double-click it to clear. vol = dB trim · gate = note length × · bright = FM modulator index × (no effect on PSG/NES pulse) · oct = octave shift. Export saves these in the song's "mix" block; drop the file into songs\ and rebuild demo.html.</small></section>
 <section><b>Vibe shifter SFX</b> <label><input type="checkbox" id="quant" checked> quantize to next 1/16</label><br><span id="sfx"></span>
  <br><small>SFX use the song's key/scale and instrument timbres; with no song playing they fall back to C major / square.</small></section>
+<section><b>Original Sega SFX</b> <small>(extracted from the ROMs; Genesis songs map game SFX to these via song.sfxMap)</small><br>
+ <label><input type="checkbox" id="sfxorig" checked> use original SFX</label>
+ <label><input type="checkbox" id="sfxtrans"> transpose to song key (±6 st)</label>
+ <div id="sfxmap" style="margin:6px 0"></div>
+ <b>Browser</b> <select id="sfxset"></select> <input id="sfxfilter" placeholder="filter" size="12">
+ <div id="sfxlist" style="max-height:220px;overflow:auto;margin-top:4px"></div></section>
 </main>
 <script>window.__selftest={errors:[],rows:0,beats:0,bars:0};window.addEventListener("error",function(e){window.__selftest.errors.push(String(e.message));document.title="JSERROR "+e.message;});</script>
 <script>/*ENGINE*/</script>
 <script>/*VIBE*/</script>
 <script>/*PALETTE*/</script>
+<script>/*SEGADATA*/</script>
 <script>var SONGS = /*SONGS*/; var SONG = SONGS[Object.keys(SONGS)[0]];</script>
 <script>
 (function(){
@@ -62,7 +69,7 @@ button.alt{background:var(--park-accent2);color:var(--park-fg)} label{margin-rig
     Palette.apply(SONG.palette, { ms: 600 });
   }
   function switchSong(id){
-    SONG = SONGS[id]; showSong(); buildStems();
+    SONG = SONGS[id]; showSong(); buildStems(); buildSfxMap();
     if (!engine) return;
     var was = engine.isPlaying(); engine.stop(0.15);
     setTimeout(function(){ engine.load(SONG); vibe.setSong(SONG); applyToggles(); if (was) engine.play(); }, was ? 200 : 0);
@@ -105,6 +112,33 @@ button.alt{background:var(--park-accent2);color:var(--park-fg)} label{margin-rig
     tr.querySelectorAll('input').forEach(function(inp){ inp.addEventListener('input', function(){ sx[inp.dataset.k] = +inp.value; inp.nextElementSibling.textContent = inp.value; }); });
     $('mixer').appendChild(tr);
   }
+  function sfxRefs(){ var out = []; Object.keys(TrackerEngine.sfxSets).forEach(function(st){ var S = TrackerEngine.sfxSets[st].sfx; Object.keys(S).forEach(function(id){ out.push([st + ':' + id, st + ' ' + id + ' ' + S[id].name]); }); }); return out; }
+  function buildSfxMap(){
+    var box = $('sfxmap'), refs = sfxRefs(); box.innerHTML = '';
+    SONG.mix = SONG.mix || {}; var sx = SONG.mix.sfx = SONG.mix.sfx || {};
+    $('sfxorig').checked = sx.original !== false; $('sfxtrans').checked = !!sx.transpose;
+    Object.keys(VibeShifter.SFX).forEach(function(n){
+      var cur = (SONG.sfxMap || {})[n] || '', l = document.createElement('label');
+      l.innerHTML = n + ' <select data-n="' + n + '"><option value="">(synth)</option>' + refs.map(function(r){ return '<option value="' + r[0] + '"' + (r[0] === cur ? ' selected' : '') + '>' + r[1] + '</option>'; }).join('') + '</select> ';
+      var b = document.createElement('button'); b.className = 'alt'; b.textContent = '▶'; b.onclick = function(){ ensure(); vibe.playSfx(n); }; l.appendChild(b);
+      l.querySelector('select').addEventListener('change', function(e){ SONG.sfxMap = SONG.sfxMap || {}; if (e.target.value) SONG.sfxMap[n] = e.target.value; else delete SONG.sfxMap[n]; });
+      l.style.display = 'inline-block'; l.style.margin = '2px 10px 2px 0'; box.appendChild(l);
+    });
+  }
+  function buildSfxList(){
+    var st = $('sfxset').value, S = (TrackerEngine.sfxSets[st] || { sfx: {} }).sfx, q = $('sfxfilter').value.toLowerCase(), box = $('sfxlist'); box.innerHTML = '';
+    Object.keys(S).forEach(function(id){
+      var nm = id + ' ' + S[id].name; if (q && nm.toLowerCase().indexOf(q) < 0) return;
+      var b = document.createElement('button'); b.className = 'alt'; b.textContent = '▶ ' + nm + ' (' + (S[id].frames / 60).toFixed(1) + ' s)';
+      b.onclick = function(){ ensure(); engine.playOriginalSfx(st + ':' + id, ctx.currentTime + 0.02, { vol: Math.pow(10, ((SONG.mix && SONG.mix.sfx && SONG.mix.sfx.vol) || 0) / 20) }); };
+      box.appendChild(b);
+    });
+  }
+  Object.keys(TrackerEngine.sfxSets).forEach(function(st){ var o = document.createElement('option'); o.value = st; o.textContent = st + ' (' + Object.keys(TrackerEngine.sfxSets[st].sfx).length + ')'; $('sfxset').appendChild(o); });
+  $('sfxset').addEventListener('change', buildSfxList); $('sfxfilter').addEventListener('input', buildSfxList);
+  $('sfxorig').addEventListener('change', function(e){ SONG.mix = SONG.mix || {}; SONG.mix.sfx = SONG.mix.sfx || {}; SONG.mix.sfx.original = e.target.checked; });
+  $('sfxtrans').addEventListener('change', function(e){ SONG.mix = SONG.mix || {}; SONG.mix.sfx = SONG.mix.sfx || {}; SONG.mix.sfx.transpose = e.target.checked; });
+  buildSfxMap(); buildSfxList();
   $('export').onclick = function(){
     (SONG.channels || []).forEach(mixFor);
     var blob = new Blob([JSON.stringify(SONG)], { type: 'application/json' }), a = document.createElement('a');

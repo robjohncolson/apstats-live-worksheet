@@ -1,0 +1,92 @@
+{
+ "icecap": {
+  "before": {
+   "loop": {
+    "spectral": 0.861,
+    "chroma": 0.759,
+    "onset": 0.65,
+    "levelDb": 11.05
+   }
+  },
+  "after": {
+   "loop": {
+    "spectral": 0.985,
+    "chroma": 0.918,
+    "onset": 0.736,
+    "levelDb": 1.2
+   },
+   "start": {
+    "spectral": 0.985,
+    "chroma": 0.918,
+    "onset": 0.736,
+    "levelDb": 1.2
+   }
+  }
+ },
+ "launchbase": {
+  "before": {
+   "loop": {
+    "spectral": 0.647,
+    "chroma": 0.837,
+    "onset": 0.448,
+    "levelDb": 19.04
+   }
+  },
+  "after": {
+   "loop": {
+    "spectral": 0.964,
+    "chroma": 0.934,
+    "onset": 0.814,
+    "levelDb": 1.46
+   },
+   "start": {
+    "spectral": 0.981,
+    "chroma": 0.942,
+    "onset": 0.821,
+    "levelDb": 1.47
+   }
+  }
+ },
+ "mushroomhill": {
+  "before": {
+   "loop": {
+    "spectral": 0.754,
+    "chroma": 0.725,
+    "onset": 0.683,
+    "levelDb": 15.05
+   }
+  },
+  "after": {
+   "loop": {
+    "spectral": 0.973,
+    "chroma": 0.959,
+    "onset": 0.889,
+    "levelDb": 2.63
+   },
+   "start": {
+    "spectral": 0.973,
+    "chroma": 0.96,
+    "onset": 0.869,
+    "levelDb": 2.59
+   }
+  }
+ },
+ "keen-wotb": {
+  "before": {
+   "start": {
+    "spectral": 0.71,
+    "chroma": 0.741,
+    "onset": 0.011,
+    "levelDb": 8.49
+   }
+  },
+  "after": {
+   "start": {
+    "spectral": 0.89,
+    "chroma": 0.984,
+    "onset": 0.994,
+    "levelDb": 1.36
+   }
+  }
+ }
+}

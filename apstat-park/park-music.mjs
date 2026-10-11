@@ -1,6 +1,8 @@
 // APStat Park music: Grok's tracker engine (handoff/audio/tracker, synced into ./music/ by
-// scripts/sync-park-music.mjs) playing the six faithful songs, the "vibe shifter" that re-voices
-// the park's sound effects to the chosen song, and the song's colour palette on <html>.
+// scripts/sync-park-music.mjs) playing the five faithful songs, the "vibe shifter" that re-voices
+// the park's sound effects to the chosen song, and the song's colour palette on <html>. The
+// Genesis songs use the original DAC drum kits and Sega sound effects (TRACKER_SPEC §7c): those
+// are registered on the engine before it is created, and the chip AudioWorklet is awaited.
 //
 // Teacher 2026-10-10: music is available to students all the time (no "finish all work" unlock);
 // one song picker per student (solo play), persisted per device; switching songs re-voices the
@@ -21,12 +23,14 @@ export const SONGS = [
   { id: ORIGINAL, title: 'ORIGINAL SOUNDS' },
   { id: 'park-bounce', title: 'PARK BOUNCE' },
   { id: 'launchbase', title: 'LAUNCH BASE ZONE' },
-  { id: 'starlight', title: 'STAR LIGHT ZONE' },
   { id: 'icecap', title: 'ICECAP ZONE' },
   { id: 'mushroomhill', title: 'MUSHROOM HILL ZONE' },
   { id: 'keen-wotb', title: 'WEDNESDAY ON THE BEACH' },
 ];
 export const PALETTE_VARS = ['bg', 'fg', 'accent', 'accent2', 'hud'].map(k => '--park-' + k);
+// Original Sega data under ./music/ (synced from the handoff): DAC drum kits, then the S3K SFX set.
+export const SEGA_KITS = ['samples/s3.json', 'samples/sk.json'];
+export const SEGA_SFX = ['sfx/genesis-s3k.json'];
 
 // Park sound -> vibe SFX script (vibe.js SFX table). `quantize` snaps the sound to the song's
 // next 1/16 while music plays (TRACKER_SPEC §4): feedback that must be instant stays unquantized.
@@ -51,6 +55,7 @@ export function createParkMusic(win, {
   sfx = win?.sfx || null,
   loadModules = defaultModules,
   fetchSong = defaultFetchSong,
+  fetchData = defaultFetchData,   // (path) -> the JSON under ./music/
   classMode = () => false,   // true while the room is live and the teacher has not allowed sound
 } = {}) {
   const doc = win?.document;
@@ -72,8 +77,25 @@ export function createParkMusic(win, {
     if (!songs.has(id)) songs.set(id, fetchSong(id, V).catch(err => { songs.delete(id); throw err; }));
     return songs.get(id);
   }
+  // The original Sega data (DAC kits, S3K sound effects), registered on the engine module once
+  // per window, before the engine exists. A fetch that fails is retried on the next build; the
+  // engine then plays the synthesized kit / vibe SFX for that song.
+  let segaP = null;
+  function registerSega() {
+    if (!segaP) segaP = (async () => {
+      const { TrackerEngine } = await modules();
+      const [kits, sets] = await Promise.all([
+        Promise.all(SEGA_KITS.map(p => fetchData(p, V))), Promise.all(SEGA_SFX.map(p => fetchData(p, V))),
+      ]);
+      for (const kit of kits) TrackerEngine.registerKit(kit);
+      for (const set of sets) TrackerEngine.registerSfx(set);
+      return true;
+    })().catch(() => { segaP = null; return false; });
+    return segaP;
+  }
   // The engine needs the Desk's audio graph, which exists only after a user gesture. Built as soon
   // as a bus exists (a pick click is a gesture), so the sound effects are re-voiced before PLAY.
+  // The chip AudioWorklet (engine.ready) is awaited so the first play() uses it.
   let building = null;
   async function ensureEngine() {
     if (engine) return engine;
@@ -84,9 +106,13 @@ export function createParkMusic(win, {
     building = (async () => {
       try {
         const { TrackerEngine, VibeShifter } = await modules();
+        await registerSega();
         if (engine || disposed) return engine;
         bus = next;
-        engine = TrackerEngine.create(bus.ctx, bus.input, { unlocked: true, mode: inClass() ? 'class' : 'solo', lowPower: lowPower() });
+        const eng = TrackerEngine.create(bus.ctx, bus.input, { unlocked: true, mode: inClass() ? 'class' : 'solo', lowPower: lowPower() });
+        try { await eng.ready(); } catch {}
+        if (engine || disposed) return engine;
+        engine = eng;
         vibe = VibeShifter.create(bus.ctx, bus.input, engine);
         if (song && !loadSong(song)) song = null;
         return engine;
@@ -258,8 +284,10 @@ async function defaultModules(v) {
   return { TrackerEngine: t.default, VibeShifter: s.default, Palette: p.default };
 }
 
-async function defaultFetchSong(id, v) {
-  const res = await fetch(new URL('./music/songs/' + id + '.json' + v, import.meta.url));
-  if (!res.ok) throw new Error('song ' + id + ': HTTP ' + res.status);
+async function defaultFetchSong(id, v) { return defaultFetchData('songs/' + id + '.json', v); }
+
+async function defaultFetchData(path, v) {
+  const res = await fetch(new URL('./music/' + path + v, import.meta.url));
+  if (!res.ok) throw new Error('music/' + path + ': HTTP ' + res.status);
   return res.json();
 }

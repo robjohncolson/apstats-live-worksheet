@@ -1,0 +1,44 @@
+<!doctype html><meta charset="utf-8"><title>tracker offline render</title>
+<script src="../../tracker-engine.js"></script>
+<script>
+// Renders songs with the REAL engine (tracker-engine.js incl. the AudioWorklet chip synth) into an OfflineAudioContext.
+async function loadJSON(p) { return (await fetch(p)).json(); }
+async function kits() { for (const k of ['s3', 'sk']) TrackerEngine.registerKit(await loadJSON('../../samples/' + k + '.json')); }
+window.renderSfx = async function (refs, gap, o) {
+  o = o || {}; await kits();
+  for (const k of ['s3k']) TrackerEngine.registerSfx(await loadJSON('../../sfx/genesis-' + k + '.json'));
+  let T = 0.1; const at = [];
+  for (const r of refs) { const fx = TrackerEngine.sfxRef(r); at.push([r, T, fx.name]); T += fx.frames / 60 + gap; }
+  const ctx = new OfflineAudioContext(2, Math.round((T + 0.5) * 44100), 44100);
+  const eng = TrackerEngine.create(ctx, ctx.destination, { unlocked: true, allowInClass: true, lowPower: !!o.lowPower, noWorklet: !!o.noWorklet });
+  const ok = await eng.ready();
+  for (const [r, t] of at) eng.playOriginalSfx(r, t, {});
+  await new Promise(r => setTimeout(r, 300));
+  const buf = await ctx.startRendering();
+  return Object.assign(pack(buf, o), { worklet: ok, at: at });
+};
+function pack(buf, o) {
+  const L = buf.getChannelData(0), R = buf.getChannelData(1), n = L.length, out = new Int16Array(n * 2); let pk = 0;
+  for (let i = 0; i < n; i++) { pk = Math.max(pk, Math.abs(L[i]), Math.abs(R[i])); }
+  const g = o.normalize ? Math.pow(10, o.normalize / 20) / Math.max(pk, 1e-9) : 1;
+  for (let i = 0; i < n; i++) { out[2 * i] = Math.max(-32767, Math.min(32767, Math.round(L[i] * g * 32767))); out[2 * i + 1] = Math.max(-32767, Math.min(32767, Math.round(R[i] * g * 32767))); }
+  const b = new Uint8Array(out.buffer); let s = ''; for (let i = 0; i < b.length; i += 0x8000) s += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000));
+  return { pcm: btoa(s), peakDb: 20 * Math.log10(pk) };
+}
+window.renderSong = async function (id, dur, o) {
+  o = o || {}; await kits();
+  const song = await loadJSON('../../songs/' + id + '.json');
+  const ctx = new OfflineAudioContext(2, Math.round(dur * 44100), 44100);
+  const eng = TrackerEngine.create(ctx, ctx.destination, { unlocked: true, allowInClass: true, lookahead: dur + 2, timerMs: 1e7, lowPower: !!o.lowPower, skipIntro: !!o.skipIntro, noWorklet: !!o.noWorklet });
+  const ok = await eng.ready();
+  eng.load(song); eng.play();
+  await new Promise(r => setTimeout(r, 300));
+  const t0 = performance.now(); const buf = await ctx.startRendering(); const ms = performance.now() - t0;
+  const L = buf.getChannelData(0), R = buf.getChannelData(1), n = L.length, out = new Int16Array(n * 2); let pk = 0;
+  for (let i = 0; i < n; i++) { pk = Math.max(pk, Math.abs(L[i]), Math.abs(R[i])); }
+  const g = o.normalize ? Math.pow(10, o.normalize / 20) / Math.max(pk, 1e-9) : 1;
+  for (let i = 0; i < n; i++) { out[2 * i] = Math.max(-32767, Math.min(32767, Math.round(L[i] * g * 32767))); out[2 * i + 1] = Math.max(-32767, Math.min(32767, Math.round(R[i] * g * 32767))); }
+  const b = new Uint8Array(out.buffer); let s = ''; for (let i = 0; i < b.length; i += 0x8000) s += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000));
+  return { pcm: btoa(s), peakDb: 20 * Math.log10(pk), worklet: ok && eng.usesWorklet(), renderMs: ms, voices: eng.getVoiceCount() };
+};
+</script>

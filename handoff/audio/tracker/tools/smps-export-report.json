@@ -1,0 +1,112 @@
+{
+ "launchbase": {
+  "introTf": 2281,
+  "introRows": 381,
+  "introSec": 46.67,
+  "loopRows": 464,
+  "loopSec": 56.83,
+  "bpm": 122.461,
+  "channels": [
+   "FM1",
+   "FM2",
+   "FM3",
+   "FM4",
+   "FM5",
+   "PSG1",
+   "PSG2",
+   "PSG3"
+  ],
+  "notes": {
+   "FM1": 127,
+   "FM2": 302,
+   "FM3": 44,
+   "FM4": 44,
+   "FM5": 79,
+   "PSG1": 112,
+   "PSG2": 111,
+   "PSG3": 767
+  },
+  "dac": 472,
+  "voices": [
+   0,
+   1,
+   2,
+   3
+  ],
+  "modNotes": 391,
+  "patterns": 52,
+  "unknownOps": []
+ },
+ "icecap": {
+  "introTf": 0,
+  "introRows": 0,
+  "introSec": 0.0,
+  "loopRows": 768,
+  "loopSec": 83.31,
+  "bpm": 138.281,
+  "channels": [
+   "FM1",
+   "FM2",
+   "FM3",
+   "FM4",
+   "FM5",
+   "PSG1",
+   "PSG2",
+   "PSG3"
+  ],
+  "notes": {
+   "FM1": 486,
+   "FM2": 90,
+   "FM3": 149,
+   "FM4": 420,
+   "FM5": 408,
+   "PSG1": 204,
+   "PSG2": 204,
+   "PSG3": 190
+  },
+  "dac": 396,
+  "voices": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5
+  ],
+  "modNotes": 413,
+  "patterns": 31,
+  "unknownOps": []
+ },
+ "mushroomhill": {
+  "introTf": 141,
+  "introRows": 36,
+  "introSec": 3.09,
+  "loopRows": 480,
+  "loopSec": 41.17,
+  "bpm": 116.602,
+  "channels": [
+   "FM1",
+   "FM2",
+   "FM3",
+   "FM4",
+   "FM5"
+  ],
+  "notes": {
+   "FM1": 102,
+   "FM2": 208,
+   "FM3": 124,
+   "FM4": 124,
+   "FM5": 102
+  },
+  "dac": 154,
+  "voices": [
+   0,
+   1,
+   2,
+   3
+  ],
+  "modNotes": 70,
+  "patterns": 18,
+  "unknownOps": []
+ }
+}

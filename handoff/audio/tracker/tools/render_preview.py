@@ -113,12 +113,24 @@ def drum_sound(D,n,vel,src_cache,cell=None):
 D=INS['drums']; D.setdefault('hat',{'noise':'white','filter':'highpass','tone':8000,'decay':0.03,'vol':0.0})
 SRC={'S':filt(noise(D['snare'].get('noise','white'),N)[:N+SR],D['snare']),'H':filt(noise(D['hat'].get('noise','white'),N)[:N+SR],D['hat']),'used':[]}
 ROLES=song.get('roles',{})
+import base64
+sys.path.insert(0,os.path.join(ROOT,'tools','sega')); import sfx_render
+KIT=json.load(open(os.path.join(ROOT,'samples',song['drumKit']+'.json'))) if song.get('drumKit') else None
+_kc={}
+def kit_sample(d,vel):
+    m=KIT['ids'].get(d) if KIT else None
+    if not m: return None
+    if d not in _kc:
+        S=KIT['samples'][m['sample']]; x=np.frombuffer(base64.b64decode(S['pcm']),np.uint8).astype(float)/128-1
+        n=int(len(x)*SR/m['rate']); _kc[d]=np.interp(np.arange(n)*m['rate']/SR,np.arange(len(x)),x)
+    return _kc[d]*D.get('sampleVol',0.55)*vel
 def drums():
     out=np.zeros(N)
     for t,x in cells.get('drums',[]):
         i0=int(t*SR)
         if i0>=N: continue
-        s=drum_sound(D,x['n'],x.get('v',1),SRC,x); j=min(N,i0+len(s)); out[i0:j]+=s[:j-i0]
+        s=kit_sample(x['d'],x.get('v',1)) if x.get('d') else None
+        if s is None: s=drum_sound(D,x['n'],x.get('v',1),SRC,x); j=min(N,i0+len(s)); out[i0:j]+=s[:j-i0]
     return out
 def deg2midi(deg,oct):
     sc=SC[song['scale']]; n=len(sc); o=deg//n; i=deg%n; k=KEYS[song['key']]; k=k-12 if k>6 else k
@@ -139,6 +151,10 @@ def sfx_notes(d):            # mirrors vibe.js sfxNotes: top note C4..C6 (bass C
     return [None if n is None else n+off for n in notes]
 def sfx(name,t):
     """mirrors vibe.js: one platform voice per timbre (engine.sfxVoice), drums via engine.sfxDrum"""
+    ref=song.get('sfxMap',{}).get(name); mx=song.get('mix',{}).get('sfx',{})
+    if ref and mx.get('original',True):
+        st,i=ref.split(':'); fx=json.load(open(os.path.join(ROOT,'sfx','genesis-%s.json'%st)))['sfx'][i]
+        return sfx_render.render(fx,SR,max(-12,min(12,mx.get('pitch',0))),10**(mx.get('vol',0)/20)).astype(float)
     d=SFX[name]; t32=60/song['bpm']/8; out=np.zeros(int(4*SR)); per={}; tt0=t
     NT=sfx_notes(d)
     for (deg,ln,kind),mid in zip(d['steps'],NT):

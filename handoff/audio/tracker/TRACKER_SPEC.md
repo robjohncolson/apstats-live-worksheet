@@ -1,5 +1,7 @@
 # APStat Park tracker engine — handoff spec (prototype, lives in /workspace/tracker on the box)
 
+> **Oct 10 2026, 8:52 PM:** Star Light Zone was removed at Robert's request. No remaining song used the Sonic 1 drum kit (samples/s1.json) or the Sonic 1 SFX (sfx/genesis-s1.json), so both were removed too. The removed files are in /workspace/tracker-prev/starlight-removed/ (box) and handoff\audio\tracker\_removed\ (Athena). Star Light / S1 mentions below are history only. The S1 timpani rates and S1 driver support in smps_drv.py are kept for reference.
+
 Files: `tracker-engine.js`, `vibe.js`, `palette.js` (classic scripts; each exposes a global and `module.exports`),
 `songs/launchbase.json`, `demo.html` (single file, modules + song inlined, works from file://), `arrange.py`
 (score → tracker song), `render_preview.py` (offline numpy mirror of the engine), `build_demo.py`.
@@ -99,10 +101,9 @@ on `<html>`. Game CSS should only read these vars. Launch Base palette: bg `#1d2
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | park-bounce (nes) | Park Bounce (hook A) | C major | 140.00 | 4 | 20 | 34.3 s | #fff4dc | #3a2e2a | #ff8a3d | #8fd3c8 | #ffd9b0 |
 | launchbase (genesis) | Launch Base Zone Act 1 | G minor | 122.46 | 4 | 29 | 56.8 s | #1d2440 | #f4ead8 | #f08a24 | #5f86b3 | #2a3a5c |
-| starlight (genesis) | Star Light Zone | B major | 125.00 | 4 | 22 | 42.2 s | #0b0f2e | #eef0ff | #ffd34d | #d45bd8 | #1a1f52 |
 | icecap (genesis) | IceCap Zone Act 1 | G minor | 138.28 | 4 | 48 | 83.3 s | #dff1ff | #14324f | #2bb6e8 | #7a5fd1 | #b9dcf5 |
 | mushroomhill (genesis) | Mushroom Hill Zone Act 1 | A# major | 116.60 | 6 | 20 | 41.2 s | #1e3a22 | #f6efd6 | #e9472f | #f2a23a | #2f5a32 |
-| keen-wotb (opl2) | Wednesday On the Beach (Commander Keen 5) | G mixolydian | 156.00 | 4 | 36 | 55.4 s | #f3dfb2 | #2b2a3a | #18a5a0 | #f2704a | #e8c48a |
+| keen-wotb (opl2) | Wednesday On the Beach (Commander Keen 5) | G mixolydian | 155.32 | 4 | 36 | 55.6 s | #f3dfb2 | #2b2a3a | #18a5a0 | #f2704a | #e8c48a |
 
 Palette moods: Park Bounce = Pico Park pastel (cream, warm orange, mint); Launch Base = dusky indigo + LBZ orange; Starlight = night sky with yellow city lights and a neon-magenta sign; IceCap = icy white-blue with cyan and purple; Mushroom Hill = forest green with autumn red and orange; Keen beach = sand, teal water, sunset coral.
 
@@ -165,8 +166,79 @@ lowPower: at most 5 melodic voices (channels flagged lowPowerOff are muted); no 
 Voice budget (oscillator/buffer sources per play(), measured headless Oct 10): park-bounce 7 (7), launchbase 22 (17 lowPower), starlight 24 (17), icecap 22 (17), mushroomhill 17 (15), keen 22 (18). Plus 1-4 short-lived nodes per SFX.
 Levels: engine master default 0.27 and sfxOut 0.48. Headless browser peaks with SFX: -6.6 to -11.3 dBFS; offline mirror worst case (all channels + SFX) -3.8 dBFS (park-bounce).
 
+## 7c. Original Sega SFX and DAC drum samples (Oct 10 2026)
+These were extracted from Robert's own ROMs (Sonic 1 REV01, Sonic 3, Sonic & Knuckles) for use in APStat Park; Robert reports he has Sega's permission. Tools are in tools/sega/ and need the ROMs in /workspace/sonic/.
+
+**SFX data** (`tools/sega/sfx_extract.py` -> `sfx/genesis-s1.json` 48 effects $A0-$CF, 52 KB; `sfx/genesis-s3k.json` 173 effects $33-$DF, 459 KB).
+- S1 SoundIndex @0x78B44: big-endian, track pointers relative to the header.
+- S3K: the SFX pointer table is in the S&K Kosinski driver data (@0xF7760, +0x37C), $33-$DF, with the data in z80 bank 0x1F. 166 of 169 effects are byte-identical to Sonic 3's table @0xE767C, so one set covers S3 and S&K.
+- An SMPS interpreter runs each effect at 60 frames/s: notes, ties, note fill, loops/calls/jumps, transposition, E6/EC volume, E1 detune, F0 modulation (applied in FM fnum / PSG period units), voice changes, and F3 noise mode. Output per channel: `{kind: fm|psg|noise, ch, inst (2-op voice from the effect's own 25-byte SMPS patch), gainDbPerVol, ev: [[frame, midi|null, vol, keyon]]}`.
+- Known approximations: PSG volume envelopes (F5) become a fixed short decay; S3K F1/F4 modulation envelopes are on/off; FM is the engine's 2-op mapping, not 4-op.
+- Playback: `engine.playOriginalSfx("s3k:33", t, {semis, vol})` uses the same makeVoice FM factory (one short-lived voice per channel), plus a square osc for PSG and a noise buffer for noise. Check renders: `tools/sega/sfx_render.py` -> sfx/wav/<set>/<id>_<name>.wav (box only, about 65 MB).
+- Identification: by fingerprint against S1 (note-interval / voice / length match plus byte matches of track data), with the S3K ID order anchored by those matches. Identified:
+  - S1: A0 jump, A1 lamppost, A3 death, A4 skid, A6 spike hurt, AA splash, B5 ring, BE roll, C1 break item, C3 giant ring, C6 ring loss, CC spring, CD switch, CF signpost.
+  - S3K: 33/34 ring R/L, 35 death, 36 skid, 37 spike hit, 39 splash, 3B drown, 3C roll, 3D break, 62 jump, 63 starpost, A9 air ding, AB spindash, AC continue, B1 spring (byte match with S1 spring), B2 error, B3 big ring, B4 explode, B8 signpost, B9 ring loss, 5B blip (matches S1 switch).
+  - Not in the SFX tables: the extra-life jingle (it is a music track).
+
+**DAC samples** (`tools/sega/dac_extract.py` -> samples/<kit>/*.wav, 8-bit mono at native rate, plus samples/<kit>.json with base64 PCM for the engine). DPCM decoding: 16-entry delta table, start 0x80, high nibble first.
+- s1: 3 samples (kick, snare, timpani), 7 IDs, 14 KB WAV. Kosinski DAC driver @0x72E7C, table @z80 0xD6. Rate: fs = 2*3579545/(288+26*pitch).
+- s3: 47 unique samples, 68 IDs ($81-$C4), 165 KB WAV. Per-bank playlists at the start of banks 0x1C/0x1D/0x1E (pointer table -> 5-byte entries: rate, length, pointer). Rate: fs = 2*3579545/(297+26*rate).
+- sk: 39 unique samples, 61 IDs, 138 KB WAV (S&K bank 0x1E; IDs whose data doesn't decode cleanly there are left out).
+- The rate formulas follow the SMPSPlay cycle model; small pitch error is possible.
+- Songs: `song.drumKit` = s1 (Star Light), s3 (Launch Base, IceCap), sk (Mushroom Hill). Drum cells carry the original DAC ID in `d`. The engine plays the sample (one BufferSource per hit, gain `instruments.drums.sampleVol`, default 0.55). PSG-noise hats and lowPower use the synthesized kit.
+
+**Vibe mapping**: `song.sfxMap = {coin, jump, key, door, stageClear, error, ui, land: "set:id"}`.
+
+| game SFX | Star Light (s1) | Launch Base / IceCap / Mushroom Hill (s3k) |
+|---|---|---|
+| coin | B5 Ring | 33 Ring |
+| jump | A0 Jump | 62 Jump |
+| key | A1 Lamppost | 63 Starpost |
+| door | CC Spring | B1 Spring |
+| stageClear | CF Signpost | B8 Signpost |
+| error | A6 Hit spikes | 37 Spike hit |
+| ui | CD Switch | 5B Blip/switch |
+| land | A4 Skid | 36 Skid |
+
+Original SFX play at native pitch. `mix.sfx.pitch` (±12 st) and `mix.sfx.vol` still apply. `mix.sfx.transpose = true` adds the nearest key offset (±6); the total is capped at ±12. `mix.sfx.original = false` falls back to the synthesized vibe SFX. Songs without sfxMap (Park Bounce, Keen) are unchanged.
+demo.html has an "Original Sega SFX" section: per-game-SFX dropdowns to reassign (saved in sfxMap by Export), original/transpose toggles, and a filterable browser to audition all 221 effects. demo.html is about 1.1 MB because the kits and SFX sets are inlined. previews/sega-sfx-sampler.mp3 (47 s) plays the 8 mapped effects plus death, break, splash, ring loss, and roll/spindash for each set, with 0.6 s silent gaps.
+
+## 7d. Accuracy pass (Oct 10 2026, night): song formats `smps-v2` / `opl-v2`
+All five original songs are now rebuilt straight from the sound-driver data, not from per-channel averages:
+- **Sega (`python3 tools/smps_export.py`)**: tools/sega/smps_drv.py emulates the SMPS driver frame by frame (S1 68k and S3/S&K Z80): tempo, intro then loop (the intro plays once; `song.intro` lists the intro patterns, `order` is the loop), per-note volume (E6/EC/E5), F0 modulation and S3K modulation envelopes, the ROM PSG volume envelopes (F5), note fill (E8), ties (E7), rests, detune (E1), transposition, pan (E0: L/R/centre per note, `pb`) and noise mode. Each note cell carries `vo` (voice id into `song.voices`, the full 25-byte SMPS voice: alg, fb, 4 operators with DT/MUL/TL/RS/AR/AM/D1R/D2R/D1L/RR), `va` (volume added to the carriers' TL), `pc` (pitch curve in cents per 60 Hz frame) and for PSG `vc` (attenuation per frame = volume + envelope) and `nz`.
+- **Keen (`python3 tools/keen_export.py`)**: every IMF key-on with the full OPL2 register snapshot (AM/VIB/EGT/KSR/MUL, KSL/TL, AR/DR, SL/RR, FB/CON; waveform select is never enabled by the song, so all sine), exact 560 Hz timing on the 36-bar grid (155.32 BPM from the IMF length), all 8 used OPL channels including the melodic-mode drum channels 5/6.
+- **Synthesis (normal power)**: one AudioWorklet (`ChipDSP` in tracker-engine.js) renders every chip channel sample by sample: YM2612 with all 8 algorithms, op1 feedback, DT, MUL, the chip EG (rate tables, attenuation counter, SL, key scaling) and the YM2612 output stage (9-bit carrier truncation, channel clamp, the model-1 DAC "ladder" step and 7 Hz AC coupling); SN76489 (2 dB steps, 10-bit periods, 16-bit LFSR, taps 0/3); OPL2 2-op with KSL, AM (tremolo 3.7 Hz), VIB (6.1 Hz), EG type (sustained vs percussive), KSR and feedback. Hard YM pan (centre = full level both sides).
+- **lowPower** (or no AudioWorklet): the older node-graph voices (2-op approximation of each voice, per-note volume kept); fewer voices.
+- **DAC drums**: original samples at the driver rates (S1: fs = 2*3579545/(288+26*p); S3K: 2*3579545/(297+26*r)). S1 timpani: $83 7231 Hz (pitch $1B), $88 9470 Hz ($12, +4.6 st), $89 8697 Hz ($15, +3.1 st), $8A 7040 Hz ($1C, -0.5 st), $8B 6857 Hz ($1D, -0.9 st).
+- **Original SFX (`python3 tools/sega/sfx_v2.py`)**: each effect is run through the same driver emulation (PSG envelopes, modulation, fill, detune, pan, per-note volume) into `fx.v2`, played on a separate 6-slot chip worklet (3 FM + 3 PSG; a newer effect on a slot takes it over, as in the game) at the same chip level as the music. lowPower keeps the older 2-op frame player.
+- **Approved mix choices** (songs.config.json `faithful.approvedMix`, on top of the accurate volumes, written into the song `mix` block):
+  - (removed song) Star Light: the accurate data contradicts the earlier assumption. In the original, FM1 is about 6 dB LOUDER than the lead FM5, and FM3/FM4 are level with it. To keep Robert's approved sound: FM1 -16 dB, FM3/FM4 -11 dB, brightness 0.6.
+  - Mushroom Hill: in the original the FM3/FM4 chords already sit about 8 dB under the lead. Approved: gate 0.55, -3 dB, brightness 0.6.
+  - IceCap: the original PSG1 bell is at near-full PSG volume (attenuation 1) at G6. Approved: notes >= E6 drop an octave and play at 0.35 (-9 dB).
+  - Launch Base, Keen: no deviations (pure original data).
+- `song.gainTrim` evens out loudness between songs (accurate levels differ by up to 13 dB); it also scales that song's SFX.
+
+### Reference comparison (tools/ref/)
+The reference is the SMPS driver's YM2612 register stream played through **Nuked OPN2** (libvgm's ym3438.c, `ym_ref`, YM2612 mode) plus an exact SN76489 model and the DAC samples (`compare.py <id> [--before]`). For Keen it is the IMF stream played through **pyopl** (DOSBox OPL2), in `compare_keen.py`. For SFX, run `compare_sfx.py <refs>`; there "after" is the real engine in headless Chrome. Metrics (`metrics.py`): spectral = mean framewise log-spectrum correlation, chroma = pitch-class correlation, onset = onset-envelope correlation (below 5 kHz). Results are in tools/ref/similarity.json and sfx/similarity-sfx.json. Before = the previous 2-op faithful arrangement. After = the v2 engine with the approved mix.
+
+| song | before spectral / chroma / onset | after spectral / chroma / onset (segment) |
+|---|---|---|
+| IceCap | 0.861 / 0.759 / 0.650 | 0.985 / 0.918 / 0.736 (no intro; loops to the start) |
+| Launch Base | 0.647 / 0.837 / 0.448 | 0.964 / 0.934 / 0.814 (loop); 0.981 / 0.942 / 0.821 (from start) |
+| Mushroom Hill | 0.754 / 0.725 / 0.683 | 0.973 / 0.959 / 0.889 (loop); 0.973 / 0.960 / 0.869 (from start) |
+| Keen | 0.710 / 0.741 / 0.011 | 0.890 / 0.984 / 0.994 (from start) |
+
+Per FM channel the levels match the reference within about 1 dB.
+
+### Offline renders = the real engine
+`node tools/offline/render_offline.js <id> 40 out.wav [--normalize=-4] [--lowpower]` and `... --sfx s1:B5,s3k:33 out.wav` render with tracker-engine.js itself in headless Chrome (OfflineAudioContext, including the AudioWorklet). previews/*.mp3 and the SFX sampler come from this. render_preview.py is now legacy, and tools/render_v2.py + render_chip.js (same ChipDSP code in Node) feed the comparisons.
+
+### CPU
+Offline render cost on the box (one Xeon core, 40 s of song): normal 1.6-2.4 s (4-6% of a core), lowPower 0.9-1.3 s (2-3%). On a Chromebook-class CPU (roughly 3-4x slower per core), estimate about 15-25% of one core in normal mode and about 9-13% in lowPower. Voice/node counts per selftest: 25-37 normal, 18-21 lowPower.
+
 ## 8. Adding songs (tools/)
-- `python3 tools/faithful.py [id ...]` builds songs/<id>.json from the `faithful` block in songs.config.json (genesis: job + keep + roles + lowPowerOff; opl2: src, patches, bpm, bars, keep, roles). This is the current build for all six songs; build_songs.py/arrange.py is the old stem arranger.
+- Current builds: `python3 tools/smps_export.py [id]` (Sega v2), `python3 tools/keen_export.py` (Keen v2), `python3 tools/sega/sfx_extract.py && python3 tools/sega/sfx_v2.py` (SFX). Then run build_demo.py.
+- (older) `python3 tools/faithful.py [id ...]` builds songs/<id>.json from the `faithful` block in songs.config.json (genesis: job + keep + roles + lowPowerOff; opl2: src, patches, bpm, bars, keep, roles). This is the current build for all six songs; build_songs.py/arrange.py is the old stem arranger.
 - tools/arrange.py SRC OUT [--opts JSON | --opts-file F]: SRC is a `var SCORE = {...}` .js or a .json with {bpm, loopSeconds, tracks{lead,bass,arp,drum}}. Options: id, title, source, palette{bg,fg,accent,accent2,hud}, rowsPerBeat (4|6), key/scale override, leadJson/padJson {path, channel} (an exported channel line replaces the lead or becomes the pad), swing, leadDuty, vibBeats, trillBeats. Paths are never hardcoded.
 - tools/songs.config.json holds every song's source, palette, platform, and `faithful` block. Run `python3 tools/faithful.py` (build_songs.py is the old stem arranger; running it would overwrite the faithful songs).
 - `python3 tools/build_demo.py` inlines the engine, vibe, palette, and all songs into demo.html (open via file://; `?selftest` runs every song for 3 s and writes the timing results to document.title).
@@ -177,5 +249,8 @@ Levels: engine master default 0.27 and sfxOut 0.48. Headless browser peaks with 
 - Offline renderer uses naive (aliased) pulses; the browser uses band-limited PeriodicWaves, so timbre differs slightly.
 - Swing, slide and `loop:false` are implemented but untested by ear; tempo changes take effect at the next row.
 - Envelope de-click ramps 2 ms to zero at each note; fast legato lines may sound slightly detached (by design: punchier).
-- Channel levels are role-based, not decoded from SMPS header volumes / E6 volume commands or IMF TL changes, and SMPS modulation (vibrato) and PSG envelopes are not reproduced.
-- Songs loop from the original loop point; the one-time intros before the loop are not included.
+- (fixed Oct 10 night) Per-note volumes, modulation, PSG envelopes and intros are now reproduced (section 7d).
+- Notes are placed on fractional rows; the driver's frame timing is rounded to 1/10000 row. Onset similarity per channel is 0.65-0.85, versus about 0.99 for Keen, mostly from the reference's frame-exact timing and the YM2612 EG timing.
+- OPL2 is not chip-exact (a float model with the data-sheet EG times). The reference (pyopl) also aliases, so Keen spectral similarity tops out around 0.89.
+- DAC rates come from the SMPSPlay cycle model. The reference uses the same rates, so they are not independently verified.
+- Overlapping SFX on the same slot can be cut by the earlier effect's key-off (rare).
