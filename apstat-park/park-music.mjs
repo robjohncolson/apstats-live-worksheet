@@ -48,9 +48,10 @@ export const VIBE_FOR = {
 // The engine schedules rows from a main-thread timer (default: 100 ms ahead, every 25 ms). Inside
 // the park that thread also renders the game, and a stall longer than the lookahead lands a
 // short note's key-on AND key-off in the past, so the note vanishes ("the tracker drops notes
-// here and there", teacher 2026-10-11). Scheduling 400 ms ahead rides out those stalls; mix and
-// mode changes still apply at once (they are gain changes, not scheduled events).
-export const SCHEDULER = { lookahead: 0.4, timerMs: 40 };
+// here and there", teacher 2026-10-11). Scheduling well ahead rides out those stalls; mix and
+// mode changes still apply at once (they are gain changes, not scheduled events). 800 ms since the
+// teacher heard the 400 ms version fix most of it (2026-10-11).
+export const SCHEDULER = { lookahead: 0.8, timerMs: 50 };
 
 export function isSongId(id) { return SONGS.some(s => s.id === id); }
 
