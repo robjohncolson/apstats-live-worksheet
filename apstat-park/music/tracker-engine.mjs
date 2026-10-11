@@ -179,7 +179,11 @@ function chipDSPFactory() {
       var t = this.t + s / sr;
       while (this.ei < ev.length && ev[this.ei].t <= t) {
         var e = ev[this.ei++], c = chs[e.ch];
-        if (e.type === 'on') this.keyOn(c, e);
+        if (this.log) this.log.push([t, e.ch, e.type, e.f || 0, e.id || 0, e.nz != null ? e.nz : null]);   // optional key-on/off log (tools/bass_check.py)
+        // e.id ties an 'off'/'cents' to its own note: a late key-off of the previous note (same timestamp or a rounding
+        // hair after the next key-on) must not cut the next note -- that dropped back-to-back bass notes.
+        if (e.type === 'on') { this.keyOn(c, e); c.nid = e.id || 0; }
+        else if (e.id && e.id !== c.nid) { /* stale event of an earlier note on this channel */ }
         else if (e.type === 'off') { if (c.kind !== 'psg') this.keyOff(c); else c.on = false; }
         else if (e.type === 'cents') c.cents = e.v;
       }
@@ -249,18 +253,19 @@ function chipDSPFactory() {
 var ChipDSP = chipDSPFactory();
 
 // chip events for one tracker cell (shared by the live AudioWorklet path and tools/render_chip.js)
+var chipNoteId = 0;
 function chipEvents(song, c, k, cell, t, rd, m, ts) {
-  m = m || {}; ts = ts || 1;
+  m = m || {}; ts = ts || 1; var id = ++chipNoteId;
   var gate = cell.l * rd * (m.gate != null ? m.gate : 1), f = 440 * Math.pow(2, (cell.n + 12 * (m.oct || 0) - 69) / 12), ev = [];
   var vadd = cell.v != null && cell.v > 0 ? -20 * Math.log10(cell.v) / 0.75 : 0;
   if (/^PSG/.test(c)) {
-    ev.push({ t: t, ch: k, type: 'on', f: f, gate: gate, vc: cell.vc, nz: cell.nz, ts: ts, lvl: cell.v != null ? cell.v : 1 });
+    ev.push({ t: t, ch: k, type: 'on', id: id, f: f, gate: gate, vc: cell.vc, nz: cell.nz, ts: ts, lvl: cell.v != null ? cell.v : 1 });
   } else {
     var V = song.voices[cell.vo]; if (!V) return ev;
-    ev.push({ t: t, ch: k, type: 'on', f: f, gate: gate, V: V, va: (cell.va || 0) + vadd, bright: m.bright != null ? m.bright : 1, depth: song.oplDepth, kpm: song.oplK });
+    ev.push({ t: t, ch: k, type: 'on', id: id, f: f, gate: gate, V: V, va: (cell.va || 0) + vadd, bright: m.bright != null ? m.bright : 1, depth: song.oplDepth, kpm: song.oplK });
   }
-  if (cell.pc) for (var i = 0; i < cell.pc.length; i++) { var tc = t + cell.pc[i][0] / 60 * ts; if (tc < t + gate) ev.push({ t: tc, ch: k, type: 'cents', v: cell.pc[i][1] }); }
-  ev.push({ t: t + gate, ch: k, type: 'off' });
+  if (cell.pc) for (var i = 0; i < cell.pc.length; i++) { var tc = t + cell.pc[i][0] / 60 * ts; if (tc < t + gate) ev.push({ t: tc, ch: k, type: 'cents', id: id, v: cell.pc[i][1] }); }
+  ev.push({ t: t + gate, ch: k, type: 'off', id: id });
   return ev;
 }
 var NES_DEFAULT = {"drums": {"kick": {"wave": "tri4", "from": 180, "to": 50, "decay": 0.09, "vol": 0.8}, "snare": {"noise": "lfsrLong", "filter": "none", "tone": 0, "decay": 0.11, "vol": 0.32, "steps": true}, "hat": {"noise": "lfsrShort", "filter": "highpass", "tone": 6000, "decay": 0.03, "vol": 0.14, "steps": true}}, "bass": {"wave": "tri4", "adsr": [0.001, 0.05, 1.0, 0.02], "vol": 0.6}, "pad": {"wave": "pulse", "duty": 0.5, "adsr": [0.06, 0.3, 0.6, 0.25], "vol": 0.08, "steps": true, "lowPowerOff": true}, "arp": {"wave": "pulse", "duty": 0.25, "adsr": [0.001, 0.08, 0.6, 0.03], "vol": 0.09, "steps": true}, "lead": {"wave": "pulse", "duty": 0.125, "adsr": [0.001, 0.12, 0.6, 0.05], "vol": 0.2, "steps": true}};
@@ -300,7 +305,9 @@ function create(ctx, dest, opts) {
     CHS.forEach(function (c) { muted[c] = !!mixOf(c).mute; });
     soloCh = solo;
   }
-  function lpOff(c) { if (song && song.lowPowerOff && song.lowPowerOff.indexOf(c) >= 0) return true; var i = song && song.instruments[c]; return !!(i && i.lowPowerOff !== undefined ? i.lowPowerOff : (c === 'pad' && i)); }
+  // protected parts: bass, lead and the PSG noise (hat) channel are never capped, stolen or lowPower-muted
+  function isBass(c) { return !!(song && ((song.roles && (song.roles.bass === c || song.roles.lead === c)) || (/^PSG3$/.test(c) && usedNoise(c)))); }
+  function lpOff(c) { if (isBass(c)) return false; if (song && song.lowPowerOff && song.lowPowerOff.indexOf(c) >= 0) return true; var i = song && song.instruments[c]; return !!(i && i.lowPowerOff !== undefined ? i.lowPowerOff : (c === 'pad' && i)); }
   var patRows = {}, phase = 'loop';
   function seq() { return phase === 'intro' ? song.intro : song.order; }
   var song = null, pats = null, voices = null, playing = false, timer = null;
@@ -315,12 +322,17 @@ function create(ctx, dest, opts) {
     for (var i = 0; i < bin.length; i++) d[i] = (bin.charCodeAt(i) - 128) / 128;
     return (kitBufs[k] = b);
   }
+  var dacLast = null, dbg = opts.debugLog || null;   // debugLog: optional array of drum events (tools/part_check.py)
   function playSample(kitName, id, t, vel, out) {
     var K = KITS[kitName], m = K && K.ids[id]; if (!m) return false;
     var src = ctx.createBufferSource(), g = ctx.createGain(), buf = kitBuffer(kitName, m.sample);
     src.buffer = buf; src.playbackRate.value = m.rate / buf.sampleRate;
     g.gain.value = (song && song.levels && song.levels.dac ? song.levels.dac : ((song && song.instruments.drums && song.instruments.drums.sampleVol) || 0.55)) * vel;
     src.connect(g); g.connect(out); src.start(t); src.onended = function () { g.disconnect(); };
+    // one DAC channel, as on the Genesis: a new sample cuts the previous one (rows are scheduled in time order)
+    if (dacLast && dacLast.t < t) { try { dacLast.src.stop(t); } catch (e) {} }
+    dacLast = { src: src, t: t };
+    if (dbg) dbg.push(['dac', t, id, m.sample, m.rate]);
     return true;
   }
 
@@ -711,7 +723,7 @@ function create(ctx, dest, opts) {
   function buildVoices() {
     var v = {}, lp = lowPower, n = 0, mel = 0;
     if (isV2() && !lp && chipReady) {                                  // one AudioWorkletNode renders every chip channel
-      var cc = CHS.filter(function (c) { return c !== 'drums' && mel++ < MAX_VOICES + 1; });
+      var cc = CHS.filter(function (c) { return c !== 'drums' && (isBass(c) || mel++ < MAX_VOICES + 1); });
       var kinds = cc.map(function (c) { return { name: c, kind: /^PSG/.test(c) ? 'psg' : (song.format === 'opl-v2' ? 'opl' : 'fm') }; });
       chipNode = new AudioWorkletNode(ctx, 'chipsynth-v2', { numberOfInputs: 0, numberOfOutputs: cc.length, outputChannelCount: cc.map(function () { return 1; }), processorOptions: { chans: kinds, levels: song.levels || {} } });
       cc.forEach(function (c, k) {
@@ -732,7 +744,7 @@ function create(ctx, dest, opts) {
         v[c] = buildV2(c, lp); n += v[c].nodes.length; mel++; return;
       }
       if (lp && lpOff(c)) return;                                     // lowPower: fewer voices (doubles / inner harmony first)
-      if (mel >= (lp ? LP_VOICES : MAX_VOICES)) return;               // hard voice cap
+      if (mel >= (lp ? LP_VOICES : MAX_VOICES) && !isBass(c)) return;   // hard voice cap (never the bass)
       if (!song.mix) song.mix = {};
       if (!song.mix[c]) song.mix[c] = {};
       v[c] = makeVoice(song.instruments[c] || NES_DEFAULT[c] || NES_DEFAULT.arp, chan[c], lp && platform() !== 'nes', song.mix[c]);
@@ -797,6 +809,7 @@ function create(ctx, dest, opts) {
     var vel = cell.v != null ? cell.v : 1;
     // original DAC sample (per-song kit); lowPower and PSG-noise hats keep the synthesized kit
     if (cell.d && song.drumKit && !lowPower && KITS[song.drumKit] && playSample(song.drumKit, cell.d, t, vel, chan.drums)) return;
+    if (dbg) dbg.push(['syn', t, cell.n, cell.d || null]);
     drumHit(voices.drums, cell.n, t, vel, cell);
   }
   // ---------- original SMPS SFX: frame data played through the same Genesis FM voice factory ----------
