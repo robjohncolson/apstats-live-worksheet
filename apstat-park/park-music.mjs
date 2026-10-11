@@ -130,7 +130,20 @@ export function createParkMusic(win, {
   }
   // A malformed song must never throw into a scene: false = unusable.
   function loadSong(s) {
-    try { engine.load(s); vibe.setSong(s); return true; } catch { loadFailed = s.id; return false; }
+    try { engine.load(s); vibe.setSong(s); } catch { loadFailed = s.id; return false; }
+    prime(s);
+    return true;
+  }
+  // Warm-up (teacher 2026-10-11, "it needs time to load the samples"): the engine base64-decodes
+  // each DAC drum sample the first time a row hits it and builds the chip worklet node at play(),
+  // both synchronously inside the first scheduling tick, so a Genesis song's opening rows were
+  // already in the past when their events reached the audio thread. A silent zero-length play at
+  // load time does that work now, off the critical path: play() ramps the master up at t, stop(0)
+  // ramps it back to 0 within 1 ms and kills the voices 20 ms later, before the first row (t + 50 ms).
+  function prime(s) {
+    if (!s.drumKit && s.format !== 'smps-v2' && s.format !== 'opl-v2') return;
+    if (inClass() || !engine.isUnlocked?.()) return;   // play() would refuse anyway
+    try { if (engine.play()) engine.stop(0); } catch {}
   }
   function lowPower() { try { return !!(sfx && sfx.isLowPower && sfx.isLowPower()); } catch { return false; } }
 

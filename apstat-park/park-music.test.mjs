@@ -333,6 +333,27 @@ test('park-music: the engine is created with the long lookahead (main-thread sta
   music.dispose();
 });
 
+test('park-music: a Genesis song is primed at load (silent play + stop) so its samples / chip node are warm before PLAY', async () => {
+  win.localStorage.clear();
+  const sfx = fakeSfx();
+  const music = createParkMusic(win, { sfx, loadModules: modules, fetchSong, fetchData });
+  await music.pick('icecap'); await tick(); await tick();
+  const eng = music.engine;
+  assert.ok(eng && !eng.isPlaying(), 'primed, then stopped: not playing after the pick');
+  const master = eng.master.gain.calls.map(c => c[0]);
+  assert.ok(master.includes('linearRampToValueAtTime'), 'the priming play was faded out at once');
+  assert.ok(sfx.ctx.started.length > 0, 'voices were built (samples decoded, chip node path exercised)');
+  const before = sfx.ctx.started.length;
+  assert.equal(await music.play(), true);
+  assert.ok(eng.isPlaying()); assert.ok(sfx.ctx.started.length >= before);
+  music.stop(0);
+  // park-bounce (NES, no samples) is not primed.
+  const calls = eng.master.gain.calls.length;
+  await music.pick('park-bounce'); await tick();
+  assert.equal(music.engine.master.gain.calls.length, calls, 'no priming play for a sample-free song');
+  music.dispose();
+});
+
 test('park-music: when the Sega data cannot be fetched the engine still builds (synthesized kit / vibe SFX)', async () => {
   win.localStorage.clear();
   const sfx = fakeSfx();
