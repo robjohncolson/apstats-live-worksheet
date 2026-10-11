@@ -5,9 +5,9 @@
 // shifter; the stage-select music bar.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync } from 'node:fs';
+import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { JSDOM } from 'jsdom';
-import { drift, DATA } from '../scripts/sync-park-music.mjs';
+import { drift, staleFreezes, frozenFiles, songIds, DATA } from '../scripts/sync-park-music.mjs';
 
 const dom = new JSDOM('<!doctype html>', { pretendToBeVisual: true, url: 'https://example.test/' });
 const win = dom.window;
@@ -22,6 +22,7 @@ const Palette = (await import('./music/palette.mjs')).default;
 const musicDir = new URL('./music/', import.meta.url);
 const songsDir = new URL('./music/songs/', import.meta.url);
 const DATA_JSON = Object.fromEntries(DATA.map(p => [p, JSON.parse(readFileSync(new URL(p, musicDir), 'utf8'))]));
+const FROZEN_META = Object.fromEntries(songIds().map(id => [id, JSON.parse(readFileSync(new URL(frozenFiles(id)[0], musicDir), 'utf8'))]));
 const SONG = Object.fromEntries(readdirSync(songsDir).filter(f => f.endsWith('.json'))
   .map(f => { const s = JSON.parse(readFileSync(new URL(f, songsDir), 'utf8')); return [s.id, s]; }));
 
@@ -43,6 +44,8 @@ function fakeContext() {
   ctx.createBiquadFilter = () => node({ type: 'lowpass', frequency: param(350), Q: param(1) });
   ctx.createPeriodicWave = () => ({});
   ctx.createBuffer = (ch, len, rate) => ({ getChannelData: () => new Float32Array(len) });
+  ctx.decoded = [];
+  ctx.decodeAudioData = bytes => { const b = { frozen: true, length: bytes.byteLength, sampleRate: 44100, numberOfChannels: 2 }; ctx.decoded.push(b); return Promise.resolve(b); };
   return ctx;
 }
 
@@ -60,9 +63,21 @@ test('apstat-park/music/ matches handoff/audio/tracker/ (scripts/sync-park-music
   assert.equal(DATA_JSON['sfx/genesis-s3k.json'].set, 'genesis-s3k');
   assert.equal(Object.keys(DATA_JSON['sfx/genesis-s3k.json'].sfx).length, 173);
   assert.equal(DATA_JSON['samples/s3.json'].kit, 's3'); assert.equal(DATA_JSON['samples/sk.json'].kit, 'sk');
-  // The engine source carries the chip emulator and the v2 paths.
+  // The engine source carries the chip emulator, the v2 paths and the frozen load option (§7e).
   const engineSrc = readFileSync(new URL('tracker-engine.mjs', musicDir), 'utf8');
-  for (const needle of ['chipsynth-v2', 'ChipDSP', 'playSfxV2', 'registerKit']) assert.ok(engineSrc.includes(needle), needle);
+  for (const needle of ['chipsynth-v2', 'ChipDSP', 'playSfxV2', 'registerKit', 'isFrozen', 'o.frozen']) assert.ok(engineSrc.includes(needle), needle);
+  // Every song is frozen (full mix only; TRACKER_SPEC §7e), the freeze matches the song and the engine it was rendered with.
+  assert.deepEqual(staleFreezes(), []);
+  for (const id of Object.keys(SONG)) {
+    const m = FROZEN_META[id];
+    assert.equal(m.id, id); assert.equal(m.sampleRate, 44100); assert.equal(m.renderMaster, 0.27); assert.equal(m.codec, 'vorbis q5');
+    assert.ok(m.loopSeconds > 30 && m.introSeconds >= 0, id);
+    const ogg = readFileSync(new URL(frozenFiles(id)[1], musicDir));
+    assert.equal(ogg.subarray(0, 4).toString(), 'OggS', id + ' is an Ogg file');
+    assert.ok(ogg.length > 400000, id + ' freeze has audio');
+  }
+  assert.equal(FROZEN_META.launchbase.introSeconds.toFixed(2), '46.67'); assert.equal(FROZEN_META.icecap.loopSeconds.toFixed(2), '83.31');
+  assert.ok(!existsSync(new URL('frozen/icecap.lowpower.ogg', musicDir)), 'low-power freezes are not shipped (a buffer source costs no CPU)');
 });
 
 // ── 2. TRACKER_SPEC §4a: highest SFX note per song, after pitch safety ───────────────────────────
@@ -134,6 +149,8 @@ function fakeSfx({ enabled = true, lowPower = false } = {}) {
 const modules = async () => ({ TrackerEngine, VibeShifter, Palette });
 const fetchSong = async id => { if (!SONG[id]) throw new Error('no ' + id); return JSON.parse(JSON.stringify(SONG[id])); };
 const fetchData = async path => { if (!DATA_JSON[path]) throw new Error('no ' + path); return DATA_JSON[path]; };
+const fetchFrozen = async id => { if (!FROZEN_META[id]) throw new Error('no freeze ' + id); return { meta: FROZEN_META[id], bytes: new ArrayBuffer(16) }; };
+const noFreeze = async id => { throw new Error('HTTP 404'); };
 const tick = () => new Promise(r => setTimeout(r, 5));
 
 test('park-music: the song list starts with ORIGINAL and names every synced song', () => {
@@ -147,7 +164,7 @@ test('park-music: the song list starts with ORIGINAL and names every synced song
 test('park-music: pick persists, loads the song, applies the palette; ORIGINAL clears it', async () => {
   win.localStorage.clear();
   const sfx = fakeSfx();
-  const music = createParkMusic(win, { sfx, loadModules: modules, fetchSong, fetchData });
+  const music = createParkMusic(win, { sfx, loadModules: modules, fetchSong, fetchData, fetchFrozen });
   assert.equal(music.view().songId, ORIGINAL);
   const release = music.acquire();
   assert.equal(await music.pick('launchbase'), true);
@@ -169,7 +186,7 @@ test('park-music: a song that fails to load is reported, never stuck on LOADING;
   win.localStorage.clear();
   const sfx = fakeSfx();
   const bad = async id => { if (id === 'icecap') throw new Error('404'); if (id === 'mushroomhill') return { id, bogus: true }; return fetchSong(id); };
-  const music = createParkMusic(win, { sfx, loadModules: modules, fetchSong: bad, fetchData });
+  const music = createParkMusic(win, { sfx, loadModules: modules, fetchSong: bad, fetchData, fetchFrozen });
   assert.equal(await music.pick('icecap'), false);
   assert.equal(music.view().loading, false);
   assert.equal(music.view().failed, true);
@@ -200,7 +217,7 @@ test('park-music: play needs a song and a bus; class mode refuses; a bus later l
   win.localStorage.clear();
   let cls = false;
   const sfx = fakeSfx();
-  const music = createParkMusic(win, { sfx, loadModules: modules, fetchSong, fetchData, classMode: () => cls });
+  const music = createParkMusic(win, { sfx, loadModules: modules, fetchSong, fetchData, fetchFrozen, classMode: () => cls });
   assert.equal(await music.play(), false, 'ORIGINAL has no music');
   await music.pick('icecap');
   cls = true;
@@ -225,7 +242,7 @@ test('park-music: playSfx only with a song, out of class, with sound enabled', a
   win.localStorage.clear();
   let cls = false, enabled = true;
   const sfx = fakeSfx(); sfx.isEnabled = () => enabled;
-  const music = createParkMusic(win, { sfx, loadModules: modules, fetchSong, fetchData, classMode: () => cls });
+  const music = createParkMusic(win, { sfx, loadModules: modules, fetchSong, fetchData, fetchFrozen, classMode: () => cls });
   assert.equal(music.playSfx('jump'), false, 'ORIGINAL: the .ogg plays instead');
   await music.pick('launchbase');
   await tick();   // the build also waits for the Sega data and the chip worklet
@@ -247,7 +264,7 @@ test('park-music: playSfx only with a song, out of class, with sound enabled', a
 test('park-music: acquire / release — the last scene out stops the music after a grace', async () => {
   win.localStorage.clear();
   const sfx = fakeSfx();
-  const music = createParkMusic(win, { sfx, loadModules: modules, fetchSong, fetchData });
+  const music = createParkMusic(win, { sfx, loadModules: modules, fetchSong, fetchData, fetchFrozen });
   const r1 = music.acquire();
   await music.pick('park-bounce'); await music.play();
   const r2 = music.acquire();
@@ -261,7 +278,7 @@ test('park-music: acquire / release — the last scene out stops the music after
 test('park-music: a stored song is re-voiced on the next acquire; the swap stops the old song', async () => {
   win.localStorage.setItem(SONG_KEY, 'keen-wotb');
   const sfx = fakeSfx();
-  const music = createParkMusic(win, { sfx, loadModules: modules, fetchSong, fetchData });
+  const music = createParkMusic(win, { sfx, loadModules: modules, fetchSong, fetchData, fetchFrozen });
   assert.equal(music.view().songId, 'keen-wotb');
   music.acquire(); await tick(); await tick();
   assert.equal(music.song?.id, 'keen-wotb');
@@ -278,7 +295,7 @@ test('park-music: music is on for every window (the ?music=1 preview gate is gon
   const mod = await import('./park-music.mjs');
   assert.equal(mod.musicEnabled, undefined); assert.equal(mod.MUSIC_FLAG_KEY, undefined);
   const w = { location: { search: '' }, localStorage: win.localStorage, document: win.document, sfx: fakeSfx() };
-  const music = mod.getParkMusic(w, { loadModules: modules, fetchSong, fetchData });
+  const music = mod.getParkMusic(w, { loadModules: modules, fetchSong, fetchData, fetchFrozen });
   assert.ok(music, 'a music instance without any flag');
   assert.equal(mod.getParkMusic(w), music, 'the same instance for the window');
   assert.equal(mod.getParkMusic(null), null);
@@ -289,7 +306,7 @@ test('park-music: before any gesture the .ogg plays; the first sound after a bus
   win.localStorage.clear();
   let bus = false;
   const sfx = fakeSfx(); const real = sfx.musicBus; sfx.musicBus = () => bus ? real() : null;
-  const music = createParkMusic(win, { sfx, loadModules: modules, fetchSong, fetchData });
+  const music = createParkMusic(win, { sfx, loadModules: modules, fetchSong, fetchData, fetchFrozen });
   await music.pick('launchbase');
   assert.equal(music.playSfx('jump'), false, 'no bus yet');
   bus = true;
@@ -303,7 +320,7 @@ test('park-music: the original Sega kits and SFX are registered before the engin
   win.localStorage.clear();
   const sfx = fakeSfx();
   const fetched = [];
-  const music = createParkMusic(win, { sfx, loadModules: modules, fetchSong, fetchData: p => { fetched.push(p); return fetchData(p); } });
+  const music = createParkMusic(win, { sfx, loadModules: modules, fetchSong, fetchData: p => { fetched.push(p); return fetchData(p); }, fetchFrozen });
   assert.equal(await music.pick('icecap'), true);
   await tick(); await tick();
   assert.deepEqual(fetched.sort(), ['samples/s3.json', 'samples/sk.json', 'sfx/genesis-s3k.json']);
@@ -317,6 +334,7 @@ test('park-music: the original Sega kits and SFX are registered before the engin
   music.engine.playOriginalSfx = (ref, t, o) => { played.push(ref); return orig(ref, t, o); };
   assert.equal(music.playSfx('switch'), true);
   assert.deepEqual(played, ['s3k:33'], 'a switch (coin) in IceCap is the S3K ring, not the synthesized vibe note');
+  assert.equal(music.view().frozen, true, 'IceCap plays frozen; the Sega SFX path is unchanged');
   music.dispose();
 });
 
@@ -326,17 +344,17 @@ test('park-music: the engine is created with the long lookahead (main-thread sta
   assert.ok(SCHEDULER.lookahead >= 0.3 && SCHEDULER.timerMs <= SCHEDULER.lookahead * 1000 / 4);
   const seen = [];
   const spied = { ...TrackerEngine, create: (ctx, dest, opts) => { seen.push(opts); return TrackerEngine.create(ctx, dest, opts); } };
-  const music = createParkMusic(win, { sfx: fakeSfx(), loadModules: async () => ({ TrackerEngine: spied, VibeShifter, Palette }), fetchSong, fetchData });
+  const music = createParkMusic(win, { sfx: fakeSfx(), loadModules: async () => ({ TrackerEngine: spied, VibeShifter, Palette }), fetchSong, fetchData, fetchFrozen });
   await music.pick('park-bounce'); await tick(); await tick();
   assert.equal(seen.length, 1);
   assert.equal(seen[0].lookahead, SCHEDULER.lookahead); assert.equal(seen[0].timerMs, SCHEDULER.timerMs);
   music.dispose();
 });
 
-test('park-music: a Genesis song is primed at load (silent play + stop) so its samples / chip node are warm before PLAY', async () => {
+test('park-music: a Genesis song played LIVE (no freeze) is primed at load (silent play + stop) so its samples / chip node are warm before PLAY', async () => {
   win.localStorage.clear();
   const sfx = fakeSfx();
-  const music = createParkMusic(win, { sfx, loadModules: modules, fetchSong, fetchData });
+  const music = createParkMusic(win, { sfx, loadModules: modules, fetchSong, fetchData, fetchFrozen: noFreeze });
   await music.pick('icecap'); await tick(); await tick();
   const eng = music.engine;
   assert.ok(eng && !eng.isPlaying(), 'primed, then stopped: not playing after the pick');
@@ -354,10 +372,60 @@ test('park-music: a Genesis song is primed at load (silent play + stop) so its s
   music.dispose();
 });
 
+test('park-music: a frozen song loops one decoded buffer (no row scheduling); the freeze is fetched at pick time and only the current song stays decoded', async () => {
+  win.localStorage.clear();
+  const sfx = fakeSfx();
+  const fetched = [];
+  const music = createParkMusic(win, { sfx, loadModules: modules, fetchSong, fetchData, fetchFrozen: id => { fetched.push(id); return fetchFrozen(id); } });
+  assert.equal(await music.pick('icecap'), true);
+  assert.deepEqual(fetched, ['icecap'], 'the freeze download starts with the pick');
+  await tick(); await tick();
+  const eng = music.engine;
+  assert.ok(eng && eng.isFrozen(), 'loaded with the freeze');
+  assert.equal(music.view().frozen, true);
+  assert.equal(sfx.ctx.decoded.length, 1, 'decoded once on the music bus');
+  assert.ok(!eng.isPlaying() && !eng.master.gain.calls.some(c => c[0] === 'linearRampToValueAtTime'), 'nothing to prime: no silent play');
+  const before = sfx.ctx.started.length;
+  assert.equal(await music.play(), true);
+  const srcs = sfx.ctx.started.slice(before).filter(n => n.buffer && n.buffer.frozen);
+  assert.equal(srcs.length, 1, 'one buffer source carries the whole song');
+  assert.equal(srcs[0].loop, true); assert.equal(srcs[0].loopStart, 0); assert.equal(srcs[0].loopEnd.toFixed(2), '83.31');
+  assert.equal(sfx.ctx.started.length - before, 1, 'no song voices were built');
+  assert.equal(eng.master.gain.value.toFixed(3), (0.27 / 0.27).toFixed(3), 'master = default volume / renderMaster: the baked render master is undone, same loudness as live');
+  // Launch Base: the loop region starts after its 46.7 s intro; low power keeps the full mix (no lowPowerBuffer).
+  assert.equal(await music.pick('launchbase'), true); await tick(); await tick();
+  assert.equal(await music.play(), true);
+  const lb = sfx.ctx.started.filter(n => n.buffer && n.buffer.frozen).at(-1);
+  assert.equal(lb.loopStart.toFixed(2), '46.67'); assert.equal(lb.loopEnd.toFixed(2), (46.667957 + 56.834467).toFixed(2));
+  music.engine.setLowPower(true); await tick();
+  assert.ok(music.engine.isPlaying() && music.engine.isFrozen());
+  assert.deepEqual(fetched, ['icecap', 'launchbase']);
+  // Only the current song stays decoded: coming back to IceCap fetches and decodes it again.
+  assert.equal(await music.pick('icecap'), true); await tick(); await tick();
+  assert.deepEqual(fetched, ['icecap', 'launchbase', 'icecap']);
+  music.dispose();
+});
+
+test('park-music: a song whose freeze is missing or undecodable plays live (the scheduler path, primed), and a bad sidecar is refused', async () => {
+  win.localStorage.clear();
+  for (const fake of [noFreeze, async id => ({ meta: { introSeconds: 0, loopSeconds: 0 }, bytes: new ArrayBuffer(4) }), async id => ({ meta: FROZEN_META[id], bytes: 'not bytes' })]) {
+    const sfx = fakeSfx();
+    if (fake !== noFreeze) sfx.ctx.decodeAudioData = b => typeof b === 'string' ? Promise.reject(new Error('decode')) : Promise.resolve({ frozen: true });
+    const music = createParkMusic(win, { sfx, loadModules: modules, fetchSong, fetchData, fetchFrozen: fake });
+    assert.equal(await music.pick('icecap'), true); await tick(); await tick();
+    assert.ok(music.engine && !music.engine.isFrozen(), 'live fallback');
+    assert.equal(music.view().frozen, false);
+    assert.equal(await music.play(), true);
+    assert.ok(sfx.ctx.started.filter(n => n.buffer && n.buffer.frozen).length === 0, 'no frozen source');
+    assert.ok(sfx.ctx.started.length > 1, 'song voices built');
+    music.dispose();
+  }
+});
+
 test('park-music: when the Sega data cannot be fetched the engine still builds (synthesized kit / vibe SFX)', async () => {
   win.localStorage.clear();
   const sfx = fakeSfx();
-  const music = createParkMusic(win, { sfx, loadModules: modules, fetchSong, fetchData: async () => { throw new Error('offline'); } });
+  const music = createParkMusic(win, { sfx, loadModules: modules, fetchSong, fetchData: async () => { throw new Error('offline'); }, fetchFrozen });
   assert.equal(await music.pick('park-bounce'), true);
   await tick(); await tick();
   assert.ok(music.engine, 'engine built without the Sega data');

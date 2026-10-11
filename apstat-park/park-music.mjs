@@ -4,6 +4,12 @@
 // Genesis songs use the original DAC drum kits and Sega sound effects (TRACKER_SPEC §7c): those
 // are registered on the engine before it is created, and the chip AudioWorklet is awaited.
 //
+// Frozen songs (TRACKER_SPEC §7e, teacher 2026-10-11 "render each track as a loop and layer them"):
+// every song also ships pre-rendered by the real engine (./music/frozen/<id>.ogg + sidecar). The
+// engine then loops that one buffer instead of scheduling rows from the main thread, so a page
+// stall cannot drop notes any more; SFX, the vibe grid clock and the palette are unchanged. A
+// freeze that cannot be fetched or decoded leaves that song on the live scheduler, as before.
+//
 // Teacher 2026-10-10: music is available to students all the time (no "finish all work" unlock);
 // one song picker per student (solo play), persisted per device; switching songs re-voices the
 // SFX and recolours the park + Pico Desk (never the classic System-7 Desk). In class — the room's
@@ -31,6 +37,7 @@ export const PALETTE_VARS = ['bg', 'fg', 'accent', 'accent2', 'hud'].map(k => '-
 // Original Sega data under ./music/ (synced from the handoff): DAC drum kits, then the S3K SFX set.
 export const SEGA_KITS = ['samples/s3.json', 'samples/sk.json'];
 export const SEGA_SFX = ['sfx/genesis-s3k.json'];
+export const FROZEN_DIR = 'frozen';
 
 // Park sound -> vibe SFX script (vibe.js SFX table). `quantize` snaps the sound to the song's
 // next 1/16 while music plays (TRACKER_SPEC §4): feedback that must be instant stays unquantized.
@@ -64,6 +71,7 @@ export function createParkMusic(win, {
   loadModules = defaultModules,
   fetchSong = defaultFetchSong,
   fetchData = defaultFetchData,   // (path) -> the JSON under ./music/
+  fetchFrozen = defaultFetchFrozen,   // (id) -> { meta, bytes: ArrayBuffer } of the song's freeze; throws when there is none
   classMode = () => false,   // true while the room is live and the teacher has not allowed sound
 } = {}) {
   const doc = win?.document;
@@ -71,6 +79,8 @@ export function createParkMusic(win, {
   let wantPlaying = false, holders = 0, releaseTimer = null, loadSeq = 0, disposed = false, loadFailed = null;
   const listeners = new Set();
   const songs = new Map();
+  const frozenBytes = new Map();    // id -> Promise<{ meta, bytes }>: the download starts at pick time
+  const frozenReady = new Map();    // id -> Promise<frozen | null>: decoded on the bus; only the current song stays decoded
   let classModeFn = classMode;
 
   function notify() { for (const fn of listeners) { try { fn(view()); } catch {} } }
@@ -84,6 +94,31 @@ export function createParkMusic(win, {
   async function songData(id) {
     if (!songs.has(id)) songs.set(id, fetchSong(id, V).catch(err => { songs.delete(id); throw err; }));
     return songs.get(id);
+  }
+  function frozenData(id) {
+    if (!frozenBytes.has(id)) frozenBytes.set(id, Promise.resolve().then(() => fetchFrozen(id, V)).catch(err => { frozenBytes.delete(id); throw err; }));
+    return frozenBytes.get(id);
+  }
+  function isFrozenMeta(m) {
+    return !!m && typeof m === 'object' && Number.isFinite(m.introSeconds) && m.introSeconds >= 0 && Number.isFinite(m.loopSeconds) && m.loopSeconds > 0;
+  }
+  // The decoded freeze for engine.load(song, { frozen }), or null = play it live. A decoded song
+  // is ~30 MB, so only the current one is kept; a failure is forgotten so the next load retries.
+  function frozenFor(id) {
+    if (!frozenReady.has(id)) {
+      for (const k of [...frozenReady.keys()]) if (k !== id) { frozenReady.delete(k); frozenBytes.delete(k); }
+      frozenReady.set(id, (async () => {
+        const { meta, bytes } = await frozenData(id);
+        if (!isFrozenMeta(meta) || !bus?.ctx?.decodeAudioData) throw new Error('unusable freeze');
+        const buffer = await bus.ctx.decodeAudioData(bytes.slice(0));
+        return { buffer, introSeconds: meta.introSeconds, loopSeconds: meta.loopSeconds, lowPowerBuffer: null, renderMaster: meta.renderMaster };
+      })().catch(err => {
+        frozenReady.delete(id);
+        try { win.console?.info?.('park music: ' + id + ' plays live (no freeze: ' + (err?.message || err) + ')'); } catch {}
+        return null;
+      }));
+    }
+    return frozenReady.get(id);
   }
   // The original Sega data (DAC kits, S3K sound effects), registered on the engine module once
   // per window, before the engine exists. A fetch that fails is retried on the next build; the
@@ -122,16 +157,19 @@ export function createParkMusic(win, {
         if (engine || disposed) return engine;
         engine = eng;
         vibe = VibeShifter.create(bus.ctx, bus.input, engine);
-        if (song && !loadSong(song)) song = null;
+        if (song) { const s = song; if (!(await loadSong(s)) && song === s) song = null; }   // a newer pick loads itself
         return engine;
       } catch { return null; } finally { building = null; }
     })();
     return building;
   }
-  // A malformed song must never throw into a scene: false = unusable.
-  function loadSong(s) {
-    try { engine.load(s); vibe.setSong(s); } catch { loadFailed = s.id; return false; }
-    prime(s);
+  // A malformed song must never throw into a scene: false = unusable. Frozen when its freeze
+  // decodes (the fetch began at pick time), live otherwise.
+  async function loadSong(s) {
+    const frozen = await frozenFor(s.id);
+    if (disposed || song !== s) return false;   // superseded while decoding
+    try { engine.load(s, frozen ? { frozen } : undefined); vibe.setSong(s); } catch { loadFailed = s.id; return false; }
+    if (!frozen) prime(s);
     return true;
   }
   // Warm-up (teacher 2026-10-11, "it needs time to load the samples"): the engine base64-decodes
@@ -183,6 +221,7 @@ export function createParkMusic(win, {
       notify(); return true;
     }
     ensureEngine().catch(() => {});   // the pick is a gesture: re-voice the sound effects now
+    frozenData(id).catch(() => {});   // and start the freeze download alongside the song
     let next;
     try { next = await songData(id); } catch { return seq === loadSeq ? failPick(id, previous) : false; }
     if (seq !== loadSeq || disposed) return false;
@@ -190,9 +229,11 @@ export function createParkMusic(win, {
     const before = song;
     song = next; applyPalette(song.palette);
     if (engine) {
-      if (!loadSong(song)) {
+      const ok = await loadSong(song);
+      if (seq !== loadSeq || disposed) return false;
+      if (!ok) {
         song = before;
-        if (song) { loadSong(song); applyPalette(song.palette); if (wantPlaying) play(); } else applyPalette(null);
+        if (song) { await loadSong(song); applyPalette(song.palette); if (wantPlaying) play(); } else applyPalette(null);
         return failPick(id, previous);
       }
       if (wantPlaying) play();
@@ -262,7 +303,7 @@ export function createParkMusic(win, {
   }
   function view() {
     return { songId, title: SONGS.find(s => s.id === songId)?.title || '', playing: isPlaying(), wantPlaying, inClass: inClass(), hasSong: hasSong(), loading: songId !== ORIGINAL && !song, failed: loadFailed != null,
-      failedTitle: loadFailed != null ? SONGS.find(s => s.id === loadFailed)?.title || '' : '' };
+      failedTitle: loadFailed != null ? SONGS.find(s => s.id === loadFailed)?.title || '' : '', frozen: !!(engine && engine.isFrozen && engine.isFrozen()) };
   }
   function dispose() {
     disposed = true; clearInterval(syncTimer); clearTimeout(releaseTimer);
@@ -300,4 +341,14 @@ async function defaultFetchData(path, v) {
   const res = await fetch(new URL('./music/' + path + v, import.meta.url));
   if (!res.ok) throw new Error('music/' + path + ': HTTP ' + res.status);
   return res.json();
+}
+
+// The sidecar rides the build query like every park file; the audio (~1 MB) is keyed by the
+// song it was rendered from, so a build bump never re-downloads it and a re-render always does.
+async function defaultFetchFrozen(id, v) {
+  const meta = await defaultFetchData(FROZEN_DIR + '/' + id + '.json', v);
+  const key = typeof meta?.songSha1 === 'string' ? '?v=' + meta.songSha1.slice(0, 12) : v;
+  const res = await fetch(new URL('./music/' + FROZEN_DIR + '/' + id + '.ogg' + key, import.meta.url));
+  if (!res.ok) throw new Error('music/' + FROZEN_DIR + '/' + id + '.ogg: HTTP ' + res.status);
+  return { meta, bytes: await res.arrayBuffer() };
 }

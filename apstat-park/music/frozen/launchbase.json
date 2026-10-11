@@ -1,0 +1,15 @@
+{
+ "id": "launchbase",
+ "sampleRate": 44100,
+ "introSeconds": 46.667957,
+ "loopSeconds": 56.834467,
+ "introRows": 381,
+ "loopRows": 464,
+ "renderedFrom": "songs/launchbase.json",
+ "songSha1": "04ca7597749c6517b16110ebd69a32c42e52a750",
+ "lowPower": "launchbase.lowpower.ogg",
+ "renderMaster": 0.27,
+ "engineSha1": "6d168f9d92d020452e308be8bd6686291ca15c1d",
+ "seamCrossfadeMs": 10,
+ "codec": "vorbis q5"
+}
