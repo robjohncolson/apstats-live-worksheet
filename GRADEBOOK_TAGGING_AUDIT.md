@@ -1,5 +1,5 @@
 # Gradebook Tagging Audit — AP Skill Coverage
-<!-- GENERATED: 2026-08-19T06:49:32.363Z -->
+<!-- GENERATED: 2026-10-10T15:40:09.282Z -->
 
 ## Summary
 
@@ -13,7 +13,7 @@
   Skills are inferred from lesson→topic→framework mapping only.
 
 ### Pool (b) — curriculum_render/data/curriculum.js
-- Status: AVAILABLE (/home/mrcolson/repos/curriculum_render/data/curriculum.js)
+- Status: AVAILABLE (C:\Users\rober\Downloads\Projects\school\curriculum_render\data\curriculum.js)
 - Total questions: 367
 - Questions with AP-skill tags: 0 (0%)
 - AP-skill tagging: **ABSENT** — no skill, apSkill, or skills field on any question.
