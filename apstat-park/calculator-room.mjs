@@ -55,6 +55,9 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   let joinedAt = 0, poseAt = 0, receivedAt = 0, clockOffset = 0, needsRelease = false;
   const openedAt = performance.now();
   let selected = null, depressed = null, lastRevision = -1;
+  // B4/B5 (CALCULATOR_FEEL_SPEC): the timer rises as water (drawn, never simulated); the result
+  // screen scrolls in when the route's last key lands; water drains once the result is matched.
+  let water = 0, waterAt = 0, resultAt = null, wasShowingResult = false;
   // When this page first saw the relay's authoritative team completion (key celebration).
   let rewardShownAt = null;
   const keyQueue = [];
@@ -377,7 +380,14 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   function drawScreen(ctx, top, layer) {
     ctx.save();
     ctx.imageSmoothingEnabled = true;
-    ctx.drawImage(screenCanvas, SCREEN.x, top, SCREEN.w, SCREEN.h);
+    // The result arrives: ~250 ms scroll in from the bottom of the screen (§B5).
+    const arriving = resultAt == null ? 1 : Math.min(1, (performance.now() - resultAt) / 250);
+    if (arriving < 1) {
+      ctx.fillStyle = PAPER; ctx.fillRect(SCREEN.x, top, SCREEN.w, SCREEN.h);
+      ctx.beginPath(); ctx.rect(SCREEN.x, top, SCREEN.w, SCREEN.h); ctx.clip();
+      ctx.drawImage(screenCanvas, SCREEN.x, top + Math.round((1 - arriving) * SCREEN.h), SCREEN.w, SCREEN.h);
+    }
+    else ctx.drawImage(screenCanvas, SCREEN.x, top, SCREEN.w, SCREEN.h);
     ctx.strokeStyle = ink; ctx.lineWidth = 2;
     ctx.strokeRect(SCREEN.x - 1, top - 1, SCREEN.w + 2, SCREEN.h + 2);
     if (layer === 'second' || layer === 'alpha') {
@@ -441,6 +451,27 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     return rgbHex([channel(16), channel(8), channel(0)]);
   }
   function lightCap(colour) { return colour === CAP.light || colour === '#f9c45f' || colour === '#9bdfae'; }
+  // Rising water (§B4): fills from the floor up to the lowest cap row, full at exactly time-up.
+  // The failure path is untouched; this only shows the same clock. Drains over ~400 ms on a match.
+  function drawWater(ctx, step, showingBoxplot) {
+    const now = performance.now(), dt = Math.min(0.1, (now - waterAt) / 1000); waterAt = now;
+    const elapsed = state ? clock() - state.startedAt : 0;
+    const target = !state || state.solved || state.complete ? 0 : Math.min(1, elapsed / timeLimitFor(state));
+    water = target >= water ? target : Math.max(target, water - dt / 0.4);
+    if (water <= 0) return;
+    const top = Math.max(...tilesFor(step, level).map(tile => tile.y));   // the lowest row of caps
+    const surface = WORLD.floor - (WORLD.floor - top) * water;
+    ctx.save();
+    ctx.globalAlpha = 0.55; ctx.fillStyle = '#6fa8dc';
+    ctx.beginPath(); ctx.moveTo(0, WORLD.floor);
+    for (let x = 0; x <= WORLD.width; x += 8) ctx.lineTo(x, surface + Math.sin(x / 24 + now / 350) * 2);
+    ctx.lineTo(WORLD.width, WORLD.floor); ctx.closePath(); ctx.fill();
+    ctx.globalAlpha = 1; ctx.strokeStyle = ink; ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let x = 0; x <= WORLD.width; x += 8) ctx.lineTo(x, surface + Math.sin(x / 24 + now / 350) * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
   function drawScenery(ctx, atlas) {
     // 'count' (keys are a count, door open) / 'holder' (older relay, own key) / false: also the cache key.
     const unlocked = campaignUnlocked() && (Array.isArray(lobby?.campaignOpen) ? 'count' : 'holder');
@@ -510,6 +541,9 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     if (caption.length > 106) text(ctx, caption.slice(106), 28, 89, 10);
     if (showingBoxplot) text(ctx, 'CALCULATOR RESULT', 28, 103, 10);
     const screenTop = showingBoxplot ? 123 : 106;
+    const showingResult = !!state && showingBoxplot && display.kind() === 'result';
+    if (showingResult && !wasShowingResult) { resultAt = performance.now(); audio.play('clear'); }
+    wasShowingResult = showingResult;
     if (screen && display.kind() !== 'graph') drawScreen(ctx, screenTop, layer);
     else for (const [i, line] of display.getLines().slice(0, 8).entries()) {
       // Graphs keep the text lines: the trainer's graph screen is an illustration, not the data.
@@ -574,6 +608,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
       if (showingBoxplot && index < 9) pixelText(ctx, String(index + 1), tile.x + 7, tile.y + sink + 11, 7, '#b06a1a', 'left');
       ctx.restore();
     }
+    drawWater(ctx, step, showingBoxplot);
     if (step >= level.route.length) drawBoxplot(ctx, step - level.route.length);
     else if (state) text(ctx, keyInstruction(level.route[step], level.hints[step] || '', layer, level.route[step + 1]).slice(0, 52), 350, 252, 10);
     if (showingBoxplot) {

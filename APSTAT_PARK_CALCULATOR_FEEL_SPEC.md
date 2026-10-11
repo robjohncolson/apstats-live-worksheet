@@ -1,6 +1,6 @@
 # APStat Park calculator activities: real screen, Pico feel (spec)
 
-Status: 2026-10-11 — A shipped, B1+B2 and B3 built (see B3 for the revision), B4+B5 in progress.
+Status: 2026-10-11 — all built: A shipped; B1+B2, B3 (revised, see below) and B4+B5 committed, awaiting the push go.
 
 Teacher's brief (2026-10-11): keep the activities as they are ("currently pretty good"), make the screen show the
 same menu geometry as the real TI-84 CE but in Pico colours — not green and black — and make the keypresses more
@@ -79,7 +79,7 @@ anyone who wants it. Water is drawn, not simulated: no physics change, nobody dr
 
 ### B5. The result arrives (client only)
 On the final `ENTER` of a route, the screen canvas scrolls the result in from the bottom over ~250 ms and the
-existing `clear` jingle plays; "MISSION COMPLETE!" is unchanged. On the challenge's `TOGETHER! RESULT MATCHED.`
+`clear` sound plays once (not the clear→fanfare chain, which stays the team's completion); "MISSION COMPLETE!" is unchanged. On the challenge's `TOGETHER! RESULT MATCHED.`
 the water drains over ~400 ms.
 
 ## C. Verification
