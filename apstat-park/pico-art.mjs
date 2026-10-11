@@ -16,7 +16,37 @@ export function tintPixel(r, g, b, colour) {
 
 export function createPicoArt(doc) {
   const win = doc?.defaultView;
-  let image = null, ready = false, cats = null, tiles = null, tilesFor = null, catPixels = null;
+  let image = null, ready = false, cats = null, tiles = null, tilesFor = null, tilesAccent = null, catPixels = null;
+  // The song palette (park-music.mjs sets --park-accent on <html>) recolours the orange square:
+  // floors, stair blocks, tiles and bridges. Read at most every 200 ms; null = the game's orange.
+  let accent = null, accentAt = -Infinity;
+  const squares = new Map();   // accent -> the 48x48 square sprite recoloured (source-atop)
+  function accentNow() {
+    const now = Date.now();
+    if (now - accentAt < 200) return accent;
+    accentAt = now;
+    let next = null;
+    try { next = win?.getComputedStyle(doc.documentElement).getPropertyValue('--park-accent').trim() || null; } catch { next = null; }
+    if (next && next.toLowerCase() === FLAT_COLOUR.toLowerCase()) next = null;
+    accent = next;
+    return accent;
+  }
+  // { img, x, y } of the square sprite in the current accent (the atlas itself when none).
+  function square() {
+    const colour = accentNow();
+    if (!colour) return { img: image, x: ATLAS.square.x, y: ATLAS.square.y };
+    if (!squares.has(colour)) {
+      const s = ATLAS.square, tinted = canvas(s.w, s.h);
+      if (!tinted) return { img: image, x: s.x, y: s.y };
+      tinted.ctx.drawImage(image, s.x, s.y, s.w, s.h, 0, 0, s.w, s.h);
+      tinted.ctx.globalCompositeOperation = 'source-atop';
+      tinted.ctx.fillStyle = colour; tinted.ctx.fillRect(0, 0, s.w, s.h);
+      if (squares.size >= 16) squares.delete(squares.keys().next().value);
+      squares.set(colour, tinted.c);
+    }
+    return { img: squares.get(colour), x: 0, y: 0 };
+  }
+  const flat = () => accentNow() || FLAT_COLOUR;
   const CAT_CACHE_MAX = 64;   // tinted frame sets, one per colour (students' own hues)
   function canvas(w, h) {
     const c = doc.createElement('canvas'); c.width = w; c.height = h;
@@ -77,7 +107,8 @@ export function createPicoArt(doc) {
   // The static tile map, rendered once per level into a level-sized canvas.
   function tileLayer(level) {
     if (!ready || !level.tiles) return null;
-    if (tiles && tilesFor === level) return tiles;
+    const sq = square();
+    if (tiles && tilesFor === level && tilesAccent === sq.img) return tiles;
     const size = level.tiles.size, layer = canvas(level.width, level.height);
     if (!layer) return null;
     layer.ctx.imageSmoothingEnabled = false;
@@ -85,10 +116,10 @@ export function createPicoArt(doc) {
       for (let row = 0; row < column.length; row++) {
         const window = TILE_WINDOWS[tileCodeAt(level, col, row)];
         if (!window) continue;
-        layer.ctx.drawImage(image, ATLAS.square.x + window[0], ATLAS.square.y + window[1], size, size, col * size, row * size, size, size);
+        layer.ctx.drawImage(sq.img, sq.x + window[0], sq.y + window[1], size, size, col * size, row * size, size, size);
       }
     });
-    tiles = layer.c; tilesFor = level;
+    tiles = layer.c; tilesFor = level; tilesAccent = sq.img;
     return tiles;
   }
   const sprite = (ctx, rect, dx, dy, dw = rect.w, dh = rect.h) => ctx.drawImage(image, rect.x, rect.y, rect.w, rect.h, dx, dy, dw, dh);
@@ -100,26 +131,26 @@ export function createPicoArt(doc) {
     tiles(ctx, level) {
       const layer = tileLayer(level);
       if (layer) { ctx.drawImage(layer, 0, 0); return; }
-      ctx.fillStyle = FLAT_COLOUR;
+      ctx.fillStyle = flat();
       for (const p of level.platforms) if (p.kind === 'tile') ctx.fillRect(p.x, p.y, p.w, p.h);
     },
     // Stair blocks: nine-slice of the 48x48 square in 16 px cells.
     block(ctx, r) {
-      if (!ready) { ctx.fillStyle = FLAT_COLOUR; ctx.fillRect(r.x, r.y, r.w, r.h); return; }
-      const s = ATLAS.square, c = 16, half = Math.min(c, r.w / 2, r.h / 2);
+      if (!ready) { ctx.fillStyle = flat(); ctx.fillRect(r.x, r.y, r.w, r.h); return; }
+      const sq = square(), s = { x: sq.x, y: sq.y }, c = 16, half = Math.min(c, r.w / 2, r.h / 2);
       const xs = [[0, r.x, half], [c, r.x + half, r.w - 2 * half], [2 * c + (c - half), r.x + r.w - half, half]];
       const ys = [[0, r.y, half], [c, r.y + half, r.h - 2 * half], [2 * c + (c - half), r.y + r.h - half, half]];
       for (const [sx, dx, dw] of xs) for (const [sy, dy, dh] of ys) {
         if (dw <= 0 || dh <= 0) continue;
         const sw = sx === c ? c : half, sh = sy === c ? c : half;
-        ctx.drawImage(image, s.x + sx, s.y + sy, sw, sh, dx, dy, dw, dh);
+        ctx.drawImage(sq.img, s.x + sx, s.y + sy, sw, sh, dx, dy, dw, dh);
       }
     },
     bridge(ctx, left, right, y) {
       for (let x = right - 10; x > left - 10; x -= 10) {
         const dx = Math.max(left, x);
         if (ready) sprite(ctx, ATLAS.bridge, dx, y, 10, 10);
-        else { ctx.fillStyle = FLAT_COLOUR; ctx.fillRect(dx, y, 10, 10); }
+        else { ctx.fillStyle = flat(); ctx.fillRect(dx, y, 10, 10); }
       }
     },
     switchPad(ctx, cx, floor, down) {

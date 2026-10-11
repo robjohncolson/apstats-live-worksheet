@@ -4939,7 +4939,10 @@
         if (classroomBusy()) return;
         var w = _viewportW(), floor = engine.groundY;
         ctx.save(); ctx.fillStyle = '#fff7e7'; ctx.fillRect(0, 0, w, floor);
-        ctx.fillStyle = '#FF864D'; ctx.fillRect(0, floor, w, 50);
+        // Park music (2026-10-11): the song palette's accent, when a song is picked.
+        var parkAccent = '';
+        try { parkAccent = getComputedStyle(document.documentElement).getPropertyValue('--park-accent').trim(); } catch (_) {}
+        ctx.fillStyle = parkAccent || '#FF864D'; ctx.fillRect(0, floor, w, 50);
         ctx.restore();
       }
     });

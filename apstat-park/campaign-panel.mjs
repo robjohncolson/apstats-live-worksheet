@@ -326,7 +326,7 @@ export function mountCampaign({ container, getSocket, board, onClose, keyShop = 
       game.render(); paintedFrame = replay.frame; paintedEpoch = state.epoch; paintedHelpers = state.helpers; paintedWidth = width;
     }
     // Same orange floor edge and exit doorway as the calculator room.
-    if (!game || !state) { ctx.fillStyle = '#ff864d'; ctx.fillRect(0, 700, width, 50); }
+    if (!game || !state) { ctx.fillStyle = parkPalette().accent; ctx.fillRect(0, 700, width, 50); }
     const atlas = board.atlas?.();
     const doorX = 30 + (game && state ? game.getView().projection.x : left);
     if (atlas) ctx.drawImage(atlas, 96, 0, 48, 48, doorX, 660, 40, 40);

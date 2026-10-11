@@ -364,3 +364,24 @@ test('campaign-select: music bar hit-testing and view', async () => {
   assert.equal(musicBarView({ title: 'X', hasSong: true, playing: true }).playLabel, 'STOP');
   assert.equal(musicBarView({ title: 'X', hasSong: true, playing: false }).playLabel, 'PLAY');
 });
+
+// ── 7. the song palette reaches the park's orange square (floors, blocks, tiles) ─────────────────
+test('pico-art: --park-accent recolours the floor block / tiles; without it the game orange stays', async () => {
+  const { createPicoArt } = await import('./pico-art.mjs');
+  const { FLAT_COLOUR } = await import('./assets/pico-atlas.mjs');
+  const art = createPicoArt(win.document);   // never loads: the flat fallback shows the colour choice
+  const fills = [];
+  const ctx = { fillStyle: null, fillRect(x, y, w, h) { fills.push([this.fillStyle, w, h]); }, drawImage() {} };
+  art.block(ctx, { x: 0, y: 700, w: 720, h: 50 });
+  assert.equal(fills.at(-1)[0], FLAT_COLOUR, 'no palette: the game orange');
+  win.document.documentElement.style.setProperty('--park-accent', '#2a6fd6');
+  await new Promise(r => setTimeout(r, 210));   // the accent is re-read at most every 200 ms
+  art.block(ctx, { x: 0, y: 700, w: 720, h: 50 });
+  assert.equal(fills.at(-1)[0], '#2a6fd6', 'a picked song: its accent');
+  art.tiles(ctx, { platforms: [{ kind: 'tile', x: 0, y: 0, w: 24, h: 24 }] });
+  assert.equal(fills.at(-1)[0], '#2a6fd6');
+  win.document.documentElement.style.removeProperty('--park-accent');
+  await new Promise(r => setTimeout(r, 210));
+  art.block(ctx, { x: 0, y: 700, w: 720, h: 50 });
+  assert.equal(fills.at(-1)[0], FLAT_COLOUR, 'ORIGINAL SOUNDS / exit: orange again');
+});
