@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import { readFileSync } from 'node:fs';
 import { nativeScriptFilenames } from '../ti84-trainer-v2/native/manifest.mjs';
-import { keyboardLayer, keyLabel, keyInstruction } from './calculator-key-labels.mjs';
+import { keyboardLayer, keyLabel, keySublabels, keyInstruction } from './calculator-key-labels.mjs';
 
 test('key names follow engine modifiers and return after the physical key is pressed', () => {
   const sandbox = { window: {}, console };
@@ -33,4 +33,18 @@ test('key names follow engine modifiers and return after the physical key is pre
   assert.equal(label('MATH'), 'MATH');
   calculator.pressKey('2ND'); calculator.pressKey('2ND');
   assert.equal(keyboardLayer(calculator.save()), 'normal');
+});
+
+test('keycap legends: every physical key reports the 2nd function and alpha letter the CE prints above it', () => {
+  assert.deepEqual(keySublabels('STAT'), { second: 'LIST', alpha: '' });
+  assert.deepEqual(keySublabels('MATH'), { second: 'TEST', alpha: 'A' });
+  assert.deepEqual(keySublabels('1'), { second: 'L1', alpha: 'Y' });
+  assert.deepEqual(keySublabels('ENTER'), { second: 'ENTRY', alpha: 'SOLVE' });
+  assert.deepEqual(keySublabels('2ND'), { second: '', alpha: '' });
+  // The legend is what the key becomes under that layer (same source as the main label).
+  for (const key of ['STAT', 'MATH', '1', 'ENTER', 'TRACE', '0']) {
+    const { second, alpha } = keySublabels(key);
+    if (second) assert.equal(keyLabel(key, 'second'), second);
+    if (alpha) assert.equal(keyLabel(key, 'alpha'), alpha);
+  }
 });

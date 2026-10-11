@@ -25,6 +25,11 @@ export function keyboardLayer(snapshot) {
   return 'normal';
 }
 
+// The small legends printed above a physical key: its blue 2nd function and green alpha letter.
+export function keySublabels(key) {
+  return { second: second[key] || '', alpha: alpha[key] || '' };
+}
+
 export function keyLabel(key, layer) {
   if (key === '2ND' || key === 'ALPHA') return key;
   return (layer === 'alpha' ? alpha[key] : layer === 'second' ? second[key] : null) || key;

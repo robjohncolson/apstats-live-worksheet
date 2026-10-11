@@ -5,7 +5,7 @@ const { DEFAULT_LEVEL, levelById, challengeFor, initializeCalculator } = await i
 const { drawChallenge } = await import('./calculator-challenge-view.mjs' + V);
 const { nativeScriptFilenames } = await import('../ti84-trainer-v2/native/manifest.mjs' + V);
 const { pixelText } = await import('./pixel-text.mjs' + V);
-const { keyboardLayer, keyLabel, keyInstruction } = await import('./calculator-key-labels.mjs' + V);
+const { keyboardLayer, keyLabel, keySublabels, keyInstruction } = await import('./calculator-key-labels.mjs' + V);
 const { createWorldDisplay } = await import('./calculator-display.mjs' + V);
 const { createPicoArt } = await import('./pico-art.mjs' + V);
 const { createPicoAudio } = await import('./pico-audio.mjs' + V);
@@ -54,7 +54,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   let state = null, socket = null, disposed = false, epoch = null, applied = 0;
   let joinedAt = 0, poseAt = 0, receivedAt = 0, clockOffset = 0, needsRelease = false;
   const openedAt = performance.now();
-  let selected = null, lastRevision = -1;
+  let selected = null, depressed = null, lastRevision = -1;
   // When this page first saw the relay's authoritative team completion (key celebration).
   let rewardShownAt = null;
   const keyQueue = [];
@@ -359,6 +359,10 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     if (player.x < ENTRY_WIDTH) setParticipating(false);
     if (!tileAt(localPose(), state?.step || 0, level)) needsRelease = false;
     selected = needsRelease ? null : tileAt(localPose(), state?.step || 0, level);
+    // A cap clicks when it is first stepped on (CALCULATOR_FEEL_SPEC §B2); the relay's own
+    // 'switch' still marks the credited press.
+    if (selected && selected !== depressed) audio.play('key');
+    depressed = selected;
     const viewport = board.viewportW() / scale();
     // Mouse-first solving: keep every key visible instead of chasing the selected cat.
     const assembling = lobby?.phase === 'assembling' && lobby.roster.includes(board.username);
@@ -394,16 +398,49 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     pixelText(ctx, value, 0, 0, size, color, align);
     ctx.restore();
   }
-  function keyPlatform(ctx, tile, colour) {
-    const { x, y, w, h } = tile, cut = 4;
-    ctx.fillStyle = colour;
+  function capPath(ctx, x, y, w, h) {
+    const cut = 4;
     ctx.beginPath();
     ctx.moveTo(x + cut, y); ctx.lineTo(x + w - cut, y);
     ctx.lineTo(x + w, y + cut); ctx.lineTo(x + w, y + h - cut);
     ctx.lineTo(x + w - cut, y + h); ctx.lineTo(x + cut, y + h);
     ctx.lineTo(x, y + h - cut); ctx.lineTo(x, y + cut);
-    ctx.closePath(); ctx.fill();
+    ctx.closePath();
   }
+  function keyPlatform(ctx, tile, colour) {
+    ctx.fillStyle = colour;
+    capPath(ctx, tile.x, tile.y, tile.w, tile.h); ctx.fill();
+  }
+  // Keycaps (CALCULATOR_FEEL_SPEC §B1/§B2): the CE's colour groups, a darker 2 px base so the cap
+  // reads as raised, a 2 px ink outline. A pressed cap sinks 4 px onto its base; `tint` washes the
+  // cap while 2nd (blue) or ALPHA (green) is active. Cosmetic only: tileAt() still uses tile.y.
+  const CAP = { dark: '#494458', light: '#e9e1d2', second: '#6fa8dc', alpha: '#7bc47f' };
+  const TOP_ROW = new Set(['Y=', 'WINDOW', 'ZOOM', 'TRACE', 'GRAPH']);
+  const LIGHT_KEYS = new Set(['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '(−)', 'ENTER', '÷', '×', '−', '+', 'ON']);
+  function capColour(tile, showingBoxplot) {
+    if (showingBoxplot) return CAP.light;
+    if (tile.key === '2ND') return CAP.second;
+    if (tile.key === 'ALPHA') return CAP.alpha;
+    if (TOP_ROW.has(tile.key)) return '#30263b';
+    return LIGHT_KEYS.has(tile.key) ? CAP.light : CAP.dark;
+  }
+  function keycap(ctx, tile, colour, { pressed = false, tint = null } = {}) {
+    const { x, y, w, h } = tile, sink = pressed ? 4 : 0;
+    ctx.save();
+    ctx.lineWidth = 2; ctx.strokeStyle = ink;
+    if (!pressed) { ctx.fillStyle = darken(colour); capPath(ctx, x, y + 2, w, h); ctx.fill(); }
+    ctx.fillStyle = colour; capPath(ctx, x, y + sink, w, h); ctx.fill();
+    if (tint) { ctx.globalAlpha = 0.45; ctx.fillStyle = tint; ctx.fill(); ctx.globalAlpha = 1; }
+    ctx.stroke();
+    ctx.restore();
+    return sink;
+  }
+  function darken(hex) {
+    const n = parseInt(hex.slice(1), 16);
+    const channel = shift => Math.max(0, ((n >> shift) & 255) - 48);
+    return rgbHex([channel(16), channel(8), channel(0)]);
+  }
+  function lightCap(colour) { return colour === CAP.light || colour === '#f9c45f' || colour === '#9bdfae'; }
   function drawScenery(ctx, atlas) {
     // 'count' (keys are a count, door open) / 'holder' (older relay, own key) / false: also the cache key.
     const unlocked = campaignUnlocked() && (Array.isArray(lobby?.campaignOpen) ? 'count' : 'holder');
@@ -510,21 +547,31 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     }
     // Ledges and answer choices are solid platforms in both phases.
     for (const ledge of approachSteps(showingBoxplot)) keyPlatform(ctx, ledge, '#494458');
+    const modifier = layer === 'second' ? '#a9daff' : layer === 'alpha' ? '#b7edab' : null;
     for (const [index, tile] of tilesFor(step, level).entries()) {
       const hint = state?.hintKeys?.includes(tile.key);
-      keyPlatform(ctx, tile, selected === tile.key ? '#f9c45f' : hint ? '#9bdfae' : '#494458');
+      const pressed = selected === tile.key;
+      const colour = pressed ? '#f9c45f' : hint ? '#9bdfae' : capColour(tile, showingBoxplot);
+      // The modifier keys themselves keep their own colour; everything else tints with the layer.
+      const tint = modifier && !pressed && !hint && tile.key !== '2ND' && tile.key !== 'ALPHA' ? modifier : null;
+      const sink = keycap(ctx, tile, colour, { pressed, tint });
       ctx.save();
       if (state?.solved) ctx.globalAlpha *= 0.22;
       const label = showingBoxplot ? plainText(tile.label ?? tile.key) : keyLabel(tile.key, layer);
-      const color = selected === tile.key || hint ? '#30263b'
-        : showingBoxplot ? '#fff'
-        : layer === 'second' || tile.key === '2ND' ? '#a9daff'
-        : layer === 'alpha' || tile.key === 'ALPHA' ? '#b7edab' : '#fff';
+      const color = lightCap(colour) || tint ? '#30263b' : '#fff';
       // Use whole pixel sizes: no horizontally squeezed letters or crowded sublabels.
       const size = label.length * 12 - 2 <= tile.w - 8 ? 14 : 7;
-      pixelText(ctx, label, tile.x + tile.w / 2, tile.y + (size === 7 ? 16 : 20), size, color, 'center');
+      pixelText(ctx, label, tile.x + tile.w / 2, tile.y + sink + (size === 7 ? 16 : 20), size, color, 'center');
+      // The printed legends above the key: blue 2nd function left, green alpha letter right. The
+      // active layer's legend brightens; the other fades.
+      if (!showingBoxplot) {
+        const legends = keySublabels(tile.key);
+        const bright = (name, colour) => layer === 'normal' ? colour : layer === name ? ink : colour + '55';
+        if (legends.second) pixelText(ctx, legends.second, tile.x + 1, tile.y - 1, 7, bright('second', '#5b8fd0'), 'left');
+        if (legends.alpha) pixelText(ctx, legends.alpha, tile.x + tile.w - 1, tile.y - 1, 7, bright('alpha', '#4f9a5a'), 'right');
+      }
       // The number key that chooses this answer.
-      if (showingBoxplot && index < 9) pixelText(ctx, String(index + 1), tile.x + 7, tile.y + 11, 7, '#f9c45f', 'left');
+      if (showingBoxplot && index < 9) pixelText(ctx, String(index + 1), tile.x + 7, tile.y + sink + 11, 7, '#b06a1a', 'left');
       ctx.restore();
     }
     if (step >= level.route.length) drawBoxplot(ctx, step - level.route.length);
