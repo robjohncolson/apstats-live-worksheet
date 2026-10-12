@@ -31,15 +31,14 @@ function mountRoom(username) {
     addEventListener(type, fn) { if (type === 'message') listeners.push(fn); }, removeEventListener() {} };
   const sprite = (extra) => Object.assign({ x: 0, y: 0, vx: 0, vy: 0, hue: 0, update: noop, render: noop }, extra);
   const engine = { canvas, groundY: 700, entities: new Map(), sceneEntities: null };
-  let player = null;
   const board = { engine, input: { left: false, right: false, jump: false, up: false, run: false },
     presses: { left: 0, right: 0, jump: 0, up: 0 }, username, role: 'student', api: { _camera: {} },
     viewportW: () => 1366, setBoardHeight: noop, atlas: () => null,
-    createPlayer: (o) => (player = sprite(o)), createPeer: (name, pose) => sprite({ name, ...pose }) };
+    createPlayer: (o) => sprite(o), createPeer: (name, pose) => sprite({ name, ...pose }) };
   const panel = mountParkPanel({ container, getSocket: () => socket, board, onClose: noop });
   const deliver = (packet) => listeners.forEach((fn) => fn({ data: JSON.stringify(packet) }));
   const status = () => container.querySelector('[role="status"]').textContent;
-  return { panel, deliver, socket, status, container, player: () => player };
+  return { panel, deliver, socket, status, container };
 }
 
 const lobby = { type: 'calculator_lobby_state', protocol: CALCULATOR_PROTOCOL, epoch: 'e1', missionId: LEVEL.id,
@@ -95,22 +94,3 @@ test('the +1 key celebration appears only after the relay completes the whole te
   assert.deepEqual(panel.getView().keyCounts.alpha, 2, 'the gold count is the relay count');
 });
 
-test('the stomp: DOWN while standing on a keycap presses it at once; off a cap it does nothing (FEEL_SPEC §B3)', (t) => {
-  const { panel, deliver, socket, player } = mountRoom('alpha');
-  t.after(() => panel.dispose());
-  panel.startMission();
-  deliver(lobby);
-  deliver(state({ step: 0, keys: [], members: [{ name: 'alpha', pose: { x: 65, y: 676 }, step: 0 }] }));
-  const down = () => win.document.dispatchEvent(new win.KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
-  const presses = () => socket.sent.filter(message => message.type === 'calculator_press');
-  Object.assign(player(), { x: 720 + 65, y: 676 });          // on the floor, no cap underfoot
-  down();
-  assert.equal(presses().length, 0, 'nothing to press');
-  const stat = tilesFor(0, LEVEL).find(tile => tile.key === 'STAT');
-  Object.assign(player(), { x: 720 + stat.x + stat.w / 2 - 10, y: stat.y - 24 });
-  down();
-  assert.equal(presses().length, 1);
-  assert.equal(presses()[0].key, 'STAT');
-  win.document.dispatchEvent(new win.KeyboardEvent('keydown', { key: 'x', bubbles: true }));
-  assert.equal(presses().length, 1, 'a second stomp waits for the acknowledged revision');
-});

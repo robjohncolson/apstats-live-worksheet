@@ -46,7 +46,9 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   let state = null, socket = null, disposed = false, epoch = null, applied = 0;
   let joinedAt = 0, poseAt = 0, receivedAt = 0, clockOffset = 0, needsRelease = false;
   const openedAt = performance.now();
-  let selected = null, depressed = null, lastRevision = -1;
+  let selected = null, lastRevision = -1;
+  // The click is the press (teacher 2026-10-11): the chosen cap sinks for ~120 ms with the click sound.
+  let clicked = null, clickedAt = 0;
   // When this page first saw the relay's authoritative team completion (key celebration).
   let rewardShownAt = null;
   const keyQueue = [];
@@ -157,6 +159,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
       Object.assign(player, { x: ENTRY_WIDTH + tile.x + tile.w / 2 - 10, y: tile.y - 24, vx: 0, vy: 0, standingOn: null });
     }
     needsRelease = true; selected = tile.key; poseAt = 0;
+    clicked = tile.key; clickedAt = performance.now(); audio.play('key');
     keyQueue.push({ key: tile.key, summary: state.step >= level.route.length });
     flushPress();
   }
@@ -351,10 +354,6 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     if (player.x < ENTRY_WIDTH) setParticipating(false);
     if (!tileAt(localPose(), state?.step || 0, level)) needsRelease = false;
     selected = needsRelease ? null : tileAt(localPose(), state?.step || 0, level);
-    // A cap clicks when it is first stepped on (CALCULATOR_FEEL_SPEC §B2); the relay's own
-    // 'switch' still marks the credited press.
-    if (selected && selected !== depressed) audio.play('key');
-    depressed = selected;
     const viewport = board.viewportW() / scale();
     // Mouse-first solving: keep every key visible instead of chasing the selected cat.
     const assembling = lobby?.phase === 'assembling' && lobby.roster.includes(board.username);
@@ -388,7 +387,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     capPath(ctx, tile.x, tile.y, tile.w, tile.h); ctx.fill();
   }
   // Keycaps (CALCULATOR_FEEL_SPEC §B1/§B2): the CE's colour groups, a darker 2 px base so the cap
-  // reads as raised, a 2 px ink outline. A pressed cap sinks 4 px onto its base; `tint` washes the
+  // reads as raised, a 2 px ink outline. A clicked cap sinks 4 px onto its base; `tint` washes the
   // cap while 2nd (blue) or ALPHA (green) is active. Cosmetic only: tileAt() still uses tile.y.
   const CAP = { dark: '#494458', light: '#e9e1d2', second: '#6fa8dc', alpha: '#7bc47f' };
   const TOP_ROW = new Set(['Y=', 'WINDOW', 'ZOOM', 'TRACE', 'GRAPH']);
@@ -511,7 +510,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
       ctx.fillStyle = '#d5c5ae'; ctx.fillRect(350, 234, 315, 12);
       ctx.fillStyle = '#479b67'; ctx.fillRect(350, 234, 315 * hold, 12);
     }
-    if (state?.holdAt != null) text(ctx, 'HOLD TO PRESS . DOWN PRESSES NOW', 350, 269, 10);
+    if (state?.holdAt != null) text(ctx, 'HOLD TO PRESS', 350, 269, 10);
     else if (!state?.failure && showingBoxplot && state?.lastPlot?.correct === false && !state.boxValues.length) {
       text(ctx, 'RESULT DID NOT MATCH. TRY AGAIN.', 350, 269, 10);
     }
@@ -523,10 +522,11 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     const modifier = layer === 'second' ? '#a9daff' : layer === 'alpha' ? '#b7edab' : null;
     for (const [index, tile] of tilesFor(step, level).entries()) {
       const hint = state?.hintKeys?.includes(tile.key);
-      const pressed = selected === tile.key;
-      const colour = pressed ? '#f9c45f' : hint ? '#9bdfae' : capColour(tile, showingBoxplot);
+      const chosen = selected === tile.key;
+      const pressed = clicked === tile.key && performance.now() - clickedAt < 120;
+      const colour = chosen ? '#f9c45f' : hint ? '#9bdfae' : capColour(tile, showingBoxplot);
       // The modifier keys themselves keep their own colour; everything else tints with the layer.
-      const tint = modifier && !pressed && !hint && tile.key !== '2ND' && tile.key !== 'ALPHA' ? modifier : null;
+      const tint = modifier && !chosen && !hint && tile.key !== '2ND' && tile.key !== 'ALPHA' ? modifier : null;
       const sink = keycap(ctx, tile, colour, { pressed, tint });
       ctx.save();
       if (state?.solved) ctx.globalAlpha *= 0.22;
@@ -645,14 +645,6 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     if (/^[1-9]$/.test(event.key) && !event.repeat && participating && state && answering() && !state.solved
       && !event.target?.closest?.('input, textarea, select, [contenteditable="true"]')) {
       const tile = tilesFor(state.step, level)[Number(event.key) - 1];
-      if (tile) { event.preventDefault(); choose(tile); }
-    }
-    // Stomp (CALCULATOR_FEEL_SPEC §B3): DOWN or the park's action key (X / K) presses the cap
-    // the cat stands on right away; standing still keeps the relay's hold as the patient path.
-    if ((event.key === 'ArrowDown' || /^[xk]$/i.test(event.key)) && !event.repeat && participating && state && !state.solved
-      && !event.target?.closest?.('input, textarea, select, [contenteditable="true"]')) {
-      const key = tileAt(localPose(), state.step, level);
-      const tile = key && tilesFor(state.step, level).find(tile => tile.key === key);
       if (tile) { event.preventDefault(); choose(tile); }
     }
     // Handle brief taps even when keydown and keyup fall between physics steps.

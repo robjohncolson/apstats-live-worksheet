@@ -2,7 +2,9 @@
 
 Status: 2026-10-11 — teacher verdict after seeing it live: **A (CE-renderer screen) and B4 (water) were
 regressions and are reverted** (the room draws the big pixel-font text lines again; the timer is the number).
-B5's scroll-in went with the screen. Kept: B1 keycaps + legends, B2 depress/click/tint, B3 the stomp.
+B5's scroll-in went with the screen. Kept: B1 keycaps + legends, B2 tint. Follow-up the same day: the mouse is
+the game (15 s stays; keyboard = unofficial hard mode, no lifts built), so B3 the stomp and the standing sink
+are removed; instead the **click is the press**: the chosen cap sinks 4 px for ~120 ms with the click sound.
 The renderer's palette options and the trainer tab-highlight fix stay (additive; trainer unchanged).
 
 Teacher's brief (2026-10-11): keep the activities as they are ("currently pretty good"), make the screen show the
