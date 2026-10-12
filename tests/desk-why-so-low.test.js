@@ -256,12 +256,13 @@ describe('Why-so-low coach: Blooket make-up awareness', () => {
     expect(body).toMatch(/hasBlooket:\s*!!l\.hasBlooket/);
   });
 
-  it('92: _renderCoachPanel surfaces the Blooket make-up line (80% via flashcards)', () => {
+  it('92: _renderCoachPanel surfaces the Blooket line (the deck score is the grade, no pass mark)', () => {
     const body = fnBody(DESK, '_renderCoachPanel');
     expect(body).toMatch(/ctx\.blooket\s*&&\s*ctx\.blooket\.due\s*>\s*0/);
     expect(body).toMatch(/Blooket:/);
     expect(body).toMatch(/flashcards/);
-    expect(body).toMatch(/80%/);
+    // Teacher 2026-10-12: 80% was the summer unlock rule; student copy never names it.
+    expect(body).not.toMatch(/80%/);
   });
 
   it('93: a weak-lesson line mentions Blooket ONLY when the lesson has one', () => {

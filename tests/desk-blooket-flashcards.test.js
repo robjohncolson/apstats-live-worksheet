@@ -50,8 +50,11 @@ describe('Desk: Blooket flashcard verification', () => {
     const body = fnBody(DESK, 'showResourcePanel');
     // The launcher routes to studentMark(..., 'blooket') and is always clickable.
     expect(body).toMatch(/studentMark\(this,[^\n]*blooket/);
-    expect(body).toMatch(/Do flashcards/);
-    expect(body).toMatch(/Flashcards — need 80%/);
+    expect(body).toMatch(/Do flashcards \(your score = Blooket grade\)/);
+    // Teacher 2026-10-12: the score IS the grade; 80% was the summer unlock rule.
+    // No student-facing label may call 80% done, credit or a pass.
+    expect(body).toMatch(/Flashcards ' \+ Math\.round\(_blScore\) \+ '% — redo to raise it/);
+    expect(body).not.toMatch(/need 80%|80% = done|✓ done/);
   });
 
   it('03: _doneBtn no longer handles blooket (it is launcher + chip in its row now)', () => {

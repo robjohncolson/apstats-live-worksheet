@@ -2953,10 +2953,10 @@
 <script src="js/ced2026-crosswalk.js"></script>
 <script src="js/ced2026-labels.js"></script>
 <script src="lib/qrcode.min.js"></script>
-<script src="canvas_engine.js?v=2026-10-12-4qvi"></script>
-<script src="sprite_sheet.js?v=2026-10-12-4qvi"></script>
-<script src="classroom-board.js?v=2026-10-12-4qvi"></script>
-<script src="pico-home.js?v=2026-10-12-4qvi"></script>
+<script src="canvas_engine.js?v=2026-10-12-zmq6"></script>
+<script src="sprite_sheet.js?v=2026-10-12-zmq6"></script>
+<script src="classroom-board.js?v=2026-10-12-zmq6"></script>
+<script src="pico-home.js?v=2026-10-12-zmq6"></script>
 <script src="ti84-plot.js"></script>
 <script src="activity-bridge.js"></script>
 <script src="activity-colorbox.js"></script>
@@ -9845,7 +9845,7 @@ function _renderCoachPanel(panel, ctx) {
 
   // Blooket make-up — a real Work-track component (10%) the student can't see
   // anywhere else. Show the standing; when any are undone, point at the flashcard
-  // make-up (a pass = 80%), which is often the fastest Work-track lift.
+  // deck (its best score is the grade, point for point), often the fastest Work-track lift.
   if (ctx.blooket && ctx.blooket.due > 0) {
     var blk = document.createElement('div');
     var bTrk = (ctx.blooket.track != null) ? (Math.round(ctx.blooket.track) + '%') : '—';
@@ -9864,7 +9864,7 @@ function _renderCoachPanel(panel, ctx) {
   if (Array.isArray(ctx.flashcardGate) && ctx.flashcardGate.length) {
     var fg = document.createElement('div');
     var fgTopics = ctx.flashcardGate.slice(0, 3).map(function (g) { return cedLabel(g.lesson).text; }).join('; ');
-    fg.textContent = 'Flashcards to finish: ' + fgTopics + ' — pass each lesson’s flashcards to 80% on the Desk to mark it complete. Nothing is locked; every lesson stays open.';
+    fg.textContent = 'Flashcards to finish: ' + fgTopics + ' — play each lesson’s timed deck on the Desk; your best score is that lesson’s Blooket grade. Nothing is locked; every lesson stays open.';
     facts.appendChild(fg);
   }
 
@@ -12350,19 +12350,18 @@ function showResourcePanel(inf, dateStr) {
             }
             if (u.blooket) {
                 // The Blooket grade = max(real game, flashcard). The chip shows the
-                // current score (colored vs the 80% gate); the launcher is ALWAYS
-                // available so a student can re-run the flashcards to IMPROVE — the
-                // full timed deck is the only graded mode (80% = done, up to 100%).
+                // current score; the launcher is ALWAYS available so a student can
+                // re-run the deck to raise it — the full timed deck is the only graded mode.
+                // The best score IS the Blooket grade, point for point (teacher 2026-10-12:
+                // "80% counts as done" was only the summer unlock rule and misled students
+                // into stopping at 80). The 80 gate survives only as the lesson-complete tint.
                 var _blScore = (typeof _blooketScoreFor === 'function') ? _blooketScoreFor(_stuTopicId) : null;
-                // Label by the 80% gate, not 100: >=80 already PASSES (done) — say so, and
-                // keep the click as an optional redo. <80 = a make-up; 100 = perfected.
                 var _blLabel = (typeof _blScore === 'number')
-                    ? (_blScore >= 100 ? 'Flashcards ✓ perfected'
-                       : _blScore >= 80 ? 'Flashcards ✓ done — redo to improve'
-                       : 'Flashcards — need 80%')
-                    : 'Do flashcards (Blooket credit)';
+                    ? (_blScore >= 100 ? 'Flashcards 100% ✓'
+                       : 'Flashcards ' + Math.round(_blScore) + '% — redo to raise it')
+                    : 'Do flashcards (your score = Blooket grade)';
                 var _blBtn = _signedIn
-                    ? ' <button class="s7btn chicago" style="font-size:9px;padding:1px 4px;margin-left:4px" title="The timed flashcard deck earns your Blooket credit: 80% = done, up to 100%" onclick="studentMark(this,\'' + _stuTopicId + '\',\'blooket\')">' + _blLabel + '</button>'
+                    ? ' <button class="s7btn chicago" style="font-size:9px;padding:1px 4px;margin-left:4px" title="The timed flashcard deck is your Blooket grade for this lesson: your best score counts, point for point, up to 100%" onclick="studentMark(this,\'' + _stuTopicId + '\',\'blooket\')">' + _blLabel + '</button>'
                     : '';
                 var _blDueText = '';
                 if (typeof _fcFlag === 'function' && _fcFlag('readinessBadge')) {
@@ -12748,10 +12747,16 @@ async function studentMark(btn, topicId, artifact) {
 }
 
 // ── Blooket flashcard verification (2026-05-20) ───────────────────────────────
-// Sources the same Blooket CSV that built the live Blooket game. Student
-// must score >=80% on a single pass to unlock Done. This is the actual
-// chain-of-custody check: self-attest and self-reported scores couldn't
+// Sources the same Blooket CSV that built the live Blooket game. This is the
+// actual chain-of-custody check: self-attest and self-reported scores couldn't
 // verify anything; flashcards we control end-to-end can.
+//
+// GRADE RULE (teacher 2026-10-12): the deck's best score IS the lesson's Blooket
+// grade, point for point (_ftFinish → _blooketCommit records the exact %; the
+// roster's blooketAvg is the mean of those). The 80% threshold below was the
+// SUMMER unlock rule (lessons were gated then); today it only decides the
+// lesson-complete tint (_isLessonComplete) and nothing a student reads may call
+// 80% "done", "credit" or "a pass". Nothing is locked since 2026-09-10.
 const BLOOKET_PASS_THRESHOLD = 0.80;
 const BLOOKET_RETRY_COOLDOWN_MS = 0; // (changing this needs teacher sign-off — see FLASHCARD_V2_BUILD.md)
 
@@ -13947,7 +13952,7 @@ async function openBlooketFlashcards(btn, topicId) {
 
 // One sentence every student sees before the first card: the deck IS the Blooket credit.
 function _bfCreditNote(topicId) {
-    var note = 'This timed deck is how you earn Blooket credit for this lesson. 80% or higher counts it as done; you can reach 100%.';
+    var note = 'This timed deck is your Blooket grade for this lesson. Your best score counts, point for point, up to 100% — there is no pass mark.';
     var best = (typeof _blooketScoreFor === 'function') ? _blooketScoreFor(topicId) : null;
     if (typeof best === 'number') note += ' Your best so far: ' + best + '%.';
     return note;
@@ -27876,7 +27881,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-10-12-4qvi';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-10-12-zmq6';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

@@ -175,6 +175,10 @@ roster-server is called cross-origin by these frontends — they MUST keep worki
 
 `app.use(cors())` in `roster-server/server.js` is **intentionally wildcard-open today**. Do not harden it ad hoc — the prepared hardening path is `roster-server/docs/cors-allowlist.patch` (explicit allowlist with all three origins above plus localhost dev origins, with apply/verify instructions in the file header). After applying + deploying, verify the Desk loads, the trainer signs in standalone, and the quiz app works.
 
+## Blooket credit = the timed flashcard deck's score (no pass mark)
+
+A lesson's Blooket grade is the **best score on its timed flashcard deck, point for point** (Desk `_ftFinish` → `_blooketCommit`; roster `blooketAvg` = mean of best scores over due lessons; a deck not played by its zero date = 0). There is **no 80% pass mark**: "80% counts as done" was the summer-2026 unlock rule from when lessons were gated, and it misled students into stopping at 80 (teacher, 2026-10-12). `BLOOKET_PASS_THRESHOLD` survives only as the lesson-complete tint. Student-facing copy anywhere in the repo (Desk, Pico Desk, mobile home, coach, tooltips) must never call 80% "done", "credit" or "a pass" — tests `tests/desk-blooket-flashcards.test.js`, `tests/desk-flashcards-guard-copy.test.js`, `tests/mobile-home-flashcards.test.js` pin this.
+
 ## AI Grading Rubric Structure
 
 Each reflection question in `ai-grading-prompts*.js` has:

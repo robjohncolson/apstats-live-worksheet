@@ -426,11 +426,14 @@ describe('mobile-home — native flashcards commit note + accessibility', () => 
     });
   });
 
-  it('uses the frozen Blooket-half vocabulary in flashcard student copy', () => {
+  it('flashcard student copy says the score IS the Blooket grade (no pass mark, no unlock)', () => {
+    // Teacher 2026-10-12: "80% counts as done" was the summer unlock rule and misled
+    // students into stopping at 80. The deck's best score is the grade, point for point.
     const start = HOME.indexOf('// ── Native flashcards');
     const end = HOME.indexOf('// Cached grade', start);
     const flashcardsBlock = HOME.slice(start, end);
-    expect(flashcardsBlock).toContain('Blooket half of Done');
+    expect(flashcardsBlock).toContain('your Blooket grade for the lesson, point for point');
+    expect(flashcardsBlock).not.toMatch(/half of Done|Reach 80%|Passed!/);
     expect(flashcardsBlock).not.toMatch(/lesson unlocked|to unlock|enough to unlock/i);
   });
 });

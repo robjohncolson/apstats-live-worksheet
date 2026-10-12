@@ -525,8 +525,8 @@ describe('Phase 2 -- review fixes', { timeout: 90_000 }, () => {
     const desk = readFileSync(resolve(__dirname, '..', 'ap_stats_roadmap_square_mode.html'), 'utf8');
     // The panel's own status strings, as the Desk writes them.
     expect(desk).toContain('&#10003; Completed</button>');
-    expect(desk).toContain("'Flashcards ✓ perfected'");
-    expect(desk).toContain("'Flashcards ✓ done — redo to improve'");
+    expect(desk).toContain("'Flashcards 100% ✓'");
+    expect(desk).toContain("'% — redo to raise it'");
     expect(desk).toContain('&#10003; visited</span>');
     expect(desk).toContain('">Done</button>');
     expect(desk).toContain('class="worksheet-done-slot"');
@@ -538,8 +538,10 @@ describe('Phase 2 -- review fixes', { timeout: 90_000 }, () => {
       const row = (html) => { const d = doc.createElement('div'); d.innerHTML = html; return d; };
       const status = (html) => win.PicoHome.rowStatus(row(html));
       expect(status('<a>Quiz</a><span class="desk-quiz-done-slot"><button disabled>✓ Completed</button></span>')).toBe('done');
-      expect(status('<a>Blooket Review</a><span class="desk-quiz-done-slot"><button>Flashcards ✓ perfected</button></span>')).toBe('done');
-      expect(status('<a>Blooket Review</a><span class="desk-quiz-done-slot"><button>Flashcards ✓ done — redo to improve</button></span>')).toBe('done');
+      expect(status('<a>Blooket Review</a><span class="desk-quiz-done-slot"><button>Flashcards 100% ✓</button></span>')).toBe('done');
+      // The label carries the exact score (it IS the Blooket grade); the panel dot follows the Desk's 80 tint.
+      expect(status('<a>Blooket Review</a><span class="desk-quiz-done-slot"><button>Flashcards 85% — redo to raise it</button></span>')).toBe('done');
+      expect(status('<a>Blooket Review</a><span class="desk-quiz-done-slot"><button>Flashcards 60% — redo to raise it</button></span>')).toBe('todo');
       expect(status('<a>Video 1</a> <span>✓ visited</span>')).toBe('done');
       expect(status('<a>Video 1</a>')).toBe('todo');
       expect(status('<a>Follow-Along Worksheet</a><span class="worksheet-done-slot"><button disabled>Done</button></span>')).toBe('todo');

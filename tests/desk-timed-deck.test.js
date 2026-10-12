@@ -148,7 +148,7 @@ describe('Timed deck — UI wiring (static parse)', () => {
     expect(body).toMatch(/_ftStart\s*\(\s*btn\s*,\s*topicId\s*\)/);
     expect(body).not.toMatch(/_bfStartQuick|_bfShowModePicker/);
     expect(fnBody(DESK, '_ftStart')).toMatch(/_bfCreditNote\(topicId\)/);
-    expect(fnBody(DESK, '_bfCreditNote')).toMatch(/Blooket credit[\s\S]*80%[\s\S]*100%[\s\S]*Your best so far/);
+    expect(fnBody(DESK, '_bfCreditNote')).toMatch(/your Blooket grade[\s\S]*point for point[\s\S]*100%[\s\S]*Your best so far/);
   });
 
   it('13: the timer ticks every second and times out the card at 0', () => {

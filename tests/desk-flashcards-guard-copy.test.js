@@ -98,8 +98,11 @@ describe('Desk flashcards — timed keyboard guards and honest picker', () => {
 
   it('the timed deck note states the credit rule and current best honestly', () => {
     const body = fnBody(DESK, '_bfCreditNote');
-    expect(body).toMatch(/Blooket credit/);
-    expect(body).toMatch(/80% or higher counts it as done/);
+    expect(body).toMatch(/your Blooket grade/);
+    // Teacher 2026-10-12: the score IS the grade — no pass mark in student copy.
+    expect(body).toMatch(/point for point/);
+    expect(body).toMatch(/no pass mark/);
+    expect(body).not.toMatch(/80%/);
     expect(body).toMatch(/100%/);
     expect(body).toMatch(/Your best so far/);
   });

@@ -1313,13 +1313,14 @@ export function computeQuarterV3({
   // -- Blooket track (BLOOKET_MAKEUP_BUILD.md) -- now a real per-lesson grade:
   // denominator = due lessons that HAVE a Blooket (blooketLessons), and a
   // missing-but-due Blooket counts as 0 (mirrors the lessons/quizzes tracks).
-  // r.blooket is the real game score, else the flashcard make-up (80%), else
+  // r.blooket is the real game score, else the timed flashcard deck's best score
+  // (the exact %, point for point — teacher 2026-10-12: no 80% pass mark), else
   // null→0. A lesson with NO Blooket is excluded from the denominator, so it is
   // never an unfair 0. If blooketLessons isn't supplied (older caller), the set
   // is empty → blooketAvg null → renormalized away (back-compat, no tank).
   // blooketDone = due Blooket lessons WITH a score (game or flashcard make-up);
   // blooketTodo = due Blooket lessons with NO score yet — the flashcard make-up
-  // opportunities the grade coach surfaces (each can become an 80%).
+  // opportunities the grade coach surfaces (each becomes the deck's best score).
   // Iterate bandLessons (NOT dueLessons): a Blooket-bearing lesson counts once
   // it's scheduled-due OR the student has already earned a Blooket score for it
   // (game or flashcard make-up). This mirrors the lessons track's "if the work is

@@ -2011,11 +2011,15 @@
     return Boolean(head && head.classList.contains('chicago') && !hasControl(head) && node.children.length > 1);
   }
 
-  // The panel's own status for a row: 'done' (✓ Completed / flashcards ✓ done / video ✓ visited),
-  // 'todo' (a Done slot not yet done, an unvisited video), or null (no status: tutor, links).
+  // The panel's own status for a row: 'done' (✓ Completed / flashcards at the Desk's 80
+  // lesson-complete tint / video ✓ visited), 'todo' (a Done slot not yet done, an unvisited
+  // video), or null (no status: tutor, links). The flashcard label carries the exact score
+  // ("Flashcards 85% — redo to raise it") because that score IS the Blooket grade.
   function rowStatus(row) {
     var text = row.textContent;
-    if (/✓ Completed|✓ done|✓ perfected/.test(text)) return 'done';
+    if (/✓ Completed|✓ done|✓ perfected|Flashcards 100% ✓/.test(text)) return 'done';
+    var flashcards = /Flashcards (\d+)% — redo/.exec(text);
+    if (flashcards) return Number(flashcards[1]) >= 80 ? 'done' : 'todo';
     if (row.querySelector('.worksheet-done-slot, .desk-quiz-done-slot')) return 'todo';
     if (/\bVideo \d/.test(text)) return /✓ visited/.test(text) ? 'done' : 'todo';
     return null;
