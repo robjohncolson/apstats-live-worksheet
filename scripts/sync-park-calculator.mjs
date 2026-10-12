@@ -5,7 +5,8 @@ import { fileURLToPath } from 'node:url';
 import { nativeScriptFilenames } from '../ti84-trainer-v2/native/manifest.mjs';
 const root = fileURLToPath(new URL('../', import.meta.url));
 const relay = resolve(process.argv[2] || resolve(root, '../curriculum_render/railway-server/apstat-park'));
-for (const file of ['calculator-catalog.mjs', 'calculator-curriculum.mjs', 'calculator-engine.mjs', 'calculator-mission.mjs', 'calculator-lobby.mjs']) {
+for (const file of ['calculator-catalog.mjs', 'calculator-curriculum.mjs', 'calculator-engine.mjs', 'calculator-mission.mjs', 'calculator-lobby.mjs',
+  'calculator-goals.mjs', 'calculator-variation.mjs']) {
   copyFileSync(resolve(root, 'apstat-park', file), resolve(relay, file));
 }
 for (const file of [...nativeScriptFilenames, 'manifest.mjs']) {

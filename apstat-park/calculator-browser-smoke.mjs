@@ -287,7 +287,12 @@ try {
   await clickKey(bob, 'MATH');
   await bob.waitForFunction(() => board.getParkScene().getState().lastPress?.key === 'MATH');
   assert.deepEqual(await bob.evaluate(() => board.getParkScene().getState().keys), ['MATH']);
-  assert.equal(await bob.evaluate(() => board.getParkScene().getState().startedAt), bobDeadline, 'wrong press does not reset the timer');
+  // Protocol 10 (§5): MATH on the home screen is a wrong key: it costs 2 s and never renews the timer.
+  assert.deepEqual(await bob.evaluate(() => board.getParkScene().getState().lastPress),
+    { key: 'MATH', advanced: false, wrong: true, penaltyMs: 2000 });
+  assert.equal(await bob.evaluate(() => board.getParkScene().getState().startedAt), bobDeadline - 2000, 'a wrong press costs 2 s');
+  assert.equal(await bob.evaluate(() => board.getParkScene().getView().wrongKey), 'WRONG KEY · -2S · CLEAR BACKS OUT');
+  await bob.screenshot({ path: path.join(output, 'calculator-wrong-key.png'), fullPage: true });
   assert.deepEqual(await alice.evaluate(() => board.getParkScene().getState().keys), ['STAT']);
   // Alice takes a list-editor detour and then uses numeric selection/ENTER.
   for (const [key, screen] of [['ENTER','stat-edit-lists'], ['STAT','stat-menu']]) {

@@ -1,6 +1,7 @@
 const V = new URL(import.meta.url).search;
 const mission = await import('./calculator-mission.mjs' + V);
-const { HOLD_MS, timeLimitFor, WORLD, tilesFor, tileAt } = mission;
+const { HOLD_MS, timeLimitFor, WORLD, tilesFor, tileAt, missionFor } = mission;
+const { goalFor } = await import('./calculator-goals.mjs' + V);
 const { DEFAULT_LEVEL, levelById, challengeFor, initializeCalculator } = await import('./calculator-curriculum.mjs' + V);
 const { drawChallenge } = await import('./calculator-challenge-view.mjs' + V);
 const { nativeScriptFilenames } = await import('../ti84-trainer-v2/native/manifest.mjs' + V);
@@ -24,6 +25,37 @@ const RESET_DOOR = { x: 650, y: WORLD.floor - 48, w: 48, h: 48 };
 // Same calculator, with its menu payloads painted directly into the level.
 for (const file of nativeScriptFilenames) await import('../ti84-trainer-v2/native/' + file + V);
 
+// Navigator round (APSTAT_PARK_CALCULATOR_FLUENCY_SPEC §3). Every client works it out from the
+// round's own packet, so nobody has to send it. The relay could reproduce it exactly:
+//   hash = FNV-1a 32-bit over the epoch string's UTF-16 code units
+//          (h = 2166136261; for each unit c: h = ((h XOR c) * 16777619) mod 2^32)
+//   navigator round  <=>  roster has >= 2 names  and  hash % 3 === 0
+//   step k (0-based) belongs to sorted(roster)[k % roster.length]  (default JS sort: code units)
+export function epochHash(epoch) {
+  const text = String(epoch);
+  let hash = 2166136261;
+  for (let i = 0; i < text.length; i++) hash = Math.imul(hash ^ text.charCodeAt(i), 16777619) >>> 0;
+  return hash;
+}
+// null, or { roster } with the roster sorted (the relay's order follows pushing, not names).
+export function navigatorPlan(epoch, roster = []) {
+  if (epoch == null || roster.length < 2) return null;
+  if (epochHash(epoch) % 3 !== 0) return null;
+  return { roster: [...roster].sort() };
+}
+export function navigatorOf(plan, step) {
+  return plan.roster[step % plan.roster.length];
+}
+// 0-based route steps this name navigates.
+export function navigatorSteps(plan, name, routeLength) {
+  const steps = [];
+  for (let step = 0; step < routeLength; step++) if (navigatorOf(plan, step) === name) steps.push(step);
+  return steps;
+}
+const RUNG_TAGS = ['HINTS: FULL', 'HINTS: GOALS', 'NO HINTS'];
+const RUNG_SPEECH = ['Hints: full.', 'Hints: goals only.', 'No hints: read the calculator screen.'];
+const WRONG_RED = '#b4442c';
+
 export function mountParkPanel({ container, getSocket, board, onClose, onPark = () => {} }) {
   const doc = container.ownerDocument, win = doc.defaultView;
   const { engine, input, api } = board;
@@ -39,10 +71,17 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   // TRACE text comes from the trainer's own renderer: what the calculator shows is what the Park shows.
   // Teacher 2026-10-11: the CE-renderer screen (FEEL_SPEC §A) read worse than these lines; reverted.
   const display = createWorldDisplay({ traceLabel: win.TI84ScreenRenderer?.traceLabel });
+  // level is missionFor(state) once a round is in: the catalogue level merged with the round's
+  // random data (protocol 10, §2). Before that, the lobby's catalogue preview.
   let level = DEFAULT_LEVEL, challenge = challengeFor(level);
-  let calculator = win.TI84Native.create(null, { renderer: display });
-  initializeCalculator(calculator, level);
+  // The round data the local calculator was loaded with (JSON of state.problem, 'null' = catalogue).
+  let calculatorProblem = 'null';
+  let calculator = freshCalculator(null);
   let computedSummary = null;
+  // §1/§5: the step a wrong key dropped one rung ('epoch:step'), and the last wrong press to animate.
+  let wrongStep = null, wrongPress = null, wrongAt = -Infinity;
+  // The hint mode the screen reader last heard (rung or navigator round).
+  let announcedMode = null;
   let state = null, socket = null, disposed = false, epoch = null, applied = 0;
   let joinedAt = 0, poseAt = 0, receivedAt = 0, clockOffset = 0, needsRelease = false;
   const openedAt = performance.now();
@@ -67,7 +106,11 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   status.setAttribute('role', 'status'); status.setAttribute('aria-live', 'polite');
   status.style.cssText = 'flex:1 1 240px;font:14px system-ui';
   status.textContent = 'Connecting the calculator team…';
-  controls.append(status); container.append(controls);
+  // §3: the navigator steps and their goals, for screen readers, for the whole round.
+  const navigatorList = doc.createElement('ul');
+  navigatorList.setAttribute('aria-label', 'Your navigator steps');
+  let navigatorListKey = '';
+  controls.append(status, navigatorList); container.append(controls);
   const readings = doc.createElement('output');
   readings.setAttribute('aria-label', 'Calculator result');
   readings.style.cssText = screenReaderOnly;
@@ -101,6 +144,133 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   Object.assign(api._camera, { enabled: false, x: 0 });
   function scale() { return Math.min(1, board.viewportW() / WORLD.width); }
   function answering(step = state?.step || 0) { return step >= level.route.length; }
+  // A new local calculator loaded with the current level's lists (a varied round's own data).
+  // problem: the round's state.problem (null = the catalogue's data). Callers reset `applied`.
+  function freshCalculator(problem) {
+    const next = win.TI84Native.create(null, { renderer: display });
+    initializeCalculator(next, level);
+    calculatorProblem = JSON.stringify(problem ?? null);
+    return next;
+  }
+  // §3: this round's navigator plan from the round packet (null outside a navigator round).
+  function navigator() {
+    if (!state) return null;
+    return navigatorPlan(state.epoch, (state.members || []).map(member => member.name));
+  }
+  // §1: the hint rung for the current step. The relay's rung (older relay: none, so 0), one lower
+  // after a wrong key on this step, and full while the relay's time-up help (hintKeys) is showing.
+  function hintRung() {
+    if (!state || state.hintKeys?.length) return 0;
+    const rung = [0, 1, 2].includes(state.rung) ? state.rung : 0;
+    if (wrongStep === state.epoch + ':' + state.step) return Math.max(0, rung - 1);
+    return rung;
+  }
+  // The hint line for a route step ('' = no line). Rung 0: the key; rung 1: the goal; rung 2: nothing.
+  // A navigator round ignores rungs: your own steps show their goal, the rest say ASK YOUR TEAM.
+  function hintFor(step, layer) {
+    const full = keyInstruction(level.route[step], level.hints[step] || '', layer, level.route[step + 1]);
+    const goal = goalFor(level.id, step) || full;
+    if (state?.hintKeys?.length) return full;
+    const plan = navigator();
+    if (plan) return navigatorOf(plan, step) === board.username ? goal : 'ASK YOUR TEAM';
+    const rung = hintRung();
+    if (rung === 0) return full;
+    if (rung === 1) return goal;
+    return '';
+  }
+  // My navigator steps as 1-based numbers, with their goal phrases (consecutive equal phrases merged).
+  function navigatorCard(plan) {
+    const steps = navigatorSteps(plan, board.username, level.route.length);
+    const groups = [];
+    for (const step of steps) {
+      const goal = goalFor(level.id, step) || level.hints[step] || '';
+      const last = groups.at(-1);
+      if (last && last.goal === goal) last.steps.push(step + 1);
+      else groups.push({ steps: [step + 1], goal });
+    }
+    return { steps: steps.map(step => step + 1), groups };
+  }
+  // The lowest route step a teammate is still on (0-based): what the team needs from me now.
+  // No teammate left on the route: my own step (or the route's end, which needs nothing).
+  function teamStep() {
+    const onRoute = step => Number.isInteger(step) && step < level.route.length;
+    const steps = (state?.members || []).filter(member => member.name !== board.username).map(member => member.step).filter(onRoute);
+    if (steps.length) return Math.min(...steps);
+    return onRoute(state?.step) ? state.step : level.route.length;
+  }
+  // The part of my navigator list that fits, starting at the first group the team still needs.
+  // compact (answer/solved phases): one row per group at y 254 and 282 in the status column (the hint
+  // line is not drawn then; the challenge title starts at y 296). Otherwise the strip right of the
+  // keypad: x 592, a blue STEP line plus the goal wrapped at 18 characters, from y 316 to 672.
+  // lines: [{ text, y, blue }]; '...' rows mark hidden groups above or below.
+  function navigatorWindow(card, compact) {
+    const from = teamStep();
+    const start = card.groups.findIndex(group => group.steps.at(-1) - 1 >= from);
+    const shown = { from: from + 1, hiddenBefore: start > 0, hiddenAfter: false, groups: [], lines: [] };
+    if (start < 0) return shown;
+    const rest = card.groups.slice(start);
+    const label = group => (group.steps.length > 1 ? 'STEPS ' : 'STEP ') + group.steps.join(', ');
+    if (compact) {
+      for (const [i, y] of [254, 282].entries()) {
+        const group = rest[i];
+        if (!group) break;
+        const lead = i === 0 && shown.hiddenBefore ? '... ' : '';
+        shown.groups.push(group);
+        shown.lines.push({ text: lead + label(group) + ': ' + group.goal, y, blue: false });
+      }
+      shown.hiddenAfter = rest.length > shown.groups.length;
+      if (shown.hiddenAfter) shown.lines.at(-1).text += ' ...';
+      return shown;
+    }
+    let y = 316;
+    if (shown.hiddenBefore) { shown.lines.push({ text: '...', y, blue: false }); y += 11; }
+    for (const group of rest) {
+      const rows = [label(group), ...wrapWords(group.goal, 18)];
+      if (y + (rows.length - 1) * 11 > 672) { shown.hiddenAfter = true; break; }
+      shown.groups.push(group);
+      for (const [i, row] of rows.entries()) shown.lines.push({ text: row, y: y + i * 11, blue: i === 0 });
+      y += rows.length * 11 + 5;
+    }
+    if (shown.hiddenAfter && y <= 672) shown.lines.push({ text: '...', y, blue: false });
+    return shown;
+  }
+  // Keeps the offscreen list of my navigator steps current (rebuilt only when it changes).
+  function updateNavigatorList() {
+    const plan = navigator();
+    const items = plan ? navigatorCard(plan).groups.map(group =>
+      (group.steps.length > 1 ? 'Steps ' : 'Step ') + group.steps.join(', ') + ': ' + group.goal) : [];
+    const key = JSON.stringify(items);
+    if (key === navigatorListKey) return;
+    navigatorListKey = key;
+    navigatorList.replaceChildren(...items.map(item => {
+      const li = doc.createElement('li');
+      li.textContent = item;
+      return li;
+    }));
+  }
+  // "STEPS 2, 5, 8" capped to fit one row (52 small characters).
+  function stepList(steps) {
+    let list = '';
+    for (const step of steps) {
+      const next = list ? list + ', ' + step : String(step);
+      if (next.length > 40) return list + ' ...';
+      list = next;
+    }
+    return list;
+  }
+  // What the screen reader says about hints, once per change.
+  function hintMode() {
+    const plan = navigator();
+    if (plan) {
+      const steps = navigatorSteps(plan, board.username, level.route.length).map(step => step + 1);
+      return 'Navigator round: talk. ' + (steps.length ? 'You are the navigator for steps ' + steps.join(', ') + '.'
+        : 'You have no steps: ask your team.');
+    }
+    return RUNG_SPEECH[hintRung()];
+  }
+  function wrongKeyText(press) {
+    return press.penaltyMs > 0 ? 'WRONG KEY · -' + press.penaltyMs / 1000 + 'S · CLEAR BACKS OUT' : 'WRONG KEY · CLEAR BACKS OUT';
+  }
   function campaignUnlocked() {
     // Teacher 2026-10-07: keys are a spendable count and no longer gate the door (1-1 is always
     // startable; keys open later stages). A relay that sends campaignOpen has that rule.
@@ -205,15 +375,17 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
       for (const name of lobbyPeers.keys()) if (!packet.members.some(member => member.name === name)) lobbyPeers.delete(name);
       if (reset) {
         state = null; peers.clear(); epoch = null; applied = 0; lastRevision = -1; computedSummary = null;
-        calculator = win.TI84Native.create(null, { renderer: display }); initializeCalculator(calculator, level);
-        readings.textContent = '';
+        wrongStep = null; wrongPress = null; announcedMode = null;
+        // Back to the catalogue level: the last round's random data must not leak into the next preview.
+        level = levelById(level.id) || DEFAULT_LEVEL; challenge = challengeFor(level);
+        calculator = freshCalculator(null);
+        readings.textContent = ''; updateNavigatorList();
         returnToStart();
       }
       const preview = levelById(packet.missionId);
       if (!state && preview && preview.id !== level.id) {
         level = preview; challenge = challengeFor(level);
-        calculator = win.TI84Native.create(null, { renderer: display });
-        initializeCalculator(calculator, level); applied = 0;
+        calculator = freshCalculator(null); applied = 0;
       }
       // Teacher decision 2026-10-06: the teacher plays as a peer: participate only from the roster (no spectate branch).
       if (packet.phase === 'active' && packet.roster.includes(board.username) && player.x >= ENTRY_WIDTH + 20) {
@@ -228,9 +400,15 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     if (packet.type !== 'calculator_state') return;
     if (packet.protocol !== CALCULATOR_PROTOCOL) { status.textContent = 'Waiting for the team-block server update.'; return; }
     if (state?.epoch === packet.epoch && packet.revision < state.revision) return;
-    const incomingLevel = levelById(packet.missionId);
-    if (!incomingLevel) { status.textContent = 'Reload to load this calculator skill.'; return; }
-    level = incomingLevel; challenge = challengeFor(level);
+    if (!levelById(packet.missionId)) { status.textContent = 'Reload to load this calculator skill.'; return; }
+    // §2: the round's own data (state.problem) replaces the catalogue's for this round.
+    level = missionFor(packet); challenge = challengeFor(level);
+    const problemChanged = JSON.stringify(packet.problem ?? null) !== calculatorProblem;
+    // §5: a fresh wrong press shakes its cap and floats the time it cost; it drops this step one rung.
+    if (packet.lastPress?.wrong) {
+      if (state?.epoch === packet.epoch && packet.revision > state.revision) { wrongPress = packet.lastPress; wrongAt = performance.now(); }
+      wrongStep = packet.epoch + ':' + packet.step;
+    }
     if (packet.complete && !state?.complete) { audio.clear(); rewardShownAt = performance.now(); }
     else if (state?.epoch === packet.epoch && packet.revision > state.revision) {
       if (packet.solved && !state.solved) audio.play('switch');
@@ -244,10 +422,9 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     }
     const timedOut = state && packet.timeoutCount !== state.timeoutCount && epoch === packet.epoch;
     receivedAt = performance.now(); clockOffset = packet.clock - receivedAt;
-    if (epoch !== packet.epoch || timedOut) {
+    if (epoch !== packet.epoch || timedOut || problemChanged) {
       keyQueue.length = 0; pendingPress = null;
-      calculator = win.TI84Native.create(null, { renderer: display });
-      initializeCalculator(calculator, level); applied = 0; epoch = packet.epoch;
+      calculator = freshCalculator(packet.problem); applied = 0; epoch = packet.epoch;
       computedSummary = null;
     }
     // Replay committed input once, including when joining halfway through or reconnecting.
@@ -267,7 +444,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
       // Standing on a repeated key needs a fresh choice; clicks are queued.
     }
     if (state && packet.boxAttempts !== state.boxAttempts) { keyQueue.length = 0; pendingPress = null; }
-    lastRevision = packet.revision; state = packet;
+    lastRevision = packet.revision; state = packet; updateNavigatorList();
     if (pendingPress && packet.revision > pendingPress.revision) pendingPress = null;
     if (state.solved) { keyQueue.length = 0; pendingPress = null; }
     flushPress();
@@ -280,17 +457,26 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     for (const name of peers.keys()) if (!state.members.some(member => member.name === name)) peers.delete(name);
     const answerIndex = state.step - level.route.length;
     const hint = state.solved ? 'Your result is ready. Help your teammates finish.'
-      : state.step < level.route.length ? keyInstruction(level.route[state.step], level.hints[state.step], keyboardLayer(calculator.save()), level.route[state.step + 1])
+      : state.step < level.route.length ? hintFor(state.step, keyboardLayer(calculator.save()))
       : challenge.prompts ? challenge.prompts[answerIndex] + ' Click a choice, press its number key, or stand on it.'
       : 'Choose ' + challenge.labels[answerIndex] + '. Click its value.';
     const feedback = answerFeedback();
+    // The hint mode is spoken once when it changes (a new rung, a wrong key, a navigator round).
+    const mode = state.solved || answering() ? null : hintMode();
+    const modeNote = mode && mode !== announcedMode ? mode + ' ' : '';
+    if (mode) announcedMode = mode;
+    const press = state.lastPress;
+    const pressNote = !press || press.advanced ? ''
+      : press.wrong ? ' Wrong key: ' + press.key + '.' + (press.penaltyMs > 0 ? ' ' + press.penaltyMs / 1000 + ' seconds off the clock.' : '')
+        + ' CLEAR backs out.'
+      : ' Pressed ' + press.key + '. The countdown keeps running. Reach the next checkpoint before time runs out.';
     const text = state.failure ? (state.step >= level.route.length
       ? 'Time is up. Returning to your result checkpoint with a fresh timer.'
       : 'Time is up. Restarting the calculator portion.')
       : state.complete ? 'Together! ' + level.title + ' complete. +1 key for everyone on the team.'
       : state.solved ? hint + ' ' + state.readyCount + '/' + state.teamSize + ' ready.'
-      : 'Step ' + (state.step + 1) + '/' + (level.route.length + challenge.answers.length) + ' · ' + state.teamSize + ' on the team. ' + hint
-        + (state.lastPress && !state.lastPress.advanced ? ' Pressed ' + state.lastPress.key + '. The countdown keeps running. Reach the next checkpoint before time runs out.' : '')
+      : modeNote + 'Step ' + (state.step + 1) + '/' + (level.route.length + challenge.answers.length) + ' · ' + state.teamSize + ' on the team. ' + hint
+        + pressNote
         + (state.hintKeys?.length ? ' Hint: choose ' + state.hintKeys.join(' or ') + '. Step reset—30 seconds to try again.' : '')
         + (feedback ? ' Not yet: ' + feedback : '');
     if (status.textContent !== text) status.textContent = text;
@@ -490,6 +676,12 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     }
     text(ctx, state?.complete ? 'MISSION COMPLETE!' : 'ONE TEAM · ONE GOAL', 350, 112, 17);
     if (state?.complete) drawKeyReward(ctx, atlas);
+    const plan = navigator();
+    const coaching = state && !state.solved && !state.failure && !showingBoxplot;
+    // The navigator card stays until the whole team is done: teammates may still need my steps.
+    if (plan && !state.complete && !state.failure) drawNavigatorCard(ctx, plan, !coaching);
+    // §1 rung tag: small, right-aligned on the title row (the title ends near x 576).
+    else if (coaching) text(ctx, RUNG_TAGS[hintRung()], 665, 112, 7, ink, 'right');
     const elapsed = state ? clock() - state.startedAt : 0;
     const remain = Math.max(0, Math.ceil((timeLimitFor(state || { step: 0 }) - elapsed) / 1000));
     text(ctx, state?.failure ? 'TIME UP! TEAM RESTART.'
@@ -514,6 +706,9 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     else if (!state?.failure && showingBoxplot && state?.lastPlot?.correct === false && !state.boxValues.length) {
       text(ctx, 'RESULT DID NOT MATCH. TRY AGAIN.', 350, 269, 10);
     }
+    else if (!state?.failure && state?.lastPress?.wrong) {
+      text(ctx, wrongKeyText(state.lastPress), 350, 269, 10, WRONG_RED);
+    }
     else if (!state?.failure && state?.lastPress && !state.lastPress.advanced) {
       text(ctx, state.lastPress.key + ' PRESSED · KEEP TRYING', 350, 269, 10);
     }
@@ -527,6 +722,9 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
       const colour = chosen ? '#f9c45f' : hint ? '#9bdfae' : capColour(tile, showingBoxplot);
       // The modifier keys themselves keep their own colour; everything else tints with the layer.
       const tint = modifier && !chosen && !hint && tile.key !== '2ND' && tile.key !== 'ALPHA' ? modifier : null;
+      // §5: a wrong key's cap shakes for 200 ms (±2 px). Cosmetic only: tileAt() is unchanged.
+      const shake = wrongShake(tile, showingBoxplot);
+      ctx.save(); ctx.translate(shake, 0);
       const sink = keycap(ctx, tile, colour, { pressed, tint });
       ctx.save();
       if (state?.solved) ctx.globalAlpha *= 0.22;
@@ -546,9 +744,15 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
       // The number key that chooses this answer.
       if (showingBoxplot && index < 9) pixelText(ctx, String(index + 1), tile.x + 7, tile.y + sink + 11, 7, '#b06a1a', 'left');
       ctx.restore();
+      ctx.restore();
     }
+    if (!showingBoxplot) drawPenaltyFloat(ctx);
     if (step >= level.route.length) drawBoxplot(ctx, step - level.route.length);
-    else if (state) text(ctx, keyInstruction(level.route[step], level.hints[step] || '', layer, level.route[step + 1]).slice(0, 52), 350, 252, 10);
+    else if (state) {
+      // §1/§3: the hint line fades with the rung, or belongs to the step's navigator.
+      const line = hintFor(step, layer);
+      if (line) text(ctx, line.slice(0, 52), 350, 252, 10);
+    }
     if (showingBoxplot) {
       const flag = ATLAS.checkpoint;
       if (atlas) ctx.drawImage(atlas, flag.x, flag.y, flag.w, flag.h, 40, WORLD.floor - flag.h, flag.w, flag.h);
@@ -596,6 +800,48 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     text(ctx, '+1 KEY FOR EVERY TEAMMATE', 350 + (atlas && key ? key.w + 8 : 0), 272, 12, KEY_GOLD);
     const age = rewardShownAt == null ? Infinity : (performance.now() - rewardShownAt) / 1000;
     if (age < 3) text(ctx, '+1', player.x - ENTRY_WIDTH + 10, player.y - 36 - age * 12, 14, KEY_GOLD, 'center');
+  }
+  // §3 navigator card. Two small rows in the status column's free gaps (between the title at y 112
+  // and the timer at 143, and between 143 and 175), then the window of my steps the team still
+  // needs (navigatorWindow): the strip right of the keypad while I am on the route, two status rows
+  // once I am answering or solved (my teammates may still be on my steps).
+  function drawNavigatorCard(ctx, plan, compact) {
+    const card = navigatorCard(plan);
+    text(ctx, 'NAVIGATOR ROUND · TALK', 350, 124, 7);
+    text(ctx, card.steps.length ? 'YOU ARE THE NAVIGATOR FOR STEPS ' + stepList(card.steps)
+      : 'NO STEPS FOR YOU · ASK YOUR TEAM', 350, 156, 7);
+    if (!card.steps.length) return;
+    const x = compact ? 350 : 592;
+    if (!compact) text(ctx, 'YOUR STEPS', x, 300, 7);
+    for (const line of navigatorWindow(card, compact).lines) text(ctx, line.text, x, line.y, 7, line.blue ? '#5b8fd0' : ink);
+  }
+  // Greedy word wrap for the small lettering.
+  function wrapWords(value, width) {
+    const lines = [];
+    for (const word of String(value).split(/\s+/).filter(Boolean)) {
+      const last = lines.at(-1);
+      if (last != null && (last + ' ' + word).length <= width) lines[lines.length - 1] = last + ' ' + word;
+      else lines.push(word);
+    }
+    return lines;
+  }
+  // §5: ±2 px for 200 ms on the cap of a fresh wrong press.
+  function wrongShake(tile, showingBoxplot) {
+    if (showingBoxplot || wrongPress?.key !== tile.key) return 0;
+    const age = performance.now() - wrongAt;
+    if (age >= 200) return 0;
+    return Math.floor(age / 25) % 2 ? 2 : -2;
+  }
+  // §5: a red "-2S" rises off the wrong cap for 600 ms when the relay took time.
+  function drawPenaltyFloat(ctx) {
+    if (!(wrongPress?.penaltyMs > 0)) return;
+    const age = (performance.now() - wrongAt) / 600;
+    if (age >= 1) return;
+    const tile = mission.KEYS.find(tile => tile.key === wrongPress.key);
+    if (!tile) return;
+    ctx.save(); ctx.globalAlpha = 1 - age;
+    text(ctx, '-' + wrongPress.penaltyMs / 1000 + 'S', tile.x + tile.w / 2, tile.y - 6 - age * 28, 14, WRONG_RED, 'center');
+    ctx.restore();
   }
   function drawCharacter(ctx, character, name) {
     if (state?.failure?.name !== name) { character.render(ctx); return; }
@@ -653,6 +899,27 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
       event.preventDefault(); enterResetDoor();
     }
   }
+  // getView()'s fluency fields (§1-§3, §5): what the hint line, tag and navigator card show.
+  function coachingView() {
+    const routeStep = state && !answering() ? state.step : null;
+    const plan = navigator();
+    const press = state?.lastPress;
+    return {
+      hint: routeStep == null ? null : hintFor(routeStep, keyboardLayer(calculator.save())),
+      rung: hintRung(),
+      hintTag: routeStep == null || plan ? null : RUNG_TAGS[hintRung()],
+      navigator: plan ? navigatorView(plan, routeStep == null || state.solved) : null,
+      wrongKey: press?.wrong ? wrongKeyText(press) : null,
+      caption: state || lobby?.missionId ? inputCaption() : null,
+      calculatorLists: calculator.save().lists,
+    };
+  }
+  // The plan, my steps, and the window drawn now (null once the card is gone: complete or failed).
+  function navigatorView(plan, compact) {
+    const card = navigatorCard(plan);
+    const drawn = !state.complete && !state.failure && card.steps.length;
+    return { roster: plan.roster, ...card, window: drawn ? navigatorWindow(card, compact) : null };
+  }
   function visibility() {
     if (!doc.hidden) { joinedAt = 0; return; }
     setParticipating(false); for (const key in input) input[key] = false;
@@ -683,7 +950,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     getNetworkStats: () => peerMotion.stats(),
     getView: () => ({ keyReward: !!state?.complete, cameraX, playerX: player.x, playerY: player.y, participating, campaignUnlocked: campaignUnlocked(), entranceX: ENTRY_WIDTH, lobby, missionId: level.id, challenge,
       keyCounts: Object.fromEntries([board.username, ...lobbyPeers.keys(), ...peers.keys()].map(name => [name, keyCount(name)])),
-      resetDoor: state?.complete ? { ...RESET_DOOR } : null, lines: display.getLines() }),
+      resetDoor: state?.complete ? { ...RESET_DOOR } : null, lines: display.getLines(), ...coachingView() }),
     getCalculatorScreen: () => calculator.getScreen(),
     getKeyboard: () => {
       const layer = keyboardLayer(calculator.save());
