@@ -65,7 +65,15 @@ function buildLevel(procedure, { levelId, v, stem, freqList = null, summaryPage 
     }
     route.push(key); hints.push(hint);
   }
-  function type(value, label) { for (const key of numberKeys(value)) press(key, 'Enter ' + label + ' = ' + value + '.'); }
+  function type(value, label) {
+    const keys = numberKeys(value);
+    // Typing the digit a field already shows (sigma's default 1) changes nothing on screen, so
+    // press() would drop it and the route would type .72 for 1.72. Empty the field first.
+    if (calculator.getScreen().type === 'wizard' && String(calculator.getWizardState().activeField?.value ?? '').startsWith(keys[0])) {
+      press('CLEAR', 'Clear ' + label + ' before typing ' + value + '.');
+    }
+    for (const key of keys) press(key, 'Enter ' + label + ' = ' + value + '.');
+  }
   const plot = ['histogram', 'modified-boxplot', 'scatterplot', 'residual-plot'].includes(id);
   if (plot) {
     for (const key of ['2ND', 'Y=', 'ENTER', 'ENTER', 'DOWN']) press(key);
