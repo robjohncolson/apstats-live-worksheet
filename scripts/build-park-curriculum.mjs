@@ -4,7 +4,7 @@ import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import { nativeScriptFilenames } from '../ti84-trainer-v2/native/manifest.mjs';
 import { curriculumCoverage, firstCoveredDates } from './park-curriculum-coverage.mjs';
-import { PARK_CALCULATOR_VARIANTS } from './park-calculator-variants.mjs';
+import { PARK_CALCULATOR_VARIANTS, PARK_DOTPLOT_PROBLEMS } from './park-calculator-variants.mjs';
 import { closeEnough, oneVarStats, modifiedBoxplot, histogramBins, binompdf, binomcdf } from '../apstat-park/calculator-oracles.mjs';
 
 const read = path => JSON.parse(readFileSync(new URL('../' + path, import.meta.url), 'utf8'));
@@ -15,9 +15,10 @@ const schedule = read('data/lesson-schedule.json');
 const workManifest = read('data/work-manifest.json');
 // Dot plots are taught with histograms, but are not a native TI-84 plot type.
 // Reuse the real histogram procedure, then construct individual dots in Park.
+// Its problems are its own (small whole-number data), not the histogram's.
 procedures.push({ ...procedures.find(procedure => procedure.id === 'histogram'),
   activityId: 'dotplot', name: 'Histogram to dot plot', topics: ['1.5'],
-  data: [1, 1, 2, 2, 2, 3, 4, 4, 5, 5], challenge: 'dotplot' });
+  problems: PARK_DOTPLOT_PROBLEMS, challenge: 'dotplot' });
 const sandbox = { window: {}, console };
 vm.createContext(sandbox);
 for (const file of nativeScriptFilenames) vm.runInContext(readFileSync(new URL('../ti84-trainer-v2/native/' + file, import.meta.url), 'utf8'), sandbox);
@@ -159,9 +160,9 @@ function buildLevel(procedure, { levelId, v, stem, freqList = null, summaryPage 
 }
 
 for (const procedure of procedures) {
- for (let variant = 0; variant < Math.max(2, problems[procedure.id].length); variant++) {
-  const id = procedure.id, problem = problems[id][variant % problems[id].length], v = structuredClone(problem.values);
-  if (procedure.data) v.data = variant ? [2, 2, 3, 4, 4, 4, 5, 5, 6, 6] : procedure.data;
+ const bank = procedure.problems || problems[procedure.id];
+ for (let variant = 0; variant < Math.max(2, bank.length); variant++) {
+  const id = procedure.id, problem = bank[variant % bank.length], v = structuredClone(problem.values);
   if (id === 'one-var-stats' && variant === 0) v.data = [4, 6, 7, 8, 10, 12, 13, 14, 18, 20];
   if (id === 'matrix-entry' && variant) v.data = v.data.map(row => row.map(value => value + variant * 3));
   if (id === 'matrix-entry') { v.matrix = v.data; delete v.data; }

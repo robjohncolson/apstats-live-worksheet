@@ -337,7 +337,295 @@ const alwaysHeads = {
   },
 };
 
+// ---------- G. Breadth for the U1 skills (2026-10-12) ----------
+// Realistic contexts; the questions are the AP skill (shape, outliers, center vs spread).
+const expect = (condition, message) => { if (!condition) throw new Error('park-calculator-variants: ' + message); };
+const listText = values => values.join(', ');
+const plotHints = {
+  histogram: { 'Choose TRACE.': 'TRACE shows a bin: min=, max< and its count n=.', 'Choose RIGHT.': 'Move right to the next bin.' },
+  boxplot: { 'Choose TRACE.': 'TRACE starts at the median (Med).', 'Choose RIGHT.': 'Move right: Q3, then the whisker end, then any outlier.' },
+};
+
+// The trainer's ZoomStat layout without a ROM window: bins start at minX, width = range /
+// ceil(sqrt(n)) (at least 1). Every dataset below makes that width a whole number, so the
+// bins are readable; the oracle then checks the counts independently.
+function zoomStatBins(values) {
+  const lo = Math.min(...values), hi = Math.max(...values);
+  const width = Math.max(1, (hi - lo) / Math.ceil(Math.sqrt(values.length)));
+  expect(Number.isInteger(width), 'histogram width must be whole: ' + width);
+  return { start: lo, width, binCount: Math.ceil((hi - lo) / width) + 1 };
+}
+function histogramVariant(suffix, values, stem, interpretation) {
+  const layout = zoomStatBins(values);
+  return { skillId: 'histogram', suffix, stem, values: { data: values }, traceRights: 1, hints: plotHints.histogram,
+    oracle: { kind: 'histogram', values, ...layout }, interpretation };
+}
+
+// Right-skewed commutes.
+const COMMUTE = [2, 3, 4, 4, 5, 6, 7, 8, 9, 11, 14, 16, 19, 24, 33, 42];
+const commute = oneVarStats(COMMUTE), commuteBins = histogramBins(COMMUTE, ...Object.values(zoomStatBins(COMMUTE)));
+const longCommutes = commuteBins.filter(bin => bin.lo >= 22).reduce((sum, bin) => sum + bin.count, 0);
+expect(commute.mean > commute.fiveNumber.median, 'commutes: the tail pulls the mean up');
+const histogramSkewed = histogramVariant('skewed', COMMUTE,
+  'Commute distances (miles) for 16 workers: ' + listText(COMMUTE) + '. Draw the histogram with ZoomStat and describe its shape.', {
+    title: 'DESCRIBE THE SHAPE',
+    note: 'A long tail toward large values means skewed right. The tail pulls the mean toward it.',
+    questions: [
+      choose('Shape', 'What is the shape of the commute distances?', 'right', [
+        ['right', 'Skewed right'],
+        ['left', 'Skewed left', 'The long tail is on the HIGH side, toward 42 miles. A tail to the right is skewed right.'],
+        ['symmetric', 'Roughly symmetric', 'Most workers are in the first bar and the bars trail off to the right: not symmetric.'],
+      ]),
+      choose('Mean vs median', 'For this shape, how do the mean and the median compare?', 'mean-higher', [
+        ['mean-higher', 'The mean is larger than the median'],
+        ['median-higher', 'The median is larger than the mean', 'The few long commutes pull the mean UP, toward the tail. The median resists them.'],
+        ['equal', 'They are about equal', 'Equal mean and median fit a symmetric shape. Here the long tail pulls the mean right.'],
+      ]),
+      number('Long commutes', 'How many workers commute 22 miles or more?', longCommutes, [
+        [commuteBins[2].count, 'That counts only [22, 32). Add the bars [32, 42) and [42, 52) too.'],
+        [COMMUTE.length - longCommutes, 'That many workers commute LESS than 22 miles.'],
+      ]),
+    ],
+  });
+
+// Roughly symmetric heights.
+const HEIGHTS = [60, 64, 65, 66, 67, 68, 68, 69, 70, 70, 71, 72, 73, 74, 75, 76];
+const heightBins = histogramBins(HEIGHTS, ...Object.values(zoomStatBins(HEIGHTS)));
+const tallest = Math.max(...heightBins.map(bin => bin.count));
+expect(heightBins.map(bin => bin.count).join() === '1,4,6,4,1', 'heights: a symmetric mound');
+const histogramSymmetric = histogramVariant('symmetric', HEIGHTS,
+  'Heights (inches) of 16 students: ' + listText(HEIGHTS) + '. Draw the histogram with ZoomStat and describe its shape.', {
+    title: 'DESCRIBE THE SHAPE',
+    note: 'A symmetric mound with no outliers: summarize it with the mean and standard deviation.',
+    questions: [
+      choose('Shape', 'What is the shape of the heights?', 'symmetric', [
+        ['symmetric', 'Roughly symmetric'],
+        ['right', 'Skewed right', 'The bars rise to the middle bar and fall the same way on both sides: no long tail.'],
+        ['uniform', 'Uniform (all bars equal)', 'The middle bar has ' + tallest + ' students and the end bars have 1: the bars are not equal.'],
+      ]),
+      choose('Summary', 'Which pair best summarizes center and spread here?', 'mean-sd', [
+        ['mean-sd', 'Mean and standard deviation'],
+        ['median-iqr', 'Median and IQR', 'Median and IQR are for skewed data or outliers. This shape is symmetric with no outliers.'],
+      ]),
+      number('Tallest bar', 'How many students are in the tallest bar?', tallest, [
+        [heightBins[1].count, heightBins[1].count + ' is the bar [64, 68). TRACE right to the tallest bar.'],
+        [HEIGHTS.length, HEIGHTS.length + ' is every student. One bar holds only some of them.'],
+      ]),
+    ],
+  });
+
+// Quiz scores with a gap.
+const QUIZ = [40, 42, 45, 61, 63, 65, 66, 68, 70, 71, 73, 74, 75, 77, 79, 80];
+const quizBins = histogramBins(QUIZ, ...Object.values(zoomStatBins(QUIZ)));
+const gap = quizBins.find(bin => bin.count === 0);
+expect(gap && gap.lo === 50, 'quiz: the gap is [50, 60)');
+const belowGap = quizBins.filter(bin => bin.hi <= gap.lo).reduce((sum, bin) => sum + bin.count, 0);
+const histogramGap = histogramVariant('gap', QUIZ,
+  'Quiz scores of 16 students: ' + listText(QUIZ) + '. Draw the histogram with ZoomStat and look for a gap.', {
+    title: 'FIND THE GAP',
+    note: 'A gap is an empty bin inside the data. It can split off a separate group.',
+    questions: [
+      choose('Gap', 'Which bin is empty (the gap)?', binKey(gap), [
+        [binKey(quizBins[0]), binText(quizBins[0]), 'TRACE shows n=' + quizBins[0].count + ' for ' + binText(quizBins[0]) + ': three students scored in the 40s.'],
+        [binKey(gap), binText(gap)],
+        [binKey(quizBins.at(-1)), binText(quizBins.at(-1)), binText(quizBins.at(-1)) + ' holds the score 80. A bin includes its lower boundary.'],
+      ]),
+      number('Below the gap', 'How many students scored below the gap?', belowGap, [
+        [quizBins[2].count, quizBins[2].count + ' is the bar [60, 70), above the gap.'],
+        [0, '0 is the gap itself. Count the bar BELOW it, [40, 50).'],
+      ]),
+      choose('Low scores', 'How would you describe the scores in the 40s?', 'cluster', [
+        ['cluster', 'A separate low cluster'],
+        ['center', 'The center of the distribution', 'The center is in the 60s and 70s, where most scores are.'],
+        ['typical', 'Typical scores, like the rest', 'An empty bin separates them from the other ' + (QUIZ.length - belowGap) + ' scores.'],
+      ]),
+    ],
+  });
+
+function boxplotVariant(suffix, values, stem, traceRights, endLabel, interpretation) {
+  const box = modifiedBoxplot(values);
+  const end = { Q3: box.q3, X: box.upperWhisker, maxX: box.max }[endLabel];
+  return { skillId: 'modified-boxplot', suffix, stem, values: { data: values }, traceRights, hints: plotHints.boxplot,
+    oracle: { kind: 'modified-boxplot', values, endStop: { label: endLabel, x: end } }, interpretation };
+}
+
+// A high outlier: TRACE right reaches Q3, the whisker end (X) and the outlier (maxX), as in variant D.
+const HOMEWORK = [15, 20, 25, 25, 30, 30, 35, 40, 40, 45, 50, 55, 120];
+const hw = modifiedBoxplot(HOMEWORK), hwMean = oneVarStats(HOMEWORK).mean;
+expect(hw.outliers.join() === '120' && hw.upperWhisker === 55, 'homework: 120 is the only outlier');
+const boxplotHigh = boxplotVariant('high-outlier', HOMEWORK,
+  'Minutes 13 students spent on homework last night: ' + listText(HOMEWORK) + '. Draw a modified boxplot and identify any outliers.', 3, 'maxX', {
+    title: 'FIND THE OUTLIER',
+    note: 'Fences: Q1 - 1.5 IQR = ' + hw.lowerFence + ' and Q3 + 1.5 IQR = ' + hw.upperFence + '. Beyond a fence is an outlier.',
+    questions: [
+      choose('Outliers', 'Which value(s) does the modified boxplot show as outliers?', 'high', [
+        ['high', '120 only'],
+        ['both', '15 and 120', '15 is above the lower fence ' + hw.lowerFence + ', so it is the low whisker end.'],
+        ['none', 'None: 120 is just the maximum', '120 is beyond Q3 + 1.5 IQR = ' + hw.upperFence + ', so it is an outlier.'],
+      ]),
+      number('Upper whisker', 'Where does the upper whisker end?', hw.upperWhisker, [
+        [hw.max, '120 is the outlier. The whisker stops at the largest value inside the fence.'],
+        [hw.upperFence, hw.upperFence + ' is the fence. A whisker ends at a data value.'],
+      ]),
+      choose('Resistant', 'Which measure of center is resistant to the 120?', 'median', [
+        ['median', 'The median, ' + hw.median],
+        ['mean', 'The mean, ' + short(hwMean), 'The 120 pulls the mean up. The median depends only on the middle value.'],
+      ]),
+    ],
+  });
+
+// A low outlier. Leftward TRACE stops are not ROM-verified, so the route stops at Q3.
+const TEST = [31, 68, 72, 75, 77, 78, 80, 81, 83, 85, 86, 88, 90, 94];
+const tb = modifiedBoxplot(TEST), testMean = oneVarStats(TEST).mean;
+expect(tb.outliers.join() === '31' && tb.lowerWhisker === 68 && testMean < tb.median, 'test: 31 is the only outlier');
+const boxplotLow = boxplotVariant('low-outlier', TEST,
+  'Unit test scores of 14 students: ' + listText(TEST) + '. Draw a modified boxplot and identify any outliers.', 1, 'Q3', {
+    title: 'FIND THE OUTLIER',
+    note: 'Fences: Q1 - 1.5 IQR = ' + tb.lowerFence + ' and Q3 + 1.5 IQR = ' + tb.upperFence + '.',
+    questions: [
+      choose('Outliers', 'Which value(s) does the modified boxplot show as outliers?', 'low', [
+        ['low', '31 only'],
+        ['both', '31 and 94', '94 is below the upper fence ' + tb.upperFence + ', so it is the high whisker end.'],
+        ['none', 'None: 31 is just the minimum', '31 is below Q1 - 1.5 IQR = ' + tb.lowerFence + ', so it is an outlier.'],
+      ]),
+      number('Lower whisker', 'Where does the lower whisker end?', tb.lowerWhisker, [
+        [tb.min, '31 is the outlier. The whisker stops at the smallest value inside the fence.'],
+        [tb.lowerFence, tb.lowerFence + ' is the fence. A whisker ends at a data value.'],
+      ]),
+      choose('Mean vs median', 'How does the outlier affect the mean?', 'lower', [
+        ['lower', 'Mean is below the median'],
+        ['higher', 'Mean is above the median', 'A LOW outlier pulls the mean down: mean ' + short(testMean) + ', median ' + tb.median + '.'],
+        ['equal', 'Mean equals the median', 'The 31 pulls the mean down to ' + short(testMean) + '. The median stays ' + tb.median + '.'],
+      ]),
+    ],
+  });
+
+// No outliers.
+const PULSE = [58, 62, 64, 66, 68, 70, 71, 72, 74, 75, 77, 79, 82, 85, 88];
+const pulse = modifiedBoxplot(PULSE);
+expect(pulse.outliers.length === 0, 'pulse: no outliers');
+const boxplotNone = boxplotVariant('no-outlier', PULSE,
+  'Resting pulse rates of 15 adults: ' + listText(PULSE) + '. Draw a modified boxplot and identify any outliers.', 1, 'Q3', {
+    title: 'ANY OUTLIERS?',
+    note: 'An outlier lies below Q1 - 1.5 IQR or above Q3 + 1.5 IQR. The extremes are not automatically outliers.',
+    questions: [
+      choose('Outliers', 'Which value(s) does the modified boxplot show as outliers?', 'none', [
+        ['none', 'None'],
+        ['both', '58 and 88', '58 and 88 are the extremes, but both lie inside the fences ' + pulse.lowerFence + ' and ' + pulse.upperFence + '.'],
+        ['high', '88 only', '88 is below Q3 + 1.5 IQR = ' + pulse.upperFence + ', so it is the whisker end.'],
+      ]),
+      number('Upper fence', 'What is Q3 + 1.5 IQR, the upper fence?', pulse.upperFence, [
+        [pulse.max, pulse.max + ' is the maximum. The fence is Q3 + 1.5 x IQR = ' + pulse.q3 + ' + 1.5 x ' + pulse.iqr + '.'],
+        [pulse.q3 + pulse.iqr, 'That adds 1 IQR. The fence adds 1.5 IQR to Q3.'],
+      ]),
+    ],
+  });
+
+// Plain 1-Var Stats samples.
+const BATTERY = [9.8, 10.4, 11.1, 9.5, 10.9, 10.2, 11.8, 10, 9.9, 10.7, 11.3, 10.6];
+const battery = oneVarStats(BATTERY);
+expect(battery.mean !== battery.fiveNumber.median, 'battery: the median distractor differs from the mean');
+const oneVarMeanSd = {
+  skillId: 'one-var-stats', suffix: 'mean-sd',
+  stem: 'A sample of 12 batteries lasted (hours): ' + listText(BATTERY) + '. Find the mean and standard deviation.',
+  values: { data: BATTERY }, summaryPage: false,
+  oracle: { kind: 'one-var', values: BATTERY, freq: null },
+  interpretation: {
+    title: 'MEAN AND STANDARD DEVIATION',
+    note: 'x-bar is the mean. Sx is the sample standard deviation: a typical distance from the mean.',
+    questions: [
+      number('Mean', 'What is the mean battery life (x-bar)?', battery.mean, [
+        [battery.sum, 'That is Sum x, the total of all 12 lifetimes. The mean divides it by n = 12.'],
+        [battery.fiveNumber.median, 'That is the median. 1-Var Stats shows the mean as x-bar.'],
+      ]),
+      number('SD', 'These batteries are a sample. What is their standard deviation?', battery.Sx, [
+        [battery.sigmaX, 'sigma x divides by n: the population SD. A sample uses Sx.'],
+        [battery.fiveNumber.max - battery.fiveNumber.min, 'That is the range, max - min. The SD is a typical distance from the mean.'],
+      ]),
+      choose('Meaning', 'What does Sx describe?', 'typical', [
+        ['typical', 'Typical distance from the mean'],
+        ['range', 'Distance from shortest to longest', 'That is the range. Sx is a typical distance from the mean.'],
+        ['error', 'How accurate x-bar is', 'Sx describes how spread out the 12 lifetimes are, not how accurate x-bar is.'],
+      ]),
+    ],
+  },
+};
+
+const AGES = [24, 26, 29, 31, 33, 35, 38, 40, 42, 45, 47, 51, 54, 58, 63];
+const ages = oneVarStats(AGES), agesFive = ages.fiveNumber;
+const oneVarFiveNumber = {
+  skillId: 'one-var-stats', suffix: 'five-number',
+  stem: 'Ages of 15 teachers at a school: ' + listText(AGES) + '. Find the five-number summary.',
+  values: { data: AGES }, summaryPage: true,
+  oracle: { kind: 'one-var', values: AGES, freq: null },
+  interpretation: {
+    title: 'READ THE FIVE-NUMBER SUMMARY',
+    note: 'IQR = Q3 - Q1: the spread of the middle half of the data.',
+    questions: [
+      number('Median', 'What is the median age (Med)?', agesFive.median, [
+        [agesFive.q1, agesFive.q1 + ' is Q1, the median of the lower half.'],
+        [ages.mean, 'That is the mean x-bar. The median is Med.'],
+      ]),
+      number('IQR', 'What is the IQR?', agesFive.q3 - agesFive.q1, [
+        [agesFive.max - agesFive.min, 'That is the range, maxX - minX. IQR = Q3 - Q1.'],
+        [agesFive.q3, agesFive.q3 + ' is Q3 itself. Subtract Q1.'],
+      ]),
+      choose('Middle half', 'The middle half of the ages lies between:', 'q1-q3', [
+        ['q1-q3', agesFive.q1 + ' and ' + agesFive.q3],
+        ['min-max', agesFive.min + ' and ' + agesFive.max, 'That is every teacher. The middle half lies between Q1 and Q3.'],
+        ['q1-med', agesFive.q1 + ' and ' + agesFive.median, 'That is one quarter: Q1 to the median.'],
+      ]),
+    ],
+  },
+};
+
+const ALLOWANCE = [0, 5, 5, 10, 10, 10, 15, 20, 20, 60];
+const allowance = oneVarStats(ALLOWANCE), allowanceBox = modifiedBoxplot(ALLOWANCE);
+const aboveMean = ALLOWANCE.filter(value => value > allowance.mean).length;
+expect(allowanceBox.outliers.join() === '60', 'allowance: 60 is an outlier');
+const oneVarCenter = {
+  skillId: 'one-var-stats', suffix: 'center',
+  stem: 'Weekly allowance (dollars) of 10 teens: ' + listText(ALLOWANCE) + '. Find the five-number summary.',
+  values: { data: ALLOWANCE }, summaryPage: true,
+  oracle: { kind: 'one-var', values: ALLOWANCE, freq: null },
+  interpretation: {
+    title: 'WHICH CENTER?',
+    note: 'One large value pulls the mean toward it. The median resists it.',
+    questions: [
+      number('Median', 'What is the median allowance (Med)?', allowance.fiveNumber.median, [
+        [allowance.fiveNumber.q1, allowance.fiveNumber.q1 + ' is Q1, the median of the lower half.'],
+        [allowance.fiveNumber.q3, allowance.fiveNumber.q3 + ' is Q3, the median of the upper half.'],
+      ]),
+      choose('Typical', 'The mean is ' + short(allowance.mean) + '. Which center better describes a typical teen?', 'median', [
+        ['median', 'The median, ' + allowance.fiveNumber.median],
+        ['mean', 'The mean, ' + short(allowance.mean), 'The 60 pulls the mean up: only ' + aboveMean + ' of 10 teens get more than ' + short(allowance.mean) + '.'],
+      ]),
+      choose('Outlier', 'Is 60 an outlier by the 1.5 IQR rule?', 'yes', [
+        ['yes', 'Yes, above Q3 + 1.5 IQR = ' + allowanceBox.upperFence],
+        ['no', 'No, it is just the maximum', 'Q3 + 1.5 IQR = ' + allowanceBox.upperFence + ', and 60 is beyond it.'],
+      ]),
+    ],
+  },
+};
+
 export const PARK_CALCULATOR_VARIANTS = [
   sampleSd, populationSd, frequencyList, zeroRow, noObservations,
   outlier, histogramBinsVariant, exactlyThree, atMostThree, neverHeads, alwaysHeads,
+  histogramSkewed, histogramSymmetric, histogramGap, boxplotHigh, boxplotLow, boxplotNone,
+  oneVarMeanSd, oneVarFiveNumber, oneVarCenter,
 ];
+
+// Dot plots (skill 'dotplot'): small whole-number data drawn as a histogram on the calculator,
+// then rebuilt dot by dot. The stem quotes exactly the list in L1, so calculator-variation.mjs
+// can rewrite it for random data; the only other number a stem may carry is n. At most 5 equal
+// values (the dot plot's answer tiles offer 0-5).
+export const PARK_DOTPLOT_PROBLEMS = [
+  { data: [1, 1, 2, 2, 2, 3, 4, 4, 5, 5], context: 'Number of pets owned by 10 students' },
+  { data: [2, 2, 3, 4, 4, 4, 5, 5, 6, 6], context: 'Books read this month by 10 students' },
+  { data: [0, 0, 1, 1, 1, 1, 2, 2, 2, 3, 3, 5], context: 'Number of siblings of 12 students' },
+  { data: [0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 4, 4, 6, 7], context: 'Goals scored by a soccer team in 14 games' },
+  { data: [5, 6, 6, 7, 7, 7, 7, 8, 8, 8, 8, 9, 10], context: 'Hours of sleep reported by 13 students' },
+].map(({ data, context }) => ({
+  values: { data },
+  stem: context + ': ' + listText(data) + '. Graph the data with a histogram, then build the dot plot.',
+}));

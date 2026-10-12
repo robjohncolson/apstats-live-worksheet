@@ -4,7 +4,8 @@ import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import { nativeScriptFilenames } from '../ti84-trainer-v2/native/manifest.mjs';
 import { curriculumCoverage, firstCoveredDates } from '../scripts/park-curriculum-coverage.mjs';
-import { CALCULATOR_LEVELS, CALCULATOR_PROBLEMS, DEFAULT_LEVEL, eligibleLevels, schoolDate, createLevelRotation, challengeFor, initializeCalculator, answerMatches } from './calculator-curriculum.mjs';
+import { CALCULATOR_LEVELS, CALCULATOR_PROBLEMS, DEFAULT_LEVEL, eligibleLevels, schoolDate, createLevelRotation, challengeFor, initializeCalculator, answerMatches, levelById } from './calculator-curriculum.mjs';
+import { varyProblem } from './calculator-variation.mjs';
 import { createMissionEngine } from './calculator-engine.mjs';
 import { createMission, pressMissionKey, KEYS, tilesFor, timeLimitFor, BOXPLOT_MS } from './calculator-mission.mjs';
 
@@ -57,6 +58,27 @@ test('past worksheet and quiz coverage remains available; any mapped lesson can 
   assert.equal(dots.procedureId, 'histogram');
   assert.deepEqual(challengeFor(dots).answers, [2, 3, 1, 2, 2]);
   assert(eligibleLevels('PeriodX', '2027-04-01').some(level => level.id === 'dotplot'));
+});
+
+test('dot plot problems describe their own data: the stem quotes exactly L1, and every count fits the 0-5 tiles', () => {
+  const dots = CALCULATOR_PROBLEMS.filter(level => level.skillId === 'dotplot');
+  assert.deepEqual(dots.map(level => level.id), ['dotplot', 'dotplot@1', 'dotplot@2', 'dotplot@3', 'dotplot@4']);
+  for (const level of dots) {
+    const data = level.setup.lists.L1;
+    assert.deepEqual(level.values.data, data, level.id);
+    assert(data.length >= 8 && data.length <= 15 && data.every(Number.isInteger), level.id + ': small whole-number data');
+    assert(level.stem.includes(': ' + data.join(', ') + '.'), level.id + ': the stem quotes L1');
+    const otherNumbers = level.stem.replace(data.join(', '), ' ').match(/\d+/g) || [];
+    assert.deepEqual(otherNumbers.map(Number), [data.length], level.id + ': no other data in the stem');
+    assert(/^[\x20-\x7e]+$/.test(level.stem), level.id + ': ASCII stem');
+    assert.equal(level.challenge, 'dotplot');
+    const answers = challengeFor(level).answers;
+    assert(answers.every(count => count >= 1 && count <= 5), level.id + ': at most 5 dots per value');
+    assert.equal(answers.reduce((sum, count) => sum + count, 0), data.length);
+  }
+  const varied = varyProblem(levelById('dotplot@3'), () => .3);
+  assert(varied, 'a dot plot problem varies');
+  assert(varied.stem.includes(varied.setup.lists.L1.join(', ')), 'random data rewrites the quoted list');
 });
 
 test('rotation covers the eligible pool, avoids consecutive repeats, and adds new lessons', () => {

@@ -37,7 +37,9 @@ const keysFor = problem => challengeFor(problem).answers.map(String);
 test('A-F are variants of existing skills and every new skill id is unchanged', () => {
   const ids = variants.map(problem => problem.id).sort();
   assert.deepEqual(ids, ['binomcdf@always-heads', 'binomcdf@at-most-3', 'binomcdf@never-heads', 'binompdf@exactly-3',
-    'histogram@bins', 'modified-boxplot@outlier', 'one-var-stats@freq', 'one-var-stats@no-observations',
+    'histogram@bins', 'histogram@gap', 'histogram@skewed', 'histogram@symmetric',
+    'modified-boxplot@high-outlier', 'modified-boxplot@low-outlier', 'modified-boxplot@no-outlier', 'modified-boxplot@outlier',
+    'one-var-stats@center', 'one-var-stats@five-number', 'one-var-stats@freq', 'one-var-stats@mean-sd', 'one-var-stats@no-observations',
     'one-var-stats@population-sd', 'one-var-stats@sample-sd', 'one-var-stats@zero-row']);
   for (const problem of variants) {
     const base = CALCULATOR_LEVELS.find(item => item.id === problem.skillId);
@@ -110,6 +112,31 @@ test('reference answers agree with the independent oracles and the ROM fixtures'
   assert.equal(answerOf(level('binomcdf@at-most-3'), 'Probability'), Number(binomcdf(10, .5, 3).toPrecision(5)));
   assert.equal(answerOf(level('binomcdf@never-heads'), 'Probability'), 1);
   assert.equal(answerOf(level('binomcdf@always-heads'), 'Probability'), 0);
+});
+
+test('U1 breadth variants: shape, outlier and center answers follow the data', () => {
+  const bins = id => level(id).finalView.points.map(bin => bin.y);
+  assert.deepEqual(bins('histogram@skewed'), [10, 3, 1, 1, 1]);
+  assert.equal(answerOf(level('histogram@skewed'), 'Shape'), 'right');
+  assert.equal(answerOf(level('histogram@skewed'), 'Long commutes'), 3);
+  assert.deepEqual(bins('histogram@symmetric'), [1, 4, 6, 4, 1]);
+  assert.equal(answerOf(level('histogram@symmetric'), 'Summary'), 'mean-sd');
+  assert.deepEqual(bins('histogram@gap'), [3, 0, 5, 7, 1]);
+  assert.equal(answerOf(level('histogram@gap'), 'Gap'), '[50,60)');
+  const outliersOf = id => modifiedBoxplot(level(id).values.data).outliers;
+  assert.deepEqual(outliersOf('modified-boxplot@high-outlier'), [120]);
+  const trace = level('modified-boxplot@high-outlier').finalView.traceInfo;
+  assert.deepEqual([trace.label, trace.x], ['maxX', 120]);
+  assert.deepEqual(outliersOf('modified-boxplot@low-outlier'), [31]);
+  assert.equal(answerOf(level('modified-boxplot@low-outlier'), 'Lower whisker'), 68);
+  assert.deepEqual(outliersOf('modified-boxplot@no-outlier'), []);
+  assert.equal(answerOf(level('modified-boxplot@no-outlier'), 'Upper fence'), 98.5);
+  const stats = id => level(id).computed;
+  assert.equal(answerOf(level('one-var-stats@mean-sd'), 'Mean'), Number(stats('one-var-stats@mean-sd').xbar.toPrecision(5)));
+  assert.equal(answerOf(level('one-var-stats@mean-sd'), 'SD'), Number(stats('one-var-stats@mean-sd').Sx.toPrecision(5)));
+  assert.equal(answerOf(level('one-var-stats@five-number'), 'IQR'), stats('one-var-stats@five-number').Q3 - stats('one-var-stats@five-number').Q1);
+  assert.equal(answerOf(level('one-var-stats@center'), 'Median'), stats('one-var-stats@center').Med);
+  for (const problem of variants) assert(problem.stem.length <= 160 && /^[\x20-\x7e]+$/.test(problem.stem), problem.id + ': short ASCII stem');
 });
 
 test('the trainer under test reaches the oracle result on each variant route', () => {

@@ -167,9 +167,11 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   }
   // The hint line for a route step ('' = no line). Rung 0: the key; rung 1: the goal; rung 2: nothing.
   // A navigator round ignores rungs: your own steps show their goal, the rest say ASK YOUR TEAM.
+  // A varied randint round rewrites its goals (the seed, upper and n differ); the catalogue's otherwise.
+  function goalAt(step) { return level.goals?.[step] || goalFor(level.id, step); }
   function hintFor(step, layer) {
     const full = keyInstruction(level.route[step], level.hints[step] || '', layer, level.route[step + 1]);
-    const goal = goalFor(level.id, step) || full;
+    const goal = goalAt(step) || full;
     if (state?.hintKeys?.length) return full;
     const plan = navigator();
     if (plan) return navigatorOf(plan, step) === board.username ? goal : 'ASK YOUR TEAM';
@@ -183,7 +185,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     const steps = navigatorSteps(plan, board.username, level.route.length);
     const groups = [];
     for (const step of steps) {
-      const goal = goalFor(level.id, step) || level.hints[step] || '';
+      const goal = goalAt(step) || level.hints[step] || '';
       const last = groups.at(-1);
       if (last && last.goal === goal) last.steps.push(step + 1);
       else groups.push({ steps: [step + 1], goal });

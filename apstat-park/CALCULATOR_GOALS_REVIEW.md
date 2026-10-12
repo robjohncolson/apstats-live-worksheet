@@ -105,6 +105,20 @@ Shortcuts the audit reports but deliberately keeps:
 | one-var-stats@no-observations | 5-6 | `2ND 2` | Set FreqList to L2 |
 | one-var-stats@no-observations | 7 | `DOWN` | Move down to Calculate |
 | one-var-stats@no-observations | 8 | `ENTER` | Calculate |
+| one-var-stats@mean-sd | 1-2 | `STAT RIGHT` | Open STAT > CALC |
+| one-var-stats@mean-sd | 3 | `ENTER` | Pick 1:1-Var Stats |
+| one-var-stats@mean-sd | 4-5 | `DOWN DOWN` | Move down to Calculate |
+| one-var-stats@mean-sd | 6 | `ENTER` | Calculate |
+| one-var-stats@five-number | 1-2 | `STAT RIGHT` | Open STAT > CALC |
+| one-var-stats@five-number | 3 | `ENTER` | Pick 1:1-Var Stats |
+| one-var-stats@five-number | 4-5 | `DOWN DOWN` | Move down to Calculate |
+| one-var-stats@five-number | 6 | `ENTER` | Calculate |
+| one-var-stats@five-number | 7 | `DOWN` | Scroll to the five-number summary |
+| one-var-stats@center | 1-2 | `STAT RIGHT` | Open STAT > CALC |
+| one-var-stats@center | 3 | `ENTER` | Pick 1:1-Var Stats |
+| one-var-stats@center | 4-5 | `DOWN DOWN` | Move down to Calculate |
+| one-var-stats@center | 6 | `ENTER` | Calculate |
+| one-var-stats@center | 7 | `DOWN` | Scroll to the five-number summary |
 
 ## histogram (Histogram)
 
@@ -128,6 +142,24 @@ Shortcuts the audit reports but deliberately keeps:
 | histogram@bins | 5-7 | `RIGHT RIGHT ENTER` | Pick the histogram |
 | histogram@bins | 8-9 | `ZOOM 9` | ZoomStat (ZOOM 9) |
 | histogram@bins | 10-11 | `TRACE RIGHT` | TRACE across the plot |
+| histogram@skewed | 1-2 | `2ND Y=` | Open STAT PLOT (2ND Y=) |
+| histogram@skewed | 3 | `ENTER` | Open Plot1 (check it is On) |
+| histogram@skewed | 4 | `DOWN` | Move down to Type |
+| histogram@skewed | 5-7 | `RIGHT RIGHT ENTER` | Pick the histogram |
+| histogram@skewed | 8-9 | `ZOOM 9` | ZoomStat (ZOOM 9) |
+| histogram@skewed | 10-11 | `TRACE RIGHT` | TRACE across the plot |
+| histogram@symmetric | 1-2 | `2ND Y=` | Open STAT PLOT (2ND Y=) |
+| histogram@symmetric | 3 | `ENTER` | Open Plot1 (check it is On) |
+| histogram@symmetric | 4 | `DOWN` | Move down to Type |
+| histogram@symmetric | 5-7 | `RIGHT RIGHT ENTER` | Pick the histogram |
+| histogram@symmetric | 8-9 | `ZOOM 9` | ZoomStat (ZOOM 9) |
+| histogram@symmetric | 10-11 | `TRACE RIGHT` | TRACE across the plot |
+| histogram@gap | 1-2 | `2ND Y=` | Open STAT PLOT (2ND Y=) |
+| histogram@gap | 3 | `ENTER` | Open Plot1 (check it is On) |
+| histogram@gap | 4 | `DOWN` | Move down to Type |
+| histogram@gap | 5-7 | `RIGHT RIGHT ENTER` | Pick the histogram |
+| histogram@gap | 8-9 | `ZOOM 9` | ZoomStat (ZOOM 9) |
+| histogram@gap | 10-11 | `TRACE RIGHT` | TRACE across the plot |
 
 ## modified-boxplot (Modified Boxplot)
 
@@ -151,6 +183,24 @@ Shortcuts the audit reports but deliberately keeps:
 | modified-boxplot@outlier | 5-8 | `RIGHT RIGHT RIGHT ENTER` | Pick the modified boxplot |
 | modified-boxplot@outlier | 9-10 | `ZOOM 9` | ZoomStat (ZOOM 9) |
 | modified-boxplot@outlier | 11-14 | `TRACE RIGHT RIGHT RIGHT` | TRACE across the plot |
+| modified-boxplot@high-outlier | 1-2 | `2ND Y=` | Open STAT PLOT (2ND Y=) |
+| modified-boxplot@high-outlier | 3 | `ENTER` | Open Plot1 (check it is On) |
+| modified-boxplot@high-outlier | 4 | `DOWN` | Move down to Type |
+| modified-boxplot@high-outlier | 5-8 | `RIGHT RIGHT RIGHT ENTER` | Pick the modified boxplot |
+| modified-boxplot@high-outlier | 9-10 | `ZOOM 9` | ZoomStat (ZOOM 9) |
+| modified-boxplot@high-outlier | 11-14 | `TRACE RIGHT RIGHT RIGHT` | TRACE across the plot |
+| modified-boxplot@low-outlier | 1-2 | `2ND Y=` | Open STAT PLOT (2ND Y=) |
+| modified-boxplot@low-outlier | 3 | `ENTER` | Open Plot1 (check it is On) |
+| modified-boxplot@low-outlier | 4 | `DOWN` | Move down to Type |
+| modified-boxplot@low-outlier | 5-8 | `RIGHT RIGHT RIGHT ENTER` | Pick the modified boxplot |
+| modified-boxplot@low-outlier | 9-10 | `ZOOM 9` | ZoomStat (ZOOM 9) |
+| modified-boxplot@low-outlier | 11-12 | `TRACE RIGHT` | TRACE across the plot |
+| modified-boxplot@no-outlier | 1-2 | `2ND Y=` | Open STAT PLOT (2ND Y=) |
+| modified-boxplot@no-outlier | 3 | `ENTER` | Open Plot1 (check it is On) |
+| modified-boxplot@no-outlier | 4 | `DOWN` | Move down to Type |
+| modified-boxplot@no-outlier | 5-8 | `RIGHT RIGHT RIGHT ENTER` | Pick the modified boxplot |
+| modified-boxplot@no-outlier | 9-10 | `ZOOM 9` | ZoomStat (ZOOM 9) |
+| modified-boxplot@no-outlier | 11-12 | `TRACE RIGHT` | TRACE across the plot |
 
 ## normalcdf (normalcdf)
 
@@ -1007,3 +1057,21 @@ Shortcuts the audit reports but deliberately keeps:
 | dotplot@1 | 5-7 | `RIGHT RIGHT ENTER` | Pick the histogram |
 | dotplot@1 | 8-9 | `ZOOM 9` | ZoomStat (ZOOM 9) |
 | dotplot@1 | 10-11 | `TRACE RIGHT` | TRACE across the plot |
+| dotplot@2 | 1-2 | `2ND Y=` | Open STAT PLOT (2ND Y=) |
+| dotplot@2 | 3 | `ENTER` | Open Plot1 (check it is On) |
+| dotplot@2 | 4 | `DOWN` | Move down to Type |
+| dotplot@2 | 5-7 | `RIGHT RIGHT ENTER` | Pick the histogram |
+| dotplot@2 | 8-9 | `ZOOM 9` | ZoomStat (ZOOM 9) |
+| dotplot@2 | 10-11 | `TRACE RIGHT` | TRACE across the plot |
+| dotplot@3 | 1-2 | `2ND Y=` | Open STAT PLOT (2ND Y=) |
+| dotplot@3 | 3 | `ENTER` | Open Plot1 (check it is On) |
+| dotplot@3 | 4 | `DOWN` | Move down to Type |
+| dotplot@3 | 5-7 | `RIGHT RIGHT ENTER` | Pick the histogram |
+| dotplot@3 | 8-9 | `ZOOM 9` | ZoomStat (ZOOM 9) |
+| dotplot@3 | 10-11 | `TRACE RIGHT` | TRACE across the plot |
+| dotplot@4 | 1-2 | `2ND Y=` | Open STAT PLOT (2ND Y=) |
+| dotplot@4 | 3 | `ENTER` | Open Plot1 (check it is On) |
+| dotplot@4 | 4 | `DOWN` | Move down to Type |
+| dotplot@4 | 5-7 | `RIGHT RIGHT ENTER` | Pick the histogram |
+| dotplot@4 | 8-9 | `ZOOM 9` | ZoomStat (ZOOM 9) |
+| dotplot@4 | 10-11 | `TRACE RIGHT` | TRACE across the plot |

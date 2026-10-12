@@ -5,7 +5,7 @@ import { CALCULATOR_PROBLEMS } from './calculator-catalog.mjs';
 import { GOALS, goalFor, goalSpans } from './calculator-goals.mjs';
 
 test('every problem has exactly one goal per route key, and no other problem has goals', () => {
-  assert.equal(CALCULATOR_PROBLEMS.length, 87);
+  assert.equal(CALCULATOR_PROBLEMS.length, 99);
   for (const problem of CALCULATOR_PROBLEMS) {
     const goals = GOALS[problem.id];
     assert(goals, problem.id + ' has goals');
