@@ -1,6 +1,9 @@
 # APStat Park calculator activities: real screen, Pico feel (spec)
 
-Status: 2026-10-11 — all built: A shipped; B1+B2, B3 (revised, see below) and B4+B5 committed, awaiting the push go.
+Status: 2026-10-11 — teacher verdict after seeing it live: **A (CE-renderer screen) and B4 (water) were
+regressions and are reverted** (the room draws the big pixel-font text lines again; the timer is the number).
+B5's scroll-in went with the screen. Kept: B1 keycaps + legends, B2 depress/click/tint, B3 the stomp.
+The renderer's palette options and the trainer tab-highlight fix stay (additive; trainer unchanged).
 
 Teacher's brief (2026-10-11): keep the activities as they are ("currently pretty good"), make the screen show the
 same menu geometry as the real TI-84 CE but in Pico colours — not green and black — and make the keypresses more
