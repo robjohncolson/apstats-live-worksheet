@@ -22,7 +22,7 @@ function page(today,teacher){
  if(teacher)globals.cedTeacherBridgeAllowed=()=>true;
  const s=createContext(globals);
  for(const path of ['js/ced2026-crosswalk.js','js/ced2026-labels.js'])runInContext(readFileSync(path,'utf8'),s);
- runInContext([decl('PC_LINKS'),decl('POSTER_LINKS'),...['posterLinksFor','groupTopics','groupLabel','_showProgressCheckPanel','_showPosterPanel','_showWorkDayPanel','_showBreakDayPanel','showResourcePanel','sTip','_resourcePanelEsc','renderDoNow','localLessonState'].map(fn)].join('\n'),s);
+ runInContext([decl('PC_LINKS'),decl('POSTER_LINKS'),...['pcLinksFor','posterLinksFor','groupTopics','groupLabel','_showProgressCheckPanel','_showPosterPanel','_showWorkDayPanel','_showBreakDayPanel','showResourcePanel','sTip','_resourcePanelEsc','renderDoNow','localLessonState'].map(fn)].join('\n'),s);
  return {dom,s};
 }
 describe('Poster-day links',()=>{

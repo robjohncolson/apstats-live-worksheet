@@ -18,13 +18,30 @@ function page(today){
   _lastResourcePanel:null,_todayLessonInf:today,_donowData:null,tdy:()=>new Date(2026,8,21),getStudentEmail:()=>'',getStudentMarks:()=>({}),
   getRegistryEntry:()=>null,getAllRegistryEntries:()=>[],tip:dom.window.document.getElementById('tip'),DN:['Sun','Mon','Tue','Wed','Thu','Fri','Sat']});
  for(const path of ['js/ced2026-crosswalk.js','js/ced2026-labels.js'])runInContext(readFileSync(path,'utf8'),s);
- runInContext([decl('PC_LINKS'),...['groupTopics','groupLabel','_showProgressCheckPanel','_showWorkDayPanel','_showBreakDayPanel','showResourcePanel','sTip','_resourcePanelEsc','renderDoNow','localLessonState'].map(fn)].join('\n'),s);
+ runInContext([decl('PC_LINKS'),...['pcLinksFor','groupTopics','groupLabel','_showProgressCheckPanel','_showWorkDayPanel','_showBreakDayPanel','showResourcePanel','sTip','_resourcePanelEsc','renderDoNow','localLessonState'].map(fn)].join('\n'),s);
  return {dom,s};
 }
+const pc1={t:'U1-PC1',n:'Unit 1 Progress Check (Day 1)',u:1,kind:'pc',admin:1};
 describe('Progress Check launch links',()=>{
  it('U1 MCQ Part A points at the AP Classroom assignment',()=>{
   const {s}=page(pcA);
   expect(s.PC_LINKS['U1-PCA'].url).toBe('https://apclassroom.collegeboard.org/33/assignments?quizId=21010399&type=');
+ });
+ it('U1 Day 1 (MCQ Part B + C) lists one button per assignment, Part B first',()=>{
+  const {dom,s}=page(pc1);try{
+   const links=s.pcLinksFor('U1-PC1');
+   expect(links[0].url).toBe('https://apclassroom.collegeboard.org/33/assessments/assignments/81595010');
+   expect(links[0].label).toMatch(/Part B/);
+   expect(links[1].url).toBe('https://apclassroom.collegeboard.org/33/assessments/assignments/81595024');
+   expect(links[1].label).toMatch(/Part C/);
+   expect(s.pcLinksFor('U1-PC2')[0].url).toBe('https://apclassroom.collegeboard.org/33/assessments/assignments/81595036');
+   s.showResourcePanel(pc1,'Oct 13');const d=dom.window.document;
+   const as=[...d.querySelectorAll('#resource-body a')];
+   expect(as.map(a=>a.href)).toEqual(links.map(l=>l.url));
+   if(as.length>1)expect(as[0].textContent).toContain('Part B');
+   expect(s.pcLinksFor('U9-PC2')).toEqual([]);
+   expect(s.pcLinksFor('U1-PCA')).toEqual([{url:s.PC_LINKS['U1-PCA'].url,label:s.PC_LINKS['U1-PCA'].label}]);
+  }finally{dom.window.close();}
  });
  it('the tile opens a panel with an AP Classroom link, new tab, no resource rows',()=>{
   const {dom,s}=page(pcA);try{

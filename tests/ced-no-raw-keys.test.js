@@ -266,6 +266,32 @@ describe('Desk Do Now and coach', () => {
   });
 });
 
+describe('Dogecoin presence dropdown (teacher sees WHERE a classmate is)', () => {
+  // railway_client.js announces a worksheet by file name: "U3 L3", "U3 L6-7" (the old key).
+  const worksheetFiles = execFileSync('git', ['ls-files', 'u*_lesson*_live.html'], { cwd: repo, encoding: 'utf8' })
+    .split(/\r?\n/).filter(Boolean);
+  const announced = worksheetFiles.map((f) => /^u(\d+)_lesson([\d.\-]+)_live\.html$/.exec(f))
+    .filter(Boolean).map((m) => ({ lesson: 'U' + m[1] + ' L' + m[2], key: m[1] + '.' + m[2] }));
+
+  it('labels every worksheet location in CED numbering, never "U3 L3"', () => {
+    expect(announced.length).toBeGreaterThan(60);
+    const win = newWindow('');
+    win.eval(CED_SOURCE);
+    win.eval('function _deskEsc(s) { return String(s); }\n' + declaration('DogePresence', '{', '}') + '\nwindow.DogePresence = DogePresence;');
+    for (const { lesson, key } of announced) {
+      const loc = { surface: 'worksheet', lesson, onDesk: false };
+      const chip = win.DogePresence._locationChip(loc, true);
+      const where = win.DogePresence._whereSentence(loc, true);
+      expect(chip, key).not.toMatch(/\bU\d+ L[\d.-]+\b/);
+      expect(where, key).not.toMatch(/\bU\d+ L[\d.-]+\b/);
+      expectNoRawKeys(chip, [key], 'presence chip ' + key);
+      expectNoRawKeys(where, [key], 'presence where ' + key);
+      // Students only ever see the coarse surface.
+      expect(win.DogePresence._locationChip(loc, false)).toContain('>Worksheet<');
+    }
+  });
+});
+
 describe('gradebook column titles (roster-server gradebook-grid → ced-titles)', () => {
   const lessons = Object.entries(SCHEDULE.lessons).map(([lessonKey, l]) => ({
     lessonKey, unit: l.unit, worksheetKey: l.worksheetKey, quizTotal: 1, hasBlooket: true, blooketBonus: false,

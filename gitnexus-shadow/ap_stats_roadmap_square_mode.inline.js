@@ -10135,7 +10135,7 @@ async function renderDoNow() {
       return;
     }
     if (typeof _todayLessonInf !== 'undefined' && _todayLessonInf && _todayLessonInf.kind === 'pc') {
-      var pcLink = (typeof PC_LINKS !== 'undefined') ? PC_LINKS[_todayLessonInf.t] : null;
+      var pcLink = pcLinksFor(_todayLessonInf.t).length > 0;
       show('Today: ' + _todayLessonInf.n + ' — in AP Classroom.\n'
         + (pcLink ? 'Click today’s tile on the calendar to open it.' : 'Your teacher shares the link in class.'), 'todo');
       return;
@@ -10458,9 +10458,22 @@ function cedTeacherBridgeAllowed() {
 // PCs are taken in AP Classroom (College Board sign-in), never inside the Desk:
 // the tile / Do Now only open the assignment. A missing key renders a
 // "your teacher shares the link in class" panel, so unlinked PCs never break.
+// A day with several assignments (Day 1 = MCQ Part B + Part C) lists them in `links`.
 var PC_LINKS = {
-    'U1-PCA': { url: 'https://apclassroom.collegeboard.org/33/assignments?quizId=21010399&type=', label: 'Unit 1 Progress Check — MCQ Part A' }
+    'U1-PCA': { url: 'https://apclassroom.collegeboard.org/33/assignments?quizId=21010399&type=', label: 'Unit 1 Progress Check — MCQ Part A' },
+    'U1-PC1': { links: [
+        { url: 'https://apclassroom.collegeboard.org/33/assessments/assignments/81595010', label: 'MCQ Part B (14 questions)' },
+        { url: 'https://apclassroom.collegeboard.org/33/assessments/assignments/81595024', label: 'MCQ Part C (12 questions)' }
+    ], label: 'Unit 1 Progress Check — Day 1' },
+    'U1-PC2': { url: 'https://apclassroom.collegeboard.org/33/assessments/assignments/81595036', label: 'Unit 1 Progress Check — FRQ' }
 };
+// Every assignment a PC tile opens, in order (one `url` or several `links`).
+function pcLinksFor(tileId) {
+    var entry = (typeof PC_LINKS !== 'undefined') ? PC_LINKS[tileId] : null;
+    if (!entry) return [];
+    if (entry.links && entry.links.length) return entry.links;
+    return entry.url ? [{ url: entry.url, label: entry.label }] : [];
+}
 // Poster-day materials, keyed by the unit's poster tile id (U{u}-Poster; the
 // day-2 tile U{u}-Poster2 shares the entry via posterLinksFor). `student`
 // links render for everyone; `teacher` links render only for a signed-in
@@ -12009,22 +12022,22 @@ function _showProgressCheckPanel(inf, dateStr) {
     header.style.fontStyle = '';
     var body = document.getElementById('resource-body');
     body.innerHTML = '';
-    var link = (typeof PC_LINKS !== 'undefined') ? PC_LINKS[inf.t] : null;
+    var links = pcLinksFor(inf.t);
     var p = document.createElement('p');
-    p.textContent = link
-        ? 'Taken in AP Classroom. Sign in with your College Board account, then open the assignment:'
+    p.textContent = links.length
+        ? 'Taken in AP Classroom. Sign in with your College Board account, then open ' + (links.length > 1 ? 'each assignment:' : 'the assignment:')
         : 'Taken in AP Classroom. Your teacher shares the link in class.';
     body.appendChild(p);
-    if (link) {
+    links.forEach(function (link) {
         var a = document.createElement('a');
         a.href = link.url;
         a.target = '_blank';
         a.rel = 'noopener';
         a.className = 's7btn chicago';
-        a.style.cssText = 'display:inline-block;padding:6px 10px;text-decoration:none';
-        a.textContent = 'Open in AP Classroom →';
+        a.style.cssText = 'display:inline-block;padding:6px 10px;margin:0 6px 6px 0;text-decoration:none';
+        a.textContent = (links.length > 1 && link.label ? link.label + ' → ' : 'Open in AP Classroom →');
         body.appendChild(a);
-    }
+    });
     var tip = document.createElement('p');
     tip.textContent = 'AP Classroom down? Ask for the paper copy — same questions, same score.';
     body.appendChild(tip);
@@ -26190,18 +26203,32 @@ const DogePresence = {
         const COARSE = { desk: 'Desk', worksheet: 'Worksheet', quiz: 'Quiz', 'study-guide': 'Study guide', edgar: 'Worksheet', mit: 'Worksheet', other: 'Online' };
         return COARSE[surface] || 'Online';
     },
+    // Presence announces a worksheet by its FILE name ("U3 L3", "U3 L6-7" — railway_client.js
+    // _presenceSurface). That is the old storage key (CED2026_SINGLE_SOURCE_SPEC §2): print the
+    // CED label ("1.11 · Sampling Methods") and keep the raw key out of the dropdown.
+    _lessonText(lesson) {
+        const raw = String(lesson || '');
+        const m = /^U(\d+) L([\d.\-]+)$/.exec(raw);
+        if (!m || typeof cedLabel !== 'function') return raw;
+        const key = m[1] + '.' + m[2];
+        const label = cedLabel(key);
+        if (!label.mapped) return raw;
+        // A combined worksheet (4.1-2-3) spans several topics — the chip gets the topic range.
+        if (label.text.indexOf(' / ') !== -1 && typeof cedTopicCoverage === 'function') return cedTopicCoverage([key]);
+        return label.text;
+    },
     _locationChip(loc, teacher) {
         if (!loc || !loc.surface) return '<span class="doge-loc doge-loc-unknown">&middot;</span>';
         const coarse = this._coarseLabel(loc.surface);
-        const txt = (teacher && loc.lesson) ? loc.lesson : coarse;
+        const txt = (teacher && loc.lesson) ? this._lessonText(loc.lesson) : coarse;
         const cls = loc.onDesk ? 'doge-loc doge-loc-desk' : 'doge-loc';
-        return `<span class="${cls}" title="${_deskEsc((teacher && loc.lesson) ? loc.lesson : coarse)}">${_deskEsc(txt)}</span>`;
+        return `<span class="${cls}" title="${_deskEsc(txt)}">${_deskEsc(txt)}</span>`;
     },
     _whereSentence(loc, teacher) {
         if (!loc || !loc.surface) return 'Whereabouts unknown';
         const MAP = { desk: 'On the Desk', worksheet: 'On a live worksheet', quiz: 'In the quiz', 'study-guide': 'In the study guide', edgar: 'On a worksheet', mit: 'On a worksheet', other: 'Online' };
         let s = MAP[loc.surface] || 'Online';
-        if (teacher && loc.lesson) s += ' — ' + loc.lesson;
+        if (teacher && loc.lesson) s += ' — ' + this._lessonText(loc.lesson);
         return _deskEsc(s);
     },
     // pArg is already _deskEsc(JSON.stringify(username)) — XSS-safe for an onclick="" attribute.
@@ -27374,7 +27401,7 @@ function sTip(ev,dt,inf,ds){if(inf===NC||!inf)return;
         if(inf.due)h+=`<div class="th">Due: ${_resourcePanelEsc(newLabels?cedDisplayText(inf.due):inf.due)}</div>`;
         if(inf.as)h+=`<div class="th">Assign: ${_resourcePanelEsc(newLabels?cedDisplayText(inf.as):inf.as)}</div>`;
         if(inf.db)h+='<div class="th">** Double topic day **</div>';
-        if(inf.kind==='pc')h+='<div class="th" style="color:#2b6cb0">'+((typeof PC_LINKS!=='undefined'&&PC_LINKS[inf.t])?'Click to open in AP Classroom':'Taken in AP Classroom')+'</div>';
+        if(inf.kind==='pc')h+='<div class="th" style="color:#2b6cb0">'+((typeof pcLinksFor==='function'&&pcLinksFor(inf.t).length)?'Click to open in AP Classroom':'Taken in AP Classroom')+'</div>';
         if(inf.kind==='poster')h+='<div class="th" style="color:#2b6cb0">'+((typeof posterLinksFor==='function'&&posterLinksFor(inf.t))?'Click for the group sheets + example poster':'Groups of three, Data / Graph / Sentence')+'</div><div class="th">Bonus (banked)</div>';
         const keys=inf.group?groupTopics(inf):[inf.t];
         const re=keys.map(getRegistryEntry).find(Boolean);
@@ -27914,7 +27941,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-10-13-h0r0';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-10-13-n56a';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.
