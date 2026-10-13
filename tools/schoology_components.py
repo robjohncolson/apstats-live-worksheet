@@ -84,15 +84,28 @@ def bl_key(label: str) -> str:
     return f"BL:{label}"
 
 
-def fa_title(label: str) -> str:
+# ced=True swaps in the CED-2026 title from data/ced-column-titles.json (via
+# schoology_sync_lib.ced_column_title); ced=False keeps today's live titles.
+def _ced_title(column_key: str) -> str:
+    import schoology_sync_lib
+    return schoology_sync_lib.ced_column_title(column_key)
+
+
+def fa_title(label: str, ced: bool = False) -> str:
+    if ced:
+        return _ced_title(fa_key(label))
     return f"{label} Follow-Along"
 
 
-def quiz_title(topic_key: str) -> str:
+def quiz_title(topic_key: str, ced: bool = False) -> str:
+    if ced:
+        return _ced_title(quiz_key(topic_key))
     return f"{topic_key} Quiz"
 
 
-def bl_title(label: str) -> str:
+def bl_title(label: str, ced: bool = False) -> str:
+    if ced:
+        return _ced_title(bl_key(label))
     return f"{label} Blooket"
 
 
@@ -102,7 +115,9 @@ def pc_key(unit) -> str:
     return f"PC:U{unit}"
 
 
-def pc_title(unit) -> str:
+def pc_title(unit, ced: bool = False) -> str:
+    if ced:
+        return _ced_title(pc_key(unit))
     return f"Unit {unit} Progress Check"
 
 
@@ -110,7 +125,9 @@ def poster_key(unit) -> str:
     return f"POSTER:U{unit}"
 
 
-def poster_title(unit) -> str:
+def poster_title(unit, ced: bool = False) -> str:
+    if ced:
+        return _ced_title(poster_key(unit))
     return f"Unit {unit} Poster"
 
 
@@ -187,6 +204,7 @@ def component_columns(
     include_undated: bool = False,
     progress_checks: dict | None = None,
     posters: dict | None = None,
+    ced: bool = False,
 ) -> list:
     """Generate the fine-grained column specs for a section.
 
@@ -207,6 +225,8 @@ def component_columns(
                      the SY26-27 calendar, where units 1-5 have null dates).
                      When False, a null-date lesson is excluded (the normal
                      PeriodB/E behavior -- mirrors build_scope).
+    ced:             True = CED-2026 titles (data/ced-column-titles.json); False =
+                     today's titles. Keys never change, only the 'title' field.
 
     Returns a list of column specs, each::
 
@@ -254,7 +274,7 @@ def component_columns(
         columns.append({
             "key": fa_key(label),
             "kind": KIND_FOLLOWALONG,
-            "title": fa_title(label),
+            "title": fa_title(label, ced),
             "group_label": label,
             "topic_keys": list(topics_sorted),
             "due_date": date,
@@ -269,7 +289,7 @@ def component_columns(
             columns.append({
                 "key": quiz_key(tk),
                 "kind": KIND_QUIZ,
-                "title": quiz_title(tk),
+                "title": quiz_title(tk, ced),
                 "group_label": label,
                 "topic_keys": [tk],
                 "due_date": tdate,
@@ -281,7 +301,7 @@ def component_columns(
             columns.append({
                 "key": bl_key(label),
                 "kind": KIND_BLOOKET,
-                "title": bl_title(label),
+                "title": bl_title(label, ced),
                 "group_label": label,
                 "topic_keys": list(topics_sorted),
                 "due_date": date,
@@ -322,7 +342,7 @@ def component_columns(
         columns.append({
             "key": pc_key(u),
             "kind": KIND_PROGRESS_CHECK,
-            "title": pc_title(u),
+            "title": pc_title(u, ced),
             "group_label": f"U{u}",
             "topic_keys": [],
             "due_date": udate,
@@ -331,7 +351,7 @@ def component_columns(
         columns.append({
             "key": poster_key(u),
             "kind": KIND_POSTER,
-            "title": poster_title(u),
+            "title": poster_title(u, ced),
             "group_label": f"U{u}",
             "topic_keys": [],
             "due_date": pdate,

@@ -2373,6 +2373,8 @@
     // old key stays in the hover title. Combined worksheets ("4.1-2") map by
     // their first topic.
     function gbShortTitle(col) {
+      // A current roster (it sends schoologyTitle) already titles columns in CED numbering.
+      if (col.schoologyTitle && col.title) return String(col.title);
       var k = String(col.key || '');
       var i = k.indexOf(':');
       var tail = i >= 0 ? k.slice(i + 1) : (col.title || k);
@@ -2387,7 +2389,8 @@
       var ced = firstTopic ? gbCedFor(firstTopic) : null;
       var base = String(col.title || col.key || '');
       if (!ced) return base;
-      return 'CED-2026 ' + ced.key + (ced.label ? ' — ' + ced.label : '') + '  (was ' + base + ')';
+      var stored = 'stored as ' + String(col.key || '') + (col.schoologyTitle ? '; Schoology: ' + col.schoologyTitle : '');
+      return 'CED-2026 ' + ced.key + (ced.label ? ' — ' + ced.label : '') + '  (' + stored + ')';
     }
 
     function renderGradebook(payload) {

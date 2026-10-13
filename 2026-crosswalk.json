@@ -2,6 +2,13 @@
  "source": "ap-stats-video-crosswalk.md (EK-verified vs 5 official Fall-2026 unit guides)",
  "schema": "ced2026 overlay: {status core|bonus, newUnit, newTopic, newLabel, bonusUnit}",
  "generatedAt": null,
+ "units": {
+  "1": "Exploring One-Variable Data & Collecting Data",
+  "2": "Probability, Random Variables & Distributions",
+  "3": "Inference for Categorical Data: Proportions",
+  "4": "Inference for Quantitative Data: Means",
+  "5": "Regression Analysis"
+ },
  "map": {
   "1.1": {
    "status": "core",

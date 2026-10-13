@@ -892,6 +892,7 @@
 
 
 
+
     // ===== identity helpers =====
 
     function currentSession() {
@@ -1328,6 +1329,12 @@
           // cockpit's existing tests don't need to inject the helpers.
           onClassroomMessage: function (msg) {
             if (!msg || !msg.type) return;
+            // Park music (2026-10-10): in Live mode the monitor socket is gone; the room's sound
+            // state arrives on this joined socket (the snapshot and classroom_sound_state).
+            if (msg.type === 'classroom_state' || msg.type === 'classroom_sound_state') {
+              _liveClassSound = msg.sound === true;
+              _renderClassSound();
+            }
             if (msg.type === 'classroom_student_nudge_reply' && typeof _renderReplyInList === 'function') {
               try { _renderReplyInList(msg); } catch (_) {}
             } else if (msg.type === 'classroom_teacher_nudge_ack' && typeof _renderNudgeAck === 'function') {
@@ -2545,9 +2552,11 @@
         if (msg.type === 'classroom_state_all') {
           _globalState = { sections: msg.sections || [] };
           _renderGlobalPresence();
+          _renderClassSound();
         } else if (msg.type === 'classroom_member_update'
                 || msg.type === 'classroom_member_left'
-                || msg.type === 'classroom_live_state') {
+                || msg.type === 'classroom_live_state'
+                || msg.type === 'classroom_sound_state') {
           _applyMonitorDelta(msg);
           _renderGlobalPresence();
         }
@@ -2588,7 +2597,34 @@
         room.members = room.members.filter(function(m) { return m.username !== msg.username; });
       } else if (msg.type === 'classroom_live_state') {
         room.live = !!msg.live;
+      } else if (msg.type === 'classroom_sound_state') {
+        room.sound = !!msg.sound;
+        _renderClassSound();
       }
+    }
+
+    // Teacher 2026-10-10 (park music): while a room is live, student devices keep park music and
+    // park sounds off unless this switch is on. Durable on the relay, default off.
+    var _liveClassSound = false;   // the live room's switch, from the joined board socket (authoritative in Live mode)
+    function _classSoundOn() {
+      if (_cockpitMode === 'live' && boardHandle) return _liveClassSound;
+      var sections = _globalState.sections || [];
+      for (var i = 0; i < sections.length; i++) {
+        if (sections[i].section === _liveSectionRef) return !!sections[i].sound;
+      }
+      return false;
+    }
+    function _renderClassSound() {
+      var btn = document.getElementById('btn-class-sound');
+      if (!btn) return;
+      var on = _classSoundOn();
+      btn.textContent = String.fromCodePoint(on ? 0x1F50A : 0x1F507) + ' Class sound: ' + (on ? 'on' : 'off');
+      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    }
+    function _sendClassSound(on) {
+      // Over the mounted board's joined teacher socket: the relay refuses it from anything else.
+      if (!boardHandle || typeof boardHandle.setClassSound !== 'function') return;
+      boardHandle.setClassSound(!!on);
     }
 
     function _renderGlobalPresence() {
@@ -2646,6 +2682,8 @@
       // Tell the server this section is Live now.
       _sendLiveStart(section);
       _liveSectionRef = section;
+      _liveClassSound = false;   // until this room's snapshot arrives on the board socket
+      _renderClassSound();
       // v3 P3: open WebRTC to every student currently in the section.
       // _globalState carries the monitor snapshot per section; pull the
       // student usernames for the active section and initiate.
@@ -2901,6 +2939,10 @@
     });
 
     document.getElementById('btn-exit-live').addEventListener('click', exitLiveMode);
+    document.getElementById('btn-class-sound').addEventListener('click', function() {
+      if (!_liveSectionRef) return;
+      _sendClassSound(!_classSoundOn());
+    });
 
     // ===== section selector =====
 
@@ -2914,6 +2956,8 @@
       if (prev && prev !== section) _sendLiveStop(prev);
       if (section) _sendLiveStart(section);
       _liveSectionRef = section;
+      _liveClassSound = false;   // until this room's snapshot arrives on the board socket
+      _renderClassSound();
       mountBoard(section, session);
     }
 

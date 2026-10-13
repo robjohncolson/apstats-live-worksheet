@@ -1566,14 +1566,15 @@
 
   function _fcRenderResult(lesson, score, passed, committed, misses, mode) {
     var note;
-    if (committed && committed.skipped && !passed && score < 80) note = 'Reach 80% for the Blooket half of Done — your grade wasn’t lowered.';
+    // Teacher 2026-10-12: the deck's best score IS the Blooket grade, point for point — no pass mark in student copy.
+    if (committed && committed.skipped && !passed && score < 80) note = 'Your best score stays — this run was lower. Redo to raise your Blooket grade.';
     else if (committed && committed.skipped) note = 'Kept your best score — a higher one is already recorded.';
     else if (committed && committed.queued) note = 'Saved offline — it’ll sync when you reconnect.';
     else if (committed && committed.ok === false) note = (committed.reason === 'no-identity' || committed.reason === 'no-client') ? 'Sign in to save this to your grade.' : 'Couldn’t save right now — try again when online.';
-    else note = passed ? '🎯 Recorded — that’s the Blooket half of Done (the worksheet 60% is also needed).' : 'Score recorded. Reach 80% for the Blooket half of Done — the worksheet 60% is also needed.';
+    else note = '🎯 Recorded — this is your Blooket grade for the lesson, point for point. Redo any time to raise it.';
     _fcBodyHtml(
       '<div class="fc-result">' +
-        '<h2>' + (passed ? '🎉 Passed!' : 'Keep going') + '</h2>' +
+        '<h2>' + (score >= 100 ? '🎉 100%!' : 'Your score') + '</h2>' +
         '<div class="fc-score ' + (passed ? 'pass' : 'fail') + '">' + (Math.round(score * 10) / 10) + '%</div>' +
         '<div id="fc-recap-slot"></div>' +
         '<p>' + esc(note) + '</p>' +

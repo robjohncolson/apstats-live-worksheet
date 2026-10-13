@@ -218,7 +218,7 @@ describe('Desk journey J5', () => {
       const srsLogBefore = JSON.parse(harness.window.localStorage.getItem(LOG_KEY) || '[]');
       let picker = await j5OpenPicker(harness);
       expect(picker.textContent).toContain(`Your best so far: ${INITIAL_BLOOKET}%`);
-      expect(picker.textContent).toMatch(/Blooket credit/);
+      expect(picker.textContent).toMatch(/your Blooket grade/);   // teacher 2026-10-12: the score IS the grade
       const gradeRequestsBeforeLower = harness.roster.state.requests.filter((request) => (
         request.method === 'GET' && request.path === '/grade'
       )).length;

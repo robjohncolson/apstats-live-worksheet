@@ -21,6 +21,7 @@ import { mountAdminRestore } from './admin-restore.js';
 import { mountDonow } from './donow.js';
 import { mountRollup } from './rollup.js';
 import { mountGrade } from './grade.js';
+import { cedRetitleGradebook } from './ced-titles.js';
 import { mountOfflineInputs } from './grade-offline-inputs.js';
 import { mountAnswerKey } from './grade-answer-key.js';
 import { mountTranscript } from './transcript.js';
@@ -1141,7 +1142,7 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
     mountGrade(app, {
       verifyToken, ledgerDb, loadAnswerKey: _gradingLoadAnswerKey, lessonSchedule: _sched, eventSchedule: _events, db,
       config: gradeConfig, worksheetBlankCounts: worksheetBlankCounts || null,
-      ..._blooketBundle,
+      ..._blooketBundle, retitleGradebook: cedRetitleGradebook,
     });
     mountOfflineInputs(app, {
       verifyToken, ledgerDb, loadAnswerKey: _gradingLoadAnswerKey, lessonSchedule: _sched, eventSchedule: _events, db,

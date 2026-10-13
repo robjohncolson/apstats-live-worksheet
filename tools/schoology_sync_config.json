@@ -1,0 +1,4 @@
+{
+  "_doc": "Schoology sync settings. schoology_titles_ced (SCHOOLOGY_TITLES_CED, CED2026_SINGLE_SOURCE_SPEC.md section 3): false = the sync names and finds columns by the OLD titles ('3.1 Blooket'); true = the CED-2026 titles ('1.10 Day 1 Blooket') from data/ced-column-titles.json. The sync matches Schoology columns by EXACT title, so set true ONLY after 'python tools/schoology_rename_columns.py --apply' has renamed both sections' columns; then set roster grade-config.js SCHOOLOGY_TITLES_CED=true and redeploy. With true, a sync run aborts before any write if an old title is still in the gradebook.",
+  "schoology_titles_ced": false
+}

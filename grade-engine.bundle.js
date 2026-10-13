@@ -7,7 +7,7 @@
  *
  * Regenerate after any engine edit:  node scripts/build-grade-engine.mjs
  * Parity is pinned by tests/grade-engine-bundle-parity.test.js.
- * engine-version: 99d09cc68981
+ * engine-version: 9b3b92fc80b0
  */
 ;(function (root) {
   'use strict';
@@ -47,6 +47,13 @@
     // (teacher 2026-10-03: 1.5x, retroactive to every sheet). Mirrored in the Desk
     // (DESK_BONUS_MULTIPLIER) and tools/schoology_official.py -- pinned equal by tests.
     const BONUS_MULTIPLIER = 1.5;
+    
+    // Gradebook column titles are CED-2026 ("1.10 Day 1 Blooket"); `schoologyTitle` names the
+    // column a student will actually find in Schoology. false = Schoology still has the OLD titles
+    // ("3.1 Blooket"). Flip to true the day tools/schoology_rename_columns.py --apply has run
+    // (CED2026_SINGLE_SOURCE_SPEC.md §3). Display only: no grade reads it. Mirrored by the Desk's
+    // DESK_SCHOOLOGY_TITLES_CED fallback (pinned equal by tests/ced-no-raw-keys.test.js).
+    const SCHOOLOGY_TITLES_CED = false;
     
     const PHASE3_CONFIG = {
       // Banked bonus-sheet points are multiplied by this when read (class.js bankedBonus).
@@ -1837,13 +1844,14 @@
       // -- Blooket track (BLOOKET_MAKEUP_BUILD.md) -- now a real per-lesson grade:
       // denominator = due lessons that HAVE a Blooket (blooketLessons), and a
       // missing-but-due Blooket counts as 0 (mirrors the lessons/quizzes tracks).
-      // r.blooket is the real game score, else the flashcard make-up (80%), else
+      // r.blooket is the real game score, else the timed flashcard deck's best score
+      // (the exact %, point for point — teacher 2026-10-12: no 80% pass mark), else
       // null→0. A lesson with NO Blooket is excluded from the denominator, so it is
       // never an unfair 0. If blooketLessons isn't supplied (older caller), the set
       // is empty → blooketAvg null → renormalized away (back-compat, no tank).
       // blooketDone = due Blooket lessons WITH a score (game or flashcard make-up);
       // blooketTodo = due Blooket lessons with NO score yet — the flashcard make-up
-      // opportunities the grade coach surfaces (each can become an 80%).
+      // opportunities the grade coach surfaces (each becomes the deck's best score).
       // Iterate bandLessons (NOT dueLessons): a Blooket-bearing lesson counts once
       // it's scheduled-due OR the student has already earned a Blooket score for it
       // (game or flashcard make-up). This mirrors the lessons track's "if the work is
@@ -3168,7 +3176,7 @@
     isCorrect: __reg["scoring"].isCorrect,
     normalizeResponse: __reg["scoring"].normalizeResponse,
     scoreAgainstKey: __reg["scoring"].scoreAgainstKey,
-    _engineVersion: "99d09cc68981",
+    _engineVersion: "9b3b92fc80b0",
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = __api;

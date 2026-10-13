@@ -1,6 +1,7 @@
 import { requireTeacher } from './teacher-auth.js';
 import { quarterOfDate } from './grade-config.js';
 import { todayInTz } from './lesson-grade.js';
+import { cedAssignmentTitle } from './ced-titles.js';
 
 export function fiveNumberSummary(values) {
   if (!values.length) return null;
@@ -141,7 +142,7 @@ export function mountClassSnapshot(app, { db, verifyToken, computeClassGrades, c
         const summary = summarizeValues(values);
         snapshot.assignments.push({
           key: `${lesson.lessonKey}:${track}`, lessonKey: lesson.lessonKey, track,
-          title: `${lesson.lessonKey} ${label}`, zeroDate, ...summary,
+          title: cedAssignmentTitle(lesson, track), zeroDate, ...summary,
           // Internal pooled call: keep the raw values so the n<5 floor applies to the POOL,
           // not to each section's slice (mergeSnapshots re-summarizes and re-applies it).
           // Tentative zeros: taught here, not yet past the zero date, no score yet.

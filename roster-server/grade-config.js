@@ -20,6 +20,13 @@ export const TEACHER_DIAGNOSTIC_CONFIG = {
 // (DESK_BONUS_MULTIPLIER) and tools/schoology_official.py -- pinned equal by tests.
 export const BONUS_MULTIPLIER = 1.5;
 
+// Gradebook column titles are CED-2026 ("1.10 Day 1 Blooket"); `schoologyTitle` names the
+// column a student will actually find in Schoology. false = Schoology still has the OLD titles
+// ("3.1 Blooket"). Flip to true the day tools/schoology_rename_columns.py --apply has run
+// (CED2026_SINGLE_SOURCE_SPEC.md §3). Display only: no grade reads it. Mirrored by the Desk's
+// DESK_SCHOOLOGY_TITLES_CED fallback (pinned equal by tests/ced-no-raw-keys.test.js).
+export const SCHOOLOGY_TITLES_CED = false;
+
 export const PHASE3_CONFIG = {
   // Banked bonus-sheet points are multiplied by this when read (class.js bankedBonus).
   bonusMultiplier: BONUS_MULTIPLIER,

@@ -1966,7 +1966,8 @@
 
 
 
-try{if(/[?&]home=park(?:&|$)/.test(location.search)||localStorage.getItem('apstats-pico-home')==='1')document.documentElement.classList.add('pico-home');}catch(_){}
+try{var _ph=/[?&]home=(park|classic)(?:&|$)/.exec(location.search),_ps=null;try{_ps=localStorage.getItem('apstats-pico-home')}catch(_){}if(_ph?_ph[1]==='park':_ps!=='0')document.documentElement.classList.add('pico-home');}catch(_){}
+
 
 
 
@@ -7224,6 +7225,8 @@ function updateUserRoleUI() {
     if (isTeacher) localStorage.setItem('apstats_user_role', 'teacher');
     else localStorage.removeItem('apstats_user_role');
   } catch (_) {}
+  // Sound level default by role (students quiet, teachers normal; persisted once signed in).
+  try { _sfxApplyRoleDefault(who, isTeacher); } catch (_) {}
   // Period switch + any other .teacher-only chrome: follows _deskIsTeacher(), which is false in
   // Preview-as-student and view-as even for a signed-in teacher (teacher 2026-10-06).
   try { document.documentElement.classList.toggle('desk-teacher', (typeof _deskIsTeacher === 'function') && _deskIsTeacher()); } catch (_) {}
@@ -8973,6 +8976,10 @@ function _phase2ReDeriveGrade() {
             ? GradeEngine.todayInTz((inputs.config && inputs.config.schoolTz) || 'America/New_York')
             : undefined;
           gradebook = GradeEngine.buildGradebook(g, { lessonSchedule: opts.lessonSchedule, eventSchedule: opts.eventSchedule, section: opts.section, todayStr: todayStr });
+          // Same CED titles as the server's /grade (roster-server/ced-titles.js).
+          if (gradebook && typeof retitleGradebook === 'function') {
+            retitleGradebook(gradebook, { schoologyTitlesCed: DESK_SCHOOLOGY_TITLES_CED });
+          }
         }
       } catch (_) {}
       return {
@@ -9842,7 +9849,7 @@ function _renderCoachPanel(panel, ctx) {
 
   // Blooket make-up — a real Work-track component (10%) the student can't see
   // anywhere else. Show the standing; when any are undone, point at the flashcard
-  // make-up (a pass = 80%), which is often the fastest Work-track lift.
+  // deck (its best score is the grade, point for point), often the fastest Work-track lift.
   if (ctx.blooket && ctx.blooket.due > 0) {
     var blk = document.createElement('div');
     var bTrk = (ctx.blooket.track != null) ? (Math.round(ctx.blooket.track) + '%') : '—';
@@ -9861,7 +9868,7 @@ function _renderCoachPanel(panel, ctx) {
   if (Array.isArray(ctx.flashcardGate) && ctx.flashcardGate.length) {
     var fg = document.createElement('div');
     var fgTopics = ctx.flashcardGate.slice(0, 3).map(function (g) { return cedLabel(g.lesson).text; }).join('; ');
-    fg.textContent = 'Flashcards to finish: ' + fgTopics + ' — pass each lesson’s flashcards to 80% on the Desk to mark it complete. Nothing is locked; every lesson stays open.';
+    fg.textContent = 'Flashcards to finish: ' + fgTopics + ' — play each lesson’s timed deck on the Desk; your best score is that lesson’s Blooket grade. Nothing is locked; every lesson stays open.';
     facts.appendChild(fg);
   }
 
@@ -10295,71 +10302,88 @@ function getAllRegistryEntries(topicKey) {
 
 /* ═══ SOUND ENGINE (Mac System 7-style synthesized sounds) ═══ */
 // Study Break's cues, played through the shared engine in lib/sfx.js (SFX_SPEC.md). Each recipe
-// keeps the frequencies, start times and envelopes of the hand-built oscillators it replaced
-// (TETRIS_SQUARES_SPEC §4 for the bells and chimes); the engine adds the reverb tail, a little
-// stereo width, pitch / level variation and the ducker. Gold fuse / gold clear are priority.
+// keeps the timing and pitch shape of the hand-built oscillators it replaced, voiced by family
+// (game = pulse, reward = triangle bell + octave); the bells and chimes keep their exact
+// TETRIS_SQUARES_SPEC §4 sines. Gold fuse / gold clear are priority.
 const SFX = {
     muted: false,
     ready: false,
 
     // Plain data for sfx.define (see lib/sfx.js). `gain` on a note is the multiplier of the
-    // caller's volume, exactly as the old `vol * 0.4` arguments were.
+    // caller's volume. Two families, told apart by waveform and envelope rather than reverb
+    // (handoff/audio/AUDIO_IDEAS_HANDOFF.md §0):
+    //   game   = square (pulse) notes with a 1 ms attack and short decays; impacts add a noise burst
+    //   reward = a triangle bell plus its octave, struck, with a longer ring
+    // The fuse bells and square-clear chimes keep their exact TETRIS_SQUARES_SPEC §4 sines.
     recipes: {
-        // Piece lock - short water droplet sound
-        droplet: { bus: 'sfx', channel: 'game', reverb: 0.08, body: [
-            { osc: 'sine', freq: 1400, freqEnd: 400, at: 0, dur: 0.06, gain: 0.4 },
-            { osc: 'sine', freq: 800, freqEnd: 300, at: 0.02, dur: 0.05, gain: 0.2 }] },
-        // Single line clear - springy boing
-        boing: { bus: 'sfx', channel: 'game', reverb: 0.12, detune: 10, body: [
-            { osc: 'sine', freq: 200, freqEnd: 800, at: 0, dur: 0.15, gain: 0.5 },
-            { osc: 'sine', freq: 250, freqEnd: 600, at: 0.05, dur: 0.12, gain: 0.3 }] },
-        // Double line clear - two-tone alert (Sosumi-like); also the challenge alert (priority)
-        sosumi: { bus: 'sfx', channel: 'game', reverb: 0.15, detune: 10, body: [
-            { osc: 'sine', freq: 880, at: 0, dur: 0.12, gain: 0.5 },
-            { osc: 'sine', freq: 660, at: 0.15, dur: 0.12, gain: 0.5 }] },
-        // Triple line clear - quack
-        quack: { bus: 'sfx', channel: 'game', reverb: 0.1, body: [
-            { osc: 'sawtooth', freq: 300, freqEnd: 200, at: 0, dur: 0.08, gain: 0.3 },
-            { osc: 'square', freq: 250, freqEnd: 180, at: 0.02, dur: 0.1, gain: 0.2 },
-            { noise: true, amp: 0.5, at: 0, dur: 0.06, gain: 0.1 }] },
-        // Tetris (4 lines) - excited ascending chirp (Wild Eep-like)
-        wildEep: { bus: 'sfx', channel: 'game', reverb: 0.18, detune: 10, width: 0.3, body: [
-            { osc: 'sine', freq: 600, freqEnd: 1800, at: 0, dur: 0.08, gain: 0.4 },
-            { osc: 'sine', freq: 800, freqEnd: 2200, at: 0.1, dur: 0.08, gain: 0.5 },
-            { osc: 'sine', freq: 1000, freqEnd: 2400, at: 0.2, dur: 0.1, gain: 0.4 }] },
-        // Level up - pleasant ascending chord (Indigo-like)
-        indigo: { bus: 'sfx', channel: 'game', reverb: 0.2, detune: 10, width: 0.3, body: [
-            { osc: 'sine', freq: 440, at: 0, dur: 0.2, gain: 0.3 },
-            { osc: 'sine', freq: 554, at: 0.1, dur: 0.2, gain: 0.3 },
-            { osc: 'sine', freq: 659, at: 0.2, dur: 0.25, gain: 0.4 }] },
-        // Hold swap - soft click (Moof-like)
-        moof: { bus: 'sfx', channel: 'game', reverb: 0.05, body: [
-            { osc: 'square', freq: 800, at: 0, dur: 0.02, gain: 0.2 },
-            { osc: 'sine', freq: 600, at: 0.01, dur: 0.03, gain: 0.15 }] },
-        // Game over - descending sad sound (Monkey-like)
-        monkey: { bus: 'sfx', channel: 'game', reverb: 0.2, detune: 10, body: [
-            { osc: 'sine', freq: 600, freqEnd: 200, at: 0, dur: 0.15, gain: 0.4 },
-            { osc: 'sine', freq: 500, freqEnd: 150, at: 0.2, dur: 0.15, gain: 0.3 },
-            { osc: 'sine', freq: 400, freqEnd: 100, at: 0.4, dur: 0.2, gain: 0.3 }] },
-        // Garbage received - heavy thud (Logjam-like)
-        logjam: { bus: 'sfx', channel: 'game', reverb: 0.1, body: [
-            { osc: 'sine', freq: 100, freqEnd: 40, at: 0, dur: 0.15, gain: 0.5 },
-            { noise: true, amp: 0.5, at: 0, dur: 0.08, gain: 0.3 }] },
-        // KO / Win - double sosumi staggered
-        koWin: { bus: 'sfx', channel: 'game', reverb: 0.2, detune: 10, width: 0.2, body: [
-            { osc: 'sine', freq: 880, at: 0, dur: 0.12, gain: 0.5 },
-            { osc: 'sine', freq: 1100, at: 0.15, dur: 0.15, gain: 0.6 },
-            { osc: 'sine', freq: 880, at: 0.4, dur: 0.12, gain: 0.5 },
-            { osc: 'sine', freq: 1100, at: 0.55, dur: 0.15, gain: 0.6 }] },
-        // Gold square - bright ascending major chord chime (C5 E5 G5)
-        goldChime: { bus: 'sfx', channel: 'game', reverb: 0.25, detune: 0, width: 0.3, body: [
-            { osc: 'sine', freq: 523, at: 0, dur: 0.3, gain: 0.5 },
-            { osc: 'sine', freq: 659, at: 0.08, dur: 0.28, gain: 0.45 },
-            { osc: 'sine', freq: 784, at: 0.16, dur: 0.35, gain: 0.5 }] },
-        // Silver square - shorter metallic shimmer (C6 E6)
-        silverShimmer: { bus: 'sfx', channel: 'game', reverb: 0.25, detune: 0, width: 0.3, body: [
-            { osc: 'sine', freq: 1047, at: 0, dur: 0.15, gain: 0.4 },
-            { osc: 'sine', freq: 1319, at: 0.05, dur: 0.18, gain: 0.35 }] },
+        // GAME. Piece lock - a short falling blip on a soft thud
+        droplet: { bus: 'sfx', channel: 'game', reverb: 0.02, body: [
+            { osc: 'square', env: 'strike', attack: 0.001, freq: 1400, freqEnd: 400, at: 0, dur: 0.045, gain: 0.12 },
+            { osc: 'square', env: 'strike', attack: 0.001, freq: 800, freqEnd: 300, at: 0.015, dur: 0.04, gain: 0.06 },
+            { noise: true, amp: 1, at: 0, dur: 0.02, gain: 0.08, filter: { type: 'lowpass', freq: 1800 } }] },
+        // GAME. Single line clear - springy boing (sweeps up)
+        boing: { bus: 'sfx', channel: 'game', reverb: 0.03, detune: 10, body: [
+            { osc: 'square', env: 'strike', attack: 0.001, freq: 200, freqEnd: 800, at: 0, dur: 0.1, gain: 0.15 },
+            { osc: 'square', env: 'strike', attack: 0.001, freq: 250, freqEnd: 600, at: 0.04, dur: 0.09, gain: 0.09 }] },
+        // GAME. Double line clear - two-tone alert (Sosumi-like); also the challenge alert (priority)
+        sosumi: { bus: 'sfx', channel: 'game', reverb: 0.03, detune: 10, body: [
+            { osc: 'square', env: 'strike', attack: 0.001, freq: 880, at: 0, dur: 0.09, gain: 0.14 },
+            { osc: 'square', env: 'strike', attack: 0.001, freq: 660, at: 0.12, dur: 0.09, gain: 0.14 }] },
+        // GAME. Triple line clear - quack
+        quack: { bus: 'sfx', channel: 'game', reverb: 0.02, body: [
+            { osc: 'square', env: 'strike', attack: 0.001, freq: 300, freqEnd: 200, at: 0, dur: 0.07, gain: 0.14 },
+            { osc: 'square', env: 'strike', attack: 0.001, freq: 250, freqEnd: 180, at: 0.02, dur: 0.08, gain: 0.1 },
+            { noise: true, amp: 0.5, at: 0, dur: 0.05, gain: 0.06 }] },
+        // GAME. Tetris (4 lines) - excited ascending chirp (Wild Eep-like)
+        wildEep: { bus: 'sfx', channel: 'game', reverb: 0.04, detune: 10, width: 0.3, body: [
+            { osc: 'square', env: 'strike', attack: 0.001, freq: 600, freqEnd: 1800, at: 0, dur: 0.07, gain: 0.12 },
+            { osc: 'square', env: 'strike', attack: 0.001, freq: 800, freqEnd: 2200, at: 0.09, dur: 0.07, gain: 0.14 },
+            { osc: 'square', env: 'strike', attack: 0.001, freq: 1000, freqEnd: 2400, at: 0.18, dur: 0.09, gain: 0.12 }] },
+        // GAME. Hold swap - soft click (Moof-like)
+        moof: { bus: 'sfx', channel: 'game', reverb: 0, body: [
+            { osc: 'square', env: 'strike', attack: 0.001, freq: 800, at: 0, dur: 0.02, gain: 0.1 },
+            { osc: 'square', env: 'strike', attack: 0.001, freq: 600, at: 0.01, dur: 0.025, gain: 0.07 }] },
+        // GAME. Game over - descending sad sound (Monkey-like)
+        monkey: { bus: 'sfx', channel: 'game', reverb: 0.04, detune: 10, body: [
+            { osc: 'square', env: 'strike', attack: 0.001, freq: 600, freqEnd: 200, at: 0, dur: 0.14, gain: 0.14 },
+            { osc: 'square', env: 'strike', attack: 0.001, freq: 500, freqEnd: 150, at: 0.18, dur: 0.14, gain: 0.1 },
+            { osc: 'square', env: 'strike', attack: 0.001, freq: 400, freqEnd: 100, at: 0.36, dur: 0.2, gain: 0.1 }] },
+        // GAME. Garbage received - heavy thud (Logjam-like): a falling pulse on a low noise burst
+        logjam: { bus: 'sfx', channel: 'game', reverb: 0.02, body: [
+            { osc: 'square', env: 'strike', attack: 0.001, freq: 100, freqEnd: 40, at: 0, dur: 0.14, gain: 0.25 },
+            { noise: true, amp: 1, at: 0, dur: 0.08, gain: 0.3, filter: { type: 'lowpass', freq: 900 } }] },
+        // REWARD. Level up - ascending chord (Indigo-like), triangle bells + octaves
+        indigo: { bus: 'sfx', channel: 'game', reverb: 0.08, detune: 0, width: 0.3, body: [
+            { osc: 'triangle', env: 'strike', freq: 440, at: 0, dur: 0.35, gain: 0.3 },
+            { osc: 'triangle', env: 'strike', freq: 880, at: 0, dur: 0.25, gain: 0.1 },
+            { osc: 'triangle', env: 'strike', freq: 554, at: 0.1, dur: 0.35, gain: 0.3 },
+            { osc: 'triangle', env: 'strike', freq: 1108, at: 0.1, dur: 0.25, gain: 0.1 },
+            { osc: 'triangle', env: 'strike', freq: 659, at: 0.2, dur: 0.45, gain: 0.4 },
+            { osc: 'triangle', env: 'strike', freq: 1318, at: 0.2, dur: 0.3, gain: 0.14 }] },
+        // REWARD. KO / Win - double sosumi staggered, rung as bells
+        koWin: { bus: 'sfx', channel: 'game', reverb: 0.08, detune: 0, width: 0.2, body: [
+            { osc: 'triangle', env: 'strike', freq: 880, at: 0, dur: 0.22, gain: 0.5 },
+            { osc: 'triangle', env: 'strike', freq: 1760, at: 0, dur: 0.15, gain: 0.17 },
+            { osc: 'triangle', env: 'strike', freq: 1100, at: 0.15, dur: 0.25, gain: 0.6 },
+            { osc: 'triangle', env: 'strike', freq: 2200, at: 0.15, dur: 0.18, gain: 0.2 },
+            { osc: 'triangle', env: 'strike', freq: 880, at: 0.4, dur: 0.22, gain: 0.5 },
+            { osc: 'triangle', env: 'strike', freq: 1760, at: 0.4, dur: 0.15, gain: 0.17 },
+            { osc: 'triangle', env: 'strike', freq: 1100, at: 0.55, dur: 0.35, gain: 0.6 },
+            { osc: 'triangle', env: 'strike', freq: 2200, at: 0.55, dur: 0.25, gain: 0.2 }] },
+        // REWARD. Personal best - bright ascending major chord chime (C5 E5 G5 + octaves)
+        goldChime: { bus: 'sfx', channel: 'game', reverb: 0.08, detune: 0, width: 0.3, body: [
+            { osc: 'triangle', env: 'strike', freq: 523, at: 0, dur: 0.4, gain: 0.5 },
+            { osc: 'triangle', env: 'strike', freq: 1046, at: 0, dur: 0.3, gain: 0.17 },
+            { osc: 'triangle', env: 'strike', freq: 659, at: 0.08, dur: 0.4, gain: 0.45 },
+            { osc: 'triangle', env: 'strike', freq: 1318, at: 0.08, dur: 0.3, gain: 0.15 },
+            { osc: 'triangle', env: 'strike', freq: 784, at: 0.16, dur: 0.5, gain: 0.5 },
+            { osc: 'triangle', env: 'strike', freq: 1568, at: 0.16, dur: 0.35, gain: 0.17 }] },
+        // REWARD. Silver square - shorter metallic shimmer (C6 E6 + octaves)
+        silverShimmer: { bus: 'sfx', channel: 'game', reverb: 0.08, detune: 0, width: 0.3, body: [
+            { osc: 'triangle', env: 'strike', freq: 1047, at: 0, dur: 0.22, gain: 0.4 },
+            { osc: 'triangle', env: 'strike', freq: 2094, at: 0, dur: 0.15, gain: 0.13 },
+            { osc: 'triangle', env: 'strike', freq: 1319, at: 0.05, dur: 0.25, gain: 0.35 },
+            { osc: 'triangle', env: 'strike', freq: 2638, at: 0.05, dur: 0.18, gain: 0.12 }] },
         // TETRIS_SQUARES_SPEC §4. Fuse (silver): a bell, E6 + B6 sine partials, 2 ms attack,
         // 350 ms exponential decay (each partial a little quieter than the one below it), plus an
         // 80 ms noise sparkle band-passed to 6-9 kHz (centre 7.5 kHz, Q = 7500 / 3000 = 2.5).
@@ -11241,6 +11265,11 @@ function _renderMenuChecks() {
     }
     var quiet = document.getElementById('menu-sound-quiet');
     if (quiet) quiet.textContent = (_sfxIsQuiet() ? '\u2713' : '\u2003') + ' Quieter';
+    var lowPower = document.getElementById('menu-sound-lowpower');
+    if (lowPower) {
+        var setting = _sfxLowPowerSetting();
+        lowPower.textContent = '\u2003 Low-power sound: ' + setting.charAt(0).toUpperCase() + setting.slice(1);
+    }
 }
 // The per-device "quieter" level (SFX_SPEC \u00a71: localStorage apstats-sfx-level, applied on the
 // engine's master). The Sound option stays the on/off switch.
@@ -11251,7 +11280,30 @@ function _toggleSfxQuiet() {
     try { if (window.sfx) window.sfx.setLevel(_sfxIsQuiet() ? 'normal' : 'quiet'); } catch (_) {}
     try { _renderMenuChecks(); } catch (_) {}
 }
-try { window._toggleSfxQuiet = _toggleSfxQuiet; window._sfxIsQuiet = _sfxIsQuiet; } catch (_) {}
+// Low-power sound (handoff/audio/AUDIO_IDEAS_HANDOFF.md section 0): auto -> on -> off -> auto.
+// Auto = the engine's detection (<= 4 cores, <= 4 GB, or slow frames). Stored per device in
+// localStorage apstats-sfx-lowpower.
+var SFX_LOW_POWER_NEXT = { auto: 'on', on: 'off', off: 'auto' };
+function _sfxLowPowerSetting() {
+    try { return window.sfx ? window.sfx.getLowPower() : 'auto'; } catch (_) { return 'auto'; }
+}
+function _cycleSfxLowPower() {
+    try { if (window.sfx) window.sfx.setLowPower(SFX_LOW_POWER_NEXT[_sfxLowPowerSetting()] || 'auto'); } catch (_) {}
+    try { _renderMenuChecks(); } catch (_) {}
+}
+// Default level by role: students start at "quiet" (a room of 25 devices), teachers at "normal".
+// Once the role is known (signed in) the default is stored, so it persists on this device; a
+// level the user picked is never overwritten.
+function _sfxApplyRoleDefault(who, isTeacher) {
+    if (!window.sfx) return;
+    var level = isTeacher ? 'normal' : 'quiet';
+    window.sfx.setDefaultLevel(level);
+    if (who && !window.sfx.hasStoredLevel()) window.sfx.setLevel(level);
+}
+try {
+    window._toggleSfxQuiet = _toggleSfxQuiet; window._sfxIsQuiet = _sfxIsQuiet;
+    window._cycleSfxLowPower = _cycleSfxLowPower; window._sfxLowPowerSetting = _sfxLowPowerSetting;
+} catch (_) {}
 function _menuShowDoNow() {
     var card = document.getElementById('donow-card');
     if (!card || card.style.display === 'none') { openSignInModal(); return; }
@@ -12042,9 +12094,11 @@ function showResourcePanel(inf, dateStr) {
     const topicIds = lookupTopic(inf.t);
     const ids = Array.isArray(topicIds) ? topicIds : (topicIds ? [topicIds] : []);
 
-    // The calendar keeps OLD identity keys; students read the CED label. Only a
-    // signed-in teacher outside student preview gets the video/worksheet bridge.
+    // The calendar keeps OLD identity keys; everyone reads the CED label. Only a
+    // signed-in teacher outside student preview gets the video/worksheet bridge, and only
+    // as a hover tooltip "stored as 3.5 …" (CED2026_SINGLE_SOURCE_SPEC.md §2).
     var _hdrEl = document.getElementById('resource-header');
+    _hdrEl.removeAttribute('title');
     var _ced = (typeof REGISTRY !== 'undefined' && REGISTRY.lessons && REGISTRY.lessons[inf.t]) ? REGISTRY.lessons[inf.t].ced2026 : null;
     var _m = /^(\d+)\.(\d+)$/.exec(inf.t);
     var _newLabels = typeof cYear === 'undefined' || cYear === 'SY26-27';
@@ -12060,9 +12114,8 @@ function showResourcePanel(inf, dateStr) {
     } else {
         inf.ced = inf.group ? groupLabel(inf) : cedLabel(inf.t);
         header = inf.ced.text;
-        if (inf.ced.unit) header += ' \u2014 CED Unit ' + inf.ced.unit;
         if (_m && cedTeacherBridgeAllowed()) {
-            header += ' (old ' + inf.t + ': video "Unit ' + _m[1] + ' Lesson ' + _m[2]
+            _hdrEl.title = 'stored as ' + inf.t + ' (video "Unit ' + _m[1] + ' Lesson ' + _m[2]
                 + '", worksheet u' + _m[1] + '_lesson' + _m[2] + ')';
         }
     }
@@ -12302,19 +12355,18 @@ function showResourcePanel(inf, dateStr) {
             }
             if (u.blooket) {
                 // The Blooket grade = max(real game, flashcard). The chip shows the
-                // current score (colored vs the 80% gate); the launcher is ALWAYS
-                // available so a student can re-run the flashcards to IMPROVE — the
-                // full timed deck is the only graded mode (80% = done, up to 100%).
+                // current score; the launcher is ALWAYS available so a student can
+                // re-run the deck to raise it — the full timed deck is the only graded mode.
+                // The best score IS the Blooket grade, point for point (teacher 2026-10-12:
+                // "80% counts as done" was only the summer unlock rule and misled students
+                // into stopping at 80). The 80 gate survives only as the lesson-complete tint.
                 var _blScore = (typeof _blooketScoreFor === 'function') ? _blooketScoreFor(_stuTopicId) : null;
-                // Label by the 80% gate, not 100: >=80 already PASSES (done) — say so, and
-                // keep the click as an optional redo. <80 = a make-up; 100 = perfected.
                 var _blLabel = (typeof _blScore === 'number')
-                    ? (_blScore >= 100 ? 'Flashcards ✓ perfected'
-                       : _blScore >= 80 ? 'Flashcards ✓ done — redo to improve'
-                       : 'Flashcards — need 80%')
-                    : 'Do flashcards (Blooket credit)';
+                    ? (_blScore >= 100 ? 'Flashcards 100% ✓'
+                       : 'Flashcards ' + Math.round(_blScore) + '% — redo to raise it')
+                    : 'Do flashcards (your score = Blooket grade)';
                 var _blBtn = _signedIn
-                    ? ' <button class="s7btn chicago" style="font-size:9px;padding:1px 4px;margin-left:4px" title="The timed flashcard deck earns your Blooket credit: 80% = done, up to 100%" onclick="studentMark(this,\'' + _stuTopicId + '\',\'blooket\')">' + _blLabel + '</button>'
+                    ? ' <button class="s7btn chicago" style="font-size:9px;padding:1px 4px;margin-left:4px" title="The timed flashcard deck is your Blooket grade for this lesson: your best score counts, point for point, up to 100%" onclick="studentMark(this,\'' + _stuTopicId + '\',\'blooket\')">' + _blLabel + '</button>'
                     : '';
                 var _blDueText = '';
                 if (typeof _fcFlag === 'function' && _fcFlag('readinessBadge')) {
@@ -12700,10 +12752,16 @@ async function studentMark(btn, topicId, artifact) {
 }
 
 // ── Blooket flashcard verification (2026-05-20) ───────────────────────────────
-// Sources the same Blooket CSV that built the live Blooket game. Student
-// must score >=80% on a single pass to unlock Done. This is the actual
-// chain-of-custody check: self-attest and self-reported scores couldn't
+// Sources the same Blooket CSV that built the live Blooket game. This is the
+// actual chain-of-custody check: self-attest and self-reported scores couldn't
 // verify anything; flashcards we control end-to-end can.
+//
+// GRADE RULE (teacher 2026-10-12): the deck's best score IS the lesson's Blooket
+// grade, point for point (_ftFinish → _blooketCommit records the exact %; the
+// roster's blooketAvg is the mean of those). The 80% threshold below was the
+// SUMMER unlock rule (lessons were gated then); today it only decides the
+// lesson-complete tint (_isLessonComplete) and nothing a student reads may call
+// 80% "done", "credit" or "a pass". Nothing is locked since 2026-09-10.
 const BLOOKET_PASS_THRESHOLD = 0.80;
 const BLOOKET_RETRY_COOLDOWN_MS = 0; // (changing this needs teacher sign-off — see FLASHCARD_V2_BUILD.md)
 
@@ -13899,7 +13957,7 @@ async function openBlooketFlashcards(btn, topicId) {
 
 // One sentence every student sees before the first card: the deck IS the Blooket credit.
 function _bfCreditNote(topicId) {
-    var note = 'This timed deck is how you earn Blooket credit for this lesson. 80% or higher counts it as done; you can reach 100%.';
+    var note = 'This timed deck is your Blooket grade for this lesson. Your best score counts, point for point, up to 100% — there is no pass mark.';
     var best = (typeof _blooketScoreFor === 'function') ? _blooketScoreFor(topicId) : null;
     if (typeof best === 'number') note += ' Your best so far: ' + best + '%.';
     return note;
@@ -16113,25 +16171,53 @@ function _pastDueCurrentWork() {
     var period = (typeof cP === 'string') ? cP : null;
     return _pastDueWork(lessons, period, _zeroTodayIso());
 }
-// The Schoology column title for a row (tools/schoology_components.py): Schoology keeps
-// the OLD keys, while the Desk shows the CED label.
+// Schoology still has the OLD column titles ("3.1 Blooket") until the teacher runs
+// tools/schoology_rename_columns.py --apply. Mirrors roster-server grade-config.js
+// SCHOOLOGY_TITLES_CED (pinned equal by tests/ced-no-raw-keys.test.js); the server's
+// column.schoologyTitle wins whenever /grade has loaded.
+var DESK_SCHOOLOGY_TITLES_CED = false;
+// The Schoology column title for a row (CED2026_SINGLE_SOURCE_SPEC.md §2): the column a
+// student will actually find in Schoology. Old style while DESK_SCHOOLOGY_TITLES_CED is false:
 //   quiz               → '<lessonKey> Quiz'             ('3.6 Quiz')
 //   worksheet / deck   → '<unit>.<worksheetKey> <Word>' ('3.6-7 Follow-Along', the worksheet GROUP)
 // unit / worksheetKey come from the row, else from the /grade lesson. Missing → null (no tag, never guess).
 function _zeroSchoologyTitle(w) {
-    if (w.kind === 'quiz') return w.lessonKey + ' Quiz';
-    var WORD = { worksheet: 'Follow-Along', blooket: 'Blooket' };
+    var PREFIX = { worksheet: 'FA', blooket: 'BL', quiz: 'QUIZ' };
+    var KIND = { worksheet: 'followalong', blooket: 'blooket', quiz: 'quiz' };
+    var WORD = { worksheet: 'Follow-Along', blooket: 'Blooket', quiz: 'Quiz' };
     if (!WORD[w.kind]) return null;
-    var unit = w.unit;
-    var wsKey = w.worksheetKey;
-    if (unit == null || !wsKey) {
-        var L = _zeroLessonByKey(w.lessonKey);
-        if (!L) return null;
-        unit = L.unit;
-        wsKey = L.worksheetKey;
+    var colKey = w.lessonKey;
+    if (w.kind !== 'quiz') {
+        var unit = w.unit;
+        var wsKey = w.worksheetKey;
+        if (unit == null || !wsKey) {
+            var L = _zeroLessonByKey(w.lessonKey);
+            if (!L) return null;
+            unit = L.unit;
+            wsKey = L.worksheetKey;
+        }
+        if (unit == null || unit === '' || !wsKey) return null;
+        colKey = unit + '.' + wsKey;
     }
-    if (unit == null || unit === '' || !wsKey) return null;
-    return unit + '.' + wsKey + ' ' + WORD[w.kind];
+    var served = (typeof _gradebookSchoologyTitle === 'function') ? _gradebookSchoologyTitle(PREFIX[w.kind] + ':' + colKey) : null;
+    if (served) return served;
+    var schoologyCed = (typeof DESK_SCHOOLOGY_TITLES_CED !== 'undefined') && DESK_SCHOOLOGY_TITLES_CED;
+    if (schoologyCed && typeof cedColumnTitle === 'function') return cedColumnTitle(KIND[w.kind], colKey);
+    return colKey + ' ' + WORD[w.kind];
+}
+// The server's schoologyTitle for a gradebook column key ('BL:3.1'), or null.
+function _gradebookSchoologyTitle(colKey) {
+    var gb = (typeof _gradeGradebookCache !== 'undefined') ? _gradeGradebookCache : null;
+    var quarters = gb && gb.quarters;
+    if (!quarters) return null;
+    for (var q in quarters) {
+        var cols = quarters[q] && quarters[q].columns;
+        if (!Array.isArray(cols)) continue;
+        for (var i = 0; i < cols.length; i++) {
+            if (cols[i] && cols[i].key === colKey && cols[i].schoologyTitle) return cols[i].schoologyTitle;
+        }
+    }
+    return null;
 }
 // The /grade lesson for a lesson key (null when the cache or the lesson is missing).
 function _zeroLessonByKey(lessonKey) {
@@ -21369,27 +21455,31 @@ async function copyTutorPromptPc(unit, statusId) {
 
 /* ═══ MAC OS UI SOUND EFFECTS ═══ */
 // The Desk's UI sounds, played through the shared engine in lib/sfx.js (SFX_SPEC.md) on its `ui`
-// bus. 'click' is the UI instrument: a short triangle blip on a 3 ms noise transient. The alert
-// beep, quack, laugh and Wild Eep stay today's Mac recordings. The Sound option (this.muted) is
+// bus. UI family = short sine blips: 'click' (mostly closes) sweeps down, 'wildEep' (app opens)
+// sweeps up. The alert beep, quack and laugh stay today's Mac recordings. The Sound option (this.muted) is
 // the engine's master switch: nothing plays anywhere while it is off.
 const MacSFX = {
     muted: false,
     started: false,
 
     recipes: {
-        click:   { bus: 'ui', reverb: 0.04, detune: 25,
-                   transient: { dur: 0.003, gain: 0.5, filter: { type: 'highpass', freq: 2500 } },
-                   body: [{ osc: 'triangle', env: 'strike', attack: 0.002, freq: 1320, dur: 0.04, gain: 0.7 }] },
+        // UI family = short sine blips. 'click' is mostly a close / dismiss: it sweeps down.
+        click:   { bus: 'ui', reverb: 0, detune: 25,
+                   body: [{ osc: 'sine', env: 'strike', attack: 0.002, freq: 1200, freqEnd: 800, dur: 0.035, gain: 0.6 }] },
         sosumi:  { bus: 'ui', reverb: 0.08, detune: 0, sample: 'Mac-OS-Sounds/PowerMacBeep.wav' },
         crash:   { bus: 'ui', reverb: 0.1, detune: 0, sample: 'Mac-OS-Sounds/Quack.wav' },
         laugh:   { bus: 'ui', reverb: 0.1, detune: 0, sample: 'Mac-OS-Sounds/Laugh.wav' },
-        wildEep: { bus: 'ui', reverb: 0.12, detune: 0, sample: 'Mac-OS-Sounds/Wild-Eep.wav' },
+        // 'wildEep' opens an app / window: a two-step sine chirp that sweeps up.
+        wildEep: { bus: 'ui', reverb: 0, detune: 15, body: [
+                   { osc: 'sine', env: 'strike', attack: 0.002, freq: 600, freqEnd: 1400, at: 0, dur: 0.06, gain: 0.35 },
+                   { osc: 'sine', env: 'strike', attack: 0.002, freq: 900, freqEnd: 1800, at: 0.05, dur: 0.07, gain: 0.3 }] },
         // Teacher nudge arrival: one soft 880 Hz sine (10 ms rise, gone by 180 ms).
         nudgeChime: { bus: 'ui', reverb: 0.12, detune: 0, body: [{ osc: 'sine', freq: 880, dur: 0.2, gain: 0.08, env: 'points',
                       points: [['set', 0, 0], ['linear', 1, 0.01], ['exp', 0.00125, 0.18]] }] },
-        // Candy gift / poke: the same 880 Hz sine, a little louder, exponential rise.
-        candyChime: { bus: 'ui', reverb: 0.12, detune: 0, body: [{ osc: 'sine', freq: 880, dur: 0.2, gain: 0.12, env: 'points',
-                      points: [['set', 0.0001 / 0.12, 0], ['exp', 1, 0.01], ['exp', 0.0001 / 0.12, 0.18]] }] }
+        // Candy gift / poke (reward family): a triangle bell at 880 Hz plus its octave.
+        candyChime: { bus: 'ui', reverb: 0.06, detune: 0, body: [
+                      { osc: 'triangle', env: 'strike', freq: 880, dur: 0.25, gain: 0.12 },
+                      { osc: 'triangle', env: 'strike', freq: 1760, dur: 0.18, gain: 0.04 }] }
     },
 
     init() {
@@ -27277,7 +27367,7 @@ function sTip(ev,dt,inf,ds){if(inf===NC||!inf)return;
             else{
                 inf.ced=inf.group?groupLabel(inf):cedLabel(inf.t);
                 label=inf.ced.text;
-                if(cedTeacherBridgeAllowed())label+=' (old '+inf.t+')';
+                if(cedTeacherBridgeAllowed())label+=' (stored as '+inf.t+')';
             }
         }
         h+=`<div class="tp">${_resourcePanelEsc(label)}</div>`;
@@ -27824,7 +27914,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-10-10-cy35';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-10-13-h0r0';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

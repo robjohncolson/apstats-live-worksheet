@@ -290,9 +290,11 @@ def main() -> int:
             column = args.column_key
             if ":" in column:
                 from schoology_components import fa_title, bl_title, quiz_title
+                from schoology_sync_lib import schoology_titles_ced
                 kind, label = column.split(":", 1)
                 title_fn = {"FA": fa_title, "BL": bl_title, "QUIZ": quiz_title}.get(kind)
-                column = ops.find_assignment_id_by_title(cdp, title_fn(label)) if title_fn else None
+                ced = schoology_titles_ced()   # same title switch as the daily sync
+                column = ops.find_assignment_id_by_title(cdp, title_fn(label, ced)) if title_fn else None
             if not column or not any(c.get("columnKey") == column for c in ops.list_assignments(cdp)):
                 print("schoology-sync: column not found", file=sys.stderr)
                 return 4

@@ -370,8 +370,9 @@ describe('GET /class/snapshot?by=assignment', () => {
     await startSnapshotFixture(lessons);
     const r = await srv.get('/class/snapshot?section=PeriodB&by=assignment', teacher);
     expect(r.body.assignments.map(item => [item.key, item.title])).toEqual([
-      ['4.3:worksheet', '4.3 Follow-Along'], ['4.3:quiz', '4.3 Quiz'],
-      ['4.3:blooket', '4.3 Blooket'], ['4.4:quiz', '4.4 Quiz'], ['4.5:quiz', '4.5 Quiz'],
+      // CED-2026 titles (old 4.3-5 = CED 2.4-2.6); keys stay the old storage ids.
+      ['4.3:worksheet', '2.4-2.6 Follow-Along'], ['4.3:quiz', '2.4 Quiz'],
+      ['4.3:blooket', '2.4-2.6 Blooket'], ['4.4:quiz', '2.5 Quiz'], ['4.5:quiz', '2.6 Quiz'],
     ]);
     expect(r.body.assignments.filter(item => item.track === 'quiz').map(item => item.values))
       .toEqual([Array(6).fill(30), Array(6).fill(40), Array(6).fill(50)]);

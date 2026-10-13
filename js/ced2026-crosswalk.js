@@ -557,3 +557,10 @@ window.CED2026_CROSSWALK = {
     "bonusUnit": 5
   }
 };
+window.CED2026_UNITS = {
+  "1": "Exploring One-Variable Data & Collecting Data",
+  "2": "Probability, Random Variables & Distributions",
+  "3": "Inference for Categorical Data: Proportions",
+  "4": "Inference for Quantitative Data: Means",
+  "5": "Regression Analysis"
+};

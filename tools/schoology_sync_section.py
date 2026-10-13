@@ -349,7 +349,7 @@ def _event_unit(unit_str, entry: dict | None):
     return str(unit_str).lstrip("Uu")
 
 
-def build_scope(schedule: dict, section: str) -> list[dict]:
+def build_scope(schedule: dict, section: str, ced: bool = False) -> list[dict]:
     """Return a list of scope items for the given section.
 
     Each item::
@@ -365,6 +365,8 @@ def build_scope(schedule: dict, section: str) -> list[dict]:
     Only items that have a date for this section's period letter are included
     (items with a null period date are silently excluded -- no assignment to
     create yet).
+
+    ced: True = CED-2026 titles (lib.assignment_title ced path); keys never change.
     """
     period_letter = PERIOD_LETTER.get(section, "B")
     items = []
@@ -377,7 +379,7 @@ def build_scope(schedule: dict, section: str) -> list[dict]:
         if not date:
             continue
         kind = lib.classify_lesson_key(topic_key)
-        title = lib.assignment_title(kind, topic_key)
+        title = lib.assignment_title(kind, topic_key, ced=ced)
         items.append({
             "key": topic_key,
             "kind": kind,
@@ -398,7 +400,7 @@ def build_scope(schedule: dict, section: str) -> list[dict]:
         unit = _event_unit(unit_str, pc)
         key = components.pc_key(unit)
         kind = "progress_check"
-        title = lib.assignment_title(kind, key)
+        title = lib.assignment_title(kind, key, ced=ced)
         items.append({
             "key": key,
             "kind": kind,
@@ -414,7 +416,7 @@ def build_scope(schedule: dict, section: str) -> list[dict]:
         unit = _event_unit(unit_str, poster)
         key = components.poster_key(unit)
         kind = "poster"
-        title = lib.assignment_title(kind, key)
+        title = lib.assignment_title(kind, key, ced=ced)
         items.append({
             "key": key,
             "kind": kind,
@@ -438,6 +440,7 @@ def build_component_scope(
     roadmap_path: str = ROADMAP_PATH,
     blooket_lessons_path: str = BLOOKET_LESSONS_PATH,
     answer_key_path: str = ANSWER_KEY_PATH,
+    ced: bool = False,
 ) -> list[dict]:
     """Return FINE-GRAINED (per-component) scope items for the given section.
 
@@ -470,6 +473,7 @@ def build_component_scope(
         include_undated=include_undated,
         progress_checks=schedule.get("progressChecks"),
         posters=schedule.get("posters"),
+        ced=ced,
     )
     return columns
 
@@ -844,21 +848,22 @@ def _push_grades(
     return pushed, skipped, kept
 
 
-def _title_for_key(key: str) -> str:
+def _title_for_key(key: str, ced: bool = False) -> str:
     """The Schoology column title for a grade-target key the scope does not list."""
     prefix, _, rest = str(key).partition(":")
     if prefix == "FA" and rest:
-        return components.fa_title(rest)
+        return components.fa_title(rest, ced)
     if prefix == "QUIZ" and rest:
-        return components.quiz_title(rest)
+        return components.quiz_title(rest, ced)
     if prefix == "BL" and rest:
-        return components.bl_title(rest)
+        return components.bl_title(rest, ced)
     if prefix == "PC" and rest:
-        return components.pc_title(rest.lstrip("Uu"))
+        return components.pc_title(rest.lstrip("Uu"), ced)
     return str(key)
 
 
-def ahead_waiting_columns(deferred: dict, items_by_key: dict, column_exists) -> list[dict]:
+def ahead_waiting_columns(deferred: dict, items_by_key: dict, column_exists,
+                          ced: bool = False) -> list[dict]:
     """EFFORT_VISIBILITY_SPEC §5: scores recorded AHEAD of their column.
 
     deferred:      {(student_id, key): value} grade targets held back because their
@@ -877,7 +882,7 @@ def ahead_waiting_columns(deferred: dict, items_by_key: dict, column_exists) -> 
     out = []
     for key, count in counts.items():
         item = items_by_key.get(key) or {}
-        title = item.get("title") or _title_for_key(key)
+        title = item.get("title") or _title_for_key(key, ced)
         if column_exists(title):
             continue
         out.append({"key": key, "title": title, "due_date": item.get("due_date"), "count": count})
@@ -892,6 +897,67 @@ def ahead_waiting_line(entries: list) -> str:
     return "Ahead scores waiting for a column: " + ", ".join(
         f"{e['title']} ({e['count']})" for e in entries
     )
+
+
+RENAME_TOOL = "python tools/schoology_rename_columns.py"
+
+
+def rename_gate(section: str, ced: bool, rename_state: dict) -> tuple[str, str] | None:
+    """Can this sync run, given the CED rename manifest? None = yes; else (code, message).
+
+    Checked in BOTH title modes before anything touches Schoology. The manifest -- not
+    title presence -- is the migration state, because during the rename an OLD title can
+    legitimately be worn by a DIFFERENT, already-renamed column (old 6.1-2 becomes
+    "3.3 Follow-Along", which is old 3.3's old title): matching by title then would put
+    grades in the wrong column, or create duplicates.
+    """
+    for other, entry in sorted(rename_state.items()):
+        if (entry or {}).get("status") == "in-progress":
+            return ("rename-in-progress",
+                    f"The CED column rename is in progress for {other}. Finish it first: "
+                    f"{RENAME_TOOL} --apply --section {other} (it resumes where it stopped). "
+                    "No sync runs while a rename is half done.")
+    status = lib.rename_status(rename_state, section)
+    if not ced and status == "done":
+        return ("rename-done-flip-the-flag",
+                f"{section}'s Schoology columns already carry the CED titles, so the old titles "
+                "this run would use no longer exist. Finish the rename for every section "
+                f"({RENAME_TOOL} --apply), then set \"schoology_titles_ced\": true in "
+                "tools/schoology_sync_config.json and SCHOOLOGY_TITLES_CED=true in roster-server "
+                "grade-config.js.")
+    if ced and status != "done":
+        return ("rename-not-done",
+                f"CED titles are on, but {section}'s column rename is {status}. Rename its columns "
+                f"first: {RENAME_TOOL} --section {lib.rename_state_section(section)} (read the plan), "
+                f"then --apply. The sync must not run until the rename reports done.")
+    return None
+
+
+def unrenamed_old_titles(ops, cdp, ced_columns: dict | None = None) -> list[str]:
+    """Sanity check after a DONE rename: OLD titles still in the live gradebook.
+
+    Skips old titles that are also some column's CED title ("3.3 Follow-Along" is old
+    3.3's old title AND renamed 6.1-2's new title): presence of those says nothing.
+    Read-only. Requires the gradebook page loaded. Empty = consistent.
+    """
+    columns = ced_columns if ced_columns is not None else lib.load_ced_columns()
+    real = [e for e in columns.values() if e.get("schoologyColumn")]
+    ced_titles = {e["ced"] for e in real}
+    found = []
+    for entry in real:
+        if entry["old"] == entry["ced"] or entry["old"] in ced_titles:
+            continue
+        if ops.find_assignment_id_by_title(cdp, entry["old"]) is not None:
+            found.append(entry["old"])
+    return found
+
+
+def _aborted(section: str, course_id: str, dry_run: bool, code: str, msg: str) -> dict:
+    print(f"[ABORT] {msg}")
+    summary = {"section": section, "course_id": course_id, "dry_run": dry_run,
+               "aborted": code, "errors": [msg]}
+    print(json.dumps(summary, indent=2))
+    return summary
 
 
 def _lookup_assignment_id(section: str, lesson_key: str, state: StateStore) -> str | None:
@@ -921,6 +987,8 @@ def sync_section(
     comments: bool = False,
     class_doc: dict | None = None,
     uid_map: dict | None = None,
+    ced: bool | None = None,
+    rename_state: dict | None = None,
 ) -> dict:
     """Orchestrate one full sync for a single section.
 
@@ -937,10 +1005,20 @@ def sync_section(
     ops:           schoology_ops module (or fake); if None, imported lazily
     schedule_path: override for testing
     limit:         cap scope to first N items (for smoke-testing)
+    ced:           column titles: None = SCHOOLOGY_TITLES_CED from
+                   tools/schoology_sync_config.json; False = old; True = CED-2026.
+    rename_state:  the CED rename manifest (None = tools/.schoology-rename-state.json).
 
-    Returns summary dict.
+    Returns summary dict (with 'aborted' set when the rename gate refuses the run).
     """
     errors = []
+    if ced is None:
+        ced = lib.schoology_titles_ced()
+    if rename_state is None:
+        rename_state = lib.load_rename_state()
+    blocked = rename_gate(section, ced, rename_state)
+    if blocked:
+        return _aborted(section, course_id, dry_run, *blocked)
     comment_texts = {}
     if comments:
         from schoology_components import component_comments_from_class_doc
@@ -962,9 +1040,10 @@ def sync_section(
             quiz_topics=quiz_topics,
             blooket_topics=blooket_topics,
             include_undated=bool(force_mp_date),
+            ced=ced,
         )
     else:
-        scope_items = build_scope(schedule, section)
+        scope_items = build_scope(schedule, section, ced=ced)
     # The full (not date-filtered) scope: titles/dates for the ahead-scores summary (§5).
     all_items_by_key = {item["key"]: item for item in scope_items}
     if through_date is not None and not force_mp_date:
@@ -976,7 +1055,8 @@ def sync_section(
 
     scope_keys = [item["key"] for item in scope_items]
     print(f"\n[sync_section] section={section} course={course_id} "
-          f"scope_items={len(scope_items)} dry_run={dry_run}")
+          f"scope_items={len(scope_items)} dry_run={dry_run} "
+          f"titles={'CED-2026' if ced else 'old'}")
 
     # -- lazy-import live ops (allows test injection) -----------------------
     if ops is None:
@@ -995,6 +1075,19 @@ def sync_section(
             "Please sign into Schoology in the Edge window, then re-run."
         )
         sys.exit(1)
+
+    # -- CED titles: sanity check the gradebook against the DONE manifest ----
+    # (rename_gate above is the real gate; this only catches a gradebook that
+    # contradicts it, e.g. an old-title column created by hand after the rename.)
+    if ced:
+        leftovers = unrenamed_old_titles(ops, cdp)
+        if leftovers:
+            msg = (f"The rename manifest says {section} is done, but {len(leftovers)} column(s) "
+                   f"still carry an OLD title ({', '.join(leftovers[:5])}"
+                   f"{' ...' if len(leftovers) > 5 else ''}). Run {RENAME_TOOL} --section "
+                   f"{lib.rename_state_section(section)} to see the contradiction; rename or delete "
+                   "those columns before the next sync.")
+            return _aborted(section, course_id, dry_run, "rename-incomplete", msg)
 
     # -- read live data ----------------------------------------------------
     print("[2/5] Reading live Schoology data ...")
@@ -1083,6 +1176,7 @@ def sync_section(
         ahead_waiting = ahead_waiting_columns(
             deferred_targets, all_items_by_key,
             lambda title: ops.find_assignment_id_by_title(cdp, title) is not None,
+            ced=ced,
         )
         line = ahead_waiting_line(ahead_waiting)
         if line:
@@ -1255,7 +1349,7 @@ def main(argv=None):
         print(f"[force-mp] section={section}: filing every assignment into the "
               f"marking period covering {force_mp_date} (summer mock -> MP4).")
 
-    sync_section(
+    summary = sync_section(
         section,
         course_id,
         dry_run=dry_run,
@@ -1269,6 +1363,10 @@ def main(argv=None):
         comments=args.comments,
         class_doc=class_doc,
     )
+    # A refused run must fail the daily job (daily_schoology_sync.ps1 checks the exit code),
+    # not pass silently while nothing syncs.
+    if summary.get("aborted"):
+        sys.exit(3)
 
 
 if __name__ == "__main__":

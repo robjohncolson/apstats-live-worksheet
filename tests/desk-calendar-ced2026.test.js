@@ -349,18 +349,20 @@ describe('progress and teacher bridge', () => {
     try {
       const lesson = win.d('3.1', '3.1 → 1.10 · Investigative Question & Data Collection', 3);
       win.showResourcePanel(lesson, 'Oct 1');
-      const header = win.document.getElementById('resource-header').textContent;
-      expect(header).toMatch(/^1\.10 · Investigative Question & Data Collection/);
-      expect(header).toContain('CED Unit 1');
+      // CED2026_SINGLE_SOURCE_SPEC.md §2: the header text is the CED label only, for everyone;
+      // the teacher's old-key bridge lives in a "stored as" hover title.
+      const headerEl = win.document.getElementById('resource-header');
+      const header = headerEl.textContent;
+      expect(header).toBe('1.10 · Investigative Question & Data Collection · Day 1');
       win.sTip({}, new win.Date(2026, 9, 1), lesson, 'Oct 1');
       const tooltip = win.tip.textContent;
       expect(tooltip).toContain('1.10 · Investigative Question & Data Collection');
       if (session.allowed) {
-        expect(header).toContain('(old 3.1: video "Unit 3 Lesson 1", worksheet u3_lesson1)');
-        expect(tooltip).toContain('(old 3.1)');
+        expect(headerEl.getAttribute('title')).toBe('stored as 3.1 (video "Unit 3 Lesson 1", worksheet u3_lesson1)');
+        expect(tooltip).toContain('(stored as 3.1)');
       } else {
-        expect(header).not.toMatch(/3\.1|u3_lesson1|Unit 3 Lesson 1/);
-        expect(tooltip).not.toMatch(/3\.1|\(old /);
+        expect(headerEl.hasAttribute('title')).toBe(false);
+        expect(tooltip).not.toMatch(/3\.1|\(old |stored as/);
       }
     } finally { win.close(); }
   });

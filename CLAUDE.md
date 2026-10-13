@@ -133,6 +133,16 @@ Three suites:
 
 Representative coverage: rubric structure + prompt building (`grading-prompts*.test.js`), grading workflow + appeals (`reflection-grader.test.js`), DOM/UI states (`ui-components.test.js`), aggregate drawer, schedules, Desk features (`desk-*.test.js`).
 
+## CED-2026 numbering: old keys are storage ids, never printed
+
+Contract: `CED2026_SINGLE_SOURCE_SPEC.md`. The old 9-unit key (`3.5`, `3.6-7`) stays the key for files, ledger items, `lesson_urls.topic`, Schoology history — but students only ever read the CED-2026 label (`1.13 · Experimental Design · Day 1`, column `1.13 Day 1 Follow-Along`).
+
+- **One crosswalk**: `2026-crosswalk.json` (`map` + `units`). Edit it, then `node scripts/sync-ced-crosswalk.mjs` — vendors it to `roster-server/data/`, `../curriculum_render/data/` and `../curriculum_render/railway-server/data/`, and regenerates `js/ced2026-crosswalk.js`.
+- **One helper**: `lib/ced-label.js` (browser globals `cedLabel`/`cedColumnTitle`/`retitleGradebook`/`cedUnitLabel` + `CedLabel`; Node via `lib/ced-label.mjs`). `js/ced2026-labels.js` and `roster-server/lib/ced-label.*` are byte-identical copies made by the sync script — never edit them.
+- Every human-facing string goes through the helper; old keys may appear only in `data-*`, ids, URLs and "stored as 3.5" hover titles. The "Schoology: <column>" tag uses the column's `schoologyTitle` (old titles until `SCHOOLOGY_TITLES_CED` in `roster-server/grade-config.js` flips on rename day).
+- Column title format is pinned to `data/ced-column-titles.json` (plain ASCII, never ", "; built by `scripts/build-ced-column-titles.mjs`).
+- **Guard**: `tests/ced-no-raw-keys.test.js` (renders tile header, Do Now, missing-work rows, coach, gradebook titles; crosswalk coverage; vendored-copy identity) + `lib/ced-label.test.js`.
+
 ## Config & External Services
 
 Worksheets and apps load config/client scripts from the **repo's own root** (all tracked):

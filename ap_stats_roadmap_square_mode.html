@@ -2953,10 +2953,10 @@
 <script src="js/ced2026-crosswalk.js"></script>
 <script src="js/ced2026-labels.js"></script>
 <script src="lib/qrcode.min.js"></script>
-<script src="canvas_engine.js?v=2026-10-12-zmq6"></script>
-<script src="sprite_sheet.js?v=2026-10-12-zmq6"></script>
-<script src="classroom-board.js?v=2026-10-12-zmq6"></script>
-<script src="pico-home.js?v=2026-10-12-zmq6"></script>
+<script src="canvas_engine.js?v=2026-10-13-h0r0"></script>
+<script src="sprite_sheet.js?v=2026-10-13-h0r0"></script>
+<script src="classroom-board.js?v=2026-10-13-h0r0"></script>
+<script src="pico-home.js?v=2026-10-13-h0r0"></script>
 <script src="ti84-plot.js"></script>
 <script src="activity-bridge.js"></script>
 <script src="activity-colorbox.js"></script>
@@ -8976,6 +8976,10 @@ function _phase2ReDeriveGrade() {
             ? GradeEngine.todayInTz((inputs.config && inputs.config.schoolTz) || 'America/New_York')
             : undefined;
           gradebook = GradeEngine.buildGradebook(g, { lessonSchedule: opts.lessonSchedule, eventSchedule: opts.eventSchedule, section: opts.section, todayStr: todayStr });
+          // Same CED titles as the server's /grade (roster-server/ced-titles.js).
+          if (gradebook && typeof retitleGradebook === 'function') {
+            retitleGradebook(gradebook, { schoologyTitlesCed: DESK_SCHOOLOGY_TITLES_CED });
+          }
         }
       } catch (_) {}
       return {
@@ -12090,9 +12094,11 @@ function showResourcePanel(inf, dateStr) {
     const topicIds = lookupTopic(inf.t);
     const ids = Array.isArray(topicIds) ? topicIds : (topicIds ? [topicIds] : []);
 
-    // The calendar keeps OLD identity keys; students read the CED label. Only a
-    // signed-in teacher outside student preview gets the video/worksheet bridge.
+    // The calendar keeps OLD identity keys; everyone reads the CED label. Only a
+    // signed-in teacher outside student preview gets the video/worksheet bridge, and only
+    // as a hover tooltip "stored as 3.5 …" (CED2026_SINGLE_SOURCE_SPEC.md §2).
     var _hdrEl = document.getElementById('resource-header');
+    _hdrEl.removeAttribute('title');
     var _ced = (typeof REGISTRY !== 'undefined' && REGISTRY.lessons && REGISTRY.lessons[inf.t]) ? REGISTRY.lessons[inf.t].ced2026 : null;
     var _m = /^(\d+)\.(\d+)$/.exec(inf.t);
     var _newLabels = typeof cYear === 'undefined' || cYear === 'SY26-27';
@@ -12108,9 +12114,8 @@ function showResourcePanel(inf, dateStr) {
     } else {
         inf.ced = inf.group ? groupLabel(inf) : cedLabel(inf.t);
         header = inf.ced.text;
-        if (inf.ced.unit) header += ' \u2014 CED Unit ' + inf.ced.unit;
         if (_m && cedTeacherBridgeAllowed()) {
-            header += ' (old ' + inf.t + ': video "Unit ' + _m[1] + ' Lesson ' + _m[2]
+            _hdrEl.title = 'stored as ' + inf.t + ' (video "Unit ' + _m[1] + ' Lesson ' + _m[2]
                 + '", worksheet u' + _m[1] + '_lesson' + _m[2] + ')';
         }
     }
@@ -16166,25 +16171,53 @@ function _pastDueCurrentWork() {
     var period = (typeof cP === 'string') ? cP : null;
     return _pastDueWork(lessons, period, _zeroTodayIso());
 }
-// The Schoology column title for a row (tools/schoology_components.py): Schoology keeps
-// the OLD keys, while the Desk shows the CED label.
+// Schoology still has the OLD column titles ("3.1 Blooket") until the teacher runs
+// tools/schoology_rename_columns.py --apply. Mirrors roster-server grade-config.js
+// SCHOOLOGY_TITLES_CED (pinned equal by tests/ced-no-raw-keys.test.js); the server's
+// column.schoologyTitle wins whenever /grade has loaded.
+var DESK_SCHOOLOGY_TITLES_CED = false;
+// The Schoology column title for a row (CED2026_SINGLE_SOURCE_SPEC.md §2): the column a
+// student will actually find in Schoology. Old style while DESK_SCHOOLOGY_TITLES_CED is false:
 //   quiz               → '<lessonKey> Quiz'             ('3.6 Quiz')
 //   worksheet / deck   → '<unit>.<worksheetKey> <Word>' ('3.6-7 Follow-Along', the worksheet GROUP)
 // unit / worksheetKey come from the row, else from the /grade lesson. Missing → null (no tag, never guess).
 function _zeroSchoologyTitle(w) {
-    if (w.kind === 'quiz') return w.lessonKey + ' Quiz';
-    var WORD = { worksheet: 'Follow-Along', blooket: 'Blooket' };
+    var PREFIX = { worksheet: 'FA', blooket: 'BL', quiz: 'QUIZ' };
+    var KIND = { worksheet: 'followalong', blooket: 'blooket', quiz: 'quiz' };
+    var WORD = { worksheet: 'Follow-Along', blooket: 'Blooket', quiz: 'Quiz' };
     if (!WORD[w.kind]) return null;
-    var unit = w.unit;
-    var wsKey = w.worksheetKey;
-    if (unit == null || !wsKey) {
-        var L = _zeroLessonByKey(w.lessonKey);
-        if (!L) return null;
-        unit = L.unit;
-        wsKey = L.worksheetKey;
+    var colKey = w.lessonKey;
+    if (w.kind !== 'quiz') {
+        var unit = w.unit;
+        var wsKey = w.worksheetKey;
+        if (unit == null || !wsKey) {
+            var L = _zeroLessonByKey(w.lessonKey);
+            if (!L) return null;
+            unit = L.unit;
+            wsKey = L.worksheetKey;
+        }
+        if (unit == null || unit === '' || !wsKey) return null;
+        colKey = unit + '.' + wsKey;
     }
-    if (unit == null || unit === '' || !wsKey) return null;
-    return unit + '.' + wsKey + ' ' + WORD[w.kind];
+    var served = (typeof _gradebookSchoologyTitle === 'function') ? _gradebookSchoologyTitle(PREFIX[w.kind] + ':' + colKey) : null;
+    if (served) return served;
+    var schoologyCed = (typeof DESK_SCHOOLOGY_TITLES_CED !== 'undefined') && DESK_SCHOOLOGY_TITLES_CED;
+    if (schoologyCed && typeof cedColumnTitle === 'function') return cedColumnTitle(KIND[w.kind], colKey);
+    return colKey + ' ' + WORD[w.kind];
+}
+// The server's schoologyTitle for a gradebook column key ('BL:3.1'), or null.
+function _gradebookSchoologyTitle(colKey) {
+    var gb = (typeof _gradeGradebookCache !== 'undefined') ? _gradeGradebookCache : null;
+    var quarters = gb && gb.quarters;
+    if (!quarters) return null;
+    for (var q in quarters) {
+        var cols = quarters[q] && quarters[q].columns;
+        if (!Array.isArray(cols)) continue;
+        for (var i = 0; i < cols.length; i++) {
+            if (cols[i] && cols[i].key === colKey && cols[i].schoologyTitle) return cols[i].schoologyTitle;
+        }
+    }
+    return null;
 }
 // The /grade lesson for a lesson key (null when the cache or the lesson is missing).
 function _zeroLessonByKey(lessonKey) {
@@ -27334,7 +27367,7 @@ function sTip(ev,dt,inf,ds){if(inf===NC||!inf)return;
             else{
                 inf.ced=inf.group?groupLabel(inf):cedLabel(inf.t);
                 label=inf.ced.text;
-                if(cedTeacherBridgeAllowed())label+=' (old '+inf.t+')';
+                if(cedTeacherBridgeAllowed())label+=' (stored as '+inf.t+')';
             }
         }
         h+=`<div class="tp">${_resourcePanelEsc(label)}</div>`;
@@ -27881,7 +27914,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-10-12-zmq6';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-10-13-h0r0';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

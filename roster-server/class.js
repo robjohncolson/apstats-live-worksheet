@@ -14,6 +14,7 @@ import { answerKeyMapOrNull, skillMapValidOrNull, blooketScore, stableLedgerSort
 import { computeGrade } from './grade.js';
 import { computeMastery } from './mastery.js';
 import { buildGradebook } from './gradebook-grid.js';
+import { cedRetitleGradebook } from './ced-titles.js';
 import { todayInTz, combineV3 } from './lesson-grade.js';
 import { requireTeacher } from './teacher-auth.js';
 import { issueLedgerReceipt, recordReceiptPersistFailure } from './receipts.js';
@@ -475,7 +476,7 @@ export function mountClass(app, {
         lastActivityAt,
         ...(query.includeSavedWork === '1' ? { savedWork: summarizeSavedWork(ledgerRows, error) } : {}),
         effort: computeEffort(ledgerRows),   // DOGE wallet: effort points → candy
-        gradebook: buildGradebook(computed, { lessonSchedule, eventSchedule, section, todayStr }),
+        gradebook: cedRetitleGradebook(buildGradebook(computed, { lessonSchedule, eventSchedule, section, todayStr })),
       };
     });
 

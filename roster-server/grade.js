@@ -549,10 +549,15 @@ export function mountGrade(app, {
   // legacy alias for presence when only one list is supplied.
   blooketLessons = null, blooketPresence = null, blooketRequired = null,
   blooketBonusTopics = null,
+  // CED-2026 column titles (lib/ced-label retitleGradebook), injected by server.js so this
+  // bundled module never imports the fs-backed helper. Absent → titles stay as built.
+  retitleGradebook = /** @type {((gradebook: any) => any) | null} */ (null),
 }) {
   const _presence = blooketPresence || blooketLessons || null;
   const _required = blooketRequired || null;
   const _bonus = blooketBonusTopics || null;
+  /** @param {any} gradebook */
+  const titled = (gradebook) => (retitleGradebook ? retitleGradebook(gradebook) : gradebook);
 
   // GET /grade
   //   Auth: roster token (Authorization: Bearer <t> OR ?token=).
@@ -644,10 +649,10 @@ export function mountGrade(app, {
       // total alongside the v3 total. Clients that don't know the field ignore it.
       // lessonSchedule + section + today stamp each column with `due` so date-gating
       // clients (teacher dashboard) can hide future, not-yet-started work.
-      gradebook: buildGradebook(
+      gradebook: titled(buildGradebook(
         { units, quarters, completion, lessons },
         { lessonSchedule, eventSchedule, section, todayStr: todayInTz((config && config.schoolTz) || 'America/New_York', undefined) }
-      ),
+      )),
     });
   });
 }
