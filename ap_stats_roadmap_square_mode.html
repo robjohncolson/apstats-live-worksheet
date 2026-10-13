@@ -2953,10 +2953,10 @@
 <script src="js/ced2026-crosswalk.js"></script>
 <script src="js/ced2026-labels.js"></script>
 <script src="lib/qrcode.min.js"></script>
-<script src="canvas_engine.js?v=2026-10-13-n56a"></script>
-<script src="sprite_sheet.js?v=2026-10-13-n56a"></script>
-<script src="classroom-board.js?v=2026-10-13-n56a"></script>
-<script src="pico-home.js?v=2026-10-13-n56a"></script>
+<script src="canvas_engine.js?v=2026-10-13-107g"></script>
+<script src="sprite_sheet.js?v=2026-10-13-107g"></script>
+<script src="classroom-board.js?v=2026-10-13-107g"></script>
+<script src="pico-home.js?v=2026-10-13-107g"></script>
 <script src="ti84-plot.js"></script>
 <script src="activity-bridge.js"></script>
 <script src="activity-colorbox.js"></script>
@@ -10460,12 +10460,12 @@ function cedTeacherBridgeAllowed() {
 // "your teacher shares the link in class" panel, so unlinked PCs never break.
 // A day with several assignments (Day 1 = MCQ Part B + Part C) lists them in `links`.
 var PC_LINKS = {
-    'U1-PCA': { url: 'https://apclassroom.collegeboard.org/33/assignments?quizId=21010399&type=', label: 'Unit 1 Progress Check — MCQ Part A' },
+    'U1-PCA': { url: 'https://apclassroom.collegeboard.org/33/assignments?quizId=21010399&type=', label: 'MCQ Part A' },
     'U1-PC1': { links: [
         { url: 'https://apclassroom.collegeboard.org/33/assessments/assignments/81595010', label: 'MCQ Part B (14 questions)' },
         { url: 'https://apclassroom.collegeboard.org/33/assessments/assignments/81595024', label: 'MCQ Part C (12 questions)' }
     ], label: 'Unit 1 Progress Check — Day 1' },
-    'U1-PC2': { url: 'https://apclassroom.collegeboard.org/33/assessments/assignments/81595036', label: 'Unit 1 Progress Check — FRQ' }
+    'U1-PC2': { url: 'https://apclassroom.collegeboard.org/33/assessments/assignments/81595036', label: 'FRQ (Day 2)' }
 };
 // Every assignment a PC tile opens, in order (one `url` or several `links`).
 function pcLinksFor(tileId) {
@@ -12035,7 +12035,7 @@ function _showProgressCheckPanel(inf, dateStr) {
         a.rel = 'noopener';
         a.className = 's7btn chicago';
         a.style.cssText = 'display:inline-block;padding:6px 10px;margin:0 6px 6px 0;text-decoration:none';
-        a.textContent = (links.length > 1 && link.label ? link.label + ' → ' : 'Open in AP Classroom →');
+        a.textContent = (link.label ? link.label + ' → ' : 'Open in AP Classroom →');
         body.appendChild(a);
     });
     var tip = document.createElement('p');
@@ -27941,7 +27941,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-10-13-n56a';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-10-13-107g';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

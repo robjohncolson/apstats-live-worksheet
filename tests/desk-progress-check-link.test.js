@@ -38,7 +38,10 @@ describe('Progress Check launch links',()=>{
    s.showResourcePanel(pc1,'Oct 13');const d=dom.window.document;
    const as=[...d.querySelectorAll('#resource-body a')];
    expect(as.map(a=>a.href)).toEqual(links.map(l=>l.url));
-   if(as.length>1)expect(as[0].textContent).toContain('Part B');
+   expect(as.map(a=>a.textContent)).toEqual(['MCQ Part B (14 questions) → ','MCQ Part C (12 questions) → ']);
+   const day2={t:'U1-PC2',n:'Unit 1 Progress Check (Day 2)',u:1,kind:'pc',admin:2};
+   s.showResourcePanel(day2,'Oct 15');
+   expect(d.querySelector('#resource-body a').textContent).toContain('FRQ');
    expect(s.pcLinksFor('U9-PC2')).toEqual([]);
    expect(s.pcLinksFor('U1-PCA')).toEqual([{url:s.PC_LINKS['U1-PCA'].url,label:s.PC_LINKS['U1-PCA'].label}]);
   }finally{dom.window.close();}
