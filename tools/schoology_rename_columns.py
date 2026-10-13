@@ -39,13 +39,13 @@ the course Materials list (schoology_ops.list_materials: the same live-verified 
 sync uses to file assignments into the "Assignments" folder), matched by exact title; a
 title that is not exactly one assignment there is refused, never guessed.
 
-UNVERIFIED AGAINST LIVE SCHOOLOGY (written 2026-10-12 without a browser):
-  The EDIT FORM URL. rename_assignment tries EDIT_URL_TEMPLATES in order and edits only a
-  form whose title field currently holds the expected OLD title, so a wrong URL fails closed
-  ("edit form not found") and --apply stops with the manifest still "in-progress" (the sync
-  stays blocked; nothing was renamed wrongly). The teacher runs --apply --only "<one old
-  title>" first; if the form is not found, stop and get the working URL added here --
-  do NOT rename by hand.
+EDIT FORM URL -- verified live 2026-10-13 on Athena: the assignment page's own "Edit" link is
+  /assignment/edit/{course}/{nid}/basic (form action = the same path, title field
+  input#edit-title name="title", submit input#edit-submit "Save Changes"). The two course-less
+  guesses from 2026-10-12 (/assignment/{nid}/edit, /assignment/edit/{nid}) render no form.
+  rename_assignment still edits only a form whose title field holds the expected OLD title, so
+  a wrong URL fails closed ("edit form not found") and --apply stops with the manifest
+  "in-progress" (the sync stays blocked; nothing is renamed wrongly). Do NOT rename by hand.
 
 ASCII only. LF line endings.
 """
@@ -73,11 +73,10 @@ SECTIONS = {
     "PeriodE": "8537033042",
 }
 
-# Tried in order; {base} = SCHOOLOGY_BASE, {nid} = the assignment NODE id (from Materials).
-# UNVERIFIED -- see the module docstring.
+# Tried in order; {base} = SCHOOLOGY_BASE, {course} = the course id, {nid} = the assignment
+# NODE id (from Materials). Verified live 2026-10-13 -- see the module docstring.
 EDIT_URL_TEMPLATES = (
-    "{base}/assignment/{nid}/edit",
-    "{base}/assignment/edit/{nid}",
+    "{base}/assignment/edit/{course}/{nid}/basic",
 )
 
 
@@ -281,10 +280,10 @@ def title_of_node(assignments: list[dict], nid: str) -> str | None:
     return None
 
 
-def _open_edit_form(ops, cdp, nid: str, old_title: str) -> str | None:
+def _open_edit_form(ops, cdp, course_id: str, nid: str, old_title: str) -> str | None:
     """Navigate to the assignment's edit form; return the URL used, or None (fail closed)."""
     for template in EDIT_URL_TEMPLATES:
-        url = template.format(base=ops.SCHOOLOGY_BASE, nid=nid)
+        url = template.format(base=ops.SCHOOLOGY_BASE, course=course_id, nid=nid)
         cdp.attach_url(url, wait_ms=3000)
         current = cdp.eval_js(
             "(function(){var el=document.querySelector('form input[name=\"title\"]');"
@@ -296,16 +295,16 @@ def _open_edit_form(ops, cdp, nid: str, old_title: str) -> str | None:
 
 
 def rename_assignment(ops, cdp, course_id: str, nid: str, old_title: str, new_title: str) -> dict:
-    """Rename one assignment (by NODE id). Edit-form URL UNVERIFIED against live Schoology.
+    """Rename one assignment (by NODE id) through its "basic" edit form.
 
     Edits ONLY a form whose title field currently holds old_title. Confirms afterwards by
     identity (the node's title in Materials is now new_title) AND in the gradebook.
     Returns {'ok': bool, 'error': str|None}.
     """
-    url = _open_edit_form(ops, cdp, nid, old_title)
+    url = _open_edit_form(ops, cdp, course_id, nid, old_title)
     if url is None:
         return {"ok": False, "error": f"edit form not found for assignment {nid} "
-                                      f"(tried {len(EDIT_URL_TEMPLATES)} URLs; unverified path)"}
+                                      f"(tried {len(EDIT_URL_TEMPLATES)} URLs)"}
 
     cdp.eval_js(
         "(function(){var el=document.querySelector('form input[name=\"title\"]');"

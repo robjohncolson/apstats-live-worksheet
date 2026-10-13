@@ -25,7 +25,7 @@ export const BONUS_MULTIPLIER = 1.5;
 // ("3.1 Blooket"). Flip to true the day tools/schoology_rename_columns.py --apply has run
 // (CED2026_SINGLE_SOURCE_SPEC.md §3). Display only: no grade reads it. Mirrored by the Desk's
 // DESK_SCHOOLOGY_TITLES_CED fallback (pinned equal by tests/ced-no-raw-keys.test.js).
-export const SCHOOLOGY_TITLES_CED = false;
+export const SCHOOLOGY_TITLES_CED = true;
 
 export const PHASE3_CONFIG = {
   // Banked bonus-sheet points are multiplied by this when read (class.js bankedBonus).

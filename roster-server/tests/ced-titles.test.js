@@ -17,27 +17,27 @@ const gradebook = () => ({ quarters: { Q1: { columns: buildGradebookColumns(grad
 const titles = (gb, field) => Object.fromEntries(gb.quarters.Q1.columns.map((c) => [c.key, c[field]]));
 
 describe('CED column titles on roster responses', () => {
-  it('ships with Schoology still on the old titles', () => {
-    expect(SCHOOLOGY_TITLES_CED).toBe(false);
+  it('Schoology columns carry the CED titles since rename day (2026-10-13, both sections)', () => {
+    expect(SCHOOLOGY_TITLES_CED).toBe(true);
   });
 
-  it('prints CED titles and keeps the old Schoology title beside them', () => {
+  it('prints CED titles, and the Schoology title now matches them', () => {
     const gb = cedRetitleGradebook(gradebook());
     expect(titles(gb, 'title')).toEqual({
       'FA:3.1': '1.10 Day 1 Follow-Along', 'QUIZ:3.1': '1.10 Day 1 Quiz', 'BL:3.1': '1.10 Day 1 Blooket',
       'FA:3.6-7': '1.13 Day 2 Follow-Along', 'QUIZ:3.6': '1.13 Day 2 Quiz', 'BL:3.6-7': '1.13 Day 2 Blooket',
       'PC:U1': 'Unit 1 Progress Check',
     });
+    expect(titles(gb, 'schoologyTitle')).toEqual(titles(gb, 'title'));
+  });
+
+  it('kept the old Schoology title beside the CED one before the rename ran', () => {
+    const gb = retitleGradebook(gradebook(), { schoologyTitlesCed: false });
     expect(titles(gb, 'schoologyTitle')).toEqual({
       'FA:3.1': '3.1 Follow-Along', 'QUIZ:3.1': '3.1 Quiz', 'BL:3.1': '3.1 Blooket',
       'FA:3.6-7': '3.6-7 Follow-Along', 'QUIZ:3.6': '3.6 Quiz', 'BL:3.6-7': '3.6-7 Blooket',
       'PC:U1': 'Unit 1 Progress Check',
     });
-  });
-
-  it('names the CED title as the Schoology title once the rename has run', () => {
-    const gb = retitleGradebook(gradebook(), { schoologyTitlesCed: true });
-    expect(titles(gb, 'schoologyTitle')).toEqual(titles(gb, 'title'));
   });
 
   it('titles class-snapshot assignments like the gradebook columns', () => {

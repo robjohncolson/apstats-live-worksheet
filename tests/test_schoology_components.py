@@ -391,6 +391,19 @@ class TestComponentComments(unittest.TestCase):
         out = sc.component_comments_from_class_doc(self.doc, today="2026-10-02")
         self.assertEqual(out["u1/QUIZ:1.2"], "")
 
+    def test_ced_titles_on_comments_name_the_lesson_the_way_the_column_does(self):
+        # Rename day 2026-10-13: columns are "1.10 Day 2 Quiz"; the comment must not say "3.2".
+        self.lesson.update({"unit": 3, "lessonKey": "3.2", "worksheetKey": "2", "quizTotal": 3})
+        out = sc.component_comments_from_class_doc(self.doc, today="2026-10-13", ced=True)
+        self.assertTrue(out["u1/QUIZ:3.2"].startswith("Not a permanent 0. Missing: 1.10 Day 2 quiz."))
+        self.assertIn("Missing: 1.10 Day 2 worksheet.", out["u1/FA:3.2"])
+        self.assertIn("Missing: 1.10 Day 2 flashcards", out["u1/BL:3.2"])
+        for text in out.values():
+            self.assertNotRegex(text, r"\b3\.2\b")
+        # ced=False keeps the old key (pre-rename gradebooks)
+        old = sc.component_comments_from_class_doc(self.doc, today="2026-10-13", ced=False)
+        self.assertTrue(any("Missing: 3.2 " in t for t in old.values()))
+
     def test_range_labels_get_comments(self):
         self.lesson.update({"lessonKey": "1.3-1.4", "worksheetKey": "3-4", "quizTotal": 3})
         out = sc.component_comments_from_class_doc(self.doc, today="2026-10-02")

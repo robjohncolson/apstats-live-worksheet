@@ -91,6 +91,13 @@ def _ced_title(column_key: str) -> str:
     return schoology_sync_lib.ced_column_title(column_key)
 
 
+# The lesson name inside a grade-cell comment ("Missing: 1.10 Day 2 quiz"): CED once the
+# Schoology titles are CED (config flag), the old key before. Students read these.
+def comment_label(label: str, ced: bool | None = None) -> str:
+    import schoology_sync_lib
+    return schoology_sync_lib.lesson_label_for_comment(label, ced)
+
+
 def fa_title(label: str, ced: bool = False) -> str:
     if ced:
         return _ced_title(fa_key(label))
@@ -423,11 +430,12 @@ def quiz_zero_due(lesson: dict, period, today: str | None) -> bool:
 
 
 def component_comments_from_class_doc(doc: dict, uid_map: dict | None = None,
-                                      today: str | None = None) -> dict:
+                                      today: str | None = None, ced: bool | None = None) -> dict:
     """Fixed messages for lagged zeros; empty strings for other emitted cells.
 
     Use the grade producer's first-emitted group rule, including UID precedence.
-    No student identity fields are interpolated into comment text.
+    No student identity fields are interpolated into comment text. The lesson is
+    named the way its Schoology column is (ced=None reads the config flag).
     """
     grades = component_grades_from_class_doc(doc, uid_map, today)
     out = dict.fromkeys(grades, "")
@@ -446,6 +454,8 @@ def component_comments_from_class_doc(doc: dict, uid_map: dict | None = None,
             # Only curriculum labels may enter a message, never arbitrary text.
             # Accepts 1.2, 1.3-4 and full combined ranges like 1.3-1.4 (Codex review 2026-09-29).
             valid_label = re.fullmatch(r"\d+\.\d+(?:-(?:\d+\.)?\d+)?", label)
+            # `label` stays the storage key (column lookups); `shown` is what the student reads.
+            shown = comment_label(label, ced) if valid_label else label
             due = zero_due(lesson, period_of(student), today)
             worksheet = lesson.get("lessonGradeNoQuiz")
             if worksheet is None:
@@ -459,24 +469,24 @@ def component_comments_from_class_doc(doc: dict, uid_map: dict | None = None,
                 if score is not None or not valid_label or grades.get(key) != 0:
                     continue
                 if kind == "FA":
-                    text = (f"Not a permanent 0. Missing: {label} worksheet. "
+                    text = (f"Not a permanent 0. Missing: {shown} worksheet. "
                             "Finish it on the Desk (it is listed first in My Ledger) "
                             "and this grade updates at the next sync.")
                 else:
-                    text = (f"Not a permanent 0. Missing: {label} flashcards "
+                    text = (f"Not a permanent 0. Missing: {shown} flashcards "
                             "(Desk \u2192 Study Break or the lesson's Blooket). "
                             "Finish it and this grade updates at the next sync.")
                 # Before quiz zeros start, the quiz cell stays blank, so mention it here.
                 if (lesson.get("quizTotal") or 0) > 0 and lesson.get("Q") is None \
                         and not quiz_zero_due(lesson, period_of(student), today):
-                    text += f" Your {label} quiz is also unfinished (it counts in the Desk grade)."
+                    text += f" Your {shown} quiz is also unfinished (it counts in the Desk grade)."
                 out[key] = text
             # The quiz column's own lagged zero (from QUIZ_ZEROS_FROM on).
             qkey = f"{uid}/{quiz_key(label)}" if label else None
             if (qkey and valid_label and qkey not in emitted and grades.get(qkey) == 0
                     and quiz_zero_due(lesson, period_of(student), today)):
                 emitted.add(qkey)
-                out[qkey] = (f"Not a permanent 0. Missing: {label} quiz. "
+                out[qkey] = (f"Not a permanent 0. Missing: {shown} quiz. "
                              "Take it on the Desk (it is listed first in My Ledger) "
                              "and this grade updates at the next sync.")
     return out

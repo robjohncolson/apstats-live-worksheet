@@ -209,6 +209,26 @@ def ced_column_title(column_key: str) -> str:
     return entry["ced"]
 
 
+def lesson_label_for_comment(lesson_key: str, ced: bool | None = None) -> str:
+    """The lesson name a grade-cell comment may print ('3.2' -> '1.10 Day 2' once the
+    Schoology titles are CED; the old key while they are not).
+
+    Derived from the CED title of the lesson's Follow-Along column (the kind suffix
+    stripped), so a comment and the column it sits in always agree. Falls back to
+    the old key when the lesson has no CED column (never raises: a comment is not a
+    column title, a stale label is better than no comment).
+    """
+    if ced is None:
+        ced = schoology_titles_ced()
+    label = str(lesson_key)
+    if not ced:
+        return label
+    entry = load_ced_columns().get(f"FA:{label}")
+    if entry is None:
+        return label
+    return re.sub(r"\s+Follow-Along$", "", entry["ced"])
+
+
 def column_key_for(kind: str, lesson_key: str) -> str:
     """The sync column key for (kind, key): ('blooket','3.1') -> 'BL:3.1'.
 

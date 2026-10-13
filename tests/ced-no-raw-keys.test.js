@@ -301,10 +301,10 @@ describe('gradebook column titles (roster-server gradebook-grid → ced-titles)'
     cells: {}, categoryAverages: {}, v3Total: 88.2, schoologyTotal: 86.4,
   } } });
 
-  it('every column title is CED; the old title survives only as schoologyTitle', () => {
+  it('every column title is CED; since rename day the Schoology title is the same CED title', () => {
     for (const col of gradebook().quarters.Q1.columns) {
       expectNoRawKeys(col.title, col.topicKeys, 'column ' + col.key);
-      expect(col.schoologyTitle, col.key).toBe(COLUMN_TITLES[col.key].old);
+      expect(col.schoologyTitle, col.key).toBe(COLUMN_TITLES[col.key][SCHOOLOGY_TITLES_CED ? 'ced' : 'old']);
     }
   });
 

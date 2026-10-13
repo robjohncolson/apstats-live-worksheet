@@ -62,9 +62,14 @@ class TestTitleSwitch(unittest.TestCase):
             f.write(payload)
         return path
 
-    def test_committed_config_is_off(self):
-        self.assertIs(_load(lib.SYNC_CONFIG_PATH)["schoology_titles_ced"], False)
-        self.assertFalse(lib.schoology_titles_ced(lib.SYNC_CONFIG_PATH))
+    def test_committed_config_is_on_since_rename_day(self):
+        # Both sections were renamed 2026-10-13 (34 columns); the python flag and the roster
+        # flag must agree, or the Desk's "Schoology: <column>" tag names a column that is gone.
+        self.assertIs(_load(lib.SYNC_CONFIG_PATH)["schoology_titles_ced"], True)
+        self.assertTrue(lib.schoology_titles_ced(lib.SYNC_CONFIG_PATH))
+        grade_config = os.path.join(os.path.dirname(TESTS_DIR), "roster-server", "grade-config.js")
+        with open(grade_config, encoding="utf-8") as f:
+            self.assertIn("export const SCHOOLOGY_TITLES_CED = true;", f.read())
 
     def test_missing_config_is_off(self):
         self.assertFalse(lib.schoology_titles_ced(os.path.join(TESTS_DIR, "no-such-config.json")))

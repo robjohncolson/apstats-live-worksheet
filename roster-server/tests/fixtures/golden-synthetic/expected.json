@@ -254,7 +254,7 @@
                   "due": true,
                   "key": "FA:2.1",
                   "kind": "followalong",
-                  "schoologyTitle": "2.1 Follow-Along",
+                  "schoologyTitle": "2.1 Day 1 Follow-Along",
                   "title": "2.1 Day 1 Follow-Along",
                   "topicKeys": [
                     "2.1"
@@ -266,7 +266,7 @@
                   "due": true,
                   "key": "QUIZ:2.1",
                   "kind": "quiz",
-                  "schoologyTitle": "2.1 Quiz",
+                  "schoologyTitle": "2.1 Day 1 Quiz",
                   "title": "2.1 Day 1 Quiz",
                   "topicKeys": [
                     "2.1"
@@ -279,7 +279,7 @@
                   "due": true,
                   "key": "BL:2.1",
                   "kind": "blooket",
-                  "schoologyTitle": "2.1 Blooket",
+                  "schoologyTitle": "2.1 Day 1 Blooket",
                   "title": "2.1 Day 1 Blooket",
                   "topicKeys": [
                     "2.1"
@@ -301,7 +301,7 @@
                   "due": false,
                   "key": "FA:3.1",
                   "kind": "followalong",
-                  "schoologyTitle": "3.1 Follow-Along",
+                  "schoologyTitle": "1.10 Day 1 Follow-Along",
                   "title": "1.10 Day 1 Follow-Along",
                   "topicKeys": [
                     "3.1"
@@ -313,7 +313,7 @@
                   "due": false,
                   "key": "QUIZ:3.1",
                   "kind": "quiz",
-                  "schoologyTitle": "3.1 Quiz",
+                  "schoologyTitle": "1.10 Day 1 Quiz",
                   "title": "1.10 Day 1 Quiz",
                   "topicKeys": [
                     "3.1"
@@ -326,7 +326,7 @@
                   "due": false,
                   "key": "BL:3.1",
                   "kind": "blooket",
-                  "schoologyTitle": "3.1 Blooket",
+                  "schoologyTitle": "1.10 Day 1 Blooket",
                   "title": "1.10 Day 1 Blooket",
                   "topicKeys": [
                     "3.1"
@@ -1131,7 +1131,7 @@
                   "due": false,
                   "key": "FA:2.1",
                   "kind": "followalong",
-                  "schoologyTitle": "2.1 Follow-Along",
+                  "schoologyTitle": "2.1 Day 1 Follow-Along",
                   "title": "2.1 Day 1 Follow-Along",
                   "topicKeys": [
                     "2.1"
@@ -1143,7 +1143,7 @@
                   "due": false,
                   "key": "QUIZ:2.1",
                   "kind": "quiz",
-                  "schoologyTitle": "2.1 Quiz",
+                  "schoologyTitle": "2.1 Day 1 Quiz",
                   "title": "2.1 Day 1 Quiz",
                   "topicKeys": [
                     "2.1"
@@ -1156,7 +1156,7 @@
                   "due": false,
                   "key": "BL:2.1",
                   "kind": "blooket",
-                  "schoologyTitle": "2.1 Blooket",
+                  "schoologyTitle": "2.1 Day 1 Blooket",
                   "title": "2.1 Day 1 Blooket",
                   "topicKeys": [
                     "2.1"
@@ -1178,7 +1178,7 @@
                   "due": false,
                   "key": "FA:3.1",
                   "kind": "followalong",
-                  "schoologyTitle": "3.1 Follow-Along",
+                  "schoologyTitle": "1.10 Day 1 Follow-Along",
                   "title": "1.10 Day 1 Follow-Along",
                   "topicKeys": [
                     "3.1"
@@ -1190,7 +1190,7 @@
                   "due": false,
                   "key": "QUIZ:3.1",
                   "kind": "quiz",
-                  "schoologyTitle": "3.1 Quiz",
+                  "schoologyTitle": "1.10 Day 1 Quiz",
                   "title": "1.10 Day 1 Quiz",
                   "topicKeys": [
                     "3.1"
@@ -1203,7 +1203,7 @@
                   "due": false,
                   "key": "BL:3.1",
                   "kind": "blooket",
-                  "schoologyTitle": "3.1 Blooket",
+                  "schoologyTitle": "1.10 Day 1 Blooket",
                   "title": "1.10 Day 1 Blooket",
                   "topicKeys": [
                     "3.1"
@@ -1980,7 +1980,7 @@
                   "due": false,
                   "key": "FA:2.1",
                   "kind": "followalong",
-                  "schoologyTitle": "2.1 Follow-Along",
+                  "schoologyTitle": "2.1 Day 1 Follow-Along",
                   "title": "2.1 Day 1 Follow-Along",
                   "topicKeys": [
                     "2.1"
@@ -1992,7 +1992,7 @@
                   "due": false,
                   "key": "QUIZ:2.1",
                   "kind": "quiz",
-                  "schoologyTitle": "2.1 Quiz",
+                  "schoologyTitle": "2.1 Day 1 Quiz",
                   "title": "2.1 Day 1 Quiz",
                   "topicKeys": [
                     "2.1"
@@ -2005,7 +2005,7 @@
                   "due": false,
                   "key": "BL:2.1",
                   "kind": "blooket",
-                  "schoologyTitle": "2.1 Blooket",
+                  "schoologyTitle": "2.1 Day 1 Blooket",
                   "title": "2.1 Day 1 Blooket",
                   "topicKeys": [
                     "2.1"
@@ -2027,7 +2027,7 @@
                   "due": false,
                   "key": "FA:3.1",
                   "kind": "followalong",
-                  "schoologyTitle": "3.1 Follow-Along",
+                  "schoologyTitle": "1.10 Day 1 Follow-Along",
                   "title": "1.10 Day 1 Follow-Along",
                   "topicKeys": [
                     "3.1"
@@ -2039,7 +2039,7 @@
                   "due": false,
                   "key": "QUIZ:3.1",
                   "kind": "quiz",
-                  "schoologyTitle": "3.1 Quiz",
+                  "schoologyTitle": "1.10 Day 1 Quiz",
                   "title": "1.10 Day 1 Quiz",
                   "topicKeys": [
                     "3.1"
@@ -2052,7 +2052,7 @@
                   "due": false,
                   "key": "BL:3.1",
                   "kind": "blooket",
-                  "schoologyTitle": "3.1 Blooket",
+                  "schoologyTitle": "1.10 Day 1 Blooket",
                   "title": "1.10 Day 1 Blooket",
                   "topicKeys": [
                     "3.1"
@@ -2814,7 +2814,7 @@
                   "due": false,
                   "key": "FA:2.1",
                   "kind": "followalong",
-                  "schoologyTitle": "2.1 Follow-Along",
+                  "schoologyTitle": "2.1 Day 1 Follow-Along",
                   "title": "2.1 Day 1 Follow-Along",
                   "topicKeys": [
                     "2.1"
@@ -2826,7 +2826,7 @@
                   "due": false,
                   "key": "QUIZ:2.1",
                   "kind": "quiz",
-                  "schoologyTitle": "2.1 Quiz",
+                  "schoologyTitle": "2.1 Day 1 Quiz",
                   "title": "2.1 Day 1 Quiz",
                   "topicKeys": [
                     "2.1"
@@ -2839,7 +2839,7 @@
                   "due": false,
                   "key": "BL:2.1",
                   "kind": "blooket",
-                  "schoologyTitle": "2.1 Blooket",
+                  "schoologyTitle": "2.1 Day 1 Blooket",
                   "title": "2.1 Day 1 Blooket",
                   "topicKeys": [
                     "2.1"
@@ -2861,7 +2861,7 @@
                   "due": false,
                   "key": "FA:3.1",
                   "kind": "followalong",
-                  "schoologyTitle": "3.1 Follow-Along",
+                  "schoologyTitle": "1.10 Day 1 Follow-Along",
                   "title": "1.10 Day 1 Follow-Along",
                   "topicKeys": [
                     "3.1"
@@ -2873,7 +2873,7 @@
                   "due": false,
                   "key": "QUIZ:3.1",
                   "kind": "quiz",
-                  "schoologyTitle": "3.1 Quiz",
+                  "schoologyTitle": "1.10 Day 1 Quiz",
                   "title": "1.10 Day 1 Quiz",
                   "topicKeys": [
                     "3.1"
@@ -2886,7 +2886,7 @@
                   "due": false,
                   "key": "BL:3.1",
                   "kind": "blooket",
-                  "schoologyTitle": "3.1 Blooket",
+                  "schoologyTitle": "1.10 Day 1 Blooket",
                   "title": "1.10 Day 1 Blooket",
                   "topicKeys": [
                     "3.1"
@@ -3657,7 +3657,7 @@
                   "due": true,
                   "key": "FA:2.1",
                   "kind": "followalong",
-                  "schoologyTitle": "2.1 Follow-Along",
+                  "schoologyTitle": "2.1 Day 1 Follow-Along",
                   "title": "2.1 Day 1 Follow-Along",
                   "topicKeys": [
                     "2.1"
@@ -3669,7 +3669,7 @@
                   "due": true,
                   "key": "QUIZ:2.1",
                   "kind": "quiz",
-                  "schoologyTitle": "2.1 Quiz",
+                  "schoologyTitle": "2.1 Day 1 Quiz",
                   "title": "2.1 Day 1 Quiz",
                   "topicKeys": [
                     "2.1"
@@ -3682,7 +3682,7 @@
                   "due": true,
                   "key": "BL:2.1",
                   "kind": "blooket",
-                  "schoologyTitle": "2.1 Blooket",
+                  "schoologyTitle": "2.1 Day 1 Blooket",
                   "title": "2.1 Day 1 Blooket",
                   "topicKeys": [
                     "2.1"
@@ -3704,7 +3704,7 @@
                   "due": false,
                   "key": "FA:3.1",
                   "kind": "followalong",
-                  "schoologyTitle": "3.1 Follow-Along",
+                  "schoologyTitle": "1.10 Day 1 Follow-Along",
                   "title": "1.10 Day 1 Follow-Along",
                   "topicKeys": [
                     "3.1"
@@ -3716,7 +3716,7 @@
                   "due": false,
                   "key": "QUIZ:3.1",
                   "kind": "quiz",
-                  "schoologyTitle": "3.1 Quiz",
+                  "schoologyTitle": "1.10 Day 1 Quiz",
                   "title": "1.10 Day 1 Quiz",
                   "topicKeys": [
                     "3.1"
@@ -3729,7 +3729,7 @@
                   "due": false,
                   "key": "BL:3.1",
                   "kind": "blooket",
-                  "schoologyTitle": "3.1 Blooket",
+                  "schoologyTitle": "1.10 Day 1 Blooket",
                   "title": "1.10 Day 1 Blooket",
                   "topicKeys": [
                     "3.1"
@@ -4459,7 +4459,7 @@
                   "due": true,
                   "key": "FA:2.1",
                   "kind": "followalong",
-                  "schoologyTitle": "2.1 Follow-Along",
+                  "schoologyTitle": "2.1 Day 1 Follow-Along",
                   "title": "2.1 Day 1 Follow-Along",
                   "topicKeys": [
                     "2.1"
@@ -4471,7 +4471,7 @@
                   "due": true,
                   "key": "QUIZ:2.1",
                   "kind": "quiz",
-                  "schoologyTitle": "2.1 Quiz",
+                  "schoologyTitle": "2.1 Day 1 Quiz",
                   "title": "2.1 Day 1 Quiz",
                   "topicKeys": [
                     "2.1"
@@ -4484,7 +4484,7 @@
                   "due": true,
                   "key": "BL:2.1",
                   "kind": "blooket",
-                  "schoologyTitle": "2.1 Blooket",
+                  "schoologyTitle": "2.1 Day 1 Blooket",
                   "title": "2.1 Day 1 Blooket",
                   "topicKeys": [
                     "2.1"
@@ -4506,7 +4506,7 @@
                   "due": false,
                   "key": "FA:3.1",
                   "kind": "followalong",
-                  "schoologyTitle": "3.1 Follow-Along",
+                  "schoologyTitle": "1.10 Day 1 Follow-Along",
                   "title": "1.10 Day 1 Follow-Along",
                   "topicKeys": [
                     "3.1"
@@ -4518,7 +4518,7 @@
                   "due": false,
                   "key": "QUIZ:3.1",
                   "kind": "quiz",
-                  "schoologyTitle": "3.1 Quiz",
+                  "schoologyTitle": "1.10 Day 1 Quiz",
                   "title": "1.10 Day 1 Quiz",
                   "topicKeys": [
                     "3.1"
@@ -4531,7 +4531,7 @@
                   "due": false,
                   "key": "BL:3.1",
                   "kind": "blooket",
-                  "schoologyTitle": "3.1 Blooket",
+                  "schoologyTitle": "1.10 Day 1 Blooket",
                   "title": "1.10 Day 1 Blooket",
                   "topicKeys": [
                     "3.1"
@@ -5240,7 +5240,7 @@
                   "due": false,
                   "key": "FA:2.1",
                   "kind": "followalong",
-                  "schoologyTitle": "2.1 Follow-Along",
+                  "schoologyTitle": "2.1 Day 1 Follow-Along",
                   "title": "2.1 Day 1 Follow-Along",
                   "topicKeys": [
                     "2.1"
@@ -5252,7 +5252,7 @@
                   "due": false,
                   "key": "QUIZ:2.1",
                   "kind": "quiz",
-                  "schoologyTitle": "2.1 Quiz",
+                  "schoologyTitle": "2.1 Day 1 Quiz",
                   "title": "2.1 Day 1 Quiz",
                   "topicKeys": [
                     "2.1"
@@ -5265,7 +5265,7 @@
                   "due": false,
                   "key": "BL:2.1",
                   "kind": "blooket",
-                  "schoologyTitle": "2.1 Blooket",
+                  "schoologyTitle": "2.1 Day 1 Blooket",
                   "title": "2.1 Day 1 Blooket",
                   "topicKeys": [
                     "2.1"
@@ -5287,7 +5287,7 @@
                   "due": false,
                   "key": "FA:3.1",
                   "kind": "followalong",
-                  "schoologyTitle": "3.1 Follow-Along",
+                  "schoologyTitle": "1.10 Day 1 Follow-Along",
                   "title": "1.10 Day 1 Follow-Along",
                   "topicKeys": [
                     "3.1"
@@ -5299,7 +5299,7 @@
                   "due": false,
                   "key": "QUIZ:3.1",
                   "kind": "quiz",
-                  "schoologyTitle": "3.1 Quiz",
+                  "schoologyTitle": "1.10 Day 1 Quiz",
                   "title": "1.10 Day 1 Quiz",
                   "topicKeys": [
                     "3.1"
@@ -5312,7 +5312,7 @@
                   "due": false,
                   "key": "BL:3.1",
                   "kind": "blooket",
-                  "schoologyTitle": "3.1 Blooket",
+                  "schoologyTitle": "1.10 Day 1 Blooket",
                   "title": "1.10 Day 1 Blooket",
                   "topicKeys": [
                     "3.1"
@@ -6038,7 +6038,7 @@
                   "due": false,
                   "key": "FA:2.1",
                   "kind": "followalong",
-                  "schoologyTitle": "2.1 Follow-Along",
+                  "schoologyTitle": "2.1 Day 1 Follow-Along",
                   "title": "2.1 Day 1 Follow-Along",
                   "topicKeys": [
                     "2.1"
@@ -6050,7 +6050,7 @@
                   "due": false,
                   "key": "QUIZ:2.1",
                   "kind": "quiz",
-                  "schoologyTitle": "2.1 Quiz",
+                  "schoologyTitle": "2.1 Day 1 Quiz",
                   "title": "2.1 Day 1 Quiz",
                   "topicKeys": [
                     "2.1"
@@ -6063,7 +6063,7 @@
                   "due": false,
                   "key": "BL:2.1",
                   "kind": "blooket",
-                  "schoologyTitle": "2.1 Blooket",
+                  "schoologyTitle": "2.1 Day 1 Blooket",
                   "title": "2.1 Day 1 Blooket",
                   "topicKeys": [
                     "2.1"
@@ -6085,7 +6085,7 @@
                   "due": false,
                   "key": "FA:3.1",
                   "kind": "followalong",
-                  "schoologyTitle": "3.1 Follow-Along",
+                  "schoologyTitle": "1.10 Day 1 Follow-Along",
                   "title": "1.10 Day 1 Follow-Along",
                   "topicKeys": [
                     "3.1"
@@ -6097,7 +6097,7 @@
                   "due": false,
                   "key": "QUIZ:3.1",
                   "kind": "quiz",
-                  "schoologyTitle": "3.1 Quiz",
+                  "schoologyTitle": "1.10 Day 1 Quiz",
                   "title": "1.10 Day 1 Quiz",
                   "topicKeys": [
                     "3.1"
@@ -6110,7 +6110,7 @@
                   "due": false,
                   "key": "BL:3.1",
                   "kind": "blooket",
-                  "schoologyTitle": "3.1 Blooket",
+                  "schoologyTitle": "1.10 Day 1 Blooket",
                   "title": "1.10 Day 1 Blooket",
                   "topicKeys": [
                     "3.1"
@@ -6842,7 +6842,7 @@
                   "due": true,
                   "key": "FA:2.1",
                   "kind": "followalong",
-                  "schoologyTitle": "2.1 Follow-Along",
+                  "schoologyTitle": "2.1 Day 1 Follow-Along",
                   "title": "2.1 Day 1 Follow-Along",
                   "topicKeys": [
                     "2.1"
@@ -6854,7 +6854,7 @@
                   "due": true,
                   "key": "QUIZ:2.1",
                   "kind": "quiz",
-                  "schoologyTitle": "2.1 Quiz",
+                  "schoologyTitle": "2.1 Day 1 Quiz",
                   "title": "2.1 Day 1 Quiz",
                   "topicKeys": [
                     "2.1"
@@ -6867,7 +6867,7 @@
                   "due": true,
                   "key": "BL:2.1",
                   "kind": "blooket",
-                  "schoologyTitle": "2.1 Blooket",
+                  "schoologyTitle": "2.1 Day 1 Blooket",
                   "title": "2.1 Day 1 Blooket",
                   "topicKeys": [
                     "2.1"
@@ -6889,7 +6889,7 @@
                   "due": false,
                   "key": "FA:3.1",
                   "kind": "followalong",
-                  "schoologyTitle": "3.1 Follow-Along",
+                  "schoologyTitle": "1.10 Day 1 Follow-Along",
                   "title": "1.10 Day 1 Follow-Along",
                   "topicKeys": [
                     "3.1"
@@ -6901,7 +6901,7 @@
                   "due": false,
                   "key": "QUIZ:3.1",
                   "kind": "quiz",
-                  "schoologyTitle": "3.1 Quiz",
+                  "schoologyTitle": "1.10 Day 1 Quiz",
                   "title": "1.10 Day 1 Quiz",
                   "topicKeys": [
                     "3.1"
@@ -6914,7 +6914,7 @@
                   "due": false,
                   "key": "BL:3.1",
                   "kind": "blooket",
-                  "schoologyTitle": "3.1 Blooket",
+                  "schoologyTitle": "1.10 Day 1 Blooket",
                   "title": "1.10 Day 1 Blooket",
                   "topicKeys": [
                     "3.1"
@@ -7644,7 +7644,7 @@
                   "due": false,
                   "key": "FA:2.1",
                   "kind": "followalong",
-                  "schoologyTitle": "2.1 Follow-Along",
+                  "schoologyTitle": "2.1 Day 1 Follow-Along",
                   "title": "2.1 Day 1 Follow-Along",
                   "topicKeys": [
                     "2.1"
@@ -7656,7 +7656,7 @@
                   "due": false,
                   "key": "QUIZ:2.1",
                   "kind": "quiz",
-                  "schoologyTitle": "2.1 Quiz",
+                  "schoologyTitle": "2.1 Day 1 Quiz",
                   "title": "2.1 Day 1 Quiz",
                   "topicKeys": [
                     "2.1"
@@ -7669,7 +7669,7 @@
                   "due": false,
                   "key": "BL:2.1",
                   "kind": "blooket",
-                  "schoologyTitle": "2.1 Blooket",
+                  "schoologyTitle": "2.1 Day 1 Blooket",
                   "title": "2.1 Day 1 Blooket",
                   "topicKeys": [
                     "2.1"
@@ -7691,7 +7691,7 @@
                   "due": false,
                   "key": "FA:3.1",
                   "kind": "followalong",
-                  "schoologyTitle": "3.1 Follow-Along",
+                  "schoologyTitle": "1.10 Day 1 Follow-Along",
                   "title": "1.10 Day 1 Follow-Along",
                   "topicKeys": [
                     "3.1"
@@ -7703,7 +7703,7 @@
                   "due": false,
                   "key": "QUIZ:3.1",
                   "kind": "quiz",
-                  "schoologyTitle": "3.1 Quiz",
+                  "schoologyTitle": "1.10 Day 1 Quiz",
                   "title": "1.10 Day 1 Quiz",
                   "topicKeys": [
                     "3.1"
@@ -7716,7 +7716,7 @@
                   "due": false,
                   "key": "BL:3.1",
                   "kind": "blooket",
-                  "schoologyTitle": "3.1 Blooket",
+                  "schoologyTitle": "1.10 Day 1 Blooket",
                   "title": "1.10 Day 1 Blooket",
                   "topicKeys": [
                     "3.1"
@@ -8431,7 +8431,7 @@
                   "due": false,
                   "key": "FA:2.1",
                   "kind": "followalong",
-                  "schoologyTitle": "2.1 Follow-Along",
+                  "schoologyTitle": "2.1 Day 1 Follow-Along",
                   "title": "2.1 Day 1 Follow-Along",
                   "topicKeys": [
                     "2.1"
@@ -8443,7 +8443,7 @@
                   "due": false,
                   "key": "QUIZ:2.1",
                   "kind": "quiz",
-                  "schoologyTitle": "2.1 Quiz",
+                  "schoologyTitle": "2.1 Day 1 Quiz",
                   "title": "2.1 Day 1 Quiz",
                   "topicKeys": [
                     "2.1"
@@ -8456,7 +8456,7 @@
                   "due": false,
                   "key": "BL:2.1",
                   "kind": "blooket",
-                  "schoologyTitle": "2.1 Blooket",
+                  "schoologyTitle": "2.1 Day 1 Blooket",
                   "title": "2.1 Day 1 Blooket",
                   "topicKeys": [
                     "2.1"
@@ -8478,7 +8478,7 @@
                   "due": false,
                   "key": "FA:3.1",
                   "kind": "followalong",
-                  "schoologyTitle": "3.1 Follow-Along",
+                  "schoologyTitle": "1.10 Day 1 Follow-Along",
                   "title": "1.10 Day 1 Follow-Along",
                   "topicKeys": [
                     "3.1"
@@ -8490,7 +8490,7 @@
                   "due": false,
                   "key": "QUIZ:3.1",
                   "kind": "quiz",
-                  "schoologyTitle": "3.1 Quiz",
+                  "schoologyTitle": "1.10 Day 1 Quiz",
                   "title": "1.10 Day 1 Quiz",
                   "topicKeys": [
                     "3.1"
@@ -8503,7 +8503,7 @@
                   "due": false,
                   "key": "BL:3.1",
                   "kind": "blooket",
-                  "schoologyTitle": "3.1 Blooket",
+                  "schoologyTitle": "1.10 Day 1 Blooket",
                   "title": "1.10 Day 1 Blooket",
                   "topicKeys": [
                     "3.1"
@@ -9223,7 +9223,7 @@
                   "due": false,
                   "key": "FA:2.1",
                   "kind": "followalong",
-                  "schoologyTitle": "2.1 Follow-Along",
+                  "schoologyTitle": "2.1 Day 1 Follow-Along",
                   "title": "2.1 Day 1 Follow-Along",
                   "topicKeys": [
                     "2.1"
@@ -9235,7 +9235,7 @@
                   "due": false,
                   "key": "QUIZ:2.1",
                   "kind": "quiz",
-                  "schoologyTitle": "2.1 Quiz",
+                  "schoologyTitle": "2.1 Day 1 Quiz",
                   "title": "2.1 Day 1 Quiz",
                   "topicKeys": [
                     "2.1"
@@ -9248,7 +9248,7 @@
                   "due": false,
                   "key": "BL:2.1",
                   "kind": "blooket",
-                  "schoologyTitle": "2.1 Blooket",
+                  "schoologyTitle": "2.1 Day 1 Blooket",
                   "title": "2.1 Day 1 Blooket",
                   "topicKeys": [
                     "2.1"
@@ -9270,7 +9270,7 @@
                   "due": false,
                   "key": "FA:3.1",
                   "kind": "followalong",
-                  "schoologyTitle": "3.1 Follow-Along",
+                  "schoologyTitle": "1.10 Day 1 Follow-Along",
                   "title": "1.10 Day 1 Follow-Along",
                   "topicKeys": [
                     "3.1"
@@ -9282,7 +9282,7 @@
                   "due": false,
                   "key": "QUIZ:3.1",
                   "kind": "quiz",
-                  "schoologyTitle": "3.1 Quiz",
+                  "schoologyTitle": "1.10 Day 1 Quiz",
                   "title": "1.10 Day 1 Quiz",
                   "topicKeys": [
                     "3.1"
@@ -9295,7 +9295,7 @@
                   "due": false,
                   "key": "BL:3.1",
                   "kind": "blooket",
-                  "schoologyTitle": "3.1 Blooket",
+                  "schoologyTitle": "1.10 Day 1 Blooket",
                   "title": "1.10 Day 1 Blooket",
                   "topicKeys": [
                     "3.1"
@@ -10020,7 +10020,7 @@
                   "due": true,
                   "key": "FA:2.1",
                   "kind": "followalong",
-                  "schoologyTitle": "2.1 Follow-Along",
+                  "schoologyTitle": "2.1 Day 1 Follow-Along",
                   "title": "2.1 Day 1 Follow-Along",
                   "topicKeys": [
                     "2.1"
@@ -10032,7 +10032,7 @@
                   "due": true,
                   "key": "QUIZ:2.1",
                   "kind": "quiz",
-                  "schoologyTitle": "2.1 Quiz",
+                  "schoologyTitle": "2.1 Day 1 Quiz",
                   "title": "2.1 Day 1 Quiz",
                   "topicKeys": [
                     "2.1"
@@ -10045,7 +10045,7 @@
                   "due": true,
                   "key": "BL:2.1",
                   "kind": "blooket",
-                  "schoologyTitle": "2.1 Blooket",
+                  "schoologyTitle": "2.1 Day 1 Blooket",
                   "title": "2.1 Day 1 Blooket",
                   "topicKeys": [
                     "2.1"
@@ -10067,7 +10067,7 @@
                   "due": false,
                   "key": "FA:3.1",
                   "kind": "followalong",
-                  "schoologyTitle": "3.1 Follow-Along",
+                  "schoologyTitle": "1.10 Day 1 Follow-Along",
                   "title": "1.10 Day 1 Follow-Along",
                   "topicKeys": [
                     "3.1"
@@ -10079,7 +10079,7 @@
                   "due": false,
                   "key": "QUIZ:3.1",
                   "kind": "quiz",
-                  "schoologyTitle": "3.1 Quiz",
+                  "schoologyTitle": "1.10 Day 1 Quiz",
                   "title": "1.10 Day 1 Quiz",
                   "topicKeys": [
                     "3.1"
@@ -10092,7 +10092,7 @@
                   "due": false,
                   "key": "BL:3.1",
                   "kind": "blooket",
-                  "schoologyTitle": "3.1 Blooket",
+                  "schoologyTitle": "1.10 Day 1 Blooket",
                   "title": "1.10 Day 1 Blooket",
                   "topicKeys": [
                     "3.1"
@@ -10831,7 +10831,7 @@
                   "due": false,
                   "key": "FA:2.1",
                   "kind": "followalong",
-                  "schoologyTitle": "2.1 Follow-Along",
+                  "schoologyTitle": "2.1 Day 1 Follow-Along",
                   "title": "2.1 Day 1 Follow-Along",
                   "topicKeys": [
                     "2.1"
@@ -10843,7 +10843,7 @@
                   "due": false,
                   "key": "QUIZ:2.1",
                   "kind": "quiz",
-                  "schoologyTitle": "2.1 Quiz",
+                  "schoologyTitle": "2.1 Day 1 Quiz",
                   "title": "2.1 Day 1 Quiz",
                   "topicKeys": [
                     "2.1"
@@ -10856,7 +10856,7 @@
                   "due": false,
                   "key": "BL:2.1",
                   "kind": "blooket",
-                  "schoologyTitle": "2.1 Blooket",
+                  "schoologyTitle": "2.1 Day 1 Blooket",
                   "title": "2.1 Day 1 Blooket",
                   "topicKeys": [
                     "2.1"
@@ -10878,7 +10878,7 @@
                   "due": false,
                   "key": "FA:3.1",
                   "kind": "followalong",
-                  "schoologyTitle": "3.1 Follow-Along",
+                  "schoologyTitle": "1.10 Day 1 Follow-Along",
                   "title": "1.10 Day 1 Follow-Along",
                   "topicKeys": [
                     "3.1"
@@ -10890,7 +10890,7 @@
                   "due": false,
                   "key": "QUIZ:3.1",
                   "kind": "quiz",
-                  "schoologyTitle": "3.1 Quiz",
+                  "schoologyTitle": "1.10 Day 1 Quiz",
                   "title": "1.10 Day 1 Quiz",
                   "topicKeys": [
                     "3.1"
@@ -10903,7 +10903,7 @@
                   "due": false,
                   "key": "BL:3.1",
                   "kind": "blooket",
-                  "schoologyTitle": "3.1 Blooket",
+                  "schoologyTitle": "1.10 Day 1 Blooket",
                   "title": "1.10 Day 1 Blooket",
                   "topicKeys": [
                     "3.1"
@@ -11644,7 +11644,7 @@
                   "due": false,
                   "key": "FA:2.1",
                   "kind": "followalong",
-                  "schoologyTitle": "2.1 Follow-Along",
+                  "schoologyTitle": "2.1 Day 1 Follow-Along",
                   "title": "2.1 Day 1 Follow-Along",
                   "topicKeys": [
                     "2.1"
@@ -11656,7 +11656,7 @@
                   "due": false,
                   "key": "QUIZ:2.1",
                   "kind": "quiz",
-                  "schoologyTitle": "2.1 Quiz",
+                  "schoologyTitle": "2.1 Day 1 Quiz",
                   "title": "2.1 Day 1 Quiz",
                   "topicKeys": [
                     "2.1"
@@ -11669,7 +11669,7 @@
                   "due": false,
                   "key": "BL:2.1",
                   "kind": "blooket",
-                  "schoologyTitle": "2.1 Blooket",
+                  "schoologyTitle": "2.1 Day 1 Blooket",
                   "title": "2.1 Day 1 Blooket",
                   "topicKeys": [
                     "2.1"
@@ -11691,7 +11691,7 @@
                   "due": false,
                   "key": "FA:3.1",
                   "kind": "followalong",
-                  "schoologyTitle": "3.1 Follow-Along",
+                  "schoologyTitle": "1.10 Day 1 Follow-Along",
                   "title": "1.10 Day 1 Follow-Along",
                   "topicKeys": [
                     "3.1"
@@ -11703,7 +11703,7 @@
                   "due": false,
                   "key": "QUIZ:3.1",
                   "kind": "quiz",
-                  "schoologyTitle": "3.1 Quiz",
+                  "schoologyTitle": "1.10 Day 1 Quiz",
                   "title": "1.10 Day 1 Quiz",
                   "topicKeys": [
                     "3.1"
@@ -11716,7 +11716,7 @@
                   "due": false,
                   "key": "BL:3.1",
                   "kind": "blooket",
-                  "schoologyTitle": "3.1 Blooket",
+                  "schoologyTitle": "1.10 Day 1 Blooket",
                   "title": "1.10 Day 1 Blooket",
                   "topicKeys": [
                     "3.1"
@@ -12460,7 +12460,7 @@
                   "due": true,
                   "key": "FA:2.1",
                   "kind": "followalong",
-                  "schoologyTitle": "2.1 Follow-Along",
+                  "schoologyTitle": "2.1 Day 1 Follow-Along",
                   "title": "2.1 Day 1 Follow-Along",
                   "topicKeys": [
                     "2.1"
@@ -12472,7 +12472,7 @@
                   "due": true,
                   "key": "QUIZ:2.1",
                   "kind": "quiz",
-                  "schoologyTitle": "2.1 Quiz",
+                  "schoologyTitle": "2.1 Day 1 Quiz",
                   "title": "2.1 Day 1 Quiz",
                   "topicKeys": [
                     "2.1"
@@ -12485,7 +12485,7 @@
                   "due": true,
                   "key": "BL:2.1",
                   "kind": "blooket",
-                  "schoologyTitle": "2.1 Blooket",
+                  "schoologyTitle": "2.1 Day 1 Blooket",
                   "title": "2.1 Day 1 Blooket",
                   "topicKeys": [
                     "2.1"
@@ -12507,7 +12507,7 @@
                   "due": false,
                   "key": "FA:3.1",
                   "kind": "followalong",
-                  "schoologyTitle": "3.1 Follow-Along",
+                  "schoologyTitle": "1.10 Day 1 Follow-Along",
                   "title": "1.10 Day 1 Follow-Along",
                   "topicKeys": [
                     "3.1"
@@ -12519,7 +12519,7 @@
                   "due": false,
                   "key": "QUIZ:3.1",
                   "kind": "quiz",
-                  "schoologyTitle": "3.1 Quiz",
+                  "schoologyTitle": "1.10 Day 1 Quiz",
                   "title": "1.10 Day 1 Quiz",
                   "topicKeys": [
                     "3.1"
@@ -12532,7 +12532,7 @@
                   "due": false,
                   "key": "BL:3.1",
                   "kind": "blooket",
-                  "schoologyTitle": "3.1 Blooket",
+                  "schoologyTitle": "1.10 Day 1 Blooket",
                   "title": "1.10 Day 1 Blooket",
                   "topicKeys": [
                     "3.1"
@@ -13372,7 +13372,7 @@
                 "due": true,
                 "key": "FA:2.1",
                 "kind": "followalong",
-                "schoologyTitle": "2.1 Follow-Along",
+                "schoologyTitle": "2.1 Day 1 Follow-Along",
                 "title": "2.1 Day 1 Follow-Along",
                 "topicKeys": [
                   "2.1"
@@ -13384,7 +13384,7 @@
                 "due": true,
                 "key": "QUIZ:2.1",
                 "kind": "quiz",
-                "schoologyTitle": "2.1 Quiz",
+                "schoologyTitle": "2.1 Day 1 Quiz",
                 "title": "2.1 Day 1 Quiz",
                 "topicKeys": [
                   "2.1"
@@ -13397,7 +13397,7 @@
                 "due": true,
                 "key": "BL:2.1",
                 "kind": "blooket",
-                "schoologyTitle": "2.1 Blooket",
+                "schoologyTitle": "2.1 Day 1 Blooket",
                 "title": "2.1 Day 1 Blooket",
                 "topicKeys": [
                   "2.1"
@@ -13419,7 +13419,7 @@
                 "due": false,
                 "key": "FA:3.1",
                 "kind": "followalong",
-                "schoologyTitle": "3.1 Follow-Along",
+                "schoologyTitle": "1.10 Day 1 Follow-Along",
                 "title": "1.10 Day 1 Follow-Along",
                 "topicKeys": [
                   "3.1"
@@ -13431,7 +13431,7 @@
                 "due": false,
                 "key": "QUIZ:3.1",
                 "kind": "quiz",
-                "schoologyTitle": "3.1 Quiz",
+                "schoologyTitle": "1.10 Day 1 Quiz",
                 "title": "1.10 Day 1 Quiz",
                 "topicKeys": [
                   "3.1"
@@ -13444,7 +13444,7 @@
                 "due": false,
                 "key": "BL:3.1",
                 "kind": "blooket",
-                "schoologyTitle": "3.1 Blooket",
+                "schoologyTitle": "1.10 Day 1 Blooket",
                 "title": "1.10 Day 1 Blooket",
                 "topicKeys": [
                   "3.1"
@@ -14289,7 +14289,7 @@
                 "due": false,
                 "key": "FA:2.1",
                 "kind": "followalong",
-                "schoologyTitle": "2.1 Follow-Along",
+                "schoologyTitle": "2.1 Day 1 Follow-Along",
                 "title": "2.1 Day 1 Follow-Along",
                 "topicKeys": [
                   "2.1"
@@ -14301,7 +14301,7 @@
                 "due": false,
                 "key": "QUIZ:2.1",
                 "kind": "quiz",
-                "schoologyTitle": "2.1 Quiz",
+                "schoologyTitle": "2.1 Day 1 Quiz",
                 "title": "2.1 Day 1 Quiz",
                 "topicKeys": [
                   "2.1"
@@ -14314,7 +14314,7 @@
                 "due": false,
                 "key": "BL:2.1",
                 "kind": "blooket",
-                "schoologyTitle": "2.1 Blooket",
+                "schoologyTitle": "2.1 Day 1 Blooket",
                 "title": "2.1 Day 1 Blooket",
                 "topicKeys": [
                   "2.1"
@@ -14336,7 +14336,7 @@
                 "due": false,
                 "key": "FA:3.1",
                 "kind": "followalong",
-                "schoologyTitle": "3.1 Follow-Along",
+                "schoologyTitle": "1.10 Day 1 Follow-Along",
                 "title": "1.10 Day 1 Follow-Along",
                 "topicKeys": [
                   "3.1"
@@ -14348,7 +14348,7 @@
                 "due": false,
                 "key": "QUIZ:3.1",
                 "kind": "quiz",
-                "schoologyTitle": "3.1 Quiz",
+                "schoologyTitle": "1.10 Day 1 Quiz",
                 "title": "1.10 Day 1 Quiz",
                 "topicKeys": [
                   "3.1"
@@ -14361,7 +14361,7 @@
                 "due": false,
                 "key": "BL:3.1",
                 "kind": "blooket",
-                "schoologyTitle": "3.1 Blooket",
+                "schoologyTitle": "1.10 Day 1 Blooket",
                 "title": "1.10 Day 1 Blooket",
                 "topicKeys": [
                   "3.1"
@@ -15178,7 +15178,7 @@
                 "due": false,
                 "key": "FA:2.1",
                 "kind": "followalong",
-                "schoologyTitle": "2.1 Follow-Along",
+                "schoologyTitle": "2.1 Day 1 Follow-Along",
                 "title": "2.1 Day 1 Follow-Along",
                 "topicKeys": [
                   "2.1"
@@ -15190,7 +15190,7 @@
                 "due": false,
                 "key": "QUIZ:2.1",
                 "kind": "quiz",
-                "schoologyTitle": "2.1 Quiz",
+                "schoologyTitle": "2.1 Day 1 Quiz",
                 "title": "2.1 Day 1 Quiz",
                 "topicKeys": [
                   "2.1"
@@ -15203,7 +15203,7 @@
                 "due": false,
                 "key": "BL:2.1",
                 "kind": "blooket",
-                "schoologyTitle": "2.1 Blooket",
+                "schoologyTitle": "2.1 Day 1 Blooket",
                 "title": "2.1 Day 1 Blooket",
                 "topicKeys": [
                   "2.1"
@@ -15225,7 +15225,7 @@
                 "due": false,
                 "key": "FA:3.1",
                 "kind": "followalong",
-                "schoologyTitle": "3.1 Follow-Along",
+                "schoologyTitle": "1.10 Day 1 Follow-Along",
                 "title": "1.10 Day 1 Follow-Along",
                 "topicKeys": [
                   "3.1"
@@ -15237,7 +15237,7 @@
                 "due": false,
                 "key": "QUIZ:3.1",
                 "kind": "quiz",
-                "schoologyTitle": "3.1 Quiz",
+                "schoologyTitle": "1.10 Day 1 Quiz",
                 "title": "1.10 Day 1 Quiz",
                 "topicKeys": [
                   "3.1"
@@ -15250,7 +15250,7 @@
                 "due": false,
                 "key": "BL:3.1",
                 "kind": "blooket",
-                "schoologyTitle": "3.1 Blooket",
+                "schoologyTitle": "1.10 Day 1 Blooket",
                 "title": "1.10 Day 1 Blooket",
                 "topicKeys": [
                   "3.1"
@@ -16052,7 +16052,7 @@
                 "due": false,
                 "key": "FA:2.1",
                 "kind": "followalong",
-                "schoologyTitle": "2.1 Follow-Along",
+                "schoologyTitle": "2.1 Day 1 Follow-Along",
                 "title": "2.1 Day 1 Follow-Along",
                 "topicKeys": [
                   "2.1"
@@ -16064,7 +16064,7 @@
                 "due": false,
                 "key": "QUIZ:2.1",
                 "kind": "quiz",
-                "schoologyTitle": "2.1 Quiz",
+                "schoologyTitle": "2.1 Day 1 Quiz",
                 "title": "2.1 Day 1 Quiz",
                 "topicKeys": [
                   "2.1"
@@ -16077,7 +16077,7 @@
                 "due": false,
                 "key": "BL:2.1",
                 "kind": "blooket",
-                "schoologyTitle": "2.1 Blooket",
+                "schoologyTitle": "2.1 Day 1 Blooket",
                 "title": "2.1 Day 1 Blooket",
                 "topicKeys": [
                   "2.1"
@@ -16099,7 +16099,7 @@
                 "due": false,
                 "key": "FA:3.1",
                 "kind": "followalong",
-                "schoologyTitle": "3.1 Follow-Along",
+                "schoologyTitle": "1.10 Day 1 Follow-Along",
                 "title": "1.10 Day 1 Follow-Along",
                 "topicKeys": [
                   "3.1"
@@ -16111,7 +16111,7 @@
                 "due": false,
                 "key": "QUIZ:3.1",
                 "kind": "quiz",
-                "schoologyTitle": "3.1 Quiz",
+                "schoologyTitle": "1.10 Day 1 Quiz",
                 "title": "1.10 Day 1 Quiz",
                 "topicKeys": [
                   "3.1"
@@ -16124,7 +16124,7 @@
                 "due": false,
                 "key": "BL:3.1",
                 "kind": "blooket",
-                "schoologyTitle": "3.1 Blooket",
+                "schoologyTitle": "1.10 Day 1 Blooket",
                 "title": "1.10 Day 1 Blooket",
                 "topicKeys": [
                   "3.1"
@@ -16935,7 +16935,7 @@
                 "due": true,
                 "key": "FA:2.1",
                 "kind": "followalong",
-                "schoologyTitle": "2.1 Follow-Along",
+                "schoologyTitle": "2.1 Day 1 Follow-Along",
                 "title": "2.1 Day 1 Follow-Along",
                 "topicKeys": [
                   "2.1"
@@ -16947,7 +16947,7 @@
                 "due": true,
                 "key": "QUIZ:2.1",
                 "kind": "quiz",
-                "schoologyTitle": "2.1 Quiz",
+                "schoologyTitle": "2.1 Day 1 Quiz",
                 "title": "2.1 Day 1 Quiz",
                 "topicKeys": [
                   "2.1"
@@ -16960,7 +16960,7 @@
                 "due": true,
                 "key": "BL:2.1",
                 "kind": "blooket",
-                "schoologyTitle": "2.1 Blooket",
+                "schoologyTitle": "2.1 Day 1 Blooket",
                 "title": "2.1 Day 1 Blooket",
                 "topicKeys": [
                   "2.1"
@@ -16982,7 +16982,7 @@
                 "due": false,
                 "key": "FA:3.1",
                 "kind": "followalong",
-                "schoologyTitle": "3.1 Follow-Along",
+                "schoologyTitle": "1.10 Day 1 Follow-Along",
                 "title": "1.10 Day 1 Follow-Along",
                 "topicKeys": [
                   "3.1"
@@ -16994,7 +16994,7 @@
                 "due": false,
                 "key": "QUIZ:3.1",
                 "kind": "quiz",
-                "schoologyTitle": "3.1 Quiz",
+                "schoologyTitle": "1.10 Day 1 Quiz",
                 "title": "1.10 Day 1 Quiz",
                 "topicKeys": [
                   "3.1"
@@ -17007,7 +17007,7 @@
                 "due": false,
                 "key": "BL:3.1",
                 "kind": "blooket",
-                "schoologyTitle": "3.1 Blooket",
+                "schoologyTitle": "1.10 Day 1 Blooket",
                 "title": "1.10 Day 1 Blooket",
                 "topicKeys": [
                   "3.1"
@@ -17781,7 +17781,7 @@
                 "due": true,
                 "key": "FA:2.1",
                 "kind": "followalong",
-                "schoologyTitle": "2.1 Follow-Along",
+                "schoologyTitle": "2.1 Day 1 Follow-Along",
                 "title": "2.1 Day 1 Follow-Along",
                 "topicKeys": [
                   "2.1"
@@ -17793,7 +17793,7 @@
                 "due": true,
                 "key": "QUIZ:2.1",
                 "kind": "quiz",
-                "schoologyTitle": "2.1 Quiz",
+                "schoologyTitle": "2.1 Day 1 Quiz",
                 "title": "2.1 Day 1 Quiz",
                 "topicKeys": [
                   "2.1"
@@ -17806,7 +17806,7 @@
                 "due": true,
                 "key": "BL:2.1",
                 "kind": "blooket",
-                "schoologyTitle": "2.1 Blooket",
+                "schoologyTitle": "2.1 Day 1 Blooket",
                 "title": "2.1 Day 1 Blooket",
                 "topicKeys": [
                   "2.1"
@@ -17828,7 +17828,7 @@
                 "due": false,
                 "key": "FA:3.1",
                 "kind": "followalong",
-                "schoologyTitle": "3.1 Follow-Along",
+                "schoologyTitle": "1.10 Day 1 Follow-Along",
                 "title": "1.10 Day 1 Follow-Along",
                 "topicKeys": [
                   "3.1"
@@ -17840,7 +17840,7 @@
                 "due": false,
                 "key": "QUIZ:3.1",
                 "kind": "quiz",
-                "schoologyTitle": "3.1 Quiz",
+                "schoologyTitle": "1.10 Day 1 Quiz",
                 "title": "1.10 Day 1 Quiz",
                 "topicKeys": [
                   "3.1"
@@ -17853,7 +17853,7 @@
                 "due": false,
                 "key": "BL:3.1",
                 "kind": "blooket",
-                "schoologyTitle": "3.1 Blooket",
+                "schoologyTitle": "1.10 Day 1 Blooket",
                 "title": "1.10 Day 1 Blooket",
                 "topicKeys": [
                   "3.1"
@@ -18606,7 +18606,7 @@
                 "due": false,
                 "key": "FA:2.1",
                 "kind": "followalong",
-                "schoologyTitle": "2.1 Follow-Along",
+                "schoologyTitle": "2.1 Day 1 Follow-Along",
                 "title": "2.1 Day 1 Follow-Along",
                 "topicKeys": [
                   "2.1"
@@ -18618,7 +18618,7 @@
                 "due": false,
                 "key": "QUIZ:2.1",
                 "kind": "quiz",
-                "schoologyTitle": "2.1 Quiz",
+                "schoologyTitle": "2.1 Day 1 Quiz",
                 "title": "2.1 Day 1 Quiz",
                 "topicKeys": [
                   "2.1"
@@ -18631,7 +18631,7 @@
                 "due": false,
                 "key": "BL:2.1",
                 "kind": "blooket",
-                "schoologyTitle": "2.1 Blooket",
+                "schoologyTitle": "2.1 Day 1 Blooket",
                 "title": "2.1 Day 1 Blooket",
                 "topicKeys": [
                   "2.1"
@@ -18653,7 +18653,7 @@
                 "due": false,
                 "key": "FA:3.1",
                 "kind": "followalong",
-                "schoologyTitle": "3.1 Follow-Along",
+                "schoologyTitle": "1.10 Day 1 Follow-Along",
                 "title": "1.10 Day 1 Follow-Along",
                 "topicKeys": [
                   "3.1"
@@ -18665,7 +18665,7 @@
                 "due": false,
                 "key": "QUIZ:3.1",
                 "kind": "quiz",
-                "schoologyTitle": "3.1 Quiz",
+                "schoologyTitle": "1.10 Day 1 Quiz",
                 "title": "1.10 Day 1 Quiz",
                 "topicKeys": [
                   "3.1"
@@ -18678,7 +18678,7 @@
                 "due": false,
                 "key": "BL:3.1",
                 "kind": "blooket",
-                "schoologyTitle": "3.1 Blooket",
+                "schoologyTitle": "1.10 Day 1 Blooket",
                 "title": "1.10 Day 1 Blooket",
                 "topicKeys": [
                   "3.1"
@@ -19448,7 +19448,7 @@
                 "due": false,
                 "key": "FA:2.1",
                 "kind": "followalong",
-                "schoologyTitle": "2.1 Follow-Along",
+                "schoologyTitle": "2.1 Day 1 Follow-Along",
                 "title": "2.1 Day 1 Follow-Along",
                 "topicKeys": [
                   "2.1"
@@ -19460,7 +19460,7 @@
                 "due": false,
                 "key": "QUIZ:2.1",
                 "kind": "quiz",
-                "schoologyTitle": "2.1 Quiz",
+                "schoologyTitle": "2.1 Day 1 Quiz",
                 "title": "2.1 Day 1 Quiz",
                 "topicKeys": [
                   "2.1"
@@ -19473,7 +19473,7 @@
                 "due": false,
                 "key": "BL:2.1",
                 "kind": "blooket",
-                "schoologyTitle": "2.1 Blooket",
+                "schoologyTitle": "2.1 Day 1 Blooket",
                 "title": "2.1 Day 1 Blooket",
                 "topicKeys": [
                   "2.1"
@@ -19495,7 +19495,7 @@
                 "due": false,
                 "key": "FA:3.1",
                 "kind": "followalong",
-                "schoologyTitle": "3.1 Follow-Along",
+                "schoologyTitle": "1.10 Day 1 Follow-Along",
                 "title": "1.10 Day 1 Follow-Along",
                 "topicKeys": [
                   "3.1"
@@ -19507,7 +19507,7 @@
                 "due": false,
                 "key": "QUIZ:3.1",
                 "kind": "quiz",
-                "schoologyTitle": "3.1 Quiz",
+                "schoologyTitle": "1.10 Day 1 Quiz",
                 "title": "1.10 Day 1 Quiz",
                 "topicKeys": [
                   "3.1"
@@ -19520,7 +19520,7 @@
                 "due": false,
                 "key": "BL:3.1",
                 "kind": "blooket",
-                "schoologyTitle": "3.1 Blooket",
+                "schoologyTitle": "1.10 Day 1 Blooket",
                 "title": "1.10 Day 1 Blooket",
                 "topicKeys": [
                   "3.1"
@@ -20296,7 +20296,7 @@
                 "due": true,
                 "key": "FA:2.1",
                 "kind": "followalong",
-                "schoologyTitle": "2.1 Follow-Along",
+                "schoologyTitle": "2.1 Day 1 Follow-Along",
                 "title": "2.1 Day 1 Follow-Along",
                 "topicKeys": [
                   "2.1"
@@ -20308,7 +20308,7 @@
                 "due": true,
                 "key": "QUIZ:2.1",
                 "kind": "quiz",
-                "schoologyTitle": "2.1 Quiz",
+                "schoologyTitle": "2.1 Day 1 Quiz",
                 "title": "2.1 Day 1 Quiz",
                 "topicKeys": [
                   "2.1"
@@ -20321,7 +20321,7 @@
                 "due": true,
                 "key": "BL:2.1",
                 "kind": "blooket",
-                "schoologyTitle": "2.1 Blooket",
+                "schoologyTitle": "2.1 Day 1 Blooket",
                 "title": "2.1 Day 1 Blooket",
                 "topicKeys": [
                   "2.1"
@@ -20343,7 +20343,7 @@
                 "due": false,
                 "key": "FA:3.1",
                 "kind": "followalong",
-                "schoologyTitle": "3.1 Follow-Along",
+                "schoologyTitle": "1.10 Day 1 Follow-Along",
                 "title": "1.10 Day 1 Follow-Along",
                 "topicKeys": [
                   "3.1"
@@ -20355,7 +20355,7 @@
                 "due": false,
                 "key": "QUIZ:3.1",
                 "kind": "quiz",
-                "schoologyTitle": "3.1 Quiz",
+                "schoologyTitle": "1.10 Day 1 Quiz",
                 "title": "1.10 Day 1 Quiz",
                 "topicKeys": [
                   "3.1"
@@ -20368,7 +20368,7 @@
                 "due": false,
                 "key": "BL:3.1",
                 "kind": "blooket",
-                "schoologyTitle": "3.1 Blooket",
+                "schoologyTitle": "1.10 Day 1 Blooket",
                 "title": "1.10 Day 1 Blooket",
                 "topicKeys": [
                   "3.1"
@@ -21142,7 +21142,7 @@
                 "due": false,
                 "key": "FA:2.1",
                 "kind": "followalong",
-                "schoologyTitle": "2.1 Follow-Along",
+                "schoologyTitle": "2.1 Day 1 Follow-Along",
                 "title": "2.1 Day 1 Follow-Along",
                 "topicKeys": [
                   "2.1"
@@ -21154,7 +21154,7 @@
                 "due": false,
                 "key": "QUIZ:2.1",
                 "kind": "quiz",
-                "schoologyTitle": "2.1 Quiz",
+                "schoologyTitle": "2.1 Day 1 Quiz",
                 "title": "2.1 Day 1 Quiz",
                 "topicKeys": [
                   "2.1"
@@ -21167,7 +21167,7 @@
                 "due": false,
                 "key": "BL:2.1",
                 "kind": "blooket",
-                "schoologyTitle": "2.1 Blooket",
+                "schoologyTitle": "2.1 Day 1 Blooket",
                 "title": "2.1 Day 1 Blooket",
                 "topicKeys": [
                   "2.1"
@@ -21189,7 +21189,7 @@
                 "due": false,
                 "key": "FA:3.1",
                 "kind": "followalong",
-                "schoologyTitle": "3.1 Follow-Along",
+                "schoologyTitle": "1.10 Day 1 Follow-Along",
                 "title": "1.10 Day 1 Follow-Along",
                 "topicKeys": [
                   "3.1"
@@ -21201,7 +21201,7 @@
                 "due": false,
                 "key": "QUIZ:3.1",
                 "kind": "quiz",
-                "schoologyTitle": "3.1 Quiz",
+                "schoologyTitle": "1.10 Day 1 Quiz",
                 "title": "1.10 Day 1 Quiz",
                 "topicKeys": [
                   "3.1"
@@ -21214,7 +21214,7 @@
                 "due": false,
                 "key": "BL:3.1",
                 "kind": "blooket",
-                "schoologyTitle": "3.1 Blooket",
+                "schoologyTitle": "1.10 Day 1 Blooket",
                 "title": "1.10 Day 1 Blooket",
                 "topicKeys": [
                   "3.1"
@@ -21973,7 +21973,7 @@
                 "due": false,
                 "key": "FA:2.1",
                 "kind": "followalong",
-                "schoologyTitle": "2.1 Follow-Along",
+                "schoologyTitle": "2.1 Day 1 Follow-Along",
                 "title": "2.1 Day 1 Follow-Along",
                 "topicKeys": [
                   "2.1"
@@ -21985,7 +21985,7 @@
                 "due": false,
                 "key": "QUIZ:2.1",
                 "kind": "quiz",
-                "schoologyTitle": "2.1 Quiz",
+                "schoologyTitle": "2.1 Day 1 Quiz",
                 "title": "2.1 Day 1 Quiz",
                 "topicKeys": [
                   "2.1"
@@ -21998,7 +21998,7 @@
                 "due": false,
                 "key": "BL:2.1",
                 "kind": "blooket",
-                "schoologyTitle": "2.1 Blooket",
+                "schoologyTitle": "2.1 Day 1 Blooket",
                 "title": "2.1 Day 1 Blooket",
                 "topicKeys": [
                   "2.1"
@@ -22020,7 +22020,7 @@
                 "due": false,
                 "key": "FA:3.1",
                 "kind": "followalong",
-                "schoologyTitle": "3.1 Follow-Along",
+                "schoologyTitle": "1.10 Day 1 Follow-Along",
                 "title": "1.10 Day 1 Follow-Along",
                 "topicKeys": [
                   "3.1"
@@ -22032,7 +22032,7 @@
                 "due": false,
                 "key": "QUIZ:3.1",
                 "kind": "quiz",
-                "schoologyTitle": "3.1 Quiz",
+                "schoologyTitle": "1.10 Day 1 Quiz",
                 "title": "1.10 Day 1 Quiz",
                 "topicKeys": [
                   "3.1"
@@ -22045,7 +22045,7 @@
                 "due": false,
                 "key": "BL:3.1",
                 "kind": "blooket",
-                "schoologyTitle": "3.1 Blooket",
+                "schoologyTitle": "1.10 Day 1 Blooket",
                 "title": "1.10 Day 1 Blooket",
                 "topicKeys": [
                   "3.1"
@@ -22809,7 +22809,7 @@
                 "due": false,
                 "key": "FA:2.1",
                 "kind": "followalong",
-                "schoologyTitle": "2.1 Follow-Along",
+                "schoologyTitle": "2.1 Day 1 Follow-Along",
                 "title": "2.1 Day 1 Follow-Along",
                 "topicKeys": [
                   "2.1"
@@ -22821,7 +22821,7 @@
                 "due": false,
                 "key": "QUIZ:2.1",
                 "kind": "quiz",
-                "schoologyTitle": "2.1 Quiz",
+                "schoologyTitle": "2.1 Day 1 Quiz",
                 "title": "2.1 Day 1 Quiz",
                 "topicKeys": [
                   "2.1"
@@ -22834,7 +22834,7 @@
                 "due": false,
                 "key": "BL:2.1",
                 "kind": "blooket",
-                "schoologyTitle": "2.1 Blooket",
+                "schoologyTitle": "2.1 Day 1 Blooket",
                 "title": "2.1 Day 1 Blooket",
                 "topicKeys": [
                   "2.1"
@@ -22856,7 +22856,7 @@
                 "due": false,
                 "key": "FA:3.1",
                 "kind": "followalong",
-                "schoologyTitle": "3.1 Follow-Along",
+                "schoologyTitle": "1.10 Day 1 Follow-Along",
                 "title": "1.10 Day 1 Follow-Along",
                 "topicKeys": [
                   "3.1"
@@ -22868,7 +22868,7 @@
                 "due": false,
                 "key": "QUIZ:3.1",
                 "kind": "quiz",
-                "schoologyTitle": "3.1 Quiz",
+                "schoologyTitle": "1.10 Day 1 Quiz",
                 "title": "1.10 Day 1 Quiz",
                 "topicKeys": [
                   "3.1"
@@ -22881,7 +22881,7 @@
                 "due": false,
                 "key": "BL:3.1",
                 "kind": "blooket",
-                "schoologyTitle": "3.1 Blooket",
+                "schoologyTitle": "1.10 Day 1 Blooket",
                 "title": "1.10 Day 1 Blooket",
                 "topicKeys": [
                   "3.1"
@@ -23650,7 +23650,7 @@
                 "due": true,
                 "key": "FA:2.1",
                 "kind": "followalong",
-                "schoologyTitle": "2.1 Follow-Along",
+                "schoologyTitle": "2.1 Day 1 Follow-Along",
                 "title": "2.1 Day 1 Follow-Along",
                 "topicKeys": [
                   "2.1"
@@ -23662,7 +23662,7 @@
                 "due": true,
                 "key": "QUIZ:2.1",
                 "kind": "quiz",
-                "schoologyTitle": "2.1 Quiz",
+                "schoologyTitle": "2.1 Day 1 Quiz",
                 "title": "2.1 Day 1 Quiz",
                 "topicKeys": [
                   "2.1"
@@ -23675,7 +23675,7 @@
                 "due": true,
                 "key": "BL:2.1",
                 "kind": "blooket",
-                "schoologyTitle": "2.1 Blooket",
+                "schoologyTitle": "2.1 Day 1 Blooket",
                 "title": "2.1 Day 1 Blooket",
                 "topicKeys": [
                   "2.1"
@@ -23697,7 +23697,7 @@
                 "due": false,
                 "key": "FA:3.1",
                 "kind": "followalong",
-                "schoologyTitle": "3.1 Follow-Along",
+                "schoologyTitle": "1.10 Day 1 Follow-Along",
                 "title": "1.10 Day 1 Follow-Along",
                 "topicKeys": [
                   "3.1"
@@ -23709,7 +23709,7 @@
                 "due": false,
                 "key": "QUIZ:3.1",
                 "kind": "quiz",
-                "schoologyTitle": "3.1 Quiz",
+                "schoologyTitle": "1.10 Day 1 Quiz",
                 "title": "1.10 Day 1 Quiz",
                 "topicKeys": [
                   "3.1"
@@ -23722,7 +23722,7 @@
                 "due": false,
                 "key": "BL:3.1",
                 "kind": "blooket",
-                "schoologyTitle": "3.1 Blooket",
+                "schoologyTitle": "1.10 Day 1 Blooket",
                 "title": "1.10 Day 1 Blooket",
                 "topicKeys": [
                   "3.1"
@@ -24505,7 +24505,7 @@
                 "due": false,
                 "key": "FA:2.1",
                 "kind": "followalong",
-                "schoologyTitle": "2.1 Follow-Along",
+                "schoologyTitle": "2.1 Day 1 Follow-Along",
                 "title": "2.1 Day 1 Follow-Along",
                 "topicKeys": [
                   "2.1"
@@ -24517,7 +24517,7 @@
                 "due": false,
                 "key": "QUIZ:2.1",
                 "kind": "quiz",
-                "schoologyTitle": "2.1 Quiz",
+                "schoologyTitle": "2.1 Day 1 Quiz",
                 "title": "2.1 Day 1 Quiz",
                 "topicKeys": [
                   "2.1"
@@ -24530,7 +24530,7 @@
                 "due": false,
                 "key": "BL:2.1",
                 "kind": "blooket",
-                "schoologyTitle": "2.1 Blooket",
+                "schoologyTitle": "2.1 Day 1 Blooket",
                 "title": "2.1 Day 1 Blooket",
                 "topicKeys": [
                   "2.1"
@@ -24552,7 +24552,7 @@
                 "due": false,
                 "key": "FA:3.1",
                 "kind": "followalong",
-                "schoologyTitle": "3.1 Follow-Along",
+                "schoologyTitle": "1.10 Day 1 Follow-Along",
                 "title": "1.10 Day 1 Follow-Along",
                 "topicKeys": [
                   "3.1"
@@ -24564,7 +24564,7 @@
                 "due": false,
                 "key": "QUIZ:3.1",
                 "kind": "quiz",
-                "schoologyTitle": "3.1 Quiz",
+                "schoologyTitle": "1.10 Day 1 Quiz",
                 "title": "1.10 Day 1 Quiz",
                 "topicKeys": [
                   "3.1"
@@ -24577,7 +24577,7 @@
                 "due": false,
                 "key": "BL:3.1",
                 "kind": "blooket",
-                "schoologyTitle": "3.1 Blooket",
+                "schoologyTitle": "1.10 Day 1 Blooket",
                 "title": "1.10 Day 1 Blooket",
                 "topicKeys": [
                   "3.1"
@@ -25362,7 +25362,7 @@
                 "due": false,
                 "key": "FA:2.1",
                 "kind": "followalong",
-                "schoologyTitle": "2.1 Follow-Along",
+                "schoologyTitle": "2.1 Day 1 Follow-Along",
                 "title": "2.1 Day 1 Follow-Along",
                 "topicKeys": [
                   "2.1"
@@ -25374,7 +25374,7 @@
                 "due": false,
                 "key": "QUIZ:2.1",
                 "kind": "quiz",
-                "schoologyTitle": "2.1 Quiz",
+                "schoologyTitle": "2.1 Day 1 Quiz",
                 "title": "2.1 Day 1 Quiz",
                 "topicKeys": [
                   "2.1"
@@ -25387,7 +25387,7 @@
                 "due": false,
                 "key": "BL:2.1",
                 "kind": "blooket",
-                "schoologyTitle": "2.1 Blooket",
+                "schoologyTitle": "2.1 Day 1 Blooket",
                 "title": "2.1 Day 1 Blooket",
                 "topicKeys": [
                   "2.1"
@@ -25409,7 +25409,7 @@
                 "due": false,
                 "key": "FA:3.1",
                 "kind": "followalong",
-                "schoologyTitle": "3.1 Follow-Along",
+                "schoologyTitle": "1.10 Day 1 Follow-Along",
                 "title": "1.10 Day 1 Follow-Along",
                 "topicKeys": [
                   "3.1"
@@ -25421,7 +25421,7 @@
                 "due": false,
                 "key": "QUIZ:3.1",
                 "kind": "quiz",
-                "schoologyTitle": "3.1 Quiz",
+                "schoologyTitle": "1.10 Day 1 Quiz",
                 "title": "1.10 Day 1 Quiz",
                 "topicKeys": [
                   "3.1"
@@ -25434,7 +25434,7 @@
                 "due": false,
                 "key": "BL:3.1",
                 "kind": "blooket",
-                "schoologyTitle": "3.1 Blooket",
+                "schoologyTitle": "1.10 Day 1 Blooket",
                 "title": "1.10 Day 1 Blooket",
                 "topicKeys": [
                   "3.1"
@@ -26218,7 +26218,7 @@
                 "due": true,
                 "key": "FA:2.1",
                 "kind": "followalong",
-                "schoologyTitle": "2.1 Follow-Along",
+                "schoologyTitle": "2.1 Day 1 Follow-Along",
                 "title": "2.1 Day 1 Follow-Along",
                 "topicKeys": [
                   "2.1"
@@ -26230,7 +26230,7 @@
                 "due": true,
                 "key": "QUIZ:2.1",
                 "kind": "quiz",
-                "schoologyTitle": "2.1 Quiz",
+                "schoologyTitle": "2.1 Day 1 Quiz",
                 "title": "2.1 Day 1 Quiz",
                 "topicKeys": [
                   "2.1"
@@ -26243,7 +26243,7 @@
                 "due": true,
                 "key": "BL:2.1",
                 "kind": "blooket",
-                "schoologyTitle": "2.1 Blooket",
+                "schoologyTitle": "2.1 Day 1 Blooket",
                 "title": "2.1 Day 1 Blooket",
                 "topicKeys": [
                   "2.1"
@@ -26265,7 +26265,7 @@
                 "due": false,
                 "key": "FA:3.1",
                 "kind": "followalong",
-                "schoologyTitle": "3.1 Follow-Along",
+                "schoologyTitle": "1.10 Day 1 Follow-Along",
                 "title": "1.10 Day 1 Follow-Along",
                 "topicKeys": [
                   "3.1"
@@ -26277,7 +26277,7 @@
                 "due": false,
                 "key": "QUIZ:3.1",
                 "kind": "quiz",
-                "schoologyTitle": "3.1 Quiz",
+                "schoologyTitle": "1.10 Day 1 Quiz",
                 "title": "1.10 Day 1 Quiz",
                 "topicKeys": [
                   "3.1"
@@ -26290,7 +26290,7 @@
                 "due": false,
                 "key": "BL:3.1",
                 "kind": "blooket",
-                "schoologyTitle": "3.1 Blooket",
+                "schoologyTitle": "1.10 Day 1 Blooket",
                 "title": "1.10 Day 1 Blooket",
                 "topicKeys": [
                   "3.1"

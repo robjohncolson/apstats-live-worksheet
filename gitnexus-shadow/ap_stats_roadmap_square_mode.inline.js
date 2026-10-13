@@ -16188,7 +16188,7 @@ function _pastDueCurrentWork() {
 // tools/schoology_rename_columns.py --apply. Mirrors roster-server grade-config.js
 // SCHOOLOGY_TITLES_CED (pinned equal by tests/ced-no-raw-keys.test.js); the server's
 // column.schoologyTitle wins whenever /grade has loaded.
-var DESK_SCHOOLOGY_TITLES_CED = false;
+var DESK_SCHOOLOGY_TITLES_CED = true;
 // The Schoology column title for a row (CED2026_SINGLE_SOURCE_SPEC.md §2): the column a
 // student will actually find in Schoology. Old style while DESK_SCHOOLOGY_TITLES_CED is false:
 //   quiz               → '<lessonKey> Quiz'             ('3.6 Quiz')
@@ -27941,7 +27941,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-10-13-107g';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-10-13-wrmo';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.
