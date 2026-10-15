@@ -49,7 +49,7 @@ describe('Pico floor = the real board', { timeout: 120_000 }, () => {
     // The tallest idle thing on the room floor: the PICO PARK door label at floor - 70 …
     expect(ROOM).toContain("text(paint, 'PICO PARK', 24, WORLD.floor - 70, 14);");
     // … and the teaching text that is cropped while idle ends at y 604 (< floor - headroom).
-    expect(ROOM).toContain("text(paint, 'THE PUSHERS BECOME YOUR TEAM', 85, 604, 14);");
+    expect(ROOM).toContain("text(paint, solo ? 'NEW DATA EVERY ROUND' : 'THE PUSHERS BECOME YOUR TEAM', 85, 604, 14);");
     // The room's scale and its transparent canvas (the page shows through).
     expect(ROOM).toContain('function scale() { return Math.min(1, board.viewportW() / WORLD.width); }');
     expect(ROOM).toContain('CanvasEngine clears each frame; transparency reveals the actual calendar DOM.');

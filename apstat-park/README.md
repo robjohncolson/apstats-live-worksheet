@@ -55,6 +55,21 @@ all 48 transitions and wraparound, retry, reconnect, and membership. These are
 integration checks, not proof that every puzzle has been manually completed or
 that the recovered engine has exact native-game parity.
 
+## Calculator Solo (deep link, protocol 12)
+
+The same room with `mode: 'solo'` (`calculator-room.mjs`, one switch, no second file):
+`#room=calc-solo&skill=<skillId>` opens the student's own round on that skill at once,
+`#room=calc-solo&topic=<topic>` resolves the topic's first skill through
+`data/ti84-lesson-map.json`, and `#room=calc-solo` plays the section's rotation. No
+team block, no roster, no navigator round; the relay (`createSoloRound` beside the team
+round in `calculator-service.mjs`) keeps one room per student with the same clock, press
+judgement, random data and `park_calc_clears` count. The door at the end starts the next
+round on the same pinned skill with new data, where the student stands. A solo clear
+pays no key yet (APSTAT_PARK_TRAINER_ABSORB_SPEC §6 is Phase 4). Bonus-only skills
+(geometpdf, geometcdf, chi-square-gof-test, linreg-ttest, linreg-tint) are reachable by
+deep link only. Tests: `calculator-room-solo.test.mjs` (client), `calculator-solo.test.mjs`
+(relay); browser smoke `calculator-solo-browser-smoke.mjs`.
+
 ## Calculator Together (main room)
 
 The student room is one continuous scrolling world with an orange floor. Walk
