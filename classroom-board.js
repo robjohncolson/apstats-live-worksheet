@@ -7078,6 +7078,20 @@
     syncScene(state);
     connect();
 
+    // --- room deep links (APStat Park calculator, protocol 12) --------
+    // The calculator room parses the page hash when it mounts (#room=calc-solo&skill=… / &topic=…).
+    // A fragment-only navigation on the same document fires hashchange and nothing else, so the
+    // board leaves the mounted room when the hash now asks for a different one and mounts the
+    // requested room, which reads the new hash itself. A campaign level keeps running: the
+    // calculator room mounts on the way out and reads the hash then.
+    function onRoomHashChange() {
+      if (destroyed || !nativePanel || nativePanel.kind !== 'calculator') return;
+      if (typeof nativePanel.linkChanged !== 'function' || !nativePanel.linkChanged(root.location.hash)) return;
+      nativePanel.dispose();
+      enterPark(-1);
+    }
+    root.addEventListener('hashchange', onRoomHashChange);
+
     // --- public handle ------------------------------------------------
 
     var handle = {
@@ -7101,6 +7115,7 @@
 
       destroy: function () {
         destroyed = true;
+        root.removeEventListener('hashchange', onRoomHashChange);
         if (nativePanel) { nativePanel.dispose(); nativePanel = null; }
         setParkButtons(function (b) { if (b.parentNode) b.parentNode.removeChild(b); });
         clearInterval(heartbeatTimer);

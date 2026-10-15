@@ -64,7 +64,9 @@ The same room with `mode: 'solo'` (`calculator-room.mjs`, one switch, no second 
 team block, no roster, no navigator round; the relay (`createSoloRound` beside the team
 round in `calculator-service.mjs`) keeps one room per student with the same clock, press
 judgement, random data and `park_calc_clears` count. The door at the end starts the next
-round on the same pinned skill with new data, where the student stands. A solo clear
+round on the same pinned skill with new data, where the student stands. Changing the hash on
+the same document (team to solo, another skill or topic) is routed by `classroom-board.js`:
+it leaves the mounted room and mounts the requested one. A solo clear
 pays no key yet (APSTAT_PARK_TRAINER_ABSORB_SPEC §6 is Phase 4). Bonus-only skills
 (geometpdf, geometcdf, chi-square-gof-test, linreg-ttest, linreg-tint) are reachable by
 deep link only. Tests: `calculator-room-solo.test.mjs` (client), `calculator-solo.test.mjs`

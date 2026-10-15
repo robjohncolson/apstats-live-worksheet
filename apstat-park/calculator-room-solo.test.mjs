@@ -169,3 +169,43 @@ test('the team room is untouched: no hash means team mode and the old join packe
   assert.deepEqual(room.joins()[0], { type: 'calculator_join', protocol: CALCULATOR_PROTOCOL });
   assert.ok(room.socket.sent.some(packet => packet.type === 'calculator_lobby'), 'the team room still pushes the block');
 });
+
+// Codex review fixes (2026-10-15): hash navigation on the same document, and the waiting snapshot.
+
+test('linkChanged: team -> solo, solo -> team, skill A -> topic B, same link is no change', (t) => {
+  const team = mountRoom('alice', { link: { mode: 'team', skill: null, topic: null } });
+  t.after(() => team.panel.dispose());
+  assert.equal(team.panel.linkChanged(''), false);
+  assert.equal(team.panel.linkChanged('#topic=1.7&source=worksheet'), false, 'a trainer-era hash is still the team room');
+  assert.equal(team.panel.linkChanged('#room=calc-solo'), true);
+  assert.equal(team.panel.linkChanged('#room=calc-solo&skill=one-var-stats'), true);
+  const solo = mountRoom('alice', { link: { mode: 'solo', skill: 'one-var-stats', topic: null } });
+  t.after(() => solo.panel.dispose());
+  assert.equal(solo.panel.linkChanged('#room=calc-solo&skill=one-var-stats'), false);
+  assert.equal(solo.panel.linkChanged(''), true, 'solo -> team');
+  assert.equal(solo.panel.linkChanged('#room=calc-solo&skill=normalcdf'), true, 'another skill');
+  assert.equal(solo.panel.linkChanged('#room=calc-solo&topic=1.10'), true, 'skill A -> topic B');
+  assert.equal(solo.panel.linkChanged('#room=calc-solo'), true, 'pinned -> rotation');
+  assert.deepEqual(solo.panel.getView().link, { mode: 'solo', skill: 'one-var-stats', topic: null });
+});
+
+test('the board routes hashchange through a room transition: leave the panel, mount the requested room', () => {
+  const board = fs.readFileSync(new URL('../classroom-board.js', import.meta.url), 'utf8');
+  const wiring = board.slice(board.indexOf('function onRoomHashChange()'), board.indexOf('// --- public handle'));
+  assert.ok(wiring.includes("nativePanel.kind !== 'calculator') return;"), 'only a mounted calculator room re-routes');
+  assert.ok(wiring.includes('nativePanel.linkChanged(root.location.hash)'), 'the panel decides whether the hash means another room');
+  assert.ok(/nativePanel\.dispose\(\);\s*enterPark\(-1\);/.test(wiring), 'dispose the old panel, then mount the room that reads the new hash');
+  assert.ok(board.includes("root.addEventListener('hashchange', onRoomHashChange);"));
+  assert.ok(board.includes("root.removeEventListener('hashchange', onRoomHashChange);"), 'destroy() unhooks it');
+});
+
+test('a waiting snapshot (no playable skill yet) is told plainly and never joins a round', async (t) => {
+  const room = mountRoom('alice');
+  t.after(() => room.panel.dispose());
+  room.deliver({ type: 'calculator_lobby_state', protocol: CALCULATOR_PROTOCOL, epoch: null, mode: 'solo', pinnedSkill: 'one-var-stats',
+    missionId: null, eligibleCount: 0, phase: 'waiting', blockX: 1060, pushers: [], roster: [], members: [], campaignKeys: {}, campaignOpen: [0] });
+  await new Promise(r => setTimeout(r, 150));
+  assert.equal(room.panel.getState(), null);
+  assert.equal(room.status(), 'No calculator skills are scheduled yet for this class.');
+  room.draw();
+});

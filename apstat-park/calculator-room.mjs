@@ -545,8 +545,13 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     value => send('calculator_lobby', value), pushing);
     if (!participating || !soloReady) return;
     if (socket?.readyState !== 1) { status.textContent = 'Reconnecting—your team progress is saved.'; return; }
+    // Protocol 12: the relay answers a solo join with phase 'waiting' while the section has no
+    // playable skill (the join is retried below; nothing is kept for it on the relay).
+    if (solo && !state && lobby?.phase === 'waiting') status.textContent = 'No calculator skills are scheduled yet for this class.';
     if (!joinedAt || performance.now() - receivedAt > 3000) {
-      if (!state && performance.now() - openedAt > 8000) {
+      if (solo && !state && lobby?.phase === 'waiting') {
+        // Said above; keep retrying the join quietly.
+      } else if (!state && performance.now() - openedAt > 8000) {
         status.textContent = 'The calculator room is waiting for the classroom server update. You can return to the room and try again.';
       } else if (state) {
         status.textContent = 'Reconnecting—your team progress is saved.';
@@ -1000,9 +1005,16 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   // A solo deep link is the intent to practise: open on the keypad and join at once.
   if (solo) { startMission(); setParticipating(true); }
   pump();
-  return { kind: 'calculator', dispose, startMission, returnToStart, getState: () => state,
+  // The board calls this on hashchange: true when the page's hash now asks for a different room
+  // (team <-> solo, another skill, another topic). The board then leaves this panel and mounts
+  // the requested one, which parses the new hash itself (a fragment-only navigation never reloads).
+  function linkChanged(hash) {
+    const next = parseRoomLink(hash);
+    return next.mode !== link.mode || next.skill !== link.skill || next.topic !== link.topic;
+  }
+  return { kind: 'calculator', dispose, startMission, returnToStart, linkChanged, getState: () => state,
     getNetworkStats: () => peerMotion.stats(),
-    getView: () => ({ mode: solo ? 'solo' : 'team', skill: soloSkill, keyReward: !!state?.complete, cameraX, playerX: player.x, playerY: player.y, participating, campaignUnlocked: campaignUnlocked(), entranceX: ENTRY_WIDTH, lobby, missionId: level.id, challenge,
+    getView: () => ({ mode: solo ? 'solo' : 'team', skill: soloSkill, link: { ...link }, keyReward: !!state?.complete, cameraX, playerX: player.x, playerY: player.y, participating, campaignUnlocked: campaignUnlocked(), entranceX: ENTRY_WIDTH, lobby, missionId: level.id, challenge,
       keyCounts: Object.fromEntries([board.username, ...lobbyPeers.keys(), ...peers.keys()].map(name => [name, keyCount(name)])),
       resetDoor: state?.complete ? { ...RESET_DOOR } : null, lines: display.getLines(), ...coachingView() }),
     getCalculatorScreen: () => calculator.getScreen(),
