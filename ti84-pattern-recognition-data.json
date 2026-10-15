@@ -4,9 +4,9 @@
     "version": "1.1.0",
     "generated": "2026-06-12",
     "spec": "ti84-trainer-pattern-recognition-spec.md",
-    "procedureCount": 29,
-    "confusionPairCount": 26,
-    "canonicalProblemCount": 68,
+    "procedureCount": 31,
+    "confusionPairCount": 27,
+    "canonicalProblemCount": 73,
     "frameworkSkillsSource": "data/skill-taxonomy-ced2026.json (18-code Fall-2026 CED taxonomy; W8b, student-facing-surface-implementation-plan.md). frameworkSkills/frameworkSkill values were re-homed from the dead 2019-CED Big-Idea axis (VAR/UNC/DAT) onto that taxonomy's practice codes for every SURVIVING procedure. The 5 REMOVED-from-CED procedures pruned to bonus-only in W8a (geometpdf, geometcdf, chi-square-gof-test, linreg-ttest, linreg-tint) intentionally still carry their OLD dead codes — they are not part of the current CED, so no taxonomy code applies; re-homing them would misrepresent bonus content as currently-tested."
   },
 
