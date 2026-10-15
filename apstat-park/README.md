@@ -69,8 +69,13 @@ the same document (team to solo, another skill or topic) is routed by `classroom
 it leaves the mounted room and mounts the requested one. A solo clear
 pays no key yet (APSTAT_PARK_TRAINER_ABSORB_SPEC §6 is Phase 4). Bonus-only skills
 (geometpdf, geometcdf, chi-square-gof-test, linreg-ttest, linreg-tint) are reachable by
-deep link only. Tests: `calculator-room-solo.test.mjs` (client), `calculator-solo.test.mjs`
-(relay); browser smoke `calculator-solo-browser-smoke.mjs`.
+deep link only. A page whose protocol the relay refuses stops joining, draws
+NEW VERSION - RELOAD THE PAGE (click or Enter reloads) and keeps the relay's message in the
+screen-reader status; the relay answers such a page once, then drops its mismatched packets
+for 10 s (the Desk's version.json nudge is what refreshes it). Any other refusal retries the
+join at the usual 1.5 s. Tests: `calculator-room-solo.test.mjs` (client, with a recording
+canvas that decodes the pixel font), `calculator-solo.test.mjs` (relay); browser smoke
+`calculator-solo-browser-smoke.mjs`.
 
 ## Calculator Together (main room)
 

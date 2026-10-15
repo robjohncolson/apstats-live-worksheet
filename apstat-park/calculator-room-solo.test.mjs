@@ -10,12 +10,35 @@ const dom = new JSDOM('<!doctype html><div id="c"></div>', { url: 'https://desk.
 const win = dom.window;
 globalThis.window = win;
 const noop = () => {};
+// Every canvas remembers the rects painted on it (pixel-text.mjs paints each caption into a
+// cached canvas, then drawImage()s it); a recording main context decodes those back into text.
 const fakeContext = (canvas) => new Proxy({ canvas }, {
-  get: (target, key) => (key in target ? target[key] : (key === 'measureText' ? () => ({ width: 6 }) : noop)),
+  get: (target, key) => (key in target ? target[key]
+    : key === 'measureText' ? () => ({ width: 6 })
+      : key === 'fillRect' ? (x, y, w, h) => { (canvas.__rects ||= []).push([x, y, w, h]); }
+        : noop),
   set: (target, key, value) => { target[key] = value; return true; },
 });
 win.HTMLCanvasElement.prototype.getContext = function () { return fakeContext(this); };
+// The panel reads performance.now(); tests move it forward with `skew` instead of sleeping.
+const realNow = performance.now.bind(performance);
+let skew = 0;
+performance.now = () => realNow() + skew;
 const { mountParkPanel, parseRoomLink, skillForTopic } = await import('./calculator-room.mjs');
+const { pixelText } = await import('./pixel-text.mjs');
+
+// Glyph lookup: paint each character once at unit 1 and key its pixel set.
+const GLYPHS = new Map();
+for (const character of "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-+=.:,<>/!?'()") {
+  const rects = [];
+  pixelText({ fillRect: (x, y) => rects.push([x, y + 7]) }, character, 0, 0, 7);
+  GLYPHS.set(rects.map(([x, y]) => x + ',' + y).sort().join(' '), character);
+}
+function decodeCaption(image) {
+  const unit = image.height / 7, slots = Math.round((image.width / unit + 1) / 6), cells = Array.from({ length: slots }, () => []);
+  for (const [x, y] of image.__rects || []) cells[Math.floor(x / (6 * unit))].push((x / unit) % 6 + ',' + y / unit);
+  return cells.map(cell => cell.length ? GLYPHS.get(cell.sort().join(' ')) || '?' : ' ').join('');
+}
 const { CALCULATOR_PROTOCOL } = await import('./calculator-lobby.mjs');
 const { levelById, challengeFor } = await import('./calculator-curriculum.mjs');
 
@@ -40,9 +63,17 @@ function mountRoom(username, options = {}) {
   const deliver = (packet) => listeners.forEach((fn) => fn({ data: JSON.stringify(packet) }));
   const status = () => container.querySelector('[role="status"]').textContent;
   const draw = () => engine.sceneEntities.get('calculator-room').render(fakeContext(canvas));
+  // The captions a frame draws, decoded from the pixel font.
+  const drawn = () => {
+    const captions = [];
+    const ctx = new Proxy(fakeContext(canvas), { get: (target, key) => (key === 'drawImage'
+      ? (image) => { if (image.__rects) captions.push(decodeCaption(image)); } : target[key]) });
+    engine.sceneEntities.get('calculator-room').render(ctx);
+    return captions;
+  };
   const update = (dt = 1 / 60) => engine.sceneEntities.get('calculator-room').update(dt);
   const joins = () => socket.sent.filter(packet => packet.type === 'calculator_join');
-  return { panel, deliver, status, draw, update, container, socket, joins };
+  return { panel, deliver, status, draw, drawn, update, container, socket, joins, canvas };
 }
 
 const lobby = (epoch, name) => ({ type: 'calculator_lobby_state', protocol: CALCULATOR_PROTOCOL, epoch, mode: 'solo', pinnedSkill: 'one-var-stats',
@@ -214,7 +245,7 @@ test('a waiting snapshot (no playable skill yet) is told plainly and never joins
 
 test('a completed round followed by a waiting answer forgets the round and shows the waiting copy, still on the keypad', async (t) => {
   const room = mountRoom('alice', { link: { mode: 'solo', skill: null, topic: null } });
-  t.after(() => room.panel.dispose());
+  t.after(() => { room.panel.dispose(); skew = 0; });
   room.deliver({ ...lobby('e1', 'alice'), pinnedSkill: null });
   room.deliver(state('e1', 'alice', { pinnedSkill: null, step: LEVEL.route.length, keys: LEVEL.route, solved: true, complete: true, readyCount: 1 }));
   assert.equal(room.panel.getView().keyReward, true);
@@ -229,10 +260,65 @@ test('a completed round followed by a waiting answer forgets the round and shows
   assert.equal(room.status(), 'No calculator skills are scheduled yet for this class.');
   await new Promise(r => setTimeout(r, 150));
   assert.equal(room.status(), 'No calculator skills are scheduled yet for this class.', 'not replaced by reconnect copy');
-  room.draw();
+  // Codex P2: the waiting answer never refreshes receivedAt; past the 3 s window the frame must
+  // still show the no-skills caption and never the reconnect line over it.
+  skew = 3500;
+  await new Promise(r => setTimeout(r, 150));
+  const captions = room.drawn();
+  assert.ok(captions.includes('NO SKILLS TAUGHT YET'), captions.join(' | '));
+  assert.ok(!captions.some(caption => /CONNECTING/.test(caption)), 'no CONNECTING line: ' + captions.join(' | '));
+  assert.equal(room.status(), 'No calculator skills are scheduled yet for this class.');
+  assert.ok(room.joins().length >= 2, 'the 1.5 s retry join keeps going');
+  skew = 0;
   // A skill arrives: the next round plays normally.
   room.deliver(lobby('e2', 'alice'));
   room.deliver(state('e2', 'alice'));
   assert.equal(room.panel.getState().epoch, 'e2');
   assert.match(room.status(), /Step 1\//);
+});
+
+// Codex P2 (2026-10-15): the relay's protocol error is terminal; other errors back the rejoin off.
+
+test('the drawn-caption decoder reads the pixel font back', (t) => {
+  const room = mountRoom('alice');
+  t.after(() => room.panel.dispose());
+  assert.ok(room.drawn().includes('SOLO PRACTICE'), room.drawn().join(' | '));
+});
+
+test('a protocol error stops the joins, draws the reload line, keeps the sr-only text; click or Enter reloads', async (t) => {
+  const reloads = [];
+  const room = mountRoom('alice', { reload: () => reloads.push(1) });
+  t.after(() => { room.panel.dispose(); skew = 0; });
+  assert.equal(room.joins().length, 1);
+  room.deliver({ type: 'calculator_error', message: 'Reload the page to use the team block.' });
+  await new Promise(r => setTimeout(r, 300));
+  skew = 5000;
+  await new Promise(r => setTimeout(r, 300));
+  assert.ok(room.joins().length <= 2, 'at most one further join after the error, got ' + room.joins().length);
+  assert.equal(room.panel.getView().reloadNeeded, true);
+  assert.equal(room.status(), 'Reload the page to use the team block.', 'the screen reader hears the relay message');
+  const captions = room.drawn();
+  assert.ok(captions.includes('NEW VERSION - RELOAD THE PAGE'), captions.join(' | '));
+  assert.ok(!captions.some(caption => /CONNECTING/.test(caption)), 'no reconnect line under the instruction: ' + captions.join(' | '));
+  const sentBefore = room.socket.sent.length;
+  room.canvas.dispatchEvent(new win.MouseEvent('click', { bubbles: true, clientX: 10, clientY: 10 }));
+  assert.equal(reloads.length, 1, 'a click reloads');
+  win.document.dispatchEvent(new win.KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+  assert.equal(reloads.length, 2, 'Enter reloads');
+  await new Promise(r => setTimeout(r, 300));
+  assert.equal(room.socket.sent.length, sentBefore, 'nothing else goes out');
+});
+
+test('any other calculator_error retries the join after the normal 1.5 s, not at once', async (t) => {
+  const room = mountRoom('alice');
+  t.after(() => { room.panel.dispose(); skew = 0; });
+  assert.equal(room.joins().length, 1);
+  room.deliver({ type: 'calculator_error', message: 'Rejoin the calculator room.' });
+  await new Promise(r => setTimeout(r, 300));
+  assert.equal(room.joins().length, 1, 'no immediate rejoin');
+  assert.equal(room.panel.getView().reloadNeeded, false);
+  skew = 1600;
+  await new Promise(r => setTimeout(r, 300));
+  assert.equal(room.joins().length, 2, 'one rejoin after the backoff');
+  assert.equal(room.status(), 'Rejoin the calculator room.');
 });
