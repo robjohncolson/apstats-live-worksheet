@@ -381,12 +381,31 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
       send('calculator_press', pendingPress); pressAt = performance.now();
     }
   }
+  // Forgets the round: a team reset back to gathering, or a solo 'waiting' answer.
+  function clearRound() {
+    state = null; peers.clear(); epoch = null; applied = 0; lastRevision = -1; computedSummary = null;
+    wrongStep = null; wrongPress = null; announcedMode = null; rewardShownAt = null;
+    keyQueue.length = 0; pendingPress = null;
+    // Back to the catalogue level: the last round's random data must not leak into the next preview.
+    level = levelById(level.id) || DEFAULT_LEVEL; challenge = challengeFor(level);
+    calculator = freshCalculator(null);
+    readings.textContent = ''; updateNavigatorList();
+  }
   function onMessage(event) {
     let packet;
     try { packet = JSON.parse(event.data); } catch { return; }
     if (packet.type === 'calculator_rtc_signal') { peerMotion.receive(packet); return; }
     if (packet.type === 'calculator_lobby_state') {
       if (packet.protocol !== CALCULATOR_PROTOCOL) return;
+      // Protocol 13: 'waiting' (solo, no playable skill) is a terminal reset of the round: the relay
+      // kept nothing, so neither does this page; the student stays on the keypad and the join is
+      // retried quietly (pump) until the section has a skill.
+      if (packet.phase === 'waiting') {
+        lobby = packet;
+        if (state) clearRound();
+        status.textContent = 'No calculator skills are scheduled yet for this class.';
+        return;
+      }
       const reset = lobby && lobby.epoch !== packet.epoch && packet.phase === 'gathering';
       lobby = packet;
       peerMotion.sync(packet.epoch, packet.rtcPeers);
@@ -407,15 +426,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
         Object.assign(lobbyPeers.get(member.name), member.pose);
       }
       for (const name of lobbyPeers.keys()) if (!packet.members.some(member => member.name === name)) lobbyPeers.delete(name);
-      if (reset) {
-        state = null; peers.clear(); epoch = null; applied = 0; lastRevision = -1; computedSummary = null;
-        wrongStep = null; wrongPress = null; announcedMode = null;
-        // Back to the catalogue level: the last round's random data must not leak into the next preview.
-        level = levelById(level.id) || DEFAULT_LEVEL; challenge = challengeFor(level);
-        calculator = freshCalculator(null);
-        readings.textContent = ''; updateNavigatorList();
-        returnToStart();
-      }
+      if (reset) { clearRound(); returnToStart(); }
       const preview = levelById(packet.missionId);
       if (!state && preview && preview.id !== level.id) {
         level = preview; challenge = challengeFor(level);

@@ -55,7 +55,7 @@ all 48 transitions and wraparound, retry, reconnect, and membership. These are
 integration checks, not proof that every puzzle has been manually completed or
 that the recovered engine has exact native-game parity.
 
-## Calculator Solo (deep link, protocol 12)
+## Calculator Solo (deep link, protocol 13)
 
 The same room with `mode: 'solo'` (`calculator-room.mjs`, one switch, no second file):
 `#room=calc-solo&skill=<skillId>` opens the student's own round on that skill at once,

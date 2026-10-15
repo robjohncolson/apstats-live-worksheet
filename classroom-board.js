@@ -7078,7 +7078,7 @@
     syncScene(state);
     connect();
 
-    // --- room deep links (APStat Park calculator, protocol 12) --------
+    // --- room deep links (APStat Park calculator, protocol 12+) -------
     // The calculator room parses the page hash when it mounts (#room=calc-solo&skill=… / &topic=…).
     // A fragment-only navigation on the same document fires hashchange and nothing else, so the
     // board leaves the mounted room when the hash now asks for a different one and mounts the

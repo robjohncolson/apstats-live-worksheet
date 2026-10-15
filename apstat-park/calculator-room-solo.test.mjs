@@ -209,3 +209,30 @@ test('a waiting snapshot (no playable skill yet) is told plainly and never joins
   assert.equal(room.status(), 'No calculator skills are scheduled yet for this class.');
   room.draw();
 });
+
+// Codex review R1 (2026-10-15, protocol 13): 'waiting' after a completed round is a terminal reset.
+
+test('a completed round followed by a waiting answer forgets the round and shows the waiting copy, still on the keypad', async (t) => {
+  const room = mountRoom('alice', { link: { mode: 'solo', skill: null, topic: null } });
+  t.after(() => room.panel.dispose());
+  room.deliver({ ...lobby('e1', 'alice'), pinnedSkill: null });
+  room.deliver(state('e1', 'alice', { pinnedSkill: null, step: LEVEL.route.length, keys: LEVEL.route, solved: true, complete: true, readyCount: 1 }));
+  assert.equal(room.panel.getView().keyReward, true);
+  // The door: the rotation emptied, so the relay answers 'waiting' instead of a new round.
+  room.deliver({ type: 'calculator_lobby_state', protocol: CALCULATOR_PROTOCOL, epoch: null, mode: 'solo', pinnedSkill: null,
+    missionId: null, eligibleCount: 0, phase: 'waiting', blockX: 1060, pushers: [], roster: [], members: [], campaignKeys: {}, campaignOpen: [0] });
+  const view = room.panel.getView();
+  assert.equal(room.panel.getState(), null, 'the round is forgotten');
+  assert.equal(view.keyReward, false);
+  assert.equal(view.resetDoor, null);
+  assert.equal(view.participating, true, 'the student stays in the zone so the join retries');
+  assert.equal(room.status(), 'No calculator skills are scheduled yet for this class.');
+  await new Promise(r => setTimeout(r, 150));
+  assert.equal(room.status(), 'No calculator skills are scheduled yet for this class.', 'not replaced by reconnect copy');
+  room.draw();
+  // A skill arrives: the next round plays normally.
+  room.deliver(lobby('e2', 'alice'));
+  room.deliver(state('e2', 'alice'));
+  assert.equal(room.panel.getState().epoch, 'e2');
+  assert.match(room.status(), /Step 1\//);
+});
