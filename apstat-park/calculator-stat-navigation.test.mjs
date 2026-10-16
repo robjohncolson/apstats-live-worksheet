@@ -2,14 +2,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
-import { nativeScriptFilenames } from '../ti84-trainer-v2/native/manifest.mjs';
+import { nativeScriptFilenames } from './calculator-native/manifest.mjs';
 import { createWorldDisplay } from './calculator-display.mjs';
 
 function setup() {
   const sandbox = { window: {}, console };
   vm.createContext(sandbox);
   for (const file of nativeScriptFilenames) {
-    vm.runInContext(fs.readFileSync(new URL('../ti84-trainer-v2/native/' + file, import.meta.url), 'utf8'), sandbox);
+    vm.runInContext(fs.readFileSync(new URL('./calculator-native/' + file, import.meta.url), 'utf8'), sandbox);
   }
   const display = createWorldDisplay();
   return { calculator: sandbox.window.TI84Native.create(null, { renderer: display }), display };

@@ -5,7 +5,7 @@ const { skillTitle } = await import('./calculator-recognition.mjs' + V);
 const { goalFor } = await import('./calculator-goals.mjs' + V);
 const { DEFAULT_LEVEL, levelById, challengeFor, initializeCalculator } = await import('./calculator-curriculum.mjs' + V);
 const { drawChallenge } = await import('./calculator-challenge-view.mjs' + V);
-const { nativeScriptFilenames } = await import('../ti84-trainer-v2/native/manifest.mjs' + V);
+const { nativeScriptFilenames } = await import('./calculator-native/manifest.mjs' + V);
 const { pixelText } = await import('./pixel-text.mjs' + V);
 const { keyboardLayer, keyLabel, keySublabels, keyInstruction } = await import('./calculator-key-labels.mjs' + V);
 const { createWorldDisplay } = await import('./calculator-display.mjs' + V);
@@ -41,7 +41,7 @@ const ENTRY_WIDTH = 720;
 const LEVEL_WIDTH = ENTRY_WIDTH + WORLD.width;
 const RESET_DOOR = { x: 650, y: WORLD.floor - 48, w: 48, h: 48 };
 // Same calculator, with its menu payloads painted directly into the level.
-for (const file of nativeScriptFilenames) await import('../ti84-trainer-v2/native/' + file + V);
+for (const file of nativeScriptFilenames) await import('./calculator-native/' + file + V);
 
 // Navigator round (APSTAT_PARK_CALCULATOR_FLUENCY_SPEC §3). Every client works it out from the
 // round's own packet, so nobody has to send it. The relay could reproduce it exactly:

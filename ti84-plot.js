@@ -4,7 +4,9 @@
  * TI-84-style data plots for the Live Classroom poll cockpit.
  * Plain browser script -- no import/export.  Attaches window.Ti84Plot.
  *
- * Adapted from ti84-trainer-v2/native/screen-renderer.js for the
+ * Adapted from apstat-park/calculator-native/screen-renderer.js (the native engine, formerly
+ * ti84-trainer-v2/native; kept as a plain script copy because the Live Classroom loads it without a
+ * module loader, ABSORB_SPEC §8.3) for the
  * calculator framing + pixel-font aesthetic -- the trainer file is NOT
  * modified.
  *

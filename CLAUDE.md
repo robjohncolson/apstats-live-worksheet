@@ -9,7 +9,7 @@ A full AP Statistics course platform: 69 video follow-along live worksheets, the
 - **Repo**: github.com/robjohncolson/apstats-live-worksheet (branch `master`)
 - **Frontend**: GitHub Pages, base `https://robjohncolson.github.io/apstats-live-worksheet/`
 - **Backends**: two Railway services (see Config & External Services)
-- Everything student-facing is single-file HTML with embedded CSS/JS — no build step (exception: `ti84-trainer-v2/` has `build.mjs`).
+- Everything student-facing is single-file HTML with embedded CSS/JS — no build step.
 
 ## App Surface
 
@@ -22,7 +22,7 @@ A full AP Statistics course platform: 69 video follow-along live worksheets, the
 | `ap_stats_roadmap_square_mode.html` | **The Desk** (~14,250 lines): student home hub — roadmap lesson tiles, Do Now card with grade pills, completion calendar, resource panel, Live Classroom, Study Break Tetris, in-app gradebook. `calendar.html` is a 16-line redirect stub into it |
 | `start-here.html` | Orientation + interactive v3 Grade Playground (fully static) |
 | `study_guide_diagnostic.html` | DAG/BKT diagnostic study guide; depends on `lib/` runtime (`bkt.js`, `dag-renderer.js`, `probe-selector.js`, `curriculum-charts.js`) |
-| `ti84-trainer-v2/index.html` | ROM-backed CEmu-wasm TI-84 trainer; `build.mjs` regenerates `generated/` + `standalone.html`. Legacy v1 = `ti84_trainer.html`; QA harness = `ti84-verify.html` |
+| `calculator-solo.html` | **TI-84 practice** = the APStat Park solo calculator room as a page (`APSTAT_PARK_TRAINER_ABSORB_SPEC.md`; the v2 trainer, v1 trainer and QA harness were retired 2026-10-16 and live in git history). The native JS calculator engine is `apstat-park/calculator-native/` (byte-identical copy on the relay); the WebCEmu ROM harness is `tools/ti84-rom/` (teacher/dev only) |
 
 ### In-Desk app windows
 
@@ -30,7 +30,7 @@ The Desk hosts iframe apps via `openApp(id)` — `APP_REGISTRY` near line 12930 
 
 | id | Target |
 |----|--------|
-| `ti84` | `ti84-trainer-v2/standalone.html` (this repo, GH Pages) |
+| `ti84` | `calculator-solo.html` (this repo; `#room=calc-solo&topic=<t>` deep links) |
 | `quiz` | `https://robjohncolson.github.io/curriculum_render/` (separate repo) |
 | `formulas` | **Equation Trainer** = `https://tmux-trainer.vercel.app/#deck=ap-stats-formulas` — EXTERNAL Vercel app, NOT in this repo. Its source (`tmux-trainer`) is **not cloned on this machine** — treat the deployed URL as the only available surface |
 
@@ -262,7 +262,7 @@ When the user asks to delegate work to Codex, use the runner — don't ask the u
 **Moved to its own repo**: `/home/mrcolson/repos/ti84-transpile`
 (GitHub: https://github.com/robjohncolson/ti84-transpile).
 
-This repo (`follow-alongs`) is for the AP Stats worksheets, study guide, and TI-84 trainer (`ti84-trainer-v2/`) only. The ROM transpilation track — `TI-84_Plus_CE/`, browser shell, auto-continuation loop, `CONTINUATION_PROMPT_CODEX.md` — lives in the sibling repo so its commits never republish the student-facing GH Pages site.
+This repo (`follow-alongs`) is for the AP Stats worksheets, study guide, and the park's calculator engine (`apstat-park/calculator-native/`) only. The ROM transpilation track — `TI-84_Plus_CE/`, browser shell, auto-continuation loop, `CONTINUATION_PROMPT_CODEX.md` — lives in the sibling repo so its commits never republish the student-facing GH Pages site.
 
 Do not re-add transpile work here. If a transpile session needs something from this repo (e.g., the trainer's screen renderer for cross-reference), copy/cherry-pick the file rather than re-introducing the transpile tree.
 

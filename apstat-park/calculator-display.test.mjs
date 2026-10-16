@@ -4,12 +4,12 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import { createWorldDisplay } from './calculator-display.mjs';
 import { pixelText } from './pixel-text.mjs';
-import { nativeScriptFilenames } from '../ti84-trainer-v2/native/manifest.mjs';
+import { nativeScriptFilenames } from './calculator-native/manifest.mjs';
 import { DATA, ROUTE } from './calculator-mission.mjs';
 
 test('live trainer menu, wizard cursor and computed results feed scenery without an LCD', () => {
   const sandbox = { window: {}, console }; vm.createContext(sandbox);
-  for (const file of nativeScriptFilenames) vm.runInContext(fs.readFileSync(new URL('../ti84-trainer-v2/native/' + file, import.meta.url), 'utf8'), sandbox);
+  for (const file of nativeScriptFilenames) vm.runInContext(fs.readFileSync(new URL('./calculator-native/' + file, import.meta.url), 'utf8'), sandbox);
   const display = createWorldDisplay();
   const calculator = sandbox.window.TI84Native.create(null, { renderer: display });
   calculator.setList('L1', DATA);
@@ -35,7 +35,7 @@ test('pixel lettering draws glyphs only, with no filled LCD panel or browser fon
 
 test('the real CE screen: the display forwards every payload but graphs to a TI84ScreenRenderer, in Pico colours', () => {
   const sandbox = { window: {}, console }; vm.createContext(sandbox);
-  for (const file of nativeScriptFilenames) vm.runInContext(fs.readFileSync(new URL('../ti84-trainer-v2/native/' + file, import.meta.url), 'utf8'), sandbox);
+  for (const file of nativeScriptFilenames) vm.runInContext(fs.readFileSync(new URL('./calculator-native/' + file, import.meta.url), 'utf8'), sandbox);
   // A canvas stub that records what the renderer paints.
   const ops = [];
   const ctx = new Proxy({ fillStyle: '', strokeStyle: '', font: '', textBaseline: '', lineWidth: 1, measureText: t => ({ width: 12 * t.length }) },

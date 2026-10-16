@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
-import { nativeScriptFilenames } from '../ti84-trainer-v2/native/manifest.mjs';
+import { nativeScriptFilenames } from './calculator-native/manifest.mjs';
 import { curriculumCoverage, firstCoveredDates } from '../scripts/park-curriculum-coverage.mjs';
 import { CALCULATOR_LEVELS, CALCULATOR_PROBLEMS, DEFAULT_LEVEL, eligibleLevels, schoolDate, createLevelRotation, challengeFor, initializeCalculator, answerMatches, levelById } from './calculator-curriculum.mjs';
 import { varyProblem } from './calculator-variation.mjs';
@@ -11,12 +11,12 @@ import { createMission, pressMissionKey, KEYS, tilesFor, timeLimitFor, BOXPLOT_M
 
 const sandbox = { window: {}, console };
 vm.createContext(sandbox);
-for (const file of nativeScriptFilenames) vm.runInContext(readFileSync(new URL('../ti84-trainer-v2/native/' + file, import.meta.url), 'utf8'), sandbox);
+for (const file of nativeScriptFilenames) vm.runInContext(readFileSync(new URL('./calculator-native/' + file, import.meta.url), 'utf8'), sandbox);
 const create = sandbox.window.TI84Native.create;
 
 test('every trainer skill has a level and the current section calendar dates', () => {
   const read = path => JSON.parse(readFileSync(new URL('../' + path, import.meta.url), 'utf8'));
-  const procedures = read('ti84-procedures-data.json').procedures;
+  const procedures = read('data/ti84-procedures-data.json').procedures;
   const schedule = read('data/lesson-schedule.json');
   const lessonMap = read('data/ti84-lesson-map.json'), work = read('data/work-manifest.json');
   assert.deepEqual([...new Set(CALCULATOR_LEVELS.map(level => level.procedureId))].sort(), procedures.map(p => p.id).sort());

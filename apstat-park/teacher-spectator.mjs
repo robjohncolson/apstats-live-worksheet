@@ -7,8 +7,8 @@ const { tilesFor } = await import('./calculator-mission.mjs' + V);
 const { createPicoArt } = await import('./pico-art.mjs' + V);
 const { pixelText } = await import('./pixel-text.mjs' + V);
 const { catBodyForHue, rgbHex } = await import('./pico-rules.mjs' + V);
-const { nativeScriptFilenames } = await import('../ti84-trainer-v2/native/manifest.mjs' + V);
-for (const file of nativeScriptFilenames) await import('../ti84-trainer-v2/native/' + file + V);
+const { nativeScriptFilenames } = await import('./calculator-native/manifest.mjs' + V);
+for (const file of nativeScriptFilenames) await import('./calculator-native/' + file + V);
 
 // A separate connection has no player binding and never sends gameplay commands.
 export function mountTeacherSpectator(container, { wsUrl, username, section = 'B' }) {

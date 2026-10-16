@@ -2953,10 +2953,10 @@
 <script src="js/ced2026-crosswalk.js"></script>
 <script src="js/ced2026-labels.js"></script>
 <script src="lib/qrcode.min.js"></script>
-<script src="canvas_engine.js?v=2026-10-16-7y1o"></script>
-<script src="sprite_sheet.js?v=2026-10-16-7y1o"></script>
-<script src="classroom-board.js?v=2026-10-16-7y1o"></script>
-<script src="pico-home.js?v=2026-10-16-7y1o"></script>
+<script src="canvas_engine.js?v=2026-10-16-sc38"></script>
+<script src="sprite_sheet.js?v=2026-10-16-sc38"></script>
+<script src="classroom-board.js?v=2026-10-16-sc38"></script>
+<script src="pico-home.js?v=2026-10-16-sc38"></script>
 <script src="ti84-plot.js"></script>
 <script src="activity-bridge.js"></script>
 <script src="activity-colorbox.js"></script>
@@ -25204,7 +25204,8 @@ function destroyProgress() { ProgressApp.destroy(); }
 
 /* ═══ APP LAUNCHER ═══ */
 const APP_REGISTRY = {
-    ti84:     { url: 'https://robjohncolson.github.io/apstats-live-worksheet/ti84-trainer-v2/standalone.html', sfx: 'wildEep' },
+    // APSTAT_PARK_TRAINER_ABSORB_SPEC §8.2: the park's solo calculator room as a page (the trainer is retired).
+    ti84:     { url: 'calculator-solo.html', sfx: 'wildEep' },
     quiz:     { url: 'https://robjohncolson.github.io/curriculum_render/', sfx: 'wildEep' },
     // W2 / G3: Formula Lab is primary (working URL is /formula-lab.html — bare /formula-lab 404s).
     // Formula Defense deck stays Apps-menu secondary as "legacy review" until W13.
@@ -25290,7 +25291,7 @@ function _openTi84ForTopic(topic) {
     var app = APP_REGISTRY && APP_REGISTRY.ti84;
     var frame = document.getElementById('app-ti84-frame');
     if (app && frame && topic) {
-        var topicUrl = app.url + '#topic=' + topic + '&source=desk';
+        var topicUrl = app.url + '#room=calc-solo&topic=' + topic;
         try {
             var topicTarget = new URL(topicUrl, window.location.href);
             if (typeof frame.contentWindow !== 'undefined' && frame.contentWindow &&
@@ -25371,11 +25372,11 @@ function appLaunchUrl(app, id) {
         return isTeacher ? app.url + '?teacher=1' : app.url;
     }
     if (id !== 'ti84') return app.url;
+    // ABSORB_SPEC §8.2: the park solo room. A mapped lesson pins today's topic (the park resolves
+    // it through the lesson map); otherwise the room plays the due/rotation round.
     var topic = _ti84TodayTopic();
-    if (topic) return app.url + '#topic=' + topic + '&source=desk';
-    var unit = _todayLessonInf && _todayLessonInf.u;
-    if (!unit || unit < 1 || unit > 9) return app.url;
-    return app.url + '#unit=' + unit;
+    if (topic) return app.url + '#room=calc-solo&topic=' + topic;
+    return app.url + '#room=calc-solo';
 }
 
 function openApp(id) {
@@ -27993,7 +27994,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-10-16-7y1o';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-10-16-sc38';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

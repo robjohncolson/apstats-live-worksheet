@@ -2,7 +2,7 @@
  * Tests for TI84ResultFormatter — verifies result screen formatting
  * against expected TI-84 Plus CE output.
  *
- * Run: npx vitest run ti84-trainer-v2/native/tests/result-formatter.test.js
+ * Run: npx vitest run apstat-park/calculator-native/tests/result-formatter.test.js
  */
 import { describe, expect, it, beforeAll } from 'vitest';
 import { readFileSync } from 'node:fs';

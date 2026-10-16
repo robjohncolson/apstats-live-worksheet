@@ -2,7 +2,7 @@
  * Tests for TI84StatMath — verifies all computation functions
  * against known TI-84 Plus CE output.
  *
- * Run: npx vitest run ti84-trainer-v2/native/tests/stat-math.test.js
+ * Run: npx vitest run apstat-park/calculator-native/tests/stat-math.test.js
  */
 import { describe, expect, it, beforeAll } from 'vitest';
 import { readFileSync } from 'node:fs';

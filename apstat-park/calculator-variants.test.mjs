@@ -5,7 +5,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
-import { nativeScriptFilenames } from '../ti84-trainer-v2/native/manifest.mjs';
+import { nativeScriptFilenames } from './calculator-native/manifest.mjs';
 import { CALCULATOR_PROBLEMS, CALCULATOR_LEVELS, eligibleLevels, challengeFor, initializeCalculator,
   answerMatches, answerTiles, createLevelRotation } from './calculator-curriculum.mjs';
 import { createMissionEngine } from './calculator-engine.mjs';
@@ -16,7 +16,7 @@ import { approachSteps } from './calculator-motion.mjs';
 
 const sandbox = { window: {}, console };
 vm.createContext(sandbox);
-for (const file of nativeScriptFilenames) vm.runInContext(readFileSync(new URL('../ti84-trainer-v2/native/' + file, import.meta.url), 'utf8'), sandbox);
+for (const file of nativeScriptFilenames) vm.runInContext(readFileSync(new URL('./calculator-native/' + file, import.meta.url), 'utf8'), sandbox);
 const create = sandbox.window.TI84Native.create;
 const fixture = name => JSON.parse(readFileSync(new URL('./fixtures/ti84/' + name, import.meta.url), 'utf8'));
 const variants = CALCULATOR_PROBLEMS.filter(level => level.interpretation);

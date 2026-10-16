@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import { DATA, ROUTE, SUMMARY, HOLD_MS, ROUND_MS, tilesFor, expectedAt, createMission, advanceMission as advance } from './calculator-mission.mjs';
 import { createCalculatorRuntime } from '../../curriculum_render/railway-server/apstat-park/calculator-runtime.mjs';
-import { nativeScriptFilenames } from '../ti84-trainer-v2/native/manifest.mjs';
+import { nativeScriptFilenames } from './calculator-native/manifest.mjs';
 import { createClassroomRegistry } from '../../curriculum_render/railway-server/classroom.js';
 import { createCalculatorService } from '../../curriculum_render/railway-server/apstat-park/calculator-service.mjs';
 import { CALCULATOR_PROTOCOL } from './calculator-lobby.mjs';
@@ -18,10 +18,10 @@ function pose(key, step = 0) {
   return { x: tile.x + 10, y: tile.y - 24 };
 }
 test('mission follows the trainer route and computes the real five-number summary', () => {
-  const procedures = JSON.parse(fs.readFileSync(new URL('../ti84-procedures-data.json', import.meta.url)));
+  const procedures = JSON.parse(fs.readFileSync(new URL('../data/ti84-procedures-data.json', import.meta.url)));
   assert.deepEqual(ROUTE, procedures.procedures.find(item => item.id === 'one-var-stats').steps.map(step => step.key));
   const sandbox = { window: {}, console }; vm.createContext(sandbox);
-  for (const file of nativeScriptFilenames) vm.runInContext(fs.readFileSync(new URL('../ti84-trainer-v2/native/' + file, import.meta.url), 'utf8'), sandbox);
+  for (const file of nativeScriptFilenames) vm.runInContext(fs.readFileSync(new URL('./calculator-native/' + file, import.meta.url), 'utf8'), sandbox);
   const calculator = sandbox.window.TI84Native.create(); calculator.setList('L1', DATA);
   for (const key of ROUTE) calculator.pressKey(key);
   assert.equal(calculator.getScreen().id, 'one-var-stats-result-page2');
@@ -34,7 +34,7 @@ test('shared relay and client mission definitions are identical', () => {
       fs.readFileSync(new URL('../../curriculum_render/railway-server/apstat-park/' + file, import.meta.url), 'utf8'));
   }
   for (const file of [...nativeScriptFilenames, 'manifest.mjs']) {
-    assert.equal(fs.readFileSync(new URL('../ti84-trainer-v2/native/' + file, import.meta.url), 'utf8'),
+    assert.equal(fs.readFileSync(new URL('./calculator-native/' + file, import.meta.url), 'utf8'),
       fs.readFileSync(new URL('../../curriculum_render/railway-server/apstat-park/calculator-native/' + file, import.meta.url), 'utf8'));
   }
 });

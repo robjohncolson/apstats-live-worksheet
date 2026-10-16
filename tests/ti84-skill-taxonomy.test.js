@@ -89,8 +89,9 @@ describe('ti84 skill taxonomy re-home (W8b)', () => {
     expect(patterns.meta.frameworkSkillsSource).toContain('skill-taxonomy-ced2026.json');
   });
 
-  it('data-templates.js is fully cleansed of Big-Idea codes', () => {
-    const templates = fs.readFileSync(path.join(root, 'ti84-trainer-v2', 'data-templates.js'), 'utf8');
-    expect(templates.match(/(UNC|VAR|DAT)-\d/g)).toBeNull();
+  // (data-templates.js retired with the trainer, ABSORB_SPEC §8; the catalogue carries no Big-Idea codes.)
+  it('the park catalogue carries no Big-Idea codes', () => {
+    const catalogue = fs.readFileSync(path.join(root, 'apstat-park', 'calculator-catalog.mjs'), 'utf8');
+    expect(catalogue.match(/"(UNC|VAR|DAT)-\d/g)).toBeNull();
   });
 });

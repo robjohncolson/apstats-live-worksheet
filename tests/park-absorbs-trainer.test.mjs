@@ -7,7 +7,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { CALCULATOR_LEVELS } from '../apstat-park/calculator-curriculum.mjs';
-import { nativeScriptFilenames } from '../ti84-trainer-v2/native/manifest.mjs';
+import { nativeScriptFilenames } from '../apstat-park/calculator-native/manifest.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const readJson = rel => JSON.parse(fs.readFileSync(path.join(ROOT, rel), 'utf8'));
@@ -39,7 +39,7 @@ describe('park catalogue covers the lesson map (spec §2.1)', () => {
 });
 
 describe('park catalogue covers the v2 procedures (spec §2.1)', () => {
-  const procedures = readJson('ti84-procedures-data.json').procedures;
+  const procedures = readJson('data/ti84-procedures-data.json').procedures;
   const retiredIds = new Set(RETIRED_PROCEDURES.map(entry => entry.id));
 
   test('every v2 procedure id is a park skillId or an explicitly retired procedure', () => {
@@ -58,8 +58,8 @@ describe('park catalogue covers the v2 procedures (spec §2.1)', () => {
   });
 });
 
-describe('relay calculator-native mirrors ti84-trainer-v2/native (spec §2.2)', () => {
-  const clientDir = path.join(ROOT, 'ti84-trainer-v2', 'native');
+describe('relay calculator-native mirrors apstat-park/calculator-native (spec §2.2; moved from ti84-trainer-v2/native in Phase 6)', () => {
+  const clientDir = path.join(ROOT, 'apstat-park', 'calculator-native');
   const relayDir = path.resolve(ROOT, '..', 'curriculum_render', 'railway-server', 'apstat-park', 'calculator-native');
   const relayPresent = fs.existsSync(relayDir);
   const expectedFiles = [...nativeScriptFilenames, 'manifest.mjs'];

@@ -66,7 +66,7 @@ export const LESSON = {
   flashcardsCsv: `${WS}/u1_l2_blooket.csv`,
   flashcardsDeckU1L1: `${WS}/u1_l1_blooket.csv`,
   flashcardsJs: `${WS}/flashcards.js`,
-  ti84: `${WS}/ti84-trainer-v2/standalone.html`,
+  ti84: `${WS}/calculator-solo.html`,
   blooketExternal: 'https://dashboard.blooket.com/set/6a08a5ec93e4e9542dfc82d6',
 };
 
@@ -117,7 +117,7 @@ export const APK_PATHS = [
   { resource: 'video_media', rel: 'media/1-2__0__1cJ3a5DSlZ0w3vta901HVyADfQ-qKVQcD.mp4' },
   { resource: 'flashcards_csv', rel: 'u1_l2_blooket.csv' },
   { resource: 'flashcards_js', rel: 'flashcards.js' },
-  { resource: 'ti84', rel: 'ti84-trainer-v2/standalone.html' },
+  { resource: 'ti84', rel: 'calculator-solo.html' },
   { resource: 'lessons_index', rel: 'lessons-index.json' },
 ];
 

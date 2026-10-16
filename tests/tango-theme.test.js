@@ -133,50 +133,5 @@ describe('Tango theme on the remaining student surfaces', () => {
     }
   });
 
-  it('pins TI-84 window chrome without recoloring the calculator hardware', () => {
-    const source = fs.readFileSync(path.join(ROOT, 'ti84-trainer-v2/style.css'), 'utf8');
-    const root = cssBlock(source, ':root');
-    const chrome = {
-      '--platinum': '#E5E3D2',
-      '--window': '#E5E3D2',
-      '--paper': '#F7F5EE',
-      '--ink': '#161616',
-      '--stripe': '#A9A79A',
-      '--bevel-light': '#F3F1E8',
-      '--bevel-mid': '#D3D1C2',
-      '--bevel-dark': '#A9A79A',
-      '--bevel-deep': '#6E6C62',
-      '--accent': '#FF5B19',
-      '--accent-soft': '#F1DDD3',
-      '--good': '#25663F',
-      '--bad': '#B03A2E',
-      '--warn': '#8A6D12'
-    };
 
-    for (const [token, value] of Object.entries(chrome)) {
-      expect(cssToken(root, token), token).toBe(value);
-    }
-
-    // These literals model real TI-84 hardware; chrome palette work must never leak into them.
-    const calculatorHardware = {
-      '--calc-body': '#4a4d52',
-      '--calc-bezel': '#f5c518',
-      '--key-2nd': '#5ba4cf',
-      '--key-alpha': '#6fbf4a',
-      '--screen-bg': '#adc699',
-      '--screen-ink': '#20321d'
-    };
-
-    for (const [token, value] of Object.entries(calculatorHardware)) {
-      expect(cssToken(root, token), token).toBe(value);
-    }
-  });
-
-  it('the trainer primary CTA is the tangerine fill with charcoal ink, not a tint', () => {
-    const css = fs.readFileSync(path.join(ROOT, 'ti84-trainer-v2', 'style.css'), 'utf8');
-    const rule = /\.mac-button\.primary \{[^}]*\}/.exec(css)[0];
-    expect(rule).toMatch(/background:\s*var\(--accent\)/);
-    expect(rule).toMatch(/color:\s*var\(--ink\)/);
-    expect(rule).not.toMatch(/var\(--accent-soft\)/);
-  });
 });

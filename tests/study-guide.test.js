@@ -653,7 +653,7 @@ describe('session 84 modal viewport overflow fix', () => {
 describe('session 83 TI-84 procedure walkthroughs', () => {
   const PROCEDURES_JS_PATH = resolve(__dirname, '../data/ti84-procedures.js');
   const MAP_JS_PATH = resolve(__dirname, '../data/formula-procedure-map.js');
-  const PROCEDURES_JSON_PATH = resolve(__dirname, '../ti84-procedures-data.json');
+  const PROCEDURES_JSON_PATH = resolve(__dirname, '../data/ti84-procedures-data.json');
 
   // Test 1
   it('loads window.TI84_PROCEDURES via data/ti84-procedures.js script tag', () => {
@@ -1094,7 +1094,7 @@ describe('session 87 audit fixes', () => {
 
 describe('session 89 two-proportion calculator walkthroughs', () => {
   const MAP_PATH = resolve(__dirname, '../data/formula-procedure-map.js');
-  const PROCEDURES_JSON_PATH = resolve(__dirname, '../ti84-procedures-data.json');
+  const PROCEDURES_JSON_PATH = resolve(__dirname, '../data/ti84-procedures-data.json');
 
   it('maps two-prop-z and two-prop-ci to dedicated TI-84 procedures', () => {
     const mapSrc = readFileSync(MAP_PATH, 'utf8');

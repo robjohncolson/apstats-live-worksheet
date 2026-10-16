@@ -12419,7 +12419,10 @@ function showResourcePanel(inf, dateStr) {
         // no gate — _isLessonComplete never reads trainer.
         if (typeof _lessonHasTrainer === 'function' && _lessonHasTrainer(_stuTopicId)) {
             var _tiScore = (typeof _trainerScoreFor === 'function') ? _trainerScoreFor(_stuTopicId) : null;
-            lessonHtml += '<div style="margin:3px 0"><a href="#" onclick="_openTi84ForTopic(\'' + _stuTopicId + '\');return false;" style="color:var(--accent-ink);text-decoration:underline">🖩 Calculator Skill</a>' + _scoreChip(_tiScore, 80) + '</div>';
+            lessonHtml += '<div style="margin:3px 0"><a href="#" onclick="_openTi84ForTopic(\'' + _stuTopicId + '\');return false;" style="color:var(--accent-ink);text-decoration:underline">🖩 Calculator Skill</a>' + _scoreChip(_tiScore, 80) + '<span class="desk-calc-due-slot"></span></div>';
+            // APSTAT_PARK_TRAINER_ABSORB_SPEC §5: "N skills due" from the relay's recall schedule
+            // (GET /park/calc/due), filled in after the panel renders; opens the park solo room.
+            setTimeout(_renderCalcDue, 0);
         }
 
         // Phase 5: AI-tutor copy button (per-lesson artifact in ai-tutor/u{U}_l{L}.md).
@@ -25201,7 +25204,8 @@ function destroyProgress() { ProgressApp.destroy(); }
 
 /* ═══ APP LAUNCHER ═══ */
 const APP_REGISTRY = {
-    ti84:     { url: 'https://robjohncolson.github.io/apstats-live-worksheet/ti84-trainer-v2/standalone.html', sfx: 'wildEep' },
+    // APSTAT_PARK_TRAINER_ABSORB_SPEC §8.2: the park's solo calculator room as a page (the trainer is retired).
+    ti84:     { url: 'calculator-solo.html', sfx: 'wildEep' },
     quiz:     { url: 'https://robjohncolson.github.io/curriculum_render/', sfx: 'wildEep' },
     // W2 / G3: Formula Lab is primary (working URL is /formula-lab.html — bare /formula-lab 404s).
     // Formula Defense deck stays Apps-menu secondary as "legacy review" until W13.
@@ -25287,7 +25291,7 @@ function _openTi84ForTopic(topic) {
     var app = APP_REGISTRY && APP_REGISTRY.ti84;
     var frame = document.getElementById('app-ti84-frame');
     if (app && frame && topic) {
-        var topicUrl = app.url + '#topic=' + topic + '&source=desk';
+        var topicUrl = app.url + '#room=calc-solo&topic=' + topic;
         try {
             var topicTarget = new URL(topicUrl, window.location.href);
             if (typeof frame.contentWindow !== 'undefined' && frame.contentWindow &&
@@ -25301,6 +25305,55 @@ function _openTi84ForTopic(topic) {
         }
     }
     if (typeof openApp === 'function') openApp('ti84');
+}
+
+// APSTAT_PARK_TRAINER_ABSORB_SPEC §5 (2026-10-16): the relay's spaced-recall schedule. The
+// resource panel's Calculator Skill row gets " · N skills due" from GET /park/calc/due on the
+// curriculum render server (the park relay); the link opens the park's solo calculator room,
+// which plays the most overdue skill first. Nothing here touches a grade.
+var _calcDueCache = { at: 0, count: null };
+function _calcDueUrl() {
+    var base = (typeof window !== 'undefined' && window.RAILWAY_SERVER_URL)
+        ? window.RAILWAY_SERVER_URL : 'https://curriculumrender-production.up.railway.app';
+    var s = (window.rosterClient && window.rosterClient.current) ? window.rosterClient.current() : null;
+    if (!s || !s.section || !s.username) return null;
+    return String(base).replace(/\/+$/, '') + '/park/calc/due?section=' + encodeURIComponent(s.section)
+        + '&username=' + encodeURIComponent(s.username);
+}
+function _renderCalcDue() {
+    var slots = document.querySelectorAll('.desk-calc-due-slot');
+    if (!slots.length) return;
+    var paint = function (count) {
+        slots.forEach(function (slot) {
+            slot.textContent = '';
+            if (!(count > 0)) return;
+            var link = document.createElement('a');
+            link.href = '#';
+            link.textContent = ' · ' + count + (count === 1 ? ' skill due' : ' skills due');
+            link.style.cssText = 'color:var(--accent-ink);text-decoration:underline;margin-left:4px';
+            link.onclick = function (e) { e.preventDefault(); _openParkSolo(''); };
+            slot.appendChild(link);
+        });
+    };
+    if (Date.now() - _calcDueCache.at < 60000 && _calcDueCache.count !== null) { paint(_calcDueCache.count); return; }
+    var url = _calcDueUrl();
+    if (!url || typeof fetch !== 'function') return;
+    fetch(url).then(function (r) { return r.ok ? r.json() : null; }).then(function (data) {
+        var count = data && data.ok ? Number(data.count || 0) : 0;
+        _calcDueCache = { at: Date.now(), count: count };
+        paint(count);
+    }).catch(function () { /* the row is fine without the count */ });
+}
+// Opens the park's solo calculator room on the calendar board: the hash is the deep link
+// (#room=calc-solo[&skill=|&topic=]), which the room reads when it mounts (or re-mounts on
+// hashchange when it is already open). link: '' (the due/rotation round), '&skill=<id>' or '&topic=<t>'.
+function _openParkSolo(link) {
+    try { window.location.hash = '#room=calc-solo' + (link || ''); } catch (_) {}
+    if (typeof closeResourcePanel === 'function') { try { closeResourcePanel(); } catch (_) {} }
+    var board = document.getElementById('classroom-board-mount');
+    if (board && typeof board.scrollIntoView === 'function') { try { board.scrollIntoView({ block: 'center' }); } catch (_) {} }
+    var handle = (typeof _classroomBoardHandle !== 'undefined') ? _classroomBoardHandle : null;
+    if (handle && typeof handle.openCalculatorMission === 'function') { try { handle.openCalculatorMission(); } catch (_) {} }
 }
 
 // TI-84 trainer deep-link (FIX_PLAN D5, Desk side): a mapped lesson links its
@@ -25319,11 +25372,11 @@ function appLaunchUrl(app, id) {
         return isTeacher ? app.url + '?teacher=1' : app.url;
     }
     if (id !== 'ti84') return app.url;
+    // ABSORB_SPEC §8.2: the park solo room. A mapped lesson pins today's topic (the park resolves
+    // it through the lesson map); otherwise the room plays the due/rotation round.
     var topic = _ti84TodayTopic();
-    if (topic) return app.url + '#topic=' + topic + '&source=desk';
-    var unit = _todayLessonInf && _todayLessonInf.u;
-    if (!unit || unit < 1 || unit > 9) return app.url;
-    return app.url + '#unit=' + unit;
+    if (topic) return app.url + '#room=calc-solo&topic=' + topic;
+    return app.url + '#room=calc-solo';
 }
 
 function openApp(id) {
@@ -27941,7 +27994,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-10-13-wrmo';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-10-16-sc38';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

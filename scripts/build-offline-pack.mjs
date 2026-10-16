@@ -50,7 +50,7 @@ const ROOT_FILES = [
   'railway_client.js', 'railway_config.js', 'roadmap-data.json', 'flashcards.js',
   'sw.js', 'pwa-register.js', 'manifest.webmanifest', 'icon.svg', 'version.json',
 ];
-const DIRS = ['lib', 'data', 'js', 'ai-tutor', 'ti84-trainer-v2'];
+const DIRS = ['lib', 'data', 'js', 'ai-tutor'];
 const WORKSHEET_RE = /^u\d+_lesson.+_live\.html$/;
 const GRADING_RE = /^ai-grading-prompts.*\.js$/;
 const BLOOKET_RE = /_blooket\.csv$/;
@@ -273,7 +273,7 @@ function main() {
     const dst = copyInto(rel);
     if (/\.html$/i.test(rel)) writeFileSync(dst, prepHtml(readFileSync(dst, 'utf8'), rel), 'utf8');
   }
-  // 3. dirs (inject into any HTML inside, e.g. ti84-trainer-v2/standalone.html)
+  // 3. dirs (inject into any HTML inside)
   for (const d of dirs) {
     copyInto(d);
     const walk = (dir) => { for (const e of readdirSync(dir, { withFileTypes: true })) {

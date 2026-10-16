@@ -2,13 +2,13 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
-import { nativeScriptFilenames } from '../ti84-trainer-v2/native/manifest.mjs';
+import { nativeScriptFilenames } from '../apstat-park/calculator-native/manifest.mjs';
 import { curriculumCoverage, firstCoveredDates } from './park-curriculum-coverage.mjs';
 import { PARK_CALCULATOR_VARIANTS, PARK_DOTPLOT_PROBLEMS } from './park-calculator-variants.mjs';
 import { closeEnough, oneVarStats, modifiedBoxplot, histogramBins, binompdf, binomcdf } from '../apstat-park/calculator-oracles.mjs';
 
 const read = path => JSON.parse(readFileSync(new URL('../' + path, import.meta.url), 'utf8'));
-const procedures = read('ti84-procedures-data.json').procedures;
+const procedures = read('data/ti84-procedures-data.json').procedures;
 const problems = read('ti84-pattern-recognition-data.json').canonicalProblems;
 const lessonMap = read('data/ti84-lesson-map.json');
 const schedule = read('data/lesson-schedule.json');
@@ -21,7 +21,7 @@ procedures.push({ ...procedures.find(procedure => procedure.id === 'histogram'),
   problems: PARK_DOTPLOT_PROBLEMS, challenge: 'dotplot' });
 const sandbox = { window: {}, console };
 vm.createContext(sandbox);
-for (const file of nativeScriptFilenames) vm.runInContext(readFileSync(new URL('../ti84-trainer-v2/native/' + file, import.meta.url), 'utf8'), sandbox);
+for (const file of nativeScriptFilenames) vm.runInContext(readFileSync(new URL('../apstat-park/calculator-native/' + file, import.meta.url), 'utf8'), sandbox);
 const keyAlias = { Y_EQUALS: 'Y=', X_INVERSE: 'x⁻¹', STO: 'STO→' };
 const numberKeys = value => [...String(value)].flatMap(char => char === '-' ? ['(−)'] : /e/i.test(char) ? ['2ND', ','] : char === '+' ? [] : [char]);
 const levels = [];

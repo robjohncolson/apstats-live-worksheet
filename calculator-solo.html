@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TI-84 Practice · APStat Park</title>
+<!--
+  APSTAT_PARK_TRAINER_ABSORB_SPEC §8.2: the park solo calculator room as its own page, the
+  Desk's `ti84` app window target (APP_REGISTRY.ti84.url) and the landing pages' "TI-84" link.
+  It mounts the same Live Classroom board the Desk mounts (classroom-board.js), so the room,
+  the relay, the keys and the recall schedule are the ones the Desk uses; the hash is the deep
+  link (#room=calc-solo[&skill=<id>|&topic=<t>]) and a bare page opens #room=calc-solo.
+  The roster session comes from localStorage like everywhere else (roster-client.js); without
+  one the page says so and links the Desk to sign in. No grades are touched here.
+-->
+<style>
+  html, body { margin: 0; background: #f3ead8; color: #30263b; font: 14px/1.4 system-ui, sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 8px 8px 24px; }
+  h1 { font-size: 16px; margin: 4px 0 8px; }
+  #classroom-board-mount:empty { aspect-ratio: 720 / 750; }
+  #classroom-board-mount { position: relative; }
+  #solo-note { font-size: 12px; color: #5a4e63; margin: 6px 0 0; }
+  #solo-note a { color: #30263b; }
+</style>
+<script src="railway_config.js"></script>
+<script src="roster_config.js"></script>
+<script src="roster-client.js"></script>
+</head>
+<body>
+<main>
+  <h1>TI-84 Practice <span style="font-weight:normal;color:#5a4e63">· APStat Park</span></h1>
+  <div id="classroom-board-mount"></div>
+  <p id="solo-note">Your own calculator round. Clear a skill to earn a key; master one to bank a bonus point.
+    <a href="ap_stats_roadmap_square_mode.html">Back to the Desk</a></p>
+</main>
+<script>
+  // The park modules are imported relative to this page (./apstat-park/...), which is why the
+  // entry lives at the repo root beside the Desk. APP_BUILD is stamped by scripts/bump-build.mjs
+  // on the Desk; this page reads version.json so it never mixes modules from two deploys.
+  (function () {
+    if (!/^#room=calc-solo/.test(location.hash)) {
+      try { history.replaceState(null, '', location.pathname + location.search + '#room=calc-solo'); } catch (_) { location.hash = '#room=calc-solo'; }
+    }
+    var note = document.getElementById('solo-note');
+    function fail(message) {
+      note.innerHTML = message + ' <a href="ap_stats_roadmap_square_mode.html">Open the Desk</a>';
+    }
+    var s = (window.rosterClient && window.rosterClient.current) ? window.rosterClient.current() : null;
+    if (!s || !s.username || !s.section) { fail('Sign in on the Desk first, then come back here.'); return; }
+    fetch('version.json?x=' + Date.now()).then(function (r) { return r.json(); }).catch(function () { return null; }).then(function (v) {
+      window.APP_BUILD = (v && v.build) || '';
+      var script = document.createElement('script');
+      script.src = 'classroom-board.js' + (window.APP_BUILD ? '?v=' + window.APP_BUILD : '');
+      script.onload = function () {
+        if (!window.ClassroomBoard) { fail('The park could not load.'); return; }
+        var wsUrl = (window.RAILWAY_SERVER_URL || 'https://curriculumrender-production.up.railway.app').replace(/^http/, 'ws');
+        window.ClassroomBoard.mount(document.getElementById('classroom-board-mount'), {
+          wsUrl: wsUrl, section: s.section, username: s.username,
+          role: s.role === 'teacher' ? 'teacher' : 'student', playable: true,
+          hue: (typeof s.spriteHue === 'number') ? s.spriteHue : null,
+          hideNameLabels: true,
+        });
+      };
+      script.onerror = function () { fail('The park could not load.'); };
+      document.head.appendChild(script);
+    });
+  })();
+</script>
+</body>
+</html>

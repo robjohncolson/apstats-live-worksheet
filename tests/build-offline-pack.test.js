@@ -99,10 +99,8 @@ describe('build (real, into a temp dir)', () => {
     expect(ws).toContain('src="offline-config.js"');
     expect(ws).toContain('src="offline-queue.js"'); // the Phase 0 wiring is present in the copy
 
-    // a nested HTML (trainer) gets the ../-prefixed config
-    if (existsSync(resolve(out, 'ti84-trainer-v2', 'standalone.html'))) {
-      expect(readFileSync(resolve(out, 'ti84-trainer-v2', 'standalone.html'), 'utf8')).toContain('src="../offline-config.js"');
-    }
+    // the retired trainer is not packed (ABSORB_SPEC §8)
+    expect(existsSync(resolve(out, 'ti84-trainer-v2'))).toBe(false);
 
     // the quiz app is bundled with OFFLINE_MODE injected + cr's offline-queue.js
     if (existsSync(resolve(out, 'quiz', 'index.html'))) {

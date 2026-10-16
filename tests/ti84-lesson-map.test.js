@@ -10,9 +10,10 @@ const root = path.resolve(__dirname, '..');
 const map = JSON.parse(fs.readFileSync(path.join(root, 'data', 'ti84-lesson-map.json'), 'utf8'));
 const schedule = JSON.parse(fs.readFileSync(path.join(root, 'data', 'lesson-schedule.json'), 'utf8'));
 
-const w = {};
-new Function('window', fs.readFileSync(path.join(root, 'ti84-trainer-v2', 'generated', 'data-procedures.js'), 'utf8'))(w);
-const procedures = new Map(Object.values(w)[0].procedures.map((p) => [p.id, p]));
+// ABSORB_SPEC §8: the park catalogue is the procedure list (skill ids = the old procedure ids).
+const { CALCULATOR_LEVELS } = await import('../apstat-park/calculator-curriculum.mjs');
+// unit: from the level's topic ('1.7' -> 1), as the trainer's procedure data carried it.
+const procedures = new Map(CALCULATOR_LEVELS.map((level) => [level.skillId, { ...level, unit: Number(String(level.topic).split('.')[0]) }]));
 
 // REMOVED-from-Fall-2026-CED procedures (W8a, student-facing-surface-
 // implementation-plan.md §W8a): geometric, chi-square GOF, slope inference.
@@ -32,7 +33,7 @@ describe('ti84-lesson-map', () => {
     }
   });
 
-  it('every mapped procedure exists in the trainer (lessons + bonus)', () => {
+  it('every mapped procedure exists in the park catalogue (lessons + bonus)', () => {
     for (const [topic, ids] of [...Object.entries(map.lessons), ...Object.entries(bonus)]) {
       for (const id of ids) {
         expect(procedures.has(id), `${topic} maps unknown procedure "${id}"`).toBe(true);

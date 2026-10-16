@@ -263,7 +263,7 @@ describe('start-here.html — Phase 4a student render', () => {
       'The Desk',
       'TI-84 Trainer',
       'ap_stats_roadmap_square_mode.html',
-      'ti84-trainer-v2/standalone.html',
+      'calculator-solo.html',
     ];
     for (const marker of existingMarkers) {
       expect(START, `existing marker "${marker}" must remain present`).toContain(marker);

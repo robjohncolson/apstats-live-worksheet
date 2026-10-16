@@ -23,7 +23,7 @@ const LESSON_MAP = JSON.parse(fs.readFileSync(
   path.resolve(__dirname, '..', 'data', 'ti84-lesson-map.json'), 'utf8',
 ));
 
-const TI84_APP = { url: 'ti84-trainer-v2/standalone.html' };
+const TI84_APP = { url: 'calculator-solo.html' };
 
 // Rebuilds the two functions around injectable globals.
 function launchUrlWith({ todayLesson, map }) {
@@ -36,22 +36,22 @@ function launchUrlWith({ todayLesson, map }) {
 describe('Desk ti84 deep link', () => {
   it('a mapped lesson links its exact skill with source=desk', () => {
     const appLaunchUrl = launchUrlWith({ todayLesson: { u: 7, t: '7.2' }, map: LESSON_MAP.lessons });
-    expect(appLaunchUrl(TI84_APP, 'ti84')).toBe('ti84-trainer-v2/standalone.html#topic=7.2&source=desk');
+    expect(appLaunchUrl(TI84_APP, 'ti84')).toBe('calculator-solo.html#room=calc-solo&topic=7.2');
   });
 
-  it('an unmapped lesson falls back to the unit filter', () => {
+  it('an unmapped lesson opens the solo room (the due or rotation round)', () => {
     const appLaunchUrl = launchUrlWith({ todayLesson: { u: 1, t: '1.1' }, map: LESSON_MAP.lessons });
-    expect(appLaunchUrl(TI84_APP, 'ti84')).toBe('ti84-trainer-v2/standalone.html#unit=1');
+    expect(appLaunchUrl(TI84_APP, 'ti84')).toBe('calculator-solo.html#room=calc-solo');
   });
 
-  it('an unloaded map (fetch failed) falls back to the unit filter', () => {
+  it('an unloaded map (fetch failed) opens the solo room', () => {
     const appLaunchUrl = launchUrlWith({ todayLesson: { u: 7, t: '7.2' }, map: null });
-    expect(appLaunchUrl(TI84_APP, 'ti84')).toBe('ti84-trainer-v2/standalone.html#unit=7');
+    expect(appLaunchUrl(TI84_APP, 'ti84')).toBe('calculator-solo.html#room=calc-solo');
   });
 
-  it('no lesson today gives the bare URL', () => {
+  it('no lesson today opens the solo room', () => {
     const appLaunchUrl = launchUrlWith({ todayLesson: null, map: LESSON_MAP.lessons });
-    expect(appLaunchUrl(TI84_APP, 'ti84')).toBe('ti84-trainer-v2/standalone.html');
+    expect(appLaunchUrl(TI84_APP, 'ti84')).toBe('calculator-solo.html#room=calc-solo');
   });
 
   it('non-ti84 apps are untouched', () => {
@@ -61,11 +61,11 @@ describe('Desk ti84 deep link', () => {
 
   it('promoted Unit 3 topics now produce a topic link', () => {
     const appLaunchUrl = launchUrlWith({ todayLesson: { u: 3, t: '3.3' }, map: LESSON_MAP.lessons });
-    expect(appLaunchUrl(TI84_APP, 'ti84')).toBe('ti84-trainer-v2/standalone.html#topic=3.3&source=desk');
+    expect(appLaunchUrl(TI84_APP, 'ti84')).toBe('calculator-solo.html#room=calc-solo&topic=3.3');
   });
 
-  it('unmapped Unit 3 topics still fall back to the unit filter', () => {
+  it('unmapped Unit 3 topics open the solo room', () => {
     const appLaunchUrl = launchUrlWith({ todayLesson: { u: 3, t: '3.1' }, map: LESSON_MAP.lessons });
-    expect(appLaunchUrl(TI84_APP, 'ti84')).toBe('ti84-trainer-v2/standalone.html#unit=3');
+    expect(appLaunchUrl(TI84_APP, 'ti84')).toBe('calculator-solo.html#room=calc-solo');
   });
 });

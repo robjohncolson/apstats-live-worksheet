@@ -94,8 +94,8 @@ describe('display-only invariants (source-level pins)', () => {
     expect(rowBlock[0]).not.toMatch(/_doneBtn/);
   });
 
-  it('the row launches via _openTi84ForTopic with a #topic deep link', () => {
+  it('the row launches via _openTi84ForTopic with a park solo #room=calc-solo&topic deep link (ABSORB_SPEC §8)', () => {
     expect(deskSrc).toMatch(/function _openTi84ForTopic\(/);
-    expect(extract('_openTi84ForTopic')).toMatch(/#topic=.*source=desk/);
+    expect(extract('_openTi84ForTopic')).toMatch(/#room=calc-solo&topic=/);
   });
 });

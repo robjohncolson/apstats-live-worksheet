@@ -11,7 +11,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
-import { nativeScriptFilenames } from '../ti84-trainer-v2/native/manifest.mjs';
+import { nativeScriptFilenames } from '../apstat-park/calculator-native/manifest.mjs';
 import { CALCULATOR_PROBLEMS } from '../apstat-park/calculator-catalog.mjs';
 import { createMissionEngine } from '../apstat-park/calculator-engine.mjs';
 import { KEYS } from '../apstat-park/calculator-mission.mjs';
@@ -19,7 +19,7 @@ import { keySublabels } from '../apstat-park/calculator-key-labels.mjs';
 
 const sandbox = { window: {}, console };
 vm.createContext(sandbox);
-for (const file of nativeScriptFilenames) vm.runInContext(readFileSync(new URL('../ti84-trainer-v2/native/' + file, import.meta.url), 'utf8'), sandbox);
+for (const file of nativeScriptFilenames) vm.runInContext(readFileSync(new URL('../apstat-park/calculator-native/' + file, import.meta.url), 'utf8'), sandbox);
 const create = sandbox.window.TI84Native.create;
 const keys = KEYS.map(tile => tile.key);
 const DIGITS = new Set(['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']);

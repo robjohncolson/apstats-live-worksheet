@@ -9,7 +9,7 @@
 
 | ID | Menu Label | Title Bar Text | iframe URL | Emoji |
 |----|-----------|----------------|------------|-------|
-| `ti84` | TI-84 Trainer | TI-84 Trainer | `https://robjohncolson.github.io/apstats-live-worksheet/ti84-trainer-v2/standalone.html` | 🔢 |
+| `ti84` | TI-84 Trainer | TI-84 Trainer | `calculator-solo.html` (APStat Park solo calculator room; the v2 trainer was retired 2026-10-16, ABSORB_SPEC §8) | 🔢 |
 | `quiz` | AP Stats Quiz | AP Stats Quiz | `https://robjohncolson.github.io/curriculum_render/` | 📝 |
 | `formulas` | Equation Trainer | Equation Trainer | `https://tmux-trainer.vercel.app/#deck=ap-stats-formulas` | ⚡ |
 
@@ -130,7 +130,7 @@ Add these functions in the `<script>` block. Place them near the existing `openG
 ```javascript
 /* ═══ APP LAUNCHER ═══ */
 const APP_REGISTRY = {
-    ti84:     { url: 'https://robjohncolson.github.io/apstats-live-worksheet/ti84-trainer-v2/standalone.html', sfx: 'wildEep' },
+    ti84:     { url: 'calculator-solo.html', sfx: 'wildEep' },
     quiz:     { url: 'https://robjohncolson.github.io/curriculum_render/', sfx: 'wildEep' },
     formulas: { url: 'https://tmux-trainer.vercel.app/#deck=ap-stats-formulas', sfx: 'wildEep' }
 };

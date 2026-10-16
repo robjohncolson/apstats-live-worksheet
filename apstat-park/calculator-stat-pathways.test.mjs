@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
-import { nativeScriptFilenames } from '../ti84-trainer-v2/native/manifest.mjs';
+import { nativeScriptFilenames } from './calculator-native/manifest.mjs';
 import { createWorldDisplay } from './calculator-display.mjs';
 import { createMissionEngine } from './calculator-engine.mjs';
 import { DATA, ROUTE, KEYS } from './calculator-mission.mjs';
@@ -10,10 +10,10 @@ import { DATA, ROUTE, KEYS } from './calculator-mission.mjs';
 const sandbox = { window: {}, console };
 vm.createContext(sandbox);
 for (const file of nativeScriptFilenames) {
-  vm.runInContext(fs.readFileSync(new URL('../ti84-trainer-v2/native/' + file, import.meta.url), 'utf8'), sandbox);
+  vm.runInContext(fs.readFileSync(new URL('./calculator-native/' + file, import.meta.url), 'utf8'), sandbox);
 }
 const { TI84Native, TI84MenuNav, TI84MenuTables } = sandbox.window;
-const contract = JSON.parse(fs.readFileSync(new URL('../ti84-trainer-v2/native/stat-rom-contract.json', import.meta.url)));
+const contract = JSON.parse(fs.readFileSync(new URL('./calculator-native/stat-rom-contract.json', import.meta.url)));
 const menuIds = ['stat-menu', 'stat-calc-menu', 'stat-tests-menu'];
 const prefixes = '1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 

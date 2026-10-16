@@ -2,13 +2,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import { readFileSync } from 'node:fs';
-import { nativeScriptFilenames } from '../ti84-trainer-v2/native/manifest.mjs';
+import { nativeScriptFilenames } from './calculator-native/manifest.mjs';
 import { keyboardLayer, keyLabel, keySublabels, keyInstruction } from './calculator-key-labels.mjs';
 
 test('key names follow engine modifiers and return after the physical key is pressed', () => {
   const sandbox = { window: {}, console };
   vm.createContext(sandbox);
-  for (const file of nativeScriptFilenames) vm.runInContext(readFileSync(new URL('../ti84-trainer-v2/native/' + file, import.meta.url), 'utf8'), sandbox);
+  for (const file of nativeScriptFilenames) vm.runInContext(readFileSync(new URL('./calculator-native/' + file, import.meta.url), 'utf8'), sandbox);
   const renderer = Object.fromEntries(['Home', 'Menu', 'Wizard', 'Result', 'Editor', 'Graph']
     .map(name => ['render' + name, () => {}]));
   const calculator = sandbox.window.TI84Native.create(null, { renderer });

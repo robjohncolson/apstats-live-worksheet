@@ -55,6 +55,27 @@ all 48 transitions and wraparound, retry, reconnect, and membership. These are
 integration checks, not proof that every puzzle has been manually completed or
 that the recovered engine has exact native-game parity.
 
+## The trainer is retired (ABSORB_SPEC §8, 2026-10-16)
+
+APStat Park is the only calculator surface. `calculator-solo.html` (repo root, beside the Desk,
+because the board imports `./apstat-park/...` relative to the page) mounts the same Live
+Classroom board the Desk mounts and opens `#room=calc-solo`; the Desk's `ti84` app window and
+chip, the resource panel's Calculator Skill row, `index.html` and `start-here.html` all point
+there, and every worksheet's "Practice on the TI-84" link was rewired by
+`scripts/wire-park-calculator-links.mjs` (pattern-guarded, idempotent, dry-run default) to
+`ap_stats_roadmap_square_mode.html#room=calc-solo&topic=<t>` (the park resolves the topic through
+`data/ti84-lesson-map.json`). The native JavaScript engine moved from `ti84-trainer-v2/native/`
+to `apstat-park/calculator-native/` (the relay's byte-identical copy is unchanged;
+`scripts/sync-park-calculator.mjs` keeps it so); the WebCEmu ROM harness (`wasm/`, `bridge.js`,
+`CEMU_BUILD.md`) moved to `tools/ti84-rom/` as a teacher/dev verification tool;
+`ti84-procedures-data.json` moved to `data/` because `scripts/build-park-curriculum.mjs` still
+generates the catalogue from it. `ti84-plot.js` keeps its plain-script copy of the screen renderer
+(the Live Classroom loads it without a module loader). Deleted, living on in git history: the v1
+and v2 trainers, the QA harness, the state machine, the 16 TI84_* specs, the ti84-*-spec.md files,
+the three codex-ti84 prompts and the trainer-internal tests. Tests:
+`tests/park-calculator-links.test.js`, `tests/calculator-solo-entry.test.js`,
+`tests/desk-ti84-skill-link.test.js`.
+
 ## Calculator handheld check (ABSORB_SPEC §7, protocol 16)
 
 The v2 trainer's "type the result from your real calculator" verification, without the
@@ -295,7 +316,7 @@ the verified scope.
 
 The production calculator is ordinary JavaScript. ROM analysis supplies evidence
 for translating its behavior; the room and relay do not load or execute a ROM.
-The first static contract is `ti84-trainer-v2/native/stat-rom-contract.json`.
+The first static contract is `apstat-park/calculator-native/stat-rom-contract.json`.
 Regenerate it in the sibling `ti84-transpile` repo with
 `node TI-84_Plus_CE/semantic/extract-stat-menu.mjs`, or verify the saved artifact
 with `--check`. The extractor reads the local ROM and SDK definitions, decodes in
@@ -429,7 +450,7 @@ keyboard block travel with production section names; `PARK_SECTION` selects
 activity without bypassing eligibility. `calculator-browser-smoke.mjs` separately exercises real team
 block travel, timer failures, checkpoints, and door navigation. Relay
 `calculator-rotation.test.mjs` checks date gating and shared round lifecycle.
-Run native tests from `ti84-trainer-v2/native` with
+Run native tests from `apstat-park/calculator-native` with
 `../../node_modules/.bin/vitest.cmd run --config vitest.config.js`.
 
 Pico goal completion fades the scene objects toward white while preserving the
