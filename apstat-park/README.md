@@ -55,6 +55,27 @@ all 48 transitions and wraparound, retry, reconnect, and membership. These are
 integration checks, not proof that every puzzle has been manually completed or
 that the recovered engine has exact native-game parity.
 
+## Calculator Recall (spaced repetition, protocol 15)
+
+The v2 trainer's SM-2 schedule, ported to the relay so it follows the student
+(APSTAT_PARK_TRAINER_ABSORB_SPEC §5). `calculator-srs.mjs` (shared) holds the pure port: the
+numbers are cited from `ti84-trainer-v2/app.js` lines 3115-3140 (interval 1, 6, then
+round(interval x ease); below quality 3 back to 1; ease floor 1.3). The quality of a round is
+5, minus one per wrong key beyond the first, minus one for a time-up restart, minus one for a
+wrong recognition pick (floor 0); `wrongKeys` and `timeoutCount` ride in `calculator_state`
+and survive a restart. On every completed round the relay advances each member's record
+(`calculator-srs-state.mjs`, memory-first; `park_calc_srs`, migration cr 0009, teacher-run,
+zero RLS policies; memory-only while the table is missing) and the packet carries `review`
+(quality, interval, next review, mastered), which the clear celebration shows. `mastered`
+flips on the first solo clear at hint rung 2 with quality >= 4 (the handheld check is the
+other way in); the relay's `onMastery` hook fires once per student and skill (Phase 4 pays the
+bonus point there). `GET /park/calc/due?section&username&skills=` (relay) lists the due skills
+most overdue first, then today's skills the Desk passes from its lesson map; the Desk's
+resource panel shows "N skills due" on the Calculator Skill row and opens the solo room, and
+a solo join with no skill plays the most overdue due skill before the rotation. Tests:
+`calculator-srs.test.mjs` (relay: acceptance cases, fast-check property, state/store,
+service), `calculator-srs.test.mjs` (client mirror), `tests/desk-calc-due.test.js`.
+
 ## Calculator Recognition (protocol 14)
 
 Before the route, a round can open with the v2 trainer's "which procedure?" step

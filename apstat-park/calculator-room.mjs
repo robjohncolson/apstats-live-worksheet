@@ -312,6 +312,19 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     }
     return RUNG_SPEECH[hintRung()];
   }
+  // Protocol 15 (ABSORB_SPEC §5): the relay's recall review of a completed round, for the status line.
+  function reviewNote() {
+    const review = state?.review;
+    if (!review || !review.nextReview) return '';
+    const days = review.intervalDays;
+    return (review.masteredNow ? ' Mastered!' : '') + ' Quality ' + review.quality + ' of 5. Review again in ' + days + (days === 1 ? ' day.' : ' days.');
+  }
+  // One drawn line under the celebration: MASTERED / NEXT REVIEW IN n DAYS.
+  function reviewLine() {
+    const review = state?.review;
+    if (!review || !review.nextReview) return null;
+    return (review.masteredNow ? 'MASTERED · ' : '') + 'NEXT REVIEW IN ' + review.intervalDays + (review.intervalDays === 1 ? ' DAY' : ' DAYS');
+  }
   function wrongKeyText(press) {
     return press.penaltyMs > 0 ? 'WRONG KEY · -' + press.penaltyMs / 1000 + 'S · CLEAR BACKS OUT' : 'WRONG KEY · CLEAR BACKS OUT';
   }
@@ -549,8 +562,8 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     const text = state.failure ? (state.step >= level.route.length
       ? 'Time is up. Returning to your result checkpoint with a fresh timer.'
       : 'Time is up. Restarting the calculator portion.')
-      : state.complete ? (solo ? 'Cleared! ' + level.title + ' complete. Walk to the door for the next round.'
-        : 'Together! ' + level.title + ' complete. +1 key for everyone on the team.')
+      : state.complete ? (solo ? 'Cleared! ' + level.title + ' complete.' + reviewNote() + ' Walk to the door for the next round.'
+        : 'Together! ' + level.title + ' complete. +1 key for everyone on the team.' + reviewNote())
       : state.solved ? hint + ' ' + state.readyCount + '/' + state.teamSize + ' ready.'
       : recognizing() ? hint
       : pickNote + modeNote + 'Step ' + (state.step + 1) + '/' + (level.route.length + challenge.answers.length)
@@ -900,13 +913,20 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   // the gold counts above every cat come from the relay's own key counts.
   function drawKeyReward(ctx, atlas) {
     // ABSORB_SPEC §6 (Phase 4) pays the solo clear its key; until then the clear itself is the prize.
-    if (solo) { text(ctx, 'SKILL CLEARED · NEXT ROUND AT THE DOOR', 350, 272, 12, KEY_GOLD); return; }
+    if (solo) {
+      text(ctx, 'SKILL CLEARED · NEXT ROUND AT THE DOOR', 350, 272, 12, KEY_GOLD);
+      const line = reviewLine();
+      if (line) text(ctx, line, 350, 286, 7, KEY_GOLD);
+      return;
+    }
     const key = ATLAS.key;
     // Row 269 holds hold/retry messages, which never show once the team is complete.
     if (atlas && key) ctx.drawImage(atlas, key.x, key.y, key.w, key.h, 350, 258, key.w, key.h);
     text(ctx, '+1 KEY FOR EVERY TEAMMATE', 350 + (atlas && key ? key.w + 8 : 0), 272, 12, KEY_GOLD);
     const age = rewardShownAt == null ? Infinity : (performance.now() - rewardShownAt) / 1000;
     if (age < 3) text(ctx, '+1', player.x - ENTRY_WIDTH + 10, player.y - 36 - age * 12, 14, KEY_GOLD, 'center');
+    const line = reviewLine();
+    if (line) text(ctx, line, 350, 286, 7, KEY_GOLD);
   }
   // The pushable team block with its live pusher count (team room only).
   function drawTeamBlock(ctx, atlas) {
@@ -1034,6 +1054,8 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
       // §4: the round's recognition step (null without one): stem, options, picked, correct, message.
       recognition: state?.recognition ? { ...state.recognition } : null,
       recognitionRoom: !!lobby?.recognition,
+      // §5: the relay's recall review once the round completed (quality, interval, next review, mastered).
+      review: state?.review ? { ...state.review } : null,
     };
   }
   // The plan, my steps, and the window drawn now (null once the card is gone: complete or failed).
