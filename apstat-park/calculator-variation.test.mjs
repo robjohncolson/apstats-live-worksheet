@@ -32,7 +32,7 @@ const drawOf = level => level.finalView.at(-1).replace(/[{}]/g, '').split(' ').m
 const digits = value => String(value).length;
 
 test('protocol 15: the round packet carries the templated route (11), the solo mode (12), the waiting reset (13), the recognition step (14)', () => {
-  assert.equal(CALCULATOR_PROTOCOL, 15);
+  assert.equal(CALCULATOR_PROTOCOL, 16);
 });
 
 test('the catalogue has the five randIntNoRep problems, all varied', () => {

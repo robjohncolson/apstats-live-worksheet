@@ -55,6 +55,22 @@ all 48 transitions and wraparound, retry, reconnect, and membership. These are
 integration checks, not proof that every puzzle has been manually completed or
 that the recovered engine has exact native-game parity.
 
+## Calculator handheld check (ABSORB_SPEC §7, protocol 16)
+
+The v2 trainer's "type the result from your real calculator" verification, without the
+emulator. After a solo clear the relay offers the round's headline value (the challenge's
+first numeric answer with its label: Minimum, z statistic, Lower bound, Probability...) as
+`calculator_state.handheld { label, attempts, status }`; the expected value never leaves the
+relay. The room shows one small box ("On your real TI-84, same data: <label> = ?"); Enter
+sends `calculator_handheld { value }`. `calculator-handheld.mjs` (shared) ports the trainer's
+tolerance exactly from `ti84-trainer-v2/app.js` lines 1024-1066 (any rounding or truncation at
+the typed decimals, whole numbers only for |x| >= 1, backstop 0.5% / 0.0005; `native/stat-math.js`
+has no tolerance of its own). Pass: the skill is mastered (§5), which pays the solo door's bonus
+point on the first mastery (§6). Miss: one retry, then the check closes and nothing is
+recorded. Not offered in team rounds, nor once the skill is already mastered. Where the
+trainer and the hardware differ, the goal phrases already say "real CE: ENTER again"
+(`CALCULATOR_GOALS_REVIEW.md`). Tests: `calculator-handheld.test.mjs` on both sides.
+
 ## Calculator rewards: keys and the solo door's bonus point (ABSORB_SPEC §6)
 
 Two rewards on rails that already exist; nothing touches a grade. **Keys:** a solo clear pays

@@ -153,6 +153,40 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   readings.setAttribute('aria-label', 'Calculator result');
   readings.style.cssText = screenReaderOnly;
   container.append(readings);
+  // §7 (protocol 16): the handheld check's one visible control, shown after a solo clear while
+  // the relay offers it (state.handheld.status null). Enter sends calculator_handheld.
+  const handheld = doc.createElement('form');
+  handheld.dataset.calculatorHandheld = '';
+  handheld.style.cssText = 'display:none;position:absolute;right:12px;bottom:64px;z-index:3;background:#f3ead8;border:2px solid #30263b;padding:6px 8px;font:12px system-ui;color:#30263b;box-shadow:2px 2px 0 #30263b';
+  const handheldLabel = doc.createElement('label');
+  handheldLabel.style.cssText = 'display:block;margin-bottom:4px';
+  const handheldInput = doc.createElement('input');
+  handheldInput.type = 'text'; handheldInput.inputMode = 'decimal'; handheldInput.autocomplete = 'off';
+  handheldInput.setAttribute('aria-label', 'Result from your real TI-84');
+  handheldInput.style.cssText = 'width:110px;font:13px monospace;padding:2px 4px;border:1px solid #30263b';
+  const handheldButton = doc.createElement('button');
+  handheldButton.type = 'submit'; handheldButton.textContent = 'Check';
+  handheldButton.style.cssText = 'margin-left:6px;font:12px system-ui;padding:2px 8px;cursor:pointer';
+  handheld.append(handheldLabel, handheldInput, handheldButton);
+  container.append(handheld);
+  const containerPosition = container.style.position;
+  if (win.getComputedStyle(container).position === 'static') container.style.position = 'relative';
+  handheld.addEventListener('submit', event => {
+    event.preventDefault();
+    const value = handheldInput.value.trim();
+    if (!value || !state?.complete || !state.handheld || state.handheld.status) return;
+    send('calculator_handheld', { value, epoch: state.epoch, revision: state.revision });
+    handheldInput.value = '';
+  });
+  let handheldShownFor = null;
+  function updateHandheld() {
+    const offered = solo && state?.complete && state.handheld && !state.handheld.status;
+    handheld.style.display = offered ? 'block' : 'none';
+    if (!offered) { handheldShownFor = null; return; }
+    handheldLabel.textContent = 'On your real TI-84, same data: ' + state.handheld.label + ' = ?';
+    const key = state.epoch + ':' + state.handheld.attempts;
+    if (handheldShownFor !== key) { handheldShownFor = key; handheldInput.value = ''; }
+  }
   container.setAttribute('data-calculator-active', '');
 
   const terrain = () => [
@@ -319,6 +353,21 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     const days = review.intervalDays;
     return (review.masteredNow ? ' Mastered! One bonus point banked.' : '') + ' Quality ' + review.quality + ' of 5. Review again in ' + days + (days === 1 ? ' day.' : ' days.');
   }
+  // §7: the handheld check's status copy and drawn line.
+  function handheldNote() {
+    const check = state?.handheld;
+    if (!check) return '';
+    if (check.status === 'passed') return ' Handheld check passed.';
+    if (check.status === 'failed') return ' Handheld check closed after two tries; nothing recorded.';
+    return (check.attempts ? ' Not a match; one more try.' : '') + ' Optional: enter the same data on your real TI-84 and type ' + check.label + ' in the box.';
+  }
+  function handheldLine() {
+    const check = state?.handheld;
+    if (!check) return null;
+    if (check.status === 'passed') return 'HANDHELD CHECK PASSED';
+    if (check.status === 'failed') return 'HANDHELD CHECK CLOSED';
+    return (check.attempts ? 'NOT A MATCH · ONE MORE TRY · ' : 'REAL TI-84? ') + 'TYPE ' + check.label.toUpperCase() + ' IN THE BOX';
+  }
   // One drawn line under the celebration: MASTERED / NEXT REVIEW IN n DAYS.
   function reviewLine() {
     const review = state?.review;
@@ -415,6 +464,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   // Forgets the round: a team reset back to gathering, or a solo 'waiting' answer.
   function clearRound() {
     state = null; peers.clear(); epoch = null; applied = 0; lastRevision = -1; computedSummary = null;
+    handheld.style.display = 'none';
     wrongStep = null; wrongPress = null; announcedMode = null; rewardShownAt = null;
     keyQueue.length = 0; pendingPress = null;
     // Back to the catalogue level: the last round's random data must not leak into the next preview.
@@ -527,7 +577,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
       // Standing on a repeated key needs a fresh choice; clicks are queued.
     }
     if (state && packet.boxAttempts !== state.boxAttempts) { keyQueue.length = 0; pendingPress = null; }
-    lastRevision = packet.revision; state = packet; updateNavigatorList();
+    lastRevision = packet.revision; state = packet; updateNavigatorList(); updateHandheld();
     if (pendingPress && packet.revision > pendingPress.revision) pendingPress = null;
     if (state.solved) { keyQueue.length = 0; pendingPress = null; }
     flushPress();
@@ -562,7 +612,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     const text = state.failure ? (state.step >= level.route.length
       ? 'Time is up. Returning to your result checkpoint with a fresh timer.'
       : 'Time is up. Restarting the calculator portion.')
-      : state.complete ? (solo ? 'Cleared! ' + level.title + ' complete. +1 key.' + reviewNote() + ' Walk to the door for the next round.'
+      : state.complete ? (solo ? 'Cleared! ' + level.title + ' complete. +1 key.' + reviewNote() + handheldNote() + ' Walk to the door for the next round.'
         : 'Together! ' + level.title + ' complete. +1 key for everyone on the team.' + reviewNote())
       : state.solved ? hint + ' ' + state.readyCount + '/' + state.teamSize + ' ready.'
       : recognizing() ? hint
@@ -923,6 +973,8 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     if (age < 3) text(ctx, '+1', player.x - ENTRY_WIDTH + 10, player.y - 36 - age * 12, 14, KEY_GOLD, 'center');
     const line = reviewLine();
     if (line) text(ctx, line, 350, 286, 7, KEY_GOLD);
+    const check = handheldLine();
+    if (check) text(ctx, check, 350, 297, 7, ink);
   }
   // The pushable team block with its live pusher count (team room only).
   function drawTeamBlock(ctx, atlas) {
@@ -1052,6 +1104,8 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
       recognitionRoom: !!lobby?.recognition,
       // §5: the relay's recall review once the round completed (quality, interval, next review, mastered).
       review: state?.review ? { ...state.review } : null,
+      // §7: the handheld check offered after a solo clear ({ label, attempts, status }), else null.
+      handheld: state?.handheld ? { ...state.handheld } : null,
     };
   }
   // The plan, my steps, and the window drawn now (null once the card is gone: complete or failed).
@@ -1074,7 +1128,8 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     doc.removeEventListener('keydown', key); doc.removeEventListener('keyup', key);
     input.run = false;
     doc.removeEventListener('visibilitychange', visibility);
-    controls.remove(); readings.remove(); container.removeAttribute('data-calculator-active');
+    controls.remove(); readings.remove(); handheld.remove(); container.style.position = containerPosition;
+    container.removeAttribute('data-calculator-active');
     container.removeAttribute('data-calculator-participating');
     if (engine.sceneEntities === entities) engine.sceneEntities = null;
     Object.assign(api._camera, savedCamera); onClose();
