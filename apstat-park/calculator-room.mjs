@@ -317,13 +317,13 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     const review = state?.review;
     if (!review || !review.nextReview) return '';
     const days = review.intervalDays;
-    return (review.masteredNow ? ' Mastered!' : '') + ' Quality ' + review.quality + ' of 5. Review again in ' + days + (days === 1 ? ' day.' : ' days.');
+    return (review.masteredNow ? ' Mastered! One bonus point banked.' : '') + ' Quality ' + review.quality + ' of 5. Review again in ' + days + (days === 1 ? ' day.' : ' days.');
   }
   // One drawn line under the celebration: MASTERED / NEXT REVIEW IN n DAYS.
   function reviewLine() {
     const review = state?.review;
     if (!review || !review.nextReview) return null;
-    return (review.masteredNow ? 'MASTERED · ' : '') + 'NEXT REVIEW IN ' + review.intervalDays + (review.intervalDays === 1 ? ' DAY' : ' DAYS');
+    return (review.masteredNow ? 'MASTERED · +1 BONUS POINT BANKED · ' : '') + 'NEXT REVIEW IN ' + review.intervalDays + (review.intervalDays === 1 ? ' DAY' : ' DAYS');
   }
   function wrongKeyText(press) {
     return press.penaltyMs > 0 ? 'WRONG KEY · -' + press.penaltyMs / 1000 + 'S · CLEAR BACKS OUT' : 'WRONG KEY · CLEAR BACKS OUT';
@@ -562,7 +562,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     const text = state.failure ? (state.step >= level.route.length
       ? 'Time is up. Returning to your result checkpoint with a fresh timer.'
       : 'Time is up. Restarting the calculator portion.')
-      : state.complete ? (solo ? 'Cleared! ' + level.title + ' complete.' + reviewNote() + ' Walk to the door for the next round.'
+      : state.complete ? (solo ? 'Cleared! ' + level.title + ' complete. +1 key.' + reviewNote() + ' Walk to the door for the next round.'
         : 'Together! ' + level.title + ' complete. +1 key for everyone on the team.' + reviewNote())
       : state.solved ? hint + ' ' + state.readyCount + '/' + state.teamSize + ' ready.'
       : recognizing() ? hint
@@ -721,6 +721,8 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
       text(paint, 'ARROWS MOVE . UP ENTERS DOORS', 85, 545, 14);
       text(paint, 'HOLD SHIFT TO RUN', 85, 573, 14);
       text(paint, solo ? 'NEW DATA EVERY ROUND' : 'THE PUSHERS BECOME YOUR TEAM', 85, 604, 14);
+      // ABSORB_SPEC §6: the solo door is where the bonus is explained, in one line.
+      if (solo) text(paint, 'MASTER A SKILL HERE - BANK ONE BONUS POINT', 85, 632, 14);
       if (atlas) paint.drawImage(atlas, unlocked ? 96 : 48, 0, 48, 48, 30, WORLD.floor - 40, 40, 40);
       else { paint.fillStyle = '#493d48'; paint.fillRect(30, WORLD.floor - 40, 40, 40); }
       text(paint, 'PICO PARK', 24, WORLD.floor - 70, 14);
@@ -912,17 +914,11 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   // relay decides completion (state.complete), so the celebration never runs on a local guess;
   // the gold counts above every cat come from the relay's own key counts.
   function drawKeyReward(ctx, atlas) {
-    // ABSORB_SPEC §6 (Phase 4) pays the solo clear its key; until then the clear itself is the prize.
-    if (solo) {
-      text(ctx, 'SKILL CLEARED · NEXT ROUND AT THE DOOR', 350, 272, 12, KEY_GOLD);
-      const line = reviewLine();
-      if (line) text(ctx, line, 350, 286, 7, KEY_GOLD);
-      return;
-    }
+    // ABSORB_SPEC §6 (Phase 4): a solo clear pays its key through the same wallet path as a team clear.
     const key = ATLAS.key;
     // Row 269 holds hold/retry messages, which never show once the team is complete.
     if (atlas && key) ctx.drawImage(atlas, key.x, key.y, key.w, key.h, 350, 258, key.w, key.h);
-    text(ctx, '+1 KEY FOR EVERY TEAMMATE', 350 + (atlas && key ? key.w + 8 : 0), 272, 12, KEY_GOLD);
+    text(ctx, solo ? '+1 KEY · NEXT ROUND AT THE DOOR' : '+1 KEY FOR EVERY TEAMMATE', 350 + (atlas && key ? key.w + 8 : 0), 272, 12, KEY_GOLD);
     const age = rewardShownAt == null ? Infinity : (performance.now() - rewardShownAt) / 1000;
     if (age < 3) text(ctx, '+1', player.x - ENTRY_WIDTH + 10, player.y - 36 - age * 12, 14, KEY_GOLD, 'center');
     const line = reviewLine();

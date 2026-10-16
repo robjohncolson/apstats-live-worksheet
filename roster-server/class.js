@@ -9,7 +9,7 @@
 // Pure compute is REUSED via computeGrade / computeMastery from grade.js +
 // mastery.js — single source of truth, Phase-3 tests pin the math. READ-ONLY.
 
-import { PHASE3_CONFIG, TEACHER_DIAGNOSTIC_CONFIG } from './grade-config.js';
+import { PHASE3_CONFIG, TEACHER_DIAGNOSTIC_CONFIG, quarterOfDate } from './grade-config.js';
 import { answerKeyMapOrNull, skillMapValidOrNull, blooketScore, stableLedgerSort } from './scoring.js';
 import { computeGrade } from './grade.js';
 import { computeMastery } from './mastery.js';
@@ -547,6 +547,16 @@ export function mountClass(app, {
   }
 
   // Banked bonus is Work-track only; these routes never add points to PC.
+  // APSTAT_PARK_TRAINER_ABSORB_SPEC §6: which quarter is open today (New York). The park relay asks
+  // this before banking a calculator mastery bonus point instead of computing dates itself.
+  // Outside every quarter window (summer, breaks) the answer falls back to Q1 with open: false.
+  app.get('/class/quarter/current', async (req, res) => {
+    if (!await requireTeacher(req, db)) return res.status(401).json({ ok: false, error: 'forbidden' });
+    const asOf = todayInTz('America/New_York');
+    const quarter = quarterOfDate(asOf, config?.quarters ? config : PHASE3_CONFIG);
+    return res.json({ ok: true, quarter: quarter || 'Q1', asOf, open: !!quarter });
+  });
+
   app.post('/class/bonus', async (req, res) => {
     if (!await requireTeacher(req, db)) return res.status(401).json({ ok: false, error: 'forbidden' });
     const { sheetId, title, section, entries } = req.body || {};

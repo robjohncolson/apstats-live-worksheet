@@ -152,7 +152,8 @@ test('solo copy never mentions a team: status, celebration, and the drawn frame'
   room.deliver(state('e1', 'alice', { revision: 2, step: LEVEL.route.length, keys: LEVEL.route, solved: true, complete: true, readyCount: 1, clears: 1, rung: 1 }));
   assert.match(room.status(), /^Cleared! /);
   assert.match(room.status(), /Walk to the door for the next round\./);
-  assert.doesNotMatch(room.status(), /key|team/i, 'Phase 1 pays no key and names no team');
+  assert.match(room.status(), /\+1 key\./, 'Phase 4: a solo clear pays its key');
+  assert.doesNotMatch(room.status(), /team/i, 'names no team');
   assert.equal(room.panel.getView().keyReward, true, 'the same clear celebration');
   assert.ok(room.panel.getView().resetDoor, 'the next-round door opens');
   room.draw();

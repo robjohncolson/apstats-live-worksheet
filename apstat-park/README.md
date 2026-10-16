@@ -55,6 +55,26 @@ all 48 transitions and wraparound, retry, reconnect, and membership. These are
 integration checks, not proof that every puzzle has been manually completed or
 that the recovered engine has exact native-game parity.
 
+## Calculator rewards: keys and the solo door's bonus point (ABSORB_SPEC §6)
+
+Two rewards on rails that already exist; nothing touches a grade. **Keys:** a solo clear pays
++1 campaign key through the same wallet path as a team clear (`awardKeys`, once per round
+epoch). **The solo door:** the scenery says it in one line ("MASTER A SKILL HERE - BANK ONE
+BONUS POINT"). On the round that flips a skill to `mastered` (§5), the relay's `onMastery`
+hook runs `calculator-bonus.mjs`: it asks roster-server which quarter is open
+(`GET /class/quarter/current`, a new teacher route in `roster-server/class.js`) and posts
+`POST /class/bonus` with `sheetId 'TI84-<skillId>'`, `title 'Calculator: <skill title>'`,
+one entry `{ username, grade: 'I' }` (1 point). The ledger row upserts at attempt 1, so a
+repeat is a no-op: one point per skill per student, forever. Auth is roster-server's teacher
+key in `x-teacher-secret`, held by the relay as `ROSTER_TEACHER_KEY` (`.env.example`, the
+teacher-switch wizard's relay schema). One retry, then a log line; the celebration is never
+blocked, `park_calc_srs.mastered` stays true, and the teacher-run
+`railway-server/scripts/park-bonus-sweep.mjs` (dry-run by default, `--apply` to post)
+re-posts any mastered skill still missing its row. The Desk's bonus-bank card lists it like
+any other banked sheet. Team rounds pay keys only. Tests: `calculator-bonus.test.mjs` (relay:
+the roster mock, one retry, the acceptance case: mastering one-var-stats banks one row and a
+second clear changes neither), `roster-server/tests/class-quarter-current.test.js`.
+
 ## Calculator Recall (spaced repetition, protocol 15)
 
 The v2 trainer's SM-2 schedule, ported to the relay so it follows the student
