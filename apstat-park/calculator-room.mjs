@@ -1,6 +1,7 @@
 const V = new URL(import.meta.url).search;
 const mission = await import('./calculator-mission.mjs' + V);
-const { HOLD_MS, timeLimitFor, WORLD, tilesFor, tileAt, missionFor } = mission;
+const { HOLD_MS, timeLimitFor, WORLD, tilesFor, tileAt, missionFor, recognitionPending } = mission;
+const { skillTitle } = await import('./calculator-recognition.mjs' + V);
 const { goalFor } = await import('./calculator-goals.mjs' + V);
 const { DEFAULT_LEVEL, levelById, challengeFor, initializeCalculator } = await import('./calculator-curriculum.mjs' + V);
 const { drawChallenge } = await import('./calculator-challenge-view.mjs' + V);
@@ -162,7 +163,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     // A dense physical keypad must not trap cats underneath a row of keys.
     // Answer tiles stay climbable too (two floor ledges, then rows <= 34px apart), so a
     // team can stand on a choice; clicking or a number key works just as well.
-    ...[...approachSteps(answering()), ...tilesFor(state?.step || 0, level)]
+    ...[...approachSteps(answering()), ...tiles()]
       .filter(tile => player.vy >= 0 && player.y + 24 <= tile.y + 1)
       .map(tile => ({ ...tile, x: tile.x + ENTRY_WIDTH, h: 8 })),
   ];
@@ -181,6 +182,10 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   Object.assign(api._camera, { enabled: false, x: 0 });
   function scale() { return Math.min(1, board.viewportW() / WORLD.width); }
   function answering(step = state?.step || 0) { return step >= level.route.length; }
+  // The round's tiles now: the four procedure tiles while the word problem is open (protocol 14),
+  // else the keypad or the answer choices.
+  function tiles() { return tilesFor(state?.step || 0, level, state?.recognition); }
+  function recognizing() { return recognitionPending(state); }
   // A new local calculator loaded with the current level's lists (a varied round's own data).
   // problem: the round's state.problem (null = the catalogue's data). Callers reset `applied`.
   function freshCalculator(problem) {
@@ -366,6 +371,12 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   function choose(tile) {
     if (!participating || !state || state.solved || state.failure || !connected()) return;
     for (const key in input) input[key] = false;
+    if (recognizing()) {
+      // §4: the pick goes straight to the relay, which judges it; no queue, no hold.
+      clicked = tile.key; clickedAt = performance.now(); audio.play('key');
+      send('calculator_pick', { skill: tile.key, epoch: state.epoch, revision: state.revision });
+      return;
+    }
     if (state.step < level.route.length) {
       Object.assign(player, { x: ENTRY_WIDTH + tile.x + tile.w / 2 - 10, y: tile.y - 24, vx: 0, vy: 0, standingOn: null });
     }
@@ -516,6 +527,8 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     for (const name of peers.keys()) if (!state.members.some(member => member.name === name)) peers.delete(name);
     const answerIndex = state.step - level.route.length;
     const hint = state.solved ? (solo ? 'Your result is ready.' : 'Your result is ready. Help your teammates finish.')
+      : recognizing() ? 'Which procedure? ' + state.recognition.stem + ' Choices: '
+        + state.recognition.options.map((id, i) => (i + 1) + ' ' + skillTitle(id)).join(', ') + '. Click one or press its number.'
       : state.step < level.route.length ? hintFor(state.step, keyboardLayer(calculator.save()))
       : challenge.prompts ? challenge.prompts[answerIndex] + ' Click a choice, press its number key, or stand on it.'
       : 'Choose ' + challenge.labels[answerIndex] + '. Click its value.';
@@ -529,13 +542,18 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
       : press.wrong ? ' Wrong key: ' + press.key + '.' + (press.penaltyMs > 0 ? ' ' + press.penaltyMs / 1000 + ' seconds off the clock.' : '')
         + ' CLEAR backs out.'
       : ' Pressed ' + press.key + '. The countdown keeps running. Reach the next checkpoint before time runs out.';
+    // §4: a wrong pick is told its one-sentence signal, then the route starts on the right skill.
+    const pickNote = state.recognition?.picked && state.step === 0 && !state.lastPress
+      ? (state.recognition.correct ? 'Right: ' + level.title + '. ' : 'Not ' + skillTitle(state.recognition.picked) + '. '
+        + state.recognition.message + ' The route starts on ' + level.title + '. ') : '';
     const text = state.failure ? (state.step >= level.route.length
       ? 'Time is up. Returning to your result checkpoint with a fresh timer.'
       : 'Time is up. Restarting the calculator portion.')
       : state.complete ? (solo ? 'Cleared! ' + level.title + ' complete. Walk to the door for the next round.'
         : 'Together! ' + level.title + ' complete. +1 key for everyone on the team.')
       : state.solved ? hint + ' ' + state.readyCount + '/' + state.teamSize + ' ready.'
-      : modeNote + 'Step ' + (state.step + 1) + '/' + (level.route.length + challenge.answers.length)
+      : recognizing() ? hint
+      : pickNote + modeNote + 'Step ' + (state.step + 1) + '/' + (level.route.length + challenge.answers.length)
         + (solo ? ' · solo. ' : ' · ' + state.teamSize + ' on the team. ') + hint
         + pressNote
         + (state.hintKeys?.length ? ' Hint: choose ' + state.hintKeys.join(' or ') + '. Step reset—30 seconds to try again.' : '')
@@ -609,8 +627,8 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     if (player.x < ENTRY_WIDTH) setParticipating(false);
     // Solo: walking into the calculator zone is the whole start; no block to push.
     else if (solo && !participating && player.x >= ENTRY_WIDTH + 20) setParticipating(true);
-    if (!tileAt(localPose(), state?.step || 0, level)) needsRelease = false;
-    selected = needsRelease ? null : tileAt(localPose(), state?.step || 0, level);
+    if (!tileAt(localPose(), state?.step || 0, level, state?.recognition)) needsRelease = false;
+    selected = needsRelease ? null : tileAt(localPose(), state?.step || 0, level, state?.recognition);
     const viewport = board.viewportW() / scale();
     // Mouse-first solving: keep every key visible instead of chasing the selected cat.
     const assembling = lobby?.phase === 'assembling' && lobby.roster.includes(board.username);
@@ -728,8 +746,10 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     ctx.save(); ctx.translate(ENTRY_WIDTH, 0);
     text(ctx, solo ? 'CALCULATOR SOLO' : 'CALCULATOR TOGETHER', 28, 30, 20);
     const hasMission = !!state || !!lobby?.missionId;
-    text(ctx, hasMission ? level.title.toUpperCase() : 'RANDOM SKILL ROUND', 28, 53, 14);
+    // §4: the skill's name and data would give the recognition answer away: hidden until the pick.
+    text(ctx, recognizing() ? 'RECOGNITION ROUND' : hasMission ? level.title.toUpperCase() : 'RANDOM SKILL ROUND', 28, 53, 14);
     const caption = reloadNeeded ? 'This page is an older version. Click or press Enter to reload it.'
+      : recognizing() ? 'Read the problem. Which procedure does it call for?'
       : hasMission ? inputCaption() : lobby?.eligibleCount === 0
         ? 'No calculator skills are scheduled yet for this class.' : 'Connecting to your class curriculum...';
     text(ctx, caption.slice(0, 106), 28, 76, 10);
@@ -740,7 +760,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
       const label = (line.selected ? '> ' : '  ') + line.text;
       text(ctx, label, 28, (showingBoxplot ? 123 : 106) + i * 18, label.length > 25 ? 7 : 14, ink);
     }
-    text(ctx, state?.complete ? 'MISSION COMPLETE!' : solo ? 'SOLO PRACTICE' : 'ONE TEAM · ONE GOAL', 350, 112, 17);
+    text(ctx, state?.complete ? 'MISSION COMPLETE!' : recognizing() ? 'WHICH PROCEDURE?' : solo ? 'SOLO PRACTICE' : 'ONE TEAM · ONE GOAL', 350, 112, 17);
     if (state?.complete) drawKeyReward(ctx, atlas);
     const plan = navigator();
     const coaching = state && !state.solved && !state.failure && !showingBoxplot;
@@ -751,6 +771,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     const elapsed = state ? clock() - state.startedAt : 0;
     const remain = Math.max(0, Math.ceil((timeLimitFor(state || { step: 0 }) - elapsed) / 1000));
     text(ctx, state?.failure ? (solo ? 'TIME UP! RESTART.' : 'TIME UP! TEAM RESTART.')
+      : recognizing() ? 'NO TIMER · CHOOSE THE PROCEDURE'
       : state ? (state.solved ? 'Your result is ready.'
         : remain + (showingBoxplot ? 's · finish the whole answer' : 's · reach the next step'))
         : lobby?.eligibleCount === 0 ? 'NO SKILLS TAUGHT YET'
@@ -758,10 +779,11 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
         : lobby?.phase === 'assembling' ? 'TEAM FORMING · NO TIMER'
         : lobby?.phase === 'active' ? 'TEAM ROUND IN PROGRESS' : 'PUSH THE BLOCK HERE TO START', 350, 143, 12);
     text(ctx, state?.failure ? (showingBoxplot ? 'Return to the checkpoint.' : 'Restart the calculator.') : state?.complete ? 'Walk to the door. Press UP.' : state?.solved ? 'Help your teammates finish.'
-      : showingBoxplot ? 'Click a value for the result.' : 'Click to press your own keys.', 350, 175, 12);
+      : recognizing() ? 'Read the problem below.' : showingBoxplot ? 'Click a value for the result.' : 'Click to press your own keys.', 350, 175, 12);
     text(ctx, solo ? (state ? 'Clear it to open the next-round door.' : 'Your own round. Your own clock.')
       : state ? state.readyCount + '/' + state.teamSize + ' matching results ready' : 'Everyone solves independently.', 350, 197, 12);
     text(ctx, state?.solved ? 'All values matched.'
+      : recognizing() ? 'Click the procedure it calls for.'
       : showingBoxplot ? 'Checked after the whole answer.'
       : layer === 'second' ? '2ND ACTIVE - CHOOSE A FUNCTION'
       : layer === 'alpha' ? 'ALPHA ACTIVE - CHOOSE A LETTER' : 'Equivalent keys count.', 350, 219, 12);
@@ -777,17 +799,30 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     else if (!state?.failure && state?.lastPress?.wrong) {
       text(ctx, wrongKeyText(state.lastPress), 350, 269, 10, WRONG_RED);
     }
+    else if (!state?.failure && state?.recognition?.picked && state.step === 0 && !state.lastPress) {
+      if (state.recognition.correct) text(ctx, 'RIGHT PROCEDURE · NOW THE KEYS', 350, 269, 10, '#479b67');
+      else {
+        const rows = wrapWords('NOT ' + skillTitle(state.recognition.picked).toUpperCase() + ': ' + state.recognition.message, 52);
+        text(ctx, rows[0] || '', 350, 263, 7, WRONG_RED);
+        if (rows[1]) text(ctx, rows[1] + (rows.length > 2 ? ' ...' : ''), 350, 274, 7, WRONG_RED);
+      }
+    }
     else if (!state?.failure && state?.lastPress && !state.lastPress.advanced) {
       text(ctx, state.lastPress.key + ' PRESSED · KEEP TRYING', 350, 269, 10);
     }
     // Ledges and answer choices are solid platforms in both phases.
     for (const ledge of approachSteps(showingBoxplot)) keyPlatform(ctx, ledge, '#494458');
     const modifier = layer === 'second' ? '#a9daff' : layer === 'alpha' ? '#b7edab' : null;
-    for (const [index, tile] of tilesFor(step, level).entries()) {
+    const choosing = showingBoxplot || recognizing();
+    if (recognizing()) {
+      text(ctx, 'WHICH PROCEDURE DOES THIS CALL FOR?', 60, 316, 10);
+      for (const [i, row] of wrapWords(state.recognition.stem, 100).slice(0, 14).entries()) text(ctx, row, 60, 338 + i * 14, 7);
+    }
+    for (const [index, tile] of tiles().entries()) {
       const hint = state?.hintKeys?.includes(tile.key);
       const chosen = selected === tile.key;
       const pressed = clicked === tile.key && performance.now() - clickedAt < 120;
-      const colour = chosen ? '#f9c45f' : hint ? '#9bdfae' : capColour(tile, showingBoxplot);
+      const colour = chosen ? '#f9c45f' : hint ? '#9bdfae' : capColour(tile, choosing);
       // The modifier keys themselves keep their own colour; everything else tints with the layer.
       const tint = modifier && !chosen && !hint && tile.key !== '2ND' && tile.key !== 'ALPHA' ? modifier : null;
       // §5: a wrong key's cap shakes for 200 ms (±2 px). Cosmetic only: tileAt() is unchanged.
@@ -796,27 +831,27 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
       const sink = keycap(ctx, tile, colour, { pressed, tint });
       ctx.save();
       if (state?.solved) ctx.globalAlpha *= 0.22;
-      const label = showingBoxplot ? plainText(tile.label ?? tile.key) : keyLabel(tile.key, layer);
+      const label = choosing ? plainText(tile.label ?? tile.key) : keyLabel(tile.key, layer);
       const color = lightCap(colour) || tint ? '#30263b' : '#fff';
       // Use whole pixel sizes: no horizontally squeezed letters or crowded sublabels.
       const size = label.length * 12 - 2 <= tile.w - 8 ? 14 : 7;
       pixelText(ctx, label, tile.x + tile.w / 2, tile.y + sink + (size === 7 ? 16 : 20), size, color, 'center');
       // The printed legends above the key: blue 2nd function left, green alpha letter right. The
       // active layer's legend brightens; the other fades.
-      if (!showingBoxplot) {
+      if (!choosing) {
         const legends = keySublabels(tile.key);
         const bright = (name, colour) => layer === 'normal' ? colour : layer === name ? ink : colour + '55';
         if (legends.second) pixelText(ctx, legends.second, tile.x + 1, tile.y - 1, 7, bright('second', '#5b8fd0'), 'left');
         if (legends.alpha) pixelText(ctx, legends.alpha, tile.x + tile.w - 1, tile.y - 1, 7, bright('alpha', '#4f9a5a'), 'right');
       }
       // The number key that chooses this answer.
-      if (showingBoxplot && index < 9) pixelText(ctx, String(index + 1), tile.x + 7, tile.y + sink + 11, 7, '#b06a1a', 'left');
+      if (choosing && index < 9) pixelText(ctx, String(index + 1), tile.x + 7, tile.y + sink + 11, 7, '#b06a1a', 'left');
       ctx.restore();
       ctx.restore();
     }
     if (!showingBoxplot) drawPenaltyFloat(ctx);
     if (step >= level.route.length) drawBoxplot(ctx, step - level.route.length);
-    else if (state) {
+    else if (state && !recognizing()) {
       // §1/§3: the hint line fades with the rung, or belongs to the step's navigator.
       const line = hintFor(step, layer);
       if (line) text(ctx, line.slice(0, 52), 350, 252, 10);
@@ -959,7 +994,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     const rect = engine.canvas.getBoundingClientRect();
     const worldX = (event.clientX - rect.left) / scale() + Math.round(cameraX);
     const x = worldX - ENTRY_WIDTH, y = (event.clientY - rect.top) / scale();
-    const tile = tilesFor(state?.step || 0, level).find(tile => x >= tile.x && x <= tile.x + tile.w && y >= tile.y - 12 && y <= tile.y + tile.h);
+    const tile = tiles().find(tile => x >= tile.x && x <= tile.x + tile.w && y >= tile.y - 12 && y <= tile.y + tile.h);
     if (tile) { event.preventDefault(); event.stopImmediatePropagation(); choose(tile); }
   }
   function key(event) {
@@ -972,9 +1007,9 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     if (event.key === 'Enter' && reloadNeeded && !event.repeat) { event.preventDefault(); reload(); return; }
     if (event.key === 'Escape') { event.preventDefault(); returnToStart(); }
     // Number keys choose answer tiles (keyboard equivalent of clicking or standing on one).
-    if (/^[1-9]$/.test(event.key) && !event.repeat && participating && state && answering() && !state.solved
+    if (/^[1-9]$/.test(event.key) && !event.repeat && participating && state && (answering() || recognizing()) && !state.solved
       && !event.target?.closest?.('input, textarea, select, [contenteditable="true"]')) {
-      const tile = tilesFor(state.step, level)[Number(event.key) - 1];
+      const tile = tiles()[Number(event.key) - 1];
       if (tile) { event.preventDefault(); choose(tile); }
     }
     // Handle brief taps even when keydown and keyup fall between physics steps.
@@ -994,8 +1029,11 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
       hintTag: routeStep == null || plan ? null : RUNG_TAGS[hintRung()],
       navigator: plan ? navigatorView(plan, routeStep == null || state.solved) : null,
       wrongKey: press?.wrong ? wrongKeyText(press) : null,
-      caption: state || lobby?.missionId ? inputCaption() : null,
+      caption: recognizing() ? null : state || lobby?.missionId ? inputCaption() : null,
       calculatorLists: calculator.save().lists,
+      // §4: the round's recognition step (null without one): stem, options, picked, correct, message.
+      recognition: state?.recognition ? { ...state.recognition } : null,
+      recognitionRoom: !!lobby?.recognition,
     };
   }
   // The plan, my steps, and the window drawn now (null once the card is gone: complete or failed).
@@ -1040,7 +1078,9 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     const next = parseRoomLink(hash);
     return next.mode !== link.mode || next.skill !== link.skill || next.topic !== link.topic;
   }
-  return { kind: 'calculator', dispose, startMission, returnToStart, linkChanged, getState: () => state,
+  // The teacher's toggle for the team room's recognition step (teacher decision 2: off by default).
+  function setRecognition(on) { return send('calculator_recognition', { on: on === true }); }
+  return { kind: 'calculator', dispose, startMission, returnToStart, linkChanged, setRecognition, getState: () => state,
     getNetworkStats: () => peerMotion.stats(),
     getView: () => ({ mode: solo ? 'solo' : 'team', skill: soloSkill, link: { ...link }, keyReward: !!state?.complete, reloadNeeded, cameraX, playerX: player.x, playerY: player.y, participating, campaignUnlocked: campaignUnlocked(), entranceX: ENTRY_WIDTH, lobby, missionId: level.id, challenge,
       keyCounts: Object.fromEntries([board.username, ...lobbyPeers.keys(), ...peers.keys()].map(name => [name, keyCount(name)])),

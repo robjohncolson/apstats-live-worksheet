@@ -105,3 +105,23 @@ describe('pattern recognition data references only park skillIds (spec §2.3)', 
     expect(notParkSkills(Object.values(patterns.distractorSets).flat())).toEqual([]);
   });
 });
+
+// Phase 2 (spec §4): the shared recognition modules mirror the relay and the generated data is current.
+describe('calculator-patterns.mjs is generated from the JSON and shared with the relay (spec §4)', () => {
+  const relayDir = path.resolve(ROOT, '..', 'curriculum_render', 'railway-server', 'apstat-park');
+  const relayPresent = fs.existsSync(relayDir);
+
+  test('the generated module matches the build script output (run scripts/build-calculator-patterns.mjs)', async () => {
+    const { buildPatternsModule } = await import('../scripts/build-calculator-patterns.mjs');
+    const expected = buildPatternsModule(readJson('ti84-pattern-recognition-data.json'));
+    expect(fs.readFileSync(path.join(ROOT, 'apstat-park', 'calculator-patterns.mjs'), 'utf8')).toBe(expected);
+  });
+
+  test.skipIf(!relayPresent)('calculator-patterns.mjs, calculator-recognition.mjs and calculator-mission.mjs are byte-identical on both sides', () => {
+    for (const file of ['calculator-patterns.mjs', 'calculator-recognition.mjs', 'calculator-mission.mjs']) {
+      const client = fs.readFileSync(path.join(ROOT, 'apstat-park', file));
+      const relay = fs.readFileSync(path.join(relayDir, file));
+      expect(client.equals(relay), `${file} differs between client and relay`).toBe(true);
+    }
+  });
+});

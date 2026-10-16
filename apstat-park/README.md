@@ -55,7 +55,25 @@ all 48 transitions and wraparound, retry, reconnect, and membership. These are
 integration checks, not proof that every puzzle has been manually completed or
 that the recovered engine has exact native-game parity.
 
-## Calculator Solo (deep link, protocol 13)
+## Calculator Recognition (protocol 14)
+
+Before the route, a round can open with the v2 trainer's "which procedure?" step
+(APSTAT_PARK_TRAINER_ABSORB_SPEC §4): a canonical word problem and four procedure tiles, the
+right one plus three distractors ranked from the confusion pairs (same unit first) and then the
+unit. Data: `ti84-pattern-recognition-data.json` is the source; `node
+scripts/build-calculator-patterns.mjs` writes `calculator-patterns.mjs` on both sides (`--check`
+in the tests), and `calculator-recognition.mjs` (shared) ranks distractors and words the
+one-sentence discriminator from the first differing signature field (parameter, question,
+sample structure, data type). The relay judges the pick (`calculator_pick`), the clock starts at
+the pick, a wrong pick is told its sentence and the route starts on the right skill anyway; the
+wrong pick stays on the round for the SRS quality. The skill name and its data are hidden until
+the pick. Solo rounds always open with the step when the skill has a canonical problem; team
+rounds only after the teacher's `calculator_recognition { on: true }` (panel `setRecognition`),
+from the next round (teacher decision 2: off by default). Tests:
+`calculator-recognition.test.mjs` and `calculator-room-recognition.test.mjs` (client),
+`calculator-recognition.test.mjs` (relay).
+
+## Calculator Solo (deep link, protocol 14)
 
 The same room with `mode: 'solo'` (`calculator-room.mjs`, one switch, no second file):
 `#room=calc-solo&skill=<skillId>` opens the student's own round on that skill at once,
