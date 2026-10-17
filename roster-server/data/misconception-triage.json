@@ -222,6 +222,38 @@
         "mean-resistant",
         "zscore-percent"
       ]
+    },
+    {
+      "at": "2026-10-16T21:00:00.000Z",
+      "keys": [
+        "discrete-vs-continuous",
+        "label:chose a on u1 l3 q02",
+        "label:chose a on u1 l4 q01",
+        "label:chose a on u3 l2 q02",
+        "label:chose a on u3 l2 q03",
+        "label:chose a on u3 l3 q02",
+        "label:chose a on u3 l6 q03",
+        "label:chose b on u3 l2 q06",
+        "label:chose b on u3 l3 q02",
+        "label:chose b on u3 l6 q03",
+        "label:chose c on u1 l3 q02",
+        "label:chose c on u1 l4 q02",
+        "label:chose c on u1 l8 q01",
+        "label:chose c on u3 l3 q04",
+        "label:chose c on u3 l5 q01",
+        "label:chose c on u3 l6 q01",
+        "label:chose d on u1 l8 q02",
+        "label:chose d on u3 l2 q06",
+        "label:chose d on u3 l4 q03",
+        "label:chose d on u3 l5 q05",
+        "label:chose d on u3 l6 q01",
+        "label:chose d on u3 l6 q02",
+        "label:chose e on u1 l7 q04",
+        "label:chose e on u3 l2 q01",
+        "label:chose e on u3 l4 q03",
+        "label:chose e on u3 l6 q02",
+        "random-selection-assignment"
+      ]
     }
   ]
 }
