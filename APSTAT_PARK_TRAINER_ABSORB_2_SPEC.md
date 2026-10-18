@@ -119,7 +119,7 @@ team game)**.
   one of them: its setup is empty and its own route already is the matrix entry. The list prefix is long
   for the big LinReg sets (linreg-tint: 220 keys at 15 s a step, no total limit).
 
-**Cap (decided 2026-10-18).** `DATA_ENTRY_MAX_KEYS = 64`: a problem whose prefix is longer (the two-list
+**Cap (teacher-confirmed 2026-10-18: "64 is fine").** `DATA_ENTRY_MAX_KEYS = 64`: a problem whose prefix is longer (the two-list
 regression sets, 69–220 keys) plays pre-loaded at every rung. Scatterplot's 63 keys is the longest typed.
 
 **Relay.** `soloLevel(room)`: after choosing/varying the level, if `rungFor(clears.clearsOf(...)) >= 1`
