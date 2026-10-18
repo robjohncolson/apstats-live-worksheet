@@ -49,10 +49,22 @@
     if (!s || !s.username || !s.section) { fail('Sign in on the Desk first, then come back here.'); return; }
     fetch('version.json?x=' + Date.now()).then(function (r) { return r.json(); }).catch(function () { return null; }).then(function (v) {
       window.APP_BUILD = (v && v.build) || '';
-      var script = document.createElement('script');
-      script.src = 'classroom-board.js' + (window.APP_BUILD ? '?v=' + window.APP_BUILD : '');
-      script.onload = function () {
-        if (!window.ClassroomBoard) { fail('The park could not load.'); return; }
+      // classroom-board.js constructs the Desk's CanvasEngine + SpriteSheet globals; without
+      // them it swallows the error and the room never draws (blank canvas, teacher 2026-10-17).
+      // Same order as the Desk and teacher-classroom.html: engine, sprites, then the board.
+      var v = window.APP_BUILD ? '?v=' + window.APP_BUILD : '';
+      var scripts = ['canvas_engine.js' + v, 'sprite_sheet.js' + v, 'classroom-board.js' + v];
+      function loadNext() {
+        var src = scripts.shift();
+        if (!src) { mountBoard(); return; }
+        var script = document.createElement('script');
+        script.src = src;
+        script.onload = loadNext;
+        script.onerror = function () { fail('The park could not load.'); };
+        document.head.appendChild(script);
+      }
+      function mountBoard() {
+        if (!window.ClassroomBoard || !window.CanvasEngine) { fail('The park could not load.'); return; }
         var wsUrl = (window.RAILWAY_SERVER_URL || 'https://curriculumrender-production.up.railway.app').replace(/^http/, 'ws');
         window.ClassroomBoard.mount(document.getElementById('classroom-board-mount'), {
           wsUrl: wsUrl, section: s.section, username: s.username,
@@ -60,9 +72,8 @@
           hue: (typeof s.spriteHue === 'number') ? s.spriteHue : null,
           hideNameLabels: true,
         });
-      };
-      script.onerror = function () { fail('The park could not load.'); };
-      document.head.appendChild(script);
+      }
+      loadNext();
     });
   })();
 </script>

@@ -125,3 +125,13 @@ describe('calculator-patterns.mjs is generated from the JSON and shared with the
     }
   });
 });
+
+describe('calculator-solo.html loads the board the way the Desk does (spec §8.2)', () => {
+  const page = fs.readFileSync(path.join(ROOT, 'calculator-solo.html'), 'utf8');
+
+  test('canvas_engine.js and sprite_sheet.js are loaded before classroom-board.js', () => {
+    // classroom-board.js constructs the CanvasEngine global inside a try/catch; without the
+    // engine scripts the room mounts a blank canvas and never draws (teacher, 2026-10-17).
+    expect(page).toContain("['canvas_engine.js' + v, 'sprite_sheet.js' + v, 'classroom-board.js' + v]");
+  });
+});
