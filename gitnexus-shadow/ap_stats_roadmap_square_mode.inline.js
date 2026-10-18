@@ -1966,7 +1966,22 @@
 
 
 
+
 try{var _ph=/[?&]home=(park|classic)(?:&|$)/.exec(location.search),_ps=null;try{_ps=localStorage.getItem('apstats-pico-home')}catch(_){}if(_ph?_ph[1]==='park':_ps!=='0')document.documentElement.classList.add('pico-home');}catch(_){}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -12405,7 +12420,7 @@ function showResourcePanel(inf, dateStr) {
         // no gate — _isLessonComplete never reads trainer.
         if (typeof _lessonHasTrainer === 'function' && _lessonHasTrainer(_stuTopicId)) {
             var _tiScore = (typeof _trainerScoreFor === 'function') ? _trainerScoreFor(_stuTopicId) : null;
-            lessonHtml += '<div style="margin:3px 0"><a href="#" onclick="_openTi84ForTopic(\'' + _stuTopicId + '\');return false;" style="color:var(--accent-ink);text-decoration:underline">🖩 Calculator Skill</a>' + _scoreChip(_tiScore, 80) + '<span class="desk-calc-due-slot"></span></div>';
+            lessonHtml += '<div style="margin:3px 0"><a href="#" onclick="_openTi84ForTopic(\'' + _stuTopicId + '\');return false;" style="color:var(--accent-ink);text-decoration:underline">🖩 Calculator Skill</a>' + _scoreChip(_tiScore, 80) + '<span class="desk-calc-due-slot"></span><a href="#" class="desk-calc-progress-link" onclick="_openCalcProgress();return false;" style="color:var(--accent-ink);text-decoration:underline;margin-left:6px">progress</a></div>';
             // APSTAT_PARK_TRAINER_ABSORB_SPEC §5: "N skills due" from the relay's recall schedule
             // (GET /park/calc/due), filled in after the panel renders; opens the park solo room.
             setTimeout(_renderCalcDue, 0);
@@ -25308,6 +25323,196 @@ function _openParkSolo(link) {
     if (handle && typeof handle.openCalculatorMission === 'function') { try { handle.openCalculatorMission(); } catch (_) {} }
 }
 
+// APSTAT_PARK_TRAINER_ABSORB_2_SPEC §5: the Calculator Skills progress view. Every catalogue skill
+// from GET /park/calc/progress on the park relay, grouped by CED unit, with a state chip and a
+// Practice link into the park's solo room. Practice only: nothing here touches a grade.
+var _calcProgressCache = { at: 0, data: null };
+// The answer on screen right now (a loading answer is shown but never cached): the unit filter re-renders this.
+var _calcProgressShown = null;
+var _calcProgressUnit = 'all';
+var CALC_PROGRESS_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+// Same relay, same roster session as the due count; only the path differs.
+function _calcProgressUrl() {
+    var due = _calcDueUrl();
+    if (!due) return null;
+    return due.replace('/park/calc/due?', '/park/calc/progress?');
+}
+
+// '2026-10-24' → 'Oct 24' (read as text: no time-zone shift).
+function _calcProgressDate(iso) {
+    var parts = String(iso || '').split('-');
+    if (parts.length !== 3) return '';
+    return CALC_PROGRESS_MONTHS[Number(parts[1]) - 1] + ' ' + Number(parts[2]);
+}
+
+// The skill has a recall record (a review was ever recorded).
+function _calcProgressHasRecord(row) {
+    return row.lastQuality != null || !!row.nextReview || row.mastered === true;
+}
+
+// The state chip, first match wins. LOCKED is checked before NEW: a locked row also has no
+// clears and no record, so NEW would otherwise hide it.
+function _calcProgressChip(row) {
+    if (row.mastered) {
+        var review = _calcProgressDate(row.nextReview);
+        return { kind: 'mastered', text: 'MASTERED' + (review ? ' · review ' + review : '') };
+    }
+    if (row.due) {
+        var days = Number(row.overdueDays) || 0;
+        if (days <= 0) return { kind: 'due', text: 'DUE TODAY' };
+        return { kind: 'due', text: 'DUE · ' + days + (days === 1 ? ' day overdue' : ' days overdue') };
+    }
+    if (row.clears > 0 || _calcProgressHasRecord(row)) {
+        if (row.rung >= 2) return { kind: 'rung', text: 'NO HINTS' };
+        if (row.rung === 1) return { kind: 'rung', text: 'GOALS ONLY' };
+        return { kind: 'rung', text: 'FULL HINTS' };
+    }
+    if (!row.eligible) return { kind: 'locked', text: 'LOCKED' };
+    return { kind: 'new', text: 'NEW' };
+}
+
+// The CED-2026 unit a row is grouped under: the Desk's own label first, the relay's as fallback.
+function _calcProgressUnitOf(row) {
+    var label = cedLabel(row.topic);
+    return label.unit || label.bonusUnit || row.unit || null;
+}
+
+function _calcProgressSummary(rows) {
+    var mastered = 0, due = 0, fresh = 0;
+    rows.forEach(function (row) {
+        if (row.mastered) mastered++;
+        if (row.due) due++;
+        if (_calcProgressChip(row).kind === 'new') fresh++;
+    });
+    return mastered + ' mastered · ' + due + ' due · ' + fresh + ' new';
+}
+
+function _calcProgressMessage(text) {
+    document.getElementById('calc-progress-summary').textContent = '';
+    document.getElementById('calc-progress-filter').innerHTML = '';
+    var body = document.getElementById('calc-progress-body');
+    body.innerHTML = '';
+    var p = document.createElement('p');
+    p.textContent = text;
+    body.appendChild(p);
+}
+
+function _calcProgressFilter(units) {
+    var host = document.getElementById('calc-progress-filter');
+    host.innerHTML = '';
+    ['all'].concat(units).forEach(function (unit) {
+        var selected = String(unit) === String(_calcProgressUnit);
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 's7btn' + (selected ? ' s7btn-default' : '');
+        btn.setAttribute('data-unit', String(unit));
+        btn.setAttribute('aria-pressed', selected ? 'true' : 'false');
+        btn.textContent = unit === 'all' ? 'All' : 'Unit ' + unit;
+        btn.style.cssText = 'margin:0 4px 4px 0;font-size:11px';
+        btn.onclick = function () {
+            _calcProgressUnit = unit;
+            _renderCalcProgress(_calcProgressShown || _calcProgressCache.data);
+        };
+        host.appendChild(btn);
+    });
+}
+
+function _calcProgressRow(row) {
+    var line = document.createElement('div');
+    line.className = 'calc-progress-row';
+    line.setAttribute('data-skill', row.skillId);
+    line.style.cssText = 'display:flex;flex-wrap:wrap;align-items:baseline;gap:6px;margin:4px 0;padding-bottom:4px;border-bottom:1px dotted var(--black)';
+    var title = document.createElement('b');
+    title.textContent = row.title;
+    var topic = document.createElement('span');
+    topic.className = 'calc-progress-topic';
+    topic.textContent = cedLabel(row.topic).text;
+    topic.style.cssText = 'opacity:.8;flex:1 1 160px';
+    var chipInfo = _calcProgressChip(row);
+    var chip = document.createElement('span');
+    chip.className = 'calc-progress-chip calc-progress-' + chipInfo.kind;
+    chip.textContent = chipInfo.text;
+    chip.style.cssText = 'font-size:10px;padding:0 5px;border:1px solid var(--black);white-space:nowrap';
+    var practice = document.createElement('a');
+    practice.href = '#';
+    practice.className = 'calc-progress-practice';
+    practice.textContent = 'Practice';
+    practice.setAttribute('aria-label', 'Practice ' + row.title);
+    practice.style.cssText = 'color:var(--accent-ink);text-decoration:underline';
+    practice.onclick = function (e) {
+        e.preventDefault();
+        closeCalcProgress();
+        _openParkSolo('&skill=' + row.skillId);
+    };
+    line.appendChild(title);
+    line.appendChild(topic);
+    line.appendChild(chip);
+    line.appendChild(practice);
+    return line;
+}
+
+function _renderCalcProgress(data) {
+    _calcProgressShown = data;
+    var rows = (data && Array.isArray(data.skills)) ? data.skills : [];
+    if (!rows.length) { _calcProgressMessage('No calculator skills to show yet.'); return; }
+    var units = [];
+    rows.forEach(function (row) {
+        var unit = _calcProgressUnitOf(row);
+        if (unit != null && units.indexOf(unit) < 0) units.push(unit);
+    });
+    units.sort(function (a, b) { return a - b; });
+    if (_calcProgressUnit !== 'all' && units.indexOf(_calcProgressUnit) < 0) _calcProgressUnit = 'all';
+    document.getElementById('calc-progress-summary').textContent = _calcProgressSummary(rows);
+    _calcProgressFilter(units);
+    var body = document.getElementById('calc-progress-body');
+    body.innerHTML = '';
+    var shown = _calcProgressUnit === 'all' ? units.concat([null]) : [_calcProgressUnit];
+    shown.forEach(function (unit) {
+        var group = rows.filter(function (row) { return _calcProgressUnitOf(row) === unit; });
+        if (!group.length) return;
+        var heading = document.createElement('div');
+        heading.className = 'chicago calc-progress-unit';
+        heading.setAttribute('data-unit', String(unit));
+        heading.textContent = unit == null ? 'Other' : 'Unit ' + unit + ' · ' + cedUnitLabel(unit);
+        heading.style.cssText = 'margin:8px 0 2px;font-size:11px';
+        body.appendChild(heading);
+        group.forEach(function (row) { body.appendChild(_calcProgressRow(row)); });
+    });
+}
+
+var CALC_PROGRESS_OFFLINE = 'Could not reach the park. Try again in a minute.';
+
+// Opens the modal; fetches the relay at most once a minute (like _renderCalcDue).
+function _openCalcProgress() {
+    var overlay = document.getElementById('calc-progress-overlay');
+    if (!overlay) return;
+    overlay.style.display = 'block';
+    if (Date.now() - _calcProgressCache.at < 60000 && _calcProgressCache.data) {
+        _renderCalcProgress(_calcProgressCache.data);
+        return;
+    }
+    var url = _calcProgressUrl();
+    if (!url) { _calcProgressMessage('Sign in to see your calculator skills.'); return; }
+    if (typeof fetch !== 'function') { _calcProgressMessage(CALC_PROGRESS_OFFLINE); return; }
+    _calcProgressMessage('Loading your calculator skills…');
+    fetch(url).then(function (r) { return r.ok ? r.json() : null; }).then(function (data) {
+        if (!data || !data.ok) { _calcProgressMessage(CALC_PROGRESS_OFFLINE); return; }
+        // A cold relay answers before its store has loaded (data.loading): show what it has,
+        // cache nothing, and ask again shortly while the modal is still open.
+        if (!data.loading) _calcProgressCache = { at: Date.now(), data: data };
+        _renderCalcProgress(data);
+        if (data.loading) setTimeout(function () {
+            if (overlay.style.display !== 'none') _openCalcProgress();
+        }, 2500);
+    }).catch(function () { _calcProgressMessage(CALC_PROGRESS_OFFLINE); });
+}
+
+function closeCalcProgress() {
+    var overlay = document.getElementById('calc-progress-overlay');
+    if (overlay) overlay.style.display = 'none';
+}
+
 // The URL an app window opens (SOLO_DOOR_SPEC §5: the calculator is no longer an app window).
 function appLaunchUrl(app, id) {
     if (id === 'week') {
@@ -26677,6 +26882,7 @@ function _escCloseTopModal() {
     // overlays have no cleanup (no listeners/timers) so a direct hide is correct.
     var closers = {
         'resource-overlay':     function () { if (typeof closeResourcePanel === 'function')     closeResourcePanel(); },
+        'calc-progress-overlay': function () { if (typeof closeCalcProgress === 'function')     closeCalcProgress(); },
         'donow-bump-overlay':   function () { if (typeof closeDoNowBump === 'function')          closeDoNowBump(); },
         'dialog-overlay':       function () { if (typeof closeDialog === 'function')             closeDialog(); },
         'bf-overlay':           function () { if (typeof closeBlooketFlashcards === 'function')  closeBlooketFlashcards(); },
@@ -27937,7 +28143,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-10-18-a82a';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-10-18-b7d5';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

@@ -266,6 +266,44 @@ describe('Desk Do Now and coach', () => {
   });
 });
 
+describe('Calculator Skills modal (APSTAT_PARK_TRAINER_ABSORB_2_SPEC §5)', () => {
+  // Every catalogue skill, each in every chip state, through the REAL Desk renderer.
+  const FUNCTIONS = ['_calcProgressDate', '_calcProgressHasRecord', '_calcProgressChip', '_calcProgressUnitOf',
+    '_calcProgressSummary', '_calcProgressMessage', '_calcProgressFilter', '_calcProgressRow', '_renderCalcProgress', 'closeCalcProgress'];
+  const VARS = ['_calcProgressCache', '_calcProgressUnit', 'CALC_PROGRESS_MONTHS'];
+  const STATES = [
+    { mastered: true, clears: 3, rung: 2, nextReview: '2026-10-24', lastQuality: 5 },
+    { due: true, overdueDays: 2, clears: 1, rung: 1, nextReview: '2026-10-14', lastQuality: 4 },
+    { clears: 2, rung: 2 }, {}, { eligible: false },
+  ];
+
+  it('prints only CED labels for every catalogue skill topic', async () => {
+    const { CALCULATOR_LEVELS } = await import('../apstat-park/calculator-curriculum.mjs');
+    expect(CALCULATOR_LEVELS.length).toBe(32);
+    const start = desk.indexOf('<div id="calc-progress-overlay"');
+    const markup = desk.slice(start, desk.indexOf('<!-- ═══ Game Window (Study Break) ═══ -->', start));
+    const win = newWindow(markup);
+    win.eval(CED_SOURCE);
+    win.eval(VARS.map((name) => new RegExp('var ' + name + ' = [^\n]*').exec(desk)[0]).join('\n') + '\n'
+      + 'function _openParkSolo() {}\n' + FUNCTIONS.map(fnBody).join('\n'));
+    for (const state of STATES) {
+      const skills = CALCULATOR_LEVELS.map((level) => ({ skillId: level.skillId, title: level.title, topic: level.topic,
+        unit: null, eligible: true, clears: 0, rung: 0, repetitions: 0, intervalDays: 0, nextReview: null,
+        lastQuality: null, mastered: false, due: false, overdueDays: 0, ...state }));
+      win._renderCalcProgress({ ok: true, skills });
+      const box = win.document.querySelector('#calc-progress-overlay .dialog-box');
+      const rows = [...box.querySelectorAll('.calc-progress-row')];
+      expect(rows).toHaveLength(32);
+      for (const row of rows) {
+        const level = CALCULATOR_LEVELS.find((l) => l.skillId === row.getAttribute('data-skill'));
+        expectNoRawKeys(row.textContent, [level.topic], 'calculator skill ' + level.skillId);
+      }
+      const topics = CALCULATOR_LEVELS.map((level) => level.topic);
+      expectNoRawKeys(box.textContent, topics, 'Calculator Skills modal');
+    }
+  });
+});
+
 describe('Dogecoin presence dropdown (teacher sees WHERE a classmate is)', () => {
   // railway_client.js announces a worksheet by file name: "U3 L3", "U3 L6-7" (the old key).
   const worksheetFiles = execFileSync('git', ['ls-files', 'u*_lesson*_live.html'], { cwd: repo, encoding: 'utf8' })

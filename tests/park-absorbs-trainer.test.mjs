@@ -117,8 +117,9 @@ describe('calculator-patterns.mjs is generated from the JSON and shared with the
     expect(fs.readFileSync(path.join(ROOT, 'apstat-park', 'calculator-patterns.mjs'), 'utf8')).toBe(expected);
   });
 
-  test.skipIf(!relayPresent)('calculator-patterns.mjs, calculator-recognition.mjs and calculator-mission.mjs are byte-identical on both sides', () => {
-    for (const file of ['calculator-patterns.mjs', 'calculator-recognition.mjs', 'calculator-mission.mjs']) {
+  test.skipIf(!relayPresent)('calculator-patterns.mjs, calculator-recognition.mjs, calculator-mission.mjs and calculator-data-entry.mjs are byte-identical on both sides', () => {
+    // ABSORB_2 §2: calculator-data-entry.mjs (withDataEntry) joins the shared set.
+    for (const file of ['calculator-patterns.mjs', 'calculator-recognition.mjs', 'calculator-mission.mjs', 'calculator-data-entry.mjs']) {
       const client = fs.readFileSync(path.join(ROOT, 'apstat-park', file));
       const relay = fs.readFileSync(path.join(relayDir, file));
       expect(client.equals(relay), `${file} differs between client and relay`).toBe(true);

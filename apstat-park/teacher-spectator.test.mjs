@@ -111,6 +111,15 @@ test('a solo-only packet draws the solo title, one row per round (newest first) 
   assert.deepEqual([...view.focus.options].map(option => option.value), ['cara', 'bob', 'alice']);
 });
 
+test('ABSORB_2 §1: a solo branch round is marked BRANCH on its row', (t) => {
+  const view = mount();
+  t.after(() => view.spectator.destroy());
+  const branch = { skillId: 'normalcdf', picked: 'normalcdf', message: 'x', returnTitle: ONE_VAR.title, depth: 1 };
+  view.deliver(soloOnly([soloRound('bob', 'b1', NORMAL, mission(NORMAL, [], { branch }))]));
+  const captions = view.frame();
+  assert.ok(captions.includes('BOB . BRANCH . ' + caps(NORMAL.title) + ' . 0/' + NORMAL.route.length), captions.join(' | '));
+});
+
 test('auto shows a solo-only packet as the calculator scene, not the classroom', (t) => {
   const view = mount();
   t.after(() => view.spectator.destroy());

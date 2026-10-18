@@ -62,7 +62,9 @@ attempt, new epoch, `resetReason: { type: 'branch', skillId }`. In `broadcast` w
 `awardKeys`: if `room.branchStack.length`, call `finishBranch(room)` instead: SRS rule in (2), pop the stack,
 `setLevel(room, popped.level)` with the popped recognition, new epoch, `resetReason: { type: 'branch-return' }`,
 broadcast. A time-up in a branch restarts the branch like any solo round (`resetRoom` keeps the stack). A
-door reset / leaving the room drops the stack (the original problem is gone with the round, as today).
+door reset drops the stack; leaving the room means the solo room's usual 30 s retention (a reload inside it
+resumes the branch like any round in progress; after it the room and its stack are gone). Passive credit is
+never written while the section's recall records are still loading from the store (Codex review 2026-10-18).
 The spectator's solo row shows the branch title with `BRANCH` prefixed.
 
 **Client.** `calculator-room.mjs`: a packet whose `epoch` differs with `resetReason.type` of `branch` or
@@ -111,6 +113,14 @@ team game)**.
   and the same final screen / computed values as the catalogue level, for **every** one of the 14 skills.
   If one skill's editor path cannot be driven by the engine, that skill is listed in
   `DATA_ENTRY_SKIPPED` with the reason, plays as today, and the spec says so here.
+  **As built (2026-10-18):** `DATA_ENTRY_SKIPPED` is empty. The engine proof covers all 47 catalogue
+  problems of the 13 skills with entry data (12 list skills + chi-square-test's [A]), plus two varied
+  rounds of every varied one (relay `apstat-park/calculator-data-entry.test.mjs`). matrix-entry is not
+  one of them: its setup is empty and its own route already is the matrix entry. The list prefix is long
+  for the big LinReg sets (linreg-tint: 220 keys at 15 s a step, no total limit).
+
+**Cap (decided 2026-10-18).** `DATA_ENTRY_MAX_KEYS = 64`: a problem whose prefix is longer (the two-list
+regression sets, 69–220 keys) plays pre-loaded at every rung. Scatterplot's 63 keys is the longest typed.
 
 **Relay.** `soloLevel(room)`: after choosing/varying the level, if `rungFor(clears.clearsOf(...)) >= 1`
 and the level has entry data, `level = withDataEntry(level)`. Varied data (protocol 10) is applied first,
@@ -135,11 +145,12 @@ matrix; `withDataEntry` prefix lengths. Engine proof test above. Relay: rung 0 �
 |---|---|
 | ≥ 3 | +1 clear (as today) |
 | 2 | no change ("messy clear") |
-| ≤ 1 at rung 2 | −1 clear (back to goals-only hints) |
+| ≤ 1 at rung 2 | the clear count resets to 1 (back to goals-only hints; −1 at exactly two clears, more from a long run) |
 | ≤ 1 at rung 0 or 1 | no change |
 
-Clears are absolute counts, so `record(section, names, skillId, deltaByName)` takes a per-name delta of
-+1 / 0 / −1, floor 0. Memory and store are unchanged otherwise. Quality 2 = three wrong keys with no
+Clears are absolute counts, so `record(section, names, skillId, deltaByName)` takes a per-name delta
+(+1 / 0 / `1 − clears`), floor 0. (Built 2026-10-18 as `clearDelta({ quality, clears })`; `rungChange` on the
+member state is `rungFor(new) − rungFor(old)`, so a clean clear already at rung 2 reports 0.) Memory and store are unchanged otherwise. Quality 2 = three wrong keys with no
 time-up, or two with one; the thresholds mirror the trainer's 3+ errors demotion. **(decided)**
 
 **Visible.** The relay puts `rungChange: 1 | 0 | -1` and `clearQuality` on each member's completed state.
@@ -177,7 +188,7 @@ line text.
 
 ## 5. Calculator Skills progress view
 
-**Relay.** `GET /park/calc/progress?section&username` → `{ ok, today, skills: [ { skillId, title, topic,
+**Relay.** `GET /park/calc/progress?section&username` → `{ ok, today, loading, skills: [ { skillId, title, topic,
 unit, eligible, clears, rung, repetitions, intervalDays, nextReview, lastQuality, mastered, due,
 overdueDays } ] }` for every catalogue skill (`CALCULATOR_LEVELS`), `eligible` from the section's
 calendar gate (`available(section, today)`), clears from `clears.clearsOf`, the record from

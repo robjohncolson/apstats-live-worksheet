@@ -21,3 +21,12 @@ test('acceptance: quality 5 on two consecutive days -> six days out; quality 2 -
   assert.equal(record.nextReview, '2026-10-24');
   assert.equal(qualityFor({ wrongKeys: 2, timeoutCount: 0, recognition: { correct: false } }), 3);
 });
+
+test('ABSORB_2 §1: minus 1 per branch; a wrong pick without a branch (team) still costs one', () => {
+  assert.equal(qualityFor({ wrongKeys: 0, recognition: { correct: true, branches: 2 } }), 3, 'two branches, zero wrong keys');
+  assert.equal(qualityFor({ wrongKeys: 0, recognition: { correct: true, branches: 1 } }), 4);
+  assert.equal(qualityFor({ wrongKeys: 0, recognition: { correct: false } }), 4, 'team: unchanged');
+  assert.equal(qualityFor({ wrongKeys: 0, recognition: { correct: false, branches: 0 } }), 4);
+  assert.equal(qualityFor({ wrongKeys: 0, recognition: { correct: true, branches: 0 } }), 5);
+  assert.equal(qualityFor({ wrongKeys: 3, timeoutCount: 1, recognition: { correct: true, branches: 3 } }), 0, 'floor 0');
+});

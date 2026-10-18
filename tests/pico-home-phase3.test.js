@@ -35,6 +35,7 @@ const CASES = [
   { overlay: 'grade-help-overlay', open: (w) => w.openGradeHelp(), title: 'How your grade works' },
   { overlay: 'my-gradebook-overlay', open: (w) => w.openMyGradebook(), title: 'My Gradebook' },
   { overlay: 'my-receipts-overlay', open: (w) => w.openMyReceipts(), title: 'My Receipts' },
+  { overlay: 'calc-progress-overlay', open: (w) => w._openCalcProgress(), title: 'Calculator Skills' },
   { overlay: 'bf-overlay', open: (w, d) => { d.getElementById('bf-header').textContent = 'Flashcards'; d.getElementById('bf-overlay').style.display = 'block'; }, title: 'Flashcards' },
   { overlay: 'student-dm-modal', open: (w) => w._openStudentDmModal(), title: 'Message your teacher' },
   { overlay: 'teacher-nudge-modal', open: (w) => w._openTeacherNudgeModal('beta_fox'), title: 'Message student' },
@@ -116,7 +117,7 @@ function closeCase(win, c) {
   const entry = { 'dialog-overlay': ['closeDialog'], 'donow-bump-overlay': ['closeDoNowBump'], 'signin-overlay': ['closeSignInModal'],
     'signup-overlay': ['_switchToSignIn', 'closeSignInModal'], 'pwchange-overlay': ['closePwChangeModal'], 'namefinder-overlay': ['closeNameFinder'],
     'day-grade-overlay': ['closeDayGrade'], 'grade-help-overlay': ['closeGradeHelp'], 'my-gradebook-overlay': ['closeMyGradebook'],
-    'my-receipts-overlay': ['closeMyReceipts'], 'bf-overlay': ['closeBlooketFlashcards'], 'student-dm-modal': ['_closeStudentDmModal'],
+    'my-receipts-overlay': ['closeMyReceipts'], 'bf-overlay': ['closeBlooketFlashcards'], 'calc-progress-overlay': ['closeCalcProgress'], 'student-dm-modal': ['_closeStudentDmModal'],
     'teacher-nudge-modal': ['_closeTeacherNudgeModal'], 'app-bulletin-overlay': ['destroyBulletin'], 'game-overlay': ['closeGame'],
     'app-teachertools-overlay': ['destroyTeacherTools'], 'app-nightlyreview-overlay': ['closeNightlyReview'], 'app-gradecheckin-overlay': ['closeGradeCheckin'],
     'app-progress-overlay': ['destroyProgress'], 'override-gate-modal': ['_hideOverrideGateModal'] }[c.overlay];

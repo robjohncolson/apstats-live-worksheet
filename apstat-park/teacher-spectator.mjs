@@ -160,7 +160,9 @@ export function mountTeacherSpectator(container, { wsUrl, username, section = 'B
     // always shows, the name and title are cut to what is left.
     for (const [i, round] of rounds.entries()) {
       const progress = ' · ' + soloProgress(round);
-      const who = round.name + ' · ' + (round.level?.title || round.level?.id || '');
+      // ABSORB_2 §1: a branch round after a wrong pick is marked as one.
+      const branch = round.state?.branch ? 'BRANCH · ' : '';
+      const who = round.name + ' · ' + branch + (round.level?.title || round.level?.id || '');
       const room = SOLO_ROW_CHARS - progress.length;
       text((who.length > room ? who.slice(0, Math.max(0, room - 1)) + '…' : who) + progress, 450, 74 + i * 16, 9);
     }

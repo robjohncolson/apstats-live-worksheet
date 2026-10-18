@@ -18,7 +18,7 @@ win.HTMLCanvasElement.prototype.getContext = function () { return fakeContext(th
 const { mountParkPanel } = await import('./calculator-room.mjs');
 const { CALCULATOR_PROTOCOL } = await import('./calculator-lobby.mjs');
 const { levelById } = await import('./calculator-curriculum.mjs');
-const { handheldMatches } = await import('./calculator-handheld.mjs');
+const { handheldMatches, handheldFor } = await import('./calculator-handheld.mjs');
 
 const relay = file => new URL('../../curriculum_render/railway-server/apstat-park/' + file, import.meta.url);
 const relayPresent = fs.existsSync(relay('calculator-service.mjs'));
@@ -27,6 +27,16 @@ test('calculator-handheld.mjs is byte-identical on both sides; the tolerance is 
   assert.equal(fs.readFileSync(new URL('./calculator-handheld.mjs', import.meta.url), 'utf8'), fs.readFileSync(relay('calculator-handheld.mjs'), 'utf8'));
   assert.equal(handheldMatches('3.61', 3.6055), true);
   assert.equal(handheldMatches('0', 0.17), false);
+});
+
+test('handheldFor (ABSORB_2 §4): the first three labelled numeric answers; a reject decision is never asked', () => {
+  const labels = id => handheldFor(levelById(id)).fields.map(field => field.label);
+  assert.deepEqual(handheldFor(levelById('one-var-stats')), { label: 'Minimum',
+    fields: [{ label: 'Minimum', expected: 4 }, { label: 'Q1', expected: 7 }, { label: 'Median', expected: 11 }] });
+  assert.deepEqual(labels('t-test-data'), ['t statistic', 'p-value'], 'no df in the challenge; "Reject H0? 1=yes" is a decision, not a reading');
+  assert.deepEqual(labels('t-interval-data'), ['Lower bound', 'Upper bound']);
+  assert.deepEqual(labels('histogram'), ['55 to <65', '65 to <75', '75 to <85']);
+  assert.deepEqual(labels('normalcdf'), ['Probability']);
 });
 
 const LEVEL = levelById('one-var-stats');
@@ -58,32 +68,74 @@ const done = (epoch, name, extra = {}) => ({ type: 'calculator_state', protocol:
   timeoutCount: 0, boxAttempts: 0, boxValues: [4, 7, 11, 14, 20], lastPlot: null, solved: true, complete: true, failure: null,
   hintKeys: [], lastPress: null, clears: 1, rung: 0, problem: null, recognition: null, wrongKeys: 0,
   review: { quality: 5, intervalDays: 1, nextReview: '2026-10-17', mastered: false, masteredNow: false },
-  handheld: { label: 'Minimum', attempts: 0, status: null },
+  handheld: { label: 'Minimum', fields: ['Minimum', 'Q1', 'Median'], attempts: 0, status: null, misses: [] },
   members: [{ name, pose: { x: 65, y: 676 }, step: LEVEL.route.length + 5 }], ...extra });
 
-test('after a solo clear the box appears with the label, Enter sends calculator_handheld, the verdict shows', (t) => {
+test('after a solo clear the box shows one labelled input per field; Enter sends values; a miss names the field', (t) => {
   const room = mountRoom('alice');
   t.after(() => room.panel.dispose());
   room.deliver(lobby('e1', 'alice'));
   assert.equal(room.box().style.display, 'none');
   room.deliver(done('e1', 'alice'));
   assert.equal(room.box().style.display, 'block');
-  assert.match(room.box().querySelector('label').textContent, /real TI-84, same data: Minimum = \?/);
-  assert.match(room.status(), /Optional: enter the same data on your real TI-84 and type Minimum in the box\./);
-  assert.deepEqual(room.panel.getView().handheld, { label: 'Minimum', attempts: 0, status: null });
-  const input = room.box().querySelector('input');
-  input.value = ' 4.0 ';
-  room.box().dispatchEvent(new win.Event('submit', { bubbles: true, cancelable: true }));
-  assert.deepEqual(room.sent('calculator_handheld').at(-1), { type: 'calculator_handheld', epoch: 'e1', revision: 9, value: '4.0' });
-  assert.equal(input.value, '');
-  room.deliver(done('e1', 'alice', { revision: 10, handheld: { label: 'Minimum', attempts: 1, status: null } }));
-  assert.match(room.status(), /Not a match; one more try\./);
+  const inputs = () => [...room.box().querySelectorAll('input')];
+  assert.deepEqual([...room.box().querySelectorAll('label')].map(label => label.textContent), ['Minimum', 'Q1', 'Median']);
+  assert.equal(inputs().length, 3);
+  assert.equal(inputs()[1].getAttribute('aria-label'), 'Q1 from your real TI-84');
+  assert.match(room.box().textContent, /real TI-84, same data: Minimum, Q1, Median = \?/);
+  assert.match(room.status(), /Optional: enter the same data on your real TI-84 and type Minimum, Q1 and Median in the boxes\./);
+  assert.deepEqual(room.panel.getView().handheld, { label: 'Minimum', fields: ['Minimum', 'Q1', 'Median'], attempts: 0, status: null, misses: [] });
+  const submit = () => room.box().dispatchEvent(new win.Event('submit', { bubbles: true, cancelable: true }));
+  inputs()[0].value = ' 4.0 ';
+  submit();
+  assert.equal(room.sent('calculator_handheld').length, 0, 'an empty box blocks the check');
+  inputs()[1].value = '8'; inputs()[2].value = '11';
+  submit();
+  assert.deepEqual(room.sent('calculator_handheld').at(-1), { type: 'calculator_handheld', values: ['4.0', '8', '11'], epoch: 'e1', revision: 9 });
+  room.deliver(done('e1', 'alice', { revision: 10, handheld: { label: 'Minimum', fields: ['Minimum', 'Q1', 'Median'], attempts: 1, status: null, misses: [1] } }));
   assert.equal(room.box().style.display, 'block');
-  room.deliver(done('e1', 'alice', { revision: 11, handheld: { label: 'Minimum', attempts: 2, status: 'passed' },
+  assert.equal(room.box().querySelector('[data-calculator-handheld-message]').textContent, 'Not a match: Q1. Check sign and decimals.');
+  assert.match(room.status(), /Not a match: Q1\. Check sign and decimals\. One more try\./);
+  assert.match(inputs()[1].style.outline, /solid/, 'the missed input has a red outline');
+  assert.equal(inputs()[1].disabled, false);
+  assert.equal(inputs()[1].value, '8', 'the missed value stays to fix');
+  assert.equal(inputs()[0].style.outline, '');
+  assert.equal(inputs()[0].disabled, true, 'a matched input is kept and disabled');
+  assert.equal(inputs()[0].value.trim(), '4.0');
+  assert.equal(inputs()[2].disabled, true);
+  assert.deepEqual(room.panel.getView().handheld.misses, [1]);
+  room.draw();
+  inputs()[1].value = '7';
+  submit();
+  assert.deepEqual(room.sent('calculator_handheld').at(-1).values, ['4.0', '7', '11'], 'matched values go back with the fix');
+  room.deliver(done('e1', 'alice', { revision: 11, handheld: { label: 'Minimum', fields: ['Minimum', 'Q1', 'Median'], attempts: 2, status: 'passed', misses: [] },
     review: { quality: 5, intervalDays: 1, nextReview: '2026-10-17', mastered: true, masteredNow: true } }));
   assert.equal(room.box().style.display, 'none');
   assert.match(room.status(), /Mastered! One bonus point banked\./);
   assert.match(room.status(), /Handheld check passed\./);
+  room.draw();
+  // The next round builds fresh, empty, enabled inputs.
+  room.deliver(lobby('e2', 'alice'));
+  room.deliver(done('e2', 'alice'));
+  assert.deepEqual(inputs().map(input => [input.value, input.disabled, input.style.outline]), [['', false, ''], ['', false, ''], ['', false, '']]);
+});
+
+test('an older packet without fields falls back to one box labelled with `label`', (t) => {
+  const room = mountRoom('alice');
+  t.after(() => room.panel.dispose());
+  room.deliver(lobby('e1', 'alice'));
+  room.deliver(done('e1', 'alice', { handheld: { label: 'Minimum', attempts: 0, status: null } }));
+  assert.equal(room.box().querySelectorAll('input').length, 1);
+  assert.match(room.status(), /type Minimum in the box\./);
+  assert.deepEqual(room.panel.getView().handheld, { label: 'Minimum', fields: ['Minimum'], attempts: 0, status: null, misses: [] });
+  const input = room.box().querySelector('input');
+  input.value = '5';
+  room.box().dispatchEvent(new win.Event('submit', { bubbles: true, cancelable: true }));
+  assert.deepEqual(room.sent('calculator_handheld').at(-1).values, ['5']);
+  room.deliver(done('e1', 'alice', { revision: 10, handheld: { label: 'Minimum', attempts: 1, status: null } }));
+  assert.match(room.status(), /Not a match; one more try\./);
+  assert.equal(input.value, '', 'no misses list: the box clears as before');
+  assert.equal(input.disabled, false);
   room.draw();
 });
 
@@ -91,7 +143,7 @@ test('a closed check hides the box and says nothing was recorded; a round withou
   const room = mountRoom('alice');
   t.after(() => room.panel.dispose());
   room.deliver(lobby('e1', 'alice'));
-  room.deliver(done('e1', 'alice', { handheld: { label: 'Minimum', attempts: 2, status: 'failed' } }));
+  room.deliver(done('e1', 'alice', { handheld: { label: 'Minimum', fields: ['Minimum', 'Q1', 'Median'], attempts: 2, status: 'failed', misses: [0] } }));
   assert.equal(room.box().style.display, 'none');
   assert.match(room.status(), /Handheld check closed after two tries; nothing recorded\./);
   room.deliver(lobby('e2', 'alice'));
@@ -101,4 +153,18 @@ test('a closed check hides the box and says nothing was recorded; a round withou
   assert.equal(room.panel.getView().handheld, null);
   room.panel.dispose();
   assert.equal(room.container.querySelector('[data-calculator-handheld]'), null, 'removed on dispose');
+});
+
+test('a reload after a partial miss: the matched boxes are empty, so nothing is locked (Codex review 2026-10-18)', (t) => {
+  const room = mountRoom('alice');
+  t.after(() => room.panel.dispose());
+  room.deliver(lobby('e1', 'alice'));
+  room.deliver(done('e1', 'alice', { revision: 10, handheld: { label: 'Minimum', fields: ['Minimum', 'Q1', 'Median'], attempts: 1, status: null, misses: [1] } }));
+  const inputs = [...room.box().querySelectorAll('input')];
+  assert.deepEqual(inputs.map(input => [input.value, input.disabled]), [['', false], ['', false], ['', false]], 'every box can be typed');
+  assert.match(inputs[1].style.outline, /solid/, 'the missed field is still marked');
+  inputs[0].value = '4'; inputs[1].value = '7'; inputs[2].value = '11';
+  room.box().dispatchEvent(new win.Event('submit', { bubbles: true, cancelable: true }));
+  assert.deepEqual(room.sent('calculator_handheld').at(-1).values, ['4', '7', '11']);
+  room.draw();
 });

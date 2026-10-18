@@ -50,6 +50,7 @@ const GAP_NAMED = {
   'donow-bump-overlay': 'closeDoNowBump',
   'dialog-overlay': 'closeDialog',
   'bf-overlay': 'closeBlooketFlashcards',
+  'calc-progress-overlay': 'closeCalcProgress',
   'override-gate-modal': '_hideOverrideGateModal',
 };
 // QR/guest overlays the net hides directly (no cleanup) — they open as flex.

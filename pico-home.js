@@ -1568,6 +1568,8 @@
     return [
       { label: 'FORMULA DEFENSE', run: function () { window.open('https://tmux-trainer.vercel.app/#deck=ap-stats-formulas', '_blank', 'noopener'); } },
       { label: 'CALCULATOR', run: function () { callDesk('_openParkSolo', ['']); } },
+      // ABSORB_2_SPEC §5: the Calculator Skills progress view (the Desk's own modal, framed below).
+      { label: 'CALC SKILLS', run: function () { callDesk('_openCalcProgress', []); } },
       { label: 'ALL WORKSHEETS', run: function () { window.open('TOC.html', '_blank', 'noopener'); } },
       { label: 'BACK', submenu: 'LESSONS' },
     ];
@@ -3102,6 +3104,7 @@
     { overlay: 'my-gradebook-overlay',    box: '.dialog-box', title: '#my-gradebook-title',            close: ['closeMyGradebook'] },
     { overlay: 'my-receipts-overlay',     box: '.dialog-box', title: '.dialog-box > .chicago > span',  close: ['closeMyReceipts'] },
     { overlay: 'bf-overlay',              box: '.dialog-box', title: '#bf-header',                     close: ['closeBlooketFlashcards'] }, // Review + flashcard decks
+    { overlay: 'calc-progress-overlay',   box: '.dialog-box', title: '#calc-progress-title',           close: ['closeCalcProgress'] },     // Calculator Skills (ABSORB_2 §5)
     { overlay: 'student-dm-modal',        box: '.sdm-panel',  title: '#sdm-title',                     close: ['_closeStudentDmModal'] },   // Message teacher
     { overlay: 'teacher-nudge-modal',     box: '.tnm-panel',  title: '#tnm-title',                     close: ['_closeTeacherNudgeModal'] },
     { overlay: 'app-bulletin-overlay',    box: '.app-window', title: '.game-title-bar .title-text',    close: ['destroyBulletin'] },

@@ -158,3 +158,58 @@ test('a round without the step (older relay or a skill with no problem) is uncha
   room.panel.setRecognition(true);
   assert.deepEqual(room.sent('calculator_recognition').at(-1), { type: 'calculator_recognition', epoch: 'e1', revision: 1, on: true });
 });
+
+// ABSORB_2_SPEC §1: a solo wrong pick plays the picked skill once (a branch round), then the
+// original problem comes back with that tile gone; neither walks the student back to the door.
+const T_STATS = levelById('t-test-stats');
+const SENTENCE = 'This asks about a proportion, not a mean.';
+const BRANCH = { skillId: 't-test-stats', picked: 't-test-stats', message: SENTENCE, returnTitle: LEVEL.title, depth: 1 };
+
+test('branch round: title, the two caption lines, the status line; the player stays at the calculator', (t) => {
+  const room = mountRoom('alice');
+  t.after(() => room.panel.dispose());
+  room.deliver(lobby('e1', 'alice'));
+  room.deliver(state('e1', 'alice'));
+  assert.equal(room.panel.getView().participating, true);
+  room.deliver({ ...lobby('e2', 'alice'), missionId: T_STATS.id });
+  room.deliver(state('e2', 'alice', { missionId: T_STATS.id, recognition: null, branch: BRANCH,
+    resetReason: { type: 'branch', skillId: 't-test-stats' } }));
+  const view = room.panel.getView();
+  assert.equal(view.participating, true, 'still playing: no walk back to the door');
+  assert.equal(view.playerX, view.entranceX + 65, 'placed at the calculator like a time-up restart');
+  assert.deepEqual(view.branch, { skillId: 't-test-stats', title: skillTitle('t-test-stats'), depth: 1 });
+  assert.equal(view.recognition, null);
+  assert.match(room.status(), /^Not T-Test \(Stats input\)\. This asks about a proportion, not a mean\. Run T-Test \(Stats input\) once, then your problem comes back\. /);
+  assert.match(room.status(), /Step 1\//);
+  const captions = room.drawn();
+  assert.ok(captions.includes('BRANCH . T-TEST (STATS INPUT)'), captions.join(' | '));
+  assert.ok(captions.includes('NOT T-TEST (STATS INPUT). THIS ASKS ABOUT A PROPORTION, NOT A MEAN.'), captions.join(' | '));
+  assert.ok(captions.includes('RUN IT ONCE, THEN BACK TO YOUR PROBLEM.'), captions.join(' | '));
+  assert.ok(captions.includes('STAT'), 'the keypad: no recognition step in a branch');
+  assert.equal(room.sent('calculator_restart').length, 0);
+});
+
+test('branch return: the original problem with the remaining tiles, without the door', (t) => {
+  const room = mountRoom('alice');
+  t.after(() => room.panel.dispose());
+  room.deliver(lobby('e1', 'alice'));
+  room.deliver({ ...lobby('e2', 'alice'), missionId: T_STATS.id });
+  room.deliver(state('e2', 'alice', { missionId: T_STATS.id, recognition: null, branch: BRANCH,
+    resetReason: { type: 'branch', skillId: 't-test-stats' } }));
+  const remaining = OPTIONS.filter(id => id !== 't-test-stats');
+  room.deliver(lobby('e3', 'alice'));
+  room.deliver(state('e3', 'alice', { recognition: recognition({ options: remaining, branches: 1 }),
+    branch: null, resetReason: { type: 'branch-return' } }));
+  const view = room.panel.getView();
+  assert.equal(view.participating, true);
+  assert.equal(view.playerX, view.entranceX + 65);
+  assert.equal(view.branch, null);
+  assert.deepEqual(view.recognition.options, remaining);
+  assert.equal(view.recognition.branches, 1);
+  assert.match(room.status(), /^Back to your problem\. Which procedure\? A company claims/);
+  assert.match(room.status(), /Choices: 1 1-PropZTest/);
+  const captions = room.drawn();
+  assert.ok(captions.includes('RECOGNITION ROUND'), captions.join(' | '));
+  assert.ok(!captions.some(c => c.startsWith('BRANCH')), 'the branch title is gone');
+  assert.ok(!captions.includes(skillTitle('t-test-stats').toUpperCase()), 'the wrong tile is gone');
+});

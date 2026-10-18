@@ -3,6 +3,7 @@ const mission = await import('./calculator-mission.mjs' + V);
 const { HOLD_MS, timeLimitFor, WORLD, tilesFor, tileAt, missionFor, recognitionPending } = mission;
 const { skillTitle } = await import('./calculator-recognition.mjs' + V);
 const { goalFor } = await import('./calculator-goals.mjs' + V);
+const { dataEntryProgress } = await import('./calculator-data-entry.mjs' + V);
 const { DEFAULT_LEVEL, levelById, challengeFor, initializeCalculator } = await import('./calculator-curriculum.mjs' + V);
 const { drawChallenge } = await import('./calculator-challenge-view.mjs' + V);
 const { nativeScriptFilenames } = await import('./calculator-native/manifest.mjs' + V);
@@ -17,6 +18,8 @@ const { createSceneDissolve } = await import('./scene-transition.mjs' + V);
 const { catBodyForHue, rgbHex } = await import('./pico-rules.mjs' + V);
 const { ATLAS } = await import('./assets/pico-atlas.mjs' + V);
 const { TEAM_BLOCK, CALCULATOR_PROTOCOL } = await import('./calculator-lobby.mjs' + V);
+// ABSORB_2 §1: the relay's reset reasons for a branch round and the return to the problem.
+const BRANCH_RESETS = new Set(['branch', 'branch-return']);
 const { createPeerMotion } = await import('./peer-motion.mjs' + V);
 const { createUpdateGate } = await import('./update-gate.mjs' + V);
 const { createPoseSmoothing } = await import('./pose-smoothing.mjs' + V);
@@ -189,38 +192,85 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   readings.style.cssText = screenReaderOnly;
   container.append(readings);
   // §7 (protocol 16): the handheld check's one visible control, shown after a solo clear while
-  // the relay offers it (state.handheld.status null). Enter sends calculator_handheld.
+  // the relay offers it (state.handheld.status null). ABSORB_2 §4: one labelled input per field
+  // (up to three, in a row); Enter sends calculator_handheld { values }.
   const handheld = doc.createElement('form');
   handheld.dataset.calculatorHandheld = '';
   handheld.style.cssText = 'display:none;position:absolute;right:12px;bottom:64px;z-index:3;background:#f3ead8;border:2px solid #30263b;padding:6px 8px;font:12px system-ui;color:#30263b;box-shadow:2px 2px 0 #30263b';
-  const handheldLabel = doc.createElement('label');
-  handheldLabel.style.cssText = 'display:block;margin-bottom:4px';
-  const handheldInput = doc.createElement('input');
-  handheldInput.type = 'text'; handheldInput.inputMode = 'decimal'; handheldInput.autocomplete = 'off';
-  handheldInput.setAttribute('aria-label', 'Result from your real TI-84');
-  handheldInput.style.cssText = 'width:110px;font:13px monospace;padding:2px 4px;border:1px solid #30263b';
+  const handheldLabel = doc.createElement('div');
+  handheldLabel.style.cssText = 'margin-bottom:4px';
+  const handheldRow = doc.createElement('div');
+  handheldRow.style.cssText = 'display:flex;align-items:flex-end;gap:6px';
   const handheldButton = doc.createElement('button');
   handheldButton.type = 'submit'; handheldButton.textContent = 'Check';
-  handheldButton.style.cssText = 'margin-left:6px;font:12px system-ui;padding:2px 8px;cursor:pointer';
-  handheld.append(handheldLabel, handheldInput, handheldButton);
+  handheldButton.style.cssText = 'font:12px system-ui;padding:2px 8px;cursor:pointer';
+  const handheldMessage = doc.createElement('div');
+  handheldMessage.dataset.calculatorHandheldMessage = '';
+  handheldMessage.style.cssText = 'margin-top:4px;color:#a02020';
+  handheld.append(handheldLabel, handheldRow, handheldMessage);
   container.append(handheld);
   const containerPosition = container.style.position;
   if (win.getComputedStyle(container).position === 'static') container.style.position = 'relative';
+  let handheldInputs = [];
   handheld.addEventListener('submit', event => {
     event.preventDefault();
-    const value = handheldInput.value.trim();
-    if (!value || !state?.complete || !state.handheld || state.handheld.status) return;
-    send('calculator_handheld', { value, epoch: state.epoch, revision: state.revision });
-    handheldInput.value = '';
+    if (!state?.complete || !state.handheld || state.handheld.status) return;
+    const values = handheldInputs.map(input => input.value.trim());
+    const empty = handheldInputs.find(input => !input.value.trim());
+    if (empty) { empty.focus(); return; }
+    send('calculator_handheld', { values, epoch: state.epoch, revision: state.revision });
   });
-  let handheldShownFor = null;
+  // An older relay sends only `label` (one field) and no `misses`.
+  const checkFields = check => (Array.isArray(check?.fields) && check.fields.length ? check.fields : [check?.label || 'Result']);
+  const checkMisses = check => (Array.isArray(check?.misses) ? check.misses : []);
+  const missedLabels = check => checkMisses(check).map(i => checkFields(check)[i]).filter(Boolean);
+  function buildHandheldInputs(fields) {
+    handheldRow.replaceChildren();
+    handheldInputs = fields.map(field => {
+      const cell = doc.createElement('label');
+      cell.style.cssText = 'display:flex;flex-direction:column;gap:2px';
+      const caption = doc.createElement('span');
+      caption.textContent = field;
+      const input = doc.createElement('input');
+      input.type = 'text'; input.inputMode = 'decimal'; input.autocomplete = 'off';
+      input.setAttribute('aria-label', field + ' from your real TI-84');
+      input.style.cssText = 'width:80px;font:13px monospace;padding:2px 4px;border:1px solid #30263b';
+      cell.append(caption, input);
+      handheldRow.append(cell);
+      return input;
+    });
+    handheldRow.append(handheldButton);
+  }
+  // After a miss: missed inputs get a red outline (typed value kept to fix); matched inputs are
+  // kept and disabled. A miss without `misses` (older relay) clears every box as before.
+  function markHandheldInputs(check) {
+    const misses = checkMisses(check);
+    handheldInputs.forEach((input, i) => {
+      const missed = misses.includes(i);
+      const matched = check.attempts > 0 && misses.length > 0 && !missed;
+      if (check.attempts > 0 && !misses.length) input.value = '';
+      // A matched box is locked only while it still holds the value (after a reload the boxes
+      // are empty: the student types every field again, nothing stays locked and blank).
+      input.disabled = matched && input.value !== '';
+      input.style.outline = missed ? '2px solid #c62828' : '';
+      input.setAttribute('aria-invalid', missed ? 'true' : 'false');
+    });
+    const labels = missedLabels(check);
+    handheldMessage.textContent = labels.length ? 'Not a match: ' + labels.join(', ') + '. Check sign and decimals.' : '';
+  }
+  let handheldShownFor = null, handheldFieldsFor = null;
   function updateHandheld() {
     const offered = solo && state?.complete && state.handheld && !state.handheld.status;
     handheld.style.display = offered ? 'block' : 'none';
     if (!offered) { handheldShownFor = null; return; }
-    handheldLabel.textContent = 'On your real TI-84, same data: ' + state.handheld.label + ' = ?';
+    const fields = checkFields(state.handheld);
+    handheldLabel.textContent = 'On your real TI-84, same data: ' + fields.join(', ') + ' = ?';
+    const fieldsKey = state.epoch + ':' + fields.join('|');
+    if (handheldFieldsFor !== fieldsKey) { handheldFieldsFor = fieldsKey; buildHandheldInputs(fields); }
     const key = state.epoch + ':' + state.handheld.attempts;
-    if (handheldShownFor !== key) { handheldShownFor = key; handheldInput.value = ''; }
+    if (handheldShownFor === key) return;
+    handheldShownFor = key;
+    markHandheldInputs(state.handheld);
   }
   container.setAttribute('data-calculator-active', '');
 
@@ -256,6 +306,29 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   // else the keypad or the answer choices.
   function tiles() { return tilesFor(state?.step || 0, level, state?.recognition); }
   function recognizing() { return recognitionPending(state); }
+  // ABSORB_2 §2: a rung-1+ solo round starts empty; its first dataSteps steps type the data in.
+  function enteringData() {
+    return !!state && level.dataSteps > 0 && state.step < level.dataSteps && !recognizing();
+  }
+  // { L1: { entered, total }, ... } from what the local calculator holds now.
+  function entryProgress() {
+    return dataEntryProgress(level.entryData, calculator.save());
+  }
+  // The list (or [A]) being typed now: the first one not yet full, else the last.
+  function entryCurrent(progress) {
+    const names = Object.keys(progress);
+    return names.find(name => progress[name].entered < progress[name].total) || names.at(-1) || null;
+  }
+  // 'L1: 3/12 · L2: 0/12' (the drawn progress line).
+  function entryProgressLine() {
+    return Object.entries(entryProgress()).map(([name, count]) => name + ': ' + count.entered + '/' + count.total).join(' · ');
+  }
+  // 'Enter the data. L1: 3 of 12. ' (the status line's lead).
+  function entryStatus() {
+    const progress = entryProgress(), current = entryCurrent(progress);
+    if (!current) return 'Enter the data. ';
+    return 'Enter the data. ' + current + ': ' + progress[current].entered + ' of ' + progress[current].total + '. ';
+  }
   // A new local calculator loaded with the current level's lists (a varied round's own data).
   // problem: the round's state.problem (null = the catalogue's data). Callers reset `applied`.
   function freshCalculator(problem) {
@@ -389,20 +462,37 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     const days = review.intervalDays;
     return (review.masteredNow ? ' Mastered! One bonus point banked.' : '') + ' Quality ' + review.quality + ' of 5. Review again in ' + days + (days === 1 ? ' day.' : ' days.');
   }
+  // ABSORB_2 §3: what this clear did to the hint rung. Silent when a clean clear finds the rung
+  // already at 2 (nothing changes for the student) or on a packet without the relay's verdict.
+  function rungNote() {
+    const change = state?.rungChange;
+    if (change === 1) return ' Hints fade next round.';
+    if (change === -1) return ' Rough clear: the goal hints come back next round.';
+    if (change !== 0) return '';
+    if (!(state.clearQuality < 3)) return '';
+    return ' Messy clear: hints stay where they are.';
+  }
   // §7: the handheld check's status copy and drawn line.
   function handheldNote() {
     const check = state?.handheld;
     if (!check) return '';
     if (check.status === 'passed') return ' Handheld check passed.';
     if (check.status === 'failed') return ' Handheld check closed after two tries; nothing recorded.';
-    return (check.attempts ? ' Not a match; one more try.' : '') + ' Optional: enter the same data on your real TI-84 and type ' + check.label + ' in the box.';
+    const fields = checkFields(check), missed = missedLabels(check);
+    const miss = missed.length ? ' Not a match: ' + missed.join(', ') + '. Check sign and decimals. One more try.'
+      : check.attempts ? ' Not a match; one more try.' : '';
+    const asked = fields.length === 1 ? fields[0] + ' in the box' : fields.slice(0, -1).join(', ') + ' and ' + fields.at(-1) + ' in the boxes';
+    return miss + ' Optional: enter the same data on your real TI-84 and type ' + asked + '.';
   }
   function handheldLine() {
     const check = state?.handheld;
     if (!check) return null;
     if (check.status === 'passed') return 'HANDHELD CHECK PASSED';
     if (check.status === 'failed') return 'HANDHELD CHECK CLOSED';
-    return (check.attempts ? 'NOT A MATCH · ONE MORE TRY · ' : 'REAL TI-84? ') + 'TYPE ' + check.label.toUpperCase() + ' IN THE BOX';
+    const fields = checkFields(check), missed = missedLabels(check);
+    if (missed.length) return 'NOT A MATCH: ' + missed.join(', ').toUpperCase() + ' · ONE MORE TRY';
+    const asked = fields.length === 1 ? fields[0].toUpperCase() + ' IN THE BOX' : 'THE ' + fields.length + ' VALUES IN THE BOXES';
+    return (check.attempts ? 'NOT A MATCH · ONE MORE TRY · ' : 'REAL TI-84? ') + 'TYPE ' + asked;
   }
   // One drawn line under the celebration: MASTERED / NEXT REVIEW IN n DAYS.
   function reviewLine() {
@@ -601,6 +691,9 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     // Solo: the door's next round starts where the student stands; the team walks back to the block.
     const soloRestarted = restarted && solo;
     const teamReset = state && epoch !== packet.epoch && packet.resetReason?.type === 'timeout';
+    // ABSORB_2 §1: a branch round (or the return to the problem) is a fresh solo round where the
+    // student stands at the calculator, never a walk back to the door.
+    const branchReset = state && epoch !== packet.epoch && BRANCH_RESETS.has(packet.resetReason?.type);
     if (packet.failure && !state?.failure) {
       keyQueue.length = 0; pendingPress = null;
       for (const key in input) input[key] = false;
@@ -616,7 +709,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     const keys = packet.keys || level.route.slice(0, Math.min(packet.step, level.route.length));
     while (applied < keys.length) calculator.pressKey(keys[applied++]);
     if (packet.step >= level.route.length) computedSummary = challenge.answers;
-    if (timedOut || teamReset || soloRestarted) {
+    if (timedOut || teamReset || soloRestarted || branchReset) {
       Object.assign(player, { x: ENTRY_WIDTH + 65, y: WORLD.floor - 24, vx: 0, vy: 0, standingOn: null });
       for (const key in input) input[key] = false;
       if (soloRestarted) rewardShownAt = null;
@@ -645,7 +738,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     const hint = state.solved ? (solo ? 'Your result is ready.' : 'Your result is ready. Help your teammates finish.')
       : recognizing() ? 'Which procedure? ' + state.recognition.stem + ' Choices: '
         + state.recognition.options.map((id, i) => (i + 1) + ' ' + skillTitle(id)).join(', ') + '. Click one or press its number.'
-      : state.step < level.route.length ? hintFor(state.step, keyboardLayer(calculator.save()))
+      : state.step < level.route.length ? (enteringData() ? entryStatus() : '') + hintFor(state.step, keyboardLayer(calculator.save()))
       : challenge.prompts ? challenge.prompts[answerIndex] + ' Click a choice, press its number key, or stand on it.'
       : 'Choose ' + challenge.labels[answerIndex] + '. Click its value.';
     const feedback = answerFeedback();
@@ -665,11 +758,11 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     const text = state.failure ? (state.step >= level.route.length
       ? 'Time is up. Returning to your result checkpoint with a fresh timer.'
       : 'Time is up. Restarting the calculator portion.')
-      : state.complete ? (solo ? 'Cleared! ' + level.title + ' complete. +1 key.' + reviewNote() + handheldNote() + ' Walk to the door for the next round.'
-        : 'Together! ' + level.title + ' complete. +1 key for everyone on the team.' + reviewNote())
+      : state.complete ? (solo ? 'Cleared! ' + level.title + ' complete. +1 key.' + rungNote() + reviewNote() + handheldNote() + ' Walk to the door for the next round.'
+        : 'Together! ' + level.title + ' complete. +1 key for everyone on the team.' + rungNote() + reviewNote())
       : state.solved ? hint + ' ' + state.readyCount + '/' + state.teamSize + ' ready.'
-      : recognizing() ? hint
-      : pickNote + modeNote + 'Step ' + (state.step + 1) + '/' + (level.route.length + challenge.answers.length)
+      : recognizing() ? returnNote() + hint
+      : branchNote() + pickNote + modeNote + 'Step ' + (state.step + 1) + '/' + (level.route.length + challenge.answers.length)
         + (solo ? ' · solo. ' : ' · ' + state.teamSize + ' on the team. ') + hint
         + pressNote
         + (state.hintKeys?.length ? ' Hint: choose ' + state.hintKeys.join(' or ') + '. Step reset—30 seconds to try again.' : '')
@@ -882,20 +975,28 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     text(ctx, roomTitle(), 28, 30, 20);
     const hasMission = !!state || !!lobby?.missionId;
     // §4: the skill's name and data would give the recognition answer away: hidden until the pick.
-    text(ctx, recognizing() ? 'RECOGNITION ROUND' : hasMission ? level.title.toUpperCase() : 'RANDOM SKILL ROUND', 28, 53, 14);
+    text(ctx, recognizing() ? 'RECOGNITION ROUND' : state?.branch ? 'BRANCH · ' + branchTitle().toUpperCase()
+      : hasMission ? level.title.toUpperCase() : 'RANDOM SKILL ROUND', 28, 53, 14);
     const caption = reloadNeeded ? 'This page is an older version. Click or press Enter to reload it.'
       : recognizing() ? 'Read the problem. Which procedure does it call for?'
       : hasMission ? inputCaption() : lobby?.eligibleCount === 0
         ? 'No calculator skills are scheduled yet for this class.' : 'Connecting to your class curriculum...';
-    text(ctx, caption.slice(0, 106), 28, 76, 10);
-    if (caption.length > 106) text(ctx, caption.slice(106), 28, 89, 10);
+    // ABSORB_2 §1: until the first key of a branch, the two lines say why it is here.
+    if (branchIntro()) {
+      text(ctx, branchCaption().slice(0, 106), 28, 76, 10);
+      text(ctx, 'RUN IT ONCE, THEN BACK TO YOUR PROBLEM.', 28, 89, 10);
+    } else {
+      text(ctx, caption.slice(0, 106), 28, 76, 10);
+      if (caption.length > 106) text(ctx, caption.slice(106), 28, 89, 10);
+    }
     if (showingBoxplot) text(ctx, 'CALCULATOR RESULT', 28, 103, 10);
     // No bezel or LCD background: live menu text is part of the scenery.
     for (const [i, line] of display.getLines().slice(0, 8).entries()) {
       const label = (line.selected ? '> ' : '  ') + line.text;
       text(ctx, label, 28, (showingBoxplot ? 123 : 106) + i * 18, label.length > 25 ? 7 : 14, ink);
     }
-    text(ctx, state?.complete ? 'MISSION COMPLETE!' : recognizing() ? 'WHICH PROCEDURE?' : solo ? 'SOLO PRACTICE' : 'ONE TEAM · ONE GOAL', 350, 112, 17);
+    text(ctx, state?.complete ? 'MISSION COMPLETE!' : recognizing() ? 'WHICH PROCEDURE?' : enteringData() ? 'ENTER THE DATA'
+      : solo ? 'SOLO PRACTICE' : 'ONE TEAM · ONE GOAL', 350, 112, 17);
     if (state?.complete) drawKeyReward(ctx, atlas);
     const plan = navigator();
     // The recognition step has no route step, so no hints and no rung to tag (§4).
@@ -916,7 +1017,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
         : lobby?.phase === 'active' ? 'TEAM ROUND IN PROGRESS' : 'PUSH THE BLOCK HERE TO START', 350, 143, 12);
     text(ctx, state?.failure ? (showingBoxplot ? 'Return to the checkpoint.' : 'Restart the calculator.') : state?.complete ? 'Walk to the door. Press UP.' : state?.solved ? 'Help your teammates finish.'
       : recognizing() ? 'Read the problem below.' : showingBoxplot ? 'Click a value for the result.' : 'Click to press your own keys.', 350, 175, 12);
-    text(ctx, solo ? (state ? 'Clear it to open the next-round door.' : 'Your own round. Your own clock.')
+    text(ctx, enteringData() ? entryProgressLine() : solo ? (state ? 'Clear it to open the next-round door.' : 'Your own round. Your own clock.')
       : state ? state.readyCount + '/' + state.teamSize + ' matching results ready' : 'Everyone solves independently.', 350, 197, 12);
     text(ctx, state?.solved ? 'All values matched.'
       : recognizing() ? 'Click the procedure it calls for.'
@@ -1122,10 +1223,22 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     return String(value).replace(/x̄/g, 'xbar').replace(/σ/g, 'sigma ').replace(/≤/g, '<=').replace(/≥/g, '>=');
   }
   function inputCaption() {
+    if (enteringData()) return entryCaption();
+    // A data-entry round's calculator started empty: its data is entryData (ABSORB_2 §2).
+    const lists = level.entryData?.lists || level.setup.lists;
     // A frequency list is part of the data: show it, not just "ready".
-    if (level.values?.freq) return 'L1={' + level.setup.lists.L1.join(',') + '}  L2={' + level.setup.lists.L2.join(',') + '} (frequencies)';
-    if (level.setup.lists.L1) return 'L1={' + level.setup.lists.L1.join(',') + '}' + (level.setup.lists.L2 ? '  L2 ready' : '');
+    if (level.values?.freq) return 'L1={' + lists.L1.join(',') + '}  L2={' + lists.L2.join(',') + '} (frequencies)';
+    if (lists.L1) return 'L1={' + lists.L1.join(',') + '}' + (lists.L2 ? '  L2 ready' : '');
     return Object.entries(level.values).map(([key, value]) => key + '=' + JSON.stringify(value)).join('  ');
+  }
+  // While typing the data: the list being typed first, then the rest (or [A] row by row).
+  function entryCaption() {
+    const lists = level.entryData.lists || {};
+    const names = Object.keys(lists).filter(name => lists[name]?.length);
+    if (!names.length) return '[A]=' + (level.entryData.matrices?.['[A]'] || []).map(row => '[' + row.join(',') + ']').join('');
+    const current = entryCurrent(entryProgress());
+    const order = [current, ...names.filter(name => name !== current)];
+    return 'TYPE ' + order.map(name => name + '={' + lists[name].join(',') + '}').join('  ');
   }
   function pointer(event) {
     if (reloadNeeded) { event.preventDefault(); event.stopImmediatePropagation(); reload(); return; }
@@ -1164,6 +1277,19 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
       event.preventDefault(); enterSwitchDoor();
     }
   }
+  // ABSORB_2 §1: a branch round after a wrong pick (state.branch from the relay).
+  function branchTitle() { return skillTitle(state.branch.skillId); }
+  function branchIntro() { return !!state?.branch && state.step === 0 && !state.lastPress; }
+  function branchCaption() { return 'NOT ' + branchTitle().toUpperCase() + '. ' + (state.branch.message || ''); }
+  function branchNote() {
+    if (!branchIntro()) return '';
+    return 'Not ' + branchTitle() + '. ' + (state.branch.message ? state.branch.message + ' ' : '')
+      + 'Run ' + branchTitle() + ' once, then your problem comes back. ';
+  }
+  function returnNote() {
+    if (state?.resetReason?.type !== 'branch-return' || !state.recognition?.branches) return '';
+    return 'Back to your problem. ';
+  }
   // getView()'s fluency fields (§1-§3, §5): what the hint line, tag and navigator card show.
   function coachingView() {
     // No route step while the recognition pick is pending (§4): no hint, no rung tag.
@@ -1178,13 +1304,18 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
       wrongKey: press?.wrong ? wrongKeyText(press) : null,
       caption: recognizing() ? null : state || lobby?.missionId ? inputCaption() : null,
       calculatorLists: calculator.save().lists,
+      // ABSORB_2 §2: the data-entry prefix (null when the round has none): active while typing.
+      dataEntry: level.dataSteps > 0 && state ? { active: enteringData(), lists: entryProgress() } : null,
       // §4: the round's recognition step (null without one): stem, options, picked, correct, message.
       recognition: state?.recognition ? { ...state.recognition } : null,
       recognitionRoom: !!lobby?.recognition,
+      // ABSORB_2 §1: the branch round in progress ({ skillId, title, depth }), else null.
+      branch: state?.branch ? { skillId: state.branch.skillId, title: branchTitle(), depth: state.branch.depth } : null,
       // §5: the relay's recall review once the round completed (quality, interval, next review, mastered).
       review: state?.review ? { ...state.review } : null,
-      // §7: the handheld check offered after a solo clear ({ label, attempts, status }), else null.
-      handheld: state?.handheld ? { ...state.handheld } : null,
+      // §7: the handheld check offered after a solo clear ({ label, fields, attempts, status,
+      // misses }), else null. ABSORB_2 §4: an older packet's single label becomes fields [label].
+      handheld: state?.handheld ? { ...state.handheld, fields: checkFields(state.handheld), misses: checkMisses(state.handheld) } : null,
     };
   }
   // The plan, my steps, and the window drawn now (null once the card is gone: complete or failed).
