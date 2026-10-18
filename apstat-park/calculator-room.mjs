@@ -650,7 +650,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
       : 'Choose ' + challenge.labels[answerIndex] + '. Click its value.';
     const feedback = answerFeedback();
     // The hint mode is spoken once when it changes (a new rung, a wrong key, a navigator round).
-    const mode = state.solved || answering() ? null : hintMode();
+    const mode = state.solved || answering() || recognizing() ? null : hintMode();
     const modeNote = mode && mode !== announcedMode ? mode + ' ' : '';
     if (mode) announcedMode = mode;
     const press = state.lastPress;
@@ -898,7 +898,8 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     text(ctx, state?.complete ? 'MISSION COMPLETE!' : recognizing() ? 'WHICH PROCEDURE?' : solo ? 'SOLO PRACTICE' : 'ONE TEAM · ONE GOAL', 350, 112, 17);
     if (state?.complete) drawKeyReward(ctx, atlas);
     const plan = navigator();
-    const coaching = state && !state.solved && !state.failure && !showingBoxplot;
+    // The recognition step has no route step, so no hints and no rung to tag (§4).
+    const coaching = state && !state.solved && !state.failure && !showingBoxplot && !recognizing();
     // The navigator card stays until the whole team is done: teammates may still need my steps.
     if (plan && !state.complete && !state.failure) drawNavigatorCard(ctx, plan, !coaching);
     // §1 rung tag: small, right-aligned on the title row (the title ends near x 576).
@@ -1165,7 +1166,8 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   }
   // getView()'s fluency fields (§1-§3, §5): what the hint line, tag and navigator card show.
   function coachingView() {
-    const routeStep = state && !answering() ? state.step : null;
+    // No route step while the recognition pick is pending (§4): no hint, no rung tag.
+    const routeStep = state && !answering() && !recognizing() ? state.step : null;
     const plan = navigator();
     const press = state?.lastPress;
     return {
