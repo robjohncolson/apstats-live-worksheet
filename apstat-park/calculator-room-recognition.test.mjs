@@ -189,6 +189,22 @@ test('branch round: title, the two caption lines, the status line; the player st
   assert.equal(room.sent('calculator_restart').length, 0);
 });
 
+test('branch captions stay on screen for the whole branch round (teacher 2026-10-18); the status note goes after the first key', (t) => {
+  const room = mountRoom('alice');
+  t.after(() => room.panel.dispose());
+  room.deliver(lobby('e1', 'alice'));
+  room.deliver({ ...lobby('e2', 'alice'), missionId: T_STATS.id });
+  room.deliver(state('e2', 'alice', { missionId: T_STATS.id, recognition: null, branch: BRANCH,
+    resetReason: { type: 'branch', skillId: 't-test-stats' } }));
+  room.deliver(state('e2', 'alice', { missionId: T_STATS.id, recognition: null, branch: BRANCH, revision: 2,
+    step: 1, keys: [T_STATS.route[0]], lastPress: { key: T_STATS.route[0], advanced: true } }));
+  const captions = room.drawn();
+  assert.ok(captions.includes('NOT T-TEST (STATS INPUT). THIS ASKS ABOUT A PROPORTION, NOT A MEAN.'), captions.join(' | '));
+  assert.ok(captions.includes('RUN IT ONCE, THEN BACK TO YOUR PROBLEM.'), captions.join(' | '));
+  assert.doesNotMatch(room.status(), /^Not T-Test/);
+  assert.match(room.status(), /Step 2\//);
+});
+
 test('branch return: the original problem with the remaining tiles, without the door', (t) => {
   const room = mountRoom('alice');
   t.after(() => room.panel.dispose());

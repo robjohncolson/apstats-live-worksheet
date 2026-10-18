@@ -35,6 +35,8 @@ once. Instead:
    the student's own rung for that skill (§1 fluency; a skill never cleared plays at rung 0, full hints).
    The branch has its own epoch. Client title row: `BRANCH · <picked skill title>`; caption under it:
    `NOT <picked>. <discriminator sentence>`; second line `RUN IT ONCE, THEN BACK TO YOUR PROBLEM.`
+   Both caption lines stay on screen for the whole branch round (teacher-decided 2026-10-18: "stay on
+   screen"); only the status-line note yields to press feedback after the first key.
 2. When the branch route completes (the usual `complete` for a roster of one), the relay does **not** award
    a key and does **not** count a clear for the branched skill. It records the recall review for the
    branched skill at **quality 2** (the trainer's passive credit, `track1QualityForBranches` 3336 region)

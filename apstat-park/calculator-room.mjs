@@ -981,8 +981,8 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
       : recognizing() ? 'Read the problem. Which procedure does it call for?'
       : hasMission ? inputCaption() : lobby?.eligibleCount === 0
         ? 'No calculator skills are scheduled yet for this class.' : 'Connecting to your class curriculum...';
-    // ABSORB_2 §1: until the first key of a branch, the two lines say why it is here.
-    if (branchIntro()) {
+    // ABSORB_2 §1: for the whole branch round the two lines say why it is here (teacher 2026-10-18: "stay on screen").
+    if (branchActive()) {
       text(ctx, branchCaption().slice(0, 106), 28, 76, 10);
       text(ctx, 'RUN IT ONCE, THEN BACK TO YOUR PROBLEM.', 28, 89, 10);
     } else {
@@ -1279,7 +1279,9 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   }
   // ABSORB_2 §1: a branch round after a wrong pick (state.branch from the relay).
   function branchTitle() { return skillTitle(state.branch.skillId); }
-  function branchIntro() { return !!state?.branch && state.step === 0 && !state.lastPress; }
+  function branchActive() { return !!state?.branch && !state.solved && !state.complete; }
+  // The status-line note only until the first key: the step line then carries the press feedback.
+  function branchIntro() { return branchActive() && state.step === 0 && !state.lastPress; }
   function branchCaption() { return 'NOT ' + branchTitle().toUpperCase() + '. ' + (state.branch.message || ''); }
   function branchNote() {
     if (!branchIntro()) return '';
