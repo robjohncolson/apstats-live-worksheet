@@ -20,16 +20,33 @@ const { TEAM_BLOCK, CALCULATOR_PROTOCOL } = await import('./calculator-lobby.mjs
 const { createPeerMotion } = await import('./peer-motion.mjs' + V);
 const { createUpdateGate } = await import('./update-gate.mjs' + V);
 const { createPoseSmoothing } = await import('./pose-smoothing.mjs' + V);
-// Solo room deep links (APSTAT_PARK_TRAINER_ABSORB_SPEC §3, protocol 12):
+const { inSession, loadSchedule } = await import('./class-session.mjs' + V);
+// Room links (APSTAT_PARK_TRAINER_ABSORB_SPEC §3, APSTAT_PARK_SOLO_DOOR_SPEC §2):
 //   #room=calc-solo&skill=<skillId>   one catalogue skill, new data every round
 //   #room=calc-solo&topic=<topic>     the topic's first skill in data/ti84-lesson-map.json
 //   #room=calc-solo                   the section's rotation (Phase 3: the first due skill)
-// Anything else is the team room. Exported pure, so the Desk and tests share the parse.
+//   #room=calc-team                   the team room
+// Anything else is 'auto': team while a class is live or in session, else solo (resolveRoomMode).
+// Exported pure, so the Desk and tests share the parse.
 export function parseRoomLink(hash) {
   const params = new URLSearchParams(String(hash || '').replace(/^#/, ''));
-  if (params.get('room') !== 'calc-solo') return { mode: 'team', skill: null, topic: null };
+  const room = params.get('room');
+  if (room === 'calc-team') return { mode: 'team', skill: null, topic: null };
+  if (room !== 'calc-solo') return { mode: 'auto', skill: null, topic: null };
   return { mode: 'solo', skill: params.get('skill') || null, topic: params.get('topic') || null };
 }
+// SOLO_DOOR_SPEC §2: an explicit link wins; 'auto' is team while the Live Classroom is live or
+// the section's class is in session (class-session.mjs), else solo. isLive/inSession: booleans.
+export function resolveRoomMode({ link, isLive = false, inSession = false }) {
+  if (link?.mode === 'solo' || link?.mode === 'team') return link.mode;
+  if (isLive || inSession) return 'team';
+  return 'solo';
+}
+// SOLO_DOOR_SPEC §4: the door between the two rooms, in the entry area right of the team block's
+// start, drawn like the PICO PARK door. Room coordinates.
+export const SWITCH_DOOR = { x: 480, y: WORLD.floor - 40, w: 40, h: 40 };
+// How long an 'auto' room waits for data/lesson-schedule.json before deciding without it.
+export const SCHEDULE_TIMEOUT_MS = 4000;
 // The lesson map's first skill for a topic: `lessons` first, then the bonus-only topics (teacher
 // decision 4, 2026-10-15: bonus skills are reachable by deep link only). null = unknown topic.
 export function skillForTopic(lessonMap, topic) {
@@ -78,14 +95,19 @@ const WRONG_RED = '#b4442c';
 // lessonMap: the lesson map (topic -> skill ids) or a promise of it; defaults to fetching
 // data/ti84-lesson-map.json beside the park. Only read when the link names a topic.
 // reload: what the student's click or Enter does once the relay has said this page is too old.
-export function mountParkPanel({ container, getSocket, board, onClose, onPark = () => {}, link = null, lessonMap = null, reload = null }) {
+// schedule: data/lesson-schedule.json (or a promise of it); defaults to loading it. Only read
+// when the link is 'auto' (SOLO_DOOR_SPEC §3).
+export function mountParkPanel({ container, getSocket, board, onClose, onPark = () => {}, link = null, lessonMap = null, schedule = null, reload = null }) {
   const doc = container.ownerDocument, win = doc.defaultView;
   const { engine, input, api } = board;
   link ||= parseRoomLink(win.location?.hash);
   reload ||= () => win.location.reload();
   // §3: 'solo' hides everything team-specific (the block, the roster, the navigator round, "ask
   // your team") behind one switch. One keypad renderer, one status column.
-  const solo = link.mode === 'solo';
+  // SOLO_DOOR_SPEC §2: an 'auto' link settles the switch once, after the schedule loads; until
+  // then (modeReady false) nothing joins and the intro reads CALCULATOR / LOADING...
+  let solo = link.mode === 'solo';
+  let modeReady = link.mode !== 'auto';
   let soloSkill = solo ? link.skill : null;
   // A topic link resolves through the lesson map before the first join; nothing joins until then.
   let soloReady = !solo || !link.topic || !!soloSkill;
@@ -94,6 +116,19 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
       : win.fetch(new URL('../data/ti84-lesson-map.json', import.meta.url) + V).then(response => response.json());
     map.then(data => { soloSkill = skillForTopic(data, link.topic); }).catch(() => {}).finally(() => { soloReady = true; });
   }
+  if (!modeReady) {
+    // Codex review 2026-10-17: a stalled fetch must not leave the room loading forever. After
+    // SCHEDULE_TIMEOUT_MS the schedule counts as unknown (null): solo unless the class is live.
+    const loaded = schedule ? Promise.resolve(schedule) : loadSchedule((...args) => win.fetch(...args));
+    const timedOut = new Promise(resolve => win.setTimeout(() => resolve(null), SCHEDULE_TIMEOUT_MS));
+    Promise.race([loaded.catch(() => null), timedOut]).then(data => {
+      if (disposed) return;
+      const mode = resolveRoomMode({ link, isLive: !!board.classroom?.isLive?.(), inSession: inSession(data, board.section) });
+      solo = mode === 'solo';
+      modeReady = true;
+      status.textContent = solo ? 'Walk right to your calculator.' : 'Connecting the calculator team…';
+    });
+  }
   const art = createPicoArt(doc);
   const audio = createPicoAudio(win, { classMode: () => !!(board.classroom?.isLive?.() && !board.classroom?.soundAllowed?.()) });
   art.load(board.atlas?.());
@@ -101,7 +136,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   const entities = new Map(), peers = new Map(), lobbyPeers = new Map();
   let lobby = null;
   const updates = createUpdateGate(), smoothing = createPoseSmoothing();
-  let scenery = null, sceneryInk = null, sceneryAtlas = null, sceneryReady = false, sceneryUnlocked = false;
+  let scenery = null, sceneryInk = null, sceneryAtlas = null, sceneryReady = false, sceneryUnlocked = false, sceneryMode = null;
   let arrivalPending = true;
   // TRACE text comes from the trainer's own renderer: what the calculator shows is what the Park shows.
   // Teacher 2026-10-11: the CE-renderer screen (FEEL_SPEC §A) read worse than these lines; reverted.
@@ -143,7 +178,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   const status = doc.createElement('span');
   status.setAttribute('role', 'status'); status.setAttribute('aria-live', 'polite');
   status.style.cssText = 'flex:1 1 240px;font:14px system-ui';
-  status.textContent = solo ? 'Starting your calculator round…' : 'Connecting the calculator team…';
+  status.textContent = !modeReady ? 'Opening the calculator room…' : solo ? 'Starting your calculator round…' : 'Connecting the calculator team…';
   // §3: the navigator steps and their goals, for screen readers, for the whole round.
   const navigatorList = doc.createElement('ul');
   navigatorList.setAttribute('aria-label', 'Your navigator steps');
@@ -206,6 +241,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     onUpPressed: () => {
       if (player.x < 95 && campaignUnlocked()) onPark();
       else if (besideResetDoor()) enterResetDoor();
+      else if (besideSwitchDoor()) enterSwitchDoor();
     },
     physics: PICO });
   player.engine = engine;
@@ -421,6 +457,21 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     return Math.abs(localPose().x + 10 - (RESET_DOOR.x + RESET_DOOR.w / 2)) < 34
       && player.y + 24 >= RESET_DOOR.y;
   }
+  // SOLO_DOOR_SPEC §4: the switch door. UP with the cat's centre within 20 px of the door's centre,
+  // standing; only in the entry area, never during a round.
+  function besideSwitchDoor() {
+    return Math.abs(player.x + 10 - (SWITCH_DOOR.x + SWITCH_DOOR.w / 2)) <= 20
+      && player.y + 24 >= SWITCH_DOOR.y;
+  }
+  function onSwitchDoor(worldX, y) {
+    return worldX >= SWITCH_DOOR.x && worldX <= SWITCH_DOOR.x + SWITCH_DOOR.w
+      && y >= SWITCH_DOOR.y && y <= SWITCH_DOOR.y + SWITCH_DOOR.h;
+  }
+  // The board's hashchange handler leaves this panel and mounts the other room.
+  function enterSwitchDoor() {
+    if (!modeReady || participating) return;
+    win.location.hash = solo ? '#room=calc-team' : '#room=calc-solo';
+  }
   function enterResetDoor() {
     if (!participating || !state?.complete || !connected()) return;
     send('calculator_restart');
@@ -476,6 +527,8 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     let packet;
     try { packet = JSON.parse(event.data); } catch { return; }
     if (packet.type === 'calculator_rtc_signal') { peerMotion.receive(packet); return; }
+    // SOLO_DOOR_SPEC §3: no room packet counts until the room knows whether it is solo or team.
+    if (!modeReady) return;
     if (packet.type === 'calculator_lobby_state') {
       if (packet.protocol !== CALCULATOR_PROTOCOL) return;
       // Protocol 13: 'waiting' (solo, no playable skill) is a terminal reset of the round: the relay
@@ -637,6 +690,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     if (disposed || doc.hidden) return;
     bind();
     if (reloadNeeded) return;
+    if (!modeReady) return;
     peerMotion.publish({ x: player.x, y: player.y });
     const missionCamera = Math.max(0, Math.min(ENTRY_WIDTH, LEVEL_WIDTH - board.viewportW() / scale()));
     // Teacher decision 2026-10-06: the teacher can push the team block.
@@ -754,34 +808,50 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     return rgbHex([channel(16), channel(8), channel(0)]);
   }
   function lightCap(colour) { return colour === CAP.light || colour === '#f9c45f' || colour === '#9bdfae'; }
+  function roomTitle() {
+    if (!modeReady) return 'CALCULATOR';
+    return solo ? 'CALCULATOR SOLO' : 'CALCULATOR TOGETHER';
+  }
   function drawScenery(ctx, atlas) {
     // 'count' (keys are a count, door open) / 'holder' (older relay, own key) / false: also the cache key.
     const unlocked = campaignUnlocked() && (Array.isArray(lobby?.campaignOpen) ? 'count' : 'holder');
-    if (!scenery || sceneryInk !== ink || sceneryAtlas !== atlas || sceneryReady !== art.ready || sceneryUnlocked !== unlocked) {
+    // SOLO_DOOR_SPEC §4: the mode is part of the cache key (loading -> solo/team after the schedule).
+    const mode = !modeReady ? 'loading' : solo ? 'solo' : 'team';
+    if (!scenery || sceneryInk !== ink || sceneryAtlas !== atlas || sceneryReady !== art.ready || sceneryUnlocked !== unlocked || sceneryMode !== mode) {
       scenery ||= doc.createElement('canvas');
       scenery.width = LEVEL_WIDTH; scenery.height = WORLD.height;
       const paint = scenery.getContext('2d');
       paint.imageSmoothingEnabled = false;
       art.block(paint, { x: 0, y: WORLD.floor, w: LEVEL_WIDTH, h: 50 });
-      text(paint, solo ? 'CALCULATOR SOLO' : 'CALCULATOR TOGETHER', 85, 365, 21);
-      text(paint, solo ? 'WALK RIGHT TO YOUR CALCULATOR >' : 'PUSH THE TEAM BLOCK RIGHT >', 85, 410, 19);
-      text(paint, 'CLICK A KEY TO CHOOSE IT', 85, 451, 14);
-      text(paint, 'PRACTICE THE SKILLS YOU HAVE LEARNED', 85, 485, 14);
-      text(paint, solo ? 'YOUR OWN ROUND. YOUR OWN CLOCK.' : 'RANDOM SKILLS. ONE TEAM GOAL.', 85, 513, 14);
-      text(paint, 'ARROWS MOVE . UP ENTERS DOORS', 85, 545, 14);
-      text(paint, 'HOLD SHIFT TO RUN', 85, 573, 14);
-      text(paint, solo ? 'NEW DATA EVERY ROUND' : 'THE PUSHERS BECOME YOUR TEAM', 85, 604, 14);
-      // ABSORB_SPEC §6: the solo door is where the bonus is explained, in one line.
-      if (solo) text(paint, 'MASTER A SKILL HERE - BANK ONE BONUS POINT', 85, 632, 14);
+      text(paint, roomTitle(), 85, 365, 21);
+      if (modeReady) paintIntro(paint, atlas);
+      else text(paint, 'LOADING...', 85, 410, 19);
       if (atlas) paint.drawImage(atlas, unlocked ? 96 : 48, 0, 48, 48, 30, WORLD.floor - 40, 40, 40);
       else { paint.fillStyle = '#493d48'; paint.fillRect(30, WORLD.floor - 40, 40, 40); }
       text(paint, 'PICO PARK', 24, WORLD.floor - 70, 14);
       text(paint, !unlocked ? 'FINISH A CALCULATOR ACTIVITY TO EARN A KEY'
         : unlocked === 'count' ? 'UP TO ENTER . KEYS OPEN NEW STAGES' : 'KEY EARNED - UP TO ENTER', 24, WORLD.floor - 49, 7);
-      text(paint, solo ? 'YOUR CALCULATOR' : 'TEAM START', TEAM_BLOCK.dock + 16, WORLD.floor + 32, 10, ink, 'center');
-      sceneryInk = ink; sceneryAtlas = atlas; sceneryReady = art.ready; sceneryUnlocked = unlocked;
+      if (modeReady) text(paint, solo ? 'YOUR CALCULATOR' : 'TEAM START', TEAM_BLOCK.dock + 16, WORLD.floor + 32, 10, ink, 'center');
+      sceneryInk = ink; sceneryAtlas = atlas; sceneryReady = art.ready; sceneryUnlocked = unlocked; sceneryMode = mode;
     }
     ctx.drawImage(scenery, 0, 0);
+  }
+  // The intro lines and the switch door (SOLO_DOOR_SPEC §4), once the mode is known.
+  function paintIntro(paint, atlas) {
+    text(paint, solo ? 'WALK RIGHT TO YOUR CALCULATOR >' : 'PUSH THE TEAM BLOCK RIGHT >', 85, 410, 19);
+    text(paint, 'CLICK A KEY TO CHOOSE IT', 85, 451, 14);
+    text(paint, 'PRACTICE THE SKILLS YOU HAVE LEARNED', 85, 485, 14);
+    text(paint, solo ? 'YOUR OWN ROUND. YOUR OWN CLOCK.' : 'RANDOM SKILLS. ONE TEAM GOAL.', 85, 513, 14);
+    text(paint, 'ARROWS MOVE . UP ENTERS DOORS', 85, 545, 14);
+    text(paint, 'HOLD SHIFT TO RUN', 85, 573, 14);
+    text(paint, solo ? 'NEW DATA EVERY ROUND' : 'THE PUSHERS BECOME YOUR TEAM', 85, 604, 14);
+    const door = SWITCH_DOOR, centre = door.x + door.w / 2;
+    if (atlas) paint.drawImage(atlas, 48, 0, 48, 48, door.x, door.y, door.w, door.h);
+    else { paint.fillStyle = '#493d48'; paint.fillRect(door.x, door.y, door.w, door.h); }
+    text(paint, solo ? 'TEAM' : 'SOLO', centre, WORLD.floor - 70, 14, ink, 'center');
+    // ABSORB_SPEC §6: the solo door is where the bonus is explained, in one line.
+    text(paint, solo ? 'PUSH THE BLOCK WITH YOUR CLASS' : 'YOUR OWN ROUND . MASTER A SKILL - BANK A BONUS POINT',
+      centre, WORLD.floor - 49, 7, ink, 'center');
   }
   function draw(ctx) {
     const step = state?.step || 0;
@@ -797,7 +867,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     const atlas = board.atlas?.();
     drawScenery(ctx, atlas);
     smoothing.retain(new Set(participating ? peers.keys() : lobbyPeers.keys()));
-    if (!solo) drawTeamBlock(ctx, atlas);
+    if (modeReady && !solo) drawTeamBlock(ctx, atlas);
     // Teacher report 2026-10-06: room classmates stay visible while participating (team members are drawn below).
     for (const [name, peer] of lobbyPeers) if (!participating || !peers.has(name)) {
       const original = { x: peer.x, y: peer.y };
@@ -809,7 +879,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
       Object.assign(peer, original);
     }
     ctx.save(); ctx.translate(ENTRY_WIDTH, 0);
-    text(ctx, solo ? 'CALCULATOR SOLO' : 'CALCULATOR TOGETHER', 28, 30, 20);
+    text(ctx, roomTitle(), 28, 30, 20);
     const hasMission = !!state || !!lobby?.missionId;
     // §4: the skill's name and data would give the recognition answer away: hidden until the pick.
     text(ctx, recognizing() ? 'RECOGNITION ROUND' : hasMission ? level.title.toUpperCase() : 'RANDOM SKILL ROUND', 28, 53, 14);
@@ -1062,6 +1132,9 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     const rect = engine.canvas.getBoundingClientRect();
     const worldX = (event.clientX - rect.left) / scale() + Math.round(cameraX);
     const x = worldX - ENTRY_WIDTH, y = (event.clientY - rect.top) / scale();
+    if (modeReady && !participating && onSwitchDoor(worldX, y)) {
+      event.preventDefault(); event.stopImmediatePropagation(); enterSwitchDoor(); return;
+    }
     const tile = tiles().find(tile => x >= tile.x && x <= tile.x + tile.w && y >= tile.y - 12 && y <= tile.y + tile.h);
     if (tile) { event.preventDefault(); event.stopImmediatePropagation(); choose(tile); }
   }
@@ -1084,6 +1157,10 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     if (event.key === 'ArrowUp' && !event.repeat && !event.target?.closest?.('input, textarea, select, [contenteditable="true"]')
       && state?.complete && besideResetDoor()) {
       event.preventDefault(); enterResetDoor();
+    }
+    if (event.key === 'ArrowUp' && !event.repeat && !event.target?.closest?.('input, textarea, select, [contenteditable="true"]')
+      && modeReady && !participating && besideSwitchDoor()) {
+      event.preventDefault(); enterSwitchDoor();
     }
   }
   // getView()'s fluency fields (§1-§3, §5): what the hint line, tag and navigator card show.
@@ -1141,12 +1218,15 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   doc.addEventListener('keyup', key);
   doc.addEventListener('visibilitychange', visibility);
   const timer = setInterval(pump, peerMotion.supported ? 50 : 100);
-  // A solo deep link is the intent to practise: open on the keypad and join at once.
-  if (solo) { startMission(); setParticipating(true); }
+  // A solo deep link to a skill or topic is the intent to practise: open on the keypad and join
+  // at once. A bare #room=calc-solo (the switch door, an 'auto' room) starts in the entry area.
+  if (solo && (link.skill || link.topic)) { startMission(); setParticipating(true); }
   pump();
   // The board calls this on hashchange: true when the page's hash now asks for a different room
   // (team <-> solo, another skill, another topic). The board then leaves this panel and mounts
   // the requested one, which parses the new hash itself (a fragment-only navigation never reloads).
+  // SOLO_DOOR_SPEC §2: the hash's own mode is compared, so an 'auto' room stays put on bare -> bare
+  // and remounts on bare -> #room=calc-team even when it had resolved to team.
   function linkChanged(hash) {
     const next = parseRoomLink(hash);
     return next.mode !== link.mode || next.skill !== link.skill || next.topic !== link.topic;
@@ -1155,7 +1235,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   function setRecognition(on) { return send('calculator_recognition', { on: on === true }); }
   return { kind: 'calculator', dispose, startMission, returnToStart, linkChanged, setRecognition, getState: () => state,
     getNetworkStats: () => peerMotion.stats(),
-    getView: () => ({ mode: solo ? 'solo' : 'team', skill: soloSkill, link: { ...link }, keyReward: !!state?.complete, reloadNeeded, cameraX, playerX: player.x, playerY: player.y, participating, campaignUnlocked: campaignUnlocked(), entranceX: ENTRY_WIDTH, lobby, missionId: level.id, challenge,
+    getView: () => ({ mode: !modeReady ? null : solo ? 'solo' : 'team', modeReady, switchDoor: { ...SWITCH_DOOR }, skill: soloSkill, link: { ...link }, keyReward: !!state?.complete, reloadNeeded, cameraX, playerX: player.x, playerY: player.y, participating, campaignUnlocked: campaignUnlocked(), entranceX: ENTRY_WIDTH, lobby, missionId: level.id, challenge,
       keyCounts: Object.fromEntries([board.username, ...lobbyPeers.keys(), ...peers.keys()].map(name => [name, keyCount(name)])),
       resetDoor: state?.complete ? { ...RESET_DOOR } : null, lines: display.getLines(), ...coachingView() }),
     getCalculatorScreen: () => calculator.getScreen(),

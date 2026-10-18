@@ -85,13 +85,14 @@ const state = (epoch, name, extra = {}) => ({ type: 'calculator_state', protocol
   hintKeys: [], lastPress: null, clears: 0, rung: 0, problem: null,
   members: [{ name, pose: { x: 65, y: 676 }, step: 0 }], ...extra });
 
-test('the deep link parses to a mode, a skill and a topic; anything else is the team room', () => {
+test('the deep link parses to a mode, a skill and a topic; calc-team is the team room; anything else is auto', () => {
   assert.deepEqual(parseRoomLink('#room=calc-solo&skill=one-var-stats'), { mode: 'solo', skill: 'one-var-stats', topic: null });
   assert.deepEqual(parseRoomLink('room=calc-solo&topic=1.7'), { mode: 'solo', skill: null, topic: '1.7' });
   assert.deepEqual(parseRoomLink('#room=calc-solo'), { mode: 'solo', skill: null, topic: null });
-  assert.deepEqual(parseRoomLink(''), { mode: 'team', skill: null, topic: null });
-  assert.deepEqual(parseRoomLink('#topic=1.7&source=worksheet'), { mode: 'team', skill: null, topic: null });
-  assert.deepEqual(parseRoomLink(undefined), { mode: 'team', skill: null, topic: null });
+  assert.deepEqual(parseRoomLink('#room=calc-team'), { mode: 'team', skill: null, topic: null });
+  assert.deepEqual(parseRoomLink(''), { mode: 'auto', skill: null, topic: null });
+  assert.deepEqual(parseRoomLink('#topic=1.7&source=worksheet'), { mode: 'auto', skill: null, topic: null });
+  assert.deepEqual(parseRoomLink(undefined), { mode: 'auto', skill: null, topic: null });
 });
 
 test('a topic resolves to the lesson map\'s first skill; bonus topics resolve too; unknown topics do not', () => {
@@ -207,14 +208,16 @@ test('the team room is untouched: no hash means team mode and the old join packe
 test('linkChanged: team -> solo, solo -> team, skill A -> topic B, same link is no change', (t) => {
   const team = mountRoom('alice', { link: { mode: 'team', skill: null, topic: null } });
   t.after(() => team.panel.dispose());
-  assert.equal(team.panel.linkChanged(''), false);
-  assert.equal(team.panel.linkChanged('#topic=1.7&source=worksheet'), false, 'a trainer-era hash is still the team room');
+  assert.equal(team.panel.linkChanged('#room=calc-team'), false);
+  assert.equal(team.panel.linkChanged(''), true, 'explicit team -> auto lets the schedule pick again');
+  assert.equal(team.panel.linkChanged('#topic=1.7&source=worksheet'), true, 'a trainer-era hash is auto');
   assert.equal(team.panel.linkChanged('#room=calc-solo'), true);
   assert.equal(team.panel.linkChanged('#room=calc-solo&skill=one-var-stats'), true);
   const solo = mountRoom('alice', { link: { mode: 'solo', skill: 'one-var-stats', topic: null } });
   t.after(() => solo.panel.dispose());
   assert.equal(solo.panel.linkChanged('#room=calc-solo&skill=one-var-stats'), false);
-  assert.equal(solo.panel.linkChanged(''), true, 'solo -> team');
+  assert.equal(solo.panel.linkChanged(''), true, 'solo -> auto');
+  assert.equal(solo.panel.linkChanged('#room=calc-team'), true, 'solo -> team');
   assert.equal(solo.panel.linkChanged('#room=calc-solo&skill=normalcdf'), true, 'another skill');
   assert.equal(solo.panel.linkChanged('#room=calc-solo&topic=1.10'), true, 'skill A -> topic B');
   assert.equal(solo.panel.linkChanged('#room=calc-solo'), true, 'pinned -> rotation');
@@ -247,6 +250,8 @@ test('a waiting snapshot (no playable skill yet) is told plainly and never joins
 test('a completed round followed by a waiting answer forgets the round and shows the waiting copy, still on the keypad', async (t) => {
   const room = mountRoom('alice', { link: { mode: 'solo', skill: null, topic: null } });
   t.after(() => { room.panel.dispose(); skew = 0; });
+  // A bare solo link starts in the entry area (SOLO_DOOR_SPEC §4); walking in joins.
+  room.panel.startMission(); room.update();
   room.deliver({ ...lobby('e1', 'alice'), pinnedSkill: null });
   room.deliver(state('e1', 'alice', { pinnedSkill: null, step: LEVEL.route.length, keys: LEVEL.route, solved: true, complete: true, readyCount: 1 }));
   assert.equal(room.panel.getView().keyReward, true);

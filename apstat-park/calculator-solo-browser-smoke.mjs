@@ -5,6 +5,10 @@
 //
 // Acceptance (spec §3): a signed-in student opens #room=calc-solo&skill=one-var-stats, completes the
 // route against random data, sees the clear celebration, and park_calc_clears increments. No ledger row.
+// APSTAT_PARK_SOLO_DOOR_SPEC §5: there is no standalone calculator page. The page served at '/'
+// mounts the calendar board exactly as the Desk does, and every visit uses the Desk's hash link
+// (#room=calc-solo&skill=... / &topic=...), so this smoke drives the same path as
+// ap_stats_roadmap_square_mode.html#room=calc-solo. Not run in CI.
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { createReadStream, mkdirSync, writeFileSync } from 'node:fs';

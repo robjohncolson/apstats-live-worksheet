@@ -1561,12 +1561,13 @@
     ];
   }
 
-  // LESSONS → PRACTICE (teacher 2026-10-06): the formula deck, the TI-84 trainer and every
-  // worksheet. The quiz is reached from the lesson panel.
+  // LESSONS → PRACTICE (teacher 2026-10-06): the formula deck, the calculator and every
+  // worksheet. The quiz is reached from the lesson panel. CALCULATOR opens the park's solo
+  // calculator room on the calendar board (APSTAT_PARK_SOLO_DOOR_SPEC §5: park door only).
   function practiceItems() {
     return [
       { label: 'FORMULA DEFENSE', run: function () { window.open('https://tmux-trainer.vercel.app/#deck=ap-stats-formulas', '_blank', 'noopener'); } },
-      { label: 'TI-84 TRAINER', run: function () { callDesk('openApp', ['ti84']); } },
+      { label: 'CALCULATOR', run: function () { callDesk('_openParkSolo', ['']); } },
       { label: 'ALL WORKSHEETS', run: function () { window.open('TOC.html', '_blank', 'noopener'); } },
       { label: 'BACK', submenu: 'LESSONS' },
     ];
@@ -3106,7 +3107,6 @@
     { overlay: 'app-bulletin-overlay',    box: '.app-window', title: '.game-title-bar .title-text',    close: ['destroyBulletin'] },
     { overlay: 'app-snapshot-overlay',    box: '.app-window', title: '.game-title-bar .title-text',    close: ['destroyApp', 'snapshot'] },
     { overlay: 'app-week-overlay',        box: '.app-window', title: '.game-title-bar .title-text',    close: ['destroyApp', 'week'] },
-    { overlay: 'app-ti84-overlay',        box: '.app-window', title: '.game-title-bar .title-text',    close: ['destroyApp', 'ti84'] },
     { overlay: 'app-quiz-overlay',        box: '.app-window', title: '.game-title-bar .title-text',    close: ['destroyApp', 'quiz'] },
     { overlay: 'app-formulas-overlay',    box: '.app-window', title: '.game-title-bar .title-text',    close: ['destroyApp', 'formulas'] },
     { overlay: 'app-dok-overlay',         box: '.app-window', title: '.game-title-bar .title-text',    close: ['destroyApp', 'dok'] },        // teacher

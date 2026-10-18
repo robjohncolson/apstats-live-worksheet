@@ -41,7 +41,6 @@ const CASES = [
   { overlay: 'app-bulletin-overlay', open: (w) => w.openBulletin(), title: 'School Bulletin' },
   { overlay: 'app-snapshot-overlay', open: (w) => w.openSnapshot(), title: 'Class Snapshot' },
   { overlay: 'app-week-overlay', open: (w) => w.openApp('week'), title: 'This Week' },
-  { overlay: 'app-ti84-overlay', open: (w) => w.openApp('ti84'), title: 'TI-84 Trainer' },
   { overlay: 'app-quiz-overlay', open: (w) => w.openApp('quiz'), title: 'AP Stats Quiz' },
   { overlay: 'app-formulas-overlay', open: (w) => w.openApp('formulas'), title: 'Formula Lab' },
   { overlay: 'app-dok-overlay', open: (w) => w.openApp('dok'), title: 'DOK Ladders' },
@@ -300,20 +299,17 @@ describe('Phase 3 -- review fixes', { timeout: 180_000 }, () => {
     });
   });
 
-  it('focus after ✕ goes to the nav button that opened it: LESSONS → PRACTICE → TI-84 TRAINER', async () => {
+  // APSTAT_PARK_SOLO_DOOR_SPEC §5: park door only. CALCULATOR opens the solo room on the board
+  // (the Desk's _openParkSolo sets the hash); there is no TI-84 app window to focus.
+  it('LESSONS → PRACTICE → CALCULATOR opens the park solo room, not an app window', async () => {
     const harness = await boot(true);
     try {
       const { window: win, document: doc } = harness;
-      const lessons = doc.querySelector('#pico-home .navbtn[data-nav="LESSONS"]');
-      lessons.click();
+      doc.querySelector('#pico-home .navbtn[data-nav="LESSONS"]').click();
       [...doc.querySelectorAll('#pico-menu-list .action')].find((b) => b.textContent === 'PRACTICE').click();
-      [...doc.querySelectorAll('#pico-menu-list .action')].find((b) => b.textContent === 'TI-84 TRAINER').click();
-      const overlay = doc.getElementById('app-ti84-overlay');
-      await harness.waitFor(() => overlayOpen(win, overlay));
-      expect(overlay.contains(doc.activeElement)).toBe(true);   // the Desk put focus in its iframe
-      overlay.querySelector('[data-pico-close]').click();
-      expect(overlayOpen(win, overlay)).toBe(false);
-      expect(doc.activeElement).toBe(lessons);
+      [...doc.querySelectorAll('#pico-menu-list .action')].find((b) => b.textContent === 'CALCULATOR').click();
+      expect(win.location.hash).toBe('#room=calc-solo');
+      expect(doc.getElementById('app-ti84-overlay')).toBe(null);
     } finally {
       harness.teardown();
     }

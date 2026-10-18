@@ -55,13 +55,29 @@ all 48 transitions and wraparound, retry, reconnect, and membership. These are
 integration checks, not proof that every puzzle has been manually completed or
 that the recovered engine has exact native-game parity.
 
+## The solo door (APSTAT_PARK_SOLO_DOOR_SPEC, 2026-10-17)
+
+The calculator room's mode comes from the page hash: `#room=calc-solo[&skill=|&topic=]` is solo,
+`#room=calc-team` is team, anything else is `auto`. `auto` resolves once at mount, after
+`data/lesson-schedule.json` loads (`class-session.mjs`): team while the Live Classroom is live or
+the section's class is in session (a dated lesson day for the period, outside `calendar.breaks`,
+between `SCHOOL_HOURS` 07:30 and 14:30 local; the repo has no bell schedule), else solo. Until then
+the intro reads CALCULATOR / LOADING... and nothing joins. Both intros have a switch door at
+`SWITCH_DOOR` (x 480, right of the team block's start): the team intro's SOLO door carries the bonus
+line, the solo intro's TEAM door says "PUSH THE BLOCK WITH YOUR CLASS". UP beside it or a click on it
+sets the hash; the board's `hashchange` handler remounts the other room in the entry area. It does
+nothing during a round. A solo link naming a skill or topic still opens on the keypad and joins at
+once; a bare `#room=calc-solo` starts in the entry area (walk right to join). Tests:
+`calculator-room-door.test.mjs`, `class-session.test.mjs`, `tests/calculator-solo-entry.test.js`.
+
 ## The trainer is retired (ABSORB_SPEC §8, 2026-10-16)
 
-APStat Park is the only calculator surface. `calculator-solo.html` (repo root, beside the Desk,
-because the board imports `./apstat-park/...` relative to the page) mounts the same Live
-Classroom board the Desk mounts and opens `#room=calc-solo`; the Desk's `ti84` app window and
-chip, the resource panel's Calculator Skill row, `index.html` and `start-here.html` all point
-there, and every worksheet's "Practice on the TI-84" link was rewired by
+APStat Park is the only calculator surface, and since 2026-10-17 (SOLO_DOOR_SPEC §5) the calculator
+room on the Desk's calendar board is the only way in: there is no standalone page
+(the standalone solo page is deleted) and no Desk `ti84` app window. The Desk's Do-Now chip, the
+resource panel's Calculator Skill row and the Pico Desk PRACTICE > CALCULATOR item call
+`_openParkSolo(link)`, which sets `#room=calc-solo[&skill=|&topic=]`; `index.html` and
+`start-here.html` link `ap_stats_roadmap_square_mode.html#room=calc-solo`; and every worksheet's "Practice on the TI-84" link was rewired by
 `scripts/wire-park-calculator-links.mjs` (pattern-guarded, idempotent, dry-run default) to
 `ap_stats_roadmap_square_mode.html#room=calc-solo&topic=<t>` (the park resolves the topic through
 `data/ti84-lesson-map.json`). The native JavaScript engine moved from `ti84-trainer-v2/native/`

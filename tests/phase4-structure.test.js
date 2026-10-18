@@ -261,9 +261,9 @@ describe('start-here.html — Phase 4a student render', () => {
       // Toolkit + Desk + Trainer
       'Your toolkit',
       'The Desk',
-      'TI-84 Trainer',
+      'TI-84 practice (in APStat Park)',
       'ap_stats_roadmap_square_mode.html',
-      'calculator-solo.html',
+      'ap_stats_roadmap_square_mode.html#room=calc-solo',
     ];
     for (const marker of existingMarkers) {
       expect(START, `existing marker "${marker}" must remain present`).toContain(marker);

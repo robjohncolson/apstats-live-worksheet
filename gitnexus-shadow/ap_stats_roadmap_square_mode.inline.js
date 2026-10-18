@@ -2950,20 +2950,6 @@ try{var _ph=/[?&]home=(park|classic)(?:&|$)/.exec(location.search),_ps=null;try{
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /* ═══ BAKED REGISTRY (injected by build-roadmap-data.mjs) ═══ */
 const BAKED_REGISTRY = {
   "generatedAt": "2026-06-01T20:06:27.691Z",
@@ -17275,7 +17261,7 @@ function _paintDeskMotionCues(nextApp, caughtUp) {
             // how appForNextTask evolves. (tool-idle is temporally exclusive with
             // donow-next: caughtUp is true only when there is no next task.)
             el.classList.toggle('donow-next', !!nextApp && app === nextApp && app !== 'wallet' && app !== 'game');
-            var isTool = (app === 'formulas' || app === 'ti84');
+            var isTool = (app === 'formulas');
             el.classList.toggle('tool-idle', !!caughtUp && isTool);
         }
     } catch (_) {}
@@ -25204,8 +25190,7 @@ function destroyProgress() { ProgressApp.destroy(); }
 
 /* ═══ APP LAUNCHER ═══ */
 const APP_REGISTRY = {
-    // APSTAT_PARK_TRAINER_ABSORB_SPEC §8.2: the park's solo calculator room as a page (the trainer is retired).
-    ti84:     { url: 'calculator-solo.html', sfx: 'wildEep' },
+    // APSTAT_PARK_SOLO_DOOR_SPEC §5: no ti84 app. The calculator is the park room (_openParkSolo).
     quiz:     { url: 'https://robjohncolson.github.io/curriculum_render/', sfx: 'wildEep' },
     // W2 / G3: Formula Lab is primary (working URL is /formula-lab.html — bare /formula-lab 404s).
     // Formula Defense deck stays Apps-menu secondary as "legacy review" until W13.
@@ -25259,52 +25244,19 @@ function _renderTi84SkillBtn() {
     btn.type = 'button';
     btn.textContent = '🖩 Today’s calculator skill';
     btn.style.cssText = 'display:block;margin-top:6px;font-size:11px;padding:2px 8px;cursor:pointer';
+    // SOLO_DOOR_SPEC §5: today's topic in the park's solo room (re-read at click time).
     btn.onclick = function () {
-        var app = APP_REGISTRY && APP_REGISTRY.ti84;
-        var frame = document.getElementById('app-ti84-frame');
-        // Force the deep link even if the trainer iframe was opened earlier
-        // with a stale (or bare) URL — openApp only sets src when empty.
-        if (app && frame) {
-            var launchUrl = appLaunchUrl(app, 'ti84');
-            try {
-                var launchTarget = new URL(launchUrl, window.location.href);
-                if (typeof frame.contentWindow !== 'undefined' && frame.contentWindow &&
-                    new URL(frame.src, window.location.href).pathname === launchTarget.pathname) {
-                    frame.contentWindow.location.hash = launchTarget.hash;
-                } else {
-                    frame.src = launchUrl;
-                }
-            } catch (_) {
-                frame.src = launchUrl.replace(/(#|$)/, (launchUrl.indexOf('?') < 0 ? '?' : '&') + 'deskNav=' + Date.now() + '$1');
-            }
-        }
-        if (typeof openApp === 'function') openApp('ti84');
+        var today = _ti84TodayTopic() || topic;
+        _openParkSolo('&topic=' + today);
     };
     body.appendChild(btn);
 }
 
-// Open the in-Desk trainer deep-linked to a SPECIFIC topic (the resource
-// panel's Calculator Skill row — any mapped lesson, not just today's). Same
-// force-src trick as the Do-Now chip: openApp only sets src when empty, so a
-// stale/bare trainer iframe must be re-pointed explicitly.
+// The park's solo calculator room deep-linked to a SPECIFIC topic (the resource panel's
+// Calculator Skill row: any mapped lesson, not just today's). SOLO_DOOR_SPEC §5: park door only.
 function _openTi84ForTopic(topic) {
-    var app = APP_REGISTRY && APP_REGISTRY.ti84;
-    var frame = document.getElementById('app-ti84-frame');
-    if (app && frame && topic) {
-        var topicUrl = app.url + '#room=calc-solo&topic=' + topic;
-        try {
-            var topicTarget = new URL(topicUrl, window.location.href);
-            if (typeof frame.contentWindow !== 'undefined' && frame.contentWindow &&
-                new URL(frame.src, window.location.href).pathname === topicTarget.pathname) {
-                frame.contentWindow.location.hash = topicTarget.hash;
-            } else {
-                frame.src = topicUrl;
-            }
-        } catch (_) {
-            frame.src = topicUrl.replace(/(#|$)/, (topicUrl.indexOf('?') < 0 ? '?' : '&') + 'deskNav=' + Date.now() + '$1');
-        }
-    }
-    if (typeof openApp === 'function') openApp('ti84');
+    if (!topic) { _openParkSolo(''); return; }
+    _openParkSolo('&topic=' + topic);
 }
 
 // APSTAT_PARK_TRAINER_ABSORB_SPEC §5 (2026-10-16): the relay's spaced-recall schedule. The
@@ -25356,11 +25308,7 @@ function _openParkSolo(link) {
     if (handle && typeof handle.openCalculatorMission === 'function') { try { handle.openCalculatorMission(); } catch (_) {} }
 }
 
-// TI-84 trainer deep-link (FIX_PLAN D5, Desk side): a mapped lesson links its
-// exact calculator skill (#topic=...&source=desk, trainer resolves the same
-// curated map); otherwise pre-filter the trainer to today's unit. No lesson
-// today (weekend, schedule gap) => bare URL and the trainer shows all units;
-// the student can change the in-app unit filter either way.
+// The URL an app window opens (SOLO_DOOR_SPEC §5: the calculator is no longer an app window).
 function appLaunchUrl(app, id) {
     if (id === 'week') {
         var teacher = (typeof _deskIsTeacher === 'function') && _deskIsTeacher();
@@ -25371,12 +25319,7 @@ function appLaunchUrl(app, id) {
         var isTeacher = (typeof _deskIsTeacher === 'function') && _deskIsTeacher();
         return isTeacher ? app.url + '?teacher=1' : app.url;
     }
-    if (id !== 'ti84') return app.url;
-    // ABSORB_SPEC §8.2: the park solo room. A mapped lesson pins today's topic (the park resolves
-    // it through the lesson map); otherwise the room plays the due/rotation round.
-    var topic = _ti84TodayTopic();
-    if (topic) return app.url + '#room=calc-solo&topic=' + topic;
-    return app.url + '#room=calc-solo';
+    return app.url;
 }
 
 function openApp(id) {
@@ -27994,7 +27937,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-10-16-sc38';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-10-18-5om2';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

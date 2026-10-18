@@ -9,9 +9,15 @@
 
 | ID | Menu Label | Title Bar Text | iframe URL | Emoji |
 |----|-----------|----------------|------------|-------|
-| `ti84` | TI-84 Trainer | TI-84 Trainer | `calculator-solo.html` (APStat Park solo calculator room; the v2 trainer was retired 2026-10-16, ABSORB_SPEC §8) | 🔢 |
 | `quiz` | AP Stats Quiz | AP Stats Quiz | `https://robjohncolson.github.io/curriculum_render/` | 📝 |
 | `formulas` | Equation Trainer | Equation Trainer | `https://tmux-trainer.vercel.app/#deck=ap-stats-formulas` | ⚡ |
+
+**No `ti84` app (APSTAT_PARK_SOLO_DOOR_SPEC §5, 2026-10-17).** The TI-84 practice is the APStat Park
+calculator room on the Desk's calendar board, not an app window and not a standalone page. It is reached
+by the switch door inside the room (SOLO <-> TEAM), by the Desk hash (`#room=calc-solo[&skill=|&topic=]`,
+`#room=calc-team`), and by the Desk's `_openParkSolo(link)` (the Do-Now chip, the resource panel's
+Calculator Skill row, the Pico Desk PRACTICE > CALCULATOR item). With no hash the room opens as the team
+room while a class is live or in session (`apstat-park/class-session.mjs`), else as the solo room.
 
 ---
 
@@ -24,7 +30,6 @@ Insert a new `<span class="menu-item">` after the Label menu (line ~873) and bef
 ```html
 <span class="menu-item" data-menu="apps">Apps
     <div class="menu-dropdown" id="menu-apps">
-        <div class="menu-dd-item" data-sfx onclick="closeMenus();openApp('ti84')" style="font-weight:bold">&#128290; TI-84 Trainer</div>
         <div class="menu-dd-item" data-sfx onclick="closeMenus();openApp('quiz')" style="font-weight:bold">&#128221; AP Stats Quiz</div>
         <div class="menu-dd-item" data-sfx onclick="closeMenus();openApp('formulas')" style="font-weight:bold">&#9889; Equation Trainer</div>
     </div>
@@ -35,7 +40,7 @@ Insert a new `<span class="menu-item">` after the Label menu (line ~873) and bef
 
 Each app overlay follows the exact same HTML pattern as the game overlay (`#game-overlay`), but replaces canvas content with an iframe. Insert these after line ~1010 (end of game overlay) and before line ~1013 (Tooltip).
 
-For each app (`ti84`, `quiz`, `formulas`):
+For each app (`quiz`, `formulas`):
 
 ```html
 <!-- ═══ App Window: {TITLE} ═══ -->
@@ -130,7 +135,6 @@ Add these functions in the `<script>` block. Place them near the existing `openG
 ```javascript
 /* ═══ APP LAUNCHER ═══ */
 const APP_REGISTRY = {
-    ti84:     { url: 'calculator-solo.html', sfx: 'wildEep' },
     quiz:     { url: 'https://robjohncolson.github.io/curriculum_render/', sfx: 'wildEep' },
     formulas: { url: 'https://tmux-trainer.vercel.app/#deck=ap-stats-formulas', sfx: 'wildEep' }
 };

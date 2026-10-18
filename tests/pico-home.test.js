@@ -135,7 +135,7 @@ function createDesk({ flag = 'url', signedIn = true, teacher = false, marks = {}
 
   const spies = {};
   ['maybeBumpThenOpen', 'openWallet', 'openSignInModal', 'signOutStudent', 'changeMyPassword', '_toggleSound', '_toggleSfxQuiet', '_cycleSfxLowPower',
-    'setP', '_openStudentDmModal', 'openGradeHelp', 'openTeacherTools', 'openTeacherInbox', 'openApp',
+    'setP', '_openStudentDmModal', 'openGradeHelp', 'openTeacherTools', 'openTeacherInbox', 'openApp', '_openParkSolo',
     '_togglePreviewAsStudent', 'restoreWindow', 'closeCalendar', '_focusTodayLessonVideo', '_menuShowDoNow',
     'openDayGrade', '_openBaselineInfo', 'openBulletin', 'openReview', 'paintLocalDoneCells',
     'paintDonowCells'].forEach((name) => { spies[name] = vi.fn(); win[name] = spies[name]; });
@@ -515,11 +515,13 @@ describe('pico-home -- navigation and OPTION', () => {
     open(); clickMenu(doc, 'SCHEDULE'); expect(spies.restoreWindow).toHaveBeenCalledTimes(1);
     open(); clickMenu(doc, 'PRACTICE');
     expect(doc.getElementById('pico-menu-backdrop').hidden).toBe(false);
-    expect(menuLabels(doc)).toEqual(['FORMULA DEFENSE', 'TI-84 TRAINER', 'ALL WORKSHEETS', 'BACK']);
+    expect(menuLabels(doc)).toEqual(['FORMULA DEFENSE', 'CALCULATOR', 'ALL WORKSHEETS', 'BACK']);
     const practice = () => { open(); clickMenu(doc, 'PRACTICE'); };
     clickMenu(doc, 'FORMULA DEFENSE');
     expect(spies.open).toHaveBeenLastCalledWith('https://tmux-trainer.vercel.app/#deck=ap-stats-formulas', '_blank', 'noopener');
-    practice(); clickMenu(doc, 'TI-84 TRAINER'); expect(spies.openApp).toHaveBeenLastCalledWith('ti84');
+    // APSTAT_PARK_SOLO_DOOR_SPEC §5: the park's solo room, never an app window.
+    practice(); clickMenu(doc, 'CALCULATOR'); expect(spies._openParkSolo).toHaveBeenLastCalledWith('');
+    expect(spies.openApp.mock.calls.map((c) => c[0])).not.toContain('ti84');
     practice(); clickMenu(doc, 'ALL WORKSHEETS');
     expect(spies.open).toHaveBeenLastCalledWith('TOC.html', '_blank', 'noopener');
     practice(); clickMenu(doc, 'BACK');

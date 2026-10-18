@@ -66,7 +66,6 @@ export const LESSON = {
   flashcardsCsv: `${WS}/u1_l2_blooket.csv`,
   flashcardsDeckU1L1: `${WS}/u1_l1_blooket.csv`,
   flashcardsJs: `${WS}/flashcards.js`,
-  ti84: `${WS}/calculator-solo.html`,
   blooketExternal: 'https://dashboard.blooket.com/set/6a08a5ec93e4e9542dfc82d6',
 };
 
@@ -81,7 +80,6 @@ export const HTTP_CHECKS = [
   { host: 'GH_Pages_Desk', resource: 'flashcards_deck_u1_l1', url: LESSON.flashcardsDeckU1L1 },
   { host: 'GH_Pages_Desk', resource: 'flashcards_js', url: LESSON.flashcardsJs },
   { host: 'GH_Pages_Desk', resource: 'formula_n/a_on_this_host', url: null, skip: true },
-  { host: 'GH_Pages_Desk', resource: 'ti84', url: LESSON.ti84 },
   { host: 'GH_Pages_Desk', resource: 'roadmap_data', url: `${WS}/roadmap-data.json` },
   { host: 'GH_Pages_Desk', resource: 'lessons_index', url: `${WS}/lessons-index.json` },
   { host: 'GH_Pages_Desk', resource: 'work_manifest', url: `${WS}/data/work-manifest.json` },
@@ -117,7 +115,6 @@ export const APK_PATHS = [
   { resource: 'video_media', rel: 'media/1-2__0__1cJ3a5DSlZ0w3vta901HVyADfQ-qKVQcD.mp4' },
   { resource: 'flashcards_csv', rel: 'u1_l2_blooket.csv' },
   { resource: 'flashcards_js', rel: 'flashcards.js' },
-  { resource: 'ti84', rel: 'calculator-solo.html' },
   { resource: 'lessons_index', rel: 'lessons-index.json' },
 ];
 
@@ -127,7 +124,6 @@ const BROWSER_PAGES = [
   { id: 'worksheet', url: LESSON.worksheet },
   { id: 'quiz_relative', url: LESSON.quizPagesRelative },
   { id: 'quiz_absolute_cr', url: LESSON.quizDeskRegistry },
-  { id: 'ti84', url: LESSON.ti84 },
   { id: 'formula_deck', url: ORIGINS.FORMULA_DECK },
   { id: 'formula_lab', url: ORIGINS.FORMULA_LAB },
 ];

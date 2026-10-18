@@ -4550,6 +4550,9 @@
           onPark: function () { enterPark(7); },
           board: {
             engine: engine, input: playerInput, presses: parkPresses, username: username, role: role, api: root.ClassroomBoard,
+            // APSTAT_PARK_SOLO_DOOR_SPEC §3: the calculator room opens as the team room while this
+            // section's class is in session (data/lesson-schedule.json), else as the solo room.
+            section: section,
             // Park music / re-voiced sounds are off while the room is live unless the teacher allowed sound.
             classroom: { isLive: function () { return !!(state && state.live); }, soundAllowed: function () { return classSound; } },
             viewportW: _viewportW,
@@ -4586,6 +4589,7 @@
             if (!destroyed && engineReady) _refreshCameraDims();
           }
         });
+        if (levelIndex === -1) forgetRoomLink();
       }).catch(function (error) {
         nativeLoading = false;
         nativeActive = !!nativePanel;
@@ -7079,14 +7083,23 @@
     connect();
 
     // --- room deep links (APStat Park calculator, protocol 12+) -------
-    // The calculator room parses the page hash when it mounts (#room=calc-solo&skill=… / &topic=…).
+    // The calculator room parses the page hash when it mounts (#room=calc-solo&skill=… / &topic=…,
+    // #room=calc-team; anything else lets the room pick by the schedule, SOLO_DOOR_SPEC §2). The
+    // room's own switch door sets the hash too.
     // A fragment-only navigation on the same document fires hashchange and nothing else, so the
     // board leaves the mounted room when the hash now asks for a different one and mounts the
     // requested room, which reads the new hash itself. A campaign level keeps running: the
     // calculator room mounts on the way out and reads the hash then.
+    // SOLO_DOOR_SPEC §2 (2026-10-17): a room link is read once, when the room mounts, and does not
+    // outlive the mount. Left in the URL, #room=calc-team from the switch door (or a worksheet's
+    // #room=calc-solo&topic=) would pin the next reload to that room instead of the schedule.
+    function forgetRoomLink() {
+      if (!/^#room=calc-/.test(root.location.hash || '')) return;
+      try { root.history.replaceState(null, '', root.location.pathname + root.location.search); } catch (_) {}
+    }
     function onRoomHashChange() {
       if (destroyed || !nativePanel || nativePanel.kind !== 'calculator') return;
-      if (typeof nativePanel.linkChanged !== 'function' || !nativePanel.linkChanged(root.location.hash)) return;
+      if (typeof nativePanel.linkChanged !== 'function' || !nativePanel.linkChanged(root.location.hash)) { forgetRoomLink(); return; }
       nativePanel.dispose();
       enterPark(-1);
     }

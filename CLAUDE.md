@@ -22,7 +22,7 @@ A full AP Statistics course platform: 69 video follow-along live worksheets, the
 | `ap_stats_roadmap_square_mode.html` | **The Desk** (~14,250 lines): student home hub — roadmap lesson tiles, Do Now card with grade pills, completion calendar, resource panel, Live Classroom, Study Break Tetris, in-app gradebook. `calendar.html` is a 16-line redirect stub into it |
 | `start-here.html` | Orientation + interactive v3 Grade Playground (fully static) |
 | `study_guide_diagnostic.html` | DAG/BKT diagnostic study guide; depends on `lib/` runtime (`bkt.js`, `dag-renderer.js`, `probe-selector.js`, `curriculum-charts.js`) |
-| `calculator-solo.html` | **TI-84 practice** = the APStat Park solo calculator room as a page (`APSTAT_PARK_TRAINER_ABSORB_SPEC.md`; the v2 trainer, v1 trainer and QA harness were retired 2026-10-16 and live in git history). The native JS calculator engine is `apstat-park/calculator-native/` (byte-identical copy on the relay); the WebCEmu ROM harness is `tools/ti84-rom/` (teacher/dev only) |
+| (no page) | **TI-84 practice** = the APStat Park calculator room on the Desk's calendar board: the ONE calculator surface, no standalone page, no app window (`APSTAT_PARK_SOLO_DOOR_SPEC.md`; the standalone solo page and the Desk `ti84` window were retired 2026-10-17; the v2/v1 trainers and QA harness 2026-10-16, all in git history). Reached by the SOLO/TEAM switch door inside the room, the Desk hash (`#room=calc-solo[&skill=|&topic=]`, `#room=calc-team`) and `_openParkSolo(link)`; with no hash it opens as the team room while a class is live or in session (`apstat-park/class-session.mjs`), else solo. The native JS calculator engine is `apstat-park/calculator-native/` (byte-identical copy on the relay); the WebCEmu ROM harness is `tools/ti84-rom/` (teacher/dev only) |
 
 ### In-Desk app windows
 
@@ -30,8 +30,8 @@ The Desk hosts iframe apps via `openApp(id)` — `APP_REGISTRY` near line 12930 
 
 | id | Target |
 |----|--------|
-| `ti84` | `calculator-solo.html` (this repo; `#room=calc-solo&topic=<t>` deep links) |
 | `quiz` | `https://robjohncolson.github.io/curriculum_render/` (separate repo) |
+| (no `ti84`) | The calculator is not an app window: it is the park room on the calendar board (`_openParkSolo`, see App Surface) |
 | `formulas` | **Equation Trainer** = `https://tmux-trainer.vercel.app/#deck=ap-stats-formulas` — EXTERNAL Vercel app, NOT in this repo. Its source (`tmux-trainer`) is **not cloned on this machine** — treat the deployed URL as the only available surface |
 
 ### Teacher tools

@@ -6,7 +6,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { JSDOM } from 'jsdom';
 
-const dom = new JSDOM('<!doctype html><div id="c"></div>', { url: 'https://desk.test/', pretendToBeVisual: true });
+const dom = new JSDOM('<!doctype html><div id="c"></div>', { url: 'https://desk.test/#room=calc-team', pretendToBeVisual: true });
 const win = dom.window;
 globalThis.window = win;   // the native calculator scripts register on window
 // No canvas in jsdom: a context whose every method is a no-op.

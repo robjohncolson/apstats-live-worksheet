@@ -47,6 +47,7 @@ export function mountTeacherSpectator(container, { wsUrl, username, section = 'B
   const display = createWorldDisplay();
   let socket, disposed = false, reconnect, poll, animation, packet = null, game = null, loadingGame = false;
   let campaign = null, calculator = null, calculatorKey = '', appliedKeys = [];
+  const soloSeen = new Map();   // solo epoch -> when this spectator first saw it (newest first)
   let receivedAt = 0, pendingAt = 0, error = '', lastHeartbeat = 0;
   const replay = createCampaignReplay(inputs => game.step(inputs));
   const ink = () => win.getComputedStyle(container).color || '#43383e';
@@ -87,7 +88,7 @@ export function mountTeacherSpectator(container, { wsUrl, username, section = 'B
   }
   function connect() {
     if (disposed) return;
-    packet = null; campaign = null; pendingAt = 0; calculatorKey = ''; replay.reset(0);
+    packet = null; campaign = null; pendingAt = 0; calculatorKey = ''; replay.reset(0); soloSeen.clear();
     status.textContent = 'Connecting to ' + classes.value.replace('Period', 'Period ') + '…';
     const current = new win.WebSocket(wsUrl); socket = current;
     current.onopen = () => {
@@ -117,7 +118,61 @@ export function mountTeacherSpectator(container, { wsUrl, username, section = 'B
   };
   scenes.onchange = () => { pendingAt = 0; request(); };
   function text(message, x, y, size = 12) { pixelText(ctx, message, x, y, size, ink()); }
+  // One student's calculator: replays state.keys into a native calculator cached by epoch:name,
+  // then the screen and the tiles (or the plot challenge). Team members and solo rounds share it.
+  function drawMember(epoch, level, clock, name, state) {
+    const key = epoch + ':' + name;
+    const keys = state.keys || [];
+    if (key !== calculatorKey || appliedKeys.some((value, i) => keys[i] !== value)) {
+      calculator = win.TI84Native.create(null, { renderer: display }); initializeCalculator(calculator, level);
+      calculatorKey = key; appliedKeys = [];
+    }
+    for (let i = appliedKeys.length; i < keys.length; i++) calculator.pressKey(keys[i]);
+    appliedKeys = keys.slice();
+    const plotting = state.step >= level.route.length;
+    const remaining = Math.max(0, Math.ceil(((plotting ? 30000 : 15000) - (clock - state.startedAt)) / 1000));
+    text(name + ' · ' + (state.complete ? 'COMPLETE' : remaining + 's'), 28, 74);
+    for (const [i, line] of display.getLines().slice(0, 8).entries()) text((line.selected ? '> ' : '') + line.text, 150, 105 + i * 20);
+    if (plotting) drawChallenge(ctx, { level, challenge: challengeFor(level), values: state.boxValues,
+      rejected: false, solved: state.complete, text: pixelText, ink: ink() });
+    else for (const tile of tilesFor(state.step, level)) {
+      art.block(ctx, tile); text(tile.key, tile.x + 5, tile.y + 9, 9);
+    }
+  }
+  const SOLO_ROW_CHARS = 45;
+  // §9: what a solo row says about its round.
+  function soloProgress(round) {
+    if (round.failure) return 'FAILED';
+    if (round.state?.complete) return 'COMPLETE';
+    return (round.state?.step || 0) + '/' + (round.level?.route.length || 0);
+  }
+  // §9: no team round, only solo practice. Newest round first (the order this spectator first saw
+  // each epoch; the watch packet carries no round start), at most 12 rows.
+  function drawSolo(room) {
+    const now = performance.now();
+    for (const round of room.solo) if (!soloSeen.has(round.epoch)) soloSeen.set(round.epoch, now);
+    const rounds = room.solo.map((round, i) => ({ round, i }))
+      .sort((a, b) => soloSeen.get(b.round.epoch) - soloSeen.get(a.round.epoch) || b.i - a.i)
+      .map(({ round }) => round).slice(0, 12);
+    options(focus, rounds.map(round => [round.name, round.name]));
+    text('CALCULATOR · SOLO', 28, 42, 17);
+    // Codex review 2026-10-17: 45 characters fit from x 450 at size 9 (6 px each); the progress
+    // always shows, the name and title are cut to what is left.
+    for (const [i, round] of rounds.entries()) {
+      const progress = ' · ' + soloProgress(round);
+      const who = round.name + ' · ' + (round.level?.title || round.level?.id || '');
+      const room = SOLO_ROW_CHARS - progress.length;
+      text((who.length > room ? who.slice(0, Math.max(0, room - 1)) + '…' : who) + progress, 450, 74 + i * 16, 9);
+    }
+    const focused = rounds.find(round => round.name === focus.value) || rounds[0];
+    if (!focused?.state || !focused.level) { text((focused?.name || '') + ' · STARTING', 28, 74); return; }
+    drawMember(focused.epoch, focused.level, room.clock, focused.name, focused.state);
+  }
   function drawCalculator(room) {
+    const solo = room.solo || [];
+    // The relay's solo-only shape: no team epoch, an empty roster, and the solo rounds.
+    if (room.epoch == null) { drawSolo({ ...room, solo }); return; }
+    if (solo.length) text('+ ' + solo.length + ' SOLO', 28, 712);
     const members = room.members;
     options(focus, members.map(member => [member.name, member.name]));
     const member = members.find(member => member.name === focus.value) || members[0];
@@ -134,23 +189,7 @@ export function mountTeacherSpectator(container, { wsUrl, username, section = 'B
       }
       ctx.restore(); return;
     }
-    const key = room.epoch + ':' + member.name;
-    const keys = state.keys || [];
-    if (key !== calculatorKey || appliedKeys.some((value, i) => keys[i] !== value)) {
-      calculator = win.TI84Native.create(null, { renderer: display }); initializeCalculator(calculator, level);
-      calculatorKey = key; appliedKeys = [];
-    }
-    for (let i = appliedKeys.length; i < keys.length; i++) calculator.pressKey(keys[i]);
-    appliedKeys = keys.slice();
-    const plotting = state.step >= level.route.length;
-    const remaining = Math.max(0, Math.ceil(((plotting ? 30000 : 15000) - (room.clock - state.startedAt)) / 1000));
-    text(member.name + ' · ' + (state.complete ? 'COMPLETE' : remaining + 's'), 28, 74);
-    for (const [i, line] of display.getLines().slice(0, 8).entries()) text((line.selected ? '> ' : '') + line.text, 150, 105 + i * 20);
-    if (plotting) drawChallenge(ctx, { level, challenge: challengeFor(level), values: state.boxValues,
-      rejected: false, solved: state.complete, text: pixelText, ink: ink() });
-    else for (const tile of tilesFor(state.step, level)) {
-      art.block(ctx, tile); text(tile.key, tile.x + 5, tile.y + 9, 9);
-    }
+    drawMember(room.epoch, level, room.clock, member.name, state);
     for (const peer of members) {
       art.cat(ctx, colour(peer.name), 0, true, peer.pose.x, peer.pose.y);
       text(peer.name, peer.pose.x, peer.pose.y - 15, 9);
@@ -161,6 +200,7 @@ export function mountTeacherSpectator(container, { wsUrl, username, section = 'B
     ctx.clearRect(0, 0, 720, 750); ctx.fillStyle = '#ff864d'; ctx.fillRect(0, 700, 720, 50);
     const choice = scenes.value;
     const showCampaign = choice.startsWith('team:') || (choice === 'auto' && packet?.campaign.state);
+    // §9: a solo-only calculator packet (epoch null, solo rounds) is an active calculator scene too.
     const showCalculator = choice === 'calculator' || (choice === 'auto' && !showCampaign && packet?.calculator);
     if (showCampaign && campaign && game) {
       options(focus, campaign.roster.map(name => [name, name]));
