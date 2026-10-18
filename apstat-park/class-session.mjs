@@ -2,9 +2,19 @@
 // The calculator room opens as the team room while a class meets and as the solo room otherwise.
 const V = new URL(import.meta.url).search;
 
-// Local time. The repo has no bell schedule; the teacher narrows this to the period's actual
-// block when they give it. Do not invent per-period times.
-export const SCHOOL_HOURS = { start: '07:30', end: '14:30' };
+// LEHS SY26-27 bell schedule: LEHS_SY2627_Schedule_and_Calendar.xlsx, "Bell Schedule" tab (transcribed
+// from weekschedule.pdf). Local time, start inclusive, end exclusive. A weekday missing here is one the
+// block does not meet. Wednesday E is the 90+30 block: the window covers the rotating lunch too.
+export const BELL_SCHEDULE = {
+  B: { Mon: ['08:55', '09:50'], Tue: ['09:55', '11:00'], Thu: ['09:55', '11:00'], Fri: ['08:55', '09:50'] },
+  E: { Mon: ['13:15', '14:30'], Wed: ['11:16', '13:25'], Fri: ['13:15', '14:30'] },
+};
+
+// The whole school day (first bell to last). Used only when a lesson is dated on a weekday the block
+// does not normally meet (a special-day schedule the bell table cannot know about).
+export const SCHOOL_HOURS = { start: '07:45', end: '14:30' };
+
+const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -46,12 +56,20 @@ function minutesOf(clock) {
   return hours * 60 + minutes;
 }
 
-// True on a class day for the section, from SCHOOL_HOURS.start (inclusive) to .end (exclusive).
+// The section's block on that weekday as { start, end }, else the whole school day.
+export function blockFor(section, now) {
+  const block = BELL_SCHEDULE[periodOf(section)]?.[WEEKDAYS[now.getDay()]];
+  if (!block) return SCHOOL_HOURS;
+  return { start: block[0], end: block[1] };
+}
+
+// True on a class day for the section, during its block (start inclusive, end exclusive).
 export function inSession(schedule, section, now = new Date()) {
   if (!schedule) return false;
   if (!classDaysFor(schedule, section).has(localDate(now))) return false;
   const minute = now.getHours() * 60 + now.getMinutes();
-  return minute >= minutesOf(SCHOOL_HOURS.start) && minute < minutesOf(SCHOOL_HOURS.end);
+  const block = blockFor(section, now);
+  return minute >= minutesOf(block.start) && minute < minutesOf(block.end);
 }
 
 // data/lesson-schedule.json beside the park, with the room's cache-bust query. null on any failure.

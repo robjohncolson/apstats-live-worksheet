@@ -3,6 +3,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { JSDOM } from 'jsdom';
+import { inSession } from './class-session.mjs';
 
 const dom = new JSDOM('<!doctype html><div id="c"></div>', { url: 'https://desk.test/', pretendToBeVisual: true });
 const win = dom.window;
@@ -120,16 +121,15 @@ test('an auto room with the Live Classroom live opens as the team room', async (
   assert.ok(room.drawn().includes('CALCULATOR TOGETHER'));
 });
 
-test('an auto room on the section\'s class day follows SCHOOL_HOURS', async (t) => {
+test('an auto room on the section\'s class day follows the bell schedule (class-session inSession)', async (t) => {
   const now = new Date();
   const pad = n => String(n).padStart(2, '0');
   const today = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate());
-  const minute = now.getHours() * 60 + now.getMinutes();
-  const room = mountRoom({ link: AUTO, schedule: { lessons: { '1.1': { periods: { B: today } } } } });
+  const schedule = { lessons: { '1.1': { periods: { B: today } } } };
+  const room = mountRoom({ link: AUTO, schedule });
   t.after(() => room.panel.dispose());
   await tick(); await tick();
-  const inHours = minute >= 7 * 60 + 30 && minute < 14 * 60 + 30;
-  assert.equal(room.panel.getView().mode, inHours ? 'team' : 'solo');
+  assert.equal(room.panel.getView().mode, inSession(schedule, 'B', now) ? 'team' : 'solo');
 });
 
 test('a failed schedule load is solo', async (t) => {

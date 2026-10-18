@@ -61,7 +61,9 @@ The calculator room's mode comes from the page hash: `#room=calc-solo[&skill=|&t
 `#room=calc-team` is team, anything else is `auto`. `auto` resolves once at mount, after
 `data/lesson-schedule.json` loads (`class-session.mjs`): team while the Live Classroom is live or
 the section's class is in session (a dated lesson day for the period, outside `calendar.breaks`,
-between `SCHOOL_HOURS` 07:30 and 14:30 local; the repo has no bell schedule), else solo. Until then
+during the section's bell block that weekday (`BELL_SCHEDULE` in `class-session.mjs`, from the LEHS
+SY26-27 workbook: B Mon/Fri 08:55-09:50, Tue/Thu 09:55-11:00; E Mon/Fri 13:15-14:30, Wed 11:16-13:25;
+a lesson dated on an off-pattern weekday uses the whole school day 07:45-14:30), else solo. Until then
 the intro reads CALCULATOR / LOADING... and nothing joins. Both intros have a switch door at
 `SWITCH_DOOR` (x 480, right of the team block's start): the team intro's SOLO door carries the bonus
 line, the solo intro's TEAM door says "PUSH THE BLOCK WITH YOUR CLASS". UP beside it or a click on it

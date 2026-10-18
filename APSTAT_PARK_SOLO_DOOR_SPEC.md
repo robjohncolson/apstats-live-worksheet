@@ -27,8 +27,9 @@ Desk app window.
 - "Class is live" today = Live Classroom `state.live` (teacher-armed), exposed to the room as
   `board.classroom.isLive()`.
 - The weekly schedule: `data/lesson-schedule.json` — `lessons[].dates.B` / `.dates.E` are the class
-  days each section meets for a lesson (ISO dates), `calendar.breaks` the no-school ranges. There is
-  NO bell schedule (period start/end times) anywhere in the repo.
+  days each section meets for a lesson (ISO dates), `calendar.breaks` the no-school ranges. The bell
+  schedule is the "Bell Schedule" tab of `LEHS_SY2627_Schedule_and_Calendar.xlsx` (wired 2026-10-18;
+  at spec time it had not been found and the module shipped with a single placeholder block).
 
 ## 1. Non-goals
 
@@ -60,9 +61,11 @@ bare → `#room=calc-team` remounts; bare → bare does not).
 New module `apstat-park/class-session.mjs` (ES module, pure functions + one loader; unit-tested):
 
 ```js
-export const SCHOOL_HOURS = { start: '07:30', end: '14:30' };   // local time; see §3 note
+export const BELL_SCHEDULE = { B: { Mon, Tue, Thu, Fri }, E: { Mon, Wed, Fri } }   // ['HH:MM','HH:MM'] per weekday the block meets; see §3 note
+export const SCHOOL_HOURS = { start: '07:45', end: '14:30' };   // first bell to last: the fallback window
+export function blockFor(section, now)                 // the section's block that weekday, else SCHOOL_HOURS
 export function classDaysFor(schedule, section)        // Set of ISO dates the section meets (lessons[].dates[period]; breaks removed)
-export function inSession(schedule, section, now = new Date())   // boolean: today ∈ classDays AND SCHOOL_HOURS.start ≤ now < SCHOOL_HOURS.end (local)
+export function inSession(schedule, section, now = new Date())   // boolean: today ∈ classDays AND blockFor(section, now).start ≤ now < .end (local)
 export function loadSchedule(fetchFn)                  // fetch('../data/lesson-schedule.json' relative to import.meta.url, same `V` cache-bust as the room); null on failure
 ```
 
@@ -71,9 +74,12 @@ export function loadSchedule(fetchFn)                  // fetch('../data/lesson-
 - Dates compare as the LOCAL calendar date (`YYYY-MM-DD` from `now`'s local parts), never UTC.
 - Section meeting days come only from `lessons[].dates[period]`; B "Work Day" rows (if present as
   lessons) count as meeting days; `calendar.breaks` ranges are excluded even if a lesson is dated inside.
-- `SCHOOL_HOURS` is a single constant at the top of the module with a comment: "the repo has no bell
-  schedule; the teacher narrows this to the period's actual block when they give it". Do not invent
-  per-period times.
+- `BELL_SCHEDULE` (2026-10-18, teacher: "all bell times are in follow-alongs") is the LEHS SY26-27
+  workbook's Bell Schedule tab: B meets Mon/Fri 08:55-09:50 and Tue/Thu 09:55-11:00; E meets Mon/Fri
+  13:15-14:30 and Wed 11:16-13:25 (the 90+30 block; the window includes the rotating lunch). A lesson
+  dated on a weekday the block does not meet (a special-day schedule) uses `SCHOOL_HOURS` 07:45-14:30.
+  Before this the module shipped with that single block as a placeholder; per-period times were never
+  to be invented.
 - Schedule load failure (offline, 404) → `inSession` false → solo, unless `isLive()`.
 
 Wiring: `classroom-board.js` passes `section` on the `board` object it gives `mountParkPanel`
