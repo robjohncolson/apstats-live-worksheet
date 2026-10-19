@@ -87,9 +87,9 @@ describe('Calculator Skills modal (Desk)', () => {
       'one-var-stats': 'MASTERED · review Oct 24',
       normalcdf: 'DUE · 3 days overdue',
       invnorm: 'DUE TODAY',
-      histogram: 'NO HINTS',
+      histogram: 'ON YOUR OWN',
       dotplot: 'GOALS ONLY',
-      'randint-sampling': 'FULL HINTS',
+      'randint-sampling': 'FULL HELP',
       'modified-boxplot': 'NEW',
       'one-propztest': 'LOCKED',
     });
@@ -101,7 +101,7 @@ describe('Calculator Skills modal (Desk)', () => {
     expect(chip({ mastered: true, due: true, overdueDays: 4, nextReview: '2026-10-12' })).toBe('MASTERED · review Oct 12');
     expect(chip({ due: true, overdueDays: 1, rung: 2, clears: 5 })).toBe('DUE · 1 day overdue');
     expect(chip({ eligible: false, clears: 1, rung: 1 })).toBe('GOALS ONLY');
-    expect(chip({ eligible: false, lastQuality: 3, nextReview: '2026-11-01' })).toBe('FULL HINTS');
+    expect(chip({ eligible: false, lastQuality: 3, nextReview: '2026-11-01' })).toBe('FULL HELP');
     expect(chip({ eligible: false })).toBe('LOCKED');
     expect(chip({})).toBe('NEW');
   });

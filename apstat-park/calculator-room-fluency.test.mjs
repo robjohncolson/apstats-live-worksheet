@@ -76,19 +76,19 @@ test('rungs 0/1/2 show the full hint, the goal, then no hint line; the tag and s
   t.after(() => panel.dispose());
   deliver(state(PLAIN, { rung: 0 }));
   assert.equal(panel.getView().hint, LEVEL.hints[0]);
-  assert.equal(panel.getView().hintTag, 'HINTS: FULL');
-  assert.match(status(), /^Hints: full\./);
+  assert.equal(panel.getView().hintTag, 'FULL HELP');
+  assert.match(status(), /^Full help\./);
   draw();
   deliver(state(PLAIN, { revision: 2, rung: 1, clears: 1 }));
   assert.equal(panel.getView().hint, goalFor(LEVEL.id, 0));
-  assert.equal(panel.getView().hintTag, 'HINTS: GOALS');
-  assert.match(status(), /^Hints: goals only\. .*Open STAT > CALC/);
+  assert.equal(panel.getView().hintTag, 'GOALS ONLY');
+  assert.match(status(), /^Goals only\. .*Open STAT > CALC/);
   deliver(state(PLAIN, { revision: 3, rung: 1, clears: 1 }));
   assert.doesNotMatch(status(), /Hints:/, 'spoken once, when it changes');
   deliver(state(PLAIN, { revision: 4, rung: 2, clears: 2 }));
   assert.equal(panel.getView().hint, '');
-  assert.equal(panel.getView().hintTag, 'NO HINTS');
-  assert.match(status(), /^No hints/);
+  assert.equal(panel.getView().hintTag, 'ON YOUR OWN');
+  assert.match(status(), /^On your own/);
   draw();
 });
 

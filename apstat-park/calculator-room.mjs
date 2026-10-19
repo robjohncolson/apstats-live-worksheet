@@ -90,8 +90,9 @@ export function navigatorSteps(plan, name, routeLength) {
   for (let step = 0; step < routeLength; step++) if (navigatorOf(plan, step) === name) steps.push(step);
   return steps;
 }
-const RUNG_TAGS = ['HINTS: FULL', 'HINTS: GOALS', 'NO HINTS'];
-const RUNG_SPEECH = ['Hints: full.', 'Hints: goals only.', 'No hints: read the calculator screen.'];
+// Teacher 2026-10-18 ("on your own" sounds good): the rung tag names the help level, not "hints".
+const RUNG_TAGS = ['FULL HELP', 'GOALS ONLY', 'ON YOUR OWN'];
+const RUNG_SPEECH = ['Full help.', 'Goals only.', 'On your own: read the calculator screen.'];
 const WRONG_RED = '#b4442c';
 
 // link: the parsed deep link ({ mode, skill, topic }); defaults to the page's own hash.

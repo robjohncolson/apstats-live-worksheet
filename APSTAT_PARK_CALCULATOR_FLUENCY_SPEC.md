@@ -37,7 +37,8 @@ each member their own `clears` and `rung` for the current skill:
 
 - A wrong key (§5's definition) drops the *current step* one rung for the rest of that step; a time-up (the
   relay's `hintKeys`) shows the full hint, as today. Nobody is stranded.
-- A small tag on the status column says which rung is on: `HINTS: FULL` / `HINTS: GOALS` / `NO HINTS`, so
+- A small tag on the status column says which rung is on: `FULL HELP` / `GOALS ONLY` / `ON YOUR OWN`
+  (reworded 2026-10-18 from `HINTS: FULL` / `HINTS: GOALS` / `NO HINTS`; the teacher read "HINTS: FULL" as a bug), so
   students know why the hint changed. The screen-reader status line carries the same.
 - Clears are counted by the relay when the team's round is `complete` (same moment as the key), once per
   student per round, for that round's `skillId`.

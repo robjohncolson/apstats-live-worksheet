@@ -93,8 +93,8 @@ test('while the word problem is open: the stem and four titled tiles are drawn, 
   assert.ok(captions.some(c => c.startsWith('A COMPANY CLAIMS')), 'the stem is drawn');
   assert.ok(captions.includes('NO TIMER - CHOOSE THE PROCEDURE') || captions.includes('NO TIMER . CHOOSE THE PROCEDURE'), captions.join(' | '));
   assert.ok(!captions.includes('STAT'), 'no keypad');
-  // No route step yet, so no hint rung: the HINTS: FULL tag and the hint line wait for the pick.
-  assert.ok(!captions.some(c => /^(HINTS: |NO HINTS)/.test(c)), 'no rung tag while recognising: ' + captions.join(' | '));
+  // No route step yet, so no hint rung: the FULL HELP tag and the hint line wait for the pick.
+  assert.ok(!captions.some(c => /^(FULL HELP|GOALS ONLY|ON YOUR OWN)$/.test(c)), 'no rung tag while recognising: ' + captions.join(' | '));
   assert.equal(view.hintTag, null);
   assert.equal(view.hint, null);
   assert.doesNotMatch(room.status(), /Hints:/);
@@ -129,9 +129,9 @@ test('a wrong pick shows its sentence and the route starts; a right pick says so
   assert.ok(captions.some(c => c.startsWith('NOT T-TEST (STATS INPUT): THIS ASKS ABOUT A')), captions.join(' | '));
   assert.ok(captions.includes('PROPORTION, NOT A MEAN.'), 'the sentence wraps onto a second row');
   assert.ok(captions.includes('STAT'), 'the keypad is drawn again');
-  assert.ok(captions.includes('HINTS: FULL'), 'the rung tag appears once the route starts: ' + captions.join(' | '));
-  assert.equal(room.panel.getView().hintTag, 'HINTS: FULL');
-  assert.match(room.status(), /Hints: full\. Step 1\//);
+  assert.ok(captions.includes('FULL HELP'), 'the rung tag appears once the route starts: ' + captions.join(' | '));
+  assert.equal(room.panel.getView().hintTag, 'FULL HELP');
+  assert.match(room.status(), /Full help\. Step 1\//);
   assert.ok(captions.includes('1-PROPZTEST'), 'the title shows once picked');
   assert.equal(room.panel.getView().recognition.correct, false);
   // A fresh round, right pick.

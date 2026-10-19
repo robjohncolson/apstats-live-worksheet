@@ -207,7 +207,7 @@ a state chip, and a `Practice` link → `_openParkSolo('&skill=' + skillId)`. St
 |---|---|
 | MASTERED · <date> | `mastered` |
 | DUE · <n> days overdue | `due` (0 days → `DUE TODAY`) |
-| NO HINTS / GOALS ONLY / FULL HINTS | by `rung` 2 / 1 / 0 after at least one clear or review |
+| ON YOUR OWN / GOALS ONLY / FULL HELP | by `rung` 2 / 1 / 0 after at least one clear or review (reworded 2026-10-18 with the room's tag) |
 | NEW | no clears and no record |
 | LOCKED | not `eligible` and no record (the calendar has not opened it; still playable by deep link) |
 
