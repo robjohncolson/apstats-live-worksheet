@@ -318,8 +318,8 @@ def component_columns(
     # Per-unit Progress Check + Poster columns -- one of each for every unit that has
     # at least one (date-filtered) lesson group, UNCONDITIONALLY, mirroring
     # gradebook-grid.js buildGradebookColumns. The producer fills PC from the unit
-    # mastery track (units[U#].pcRawPct); Poster has no data source yet (rubric TBD),
-    # so its column is a placeholder the Schoology blend renormalizes around. Date =
+    # mastery track (units[U#].pcRawPct) and Poster from the banked
+    # BONUS-POSTER-U# ledger letter (evidence only, Posters category weight 0). Date =
     # the EARLIEST lesson date in the unit (the My Gradebook "unit underway" gate),
     # derived from the groups already filtered by include_undated.
     unit_dates = {}  # unit -> earliest group date (str) or None
@@ -493,7 +493,8 @@ def component_comments_from_class_doc(doc: dict, uid_map: dict | None = None,
 
 
 def component_grades_from_class_doc(doc: dict, uid_map: dict | None = None,
-                                    today: str | None = None) -> dict:
+                                    today: str | None = None,
+                                    poster_grades: dict | None = None) -> dict:
     """Map a /class/grades response to {"<uid>/<component_key>": value}.
 
     Per student, per lesson:
@@ -505,11 +506,21 @@ def component_grades_from_class_doc(doc: dict, uid_map: dict | None = None,
       - Blooket      <- lesson.blooket  (one per group; needs hasBlooket;
                         0 once the lesson's zero date has passed with no score)
 
+    Per student, per unit:
+      - Progress Check <- units[U#].pcRawPct
+      - Poster         <- poster_grades[rosterId][unit] (an E/P/I letter from the
+                          student's BONUS-POSTER-U# ledger row, see
+                          build_schoology_fixture.poster_grades_from_ledger_rows)
+                          mapped through POSTER_SCORE. Evidence only: the poster
+                          is banked bonus (POSTER_BONUS_SPEC.md), so the Schoology
+                          Posters category must stay at weight 0.
+
     Key resolution per student (highest priority first): the server-surfaced
     schoologyUid (P4b bridge), then uid_map, then the roster id. Mirrors
     build_schoology_fixture.build_fixture so the two stay consistent.
     """
     uid_map = uid_map or {}
+    poster_grades = poster_grades or {}
     out = {}
     for s in doc.get("students", []) or []:
         rid = str(s.get("studentId"))
@@ -563,9 +574,6 @@ def component_grades_from_class_doc(doc: dict, uid_map: dict | None = None,
 
         # Per-unit Progress Check from the unit-level mastery track
         # (units[U#].pcRawPct) -- the SAME source gradebook-grid.js cellValue uses.
-        # Poster has no data source yet (rubric TBD), so it is intentionally NOT
-        # emitted: the column exists as a placeholder and the Schoology blend
-        # renormalizes over present categories (parity with node).
         for ukey, u in (s.get("units") or {}).items():
             if not isinstance(u, dict):
                 continue
@@ -574,4 +582,26 @@ def component_grades_from_class_doc(doc: dict, uid_map: dict | None = None,
                 unit_num = str(ukey).lstrip("Uu") or ukey
                 out[f"{uid}/{pc_key(unit_num)}"] = pc
 
+        # Per-unit Poster as EVIDENCE (teacher 2026-10-20: "kids are looking for
+        # evidence of their grade"). The letter comes from the banked
+        # BONUS-POSTER-U# ledger row; the number is POSTER_SCORE. The grade itself
+        # is still the banked bonus applied at quarter close, so the Schoology
+        # Posters category carries weight 0 and this column never counts twice.
+        for unit_num, letter in (poster_grades.get(rid) or {}).items():
+            score = poster_score(letter)
+            if score is not None:
+                out[f"{uid}/{poster_key(unit_num)}"] = score
+
     return out
+
+
+# Poster evidence scale (teacher 2026-10-14): the floor is 90 and the ceiling 115,
+# never the printed key's 100/85/60. A poster must never read as a penalty.
+POSTER_SCORE = {"E": 115, "P": 100, "I": 90}
+
+
+def poster_score(letter) -> int | None:
+    """The 90-115 evidence number for a banked poster letter (None if unknown)."""
+    if letter is None:
+        return None
+    return POSTER_SCORE.get(str(letter).strip().upper())

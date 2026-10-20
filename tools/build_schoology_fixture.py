@@ -28,6 +28,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
@@ -100,6 +101,68 @@ def build_fixture(doc: dict, uid_map: dict | None = None,
                     val = (q or {}).get("quarterGrade")
                 if val is not None:
                     out[f"{uid}/{qk}"] = val
+    return out
+
+
+_POSTER_ITEM = re.compile(r"^BONUS-POSTER-U(\d+)$", re.IGNORECASE)
+
+
+def poster_grades_from_ledger_rows(rows) -> dict:
+    """{unit: letter} from a student's BONUS-POSTER-U# ledger rows (E/P/I).
+
+    Rows come from GET /ledger/student/:id?prefix=BONUS-POSTER- . Only
+    source 'bonus' rows count; the letter is response.grade, falling back to the
+    stored points (5/3/1). A later row for the same unit replaces an earlier one.
+    """
+    out = {}
+    for row in rows or []:
+        if not isinstance(row, dict) or row.get("source") != "bonus":
+            continue
+        m = _POSTER_ITEM.match(str(row.get("itemId") or row.get("item_id") or ""))
+        if not m:
+            continue
+        meta = row.get("response")
+        if isinstance(meta, str):
+            try:
+                meta = json.loads(meta or "{}")
+            except ValueError:
+                meta = {}
+        letter = (meta or {}).get("grade") if isinstance(meta, dict) else None
+        if not letter:
+            letter = {5: "E", 3: "P", 1: "I"}.get(_as_int(row.get("score")))
+        if letter:
+            out[int(m.group(1))] = str(letter).strip().upper()
+    return out
+
+
+def _as_int(value):
+    try:
+        return int(float(value))
+    except (TypeError, ValueError):
+        return None
+
+
+def fetch_poster_grades(base: str, doc: dict, secret: str) -> dict:
+    """{rosterId: {unit: letter}} for every student in the /class/grades doc.
+
+    One GET per student; a failed fetch skips that student with a warning (the
+    rest of the fixture still builds) rather than failing the nightly run.
+    """
+    out = {}
+    for s in doc.get("students", []) or []:
+        rid = str(s.get("studentId"))
+        url = f"{base.rstrip('/')}/ledger/student/{rid}?prefix=BONUS-POSTER-"
+        try:
+            req = Request(url, headers={"x-teacher-secret": secret})
+            with urlopen(req, timeout=60) as resp:
+                ledger = json.loads(resp.read().decode("utf-8"))
+        except (HTTPError, URLError, ValueError) as e:
+            print(f"WARN: poster rows for {rid} skipped: {e}", file=sys.stderr)
+            continue
+        rows = ledger.get("rows") or ledger.get("ledger") or ledger.get("items") or []
+        grades = poster_grades_from_ledger_rows(rows)
+        if grades:
+            out[rid] = grades
     return out
 
 
@@ -209,7 +272,9 @@ def main(argv=None) -> int:
             uid_map = json.load(f)
 
     if args.granularity == "component":
-        fixture = components.component_grades_from_class_doc(doc, uid_map=uid_map, today=_today_eastern())
+        poster_grades = fetch_poster_grades(args.base, doc, secret)
+        fixture = components.component_grades_from_class_doc(
+            doc, uid_map=uid_map, today=_today_eastern(), poster_grades=poster_grades)
     else:
         fixture = build_fixture(doc, uid_map=uid_map, granularity=args.granularity, today=_today_eastern())
     payload = json.dumps(fixture, indent=2)

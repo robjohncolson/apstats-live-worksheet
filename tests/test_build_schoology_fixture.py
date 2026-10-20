@@ -38,6 +38,35 @@ DOC = {
 }
 
 
+class TestPosterGradesFromLedger(unittest.TestCase):
+    def test_letter_from_response_grade(self):
+        rows = [
+            {"item_id": "BONUS-POSTER-U1", "source": "bonus", "score": 5,
+             "response": '{"grade":"E","quarter":"Q1","title":"Unit 1 Poster"}'},
+            {"item_id": "BONUS-screen-time", "source": "bonus", "score": 3,
+             "response": '{"grade":"P"}'},                       # DOK sheet, not a poster
+            {"item_id": "BONUS-APPLIED-Q1", "source": "bonus_applied", "score": 91},
+        ]
+        self.assertEqual(bsf.poster_grades_from_ledger_rows(rows), {1: "E"})
+
+    def test_letter_falls_back_to_stored_points_and_camel_case_keys(self):
+        rows = [{"itemId": "BONUS-POSTER-U2", "source": "bonus", "score": 1, "response": {}}]
+        self.assertEqual(bsf.poster_grades_from_ledger_rows(rows), {2: "I"})
+
+    def test_later_row_replaces_earlier_and_bad_rows_are_ignored(self):
+        rows = [
+            {"item_id": "BONUS-POSTER-U1", "source": "bonus", "score": 1, "response": '{"grade":"I"}'},
+            {"item_id": "BONUS-POSTER-U1", "source": "bonus", "score": 5, "response": '{"grade":"E"}'},
+            {"item_id": "BONUS-POSTER-U3", "source": "bonus", "score": 5, "response": "not json"},
+            "garbage", None,
+        ]
+        self.assertEqual(bsf.poster_grades_from_ledger_rows(rows), {1: "E", 3: "E"})
+
+    def test_empty(self):
+        self.assertEqual(bsf.poster_grades_from_ledger_rows(None), {})
+        self.assertEqual(bsf.poster_grades_from_ledger_rows([]), {})
+
+
 class TestBuildFixture(unittest.TestCase):
     def test_closed_quarter_wins_with_live_fallback(self):
         doc = {"students": [{"studentId": "s1", "quarters": {

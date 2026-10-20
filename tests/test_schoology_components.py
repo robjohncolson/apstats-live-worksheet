@@ -299,16 +299,35 @@ class TestComponentGradesFromClassDoc(unittest.TestCase):
         finally:
             sc.QUIZ_ZEROS_FROM = saved
 
-    def test_emits_pc_from_units_and_skips_poster(self):
-        # PC <- units[U#].pcRawPct (the unit mastery track). Poster has no data
-        # source yet, so it is never emitted (parity with gradebook-grid.js).
+    def test_emits_pc_from_units_and_skips_poster_without_ledger_letter(self):
+        # PC <- units[U#].pcRawPct (the unit mastery track). Poster has no
+        # units[] source: without a poster_grades letter it is never emitted.
         doc = {"students": [{"studentId": "r1", "schoologyUid": "9001",
             "units": {"U1": {"pcRawPct": 82}, "U6": {"pcRawPct": None}},
             "lessons": []}]}
         out = sc.component_grades_from_class_doc(doc)
         self.assertEqual(out["9001/PC:U1"], 82)
         self.assertNotIn("9001/PC:U6", out)       # null pcRawPct -> skipped
-        self.assertNotIn("9001/POSTER:U1", out)   # poster never emitted
+        self.assertNotIn("9001/POSTER:U1", out)   # no banked letter -> no evidence
+
+    def test_emits_poster_evidence_from_banked_letter(self):
+        # Poster <- the banked BONUS-POSTER-U# letter, keyed by ROSTER id, mapped
+        # through POSTER_SCORE (teacher 2026-10-14: floor 90, ceiling 115).
+        doc = {"students": [
+            {"studentId": "r1", "schoologyUid": "9001", "units": {}, "lessons": []},
+            {"studentId": "r2", "schoologyUid": "9002", "units": {}, "lessons": []},
+        ]}
+        out = sc.component_grades_from_class_doc(
+            doc, poster_grades={"r1": {1: "E"}, "r2": {1: "i", 2: "P"}})
+        self.assertEqual(out["9001/POSTER:U1"], 115)
+        self.assertEqual(out["9002/POSTER:U1"], 90)
+        self.assertEqual(out["9002/POSTER:U2"], 100)
+        self.assertEqual(sc.POSTER_SCORE, {"E": 115, "P": 100, "I": 90})
+
+    def test_unknown_poster_letter_is_not_emitted(self):
+        doc = {"students": [{"studentId": "r1", "schoologyUid": "9001", "units": {}, "lessons": []}]}
+        out = sc.component_grades_from_class_doc(doc, poster_grades={"r1": {1: "X"}})
+        self.assertNotIn("9001/POSTER:U1", out)
 
     def test_followalong_falls_back_to_cws(self):
         # A lesson with no lessonGradeNoQuiz (old server) -> FA uses Cws.
