@@ -1,6 +1,6 @@
 # Posters return to the Work track at 30% (15% of the quarter), scored 90-115 (spec, 2026-10-20)
 
-Status: SIGNED OFF by the teacher 2026-10-20 (flat letter map E 115 / P 100 / I 90 for the conversion; Work clamped at 100; the poster DOES count toward the 40% floor, teacher: "I did want it"). Building. **Grade-affecting** (changes the Work blend that feeds the
+Status: BUILT + COMMITTED 2026-10-20 (b9ed6f48; teacher decisions: flat letter map E 115 / P 100 / I 90 for the conversion, Work clamped at 100, the poster DOES count toward the 40% floor). Not yet pushed; migration 0042 runs first. **Grade-affecting** (changes the Work blend that feeds the
 Desk grade, the nightly Schoology official grade, the gradebook grid and the Bonus Bank).
 
 Teacher (2026-10-20): Period B reported "the poster grades haven't been entered into Schoology". The
