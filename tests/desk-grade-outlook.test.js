@@ -268,20 +268,30 @@ describe('the pill rule, in words (EFFORT_VISIBILITY_V2_SPEC §3)', () => {
 
 describe('"show the math" (teacher 2026-09-27: the rule as inequalities, and why Schoology differs)', () => {
   const lines = new Function('DESK_V3_WORK_WEIGHTS', 'DESK_SCHOOLOGY_WEIGHTS', fnBody(DESK, '_gradeMathLines') + '\nreturn _gradeMathLines;')(
-    { lessons: 0.50, quizzes: 0.35, blooket: 0.15 }, { Lesson: 25, Quizzes: 17.5, Blooket: 7.5, 'Progress Check': 50 });
+    { lessons: 0.30, quizzes: 0.30, posters: 0.30, blooket: 0.10 }, { Lesson: 15, Quizzes: 15, Posters: 15, Blooket: 5, 'Progress Check': 50 });
   it('PC not counting yet: names PC as — with its date, builds Work from its parts, states the two-case rule, plugs in, and explains Schoology', () => {
     const out = lines({ grade: 86, pcAvg: null, workAvg: 84.4, pcDay: 'Tue 10/13', pcOnFile: true,
-      workTracks: { lessons: 84.0, quizzes: 77.8, blooket: 95.6 },
+      workTracks: { lessons: 84.0, quizzes: 77.8, posters: null, blooket: 95.6 },
       schoologyTotal: 83.7, categoryAverages: { Lesson: 84.0, Quizzes: 77.8, Blooket: 95.6 } });
     expect(out[0]).toBe('Work = 84.4   PC = \u2014  (counts from Tue 10/13)');
-    expect(out[1]).toBe('Work = [50\u00b784 (worksheets) + 35\u00b777.8 (quizzes) + 15\u00b795.6 (flashcards)] / 100 = 83.6');
+    // No poster yet: the poster term is absent and Work renormalises over 70.
+    expect(out[1]).toBe('Work = [30\u00b784 (worksheets) + 30\u00b777.8 (quizzes) + 10\u00b795.6 (flashcards)] / 70 = 83');
     expect(out[2]).toBe('If Work \u2265 40 and PC \u2265 40:  Grade = max(Work, PC)');
     expect(out[3]).toBe('Otherwise:  Grade = max(0.7\u00b7Work, 0.7\u00b7PC, (Work + PC) / 2)');
     expect(out[4]).toBe('Here: PC is not counting yet, so Grade = Work = 84.4');
-    expect(out[5]).toBe('Schoology today = 83.7 = [84\u00d725 (Lesson) + 77.8\u00d717.5 (Quizzes) + 95.6\u00d77.5 (Blooket)] / 50');
-    expect(out[6]).toContain('(Progress Check joins when its columns open)');
-    expect(out.join('\n')).not.toMatch(/poster/i);
+    expect(out[5]).toBe('Schoology today = 83.7 = [84\u00d715 (Lesson) + 77.8\u00d715 (Quizzes) + 95.6\u00d75 (Blooket)] / 35');
+    // Posters is a Schoology category again; with no poster column yet it is named as still to join.
+    expect(out[6]).toContain('(Posters, Progress Check join when their columns open)');
+    expect(out[1]).not.toMatch(/poster/i);
     expect(out[6]).toContain('leaves out work done ahead of the calendar');
+  });
+  it('a poster on file joins the Work breakdown; a 115 can lift the blend past 100 and Work is clamped (POSTER_WORK_TRACK_SPEC.md)', () => {
+    const out = lines({ grade: 90.5, pcAvg: null, workAvg: 90.5, pcOnFile: false,
+      workTracks: { lessons: 90, quizzes: 70, posters: 115, blooket: 80 } });
+    expect(out[1]).toBe('Work = [30\u00b790 (worksheets) + 30\u00b770 (quizzes) + 30\u00b7115 (poster) + 10\u00b780 (flashcards)] / 100 = 90.5');
+    const capped = lines({ grade: 100, pcAvg: null, workAvg: 100, pcOnFile: false,
+      workTracks: { lessons: 100, quizzes: 100, posters: 115, blooket: 100 } });
+    expect(capped[1]).toBe('Work = [30\u00b7100 (worksheets) + 30\u00b7100 (quizzes) + 30\u00b7115 (poster) + 10\u00b7100 (flashcards)] / 100 = 100');
   });
   it('ahead cells: a projection line follows "Schoology today" (AHEAD_WORK_PROJECTION_SPEC §2)', () => {
     const base = { grade: 86, pcAvg: null, workAvg: 84.4, schoologyTotal: 83.7, categoryAverages: { Lesson: 84.0 } };

@@ -31,3 +31,10 @@ describe('bonus entry file', () => {
     expect(matchBonusStudents('Missing', students)).toEqual([]);
   });
 });
+
+describe('enter-bonus refuses poster sheets (POSTER_WORK_TRACK_SPEC.md)', () => {
+  it('points the teacher at enter-poster.mjs', () => {
+    expect(() => parseBonusFile('sheet=POSTER-U1 quarter=Q1 title=Unit 1 Poster\nPear Cat|E'))
+      .toThrow(/enter-poster\.mjs/);
+  });
+});

@@ -39,32 +39,124 @@ DOC = {
 
 
 class TestPosterGradesFromLedger(unittest.TestCase):
-    def test_letter_from_response_grade(self):
+    """poster_grades_from_ledger_rows -> {unit: number 90-115} (POSTER_WORK_TRACK_SPEC.md)."""
+
+    def test_poster_row_score_passes_through(self):
         rows = [
-            {"item_id": "BONUS-POSTER-U1", "source": "bonus", "score": 5,
-             "response": '{"grade":"E","quarter":"Q1","title":"Unit 1 Poster"}'},
+            {"item_id": "POSTER-U1", "source": "poster", "score": 105,
+             "response": '{"grade":"E","title":"Superpowers","unit":1}'},
             {"item_id": "BONUS-screen-time", "source": "bonus", "score": 3,
              "response": '{"grade":"P"}'},                       # DOK sheet, not a poster
             {"item_id": "BONUS-APPLIED-Q1", "source": "bonus_applied", "score": 91},
         ]
-        self.assertEqual(bsf.poster_grades_from_ledger_rows(rows), {1: "E"})
+        self.assertEqual(bsf.poster_grades_from_ledger_rows(rows), {1: 105})
 
-    def test_letter_falls_back_to_stored_points_and_camel_case_keys(self):
+    def test_legacy_bonus_row_letter_maps_to_default(self):
+        rows = [
+            {"item_id": "BONUS-POSTER-U1", "source": "bonus", "score": 5,
+             "response": '{"grade":"E","quarter":"Q1","title":"Unit 1 Poster"}'},
+            {"item_id": "BONUS-POSTER-U2", "source": "bonus", "score": 3, "response": '{"grade":"P"}'},
+            {"item_id": "BONUS-POSTER-U3", "source": "bonus", "score": 1, "response": '{"grade":"I"}'},
+        ]
+        self.assertEqual(bsf.poster_grades_from_ledger_rows(rows), {1: 115, 2: 100, 3: 90})
+        self.assertEqual(bsf.POSTER_LETTER_SCORE, {"E": 115, "P": 100, "I": 90})
+
+    def test_legacy_letter_falls_back_to_stored_points_and_camel_case_keys(self):
         rows = [{"itemId": "BONUS-POSTER-U2", "source": "bonus", "score": 1, "response": {}}]
-        self.assertEqual(bsf.poster_grades_from_ledger_rows(rows), {2: "I"})
+        self.assertEqual(bsf.poster_grades_from_ledger_rows(rows), {2: 90})
+
+    def test_poster_row_wins_over_bonus_row_for_the_same_unit(self):
+        # Whatever the order, the converted POSTER-U# row beats the legacy letter.
+        poster = {"item_id": "POSTER-U1", "source": "poster", "score": 92, "response": '{"grade":"I"}'}
+        bonus = {"item_id": "BONUS-POSTER-U1", "source": "bonus", "score": 5, "response": '{"grade":"E"}'}
+        self.assertEqual(bsf.poster_grades_from_ledger_rows([bonus, poster]), {1: 92})
+        self.assertEqual(bsf.poster_grades_from_ledger_rows([poster, bonus]), {1: 92})
+
+    def test_source_must_match_the_item_shape(self):
+        # A POSTER-U# item with source 'bonus' (or vice versa) is not a poster row.
+        rows = [
+            {"item_id": "POSTER-U1", "source": "bonus", "score": 5, "response": '{"grade":"E"}'},
+            {"item_id": "BONUS-POSTER-U2", "source": "poster", "score": 100},
+        ]
+        self.assertEqual(bsf.poster_grades_from_ledger_rows(rows), {})
 
     def test_later_row_replaces_earlier_and_bad_rows_are_ignored(self):
         rows = [
             {"item_id": "BONUS-POSTER-U1", "source": "bonus", "score": 1, "response": '{"grade":"I"}'},
             {"item_id": "BONUS-POSTER-U1", "source": "bonus", "score": 5, "response": '{"grade":"E"}'},
             {"item_id": "BONUS-POSTER-U3", "source": "bonus", "score": 5, "response": "not json"},
+            {"item_id": "POSTER-U4", "source": "poster", "score": 100},
+            {"item_id": "POSTER-U4", "source": "poster", "score": 110.5},
             "garbage", None,
         ]
-        self.assertEqual(bsf.poster_grades_from_ledger_rows(rows), {1: "E", 3: "E"})
+        self.assertEqual(bsf.poster_grades_from_ledger_rows(rows), {1: 115, 3: 115, 4: 110.5})
+
+    def test_bad_poster_scores_are_skipped(self):
+        rows = [
+            {"item_id": "POSTER-U1", "source": "poster", "score": None},
+            {"item_id": "POSTER-U2", "source": "poster", "score": "abc"},
+            {"item_id": "POSTER-U3", "source": "poster", "score": -1},
+            {"item_id": "POSTER-U4", "source": "poster", "score": 151},
+            {"item_id": "POSTER-U5", "source": "poster", "score": True},
+            {"item_id": "POSTER-U6", "source": "poster", "score": "98"},   # numeric string ok
+            {"item_id": "BONUS-POSTER-U7", "source": "bonus", "score": 4, "response": '{"grade":"X"}'},
+        ]
+        self.assertEqual(bsf.poster_grades_from_ledger_rows(rows), {6: 98})
 
     def test_empty(self):
         self.assertEqual(bsf.poster_grades_from_ledger_rows(None), {})
         self.assertEqual(bsf.poster_grades_from_ledger_rows([]), {})
+
+
+class TestFetchPosterGrades(unittest.TestCase):
+    """fetch_poster_grades asks both prefixes per student and merges them."""
+
+    def _run(self, responses):
+        import io
+        import json
+        from unittest import mock
+        calls = []
+
+        class FakeResp(io.BytesIO):
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *a):
+                return False
+
+        def fake_urlopen(req, timeout=0):
+            calls.append(req.full_url)
+            body = responses.get(req.full_url)
+            if isinstance(body, Exception):
+                raise body
+            return FakeResp(json.dumps(body).encode("utf-8"))
+
+        doc = {"students": [{"studentId": "r1"}]}
+        with mock.patch.object(bsf, "urlopen", fake_urlopen):
+            out = bsf.fetch_poster_grades("https://x", doc, "s")
+        return out, calls
+
+    def test_fetches_both_prefixes_and_poster_row_wins(self):
+        base = "https://x/ledger/student/r1?prefix="
+        out, calls = self._run({
+            base + "POSTER-": {"rows": [{"item_id": "POSTER-U1", "source": "poster", "score": 92}]},
+            base + "BONUS-POSTER-": {"rows": [
+                {"item_id": "BONUS-POSTER-U1", "source": "bonus", "score": 5, "response": '{"grade":"E"}'},
+                {"item_id": "BONUS-POSTER-U2", "source": "bonus", "score": 3, "response": '{"grade":"P"}'},
+            ]},
+        })
+        self.assertEqual(calls, [base + "POSTER-", base + "BONUS-POSTER-"])
+        self.assertEqual(out, {"r1": {1: 92, 2: 100}})
+
+    def test_a_failed_prefix_fetch_keeps_the_other(self):
+        from urllib.error import URLError
+        base = "https://x/ledger/student/r1?prefix="
+        out, _ = self._run({
+            base + "POSTER-": URLError("down"),
+            base + "BONUS-POSTER-": {"rows": [
+                {"item_id": "BONUS-POSTER-U1", "source": "bonus", "score": 1, "response": '{"grade":"I"}'}]},
+        })
+        self.assertEqual(out, {"r1": {1: 90}})
 
 
 class TestBuildFixture(unittest.TestCase):

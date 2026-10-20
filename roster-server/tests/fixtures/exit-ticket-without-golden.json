@@ -1083,6 +1083,9 @@
             "pcUnits": [
               1
             ],
+            "posterUnits": [
+              1
+            ],
             "unitGrades": {
               "U1": null,
               "U3": null,
@@ -1124,6 +1127,10 @@
               8
             ],
             "pcUnits": [
+              2,
+              3
+            ],
+            "posterUnits": [
               2,
               3
             ],
@@ -1169,6 +1176,10 @@
               4,
               5
             ],
+            "posterUnits": [
+              4,
+              5
+            ],
             "unitGrades": {
               "U2": null
             },
@@ -1205,6 +1216,7 @@
               9
             ],
             "pcUnits": [],
+            "posterUnits": [],
             "unitGrades": {
               "U9": null
             },
@@ -3584,6 +3596,7 @@
             "B": null,
             "banked": null,
             "pcRawPct": null,
+            "posterPct": null,
             "P": 0,
             "unitGrade": null,
             "graded": false
@@ -3597,6 +3610,9 @@
               4
             ],
             "pcUnits": [
+              1
+            ],
+            "posterUnits": [
               1
             ],
             "unitGrades": {
@@ -3643,6 +3659,10 @@
               2,
               3
             ],
+            "posterUnits": [
+              2,
+              3
+            ],
             "unitGrades": {
               "U5": null,
               "U6": null,
@@ -3685,6 +3705,10 @@
               4,
               5
             ],
+            "posterUnits": [
+              4,
+              5
+            ],
             "unitGrades": {
               "U2": null
             },
@@ -3721,6 +3745,7 @@
               9
             ],
             "pcUnits": [],
+            "posterUnits": [],
             "unitGrades": {
               "U9": null
             },
@@ -6107,6 +6132,7 @@
             "B": null,
             "banked": null,
             "pcRawPct": null,
+            "posterPct": null,
             "P": 0,
             "unitGrade": null,
             "graded": false
@@ -6120,6 +6146,9 @@
               4
             ],
             "pcUnits": [
+              1
+            ],
+            "posterUnits": [
               1
             ],
             "unitGrades": {
@@ -6166,6 +6195,10 @@
               2,
               3
             ],
+            "posterUnits": [
+              2,
+              3
+            ],
             "unitGrades": {
               "U5": null,
               "U6": null,
@@ -6208,6 +6241,10 @@
               4,
               5
             ],
+            "posterUnits": [
+              4,
+              5
+            ],
             "unitGrades": {
               "U2": null
             },
@@ -6244,6 +6281,7 @@
               9
             ],
             "pcUnits": [],
+            "posterUnits": [],
             "unitGrades": {
               "U9": null
             },
@@ -8650,6 +8688,7 @@
             "B": null,
             "banked": null,
             "pcRawPct": null,
+            "posterPct": null,
             "P": 0,
             "unitGrade": null,
             "graded": false
@@ -8663,6 +8702,9 @@
               4
             ],
             "pcUnits": [
+              1
+            ],
+            "posterUnits": [
               1
             ],
             "unitGrades": {
@@ -8709,6 +8751,10 @@
               2,
               3
             ],
+            "posterUnits": [
+              2,
+              3
+            ],
             "unitGrades": {
               "U5": null,
               "U6": null,
@@ -8751,6 +8797,10 @@
               4,
               5
             ],
+            "posterUnits": [
+              4,
+              5
+            ],
             "unitGrades": {
               "U2": null
             },
@@ -8787,6 +8837,7 @@
               9
             ],
             "pcUnits": [],
+            "posterUnits": [],
             "unitGrades": {
               "U9": null
             },

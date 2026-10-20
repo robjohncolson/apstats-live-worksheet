@@ -237,7 +237,7 @@ export function mountReview(app, {
       let rows = [];
       try { const lr = await ledgerDb.getLedgerByStudent(sid); rows = (lr && lr.data) || []; } catch (_) { rows = []; }
 
-      rows = rows.filter(row => row.source !== 'bonus' && row.source !== 'bonus_applied');
+      rows = rows.filter(row => row.source !== 'bonus' && row.source !== 'bonus_applied' && row.source !== 'poster');
       const sessionByLedger = sessionize(rows);
       // Window filter (fixed lookback) — newest first (getLedgerByStudent already sorts desc).
       const windowed = windowFloor
@@ -428,7 +428,7 @@ export function mountReview(app, {
       const sid = r.student_id;
       let rows = [];
       try { const lr = await ledgerDb.getLedgerByStudent(sid); rows = (lr && lr.data) || []; } catch (_) { rows = []; }
-      rows = rows.filter(row => row.source !== 'bonus' && row.source !== 'bonus_applied');
+      rows = rows.filter(row => row.source !== 'bonus' && row.source !== 'bonus_applied' && row.source !== 'poster');
       misconceptionFan.push({ roster: r, ledgerRows: rows });
       const windowed = windowFloor
         ? rows.filter((row) => (Date.parse(row.recorded_at) || 0) >= windowFloor)

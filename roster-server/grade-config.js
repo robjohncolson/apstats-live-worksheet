@@ -116,9 +116,9 @@ export const PHASE3_CONFIG = {
 
   // v3 Work-track weights (renormalized over present tracks) — formerly a
   // hardcoded const in lesson-grade.js (GRADE_SIMULATION FINDING F2). Now a
-  // pilot-tunable knob; these defaults match the constant. Posters are bonus,
-  // not a Work track (POSTER_BONUS_SPEC.md, 2026-10-09).
-  v3WorkWeights: { lessons: 0.50, quizzes: 0.35, blooket: 0.15 },
+  // pilot-tunable knob; these defaults match the constant. The unit poster is
+  // a Work track scored 90-115 (POSTER_WORK_TRACK_SPEC.md, 2026-10-20).
+  v3WorkWeights: { lessons: 0.30, quizzes: 0.30, posters: 0.30, blooket: 0.10 },
 
   // v3 quarter-grade gates: `floor` = the both-tracks-cleared threshold that
   // unlocks max(pc, work); `ceiling` = the single-track gaming bound (0.7·track).

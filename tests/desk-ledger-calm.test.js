@@ -442,7 +442,7 @@ describe('Balance card effort lines (EFFORT_VISIBILITY_SPEC §3: "they don’t f
 });
 
 describe('"How your grade is counted" note + bonus footer wording (teacher 2026-09-27)', () => {
-  const NOTE = 'Work is worksheets 50%, quizzes 35%, Blookets 15%; once Work (with bonus) is at least 40%, a higher Progress Check score replaces it, and a low one never lowers you. The Desk counts work you did ahead of the calendar now; Schoology counts it when its column opens. Bonus sheets (DOK sheets and unit posters) are banked and added at the end of the quarter to whichever track helps you more — they can only raise your grade.';
+  const NOTE = 'Work is worksheets 30%, quizzes 30%, the unit poster 30%, Blookets 10%; once Work (with bonus) is at least 40%, a higher Progress Check score replaces it, and a low one never lowers you. The Desk counts work you did ahead of the calendar now; Schoology counts it when its column opens. Your unit poster is scored 90 to 115; DOK bonus sheets are banked and added at the end of the quarter to whichever track helps you more — they can only raise your grade.';
   function noteSandbox(lib) {
     const dom = new JSDOM('<div></div>');
     const s = { document: dom.window.document, window: dom.window };

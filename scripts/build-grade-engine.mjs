@@ -38,9 +38,9 @@ const OUT = resolve(ROOT, 'grade-engine.bundle.js');
 const MODULES = [
   { key: 'grade-config',   file: 'grade-config.js',   exports: ['PHASE3_CONFIG', 'unitNumber', 'quarterOfUnit', 'quarterOfDate', 'pcRawToP'] },
   { key: 'scoring',        file: 'scoring.js',        exports: ['blooketScore', 'normalizeResponse', 'isCorrect', 'stableLedgerSort', 'latestPerItem', 'unitOf', 'answerKeyMapOrNull', 'skillMapValidOrNull', 'scoreAgainstKey', 'scorePcRows'] },
-  { key: 'lesson-grade',   file: 'lesson-grade.js',   exports: ['parseItemLesson', 'expandLessonKey', 'buildWorksheetBlankCounts', 'computeLessonGrades', 'todayInTz', 'sectionToPeriod', 'quarterOfLesson', 'computeQuarterFromLessons', 'V3_WORK_WEIGHTS', 'V3_GATES', 'quarterGradeV3', 'workAvgV3', 'computeQuarterV3', 'computeQuizTotals', 'buildLessonsArray', 'deriveQuarterBands', 'pcDatesFor', 'pcUnitsInQuarter', 'addDays', 'lessonZeroDate', 'isLessonDue'] },
+  { key: 'lesson-grade',   file: 'lesson-grade.js',   exports: ['parseItemLesson', 'expandLessonKey', 'buildWorksheetBlankCounts', 'computeLessonGrades', 'todayInTz', 'sectionToPeriod', 'quarterOfLesson', 'computeQuarterFromLessons', 'V3_WORK_WEIGHTS', 'V3_GATES', 'quarterGradeV3', 'workAvgV3', 'computeQuarterV3', 'computeQuizTotals', 'buildLessonsArray', 'deriveQuarterBands', 'pcDatesFor', 'pcUnitsInQuarter', 'posterDatesFor', 'posterUnitsInQuarter', 'postersAvgV3', 'addDays', 'lessonZeroDate', 'isLessonDue'] },
   { key: 'gradebook-grid', file: 'gradebook-grid.js', exports: ['SCHOOLOGY_CATEGORY_WEIGHTS', 'buildGradebookColumns', 'reconcileQuarter', 'buildGradebookRow', 'schoologyWeightedTotal', 'buildGradebook'] },
-  { key: 'grade',          file: 'grade.js',          exports: ['computeGrade', 'mountGrade', 'resolveBlooketLists', 'BLOOKET_PRESENCE', 'BLOOKET_REQUIRED'], omit: ['mountGrade'] },
+  { key: 'grade',          file: 'grade.js',          exports: ['computeGrade', 'posterScoresByUnit', 'mountGrade', 'resolveBlooketLists', 'BLOOKET_PRESENCE', 'BLOOKET_REQUIRED'], omit: ['mountGrade'] },
 ];
 
 // The curated public API surface exposed as window.GradeEngine.

@@ -20,6 +20,9 @@ export function parseBonusFile(text) {
       !/^Q[1-4]$/.test(header.quarter || '') || !header.title) {
     throw new Error('header needs sheet=, quarter=Q1..Q4, title=');
   }
+  if (/^POSTER/i.test(header.sheet)) {
+    throw new Error('a unit poster is a Work track, not bonus (POSTER_WORK_TRACK_SPEC.md): use scripts/enter-poster.mjs');
+  }
   const meta = { sheetId: header.sheet, quarter: header.quarter, title: header.title };
   if (header.section) meta.section = header.section;
   const rows = lines.slice(1).map(line => {

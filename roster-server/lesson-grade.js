@@ -249,9 +249,10 @@ const BLANK_ITEM_PATTERN = /^WS-U(\d+)L([\d-]+)-Q\d+$/;
 // Note: this function intentionally does NOT filter by "due date" —
 // that is applied at the quarter level in computeQuarterFromLessons.
 export function computeLessonGrades(rows, frqBand, answerKey, schedule, opts) {
-  // banked bonus — applied only at quarter close (BONUS_BANK_SPEC.md)
+  // banked bonus — applied only at quarter close (BONUS_BANK_SPEC.md); posters
+  // are unit-level rows read by computeGrade, never lesson feeders.
   rows = (Array.isArray(rows) ? rows : [])
-    .filter(row => row?.source !== 'bonus' && row?.source !== 'bonus_applied');
+    .filter(row => row?.source !== 'bonus' && row?.source !== 'bonus_applied' && row?.source !== 'poster');
   const worksheetBlankCounts = (opts && opts.worksheetBlankCounts) || null;
   const bonusTopics = (opts && opts.bonusTopics instanceof Set)
     ? opts.bonusTopics
@@ -1032,11 +1033,13 @@ export function computeQuarterFromLessons({
 
 // Work-track weights. A track contributes only when present (non-null); the
 // weights renormalize over present tracks (same pattern as computeLessonGrades'
-// B blend). Work = lessons 50 / quizzes 35 / blooket 15 (POSTER_BONUS_SPEC.md,
-// 2026-10-09). Posters are NOT a Work track: a poster is a banked Bonus Bank row
-// applied at quarter close, so it can only raise a grade. A `posters` value in
-// workTracks is still accepted but ignored (no weight key).
-export const V3_WORK_WEIGHTS = { lessons: 0.50, quizzes: 0.35, blooket: 0.15 };
+// B blend). Work = lessons 30 / quizzes 30 / posters 30 / blooket 10
+// (POSTER_WORK_TRACK_SPEC.md, teacher 2026-10-20: the unit poster is a Work
+// track again, matching the Schoology categories Lesson 15 / Quizzes 15 /
+// Posters 15 / Blooket 5 / Progress Check 50). The posters track is the mean of
+// the quarter's POSTER-U{n} ledger scores (90-115), so it may exceed 1; the
+// blend is clamped to 1. A missing poster is absent (renormalized away), never 0.
+export const V3_WORK_WEIGHTS = { lessons: 0.30, quizzes: 0.30, posters: 0.30, blooket: 0.10 };
 
 // The two gating constants for quarterGradeV3, default values. `floor` is the
 // 40% both-tracks-cleared threshold that unlocks max(pc, work); `ceiling` is the
@@ -1058,9 +1061,10 @@ export function quarterGradeV3(pcAvg, workAvg, gates = V3_GATES) {
 }
 
 // Weighted blend of the work tracks, renormalized over present tracks.
-// tracks: { lessons, quizzes, blooket } each [0,1] or null (absent). Only keys
-// in `weights` count, so an extra key (e.g. legacy `posters`) is ignored.
-// Returns [0,1], or null when no track is present.
+// tracks: { lessons, quizzes, posters, blooket } each [0,1] or null (absent);
+// posters may exceed 1 (a 115 poster is 1.15). Only keys in `weights` count.
+// Returns [0,1] (clamped at 1, so a poster above 100 can lift Work only up to
+// 100), or null when no track is present.
 export function workAvgV3(tracks, weights = V3_WORK_WEIGHTS) {
   let num = 0, den = 0;
   for (const key of Object.keys(weights)) {
@@ -1070,7 +1074,49 @@ export function workAvgV3(tracks, weights = V3_WORK_WEIGHTS) {
     den += weights[key];
   }
   if (den === 0) return null;
-  return num / den;
+  return Math.min(1, num / den);
+}
+
+// ── Posters (POSTER_WORK_TRACK_SPEC.md) ──────────────────────────────────────
+// The poster date per NEW unit from the event schedule: { [unit]: 'YYYY-MM-DD' }.
+// null when the schedule has no posters map (legacy / bespoke tests).
+export function posterDatesFor(eventSchedule, period) {
+  const posters = eventSchedule && eventSchedule.posters;
+  if (!posters || typeof posters !== 'object') return null;
+  const out = {};
+  for (const [key, entry] of Object.entries(posters)) {
+    const unit = Number(String(key).replace(/^U/i, ''));
+    if (!Number.isFinite(unit)) continue;
+    const periods = (entry && entry.periods && typeof entry.periods === 'object') ? entry.periods : {};
+    const date = period ? periods[period] : (periods.B || periods.E);
+    out[unit] = date || null;
+  }
+  return out;
+}
+
+// The NEW units whose poster falls in this quarter (by its poster date).
+// null when there is no event schedule, so callers fall back to the unit band.
+export function posterUnitsInQuarter(eventSchedule, period, config, quarterKey) {
+  const dates = posterDatesFor(eventSchedule, period);
+  if (!dates) return null;
+  return Object.keys(dates).map(Number)
+    .filter((u) => dates[u] && quarterOfDate(dates[u], config) === quarterKey)
+    .sort((a, b) => a - b);
+}
+
+// The posters track for one quarter: mean of the recorded poster scores (0-115)
+// over the quarter's poster units, on the [0, 1.15] scale. A unit with no score
+// is skipped; no scores at all -> null (absent, never 0).
+export function postersAvgV3(posterScores, posterUnits) {
+  if (!posterScores || !Array.isArray(posterUnits)) return null;
+  const vals = [];
+  for (const unit of posterUnits) {
+    const raw = posterScores[unit];
+    if (raw == null || !Number.isFinite(Number(raw))) continue;
+    vals.push(Math.max(0, Number(raw)) / 100);
+  }
+  if (!vals.length) return null;
+  return vals.reduce((a, b) => a + b, 0) / vals.length;
 }
 
 // Combine a PC-track avg and a Work-track avg into a [0,1] quarter grade,
@@ -1148,7 +1194,11 @@ function to100(x) { return x == null ? null : Math.round(x * 1000) / 10; }
 //   section      -- "PeriodB" / "PeriodE" / "B" / "E" / null
 //   unitPcData   -- { [unitNum]: rawPct|null }  (raw PC % per unit, or null)
 //   gradingWindowStart -- cohort window start (or null)
-//   workTracks   -- { posters } legacy input, accepted but ignored (posters are bonus)
+//   posterScores -- { [unitNum]: score 0-115 | null } recorded poster per NEW unit
+//                   (POSTER_WORK_TRACK_SPEC.md); the quarter's poster units come
+//                   from eventSchedule.posters, else the unit band
+//   workTracks   -- { posters } legacy override on [0, 1.15]; used only when
+//                   posterScores is not given (bespoke tests)
 //
 // Returns { quarterGrade, ceiling, lessonsDue, lessonsGraded, lessonsTotal,
 //           pcAvg, workAvg } — quarterGrade/ceiling/pcAvg/workAvg on 0..100.
@@ -1162,6 +1212,7 @@ export function computeQuarterV3({
   unitPcData,
   gradingWindowStart = /** @type {string|null} */ (null),
   workTracks = /** @type {{posters?: number|null}|null} */ (null),
+  posterScores = /** @type {Record<number, number|null>|null} */ (null),
   blooketLessons = /** @type {string[]|null} */ (null),   // [topicKey] that HAVE a Blooket — the Blooket-track denominator
   quizLessons = /** @type {string[]|null} */ (null),      // [topicKey] that HAVE a quiz — the Quiz-track denominator
   trainerLessons = /** @type {string[]|null} */ (null),   // [topicKey] with mapped TI-84 skills — the trainer-track denominator
@@ -1442,10 +1493,15 @@ export function computeQuarterV3({
   const pcDue = pcEnabled && pcBand.some(pcDueFor);
 
   // ── Combine to the quarter grade ──
+  // Posters track: the quarter's recorded poster scores (POSTER_WORK_TRACK_SPEC.md).
+  const posterUnits = posterUnitsInQuarter(eventSchedule, period, config, quarterKey) || band;
+  const postersAvg = posterScores
+    ? postersAvgV3(posterScores, posterUnits)
+    : (workTracks ? (workTracks.posters ?? null) : null);
   const tracks = {
     lessons: lessonsAvg,
     quizzes: quizzesAvg,
-    posters: workTracks ? (workTracks.posters ?? null) : null,
+    posters: postersAvg,
     // Blooket now flows from the ledger (per-topic, mean-of-recorded), NOT the
     // workTracks channel. null -> renormalized away by workAvgV3.
     blooket: blooketAvg,

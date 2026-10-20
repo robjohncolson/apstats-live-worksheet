@@ -9094,9 +9094,10 @@ function _gradePillRule(pcAvg, workAvg, pcDay, pcOnFile) {
 
 // Mirrors of the server's weights (roster-server/lesson-grade.js V3_WORK_WEIGHTS and
 // roster-server/gradebook-grid.js SCHOOLOGY_CATEGORY_WEIGHTS) — pinned equal by a test.
-// Posters are banked bonus, not a Work track or a Schoology category (POSTER_BONUS_SPEC.md).
-var DESK_V3_WORK_WEIGHTS = { lessons: 0.50, quizzes: 0.35, blooket: 0.15 };
-var DESK_SCHOOLOGY_WEIGHTS = { Lesson: 25, Quizzes: 17.5, Blooket: 7.5, 'Progress Check': 50 };
+// The unit poster is a Work track again (POSTER_WORK_TRACK_SPEC.md, teacher 2026-10-20): scored
+// 90-115, so the posters track may read above 100; Work is clamped at 100 after the blend.
+var DESK_V3_WORK_WEIGHTS = { lessons: 0.30, quizzes: 0.30, posters: 0.30, blooket: 0.10 };
+var DESK_SCHOOLOGY_WEIGHTS = { Lesson: 15, Quizzes: 15, Posters: 15, Blooket: 5, 'Progress Check': 50 };
 // The grade, shown as the system it is (teacher 2026-09-27: "explain using a system of
 // inequalities … and why Schoology is different from either Work or PC"). Pure: returns lines.
 //   ctx: { grade, pcAvg, workAvg, pcDay, pcOnFile, workTracks, schoologyTotal, categoryAverages }
@@ -9109,14 +9110,15 @@ function _gradeMathLines(ctx) {
   var wt = ctx.workTracks || null;
   if (wt && hasWork) {
     var parts = [], num = 0, den = 0;
-    [['lessons', 'worksheets'], ['quizzes', 'quizzes'], ['blooket', 'flashcards']].forEach(function (p) {
+    [['lessons', 'worksheets'], ['quizzes', 'quizzes'], ['posters', 'poster'], ['blooket', 'flashcards']].forEach(function (p) {
       var v = wt[p[0]];
       if (typeof v !== 'number') return;
       var w = DESK_V3_WORK_WEIGHTS[p[0]];
       parts.push(Math.round(w * 100) + '\u00b7' + n(v) + ' (' + p[1] + ')');
       num += w * v; den += w;
     });
-    if (den > 0) lines.push('Work = [' + parts.join(' + ') + '] / ' + Math.round(den * 100) + ' = ' + n(num / den));
+    // A 115 poster can push the blend past 100; Work is clamped at 100, like the server.
+    if (den > 0) lines.push('Work = [' + parts.join(' + ') + '] / ' + Math.round(den * 100) + ' = ' + n(Math.min(100, num / den)));
   }
   // The rule.
   lines.push('If Work \u2265 40 and PC \u2265 40:  Grade = max(Work, PC)');
@@ -10143,7 +10145,7 @@ async function renderDoNow() {
     }
     if (typeof _todayLessonInf !== 'undefined' && _todayLessonInf && _todayLessonInf.kind === 'poster') {
       var posterLinks = (typeof posterLinksFor === 'function') ? posterLinksFor(_todayLessonInf.t) : null;
-      show('Today: ' + _todayLessonInf.n + ' — groups of three. Bonus (banked).\n'
+      show('Today: ' + _todayLessonInf.n + ' — groups of three. 30% of Work, scored 90 to 115.\n'
         + (posterLinks ? 'Click today’s tile for your group sheet and the example poster.' : 'Your teacher hands out the group sheets in class.'), 'todo');
       return;
     }
@@ -10513,8 +10515,8 @@ function injectPcPosterEvents(pacing){
     // five trio posters + gallery walk) was given a second day on 2026-10-07 so
     // the PC never lands on a half-finished poster; a unit missing here is 1 day.
     const POSTER_DAYS={1:2};
-    // Units that get poster days at all (POSTER_BONUS_SPEC.md section 4, 2026-10-10).
-    // One poster per quarter, and posters are banked bonus. Unit 1 is Q1's. The
+    // Units that get poster days at all (one poster per quarter, 2026-10-10). The
+    // poster is 30% of Work (POSTER_WORK_TRACK_SPEC.md). Unit 1 is Q1's. The
     // teacher picks each later quarter's unit from the misconception tracker, so
     // no future poster is pre-scheduled: add the unit here and regenerate
     // (scripts/build-lesson-schedule-sy2627.mjs) to schedule one.
@@ -18946,9 +18948,9 @@ function _walletCountingNote() {
     note.style.cssText = 'font-size:10px;line-height:1.35;margin-top:6px;color:#666';
     note.textContent = (typeof EffortFacts !== 'undefined' && EffortFacts && EffortFacts.COUNTING_NOTE)
         ? EffortFacts.COUNTING_NOTE
-        : 'Work is worksheets 50%, quizzes 35%, Blookets 15%; once Work (with bonus) is at least 40%, a higher Progress Check score replaces it, and a low one never lowers you. '
+        : 'Work is worksheets 30%, quizzes 30%, the unit poster 30%, Blookets 10%; once Work (with bonus) is at least 40%, a higher Progress Check score replaces it, and a low one never lowers you. '
             + 'The Desk counts work you did ahead of the calendar now; Schoology counts it when its column opens. '
-            + 'Bonus sheets (DOK sheets and unit posters) are banked and added at the end of the quarter to whichever track helps you more — they can only raise your grade.';
+            + 'Your unit poster is scored 90 to 115; DOK bonus sheets are banked and added at the end of the quarter to whichever track helps you more — they can only raise your grade.';
     return note;
 }
 function _walletPaint(host, receipts, loading) {
@@ -20777,9 +20779,9 @@ var _myGradebookKeyHandler = null;
 function _myGradebookCatOrder() {
     // Local (not a top-level const) so the render never depends on top-level eval
     // order — keeps it self-contained + testable.
-    // No Posters: posters are banked bonus, not a category (a stray legacy category
-    // still renders, appended after these).
-    return ['Lesson', 'Quizzes', 'Blooket', 'Progress Check'];
+    // Posters is a Work category again (POSTER_WORK_TRACK_SPEC.md); a stray legacy
+    // category still renders, appended after these.
+    return ['Lesson', 'Quizzes', 'Posters', 'Blooket', 'Progress Check'];
 }
 
 function _attachMyGradebookKeyHandler() {
@@ -25364,9 +25366,9 @@ function _calcProgressChip(row) {
         return { kind: 'due', text: 'DUE · ' + days + (days === 1 ? ' day overdue' : ' days overdue') };
     }
     if (row.clears > 0 || _calcProgressHasRecord(row)) {
-        if (row.rung >= 2) return { kind: 'rung', text: 'NO HINTS' };
+        if (row.rung >= 2) return { kind: 'rung', text: 'ON YOUR OWN' };
         if (row.rung === 1) return { kind: 'rung', text: 'GOALS ONLY' };
-        return { kind: 'rung', text: 'FULL HINTS' };
+        return { kind: 'rung', text: 'FULL HELP' };
     }
     if (!row.eligible) return { kind: 'locked', text: 'LOCKED' };
     return { kind: 'new', text: 'NEW' };
@@ -27604,7 +27606,7 @@ function sTip(ev,dt,inf,ds){if(inf===NC||!inf)return;
         if(inf.as)h+=`<div class="th">Assign: ${_resourcePanelEsc(newLabels?cedDisplayText(inf.as):inf.as)}</div>`;
         if(inf.db)h+='<div class="th">** Double topic day **</div>';
         if(inf.kind==='pc')h+='<div class="th" style="color:#2b6cb0">'+((typeof pcLinksFor==='function'&&pcLinksFor(inf.t).length)?'Click to open in AP Classroom':'Taken in AP Classroom')+'</div>';
-        if(inf.kind==='poster')h+='<div class="th" style="color:#2b6cb0">'+((typeof posterLinksFor==='function'&&posterLinksFor(inf.t))?'Click for the group sheets + example poster':'Groups of three, Data / Graph / Sentence')+'</div><div class="th">Bonus (banked)</div>';
+        if(inf.kind==='poster')h+='<div class="th" style="color:#2b6cb0">'+((typeof posterLinksFor==='function'&&posterLinksFor(inf.t))?'Click for the group sheets + example poster':'Groups of three, Data / Graph / Sentence')+'</div><div class="th">30% of Work, scored 90 to 115</div>';
         const keys=inf.group?groupTopics(inf):[inf.t];
         const re=keys.map(getRegistryEntry).find(Boolean);
         if(re){
@@ -28143,7 +28145,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-10-18-b7d5';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-10-19-lfi8';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

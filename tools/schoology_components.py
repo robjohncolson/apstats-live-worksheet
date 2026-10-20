@@ -318,8 +318,9 @@ def component_columns(
     # Per-unit Progress Check + Poster columns -- one of each for every unit that has
     # at least one (date-filtered) lesson group, UNCONDITIONALLY, mirroring
     # gradebook-grid.js buildGradebookColumns. The producer fills PC from the unit
-    # mastery track (units[U#].pcRawPct) and Poster from the banked
-    # BONUS-POSTER-U# ledger letter (evidence only, Posters category weight 0). Date =
+    # mastery track (units[U#].pcRawPct) and Poster from the POSTER-U# ledger row's
+    # score (a Work category: Lesson 15 / Quizzes 15 / Posters 15 / Blooket 5 /
+    # Progress Check 50 in Schoology, POSTER_WORK_TRACK_SPEC.md). Date =
     # the EARLIEST lesson date in the unit (the My Gradebook "unit underway" gate),
     # derived from the groups already filtered by include_undated.
     unit_dates = {}  # unit -> earliest group date (str) or None
@@ -508,12 +509,13 @@ def component_grades_from_class_doc(doc: dict, uid_map: dict | None = None,
 
     Per student, per unit:
       - Progress Check <- units[U#].pcRawPct
-      - Poster         <- poster_grades[rosterId][unit] (an E/P/I letter from the
-                          student's BONUS-POSTER-U# ledger row, see
-                          build_schoology_fixture.poster_grades_from_ledger_rows)
-                          mapped through POSTER_SCORE. Evidence only: the poster
-                          is banked bonus (POSTER_BONUS_SPEC.md), so the Schoology
-                          Posters category must stay at weight 0.
+      - Poster         <- poster_grades[rosterId][unit]: the 90-115 score of the
+                          student's POSTER-U# ledger row (see
+                          build_schoology_fixture.poster_grades_from_ledger_rows),
+                          emitted as-is. A legacy E/P/I letter is still accepted
+                          and mapped through POSTER_SCORE. Posters are a Work
+                          category (Lesson 15 / Quizzes 15 / Posters 15 /
+                          Blooket 5 / Progress Check 50, POSTER_WORK_TRACK_SPEC.md).
 
     Key resolution per student (highest priority first): the server-surfaced
     schoologyUid (P4b bridge), then uid_map, then the roster id. Mirrors
@@ -582,26 +584,32 @@ def component_grades_from_class_doc(doc: dict, uid_map: dict | None = None,
                 unit_num = str(ukey).lstrip("Uu") or ukey
                 out[f"{uid}/{pc_key(unit_num)}"] = pc
 
-        # Per-unit Poster as EVIDENCE (teacher 2026-10-20: "kids are looking for
-        # evidence of their grade"). The letter comes from the banked
-        # BONUS-POSTER-U# ledger row; the number is POSTER_SCORE. The grade itself
-        # is still the banked bonus applied at quarter close, so the Schoology
-        # Posters category carries weight 0 and this column never counts twice.
-        for unit_num, letter in (poster_grades.get(rid) or {}).items():
-            score = poster_score(letter)
+        # Per-unit Poster: the POSTER-U# ledger row's 90-115 score, written to the
+        # Schoology Posters category (30% of Work, POSTER_WORK_TRACK_SPEC.md). A
+        # legacy letter (pre-conversion BONUS-POSTER-U# row) maps through
+        # POSTER_SCORE so the column is right on both sides of the cutover.
+        for unit_num, value in (poster_grades.get(rid) or {}).items():
+            score = poster_score(value)
             if score is not None:
                 out[f"{uid}/{poster_key(unit_num)}"] = score
 
     return out
 
 
-# Poster evidence scale (teacher 2026-10-14): the floor is 90 and the ceiling 115,
-# never the printed key's 100/85/60. A poster must never read as a penalty.
+# Poster scale (teacher 2026-10-14): the floor is 90 and the ceiling 115, never
+# the printed key's 100/85/60. These are the letter DEFAULTS; the teacher may
+# enter any number in 90-115, which the POSTER-U# ledger row carries directly.
 POSTER_SCORE = {"E": 115, "P": 100, "I": 90}
 
 
-def poster_score(letter) -> int | None:
-    """The 90-115 evidence number for a banked poster letter (None if unknown)."""
-    if letter is None:
+def poster_score(value) -> int | float | None:
+    """The Schoology poster number: a number passes through, a letter maps.
+
+    value: a numeric score (from a POSTER-U# ledger row) or an E/P/I letter
+    (legacy BONUS-POSTER-U# row). None when neither.
+    """
+    if value is None or isinstance(value, bool):
         return None
-    return POSTER_SCORE.get(str(letter).strip().upper())
+    if isinstance(value, (int, float)):
+        return value
+    return POSTER_SCORE.get(str(value).strip().upper())

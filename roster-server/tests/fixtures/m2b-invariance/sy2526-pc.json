@@ -104,6 +104,7 @@
         "B": null,
         "banked": null,
         "pcRawPct": null,
+        "posterPct": null,
         "P": 0,
         "unitGrade": null,
         "graded": false
@@ -118,6 +119,12 @@
           4
         ],
         "pcUnits": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "posterUnits": [
           1,
           2,
           3,
@@ -172,6 +179,13 @@
           8,
           9
         ],
+        "posterUnits": [
+          5,
+          6,
+          7,
+          8,
+          9
+        ],
         "unitGrades": {
           "U5": null,
           "U6": null,
@@ -210,6 +224,7 @@
       "Q3": {
         "units": [],
         "pcUnits": [],
+        "posterUnits": [],
         "unitGrades": {},
         "quarterGrade": null,
         "quarterGradeBase": null,
@@ -242,6 +257,7 @@
       "Q4": {
         "units": [],
         "pcUnits": [],
+        "posterUnits": [],
         "unitGrades": {},
         "quarterGrade": null,
         "quarterGradeBase": null,

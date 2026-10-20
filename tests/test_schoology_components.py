@@ -301,18 +301,31 @@ class TestComponentGradesFromClassDoc(unittest.TestCase):
 
     def test_emits_pc_from_units_and_skips_poster_without_ledger_letter(self):
         # PC <- units[U#].pcRawPct (the unit mastery track). Poster has no
-        # units[] source: without a poster_grades letter it is never emitted.
+        # units[] source: without a poster_grades entry it is never emitted.
         doc = {"students": [{"studentId": "r1", "schoologyUid": "9001",
             "units": {"U1": {"pcRawPct": 82}, "U6": {"pcRawPct": None}},
             "lessons": []}]}
         out = sc.component_grades_from_class_doc(doc)
         self.assertEqual(out["9001/PC:U1"], 82)
         self.assertNotIn("9001/PC:U6", out)       # null pcRawPct -> skipped
-        self.assertNotIn("9001/POSTER:U1", out)   # no banked letter -> no evidence
+        self.assertNotIn("9001/POSTER:U1", out)   # no poster row -> no cell
 
-    def test_emits_poster_evidence_from_banked_letter(self):
-        # Poster <- the banked BONUS-POSTER-U# letter, keyed by ROSTER id, mapped
-        # through POSTER_SCORE (teacher 2026-10-14: floor 90, ceiling 115).
+    def test_emits_poster_score_as_is(self):
+        # Poster <- the POSTER-U# ledger row's 90-115 number, keyed by ROSTER id,
+        # written unchanged (POSTER_WORK_TRACK_SPEC.md: Schoology shows the number).
+        doc = {"students": [
+            {"studentId": "r1", "schoologyUid": "9001", "units": {}, "lessons": []},
+            {"studentId": "r2", "schoologyUid": "9002", "units": {}, "lessons": []},
+        ]}
+        out = sc.component_grades_from_class_doc(
+            doc, poster_grades={"r1": {1: 92}, "r2": {1: 115, 2: 100.5}})
+        self.assertEqual(out["9001/POSTER:U1"], 92)
+        self.assertEqual(out["9002/POSTER:U1"], 115)
+        self.assertEqual(out["9002/POSTER:U2"], 100.5)
+
+    def test_emits_poster_from_legacy_letter(self):
+        # A pre-conversion BONUS-POSTER-U# letter still maps through POSTER_SCORE
+        # (teacher 2026-10-14: floor 90, ceiling 115).
         doc = {"students": [
             {"studentId": "r1", "schoologyUid": "9001", "units": {}, "lessons": []},
             {"studentId": "r2", "schoologyUid": "9002", "units": {}, "lessons": []},
@@ -323,6 +336,14 @@ class TestComponentGradesFromClassDoc(unittest.TestCase):
         self.assertEqual(out["9002/POSTER:U1"], 90)
         self.assertEqual(out["9002/POSTER:U2"], 100)
         self.assertEqual(sc.POSTER_SCORE, {"E": 115, "P": 100, "I": 90})
+
+    def test_poster_score_accepts_a_number_or_a_letter(self):
+        self.assertEqual(sc.poster_score(105), 105)
+        self.assertEqual(sc.poster_score(92.5), 92.5)
+        self.assertEqual(sc.poster_score("p"), 100)
+        self.assertIsNone(sc.poster_score(None))
+        self.assertIsNone(sc.poster_score(True))
+        self.assertIsNone(sc.poster_score("X"))
 
     def test_unknown_poster_letter_is_not_emitted(self):
         doc = {"students": [{"studentId": "r1", "schoologyUid": "9001", "units": {}, "lessons": []}]}

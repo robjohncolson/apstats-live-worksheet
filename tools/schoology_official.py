@@ -37,10 +37,12 @@ GRADE_FLOOR = 40.0
 # Mirrors roster-server/grade-config.js BONUS_MULTIPLIER -- pinned equal by a test.
 BONUS_MULTIPLIER = 1.5
 # Schoology "calculate by percent" category weights (both SY26-27 sections).
-# Work 50 x lessons 50 / quizzes 35 / blooket 15 (POSTER_BONUS_SPEC.md, 2026-10-09).
-# Posters are banked bonus, not a category: a stray Poster column maps to "Posters",
-# which is not in WORK_WEIGHTS, so work_from_cells ignores it.
-WORK_WEIGHTS = {"Lesson": 25, "Quizzes": 17.5, "Blooket": 7.5}
+# Work 50 x lessons 30 / quizzes 30 / posters 30 / blooket 10
+# (POSTER_WORK_TRACK_SPEC.md, 2026-10-20): posters are a Work category again,
+# filled from the POSTER-U# ledger row (90-115). A missing poster cell is absent,
+# not zero: work_from_cells renormalises over the categories that have grades.
+# Banked bonus sheets (DOK) stay bonus: BONUS_MULTIPLIER, not a category.
+WORK_WEIGHTS = {"Lesson": 15, "Quizzes": 15, "Posters": 15, "Blooket": 5}
 
 
 # --------------------------------------------------------------------------- #
@@ -175,13 +177,24 @@ def post_official_grades(quarter: str, items: list[dict], secret: str) -> str:
         return "Desk publish FAILED: HTTP %s" % err.code
 
 
+# A legacy banked poster row (pre-conversion, POSTER_WORK_TRACK_SPEC.md 1.6). It is
+# never bonus: the poster already counts in Work through the Posters category.
+_BONUS_POSTER_ITEM = re.compile(r"^BONUS-POSTER-U\d+$", re.IGNORECASE)
+
+
 def banked_bonus_points(student_id: str, quarter: str, secret: str) -> float:
-    """Banked bonus-sheet points for the quarter (stored E 5 / P 3 / I 1, x BONUS_MULTIPLIER)."""
+    """Banked bonus-sheet (DOK) points for the quarter (stored E 5 / P 3 / I 1, x BONUS_MULTIPLIER).
+
+    BONUS-POSTER-U# rows are skipped so a poster never counts twice while the
+    conversion to POSTER-U# rows has not run yet.
+    """
     doc = roster_get("/ledger/student/%s?prefix=BONUS-" % student_id, secret)
     rows = doc.get("rows") or doc.get("ledger") or doc.get("items") or []
     points = 0.0
     for row in rows:
         if row.get("source") != "bonus":
+            continue
+        if _BONUS_POSTER_ITEM.match(str(row.get("itemId") or row.get("item_id") or "")):
             continue
         try:
             meta = json.loads(row.get("response") or "{}")

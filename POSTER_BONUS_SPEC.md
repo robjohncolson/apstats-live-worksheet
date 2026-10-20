@@ -1,3 +1,8 @@
+> **SUPERSEDED 2026-10-20 by `POSTER_WORK_TRACK_SPEC.md`.** The unit poster is a Work track again
+> (lessons 30 / quizzes 30 / posters 30 / blooket 10), scored 90-115, matching the Schoology
+> categories the teacher kept (Lesson 15 / Quizzes 15 / Posters 15 / Blooket 5 / PC 50). Sections 1-3
+> and 5 below no longer apply; section 4 (one poster per quarter, `POSTER_UNITS`) still does.
+
 # Posters as pure bonus + one poster per quarter (spec, 2026-10-09)
 
 Status: PR 1 (sections 2, 5, 6) BUILT 2026-10-09 by Opus, Codex-reviewed, in the working tree awaiting push

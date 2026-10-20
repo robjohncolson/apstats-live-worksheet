@@ -84,7 +84,9 @@ describe('ap_stats_roadmap_square_mode.html — Desk "how grades work" modal', (
     const text = plain(MODAL);
     expect(text).toContain('Once Work (with bonus) is at least 40%, your Progress Check score replaces it if it\'s higher.');
     expect(text).toContain('A low Progress Check never lowers you');
-    expect(text).toMatch(/worksheets 50%, quizzes 35%, Blookets 15%/);       // V3_WORK_WEIGHTS
+    expect(text).toMatch(/worksheets 30%, quizzes 30%, the unit poster 30%, Blookets 10%/);       // V3_WORK_WEIGHTS
+    expect(text).toContain('Your unit poster is scored 90 to 115, so it can only help you unless the rest of your Work is above 90.');
+    expect(text).not.toMatch(/unit posters\)/);                              // posters are not banked bonus
     expect(text).toContain('13 days after its class day');                   // grade-config dueLagDays
     expect(text).toContain('3 days before');                                 // Desk ZERO_WARN_DAYS
     expect(text).toContain('+5 / +3 / +1');                                  // exit-ticket bonus
@@ -103,10 +105,11 @@ describe('ap_stats_roadmap_square_mode.html — Desk "how grades work" modal', (
     expect(MODAL).not.toContain('Skip a whole track');
   });
 
-  it('drops the stale report-card / poster-slice framing', () => {
+  it('drops the stale report-card framing; the poster is a Work slice again (POSTER_WORK_TRACK_SPEC.md)', () => {
     expect(MODAL).not.toMatch(/report-card version/i);
     expect(MODAL).not.toMatch(/blended a little differently/i);
-    expect(MODAL).not.toMatch(/posters?\s+30%/i);
+    expect(plain(MODAL)).toMatch(/the unit poster 30%/);
+    expect(MODAL).not.toMatch(/100\/85\/60/);
   });
 });
 
@@ -116,7 +119,11 @@ describe('start-here.html — the full explanation carries the same numbers', ()
   const text = plain(PROSE);
 
   it('states every current rule', () => {
-    expect(text).toMatch(/worksheets 50%, quizzes 35%, Blookets 15%/);
+    expect(text).toMatch(/worksheets 30%, quizzes 30%, the unit poster 30%, Blookets 10%/);
+    expect(text).toContain('Your unit poster counts 30% of Work. It is scored 90 to 115 (I = 90, P = 100, E = 115), so it can only help you unless the rest of your Work is above 90.');
+    expect(text).toContain('Your unit poster is not bonus: it is part of Work, scored 90 to 115.');
+    expect(text).not.toMatch(/posters are bonus/i);
+    expect(text).not.toMatch(/100\/85\/60/);
     expect(text).toContain('never lowers');
     expect(text).toContain('13 days after its class day');
     expect(text).toContain('3 days before');
@@ -138,22 +145,23 @@ describe('start-here.html — the full explanation carries the same numbers', ()
     expect(note).toContain("Today's estimate");
   });
 
-  it('worked example uses the real formula (50/35/15) and the official rule', () => {
-    expect(text).toContain('0.50 × 90 + 0.35 × 70 + 0.15 × 80 = 45 + 24.5 + 12 = 81.5%');
-    expect(0.50 * 90 + 0.35 * 70 + 0.15 * 80).toBeCloseTo(81.5, 10);
+  it('worked example uses the real formula (30/30/30/10) and the official rule', () => {
+    expect(text).toContain('0.30 × 90 + 0.30 × 70 + 0.30 × 100 + 0.10 × 80 = 27 + 21 + 30 + 8 = 86%');
+    expect(0.30 * 90 + 0.30 * 70 + 0.30 * 100 + 0.10 * 80).toBeCloseTo(86, 10);
     expect(text).toContain('If your Progress Check is 88%, it\'s higher, so your grade is 88%');
-    expect(text).toContain('If your Progress Check is 60%, your grade stays at 81.5%');
-    expect(officialGrade(81.5, 88)).toBe(88);
-    expect(officialGrade(81.5, 60)).toBe(81.5);
-    expect(Math.round((45 + 12) / 0.65 * 10) / 10).toBe(87.7);
-    expect(text).toContain('87.7%');
+    expect(text).toContain('If your Progress Check is 60%, your grade stays at 86%');
+    expect(officialGrade(86, 88)).toBe(88);
+    expect(officialGrade(86, 60)).toBe(86);
+    expect(Math.round((27 + 30 + 8) / 0.70 * 10) / 10).toBe(92.9);
+    expect(text).toContain('(27 + 30 + 8) ÷ 0.70 = 92.9%');
   });
 });
 
 describe('lib/effort-facts.js — the short "how your grade is counted" note', () => {
   const LIB = readFileSync(resolve(repo, 'lib/effort-facts.js'), 'utf8');
   it('carries the weights, the official 40% rule and the bonus-only-raises line', () => {
-    expect(LIB).toContain('Work is worksheets 50%, quizzes 35%, Blookets 15%; once Work (with bonus) is at least 40%, a higher Progress Check score replaces it, and a low one never lowers you.');
+    expect(LIB).toContain('Work is worksheets 30%, quizzes 30%, the unit poster 30%, Blookets 10%; once Work (with bonus) is at least 40%, a higher Progress Check score replaces it, and a low one never lowers you.');
+    expect(LIB).toContain('Your unit poster is scored 90 to 115; DOK bonus sheets are banked');
     expect(LIB).toContain('they can only raise your grade.');
     expect(LIB).not.toContain('capped at 70%');
   });

@@ -86,9 +86,10 @@
     "useV3": false,
     "v3LessonsExcludeQuiz": true,
     "v3WorkWeights": {
-      "lessons": 0.5,
-      "quizzes": 0.35,
-      "blooket": 0.15
+      "lessons": 0.3,
+      "quizzes": 0.3,
+      "posters": 0.3,
+      "blooket": 0.1
     },
     "v3Gates": {
       "floor": 0.4,
@@ -124,6 +125,9 @@
           4
         ],
         "pcUnits": [
+          1
+        ],
+        "posterUnits": [
           1
         ],
         "unitGrades": {
@@ -169,6 +173,7 @@
           2,
           3
         ],
+        "posterUnits": [],
         "unitGrades": {
           "U5": null,
           "U6": null,
@@ -211,6 +216,7 @@
           4,
           5
         ],
+        "posterUnits": [],
         "unitGrades": {
           "U2": null,
           "U7": null
@@ -248,6 +254,7 @@
           9
         ],
         "pcUnits": [],
+        "posterUnits": [],
         "unitGrades": {
           "U9": null
         },

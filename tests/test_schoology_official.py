@@ -60,24 +60,33 @@ class TestWorkGrade(unittest.TestCase):
     }
 
     def test_matches_schoologys_calculation(self):
-        # Allison's Period B row on 2026-10-01: Schoology showed 78.54 under the old
-        # 15/15/5 weights. Under 25/17.5/7.5 (POSTER_BONUS_SPEC.md) the same cells give
-        # (25*83.48 + 17.5*88.9 + 7.5*32.6) / 50 = 77.75.
-        self.assertAlmostEqual(so.work_from_cells(self.cells), 77.75, places=1)
+        # Allison's Period B row on 2026-10-01: Schoology showed 78.54 under the
+        # 15/15/15/5 weights with no poster cell yet, i.e. renormalised over
+        # Lesson/Quizzes/Blooket: (15*83.48 + 15*88.9 + 5*32.6) / 35 = 78.54.
+        self.assertAlmostEqual(so.work_from_cells(self.cells), 78.54, places=1)
 
-    def test_work_weights_are_50_35_15_with_no_posters(self):
-        self.assertEqual(so.WORK_WEIGHTS, {"Lesson": 25, "Quizzes": 17.5, "Blooket": 7.5})
+    def test_work_weights_are_15_15_15_5_with_posters(self):
+        # POSTER_WORK_TRACK_SPEC.md: posters are a Work category again.
+        self.assertEqual(so.WORK_WEIGHTS, {"Lesson": 15, "Quizzes": 15, "Posters": 15, "Blooket": 5})
 
-    def test_a_poster_column_is_ignored(self):
-        cells = dict(self.cells, **{"Unit 1 Poster": 0})
-        self.assertAlmostEqual(so.work_from_cells(cells), 77.75, places=1)
+    def test_a_poster_cell_counts_at_15(self):
+        # (15*83.48 + 15*88.9 + 15*115 + 5*32.6) / 50 = 89.47
+        cells = dict(self.cells, **{"Unit 1 Poster": 115})
+        self.assertAlmostEqual(so.work_from_cells(cells), 89.47, places=1)
+        cells = dict(self.cells, **{"Unit 1 Poster": 90})
+        self.assertAlmostEqual(so.work_from_cells(cells), 81.97, places=1)
+
+    def test_a_missing_poster_cell_is_absent_not_zero(self):
+        # An empty poster cell renormalises over the other categories (spec 1.4).
+        cells = dict(self.cells, **{"Unit 1 Poster": None})
+        self.assertAlmostEqual(so.work_from_cells(cells), 78.54, places=1)
 
     def test_calc_is_used_until_a_progress_check_column_exists(self):
         self.assertEqual(so.work_grade(78.54, self.cells), 78.54)
 
     def test_progress_check_column_is_left_out_of_work(self):
         cells = dict(self.cells, **{"Unit 1 Progress Check": 30})
-        self.assertAlmostEqual(so.work_grade(60.0, cells), 77.75, places=1)
+        self.assertAlmostEqual(so.work_grade(60.0, cells), 78.54, places=1)
 
 
 class TestPcForQuarter(unittest.TestCase):
@@ -129,6 +138,20 @@ class TestPublish(unittest.TestCase):
 
         with mock.patch.object(so, "urlopen", fake_urlopen):
             self.assertIn("migration 0038", so.post_official_grades("Q1", [self.item], "s"))
+
+
+class TestBankedBonusPoints(unittest.TestCase):
+    """Banked DOK sheets count x1.5; a legacy BONUS-POSTER-U# row is never bonus."""
+
+    def test_poster_rows_are_skipped_so_a_poster_never_counts_twice(self):
+        rows = [
+            {"item_id": "BONUS-screen-time", "source": "bonus", "score": 5, "response": '{"grade":"E","quarter":"Q1"}'},
+            {"item_id": "BONUS-POSTER-U1", "source": "bonus", "score": 5, "response": '{"grade":"E","quarter":"Q1"}'},
+            {"itemId": "bonus-poster-u2", "source": "bonus", "score": 3, "response": '{"grade":"P"}'},
+            {"item_id": "BONUS-APPLIED-Q1", "source": "bonus_applied", "score": 91},
+        ]
+        with mock.patch.object(so, "roster_get", lambda path, secret: {"rows": rows}):
+            self.assertEqual(so.banked_bonus_points("stu", "Q1", "s"), 7.5)
 
 
 class TestBonusMultiplier(unittest.TestCase):

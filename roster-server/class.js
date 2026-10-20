@@ -172,6 +172,37 @@ function friendlyLabel(realName) {
 // Bonus points are placed on whichever track gives the higher closed-quarter
 // grade (bonusAudit). PC scores themselves are never changed by bonus application.
 const BONUS_POINTS = { E: 5, P: 3, I: 1 };
+// Unit poster scores (POSTER_WORK_TRACK_SPEC.md, teacher 2026-10-14/20): floor 90,
+// ceiling 115; the flat letter map is the default when a sheet number is not given.
+const POSTER_SCORES = { E: 115, P: 100, I: 90 };
+const POSTER_MIN = 90;
+const POSTER_MAX = 115;
+
+// The letter a poster number reads as (115 -> E, 100..114 -> P, else I).
+function posterGradeForScore(score) {
+  if (score >= POSTER_SCORES.E) return 'E';
+  if (score >= POSTER_SCORES.P) return 'P';
+  return 'I';
+}
+
+// One validated poster entry -> { score, grade } or null. A letter without a
+// number takes the flat map; a number must be an integer 90..115.
+function normalizePosterEntry(entry) {
+  const grade = typeof entry?.grade === 'string' ? entry.grade.trim().toUpperCase() : null;
+  if (entry?.score == null || entry?.score === '') {
+    if (!grade || !Object.hasOwn(POSTER_SCORES, grade)) return null;
+    return { score: POSTER_SCORES[grade], grade };
+  }
+  const score = Number(entry.score);
+  if (!Number.isInteger(score) || score < POSTER_MIN || score > POSTER_MAX) return null;
+  return { score, grade: grade && Object.hasOwn(POSTER_SCORES, grade) ? grade : posterGradeForScore(score) };
+}
+
+function isPosterSourceMissing(e) {
+  const msg = String(e?.message || e?.details || '');
+  return e?.code === '23514' || /item_ledger_source_check|violates check constraint/i.test(msg);
+}
+
 
 function bonusMultiplierOf(config) {
   const m = Number(config && config.bonusMultiplier);
@@ -189,6 +220,9 @@ function bankedBonus(rows, quarter, snapshot, multiplier = 1) {
   const bonus = { points: 0, sheets: [], applied: null };
   for (const row of rows) {
     if (row.source !== 'bonus' && row.source !== 'bonus_applied') continue;
+    // A poster is a Work track now (POSTER_WORK_TRACK_SPEC.md); a not-yet-converted
+    // BONUS-POSTER-U{n} row must never also count as banked bonus.
+    if (/^BONUS-POSTER-U\d+$/i.test(row.item_id || '')) continue;
     let detail;
     try { detail = JSON.parse(row.response); } catch { detail = {}; }
     if (row.source === 'bonus_applied' && row.item_id === `BONUS-APPLIED-${quarter}`) {
@@ -592,6 +626,103 @@ export function mountClass(app, {
       }
     }
     return res.json({ ok: true, sheetId, quarter, written, errors });
+  });
+
+  // POSTER_WORK_TRACK_SPEC.md: the unit poster as a Work-track ledger row.
+  // One POSTER-U{n} row per student per unit (upsert on attempt 1, so a later
+  // entry replaces). Score 90..115; a letter alone takes the flat map.
+  app.post('/class/poster', async (req, res) => {
+    if (!await requireTeacher(req, db)) return res.status(401).json({ ok: false, error: 'forbidden' });
+    const { title, section, entries } = req.body || {};
+    const unit = Number(req.body?.unit);
+    const quarter = String(req.body?.quarter || '').toUpperCase();
+    if (!Number.isInteger(unit) || unit < 1 || unit > 9 || typeof title !== 'string' || !title.trim() ||
+        !QUARTER_RE.test(quarter) || !Array.isArray(entries)) {
+      return res.status(400).json({ ok: false, error: 'unit (1..9), title, quarter (Q1..Q4), and entries required' });
+    }
+    const roster = await listRoster(db, section, false);
+    if (roster.error) return res.status(500).json({ ok: false, error: 'Database error' });
+    let written = 0;
+    const errors = [];
+    for (const [index, entry] of entries.entries()) {
+      const matches = roster.rows.filter(r => entry?.studentId
+        ? r.student_id === entry.studentId
+        : typeof entry?.username === 'string' && r.login_username === entry.username.trim());
+      const normalized = normalizePosterEntry(entry);
+      if (matches.length !== 1 || !normalized) {
+        errors.push({ index, error: matches.length !== 1 ? 'unknown or ambiguous student' : 'score must be an integer 90..115 or grade E, P, or I' });
+        continue;
+      }
+      try {
+        const { error } = await ledgerDb.insertLedgerRow({
+          studentId: matches[0].student_id, source: 'poster', itemId: `POSTER-U${unit}`, unit: `U${unit}`,
+          score: normalized.score, attempt: 1, evidenceTier: 'practice',
+          response: JSON.stringify({ grade: normalized.grade, quarter, unit, title: title.trim() }),
+        });
+        if (error) throw error;
+        written += 1;
+      } catch (error) {
+        const missing = isPosterSourceMissing(error);
+        return res.status(missing ? 503 : 500).json({ ok: false, unit, quarter, written, errors,
+          error: missing ? 'poster source not provisioned — run migration 0042' : 'Database error' });
+      }
+    }
+    return res.json({ ok: true, unit, quarter, written, errors });
+  });
+
+  // One-time cutover: every banked BONUS-POSTER-U{n} row becomes a POSTER-U{n}
+  // row (flat letter map) and leaves the bank, so the quarter close never
+  // counts a poster twice. Dry-run by default; reports what remains.
+  app.post('/class/poster/convert', async (req, res) => {
+    if (!await requireTeacher(req, db)) return res.status(401).json({ ok: false, error: 'forbidden' });
+    const body = req.body || {};
+    const dryRun = body.dryRun !== false;
+    const roster = await listRoster(db, body.section, false);
+    if (roster.error) return res.status(500).json({ ok: false, error: 'Database error' });
+    const converted = [], errors = [];
+    let deleted = 0, remainingBonusPosterRows = 0;
+    for (const student of roster.rows) {
+      let ledger;
+      try { ledger = await ledgerDb.getLedgerByStudent(student.student_id); } catch (error) { ledger = { error }; }
+      if (!ledger || ledger.error) {
+        errors.push({ studentId: student.student_id, error: 'ledger read failed' });
+        continue;
+      }
+      const bonusRows = (ledger.data || []).filter(row => row.source === 'bonus' && /^BONUS-POSTER-U\d+$/i.test(row.item_id || ''));
+      for (const row of bonusRows) {
+        const unit = Number(String(row.item_id).match(/U(\d+)$/i)[1]);
+        let detail;
+        try { detail = JSON.parse(row.response || '{}'); } catch { detail = {}; }
+        const grade = String(detail?.grade || '').toUpperCase();
+        const normalized = normalizePosterEntry({ grade });
+        if (!normalized) {
+          errors.push({ studentId: student.student_id, itemId: row.item_id, error: 'no E/P/I grade on the bonus row' });
+          remainingBonusPosterRows += 1;
+          continue;
+        }
+        const record = { studentId: student.student_id, username: student.login_username, unit,
+          grade: normalized.grade, score: normalized.score };
+        if (dryRun) { converted.push(record); remainingBonusPosterRows += 1; continue; }
+        try {
+          const inserted = await ledgerDb.insertLedgerRow({
+            studentId: student.student_id, source: 'poster', itemId: `POSTER-U${unit}`, unit: `U${unit}`,
+            score: normalized.score, attempt: 1, evidenceTier: 'practice',
+            response: JSON.stringify({ grade: normalized.grade, quarter: detail?.quarter || null, unit,
+              title: detail?.title || `Unit ${unit} Poster`, convertedFrom: row.item_id }),
+          });
+          if (inserted.error) throw inserted.error;
+          const removed = await ledgerDb.deleteLedgerRows({ studentId: student.student_id, source: 'bonus', itemId: row.item_id });
+          if (removed.error) throw removed.error;
+          deleted += Array.isArray(removed.data) ? removed.data.length : 1;
+          converted.push(record);
+        } catch (error) {
+          const missing = isPosterSourceMissing(error);
+          return res.status(missing ? 503 : 500).json({ ok: false, dryRun, converted, deleted, remainingBonusPosterRows, errors,
+            error: missing ? 'poster source not provisioned — run migration 0042' : 'Database error' });
+        }
+      }
+    }
+    return res.json({ ok: true, dryRun, converted, deleted, remainingBonusPosterRows, errors });
   });
 
   app.post('/class/quarter/apply-bonus', async (req, res) => {

@@ -27,6 +27,7 @@ describe('CED column titles on roster responses', () => {
       'FA:3.1': '1.10 Day 1 Follow-Along', 'QUIZ:3.1': '1.10 Day 1 Quiz', 'BL:3.1': '1.10 Day 1 Blooket',
       'FA:3.6-7': '1.13 Day 2 Follow-Along', 'QUIZ:3.6': '1.13 Day 2 Quiz', 'BL:3.6-7': '1.13 Day 2 Blooket',
       'PC:U1': 'Unit 1 Progress Check',
+      'POSTER:U1': 'Unit 1 Poster', // no quarter.posterUnits -> follows pcUnits ([1]); POSTER_WORK_TRACK_SPEC.md
     });
     expect(titles(gb, 'schoologyTitle')).toEqual(titles(gb, 'title'));
   });
@@ -37,6 +38,7 @@ describe('CED column titles on roster responses', () => {
       'FA:3.1': '3.1 Follow-Along', 'QUIZ:3.1': '3.1 Quiz', 'BL:3.1': '3.1 Blooket',
       'FA:3.6-7': '3.6-7 Follow-Along', 'QUIZ:3.6': '3.6 Quiz', 'BL:3.6-7': '3.6-7 Blooket',
       'PC:U1': 'Unit 1 Progress Check',
+      'POSTER:U1': 'Unit 1 Poster', // the poster title is the same on both sides of the rename
     });
   });
 

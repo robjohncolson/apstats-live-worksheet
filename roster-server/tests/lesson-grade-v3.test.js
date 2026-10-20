@@ -11,6 +11,8 @@ import {
   workAvgV3,
   V3_WORK_WEIGHTS,
   computeQuarterV3,
+  postersAvgV3,
+  posterUnitsInQuarter,
 } from '../lesson-grade.js';
 import { computeGrade } from '../grade.js';
 
@@ -52,28 +54,50 @@ describe('quarterGradeV3 — boundary worked examples (spec §Worked examples)',
 // ── workAvgV3 — renormalize over present tracks ───────────────────────────────
 
 describe('workAvgV3 — present-track renormalization', () => {
-  it('only lessons + quizzes present → renormalized 50:35 blend', () => {
-    // (0.50·0.90 + 0.35·0.60) / 0.85 = 0.66 / 0.85 = 0.776471
-    expect(workAvgV3({ lessons: 0.90, quizzes: 0.60, blooket: null }))
-      .toBeCloseTo(0.66 / 0.85, 6);
+  it('only lessons + quizzes present -> renormalized 30:30 blend', () => {
+    // (0.30*0.90 + 0.30*0.60) / 0.60 = (0.27 + 0.18) / 0.60 = 0.45 / 0.60 = 0.75
+    expect(workAvgV3({ lessons: 0.90, quizzes: 0.60, posters: null, blooket: null }))
+      .toBeCloseTo(0.75, 6);
   });
 
-  it('all three present → full weighted blend', () => {
-    const v = workAvgV3({ lessons: 1.0, quizzes: 0.0, blooket: 1.0 });
-    // 0.50·1 + 0.35·0 + 0.15·1 = 0.65
-    expect(v).toBeCloseTo(0.65, 6);
+  it('lessons + quizzes + blooket present (no poster) -> renormalized over 0.70', () => {
+    const v = workAvgV3({ lessons: 1.0, quizzes: 0.0, posters: null, blooket: 1.0 });
+    // (0.30*1 + 0.30*0 + 0.10*1) / 0.70 = 0.40 / 0.70 = 0.571429
+    expect(v).toBeCloseTo(0.40 / 0.70, 6);
   });
 
-  it('a posters key is ignored (posters are banked bonus, not a Work track)', () => {
-    const base = workAvgV3({ lessons: 1.0, quizzes: 0.0, blooket: 1.0 });
-    expect(workAvgV3({ lessons: 1.0, quizzes: 0.0, posters: 0.0, blooket: 1.0 })).toBeCloseTo(base, 6);
-    expect(workAvgV3({ lessons: 1.0, quizzes: 0.0, posters: 1.0, blooket: 1.0 })).toBeCloseTo(base, 6);
-    expect(workAvgV3({ lessons: null, quizzes: null, posters: 0.9, blooket: null })).toBe(null);
+  it('a posters key is a Work track (POSTER_WORK_TRACK_SPEC.md: 30% of Work)', () => {
+    // posters 0.0: (0.30*1 + 0.30*0 + 0.30*0 + 0.10*1) / 1.00 = 0.40
+    expect(workAvgV3({ lessons: 1.0, quizzes: 0.0, posters: 0.0, blooket: 1.0 })).toBeCloseTo(0.40, 6);
+    // posters 1.0: (0.30*1 + 0.30*0 + 0.30*1 + 0.10*1) / 1.00 = 0.70
+    expect(workAvgV3({ lessons: 1.0, quizzes: 0.0, posters: 1.0, blooket: 1.0 })).toBeCloseTo(0.70, 6);
+    // posters alone: a single present track returns that track verbatim
+    expect(workAvgV3({ lessons: null, quizzes: null, posters: 0.9, blooket: null })).toBeCloseTo(0.9, 6);
   });
 
-  it('the default weights are 50/35/15 with no posters key', () => {
-    expect(V3_WORK_WEIGHTS).toEqual({ lessons: 0.50, quizzes: 0.35, blooket: 0.15 });
-    expect('posters' in V3_WORK_WEIGHTS).toBe(false);
+  it('the default weights are 30/30/30/10 with a posters key', () => {
+    expect(V3_WORK_WEIGHTS).toEqual({ lessons: 0.30, quizzes: 0.30, posters: 0.30, blooket: 0.10 });
+    expect('posters' in V3_WORK_WEIGHTS).toBe(true);
+  });
+
+  it('a 1.15 poster clamps Work at 1 (decision 3: Work is clamped AFTER the blend)', () => {
+    // 0.30*1 + 0.30*1 + 0.30*1.15 + 0.10*1 = 0.30 + 0.30 + 0.345 + 0.10 = 1.045 -> min(1, 1.045) = 1.0
+    expect(workAvgV3({ lessons: 1.0, quizzes: 1.0, posters: 1.15, blooket: 1.0 })).toBe(1.0);
+  });
+
+  it('a 1.15 poster lifts a weaker blend (spec section 6 worked case a)', () => {
+    // 0.30*0.9 + 0.30*0.7 + 0.30*1.15 + 0.10*0.8 = 0.27 + 0.21 + 0.345 + 0.08 = 0.905 (den 1.00)
+    expect(workAvgV3({ lessons: 0.9, quizzes: 0.7, posters: 1.15, blooket: 0.8 })).toBeCloseTo(0.905, 6);
+  });
+
+  it('null posters renormalises over the other 0.70 (decision 4: absent, not zero)', () => {
+    // (0.30*0.9 + 0.30*0.7 + 0.10*0.8) / 0.70 = (0.27 + 0.21 + 0.08) / 0.70 = 0.56 / 0.70 = 0.80
+    expect(workAvgV3({ lessons: 0.9, quizzes: 0.7, posters: null, blooket: 0.8 })).toBeCloseTo(0.80, 6);
+  });
+
+  it('all 100 + a 90 poster lowers Work (spec section 6 worked case c)', () => {
+    // 0.30*1 + 0.30*1 + 0.30*0.9 + 0.10*1 = 0.30 + 0.30 + 0.27 + 0.10 = 0.97 (den 1.00)
+    expect(workAvgV3({ lessons: 1.0, quizzes: 1.0, posters: 0.9, blooket: 1.0 })).toBeCloseTo(0.97, 6);
   });
 
   it('a single present track returns that track verbatim', () => {
@@ -123,10 +147,11 @@ describe('computeQuarterV3 — aggregation', () => {
       quarterKey: 'Q1', config: CFG, lessonMap, schedule,
       todayDateStr: '2026-09-15', section: 'PeriodB', unitPcData: {},
     });
-    // lessonsAvg = 0.93333, quizzesAvg = 0.60 → workAvg = (.50·.93333 + .35·.60)/.85 = 0.79608 → 79.6
+    // lessonsAvg = 0.93333, quizzesAvg = 0.60 (posters + blooket null -> renormalise over .60)
+    //   -> workAvg = (.30*.93333 + .30*.60)/.60 = (.28 + .18)/.60 = .46/.60 = 0.76667 -> 76.7
     expect(r.pcAvg).toBe(null);
-    expect(r.workAvg).toBeCloseTo(79.6, 1);
-    expect(r.quarterGrade).toBeCloseTo(79.6, 1);
+    expect(r.workAvg).toBeCloseTo(76.7, 1);
+    expect(r.quarterGrade).toBeCloseTo(76.7, 1);
     expect(r.lessonsDue).toBe(1);
     expect(r.lessonsTotal).toBe(2);
     expect(r.pcDue).toBe(false);   // PCs not open yet (the unit's last lesson is future)
@@ -145,9 +170,9 @@ describe('computeQuarterV3 — aggregation', () => {
       quarterKey: 'Q1', config: CFG, lessonMap, schedule,
       todayDateStr: '2026-09-20', section: 'PeriodB', unitPcData: { 1: 80 },
     });
-    // lessonsAvg=1.0, quizzesAvg=0.5 → workAvg=(.50 + .175)/.85=0.7941; pcAvg=0.80 → max=0.80
+    // lessonsAvg=1.0, quizzesAvg=0.5 -> workAvg=(.30*1 + .30*.5)/.60=(.30+.15)/.60=.45/.60=0.75; pcAvg=0.80 -> max=0.80
     expect(r.pcAvg).toBeCloseTo(80.0, 1);
-    expect(r.workAvg).toBeCloseTo(79.4, 1);
+    expect(r.workAvg).toBeCloseTo(75.0, 1);
     expect(r.quarterGrade).toBeCloseTo(80.0, 1);
     expect(r.pcDue).toBe(true);    // the unit's PCs are due-by-today
   });
@@ -251,7 +276,7 @@ describe('computeQuarterV3 — aggregation', () => {
       todayDateStr: '2026-09-15', section: 'PeriodB', unitPcData: {},
     });
     // lessonsAvg uses lessonGrade=50 → 0.50 (not the noQuiz 100).
-    expect(r.workAvg).toBeCloseTo(29.4, 1); // (.50·0.50 lessons + .35·0.0 quizzes)/.85 = 0.294
+    expect(r.workAvg).toBeCloseTo(25.0, 1); // (.30*0.50 lessons + .30*0.0 quizzes)/.60 = .15/.60 = 0.25
   });
 
   it('buckets a lesson by its CALENDAR DATE (quarterOfLesson), not its old-unit band', () => {
@@ -369,16 +394,16 @@ describe('computeQuarterV3 — Blooket make-up track', () => {
 
   it('a due Blooket-bearing lesson with NO evidence counts as 0 (drops workAvg)', () => {
     const r = run(['1.1'], null); // 1.1 has a Blooket, student has no game/flashcard
-    // blooketAvg = 0 → workAvg = .50·1 + .35·1 + .15·0 = 85.0
-    expect(r.workAvg).toBeCloseTo(85.0, 1);
+    // blooketAvg = 0 -> workAvg = (.30*1 + .30*1 + .10*0)/.70 = .60/.70 = 0.85714 -> 85.7
+    expect(r.workAvg).toBeCloseTo(85.7, 1);
     expect(r.workAvg).toBeLessThan(100); // strictly below the no-Blooket case
   });
 
   it('the flashcard make-up (r.blooket=80) lifts workAvg above the 0 case', () => {
     const zero = run(['1.1'], null);
     const made = run(['1.1'], 80); // flashcard pass pinned at 80%
-    // blooketAvg = 0.8 → workAvg = .50·1 + .35·1 + .15·0.8 = 97.0
-    expect(made.workAvg).toBeCloseTo(97.0, 1);
+    // blooketAvg = 0.8 -> workAvg = (.30*1 + .30*1 + .10*0.8)/.70 = .68/.70 = 0.97143 -> 97.1
+    expect(made.workAvg).toBeCloseTo(97.1, 1);
     expect(made.workAvg).toBeGreaterThan(zero.workAvg); // make-up helps
     expect(made.workAvg).toBeLessThan(100);             // but never a full 100 (no game)
   });
@@ -400,7 +425,7 @@ describe('computeQuarterV3 — Blooket make-up track', () => {
     expect(made.workTracks.lessons).toBeCloseTo(100, 1);
     expect(made.workTracks.quizzes).toBeCloseTo(100, 1);
     expect(made.workTracks.blooket).toBeCloseTo(80, 1);
-    expect(made.workTracks.posters).toBe(null); // posters are banked bonus, never a track
+    expect(made.workTracks.posters).toBe(null); // no posterScores / workTracks.posters given -> absent (renormalised away)
     expect(made.blooketDue).toBe(1);
     expect(made.blooketDone).toBe(1);
     expect(made.blooketTodo).toEqual([]);
@@ -478,7 +503,7 @@ describe('computeQuarterV3 — quiz-bearing denominator', () => {
     // The fix only RAISES the grade.
     expect(fixed.quarterGrade).toBeGreaterThanOrEqual(old.quarterGrade);
     expect(fixed.quarterGrade).toBeCloseTo(100, 1);
-    expect(old.quarterGrade).toBeCloseTo(79.4, 1); // (.50·1 + .35·.5)/.85
+    expect(old.quarterGrade).toBeCloseTo(75.0, 1); // (.30*1 + .30*.5)/.60 = .45/.60 = 0.75
   });
 
   it('an un-taken quiz on a quiz-BEARING due lesson still counts as 0 (engagement preserved)', () => {
@@ -538,24 +563,119 @@ describe('computeGrade — quiz/blooket surface threading', () => {
   });
 });
 
-// POSTER_BONUS_SPEC.md (2026-10-09): posters are banked bonus, not a Work track.
-// computeQuarterV3 still ACCEPTS workTracks.posters (back-compat) but ignores it.
-describe('computeQuarterV3 — workTracks.posters is accepted but ignored', () => {
-  it('a posters value never moves workAvg or the quarter grade', () => {
-    const schedule = {
-      '1.1': { unit: 1, periods: { B: '2026-09-09', E: '2026-09-09' } },
-      '1.2': { unit: 1, periods: { B: '2026-09-30', E: '2026-09-30' } }, // future
-    };
-    const lessonMap = lessonMapOf({ '1.1': { Cws: 100, W: 100, Q: 50, lessonGrade: 100 } });
-    const args = {
-      quarterKey: 'Q1', config: CFG, lessonMap, schedule,
-      todayDateStr: '2026-09-15', section: 'PeriodB', unitPcData: {},
-    };
+// POSTER_WORK_TRACK_SPEC.md (2026-10-20): posters are a Work track again (30%).
+// Without posterScores, computeQuarterV3 falls back to the legacy workTracks.posters
+// value, so that channel now DOES move workAvg.
+describe('computeQuarterV3 -- workTracks.posters (legacy channel) feeds the posters track', () => {
+  const schedule = {
+    '1.1': { unit: 1, periods: { B: '2026-09-09', E: '2026-09-09' } },
+    '1.2': { unit: 1, periods: { B: '2026-09-30', E: '2026-09-30' } }, // future -> PC not due
+  };
+  const lessonMap = lessonMapOf({ '1.1': { Cws: 100, W: 100, Q: 50, lessonGrade: 100 } });
+  const args = {
+    quarterKey: 'Q1', config: CFG, lessonMap, schedule,
+    todayDateStr: '2026-09-15', section: 'PeriodB', unitPcData: {},
+  };
+
+  it('a posters value moves workAvg (and the quarter grade, PC not due)', () => {
     const none = computeQuarterV3(args);
     const zero = computeQuarterV3({ ...args, workTracks: { posters: 0 } });
     const full = computeQuarterV3({ ...args, workTracks: { posters: 1 } });
-    expect(zero.workAvg).toBeCloseTo(none.workAvg, 6);
-    expect(full.workAvg).toBeCloseTo(none.workAvg, 6);
-    expect(full.quarterGrade).toBeCloseTo(none.quarterGrade, 6);
+    // lessons 1.0, quizzes 0.5, no posters/blooket -> (.30 + .15)/.60 = .45/.60 = 0.75 -> 75.0
+    expect(none.workAvg).toBeCloseTo(75.0, 1);
+    // posters 0 -> (.30*1 + .30*.5 + .30*0)/.90 = .45/.90 = 0.50 -> 50.0
+    expect(zero.workAvg).toBeCloseTo(50.0, 1);
+    // posters 1 -> (.30*1 + .30*.5 + .30*1)/.90 = .75/.90 = 0.83333 -> 83.3
+    expect(full.workAvg).toBeCloseTo(83.3, 1);
+    expect(full.quarterGrade).toBeCloseTo(83.3, 1); // pcAvg null -> grade = workAvg
+    expect(full.workTracks.posters).toBeCloseTo(100, 1);
+  });
+});
+
+// -- Posters track (POSTER_WORK_TRACK_SPEC.md sections 1-2) ----------------------------
+describe('posters track helpers -- postersAvgV3 / posterUnitsInQuarter', () => {
+  it('postersAvgV3 = mean of recorded scores / 100 over the quarter units; a null unit is skipped', () => {
+    // only unit 1 has a score: 115 / 100 = 1.15 (NOT clamped -- the clamp is on Work)
+    expect(postersAvgV3({ 1: 115, 2: null }, [1, 2])).toBeCloseTo(1.15, 6);
+    // two scores: (115 + 90) / 2 / 100 = 102.5 / 100 = 1.025
+    expect(postersAvgV3({ 1: 115, 2: 90 }, [1, 2])).toBeCloseTo(1.025, 6);
+    // a score for a unit OUTSIDE the quarter's poster units is ignored: mean(90)/100 = 0.90
+    expect(postersAvgV3({ 1: 90, 2: 115 }, [1])).toBeCloseTo(0.90, 6);
+  });
+
+  it('postersAvgV3 -> null when no poster score exists (absent, never 0)', () => {
+    expect(postersAvgV3({}, [1])).toBe(null);
+    expect(postersAvgV3({ 1: null }, [1])).toBe(null);
+    expect(postersAvgV3(null, [1])).toBe(null);
+  });
+
+  it('posterUnitsInQuarter buckets a unit by its poster DATE into the test config quarters', () => {
+    const events = { posters: { 1: { periods: { B: '2026-10-08' } } } };
+    // 2026-10-08 is inside CFG Q1 (2026-09-01..2026-11-30) -> [1]; Q2 (2026-12-01..) -> []
+    expect(posterUnitsInQuarter(events, 'B', CFG, 'Q1')).toEqual([1]);
+    expect(posterUnitsInQuarter(events, 'B', CFG, 'Q2')).toEqual([]);
+    // no event schedule -> null (callers fall back to the unit band)
+    expect(posterUnitsInQuarter(null, 'B', CFG, 'Q1')).toBe(null);
+  });
+});
+
+describe('computeQuarterV3 -- posterScores feeds the posters track', () => {
+  // 1.1 due; 1.2 future -> PC not due -> pcAvg null -> quarterGrade == workAvg.
+  const schedule = {
+    '1.1': { unit: 1, periods: { B: '2026-09-09', E: '2026-09-09' } },
+    '1.2': { unit: 1, periods: { B: '2026-09-30', E: '2026-09-30' } },
+  };
+  // Unit 1's poster is dated 2026-10-08 (Q1); unit 2's 2026-12-05 (Q2).
+  const eventSchedule = {
+    posters: {
+      1: { periods: { B: '2026-10-08', E: '2026-10-08' } },
+      2: { periods: { B: '2026-12-05', E: '2026-12-05' } },
+    },
+  };
+  function run(lesson, posterScores) {
+    return computeQuarterV3({
+      quarterKey: 'Q1', config: CFG, lessonMap: lessonMapOf({ '1.1': lesson }), schedule,
+      todayDateStr: '2026-09-15', section: 'PeriodB', unitPcData: {},
+      eventSchedule, posterScores,
+    });
+  }
+  const weak = { Cws: 100, W: 100, Q: 50, lessonGrade: 100 };   // lessons 1.0, quizzes 0.5
+  const perfect = { Cws: 100, W: 100, Q: 100, lessonGrade: 100 }; // lessons 1.0, quizzes 1.0
+
+  it('a 90 poster LIFTS a student whose other tracks average below 90', () => {
+    const r = run(weak, { 1: 90 });
+    // posters 90/100 = 0.90 -> (.30*1 + .30*.5 + .30*.9)/.90 = (.30 + .15 + .27)/.90 = .72/.90 = 0.80 -> 80.0
+    // (without the poster: (.30 + .15)/.60 = 0.75 -> 75.0)
+    expect(r.workTracks.posters).toBeCloseTo(90, 1);
+    expect(r.workAvg).toBeCloseTo(80.0, 1);
+    expect(r.quarterGrade).toBeCloseTo(80.0, 1);
+  });
+
+  it('a 90 poster LOWERS a student whose other tracks are 100 (decision 5)', () => {
+    const r = run(perfect, { 1: 90 });
+    // (.30*1 + .30*1 + .30*.9)/.90 = (.30 + .30 + .27)/.90 = .87/.90 = 0.96667 -> 96.7
+    expect(r.workAvg).toBeCloseTo(96.7, 1);
+  });
+
+  it('a 115 poster can exceed 1 on its track but Work is clamped at 100', () => {
+    const lifted = run(weak, { 1: 115 });
+    // (.30*1 + .30*.5 + .30*1.15)/.90 = (.30 + .15 + .345)/.90 = .795/.90 = 0.88333 -> 88.3
+    expect(lifted.workTracks.posters).toBeCloseTo(115, 1);
+    expect(lifted.workAvg).toBeCloseTo(88.3, 1);
+    const clamped = run(perfect, { 1: 115 });
+    // (.30 + .30 + .345)/.90 = .945/.90 = 1.05 -> min(1, 1.05) = 1.0 -> 100.0
+    expect(clamped.workAvg).toBeCloseTo(100.0, 1);
+    expect(clamped.quarterGrade).toBeCloseTo(100.0, 1);
+  });
+
+  it("no score for the quarter's poster unit -> posters null, Work renormalises (decision 4)", () => {
+    const none = run(weak, {});
+    expect(none.workTracks.posters).toBe(null);
+    // (.30*1 + .30*.5)/.60 = .45/.60 = 0.75 -> 75.0
+    expect(none.workAvg).toBeCloseTo(75.0, 1);
+    // a score for unit 2 (poster dated in Q2) is ignored by Q1 -> same 75.0
+    const otherQuarter = run(weak, { 2: 115 });
+    expect(otherQuarter.workTracks.posters).toBe(null);
+    expect(otherQuarter.workAvg).toBeCloseTo(75.0, 1);
   });
 });

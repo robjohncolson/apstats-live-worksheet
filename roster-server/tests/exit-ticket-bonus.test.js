@@ -71,7 +71,9 @@ describe('exit-ticket bonus', () => {
     const quarter = computeQuarterV3({ quarterKey: 'Q1', config, lessonMap: map,
       schedule: { '1.1': { unit: 1, periods: { B: '2026-09-09' } } },
       todayDateStr: '2026-09-20', section: 'B', unitPcData: {} });
-    expect(quarter.workAvg).toBe(105);
+    // The lesson reads 105, but Work is clamped at 100 after the blend
+    // (POSTER_WORK_TRACK_SPEC.md decision 3): lessons weight 1 -> min(1, 1.05) = 1 -> 100.
+    expect(quarter.workAvg).toBe(100);
     expect(quarter.quarterGrade).toBe(100);
   });
 

@@ -381,8 +381,8 @@ export function mountLedger(app, {
     if (!source || !itemId || response === undefined) {
       return res.status(400).json({ ok: false, error: 'source, itemId, and response are required' });
     }
-    if (source === 'bonus' || source === 'bonus_applied') {
-      return res.status(403).json({ ok: false, error: 'bonus sources require the teacher bonus routes' });
+    if (source === 'bonus' || source === 'bonus_applied' || source === 'poster') {
+      return res.status(403).json({ ok: false, error: 'bonus and poster sources require the teacher routes' });
     }
 
     // Resolve studentId from token

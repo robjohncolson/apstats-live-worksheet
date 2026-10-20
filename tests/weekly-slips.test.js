@@ -381,7 +381,7 @@ describe('effort lines under the header (EFFORT_VISIBILITY_SPEC §2)', () => {
   it('the footer says how the grade is counted (teacher 2026-09-27)', async () => {
     const { renderTex } = await import('../scripts/weekly-slips.mjs');
     const tex = renderTex([kid], [kid], 'PeriodB', '2026-09-27', 'Q1');
-    expect(tex).toContain('{\\small Printed Sun 9/27. Work is worksheets 50\\%, quizzes 35\\%, Blookets 15\\%; once Work (with bonus) is at least 40\\%, a higher Progress Check score replaces it, and a low one never lowers you. The Desk counts work you did ahead of the calendar now; Schoology counts it when its column opens. Bonus sheets (DOK sheets and unit posters) are banked and added at the end of the quarter to whichever track helps you more --- they can only raise your grade.}');
+    expect(tex).toContain('{\\small Printed Sun 9/27. Work is worksheets 30\\%, quizzes 30\\%, the unit poster 30\\%, Blookets 10\\%; once Work (with bonus) is at least 40\\%, a higher Progress Check score replaces it, and a low one never lowers you. The Desk counts work you did ahead of the calendar now; Schoology counts it when its column opens. Your unit poster is scored 90 to 115; DOK bonus sheets are banked and added at the end of the quarter to whichever track helps you more --- they can only raise your grade.}');
     expect(tex).not.toContain('see the Desk for the graphs');
   });
 });

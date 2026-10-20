@@ -104,35 +104,83 @@ def build_fixture(doc: dict, uid_map: dict | None = None,
     return out
 
 
-_POSTER_ITEM = re.compile(r"^BONUS-POSTER-U(\d+)$", re.IGNORECASE)
+_POSTER_ITEM = re.compile(r"^POSTER-U(\d+)$", re.IGNORECASE)
+_BONUS_POSTER_ITEM = re.compile(r"^BONUS-POSTER-U(\d+)$", re.IGNORECASE)
+# Flat letter map for a legacy banked BONUS-POSTER-U# row (POSTER_WORK_TRACK_SPEC.md 1.6).
+POSTER_LETTER_SCORE = {"E": 115, "P": 100, "I": 90}
+# A POSTER-U# row's numeric score must land in this range or the row is skipped.
+POSTER_SCORE_MIN = 0
+POSTER_SCORE_MAX = 150
+# The two ledger prefixes a poster can live under, fetched separately per student.
+POSTER_LEDGER_PREFIXES = ("POSTER-", "BONUS-POSTER-")
 
 
 def poster_grades_from_ledger_rows(rows) -> dict:
-    """{unit: letter} from a student's BONUS-POSTER-U# ledger rows (E/P/I).
+    """{unit: score} from a student's poster ledger rows, score a number 90-115.
 
-    Rows come from GET /ledger/student/:id?prefix=BONUS-POSTER- . Only
-    source 'bonus' rows count; the letter is response.grade, falling back to the
-    stored points (5/3/1). A later row for the same unit replaces an earlier one.
+    Two row shapes (POSTER_WORK_TRACK_SPEC.md):
+      - POSTER-U# with source 'poster': the row's numeric `score` is used as-is
+        (skipped unless 0 <= score <= 150).
+      - BONUS-POSTER-U# with source 'bonus' (legacy, pre-conversion): the letter
+        in response.grade (falling back to the stored points 5/3/1) is mapped
+        through POSTER_LETTER_SCORE (E 115 / P 100 / I 90).
+    A 'poster' row always wins over a bonus row for the same unit. Among rows of
+    the same shape, a later row replaces an earlier one.
     """
-    out = {}
+    poster_scores = {}
+    bonus_scores = {}
     for row in rows or []:
-        if not isinstance(row, dict) or row.get("source") != "bonus":
+        if not isinstance(row, dict):
             continue
-        m = _POSTER_ITEM.match(str(row.get("itemId") or row.get("item_id") or ""))
-        if not m:
-            continue
-        meta = row.get("response")
-        if isinstance(meta, str):
-            try:
-                meta = json.loads(meta or "{}")
-            except ValueError:
-                meta = {}
-        letter = (meta or {}).get("grade") if isinstance(meta, dict) else None
-        if not letter:
-            letter = {5: "E", 3: "P", 1: "I"}.get(_as_int(row.get("score")))
-        if letter:
-            out[int(m.group(1))] = str(letter).strip().upper()
-    return out
+        item = str(row.get("itemId") or row.get("item_id") or "")
+        source = row.get("source")
+        if source == "poster":
+            unit = _poster_unit(_POSTER_ITEM, item)
+            score = _poster_row_score(row)
+            if unit is not None and score is not None:
+                poster_scores[unit] = score
+        elif source == "bonus":
+            unit = _poster_unit(_BONUS_POSTER_ITEM, item)
+            score = _bonus_row_score(row)
+            if unit is not None and score is not None:
+                bonus_scores[unit] = score
+    merged = dict(bonus_scores)
+    merged.update(poster_scores)
+    return merged
+
+
+def _poster_unit(pattern, item: str):
+    m = pattern.match(item)
+    return int(m.group(1)) if m else None
+
+
+def _poster_row_score(row: dict):
+    """The numeric score of a POSTER-U# row, or None when missing / out of range."""
+    score = _as_number(row.get("score"))
+    if score is None or not (POSTER_SCORE_MIN <= score <= POSTER_SCORE_MAX):
+        return None
+    return score
+
+
+def _bonus_row_score(row: dict):
+    """The letter default (E 115 / P 100 / I 90) of a legacy BONUS-POSTER-U# row."""
+    meta = _row_meta(row)
+    letter = meta.get("grade")
+    if not letter:
+        letter = {5: "E", 3: "P", 1: "I"}.get(_as_int(row.get("score")))
+    if not letter:
+        return None
+    return POSTER_LETTER_SCORE.get(str(letter).strip().upper())
+
+
+def _row_meta(row: dict) -> dict:
+    meta = row.get("response")
+    if isinstance(meta, str):
+        try:
+            meta = json.loads(meta or "{}")
+        except ValueError:
+            meta = {}
+    return meta if isinstance(meta, dict) else {}
 
 
 def _as_int(value):
@@ -142,28 +190,46 @@ def _as_int(value):
         return None
 
 
-def fetch_poster_grades(base: str, doc: dict, secret: str) -> dict:
-    """{rosterId: {unit: letter}} for every student in the /class/grades doc.
+def _as_number(value):
+    if isinstance(value, bool):
+        return None
+    try:
+        n = float(value)
+    except (TypeError, ValueError):
+        return None
+    return int(n) if n.is_integer() else n
 
-    One GET per student; a failed fetch skips that student with a warning (the
-    rest of the fixture still builds) rather than failing the nightly run.
+
+def fetch_poster_grades(base: str, doc: dict, secret: str) -> dict:
+    """{rosterId: {unit: score}} for every student in the /class/grades doc.
+
+    Two GETs per student (POSTER- and BONUS-POSTER- prefixes), merged so a
+    'poster' row wins over a legacy bonus row. A failed fetch skips that prefix
+    with a warning (the rest of the fixture still builds) rather than failing
+    the nightly run.
     """
     out = {}
     for s in doc.get("students", []) or []:
         rid = str(s.get("studentId"))
-        url = f"{base.rstrip('/')}/ledger/student/{rid}?prefix=BONUS-POSTER-"
-        try:
-            req = Request(url, headers={"x-teacher-secret": secret})
-            with urlopen(req, timeout=60) as resp:
-                ledger = json.loads(resp.read().decode("utf-8"))
-        except (HTTPError, URLError, ValueError) as e:
-            print(f"WARN: poster rows for {rid} skipped: {e}", file=sys.stderr)
-            continue
-        rows = ledger.get("rows") or ledger.get("ledger") or ledger.get("items") or []
+        rows = []
+        for prefix in POSTER_LEDGER_PREFIXES:
+            rows.extend(_fetch_ledger_rows(base, rid, prefix, secret))
         grades = poster_grades_from_ledger_rows(rows)
         if grades:
             out[rid] = grades
     return out
+
+
+def _fetch_ledger_rows(base: str, rid: str, prefix: str, secret: str) -> list:
+    url = f"{base.rstrip('/')}/ledger/student/{rid}?prefix={prefix}"
+    try:
+        req = Request(url, headers={"x-teacher-secret": secret})
+        with urlopen(req, timeout=60) as resp:
+            ledger = json.loads(resp.read().decode("utf-8"))
+    except (HTTPError, URLError, ValueError) as e:
+        print(f"WARN: {prefix} rows for {rid} skipped: {e}", file=sys.stderr)
+        return []
+    return ledger.get("rows") or ledger.get("ledger") or ledger.get("items") or []
 
 
 def inspect_summary(doc: dict) -> dict:

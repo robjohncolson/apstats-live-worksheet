@@ -38,6 +38,7 @@ import {
   deriveQuarterBands,
   pcDatesFor,
   pcUnitsInQuarter,
+  posterUnitsInQuarter,
 } from './lesson-grade.js';
 import { buildGradebook } from './gradebook-grid.js';
 import { readFileSync } from 'fs';
@@ -159,11 +160,28 @@ function frqScoreToPct(score, frqBand) {
 // opts.section: student's section string (e.g. "PeriodB") for date filter.
 // opts.worksheetBlankCounts: { "<unit>.<lessonKey>": <int> } from buildWorksheetBlankCounts.
 //   If null/missing, Cws is null for every lesson (W/Q renormalize without ws feeder).
+// { [unitNum]: score } from POSTER-U{n} rows (source 'poster'); the latest
+// attempt per item wins, a malformed score is skipped.
+export function posterScoresByUnit(posterRows) {
+  const out = {};
+  for (const row of latestPerItem(Array.isArray(posterRows) ? posterRows : [])) {
+    const m = String(row.item_id || '').match(/^POSTER-U(\d+)$/i);
+    if (!m) continue;
+    const score = Number(row.score);
+    if (!Number.isFinite(score)) continue;
+    out[Number(m[1])] = score;
+  }
+  return out;
+}
+
 export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts = {}) {
   // banked bonus — applied only at quarter close (BONUS_BANK_SPEC.md)
   const rows = (Array.isArray(ledgerRows) ? ledgerRows : [])
     .filter(row => row?.source !== 'bonus' && row?.source !== 'bonus_applied');
   const bySource = (s) => rows.filter((r) => r && r.source === s);
+  // Posters (POSTER_WORK_TRACK_SPEC.md): one POSTER-U{n} row per unit, score
+  // 90-115, latest attempt wins. Read here as unit-level data; never a lesson row.
+  const unitPosterRaw = posterScoresByUnit(bySource('poster'));
   // SY2627 event schedule (PC/Poster dates keyed by NEW unit) — read up front:
   // the per-unit P curve below needs it before the lesson schedule is resolved.
   const eventSchedule = (opts && opts.eventSchedule) || null;
@@ -249,7 +267,15 @@ export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts
       ? Math.round(Math.max(banked == null ? 0 : banked, P) * 10) / 10
       : null;
 
-    units[uKey] = { W, Q, B, banked, pcRawPct, P, unitGrade, graded };
+    const posterPct = unitNum != null && unitPosterRaw[unitNum] != null ? unitPosterRaw[unitNum] : null;
+    units[uKey] = { W, Q, B, banked, pcRawPct, posterPct, P, unitGrade, graded };
+  }
+  // A poster for a unit the answer key does not know yet still needs a cell.
+  for (const [unitNum, score] of Object.entries(unitPosterRaw)) {
+    const uKey = `U${unitNum}`;
+    if (!units[uKey]) {
+      units[uKey] = { W: null, Q: null, B: null, banked: null, pcRawPct: null, posterPct: score, P: 0, unitGrade: null, graded: false };
+    }
   }
 
   // ── Phase 6: lesson-level aggregation + date-driven quarter grade ─────────
@@ -326,6 +352,8 @@ export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts
     // SY2627: PCs are NEW units placed by their Day 1 date (pcUnitsInQuarter);
     // the OLD-unit band above still drives unitGrades / lessons.
     const pcBand = pcUnitsInQuarter(eventSchedule, sectionToPeriod(section), config, qKey) || band;
+    // Posters: NEW units whose poster date lands in this quarter (else the band).
+    const posterBand = posterUnitsInQuarter(eventSchedule, sectionToPeriod(section), config, qKey) || band;
 
     // Unit-level data (UNCHANGED — teacher dashboard reads this).
     const unitGrades = {};
@@ -404,6 +432,7 @@ export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts
         todayDateStr: todayStr,
         section,
         unitPcData: unitPcRaw,
+        posterScores: unitPosterRaw,
         gradingWindowStart: (config && config.gradingWindowStart) || null,
         blooketLessons: blooketRequired, // REQUIRED denominator only (core 66)
         quizLessons,
@@ -470,6 +499,8 @@ export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts
       // SY2627: the NEW units whose Progress Check lands in this quarter (PC/Poster
       // columns key off this; `units` stays the OLD-unit lesson band).
       pcUnits: Array.isArray(qResult.pcUnits) ? qResult.pcUnits : pcBand,
+      // v3: NEW units whose poster lands in this quarter (gradebook Poster columns).
+      posterUnits: posterBand,
       unitGrades,
       quarterGrade: qResult.quarterGrade,
       // SY2627 early-completion bonus surface (v3 only; explicit pick, see below).

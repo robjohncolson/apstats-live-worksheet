@@ -203,9 +203,10 @@
       "v3LessonsByDate": true,
       "v3LessonsExcludeQuiz": true,
       "v3WorkWeights": {
-        "blooket": 0.15,
-        "lessons": 0.5,
-        "quizzes": 0.35
+        "blooket": 0.1,
+        "lessons": 0.3,
+        "posters": 0.3,
+        "quizzes": 0.3
       }
     },
     "lessonSchedule": {

@@ -7,7 +7,7 @@
  *
  * Regenerate after any engine edit:  node scripts/build-grade-engine.mjs
  * Parity is pinned by tests/grade-engine-bundle-parity.test.js.
- * engine-version: 232b9b05dd15
+ * engine-version: c916f68db090
  */
 ;(function (root) {
   'use strict';
@@ -144,9 +144,9 @@
     
       // v3 Work-track weights (renormalized over present tracks) — formerly a
       // hardcoded const in lesson-grade.js (GRADE_SIMULATION FINDING F2). Now a
-      // pilot-tunable knob; these defaults match the constant. Posters are bonus,
-      // not a Work track (POSTER_BONUS_SPEC.md, 2026-10-09).
-      v3WorkWeights: { lessons: 0.50, quizzes: 0.35, blooket: 0.15 },
+      // pilot-tunable knob; these defaults match the constant. The unit poster is
+      // a Work track scored 90-115 (POSTER_WORK_TRACK_SPEC.md, 2026-10-20).
+      v3WorkWeights: { lessons: 0.30, quizzes: 0.30, posters: 0.30, blooket: 0.10 },
     
       // v3 quarter-grade gates: `floor` = the both-tracks-cleared threshold that
       // unlocks max(pc, work); `ceiling` = the single-track gaming bound (0.7·track).
@@ -780,9 +780,10 @@
     // Note: this function intentionally does NOT filter by "due date" —
     // that is applied at the quarter level in computeQuarterFromLessons.
     function computeLessonGrades(rows, frqBand, answerKey, schedule, opts) {
-      // banked bonus — applied only at quarter close (BONUS_BANK_SPEC.md)
+      // banked bonus — applied only at quarter close (BONUS_BANK_SPEC.md); posters
+      // are unit-level rows read by computeGrade, never lesson feeders.
       rows = (Array.isArray(rows) ? rows : [])
-        .filter(row => row?.source !== 'bonus' && row?.source !== 'bonus_applied');
+        .filter(row => row?.source !== 'bonus' && row?.source !== 'bonus_applied' && row?.source !== 'poster');
       const worksheetBlankCounts = (opts && opts.worksheetBlankCounts) || null;
       const bonusTopics = (opts && opts.bonusTopics instanceof Set)
         ? opts.bonusTopics
@@ -1563,11 +1564,13 @@
     
     // Work-track weights. A track contributes only when present (non-null); the
     // weights renormalize over present tracks (same pattern as computeLessonGrades'
-    // B blend). Work = lessons 50 / quizzes 35 / blooket 15 (POSTER_BONUS_SPEC.md,
-    // 2026-10-09). Posters are NOT a Work track: a poster is a banked Bonus Bank row
-    // applied at quarter close, so it can only raise a grade. A `posters` value in
-    // workTracks is still accepted but ignored (no weight key).
-    const V3_WORK_WEIGHTS = { lessons: 0.50, quizzes: 0.35, blooket: 0.15 };
+    // B blend). Work = lessons 30 / quizzes 30 / posters 30 / blooket 10
+    // (POSTER_WORK_TRACK_SPEC.md, teacher 2026-10-20: the unit poster is a Work
+    // track again, matching the Schoology categories Lesson 15 / Quizzes 15 /
+    // Posters 15 / Blooket 5 / Progress Check 50). The posters track is the mean of
+    // the quarter's POSTER-U{n} ledger scores (90-115), so it may exceed 1; the
+    // blend is clamped to 1. A missing poster is absent (renormalized away), never 0.
+    const V3_WORK_WEIGHTS = { lessons: 0.30, quizzes: 0.30, posters: 0.30, blooket: 0.10 };
     
     // The two gating constants for quarterGradeV3, default values. `floor` is the
     // 40% both-tracks-cleared threshold that unlocks max(pc, work); `ceiling` is the
@@ -1589,9 +1592,10 @@
     }
     
     // Weighted blend of the work tracks, renormalized over present tracks.
-    // tracks: { lessons, quizzes, blooket } each [0,1] or null (absent). Only keys
-    // in `weights` count, so an extra key (e.g. legacy `posters`) is ignored.
-    // Returns [0,1], or null when no track is present.
+    // tracks: { lessons, quizzes, posters, blooket } each [0,1] or null (absent);
+    // posters may exceed 1 (a 115 poster is 1.15). Only keys in `weights` count.
+    // Returns [0,1] (clamped at 1, so a poster above 100 can lift Work only up to
+    // 100), or null when no track is present.
     function workAvgV3(tracks, weights = V3_WORK_WEIGHTS) {
       let num = 0, den = 0;
       for (const key of Object.keys(weights)) {
@@ -1601,7 +1605,49 @@
         den += weights[key];
       }
       if (den === 0) return null;
-      return num / den;
+      return Math.min(1, num / den);
+    }
+    
+    // ── Posters (POSTER_WORK_TRACK_SPEC.md) ──────────────────────────────────────
+    // The poster date per NEW unit from the event schedule: { [unit]: 'YYYY-MM-DD' }.
+    // null when the schedule has no posters map (legacy / bespoke tests).
+    function posterDatesFor(eventSchedule, period) {
+      const posters = eventSchedule && eventSchedule.posters;
+      if (!posters || typeof posters !== 'object') return null;
+      const out = {};
+      for (const [key, entry] of Object.entries(posters)) {
+        const unit = Number(String(key).replace(/^U/i, ''));
+        if (!Number.isFinite(unit)) continue;
+        const periods = (entry && entry.periods && typeof entry.periods === 'object') ? entry.periods : {};
+        const date = period ? periods[period] : (periods.B || periods.E);
+        out[unit] = date || null;
+      }
+      return out;
+    }
+    
+    // The NEW units whose poster falls in this quarter (by its poster date).
+    // null when there is no event schedule, so callers fall back to the unit band.
+    function posterUnitsInQuarter(eventSchedule, period, config, quarterKey) {
+      const dates = posterDatesFor(eventSchedule, period);
+      if (!dates) return null;
+      return Object.keys(dates).map(Number)
+        .filter((u) => dates[u] && quarterOfDate(dates[u], config) === quarterKey)
+        .sort((a, b) => a - b);
+    }
+    
+    // The posters track for one quarter: mean of the recorded poster scores (0-115)
+    // over the quarter's poster units, on the [0, 1.15] scale. A unit with no score
+    // is skipped; no scores at all -> null (absent, never 0).
+    function postersAvgV3(posterScores, posterUnits) {
+      if (!posterScores || !Array.isArray(posterUnits)) return null;
+      const vals = [];
+      for (const unit of posterUnits) {
+        const raw = posterScores[unit];
+        if (raw == null || !Number.isFinite(Number(raw))) continue;
+        vals.push(Math.max(0, Number(raw)) / 100);
+      }
+      if (!vals.length) return null;
+      return vals.reduce((a, b) => a + b, 0) / vals.length;
     }
     
     // Combine a PC-track avg and a Work-track avg into a [0,1] quarter grade,
@@ -1679,7 +1725,11 @@
     //   section      -- "PeriodB" / "PeriodE" / "B" / "E" / null
     //   unitPcData   -- { [unitNum]: rawPct|null }  (raw PC % per unit, or null)
     //   gradingWindowStart -- cohort window start (or null)
-    //   workTracks   -- { posters } legacy input, accepted but ignored (posters are bonus)
+    //   posterScores -- { [unitNum]: score 0-115 | null } recorded poster per NEW unit
+    //                   (POSTER_WORK_TRACK_SPEC.md); the quarter's poster units come
+    //                   from eventSchedule.posters, else the unit band
+    //   workTracks   -- { posters } legacy override on [0, 1.15]; used only when
+    //                   posterScores is not given (bespoke tests)
     //
     // Returns { quarterGrade, ceiling, lessonsDue, lessonsGraded, lessonsTotal,
     //           pcAvg, workAvg } — quarterGrade/ceiling/pcAvg/workAvg on 0..100.
@@ -1693,6 +1743,7 @@
       unitPcData,
       gradingWindowStart = /** @type {string|null} */ (null),
       workTracks = /** @type {{posters?: number|null}|null} */ (null),
+      posterScores = /** @type {Record<number, number|null>|null} */ (null),
       blooketLessons = /** @type {string[]|null} */ (null),   // [topicKey] that HAVE a Blooket — the Blooket-track denominator
       quizLessons = /** @type {string[]|null} */ (null),      // [topicKey] that HAVE a quiz — the Quiz-track denominator
       trainerLessons = /** @type {string[]|null} */ (null),   // [topicKey] with mapped TI-84 skills — the trainer-track denominator
@@ -1973,10 +2024,15 @@
       const pcDue = pcEnabled && pcBand.some(pcDueFor);
     
       // ── Combine to the quarter grade ──
+      // Posters track: the quarter's recorded poster scores (POSTER_WORK_TRACK_SPEC.md).
+      const posterUnits = posterUnitsInQuarter(eventSchedule, period, config, quarterKey) || band;
+      const postersAvg = posterScores
+        ? postersAvgV3(posterScores, posterUnits)
+        : (workTracks ? (workTracks.posters ?? null) : null);
       const tracks = {
         lessons: lessonsAvg,
         quizzes: quizzesAvg,
-        posters: workTracks ? (workTracks.posters ?? null) : null,
+        posters: postersAvg,
         // Blooket now flows from the ledger (per-topic, mean-of-recorded), NOT the
         // workTracks channel. null -> renormalized away by workAvgV3.
         blooket: blooketAvg,
@@ -2258,7 +2314,7 @@
     
       return result;
     }
-    return { parseItemLesson: parseItemLesson, expandLessonKey: expandLessonKey, buildWorksheetBlankCounts: buildWorksheetBlankCounts, computeLessonGrades: computeLessonGrades, todayInTz: todayInTz, sectionToPeriod: sectionToPeriod, quarterOfLesson: quarterOfLesson, computeQuarterFromLessons: computeQuarterFromLessons, V3_WORK_WEIGHTS: V3_WORK_WEIGHTS, V3_GATES: V3_GATES, quarterGradeV3: quarterGradeV3, workAvgV3: workAvgV3, computeQuarterV3: computeQuarterV3, computeQuizTotals: computeQuizTotals, buildLessonsArray: buildLessonsArray, deriveQuarterBands: deriveQuarterBands, pcDatesFor: pcDatesFor, pcUnitsInQuarter: pcUnitsInQuarter, addDays: addDays, lessonZeroDate: lessonZeroDate, isLessonDue: isLessonDue };
+    return { parseItemLesson: parseItemLesson, expandLessonKey: expandLessonKey, buildWorksheetBlankCounts: buildWorksheetBlankCounts, computeLessonGrades: computeLessonGrades, todayInTz: todayInTz, sectionToPeriod: sectionToPeriod, quarterOfLesson: quarterOfLesson, computeQuarterFromLessons: computeQuarterFromLessons, V3_WORK_WEIGHTS: V3_WORK_WEIGHTS, V3_GATES: V3_GATES, quarterGradeV3: quarterGradeV3, workAvgV3: workAvgV3, computeQuarterV3: computeQuarterV3, computeQuizTotals: computeQuizTotals, buildLessonsArray: buildLessonsArray, deriveQuarterBands: deriveQuarterBands, pcDatesFor: pcDatesFor, pcUnitsInQuarter: pcUnitsInQuarter, posterDatesFor: posterDatesFor, posterUnitsInQuarter: posterUnitsInQuarter, postersAvgV3: postersAvgV3, addDays: addDays, lessonZeroDate: lessonZeroDate, isLessonDue: isLessonDue };
   })();
 
   // ── gradebook-grid.js ──────────────────────────────────────────────────────
@@ -2290,19 +2346,18 @@
     // blooket .15}. So schoologyTotal is a linear stand-in for the v3
     // model; the only thing it can't express is v3's max/mean conditional (40% floors /
     // 70% ceilings) — which is exactly the divergence the side-by-side v3Total reveals.
-    // schoologyWeightedTotal renormalizes over PRESENT categories. Posters are NOT a
-    // category: they are banked bonus rows (POSTER_BONUS_SPEC.md, 2026-10-09).
+    // schoologyWeightedTotal renormalizes over PRESENT categories. Posters are a
+    // Work category again (POSTER_WORK_TRACK_SPEC.md, 2026-10-20): the Schoology
+    // categories are Lesson 15 / Quizzes 15 / Posters 15 / Blooket 5 / PC 50.
     const { sectionToPeriod } = __reg["lesson-grade"];
     
     const SCHOOLOGY_CATEGORY_WEIGHTS = {
-      Lesson: 25,
-      Quizzes: 17.5,
-      Blooket: 7.5,
+      Lesson: 15,
+      Quizzes: 15,
+      Posters: 15,
+      Blooket: 5,
       'Progress Check': 50,
     };
-    
-    // KIND_CATEGORY / KIND_RANK keep their `poster` entries so old POSTER:U{n} column
-    // data still parses; buildGradebookColumns no longer emits poster columns.
     
     const KIND_CATEGORY = {
       followalong: 'Lesson',
@@ -2433,12 +2488,19 @@
       }
     
       // Per-unit Progress Check columns — SY2627: the NEW units whose PC lands in
-      // this quarter (quarter.pcUnits); legacy: the old-unit band. No Poster columns:
-      // posters are banked bonus, not a gradebook category (POSTER_BONUS_SPEC.md).
+      // this quarter (quarter.pcUnits); legacy: the old-unit band.
       const pcUnits = quarter && Array.isArray(quarter.pcUnits) ? quarter.pcUnits : band;
       for (const n of pcUnits) {
         cols.push({ key: `PC:U${n}`, kind: 'pc', category: 'Progress Check',
           title: `Unit ${n} Progress Check`, unit: n, topicKeys: [] });
+      }
+      // Per-unit Poster columns — the NEW units whose poster lands in this quarter
+      // (quarter.posterUnits, POSTER_WORK_TRACK_SPEC.md); else the PC units when the
+      // quarter already names them (an event-schedule world); legacy: the old-unit band.
+      const posterUnits = quarter && Array.isArray(quarter.posterUnits) ? quarter.posterUnits : pcUnits;
+      for (const n of posterUnits) {
+        cols.push({ key: `POSTER:U${n}`, kind: 'poster', category: 'Posters',
+          title: `Unit ${n} Poster`, unit: n, topicKeys: [] });
       }
     
       cols.sort((a, b) => (
@@ -2467,7 +2529,8 @@
         return u && u.pcRawPct != null ? u.pcRawPct : null;
       }
       if (col.kind === 'poster') {
-        return null; // legacy column kind: posters are banked bonus, never a cell
+        const u = units && units[`U${col.unit}`];
+        return u && u.posterPct != null ? u.posterPct : null; // 90-115 (POSTER_WORK_TRACK_SPEC.md)
       }
       if (col.kind === 'quiz') {
         const L = lessonsByKey[col.topicKeys[0]];
@@ -2679,7 +2742,7 @@
     
     const { PHASE3_CONFIG, unitNumber, quarterOfUnit, quarterOfDate, pcRawToP } = __reg["grade-config"];
     const { latestPerItem, unitOf, answerKeyMapOrNull, scoreAgainstKey, scorePcRows } = __reg["scoring"];
-    const { buildWorksheetBlankCounts, computeLessonGrades, computeQuarterFromLessons, computeQuarterV3, buildLessonsArray, computeQuizTotals, todayInTz, sectionToPeriod, deriveQuarterBands, pcDatesFor, pcUnitsInQuarter } = __reg["lesson-grade"];
+    const { buildWorksheetBlankCounts, computeLessonGrades, computeQuarterFromLessons, computeQuarterV3, buildLessonsArray, computeQuizTotals, todayInTz, sectionToPeriod, deriveQuarterBands, pcDatesFor, pcUnitsInQuarter, posterUnitsInQuarter } = __reg["lesson-grade"];
     const { buildGradebook } = __reg["gradebook-grid"];
     
     
@@ -2773,11 +2836,28 @@
     // opts.section: student's section string (e.g. "PeriodB") for date filter.
     // opts.worksheetBlankCounts: { "<unit>.<lessonKey>": <int> } from buildWorksheetBlankCounts.
     //   If null/missing, Cws is null for every lesson (W/Q renormalize without ws feeder).
+    // { [unitNum]: score } from POSTER-U{n} rows (source 'poster'); the latest
+    // attempt per item wins, a malformed score is skipped.
+    function posterScoresByUnit(posterRows) {
+      const out = {};
+      for (const row of latestPerItem(Array.isArray(posterRows) ? posterRows : [])) {
+        const m = String(row.item_id || '').match(/^POSTER-U(\d+)$/i);
+        if (!m) continue;
+        const score = Number(row.score);
+        if (!Number.isFinite(score)) continue;
+        out[Number(m[1])] = score;
+      }
+      return out;
+    }
+    
     function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts = {}) {
       // banked bonus — applied only at quarter close (BONUS_BANK_SPEC.md)
       const rows = (Array.isArray(ledgerRows) ? ledgerRows : [])
         .filter(row => row?.source !== 'bonus' && row?.source !== 'bonus_applied');
       const bySource = (s) => rows.filter((r) => r && r.source === s);
+      // Posters (POSTER_WORK_TRACK_SPEC.md): one POSTER-U{n} row per unit, score
+      // 90-115, latest attempt wins. Read here as unit-level data; never a lesson row.
+      const unitPosterRaw = posterScoresByUnit(bySource('poster'));
       // SY2627 event schedule (PC/Poster dates keyed by NEW unit) — read up front:
       // the per-unit P curve below needs it before the lesson schedule is resolved.
       const eventSchedule = (opts && opts.eventSchedule) || null;
@@ -2863,7 +2943,15 @@
           ? Math.round(Math.max(banked == null ? 0 : banked, P) * 10) / 10
           : null;
     
-        units[uKey] = { W, Q, B, banked, pcRawPct, P, unitGrade, graded };
+        const posterPct = unitNum != null && unitPosterRaw[unitNum] != null ? unitPosterRaw[unitNum] : null;
+        units[uKey] = { W, Q, B, banked, pcRawPct, posterPct, P, unitGrade, graded };
+      }
+      // A poster for a unit the answer key does not know yet still needs a cell.
+      for (const [unitNum, score] of Object.entries(unitPosterRaw)) {
+        const uKey = `U${unitNum}`;
+        if (!units[uKey]) {
+          units[uKey] = { W: null, Q: null, B: null, banked: null, pcRawPct: null, posterPct: score, P: 0, unitGrade: null, graded: false };
+        }
       }
     
       // ── Phase 6: lesson-level aggregation + date-driven quarter grade ─────────
@@ -2940,6 +3028,8 @@
         // SY2627: PCs are NEW units placed by their Day 1 date (pcUnitsInQuarter);
         // the OLD-unit band above still drives unitGrades / lessons.
         const pcBand = pcUnitsInQuarter(eventSchedule, sectionToPeriod(section), config, qKey) || band;
+        // Posters: NEW units whose poster date lands in this quarter (else the band).
+        const posterBand = posterUnitsInQuarter(eventSchedule, sectionToPeriod(section), config, qKey) || band;
     
         // Unit-level data (UNCHANGED — teacher dashboard reads this).
         const unitGrades = {};
@@ -3018,6 +3108,7 @@
             todayDateStr: todayStr,
             section,
             unitPcData: unitPcRaw,
+            posterScores: unitPosterRaw,
             gradingWindowStart: (config && config.gradingWindowStart) || null,
             blooketLessons: blooketRequired, // REQUIRED denominator only (core 66)
             quizLessons,
@@ -3084,6 +3175,8 @@
           // SY2627: the NEW units whose Progress Check lands in this quarter (PC/Poster
           // columns key off this; `units` stays the OLD-unit lesson band).
           pcUnits: Array.isArray(qResult.pcUnits) ? qResult.pcUnits : pcBand,
+          // v3: NEW units whose poster lands in this quarter (gradebook Poster columns).
+          posterUnits: posterBand,
           unitGrades,
           quarterGrade: qResult.quarterGrade,
           // SY2627 early-completion bonus surface (v3 only; explicit pick, see below).
@@ -3153,7 +3246,7 @@
     
       return { units: unitsOut, quarters, completion: completionOut, lessons };
     }
-    return { computeGrade: computeGrade, resolveBlooketLists: resolveBlooketLists, BLOOKET_PRESENCE: BLOOKET_PRESENCE, BLOOKET_REQUIRED: BLOOKET_REQUIRED };
+    return { computeGrade: computeGrade, posterScoresByUnit: posterScoresByUnit, resolveBlooketLists: resolveBlooketLists, BLOOKET_PRESENCE: BLOOKET_PRESENCE, BLOOKET_REQUIRED: BLOOKET_REQUIRED };
   })();
 
   var __api = {
@@ -3176,7 +3269,7 @@
     isCorrect: __reg["scoring"].isCorrect,
     normalizeResponse: __reg["scoring"].normalizeResponse,
     scoreAgainstKey: __reg["scoring"].scoreAgainstKey,
-    _engineVersion: "232b9b05dd15",
+    _engineVersion: "c916f68db090",
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = __api;

@@ -65,7 +65,15 @@ async function writeWithReasoningFallback(row, reasoning, write) {
 }
 
 export function createLedgerDb(client) {
-  return { insertLedgerRow, insertLedgerRowIfAbsent, updateLedgerReceipt, updateFrqFeedback, getLedgerByStudent, getLedgerByItem, getRowsByLedgerIds };
+  return { insertLedgerRow, insertLedgerRowIfAbsent, updateLedgerReceipt, updateFrqFeedback, getLedgerByStudent, getLedgerByItem, getRowsByLedgerIds, deleteLedgerRows };
+
+  // Delete every attempt of one (student, source, item). Teacher routes only
+  // (the poster conversion, POSTER_WORK_TRACK_SPEC.md). Returns { data: rows[], error }.
+  async function deleteLedgerRows({ studentId, source, itemId }) {
+    return client.from('item_ledger').delete()
+      .eq('student_id', studentId).eq('source', source).eq('item_id', itemId)
+      .select('ledger_id');
+  }
 
   // Compare-and-set only the feedback JSON. Never include score, receipts, or
   // ticket state in this update, even when the grader suggests a higher score.

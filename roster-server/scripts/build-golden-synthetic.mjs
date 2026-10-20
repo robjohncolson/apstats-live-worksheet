@@ -54,6 +54,14 @@ function row(source, itemId, values = {}) {
   };
 }
 
+// POSTER_WORK_TRACK_SPEC.md: the unit poster as a Work-track row (score 90-115).
+function poster(unit, score, grade) {
+  return row('poster', `POSTER-U${unit}`, {
+    unit: `U${unit}`, score,
+    response: JSON.stringify({ grade, quarter: 'Q1', unit, title: `Unit ${unit} Poster` }),
+  });
+}
+
 function worksheet(unit, lesson, score = 1) {
   return row('worksheet', `WS-U${unit}L${lesson}-Q1`, { unit: `U${unit}`, score });
 }
@@ -134,6 +142,7 @@ function buildStudents() {
       blooketGame(1, 1, 0.75),
       blooketMakeup(1, 1, 80),
       trainer('histogram', 0.9),
+      poster(1, 115, 'E'),
       ...completeLesson(2, 1, { worksheetScore: 0.5, frqScore: 0, quizResponse: 'b', blooketScore: 0.4 }),
       pc(2, 0.3),
       ...completeLesson(3, 1, { worksheetScore: 1, quizResponse: 'a', blooketScore: 0.9 }),

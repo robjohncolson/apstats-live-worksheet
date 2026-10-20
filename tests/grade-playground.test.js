@@ -31,15 +31,29 @@ it('Playground accepts 105 for lesson/Work inputs, caps bars and the quarter, an
     expect(document.getElementById('gp-work-val').textContent).toBe('105');
     expect(document.getElementById('gp-bar-work').style.height).toBe('100%');
     expect(document.getElementById('gp-toy-grade').textContent).toBe('100.0%');
+    // POSTER_WORK_TRACK_SPEC.md: Work is clamped at 100 after the blend, so a 105
+    // lesson track alone reads 100, never 105.
     input('gp-w-lessons', '105');
-    expect(document.getElementById('gp-real-work').textContent).toBe('105.0%');
+    expect(document.getElementById('gp-real-work').textContent).toBe('100.0%');
     expect(document.getElementById('gp-real-grade').textContent).toBe('100.0%');
     input('gp-w-lessons', '110');
-    expect(document.getElementById('gp-real-work').textContent).toBe('105.0%');
+    expect(document.getElementById('gp-real-work').textContent).toBe('100.0%');
     expect(document.body.textContent).toContain('+5 (E), +3 (P), or +1 (I)');
-    // POSTER_BONUS_SPEC.md: no Posters input; posters read as banked bonus.
-    expect(document.getElementById('gp-w-posters')).toBeNull();
-    expect(document.body.textContent).toContain('Unit posters are bonus: graded E/P/I by Mr. Colson, banked, and added at the end of the quarter');
+    // POSTER_WORK_TRACK_SPEC.md: the Posters input is back (0-115; a 115 enters as 1.15).
+    const posters = document.getElementById('gp-w-posters');
+    expect(posters).not.toBeNull();
+    expect(posters.getAttribute('max')).toBe('115');
+    expect(document.body.textContent).toContain('Your unit poster counts 30% of Work. It is scored 90 to 115 (I = 90, P = 100, E = 115), so it can only help you unless the rest of your Work is above 90.');
+    expect(document.body.textContent).not.toMatch(/posters are bonus/i);
+    // Worked example from the spec: lessons 90 / quizzes 70 / blooket 80 / poster 115 -> min(1, .905).
+    input('gp-w-lessons', '90'); input('gp-w-quizzes', '70'); input('gp-w-blooket', '80'); input('gp-w-posters', '115');
+    expect(document.getElementById('gp-real-work').textContent).toBe('90.5%');
+    // A 120 clamps to the input max 115.
+    input('gp-w-posters', '120');
+    expect(document.getElementById('gp-real-work').textContent).toBe('90.5%');
+    // No poster yet renormalises over the other three: (27 + 21 + 8) / 0.70.
+    input('gp-w-posters', '');
+    expect(document.getElementById('gp-real-work').textContent).toBe('80.0%');
   } finally { dom.window.close(); }
 });
 
@@ -96,7 +110,7 @@ describe('Grade Playground — engine is present and verbatim-shaped', () => {
     expect(typeof engine.workAvgV3).toBe('function');
     expect(typeof engine.combineV3).toBe('function');
     expect(engine.V3_WORK_WEIGHTS).toEqual({
-      lessons: 0.50, quizzes: 0.35, blooket: 0.15,
+      lessons: 0.30, quizzes: 0.30, posters: 0.30, blooket: 0.10,
     });
   });
 });
@@ -127,24 +141,37 @@ describe('quarterGradeV3 — worked examples (pc, work -> expected) within 1e-9'
 });
 
 describe('workAvgV3 — renormalizes over present components', () => {
-  it('a missing blooket renormalizes (lessons+quizzes only) -> 0.61/0.85', () => {
-    // (0.50*0.8 + 0.35*0.6) / 0.85 = 0.61 / 0.85
-    const v = engine.workAvgV3({ lessons: 0.8, quizzes: 0.6, blooket: null });
-    expect(Math.abs(v - 0.61 / 0.85)).toBeLessThan(EPS);
+  it('a missing blooket renormalizes (lessons+quizzes+posters only) -> 0.72/0.90', () => {
+    // (0.30*0.8 + 0.30*0.6 + 0.30*1.0) / 0.90 = 0.72 / 0.90
+    const v = engine.workAvgV3({ lessons: 0.8, quizzes: 0.6, posters: 1.0, blooket: null });
+    expect(Math.abs(v - 0.72 / 0.90)).toBeLessThan(EPS);
   });
 
   it('all present uses the full weighting', () => {
-    // 0.50*1 + 0.35*0 + 0.15*1 = 0.65 over den 1.0
-    const v = engine.workAvgV3({ lessons: 1, quizzes: 0, blooket: 1 });
-    expect(Math.abs(v - 0.65)).toBeLessThan(EPS);
+    // 0.30*1 + 0.30*0 + 0.30*1 + 0.10*1 = 0.70 over den 1.0
+    const v = engine.workAvgV3({ lessons: 1, quizzes: 0, posters: 1, blooket: 1 });
+    expect(Math.abs(v - 0.70)).toBeLessThan(EPS);
   });
 
-  it('a posters value is ignored (posters are banked bonus)', () => {
-    const v = engine.workAvgV3({ lessons: 1, quizzes: 0, posters: 0, blooket: 1 });
-    expect(Math.abs(v - 0.65)).toBeLessThan(EPS);
+  it('a missing poster is absent, not zero: renormalizes over the other three', () => {
+    // lessons 90 / quizzes 70 / blooket 80, no poster -> (.27 + .21 + .08) / .70 = .80
+    const v = engine.workAvgV3({ lessons: 0.9, quizzes: 0.7, posters: null, blooket: 0.8 });
+    expect(Math.abs(v - (0.27 + 0.21 + 0.08) / 0.70)).toBeLessThan(EPS);
+    expect(Math.round(v * 1000) / 1000).toBe(0.8);
   });
 
-  it('blooket-only returns the blooket value (den == 0.15)', () => {
+  it('a 115 poster lifts Work but Work is clamped at 1.0 after the blend', () => {
+    // case (a): lessons 90 / quizzes 70 / blooket 80 / poster 115 -> min(1, .27+.21+.08+.345) = .905
+    const a = engine.workAvgV3({ lessons: 0.9, quizzes: 0.7, posters: 1.15, blooket: 0.8 });
+    expect(Math.abs(a - 0.905)).toBeLessThan(EPS);
+    // all 100 + poster 115 -> clamped to 1.0
+    expect(engine.workAvgV3({ lessons: 1, quizzes: 1, posters: 1.15, blooket: 1 })).toBe(1);
+    // case (c): all 100 + poster 90 -> .97 (a 90 lowers Work for a student above 90)
+    const c = engine.workAvgV3({ lessons: 1, quizzes: 1, posters: 0.9, blooket: 1 });
+    expect(Math.abs(c - 0.97)).toBeLessThan(EPS);
+  });
+
+  it('blooket-only returns the blooket value (den == 0.10)', () => {
     const v = engine.workAvgV3({ lessons: null, quizzes: null, blooket: 0.42 });
     expect(Math.abs(v - 0.42)).toBeLessThan(EPS);
   });
