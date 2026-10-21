@@ -153,7 +153,7 @@ function buildStudents() {
       ...completeLesson(1, 2, { blooketScore: 1 }),
       ...completeLesson(1, 5, { blooketScore: 1 }),
       trainer('histogram', 1),
-      pc(1, 0.4),
+      pc(1, 0.2775), // raw 27.75 -> 40.0 on the U1 class scale (PC_CURVE_SPEC): sits ON the floor
     ]),
     student('synthetic-03-ceiling-070', 'PeriodE', [
       worksheet(1, 1, 0), quiz(1, 1, 'b'), blooketGame(1, 1, 0),

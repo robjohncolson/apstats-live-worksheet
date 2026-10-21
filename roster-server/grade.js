@@ -18,6 +18,7 @@ import {
   quarterOfUnit,
   quarterOfDate,
   pcRawToP,
+  pcCurvePct,
 } from './grade-config.js';
 import {
   latestPerItem,
@@ -254,7 +255,12 @@ export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts
     }
     const banked = B == null ? null : Math.round(Math.min(B, C) * 10) / 10;
 
-    const pcRawPct = pcAgg.units[uKey] ? pcAgg.units[uKey].pct : null;
+    // The class scale (PC_CURVE_SPEC.md): every consumer of pcRawPct sees the curved %;
+    // pcUncurvedPct keeps the raw blend for the teacher. Rounded to 0.1 like the
+    // raw blend, so the gradebook cell and the Schoology PC column stay one decimal.
+    const pcUncurvedPct = pcAgg.units[uKey] ? pcAgg.units[uKey].pct : null;
+    const pcCurved = pcCurvePct(unitNum, pcUncurvedPct);
+    const pcRawPct = pcCurved == null ? null : Math.round(pcCurved * 10) / 10;
     // SY2627: a PC's quarter (→ its pcAnchor curve) is the quarter it becomes DUE
     // in (Day 2, same rule as pcUnitsInQuarter) when the event schedule knows
     // this NEW unit; else the legacy old-unit band.
@@ -268,7 +274,7 @@ export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts
       : null;
 
     const posterPct = unitNum != null && unitPosterRaw[unitNum] != null ? unitPosterRaw[unitNum] : null;
-    units[uKey] = { W, Q, B, banked, pcRawPct, posterPct, P, unitGrade, graded };
+    units[uKey] = { W, Q, B, banked, pcRawPct, pcUncurvedPct, posterPct, P, unitGrade, graded };
     // Per-part paper detail for the teacher dashboard (PC_FOLLOWTHROUGH_SPEC.md §1.4).
     // Only set when the unit has per-part paper rows, so every other unit keeps its shape.
     if (pcAgg.units[uKey] && pcAgg.units[uKey].parts) units[uKey].pcParts = pcAgg.units[uKey].parts;

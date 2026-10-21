@@ -125,7 +125,8 @@ describe('parts are exposed', () => {
     };
     const rows = [paper(1, 'A', 9, 18), paper(1, 'FRQ', 16, 16)].map((r) => ({ ...r, source: 'pc' }));
     const g = computeGrade(rows, {}, cfg, {});
-    expect(g.units.U1.pcRawPct).toBe(75);
+    expect(g.units.U1.pcUncurvedPct).toBe(75);
+    expect(g.units.U1.pcRawPct).toBe(85.7);      // U1 class scale (PC_CURVE_SPEC)
     expect(g.units.U1.pcParts.FRQ.points).toBe(16);
   });
 });

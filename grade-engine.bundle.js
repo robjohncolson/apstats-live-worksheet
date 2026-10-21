@@ -7,7 +7,7 @@
  *
  * Regenerate after any engine edit:  node scripts/build-grade-engine.mjs
  * Parity is pinned by tests/grade-engine-bundle-parity.test.js.
- * engine-version: f4a244e9fedf
+ * engine-version: 6c274b73b112
  */
 ;(function (root) {
   'use strict';
@@ -62,6 +62,43 @@
     const PC_PART_POINTS = {
       1: { A: 18, B: 14, C: 12, FRQ: 16 },
     };
+    
+    // Class scale per NEW unit: raw blended PC % -> curved %, piecewise linear through
+    // these knots (PC_CURVE_SPEC.md). Knots are frozen numbers chosen by the teacher.
+    // A unit without knots is uncurved.
+    const PC_CURVE = {
+      1: [[58.8, 70], [79.5, 90], [92.6, 99]],
+    };
+    
+    // The y-value of the straight line through knots a and b at x.
+    function lineThrough(a, b, x) {
+      const [x0, y0] = a;
+      const [x1, y1] = b;
+      return y0 + ((x - x0) / (x1 - x0)) * (y1 - y0);
+    }
+    
+    // Curve a unit's blended PC % (PC_CURVE_SPEC.md §1.2). null/non-finite -> null.
+    // No knots -> unchanged. Below the first knot the first segment extends down;
+    // above the last knot the last segment extends up. Clamped to [0, 100], unrounded.
+    // `curves` defaults to PC_CURVE; tests may pass their own table.
+    function pcCurvePct(unitNum, rawPct, curves = PC_CURVE) {
+      if (rawPct == null || !Number.isFinite(rawPct)) return null;
+      if (rawPct <= 0) return 0; // no PC work earns no place on the class scale
+    
+      const knots = curves[unitNum];
+      if (!knots || knots.length < 2) return rawPct;
+    
+      const sorted = [...knots].sort((a, b) => a[0] - b[0]);
+      const last = sorted.length - 1;
+    
+      // Pick the segment: the first one whose right knot is at or past rawPct,
+      // else the last segment (extrapolate upward).
+      let i = 0;
+      while (i < last - 1 && rawPct > sorted[i + 1][0]) i += 1;
+    
+      const curved = lineThrough(sorted[i], sorted[i + 1], rawPct);
+      return Math.max(0, Math.min(100, curved));
+    }
     
     const PHASE3_CONFIG = {
       // Banked bonus-sheet points are multiplied by this when read (class.js bankedBonus).
@@ -276,7 +313,7 @@
       }
       return Math.max(0, Math.min(100, Math.round(p * 10) / 10));
     }
-    return { PHASE3_CONFIG: PHASE3_CONFIG, PC_PART_POINTS: PC_PART_POINTS, unitNumber: unitNumber, quarterOfUnit: quarterOfUnit, quarterOfDate: quarterOfDate, pcRawToP: pcRawToP };
+    return { PHASE3_CONFIG: PHASE3_CONFIG, PC_PART_POINTS: PC_PART_POINTS, unitNumber: unitNumber, quarterOfUnit: quarterOfUnit, quarterOfDate: quarterOfDate, pcRawToP: pcRawToP, PC_CURVE: PC_CURVE, pcCurvePct: pcCurvePct };
   })();
 
   // ── scoring.js ──────────────────────────────────────────────────────
@@ -2842,7 +2879,7 @@
     // The `units` field on the response is UNCHANGED in shape and values
     // (teacher dashboard via class.js fans out computeGrade and reads it).
     
-    const { PHASE3_CONFIG, unitNumber, quarterOfUnit, quarterOfDate, pcRawToP } = __reg["grade-config"];
+    const { PHASE3_CONFIG, unitNumber, quarterOfUnit, quarterOfDate, pcRawToP, pcCurvePct } = __reg["grade-config"];
     const { latestPerItem, unitOf, answerKeyMapOrNull, scoreAgainstKey, scorePcRows } = __reg["scoring"];
     const { buildWorksheetBlankCounts, computeLessonGrades, computeQuarterFromLessons, computeQuarterV3, buildLessonsArray, computeQuizTotals, todayInTz, sectionToPeriod, deriveQuarterBands, pcDatesFor, pcUnitsInQuarter, posterUnitsInQuarter } = __reg["lesson-grade"];
     const { buildGradebook } = __reg["gradebook-grid"];
@@ -3032,7 +3069,12 @@
         }
         const banked = B == null ? null : Math.round(Math.min(B, C) * 10) / 10;
     
-        const pcRawPct = pcAgg.units[uKey] ? pcAgg.units[uKey].pct : null;
+        // The class scale (PC_CURVE_SPEC.md): every consumer of pcRawPct sees the curved %;
+        // pcUncurvedPct keeps the raw blend for the teacher. Rounded to 0.1 like the
+        // raw blend, so the gradebook cell and the Schoology PC column stay one decimal.
+        const pcUncurvedPct = pcAgg.units[uKey] ? pcAgg.units[uKey].pct : null;
+        const pcCurved = pcCurvePct(unitNum, pcUncurvedPct);
+        const pcRawPct = pcCurved == null ? null : Math.round(pcCurved * 10) / 10;
         // SY2627: a PC's quarter (→ its pcAnchor curve) is the quarter it becomes DUE
         // in (Day 2, same rule as pcUnitsInQuarter) when the event schedule knows
         // this NEW unit; else the legacy old-unit band.
@@ -3046,7 +3088,7 @@
           : null;
     
         const posterPct = unitNum != null && unitPosterRaw[unitNum] != null ? unitPosterRaw[unitNum] : null;
-        units[uKey] = { W, Q, B, banked, pcRawPct, posterPct, P, unitGrade, graded };
+        units[uKey] = { W, Q, B, banked, pcRawPct, pcUncurvedPct, posterPct, P, unitGrade, graded };
         // Per-part paper detail for the teacher dashboard (PC_FOLLOWTHROUGH_SPEC.md §1.4).
         // Only set when the unit has per-part paper rows, so every other unit keeps its shape.
         if (pcAgg.units[uKey] && pcAgg.units[uKey].parts) units[uKey].pcParts = pcAgg.units[uKey].parts;
@@ -3375,7 +3417,7 @@
     normalizeResponse: __reg["scoring"].normalizeResponse,
     scoreAgainstKey: __reg["scoring"].scoreAgainstKey,
     pcPaperBlend: __reg["scoring"].pcPaperBlend,
-    _engineVersion: "f4a244e9fedf",
+    _engineVersion: "6c274b73b112",
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = __api;

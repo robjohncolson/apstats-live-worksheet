@@ -35,6 +35,43 @@ export const PC_PART_POINTS = {
   1: { A: 18, B: 14, C: 12, FRQ: 16 },
 };
 
+// Class scale per NEW unit: raw blended PC % -> curved %, piecewise linear through
+// these knots (PC_CURVE_SPEC.md). Knots are frozen numbers chosen by the teacher.
+// A unit without knots is uncurved.
+export const PC_CURVE = {
+  1: [[58.8, 70], [79.5, 90], [92.6, 99]],
+};
+
+// The y-value of the straight line through knots a and b at x.
+function lineThrough(a, b, x) {
+  const [x0, y0] = a;
+  const [x1, y1] = b;
+  return y0 + ((x - x0) / (x1 - x0)) * (y1 - y0);
+}
+
+// Curve a unit's blended PC % (PC_CURVE_SPEC.md §1.2). null/non-finite -> null.
+// No knots -> unchanged. Below the first knot the first segment extends down;
+// above the last knot the last segment extends up. Clamped to [0, 100], unrounded.
+// `curves` defaults to PC_CURVE; tests may pass their own table.
+export function pcCurvePct(unitNum, rawPct, curves = PC_CURVE) {
+  if (rawPct == null || !Number.isFinite(rawPct)) return null;
+  if (rawPct <= 0) return 0; // no PC work earns no place on the class scale
+
+  const knots = curves[unitNum];
+  if (!knots || knots.length < 2) return rawPct;
+
+  const sorted = [...knots].sort((a, b) => a[0] - b[0]);
+  const last = sorted.length - 1;
+
+  // Pick the segment: the first one whose right knot is at or past rawPct,
+  // else the last segment (extrapolate upward).
+  let i = 0;
+  while (i < last - 1 && rawPct > sorted[i + 1][0]) i += 1;
+
+  const curved = lineThrough(sorted[i], sorted[i + 1], rawPct);
+  return Math.max(0, Math.min(100, curved));
+}
+
 export const PHASE3_CONFIG = {
   // Banked bonus-sheet points are multiplied by this when read (class.js bankedBonus).
   bonusMultiplier: BONUS_MULTIPLIER,

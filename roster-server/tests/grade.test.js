@@ -172,9 +172,10 @@ describe('GET /grade — model math', () => {
     expect(u1.Q).toBe(50);
     expect(u1.B).toBeCloseTo(64.2, 1);          // (92.5 + 100)/3
     expect(u1.banked).toBeCloseTo(64.2, 1);     // < 85, uncapped here
-    expect(u1.pcRawPct).toBe(50);
-    expect(u1.P).toBe(92.5);                     // PC uncaps above banked
-    expect(u1.unitGrade).toBe(92.5);            // max(61.7, 92.5)
+    expect(u1.pcUncurvedPct).toBe(50);
+    expect(u1.pcRawPct).toBe(61.5);               // U1 class scale: 70 + (50 - 58.8) * 20 / 20.7
+    expect(u1.P).toBe(100);                      // curved 61.5 on the Q1 40/60 anchor -> 100
+    expect(u1.unitGrade).toBe(100);             // max(64.2, 100)
     expect(u1.graded).toBe(true);
   });
 
@@ -219,7 +220,8 @@ describe('GET /grade — model math', () => {
     expect(body.units.U1.W).toBe(null);
     expect(body.units.U1.B).toBe(100);           // Q-only feeder, renormalized
     expect(body.units.U1.banked).toBe(85);
-    expect(body.units.U1.pcRawPct).toBe(0);
+    expect(body.units.U1.pcUncurvedPct).toBe(0);
+    expect(body.units.U1.pcRawPct).toBe(0);     // raw 0 stays 0 on the class scale
     expect(body.units.U1.P).toBe(0);
     expect(body.units.U1.unitGrade).toBe(85);    // max(85, 0) — bad PC never sinks it
   });

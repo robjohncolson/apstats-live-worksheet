@@ -117,6 +117,7 @@
         "B": null,
         "banked": null,
         "pcRawPct": null,
+        "pcUncurvedPct": null,
         "posterPct": null,
         "P": 0,
         "unitGrade": null,

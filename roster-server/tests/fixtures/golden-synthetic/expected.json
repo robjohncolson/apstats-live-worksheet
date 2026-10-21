@@ -99,14 +99,14 @@
                 "Blooket": 60,
                 "Lesson": 73.4,
                 "Posters": 115,
-                "Progress Check": 45,
+                "Progress Check": 50.6,
                 "Quizzes": 50
               },
               "categoryAveragesProjected": {
                 "Blooket": 70,
                 "Lesson": 82.2,
                 "Posters": 115,
-                "Progress Check": 45,
+                "Progress Check": 50.6,
                 "Quizzes": 66.7
               },
               "cells": {
@@ -120,7 +120,7 @@
                 "FA:1.5": null,
                 "FA:2.1": 56.7,
                 "FA:3.1": 100,
-                "PC:U1": 60,
+                "PC:U1": 71.2,
                 "PC:U2": 30,
                 "PC:U3": 90,
                 "POSTER:U1": 115,
@@ -381,16 +381,16 @@
               ],
               "reconciliation": {
                 "branch": "max",
-                "delta": 5.6,
+                "delta": 2.8,
                 "earlyBonus": 0,
-                "pcAvg": 45,
-                "reason": "Both tracks clear the 40 floor, so v3 takes the higher (Work 66.9), while Schoology averages the categories (61.3).",
-                "schoologyTotal": 61.3,
+                "pcAvg": 50.6,
+                "reason": "Both tracks clear the 40 floor, so v3 takes the higher (Work 66.9), while Schoology averages the categories (64.1).",
+                "schoologyTotal": 64.1,
                 "v3Total": 66.9,
                 "workAvg": 66.9
               },
-              "schoologyProjectedTotal": 65.6,
-              "schoologyTotal": 61.3,
+              "schoologyProjectedTotal": 68.4,
+              "schoologyTotal": 64.1,
               "v3Total": 66.9
             },
             "Q2": {
@@ -819,8 +819,8 @@
             "lessonsDue": 5,
             "lessonsGraded": 3,
             "lessonsTotal": 5,
-            "pcAvg": 45,
-            "pcAvgRaw": 0.44999999999999996,
+            "pcAvg": 50.6,
+            "pcAvgRaw": 0.506,
             "pcUnits": [
               1,
               2,
@@ -1042,7 +1042,8 @@
             "W": 85,
             "banked": 85,
             "graded": true,
-            "pcRawPct": 60,
+            "pcRawPct": 71.2,
+            "pcUncurvedPct": 60,
             "posterPct": 115,
             "unitGrade": 100
           },
@@ -1054,6 +1055,7 @@
             "banked": 20,
             "graded": true,
             "pcRawPct": 30,
+            "pcUncurvedPct": 30,
             "posterPct": null,
             "unitGrade": 63.8
           },
@@ -1065,6 +1067,7 @@
             "banked": 85,
             "graded": true,
             "pcRawPct": 90,
+            "pcUncurvedPct": 90,
             "posterPct": null,
             "unitGrade": 100
           }
@@ -2026,6 +2029,7 @@
             "banked": 85,
             "graded": true,
             "pcRawPct": 40,
+            "pcUncurvedPct": 27.8,
             "posterPct": null,
             "unitGrade": 85
           }
@@ -2052,13 +2056,13 @@
               "categoryAverages": {
                 "Blooket": 0,
                 "Lesson": 40,
-                "Progress Check": 70,
+                "Progress Check": 80.8,
                 "Quizzes": 0
               },
               "categoryAveragesProjected": {
                 "Blooket": 0,
                 "Lesson": 40,
-                "Progress Check": 70,
+                "Progress Check": 80.8,
                 "Quizzes": 0
               },
               "cells": {
@@ -2072,7 +2076,7 @@
                 "FA:1.5": 40,
                 "FA:2.1": null,
                 "FA:3.1": null,
-                "PC:U1": 70,
+                "PC:U1": 80.8,
                 "PC:U2": null,
                 "PC:U3": null,
                 "POSTER:U1": null,
@@ -2333,17 +2337,17 @@
               ],
               "reconciliation": {
                 "branch": "ceiling",
-                "delta": 0.8,
+                "delta": 2,
                 "earlyBonus": 0,
-                "pcAvg": 70,
-                "reason": "A track is below the 40 floor, so v3 caps at 70% of PC (49); Schoology applies no floor or ceiling.",
-                "schoologyTotal": 48.2,
-                "v3Total": 49,
+                "pcAvg": 80.8,
+                "reason": "A track is below the 40 floor, so v3 caps at 70% of PC (56.6); Schoology applies no floor or ceiling.",
+                "schoologyTotal": 54.6,
+                "v3Total": 56.6,
                 "workAvg": 16
               },
-              "schoologyProjectedTotal": 48.2,
-              "schoologyTotal": 48.2,
-              "v3Total": 49
+              "schoologyProjectedTotal": 54.6,
+              "schoologyTotal": 54.6,
+              "v3Total": 56.6
             },
             "Q2": {
               "aheadCells": 0,
@@ -2743,7 +2747,7 @@
             "blooketDue": 3,
             "blooketTodo": [],
             "bonusApplied": null,
-            "ceiling": 90,
+            "ceiling": 93.6,
             "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
@@ -2751,8 +2755,8 @@
             "lessonsDue": 3,
             "lessonsGraded": 3,
             "lessonsTotal": 5,
-            "pcAvg": 70,
-            "pcAvgRaw": 0.7,
+            "pcAvg": 80.8,
+            "pcAvgRaw": 0.8079999999999999,
             "pcUnits": [
               1,
               2,
@@ -2763,8 +2767,8 @@
               2,
               3
             ],
-            "quarterGrade": 49,
-            "quarterGradeBase": 49,
+            "quarterGrade": 56.6,
+            "quarterGradeBase": 56.6,
             "quizDone": 3,
             "quizDue": 3,
             "quizTodo": [],
@@ -2971,7 +2975,8 @@
             "W": null,
             "banked": 0,
             "graded": true,
-            "pcRawPct": 70,
+            "pcRawPct": 80.8,
+            "pcUncurvedPct": 70,
             "posterPct": null,
             "unitGrade": 100
           }
@@ -2998,13 +3003,13 @@
               "categoryAverages": {
                 "Blooket": 50,
                 "Lesson": 100,
-                "Progress Check": 80,
+                "Progress Check": 90.3,
                 "Quizzes": 0
               },
               "categoryAveragesProjected": {
                 "Blooket": 50,
                 "Lesson": 100,
-                "Progress Check": 80,
+                "Progress Check": 90.3,
                 "Quizzes": 0
               },
               "cells": {
@@ -3018,7 +3023,7 @@
                 "FA:1.5": 100,
                 "FA:2.1": null,
                 "FA:3.1": null,
-                "PC:U1": 80,
+                "PC:U1": 90.3,
                 "PC:U2": null,
                 "PC:U3": null,
                 "POSTER:U1": null,
@@ -3279,17 +3284,17 @@
               ],
               "reconciliation": {
                 "branch": "max",
-                "delta": 12.4,
+                "delta": 16.6,
                 "earlyBonus": 0,
-                "pcAvg": 80,
-                "reason": "Both tracks clear the 40 floor, so v3 takes the higher (PC 80), while Schoology averages the categories (67.6).",
-                "schoologyTotal": 67.6,
-                "v3Total": 80,
+                "pcAvg": 90.3,
+                "reason": "Both tracks clear the 40 floor, so v3 takes the higher (PC 90.3), while Schoology averages the categories (73.7).",
+                "schoologyTotal": 73.7,
+                "v3Total": 90.3,
                 "workAvg": 48.3
               },
-              "schoologyProjectedTotal": 67.6,
-              "schoologyTotal": 67.6,
-              "v3Total": 80
+              "schoologyProjectedTotal": 73.7,
+              "schoologyTotal": 73.7,
+              "v3Total": 90.3
             },
             "Q2": {
               "aheadCells": 0,
@@ -3704,7 +3709,7 @@
             "blooketDue": 3,
             "blooketTodo": [],
             "bonusApplied": null,
-            "ceiling": 93.3,
+            "ceiling": 96.8,
             "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
@@ -3712,8 +3717,8 @@
             "lessonsDue": 3,
             "lessonsGraded": 3,
             "lessonsTotal": 5,
-            "pcAvg": 80,
-            "pcAvgRaw": 0.8,
+            "pcAvg": 90.3,
+            "pcAvgRaw": 0.903,
             "pcUnits": [
               1,
               2,
@@ -3724,8 +3729,8 @@
               2,
               3
             ],
-            "quarterGrade": 80,
-            "quarterGradeBase": 80,
+            "quarterGrade": 90.3,
+            "quarterGradeBase": 90.3,
             "quizDone": 3,
             "quizDue": 3,
             "quizTodo": [],
@@ -3932,7 +3937,8 @@
             "W": 100,
             "banked": 33.3,
             "graded": true,
-            "pcRawPct": 80,
+            "pcRawPct": 90.3,
+            "pcUncurvedPct": 80,
             "posterPct": null,
             "unitGrade": 100
           }
@@ -4858,6 +4864,7 @@
             "banked": 85,
             "graded": true,
             "pcRawPct": 55,
+            "pcUncurvedPct": 55,
             "posterPct": null,
             "unitGrade": 96.3
           }
@@ -6649,6 +6656,7 @@
             "banked": 85,
             "graded": true,
             "pcRawPct": null,
+            "pcUncurvedPct": null,
             "posterPct": null,
             "unitGrade": 85
           }
@@ -7559,6 +7567,7 @@
             "banked": 0,
             "graded": true,
             "pcRawPct": null,
+            "pcUncurvedPct": null,
             "posterPct": null,
             "unitGrade": 0
           }
@@ -7589,10 +7598,10 @@
             "Q1": {
               "aheadCells": 0,
               "categoryAverages": {
-                "Progress Check": 85
+                "Progress Check": 90.2
               },
               "categoryAveragesProjected": {
-                "Progress Check": 85
+                "Progress Check": 90.2
               },
               "cells": {
                 "BL:1.1": null,
@@ -7605,7 +7614,7 @@
                 "FA:1.5": null,
                 "FA:2.1": null,
                 "FA:3.1": null,
-                "PC:U1": 80,
+                "PC:U1": 90.3,
                 "PC:U2": 90,
                 "PC:U3": null,
                 "POSTER:U1": null,
@@ -7866,17 +7875,17 @@
               ],
               "reconciliation": {
                 "branch": "ceiling",
-                "delta": -25.5,
+                "delta": -27.1,
                 "earlyBonus": 0,
-                "pcAvg": 85,
-                "reason": "A track is below the 40 floor, so v3 caps at 70% of PC (59.5); Schoology applies no floor or ceiling.",
-                "schoologyTotal": 85,
-                "v3Total": 59.5,
+                "pcAvg": 90.2,
+                "reason": "A track is below the 40 floor, so v3 caps at 70% of PC (63.1); Schoology applies no floor or ceiling.",
+                "schoologyTotal": 90.2,
+                "v3Total": 63.1,
                 "workAvg": 0
               },
-              "schoologyProjectedTotal": 85,
-              "schoologyTotal": 85,
-              "v3Total": 59.5
+              "schoologyProjectedTotal": 90.2,
+              "schoologyTotal": 90.2,
+              "v3Total": 63.1
             },
             "Q2": {
               "aheadCells": 0,
@@ -8238,7 +8247,7 @@
               "1.5"
             ],
             "bonusApplied": null,
-            "ceiling": 90,
+            "ceiling": 93.4,
             "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
@@ -8246,8 +8255,8 @@
             "lessonsDue": 3,
             "lessonsGraded": 0,
             "lessonsTotal": 5,
-            "pcAvg": 85,
-            "pcAvgRaw": 0.8500000000000001,
+            "pcAvg": 90.2,
+            "pcAvgRaw": 0.9015,
             "pcUnits": [
               1,
               2,
@@ -8258,8 +8267,8 @@
               2,
               3
             ],
-            "quarterGrade": 59.5,
-            "quarterGradeBase": 59.5,
+            "quarterGrade": 63.1,
+            "quarterGradeBase": 63.1,
             "quizDone": 0,
             "quizDue": 3,
             "quizTodo": [
@@ -8468,7 +8477,8 @@
             "W": null,
             "banked": null,
             "graded": true,
-            "pcRawPct": 80,
+            "pcRawPct": 90.3,
+            "pcUncurvedPct": 80,
             "posterPct": null,
             "unitGrade": 100
           },
@@ -8480,6 +8490,7 @@
             "banked": null,
             "graded": true,
             "pcRawPct": 90,
+            "pcUncurvedPct": 90,
             "posterPct": null,
             "unitGrade": 100
           }
@@ -9383,6 +9394,7 @@
             "banked": null,
             "graded": false,
             "pcRawPct": null,
+            "pcUncurvedPct": null,
             "posterPct": null,
             "unitGrade": null
           }
@@ -10283,6 +10295,7 @@
             "banked": null,
             "graded": false,
             "pcRawPct": null,
+            "pcUncurvedPct": null,
             "posterPct": null,
             "unitGrade": null
           }
@@ -11186,6 +11199,7 @@
             "banked": null,
             "graded": false,
             "pcRawPct": null,
+            "pcUncurvedPct": null,
             "posterPct": null,
             "unitGrade": null
           }
@@ -12115,6 +12129,7 @@
             "banked": 85,
             "graded": true,
             "pcRawPct": 50,
+            "pcUncurvedPct": 50,
             "posterPct": null,
             "unitGrade": 92.5
           }
@@ -13040,6 +13055,7 @@
             "banked": 85,
             "graded": true,
             "pcRawPct": 50,
+            "pcUncurvedPct": 50,
             "posterPct": null,
             "unitGrade": 92.5
           }
@@ -13953,6 +13969,7 @@
             "banked": null,
             "graded": false,
             "pcRawPct": null,
+            "pcUncurvedPct": null,
             "posterPct": null,
             "unitGrade": null
           }
@@ -13990,11 +14007,11 @@
               "aheadCells": 1,
               "categoryAverages": {
                 "Lesson": 86.7,
-                "Progress Check": 30
+                "Progress Check": 36.5
               },
               "categoryAveragesProjected": {
                 "Lesson": 86.7,
-                "Progress Check": 30,
+                "Progress Check": 36.5,
                 "Quizzes": 100
               },
               "cells": {
@@ -14008,7 +14025,7 @@
                 "FA:1.5": null,
                 "FA:2.1": 100,
                 "FA:3.1": null,
-                "PC:U1": 10,
+                "PC:U1": 22.9,
                 "PC:U2": 50,
                 "PC:U3": 100,
                 "POSTER:U1": null,
@@ -14269,17 +14286,17 @@
               ],
               "reconciliation": {
                 "branch": "ceiling",
-                "delta": -16.2,
+                "delta": -17.9,
                 "earlyBonus": 0,
-                "pcAvg": 30,
-                "reason": "A track is below the 40 floor, so v3 caps at the mean of the two tracks (26.9); Schoology applies no floor or ceiling.",
-                "schoologyTotal": 43.1,
-                "v3Total": 26.9,
+                "pcAvg": 36.5,
+                "reason": "A track is below the 40 floor, so v3 caps at the mean of the two tracks (30.2); Schoology applies no floor or ceiling.",
+                "schoologyTotal": 48.1,
+                "v3Total": 30.2,
                 "workAvg": 23.9
               },
-              "schoologyProjectedTotal": 53.8,
-              "schoologyTotal": 43.1,
-              "v3Total": 26.9
+              "schoologyProjectedTotal": 57.8,
+              "schoologyTotal": 48.1,
+              "v3Total": 30.2
             },
             "Q2": {
               "aheadCells": 0,
@@ -14669,8 +14686,8 @@
             "lessonsDue": 5,
             "lessonsGraded": 2,
             "lessonsTotal": 5,
-            "pcAvg": 30,
-            "pcAvgRaw": 0.3,
+            "pcAvg": 36.5,
+            "pcAvgRaw": 0.3645,
             "pcUnits": [
               1,
               2,
@@ -14681,8 +14698,8 @@
               2,
               3
             ],
-            "quarterGrade": 26.9,
-            "quarterGradeBase": 26.9,
+            "quarterGrade": 30.2,
+            "quarterGradeBase": 30.2,
             "quizDone": 1,
             "quizDue": 4,
             "quizTodo": [
@@ -14696,7 +14713,7 @@
               "1.5"
             ],
             "unitGrades": {
-              "U1": 21.3,
+              "U1": 48.7,
               "U2": 92.5,
               "U3": 100
             },
@@ -14886,14 +14903,15 @@
         "units": {
           "U1": {
             "B": null,
-            "P": 21.3,
+            "P": 48.7,
             "Q": null,
             "W": null,
             "banked": null,
             "graded": true,
-            "pcRawPct": 10,
+            "pcRawPct": 22.9,
+            "pcUncurvedPct": 10,
             "posterPct": null,
-            "unitGrade": 21.3
+            "unitGrade": 48.7
           },
           "U2": {
             "B": 100,
@@ -14903,6 +14921,7 @@
             "banked": 85,
             "graded": true,
             "pcRawPct": 50,
+            "pcUncurvedPct": 50,
             "posterPct": null,
             "unitGrade": 92.5
           },
@@ -14914,6 +14933,7 @@
             "banked": 85,
             "graded": true,
             "pcRawPct": 100,
+            "pcUncurvedPct": 100,
             "posterPct": null,
             "unitGrade": 100
           }
@@ -15015,14 +15035,14 @@
               "Blooket": 60,
               "Lesson": 73.4,
               "Posters": 115,
-              "Progress Check": 45,
+              "Progress Check": 50.6,
               "Quizzes": 50
             },
             "categoryAveragesProjected": {
               "Blooket": 70,
               "Lesson": 82.2,
               "Posters": 115,
-              "Progress Check": 45,
+              "Progress Check": 50.6,
               "Quizzes": 66.7
             },
             "cells": {
@@ -15036,7 +15056,7 @@
               "FA:1.5": null,
               "FA:2.1": 56.7,
               "FA:3.1": 100,
-              "PC:U1": 60,
+              "PC:U1": 71.2,
               "PC:U2": 30,
               "PC:U3": 90,
               "POSTER:U1": 115,
@@ -15297,16 +15317,16 @@
             ],
             "reconciliation": {
               "branch": "max",
-              "delta": 5.6,
+              "delta": 2.8,
               "earlyBonus": 0,
-              "pcAvg": 45,
-              "reason": "Both tracks clear the 40 floor, so v3 takes the higher (Work 66.9), while Schoology averages the categories (61.3).",
-              "schoologyTotal": 61.3,
+              "pcAvg": 50.6,
+              "reason": "Both tracks clear the 40 floor, so v3 takes the higher (Work 66.9), while Schoology averages the categories (64.1).",
+              "schoologyTotal": 64.1,
               "v3Total": 66.9,
               "workAvg": 66.9
             },
-            "schoologyProjectedTotal": 65.6,
-            "schoologyTotal": 61.3,
+            "schoologyProjectedTotal": 68.4,
+            "schoologyTotal": 64.1,
             "v3Total": 66.9
           },
           "Q2": {
@@ -15733,8 +15753,8 @@
           "lessonsDue": 5,
           "lessonsGraded": 3,
           "lessonsTotal": 5,
-          "pcAvg": 45,
-          "pcAvgRaw": 0.44999999999999996,
+          "pcAvg": 50.6,
+          "pcAvgRaw": 0.506,
           "pcUnits": [
             1,
             2,
@@ -15940,7 +15960,8 @@
           "W": 85,
           "banked": 85,
           "graded": true,
-          "pcRawPct": 60,
+          "pcRawPct": 71.2,
+          "pcUncurvedPct": 60,
           "posterPct": 115,
           "unitGrade": 100
         },
@@ -15952,6 +15973,7 @@
           "banked": 20,
           "graded": true,
           "pcRawPct": 30,
+          "pcUncurvedPct": 30,
           "posterPct": null,
           "unitGrade": 63.8
         },
@@ -15963,6 +15985,7 @@
           "banked": 85,
           "graded": true,
           "pcRawPct": 90,
+          "pcUncurvedPct": 90,
           "posterPct": null,
           "unitGrade": 100
         }
@@ -16964,6 +16987,7 @@
           "banked": 85,
           "graded": true,
           "pcRawPct": 40,
+          "pcUncurvedPct": 27.8,
           "posterPct": null,
           "unitGrade": 85
         }
@@ -17048,13 +17072,13 @@
             "categoryAverages": {
               "Blooket": 0,
               "Lesson": 40,
-              "Progress Check": 70,
+              "Progress Check": 80.8,
               "Quizzes": 0
             },
             "categoryAveragesProjected": {
               "Blooket": 0,
               "Lesson": 40,
-              "Progress Check": 70,
+              "Progress Check": 80.8,
               "Quizzes": 0
             },
             "cells": {
@@ -17068,7 +17092,7 @@
               "FA:1.5": 40,
               "FA:2.1": null,
               "FA:3.1": null,
-              "PC:U1": 70,
+              "PC:U1": 80.8,
               "PC:U2": null,
               "PC:U3": null,
               "POSTER:U1": null,
@@ -17329,17 +17353,17 @@
             ],
             "reconciliation": {
               "branch": "ceiling",
-              "delta": 0.8,
+              "delta": 2,
               "earlyBonus": 0,
-              "pcAvg": 70,
-              "reason": "A track is below the 40 floor, so v3 caps at 70% of PC (49); Schoology applies no floor or ceiling.",
-              "schoologyTotal": 48.2,
-              "v3Total": 49,
+              "pcAvg": 80.8,
+              "reason": "A track is below the 40 floor, so v3 caps at 70% of PC (56.6); Schoology applies no floor or ceiling.",
+              "schoologyTotal": 54.6,
+              "v3Total": 56.6,
               "workAvg": 16
             },
-            "schoologyProjectedTotal": 48.2,
-            "schoologyTotal": 48.2,
-            "v3Total": 49
+            "schoologyProjectedTotal": 54.6,
+            "schoologyTotal": 54.6,
+            "v3Total": 56.6
           },
           "Q2": {
             "aheadCells": 0,
@@ -17738,15 +17762,15 @@
           "blooketDone": 3,
           "blooketDue": 3,
           "blooketTodo": [],
-          "ceiling": 90,
+          "ceiling": 93.6,
           "earlyBonus": 0,
           "earlyKeys": [],
           "earlyLessons": 0,
           "lessonsDue": 3,
           "lessonsGraded": 3,
           "lessonsTotal": 5,
-          "pcAvg": 70,
-          "pcAvgRaw": 0.7,
+          "pcAvg": 80.8,
+          "pcAvgRaw": 0.8079999999999999,
           "pcUnits": [
             1,
             2,
@@ -17757,8 +17781,8 @@
             2,
             3
           ],
-          "quarterGrade": 49,
-          "quarterGradeBase": 49,
+          "quarterGrade": 56.6,
+          "quarterGradeBase": 56.6,
           "quizDone": 3,
           "quizDue": 3,
           "quizTodo": [],
@@ -17949,7 +17973,8 @@
           "W": null,
           "banked": 0,
           "graded": true,
-          "pcRawPct": 70,
+          "pcRawPct": 80.8,
+          "pcUncurvedPct": 70,
           "posterPct": null,
           "unitGrade": 100
         }
@@ -18034,13 +18059,13 @@
             "categoryAverages": {
               "Blooket": 50,
               "Lesson": 100,
-              "Progress Check": 80,
+              "Progress Check": 90.3,
               "Quizzes": 0
             },
             "categoryAveragesProjected": {
               "Blooket": 50,
               "Lesson": 100,
-              "Progress Check": 80,
+              "Progress Check": 90.3,
               "Quizzes": 0
             },
             "cells": {
@@ -18054,7 +18079,7 @@
               "FA:1.5": 100,
               "FA:2.1": null,
               "FA:3.1": null,
-              "PC:U1": 80,
+              "PC:U1": 90.3,
               "PC:U2": null,
               "PC:U3": null,
               "POSTER:U1": null,
@@ -18315,17 +18340,17 @@
             ],
             "reconciliation": {
               "branch": "max",
-              "delta": 12.4,
+              "delta": 16.6,
               "earlyBonus": 0,
-              "pcAvg": 80,
-              "reason": "Both tracks clear the 40 floor, so v3 takes the higher (PC 80), while Schoology averages the categories (67.6).",
-              "schoologyTotal": 67.6,
-              "v3Total": 80,
+              "pcAvg": 90.3,
+              "reason": "Both tracks clear the 40 floor, so v3 takes the higher (PC 90.3), while Schoology averages the categories (73.7).",
+              "schoologyTotal": 73.7,
+              "v3Total": 90.3,
               "workAvg": 48.3
             },
-            "schoologyProjectedTotal": 67.6,
-            "schoologyTotal": 67.6,
-            "v3Total": 80
+            "schoologyProjectedTotal": 73.7,
+            "schoologyTotal": 73.7,
+            "v3Total": 90.3
           },
           "Q2": {
             "aheadCells": 0,
@@ -18739,15 +18764,15 @@
           "blooketDone": 3,
           "blooketDue": 3,
           "blooketTodo": [],
-          "ceiling": 93.3,
+          "ceiling": 96.8,
           "earlyBonus": 0,
           "earlyKeys": [],
           "earlyLessons": 0,
           "lessonsDue": 3,
           "lessonsGraded": 3,
           "lessonsTotal": 5,
-          "pcAvg": 80,
-          "pcAvgRaw": 0.8,
+          "pcAvg": 90.3,
+          "pcAvgRaw": 0.903,
           "pcUnits": [
             1,
             2,
@@ -18758,8 +18783,8 @@
             2,
             3
           ],
-          "quarterGrade": 80,
-          "quarterGradeBase": 80,
+          "quarterGrade": 90.3,
+          "quarterGradeBase": 90.3,
           "quizDone": 3,
           "quizDue": 3,
           "quizTodo": [],
@@ -18950,7 +18975,8 @@
           "W": 100,
           "banked": 33.3,
           "graded": true,
-          "pcRawPct": 80,
+          "pcRawPct": 90.3,
+          "pcUncurvedPct": 80,
           "posterPct": null,
           "unitGrade": 100
         }
@@ -19920,6 +19946,7 @@
           "banked": 85,
           "graded": true,
           "pcRawPct": 55,
+          "pcUncurvedPct": 55,
           "posterPct": null,
           "unitGrade": 96.3
         }
@@ -21799,6 +21826,7 @@
           "banked": 85,
           "graded": true,
           "pcRawPct": null,
+          "pcUncurvedPct": null,
           "posterPct": null,
           "unitGrade": 85
         }
@@ -22753,6 +22781,7 @@
           "banked": 0,
           "graded": true,
           "pcRawPct": null,
+          "pcUncurvedPct": null,
           "posterPct": null,
           "unitGrade": 0
         }
@@ -22841,10 +22870,10 @@
           "Q1": {
             "aheadCells": 0,
             "categoryAverages": {
-              "Progress Check": 85
+              "Progress Check": 90.2
             },
             "categoryAveragesProjected": {
-              "Progress Check": 85
+              "Progress Check": 90.2
             },
             "cells": {
               "BL:1.1": null,
@@ -22857,7 +22886,7 @@
               "FA:1.5": null,
               "FA:2.1": null,
               "FA:3.1": null,
-              "PC:U1": 80,
+              "PC:U1": 90.3,
               "PC:U2": 90,
               "PC:U3": null,
               "POSTER:U1": null,
@@ -23118,17 +23147,17 @@
             ],
             "reconciliation": {
               "branch": "ceiling",
-              "delta": -25.5,
+              "delta": -27.1,
               "earlyBonus": 0,
-              "pcAvg": 85,
-              "reason": "A track is below the 40 floor, so v3 caps at 70% of PC (59.5); Schoology applies no floor or ceiling.",
-              "schoologyTotal": 85,
-              "v3Total": 59.5,
+              "pcAvg": 90.2,
+              "reason": "A track is below the 40 floor, so v3 caps at 70% of PC (63.1); Schoology applies no floor or ceiling.",
+              "schoologyTotal": 90.2,
+              "v3Total": 63.1,
               "workAvg": 0
             },
-            "schoologyProjectedTotal": 85,
-            "schoologyTotal": 85,
-            "v3Total": 59.5
+            "schoologyProjectedTotal": 90.2,
+            "schoologyTotal": 90.2,
+            "v3Total": 63.1
           },
           "Q2": {
             "aheadCells": 0,
@@ -23489,15 +23518,15 @@
             "1.2",
             "1.5"
           ],
-          "ceiling": 90,
+          "ceiling": 93.4,
           "earlyBonus": 0,
           "earlyKeys": [],
           "earlyLessons": 0,
           "lessonsDue": 3,
           "lessonsGraded": 0,
           "lessonsTotal": 5,
-          "pcAvg": 85,
-          "pcAvgRaw": 0.8500000000000001,
+          "pcAvg": 90.2,
+          "pcAvgRaw": 0.9015,
           "pcUnits": [
             1,
             2,
@@ -23508,8 +23537,8 @@
             2,
             3
           ],
-          "quarterGrade": 59.5,
-          "quarterGradeBase": 59.5,
+          "quarterGrade": 63.1,
+          "quarterGradeBase": 63.1,
           "quizDone": 0,
           "quizDue": 3,
           "quizTodo": [
@@ -23706,7 +23735,8 @@
           "W": null,
           "banked": null,
           "graded": true,
-          "pcRawPct": 80,
+          "pcRawPct": 90.3,
+          "pcUncurvedPct": 80,
           "posterPct": null,
           "unitGrade": 100
         },
@@ -23718,6 +23748,7 @@
           "banked": null,
           "graded": true,
           "pcRawPct": 90,
+          "pcUncurvedPct": 90,
           "posterPct": null,
           "unitGrade": 100
         }
@@ -24665,6 +24696,7 @@
           "banked": null,
           "graded": false,
           "pcRawPct": null,
+          "pcUncurvedPct": null,
           "posterPct": null,
           "unitGrade": null
         }
@@ -25609,6 +25641,7 @@
           "banked": null,
           "graded": false,
           "pcRawPct": null,
+          "pcUncurvedPct": null,
           "posterPct": null,
           "unitGrade": null
         }
@@ -26556,6 +26589,7 @@
           "banked": null,
           "graded": false,
           "pcRawPct": null,
+          "pcUncurvedPct": null,
           "posterPct": null,
           "unitGrade": null
         }
@@ -27529,6 +27563,7 @@
           "banked": 85,
           "graded": true,
           "pcRawPct": 50,
+          "pcUncurvedPct": 50,
           "posterPct": null,
           "unitGrade": 92.5
         }
@@ -28498,6 +28533,7 @@
           "banked": 85,
           "graded": true,
           "pcRawPct": 50,
+          "pcUncurvedPct": 50,
           "posterPct": null,
           "unitGrade": 92.5
         }
@@ -29451,6 +29487,7 @@
           "banked": null,
           "graded": false,
           "pcRawPct": null,
+          "pcUncurvedPct": null,
           "posterPct": null,
           "unitGrade": null
         }
@@ -29546,11 +29583,11 @@
             "aheadCells": 1,
             "categoryAverages": {
               "Lesson": 86.7,
-              "Progress Check": 30
+              "Progress Check": 36.5
             },
             "categoryAveragesProjected": {
               "Lesson": 86.7,
-              "Progress Check": 30,
+              "Progress Check": 36.5,
               "Quizzes": 100
             },
             "cells": {
@@ -29564,7 +29601,7 @@
               "FA:1.5": null,
               "FA:2.1": 100,
               "FA:3.1": null,
-              "PC:U1": 10,
+              "PC:U1": 22.9,
               "PC:U2": 50,
               "PC:U3": 100,
               "POSTER:U1": null,
@@ -29825,17 +29862,17 @@
             ],
             "reconciliation": {
               "branch": "ceiling",
-              "delta": -16.2,
+              "delta": -17.9,
               "earlyBonus": 0,
-              "pcAvg": 30,
-              "reason": "A track is below the 40 floor, so v3 caps at the mean of the two tracks (26.9); Schoology applies no floor or ceiling.",
-              "schoologyTotal": 43.1,
-              "v3Total": 26.9,
+              "pcAvg": 36.5,
+              "reason": "A track is below the 40 floor, so v3 caps at the mean of the two tracks (30.2); Schoology applies no floor or ceiling.",
+              "schoologyTotal": 48.1,
+              "v3Total": 30.2,
               "workAvg": 23.9
             },
-            "schoologyProjectedTotal": 53.8,
-            "schoologyTotal": 43.1,
-            "v3Total": 26.9
+            "schoologyProjectedTotal": 57.8,
+            "schoologyTotal": 48.1,
+            "v3Total": 30.2
           },
           "Q2": {
             "aheadCells": 0,
@@ -30223,8 +30260,8 @@
           "lessonsDue": 5,
           "lessonsGraded": 2,
           "lessonsTotal": 5,
-          "pcAvg": 30,
-          "pcAvgRaw": 0.3,
+          "pcAvg": 36.5,
+          "pcAvgRaw": 0.3645,
           "pcUnits": [
             1,
             2,
@@ -30235,8 +30272,8 @@
             2,
             3
           ],
-          "quarterGrade": 26.9,
-          "quarterGradeBase": 26.9,
+          "quarterGrade": 30.2,
+          "quarterGradeBase": 30.2,
           "quizDone": 1,
           "quizDue": 4,
           "quizTodo": [
@@ -30250,7 +30287,7 @@
             "1.5"
           ],
           "unitGrades": {
-            "U1": 21.3,
+            "U1": 48.7,
             "U2": 92.5,
             "U3": 100
           },
@@ -30428,14 +30465,15 @@
       "units": {
         "U1": {
           "B": null,
-          "P": 21.3,
+          "P": 48.7,
           "Q": null,
           "W": null,
           "banked": null,
           "graded": true,
-          "pcRawPct": 10,
+          "pcRawPct": 22.9,
+          "pcUncurvedPct": 10,
           "posterPct": null,
-          "unitGrade": 21.3
+          "unitGrade": 48.7
         },
         "U2": {
           "B": 100,
@@ -30445,6 +30483,7 @@
           "banked": 85,
           "graded": true,
           "pcRawPct": 50,
+          "pcUncurvedPct": 50,
           "posterPct": null,
           "unitGrade": 92.5
         },
@@ -30456,6 +30495,7 @@
           "banked": 85,
           "graded": true,
           "pcRawPct": 100,
+          "pcUncurvedPct": 100,
           "posterPct": null,
           "unitGrade": 100
         }

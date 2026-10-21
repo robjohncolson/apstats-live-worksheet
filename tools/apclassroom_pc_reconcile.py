@@ -773,7 +773,7 @@ def run_entry(entry: dict, pages: dict, api, roster_map: dict, today: str, apply
     for username in plan["would_lower"]:
         rep.out("  WOULD LOWER %s (AP Classroom score below the posted one: teacher decides)" % username)
     for drop in plan["drops"]:
-        rep.out("  PC %% DROPS %-18s %s -> %s" % (drop["username"], drop["from"], drop["to"]))
+        rep.out("  PC raw %% DROPS %-18s %s -> %s" % (drop["username"], drop["from"], drop["to"]))
     for username in plan["needs_scoring"]:
         rep.out("  NEEDS SCORING %s FRQ" % username)
     for name in plan["unmatched_names"]:

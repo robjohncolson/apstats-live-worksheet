@@ -144,3 +144,48 @@ describe('pcTrack gate — PC rows are inert until enabled', () => {
     expect(on.quarterGrade).toBeCloseTo(0.7 * on.workAvg, 1);
   });
 });
+
+// ── The class scale (PC_CURVE_SPEC.md §1.3): the engine curves the blended unit PC ──
+
+describe('PC curve — the blended unit PC % is curved once, in computeGrade', () => {
+  const CURVE_CFG = { ...GATE_CFG_BASE, useV3: true, pcTrack: { enabled: true } };
+  const OPTS = {
+    lessonSchedule: { '1.1': { unit: 1, periods: { B: '2026-09-09', E: '2026-09-09' } } },
+    section: 'PeriodB',
+    asOf: '2026-10-21',
+  };
+
+  function paper(unit, part, points, of) {
+    const response = JSON.stringify({ part, points, of });
+    return { source: 'pc', item_id: `U${unit}-PC-${part}-PAPER`, response, score: points / of, attempt: 1, recorded_at: '2026-10-20T23:10:00Z' };
+  }
+
+  it('Unit 1: pcUncurvedPct = raw blend, pcRawPct = curved, pcAvg uses the curved value', () => {
+    // A 9/18 + FRQ 16/16 -> raw 75; curved 70 + (75 - 58.8) * 20 / 20.7 = 85.65 -> 85.7
+    const rows = [paper(1, 'A', 9, 18), paper(1, 'FRQ', 16, 16)];
+    const g = computeGrade(rows, {}, CURVE_CFG, OPTS);
+    expect(g.units.U1.pcUncurvedPct).toBe(75);
+    expect(g.units.U1.pcRawPct).toBe(85.7);
+    expect(g.quarters.Q1.pcAvg).toBe(85.7);
+  });
+
+  it('Unit 1: the top knot lands on 99 (all four parts, raw 92.6)', () => {
+    const rows = [paper(1, 'A', 18, 18), paper(1, 'B', 13, 14), paper(1, 'C', 12, 12), paper(1, 'FRQ', 14, 16)];
+    const g = computeGrade(rows, {}, CURVE_CFG, OPTS);
+    expect(g.units.U1.pcUncurvedPct).toBe(92.6);
+    expect(g.units.U1.pcRawPct).toBe(99);
+  });
+
+  it('a unit without knots is uncurved: pcRawPct === pcUncurvedPct', () => {
+    const rows = [{ source: 'pc', item_id: 'U2-PC26-MCQ-A-Q01', response: 'A', score: 0.55, attempt: 1 }];
+    const g = computeGrade(rows, {}, CURVE_CFG, OPTS);
+    expect(g.units.U2.pcUncurvedPct).toBe(55);
+    expect(g.units.U2.pcRawPct).toBe(55);
+  });
+
+  it('no PC evidence: both stay null', () => {
+    const g = computeGrade([], {}, CURVE_CFG, OPTS);
+    const u1 = g.units.U1;
+    expect(u1 == null || (u1.pcRawPct == null && u1.pcUncurvedPct == null)).toBe(true);
+  });
+});
