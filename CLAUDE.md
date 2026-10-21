@@ -77,7 +77,12 @@ The Desk hosts iframe apps via `openApp(id)` — `APP_REGISTRY` near line 12930 
 | `data/` | Generated data: `skill-map.*`, `lesson-schedule.json`, `answer-key.json`, study-guide maps |
 | `state/` | Cross-agent orchestration logs/prompts |
 | `roadmap-data.json` | Baked Desk data — overridden at runtime by Supabase `lesson_urls` (see below) |
+| `roster-local/class-summaries/` | **Generated, gitignored** Class Log lesson summaries for sections B and E (`npm run pull-summaries`); see Class recordings below. Never hand-edit |
 | `*_SPEC.md` / `*_BUILD.md` | Per-feature spec/build contracts at root; `STATE_MACHINES.md`, `AI_GRADING_INTEGRATION.md` |
+
+### Class recordings
+
+The Class Log phone (`../class-log`) records each B and E block and posts a lesson summary to the a2 roster-server. `npm run pull-summaries` runs `../algebra2-live-worksheet/scripts/pull-class-summaries.mjs --course apstats --out roster-local/class-summaries` (the a2 checkout must sit next to this one; it holds the server URL and the teacher secret, which never comes into this repo). It writes one `<date>-<section>.md` per recorded block (front matter, then Landed, Student questions, Promises made, Next prep) and `index.json` with those four lists for every summary; the last 30 days by default, `-- --from YYYY-MM-DD` for more. The folder is generated and gitignored: the summaries quote student questions and the teacher's remarks, and this repo publishes to GitHub Pages, so they are never committed; the pull takes seconds, run it before reading. Rule for the agent: before planning the next B or E class, writing a Do Now, or a nightly review note, run the pull and read the latest summary for that section; treat its `promises` as commitments the teacher made out loud to that class.
 
 ## Architecture (worksheets)
 

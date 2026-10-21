@@ -139,3 +139,6 @@ u1_poster/tex/*.synctex.gz
 
 # Unit 1 poster grouping page carries STUDENT NAMES: local only, never commit
 u1_poster/local/
+
+# Class Log lesson summaries (student questions, teacher remarks): local only, never commit
+roster-local/

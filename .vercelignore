@@ -12,3 +12,4 @@ tools/cdp
 *.py
 video-ingest*.mjs
 *.skill
+roster-local

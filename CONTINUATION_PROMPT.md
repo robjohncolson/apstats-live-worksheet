@@ -25,6 +25,8 @@
 
 ## ⏭ SESSION 48 (2026-10-07 → 10-08 overnight, Athena laptop, Windows) — **CURRENT. Supersedes s47 below. APSTAT PARK CAMPAIGN FIDELITY: 14 batches, protocol 18 → 31, every one of the 48 Pico Park stages now plays to STAGE CLEAR by a scripted solver in the test suite.**
 
+**Class recordings (2026-10-21):** before planning a B or E class, a Do Now or a nightly review note, `npm run pull-summaries` and read the latest summary for that section (`CLAUDE.md` → Class recordings).
+
 **HEADs (all pushed):** follow-alongs `9f493575` · cr relay `d5ea964` (protocol 31). Lanes as s47: Fable orchestrated, ONE Opus 5.5 agent built every batch,
 Codex astra reviewed each (prompts `state/park-batch{2..14}-codex-review-prompt.md`), must-fixes closed before every push. Teacher's standing order:
 "faithful behaviour replication — look at the decompile"; "go across all levels and make sure all the puzzles can be played out correctly".
