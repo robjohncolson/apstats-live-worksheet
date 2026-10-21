@@ -1,0 +1,12 @@
+{
+  "classId": "33",
+  "sections": { "PeriodB": {}, "PeriodE": {} },
+  "progressChecks": [
+    { "unit": 1, "section": "PeriodB", "parts": { "A": { "of": 18, "origin": "paper" },
+        "B": { "id": "81595010", "of": 14 }, "C": { "id": "81595024", "of": 12 }, "FRQ": { "id": "81595036", "of": 16 } },
+      "dueDate": "2026-10-15", "closeDate": "2026-10-24", "active": true },
+    { "unit": 1, "section": "PeriodE", "parts": { "A": { "of": 18, "origin": "paper" },
+        "B": { "id": "81743327", "of": 14 }, "C": { "id": "81743453", "of": 12 }, "FRQ": { "id": "81743492", "of": 16 } },
+      "dueDate": "2026-10-23", "closeDate": "2026-10-24", "active": true }
+  ]
+}

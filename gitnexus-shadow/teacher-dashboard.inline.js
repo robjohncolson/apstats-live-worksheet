@@ -1085,6 +1085,47 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     // ===== guardrails =====
     // The x-teacher-secret is NEVER auto-persisted client-side. It is read
     // fresh from the input on every fetch (see api()).
@@ -3841,6 +3882,121 @@
     $('pc-unlock-one-btn').addEventListener('click', unlockPcOne);
     $('load-btn').addEventListener('click', loadPcMakeup);
     $('section-filter').addEventListener('change', loadPcMakeup);
+
+    // BEGIN PC COMPLETENESS PANEL (PC_FOLLOWTHROUGH_SPEC.md §5)
+    // GET /pc/parts (posted ledger rows) overlaid with GET /pc/status (the AP Classroom
+    // snapshot). Built with DOM nodes + textContent only: a note can never inject HTML.
+    var pcCompRequest = 0;
+    var PC_COMP_PARTS = ['A', 'B', 'C', 'FRQ'];
+
+    // One cell: { text, cls, title }.
+    function pcCompCell(posted, ap) {
+      if (posted) {
+        var text = (posted.points != null && posted.of != null)
+          ? posted.points + '/' + posted.of
+          : Math.round(Number(posted.score) * 100) + '%';
+        var title = (posted.origin || 'posted') + (posted.postedAt ? ' · ' + posted.postedAt : '');
+        return { text: text, cls: posted.points === 0 ? 'pc-zero' : '', title: title };
+      }
+      if (!ap) return { text: '—', cls: '', title: '' };
+      if (ap.status === 'scored') return { text: ap.points + '/' + ap.of + ' · not posted', cls: 'pc-pending', title: 'AP Classroom has a score the reconcile has not posted' };
+      if (ap.status === 'submitted') return { text: 'needs scoring', cls: 'pc-needs-scoring', title: 'Submitted in AP Classroom, not scored yet' };
+      if (ap.status === 'in_progress') return { text: 'in progress', cls: '', title: '' };
+      return { text: '—', cls: '', title: '' };
+    }
+
+    // The newest note among a student's posted parts.
+    function pcCompNote(parts) {
+      var best = null;
+      PC_COMP_PARTS.forEach(function (p) {
+        var part = parts[p];
+        if (!part || !part.note) return;
+        if (!best || String(part.postedAt || '') > String(best.postedAt || '')) best = part;
+      });
+      return best ? best.note : '';
+    }
+
+    // Lowest PC % first; a student with no PC at all (null) leads.
+    function pcCompSort(a, b) {
+      var pa = a.pct == null ? -1 : a.pct;
+      var pb = b.pct == null ? -1 : b.pct;
+      return (pa - pb) || String(a.username).localeCompare(String(b.username));
+    }
+
+    function pcCompRow(student, apStudent, names) {
+      var tr = document.createElement('tr');
+      var nameTd = document.createElement('td');
+      nameTd.appendChild(studentNameElement({ studentId: student.studentId, username: student.username,
+        realName: names[student.username] || student.username }));
+      tr.appendChild(nameTd);
+      PC_COMP_PARTS.forEach(function (p) {
+        var cell = pcCompCell((student.parts || {})[p], (apStudent || {})[p]);
+        var td = document.createElement('td');
+        td.textContent = cell.text;
+        if (cell.cls) td.className = cell.cls;
+        if (cell.title) td.title = cell.title;
+        tr.appendChild(td);
+      });
+      var pctTd = document.createElement('td');
+      pctTd.className = 'num';
+      pctTd.textContent = student.pct == null ? '—' : String(student.pct);
+      tr.appendChild(pctTd);
+      var noteTd = document.createElement('td');
+      noteTd.className = 'dim';
+      noteTd.textContent = pcCompNote(student.parts || {});
+      tr.appendChild(noteTd);
+      return tr;
+    }
+
+    async function loadPcCompleteness() {
+      var request = ++pcCompRequest;
+      var tbody = $('pc-comp-tbody');
+      tbody.replaceChildren();
+      $('pc-comp-wrap').hidden = true;
+      $('pc-comp-reminders').hidden = true;
+      var section = ($('section-filter').value || '').trim();
+      if (!section) { $('pc-comp-meta').textContent = 'Type a section above (PeriodB or PeriodE) to load Progress Check completeness.'; return; }
+      $('pc-comp-meta').textContent = 'Loading Progress Check completeness…';
+      var query = '?section=' + encodeURIComponent(section) + '&unit=' + encodeURIComponent($('pc-comp-unit').value);
+      var results = await Promise.all([
+        fetchJson('/pc/parts' + query, teacherSecret()),
+        fetchJson('/pc/status' + query, teacherSecret()),
+      ]);
+      if (request !== pcCompRequest) return;
+      var partsRes = results[0];
+      var statusRes = results[1];
+      if (partsRes.status === 503) { $('pc-comp-meta').textContent = 'Not provisioned yet: roster-server needs the ledger (migration 0011).'; return; }
+      if (partsRes.status !== 200 || !partsRes.data || !partsRes.data.ok) {
+        $('pc-comp-meta').textContent = 'Could not load /pc/parts. Check your teacher sign-in and try again.';
+        return;
+      }
+
+      var snapshot = statusRes.status === 200 && statusRes.data && statusRes.data.ok ? statusRes.data.status : null;
+      var meta;
+      if (statusRes.status === 503) meta = 'AP Classroom snapshot not provisioned yet: run roster-server migration 0043_pc_status.sql.';
+      else if (snapshot && snapshot.fetchedAt) meta = 'AP Classroom snapshot from ' + snapshot.fetchedAt;
+      else meta = 'No snapshot yet: run tools/apclassroom_pc_reconcile.py';
+
+      // Section 4b: reminder drafts the teacher has not sent yet.
+      var reminders = snapshot && snapshot.reminders;
+      if (reminders && reminders.sent === false) {
+        $('pc-comp-reminders').textContent = (reminders.count || 0) + ' reminder drafts waiting (drafted ' +
+          String(reminders.draftedAt || '').slice(0, 10) + ')';
+        $('pc-comp-reminders').hidden = false;
+      }
+
+      var apStudents = (snapshot && snapshot.students) || {};
+      var names = _pcNameMap();
+      var students = (partsRes.data.students || []).slice().sort(pcCompSort);
+      students.forEach(function (s) { tbody.appendChild(pcCompRow(s, apStudents[s.username], names)); });
+      $('pc-comp-wrap').hidden = students.length === 0;
+      $('pc-comp-meta').textContent = meta + ' · ' + students.length + ' student(s).';
+    }
+    $('pc-comp-refresh-btn').addEventListener('click', loadPcCompleteness);
+    $('pc-comp-unit').addEventListener('change', loadPcCompleteness);
+    $('load-btn').addEventListener('click', loadPcCompleteness);
+    $('section-filter').addEventListener('change', loadPcCompleteness);
+    // END PC COMPLETENESS PANEL
 
     // ── Quarter Close & Bonus (PC makeup [D] freeze/delta) ───────────────────
     function _qcQuarter() { return $('qc-quarter').value; }

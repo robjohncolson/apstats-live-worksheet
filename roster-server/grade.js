@@ -269,6 +269,9 @@ export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts
 
     const posterPct = unitNum != null && unitPosterRaw[unitNum] != null ? unitPosterRaw[unitNum] : null;
     units[uKey] = { W, Q, B, banked, pcRawPct, posterPct, P, unitGrade, graded };
+    // Per-part paper detail for the teacher dashboard (PC_FOLLOWTHROUGH_SPEC.md §1.4).
+    // Only set when the unit has per-part paper rows, so every other unit keeps its shape.
+    if (pcAgg.units[uKey] && pcAgg.units[uKey].parts) units[uKey].pcParts = pcAgg.units[uKey].parts;
   }
   // A poster for a unit the answer key does not know yet still needs a cell.
   for (const [unitNum, score] of Object.entries(unitPosterRaw)) {

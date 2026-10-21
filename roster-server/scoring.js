@@ -5,6 +5,8 @@
 // Phase-2 /rollup cr-quiz aggregation", not a fork). Logic is byte-equivalent
 // to rollup.js's original local helpers — the 13 rollup tests pin it.
 
+import { PC_PART_POINTS } from './grade-config.js';
+
 // blooketScore -- the authoritative per-student per-Blooket score on [0,1].
 // SINGLE SOURCE OF TRUTH: the POST /class/blooket endpoint, the import tool, and
 // the unit tests all import THIS function (BLOOKET_IMPORT_P2_BUILD.md section 1).
@@ -203,13 +205,17 @@ export function scoreAgainstKey(rows, answerKey) {
 //   • otherwise the row is RE-SCORED (row.response vs the public answer key) —
 //     legacy proctored PC rows whose items ARE in answer-key.json. A null-key
 //     item is ungradable and DROPS from the denominator (unchanged behavior).
-// Best-wins: PAPER rows (item_id …-PAPER) hold a unit-level proctored score and
-// best-win against the online per-item mean (Math.max — a makeup only ever
-// raises). Returns scoreAgainstKey's { units:{ U#:{ pct } }, totals } shape so
-// the computeGrade → unitPcRaw → computeQuarterV3 wire is untouched.
+// PAPER rows (item_id U{n}-PC-{A|B|C|FRQ|REST}-PAPER) are one row per PART
+// (PC_FOLLOWTHROUGH_SPEC.md §1). The parts blend into one paper % (pcPaperBlend:
+// half MCQ, half FRQ), and that paper % best-wins against the online per-item
+// mean (Math.max — a makeup only ever raises). A -PAPER row with no part name
+// is a legacy whole-PC score: it best-wins too. Returns scoreAgainstKey's
+// { units:{ U#:{ pct, parts } }, totals } shape so the computeGrade →
+// unitPcRaw → computeQuarterV3 wire is untouched.
 export function scorePcRows(rows, answerKey = {}) {
   const online = {}; // unit → { sum, n } of per-item credit
-  const paper = {};  // unit → best paper pct (0..100)
+  const paper = {};  // unit → best UN-parted legacy paper pct (0..100)
+  const parts = {};  // unit → { A|B|C|FRQ|REST: part detail }
   for (const row of latestPerItem(rows)) {
     const itemId = String(row?.item_id || '');
     if (!itemId) continue;
@@ -228,24 +234,112 @@ export function scorePcRows(rows, answerKey = {}) {
     }
     if (credit == null) continue;                          // ungradable → skip
 
+    const partName = pcPaperPartOf(itemId);
+    if (partName) {
+      const unitParts = parts[u] || (parts[u] = {});
+      unitParts[partName] = pcPartDetail(row, credit);
+      continue;
+    }
     if (/-PAPER$/i.test(itemId)) {
       paper[u] = Math.max(paper[u] == null ? 0 : paper[u], credit * 100);
-    } else {
-      const o = online[u] || (online[u] = { sum: 0, n: 0 });
-      o.sum += credit;
-      o.n += 1;
+      continue;
     }
+    const o = online[u] || (online[u] = { sum: 0, n: 0 });
+    o.sum += credit;
+    o.n += 1;
   }
 
   const units = {};
-  for (const u of new Set([...Object.keys(online), ...Object.keys(paper)])) {
+  for (const u of new Set([...Object.keys(online), ...Object.keys(paper), ...Object.keys(parts)])) {
     const onlinePct = online[u] ? (online[u].sum / online[u].n) * 100 : null;
-    const paperPct = paper[u] == null ? null : paper[u];
+    const blendPct = parts[u] ? pcPaperBlend(parts[u], u) : null;
     const best = Math.max(
       onlinePct == null ? -1 : onlinePct,
-      paperPct == null ? -1 : paperPct,
+      paper[u] == null ? -1 : paper[u],
+      blendPct == null ? -1 : blendPct,
     );
     units[u] = { pct: best < 0 ? null : Math.round(best * 10) / 10 };
+    if (parts[u]) units[u].parts = parts[u];
   }
   return { units, totals: {} };
+}
+
+// "U1-PC-FRQ-PAPER" → "FRQ"; anything else → null.
+function pcPaperPartOf(itemId) {
+  const m = String(itemId).match(/^U\d+-PC-(A|B|C|FRQ|REST)-PAPER$/i);
+  return m ? m[1].toUpperCase() : null;
+}
+
+// A per-part row's response is a JSON string { part, points, of, origin, note,
+// postedAt }. Legacy rows carry '(paper)' (or nothing): treat that as {}.
+function pcResponseObject(response) {
+  if (response && typeof response === 'object' && !Array.isArray(response)) return response;
+  if (typeof response !== 'string') return {};
+  try {
+    const parsed = JSON.parse(response);
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function pcPartDetail(row, credit) {
+  const info = pcResponseObject(row.response);
+  const hasPoints = typeof info.points === 'number' && Number.isFinite(info.points);
+  const points = hasPoints ? info.points : null;
+  const of = Number(info.of) > 0 ? Number(info.of) : null;
+  return {
+    score: credit,
+    points,
+    of,
+    note: typeof info.note === 'string' ? info.note : null,
+    origin: typeof info.origin === 'string' ? info.origin : null,
+    postedAt: typeof info.postedAt === 'string' ? info.postedAt : (row.recorded_at || null),
+  };
+}
+
+// The weight of one MCQ part: its posted `of`, else the config table, else 1.
+function pcPartWeight(partName, part, unitNum) {
+  if (Number(part.of) > 0) return Number(part.of);
+  const table = PC_PART_POINTS[unitNum];
+  if (table && Number(table[partName]) > 0) return Number(table[partName]);
+  return 1;
+}
+
+// pcPaperBlend(partsByName, unit) → the unit's paper % (0..100, unrounded) or
+// null when no part is present (PC_FOLLOWTHROUGH_SPEC.md §1.2, teacher 2026-10-20):
+//   MCQ half = points-weighted mean of the present A, B, C parts
+//   FRQ half = the FRQ part's score
+//   both present → 50/50; only one side present → that side alone.
+// A part posted as 0 points is PRESENT (the deadline zero); an absent part is
+// excluded, never 0.
+// Legacy (§1.3): while a unit has no B, C or FRQ row, the old REST row
+// ((B + C + FRQ) / 42) still counts and the unit keeps the old rule, the best of
+// A and REST, so nothing moves before the first reconcile. Once any B, C or FRQ
+// row exists, REST is ignored.
+export function pcPaperBlend(partsByName, unit) {
+  const parts = partsByName || {};
+  const unitNum = parseInt(String(unit).replace(/^U/i, ''), 10);
+  const hasPerPart = Boolean(parts.B || parts.C || parts.FRQ);
+
+  if (!hasPerPart) {
+    const legacy = [parts.A, parts.REST].filter(Boolean).map((p) => p.score * 100);
+    return legacy.length ? Math.max(...legacy) : null;
+  }
+
+  let num = 0;
+  let den = 0;
+  for (const name of ['A', 'B', 'C']) {
+    const part = parts[name];
+    if (!part) continue;
+    const weight = pcPartWeight(name, part, unitNum);
+    num += part.score * weight;
+    den += weight;
+  }
+  const mcqHalf = den > 0 ? num / den : null;
+  const frqHalf = parts.FRQ ? parts.FRQ.score : null;
+
+  if (mcqHalf != null && frqHalf != null) return 100 * (0.5 * mcqHalf + 0.5 * frqHalf);
+  if (mcqHalf != null) return 100 * mcqHalf;
+  return 100 * frqHalf;
 }

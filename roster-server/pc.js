@@ -4,7 +4,9 @@
 //   GET  /pc/:unit/:part            -> unlocked student fetches the QUESTIONS (answers stripped)
 //   POST /pc/:unit/:part/submit     -> unlocked student submits answers; server scores
 //                                      vs the CB-secure pc_bank + writes best-wins 'pc' rows
-//   POST /pc/grade                  -> teacher enters the proctored PAPER PC score
+//   POST /pc/grade                  -> teacher enters one proctored PAPER PC part (A|B|C|FRQ)
+//   GET  /pc/parts                  -> teacher: every student's posted parts + blended PC % (one unit)
+//   GET  /pc/status, POST /pc/status -> teacher: the AP Classroom snapshot (migration 0043)
 //   POST /pc/unlock                 -> teacher unlocks a list of present students for (unit, part)
 //   POST /pc/unlock/student         -> teacher unlocks ONE student (the after-school makeup)
 //   GET  /pc/unlock/status          -> caller's own active unlocks
@@ -15,7 +17,7 @@
 
 import { requireTeacher } from './teacher-auth.js';
 import { verifyToken } from './token.js';
-import { isCorrect } from './scoring.js';
+import { isCorrect, scorePcRows } from './scoring.js';
 
 // Only these fields ever reach the client. WHITELIST (not blacklist) so a new
 // answer-bearing field in a future bank can never leak: `answer`,
@@ -126,7 +128,9 @@ async function teacherUsername(req, db) {
   return null;
 }
 
-const PART_RE = /^(A|REST)$/;
+const PART_RE = /^(A|REST)$/;            // the online makeup parts (unlock + delivery)
+const GRADE_PART_RE = /^(A|B|C|FRQ|REST)$/; // paper parts POST /pc/grade accepts (REST = legacy)
+const PC_ORIGINS = ['apclassroom', 'paper', 'teacher'];
 
 export function mountPc(app, { db, pcDb, ledgerDb, figuresSigner }) {
   if (!pcDb) return;
@@ -268,10 +272,11 @@ export function mountPc(app, { db, pcDb, ledgerDb, figuresSigner }) {
     return res.json({ ok: true, unit: unit, part: part, scored: scored });
   });
 
-  // POST /pc/grade { studentUsername, unit, part, score }
-  // Teacher enters the authoritative PROCTORED paper PC score (0..1). Written as
-  // its own -PAPER item_id row so per-unit best-wins (Math.max) combines it with
-  // the online attempts. This is the primary score; the online retake only raises.
+  // POST /pc/grade { studentUsername, unit, part, score? , points?, of?, note?, origin? }
+  // Teacher (or the AP Classroom reconcile) enters one PROCTORED paper PC PART
+  // (PC_FOLLOWTHROUGH_SPEC.md §2.1). Written as its own U{n}-PC-{PART}-PAPER row;
+  // scorePcRows blends the parts (half MCQ, half FRQ) and best-wins that against
+  // the online attempts. points + of → score = points / of; else score (0..1).
   app.post('/pc/grade', async (req, res) => {
     if (!await requireTeacher(req, db)) return res.status(401).json({ ok: false, error: 'forbidden' });
     if (!ledgerDb) return res.status(503).json({ ok: false, error: 'ledger not provisioned' });
@@ -279,10 +284,40 @@ export function mountPc(app, { db, pcDb, ledgerDb, figuresSigner }) {
     var studentUsername = String(body.studentUsername || '').trim();
     var unit = parseInt(body.unit, 10);
     var part = String(body.part || '').toUpperCase();
-    var score = Number(body.score);
-    if (!studentUsername || !Number.isInteger(unit) || !PART_RE.test(part) || !Number.isFinite(score) || score < 0 || score > 1) {
-      return res.status(400).json({ ok: false, error: 'studentUsername + unit (int) + part (A|REST) + score (0..1) required' });
+    if (!studentUsername || !Number.isInteger(unit) || !GRADE_PART_RE.test(part)) {
+      return res.status(400).json({ ok: false, error: 'studentUsername + unit (int) + part (A|B|C|FRQ|REST) required' });
     }
+    if (part === 'REST') console.warn('POST /pc/grade: part REST is deprecated; post B, C and FRQ as separate parts');
+
+    var hasPoints = body.points != null || body.of != null;
+    var points = hasPoints ? body.points : null;
+    var of = hasPoints ? body.of : null;
+    var score;
+    if (hasPoints) {
+      if (typeof points !== 'number' || typeof of !== 'number' || !Number.isFinite(points) || !Number.isFinite(of) || of <= 0 || points < 0 || points > of) {
+        return res.status(400).json({ ok: false, error: 'points + of required together: of > 0, 0 <= points <= of' });
+      }
+      score = points / of;
+    } else {
+      score = Number(body.score);
+      if (body.score == null || !Number.isFinite(score) || score < 0 || score > 1) {
+        return res.status(400).json({ ok: false, error: 'score (0..1) required when points + of are not given' });
+      }
+    }
+
+    if (body.note != null && (typeof body.note !== 'string' || body.note.length > 300)) {
+      return res.status(400).json({ ok: false, error: 'note must be a string of at most 300 characters' });
+    }
+    var origin = body.origin == null ? 'teacher' : String(body.origin);
+    if (!PC_ORIGINS.includes(origin)) {
+      return res.status(400).json({ ok: false, error: 'origin must be apclassroom | paper | teacher' });
+    }
+
+    var detail = { part: part };
+    if (hasPoints) { detail.points = points; detail.of = of; }
+    detail.origin = origin;
+    if (body.note) detail.note = body.note;
+    detail.postedAt = new Date().toISOString();
 
     var found;
     try { found = await db.findByUsername(studentUsername); } catch (err) {
@@ -296,7 +331,7 @@ export function mountPc(app, { db, pcDb, ledgerDb, figuresSigner }) {
     var ins = await ledgerDb.insertLedgerRow({
       studentId: found.data.student_id, source: 'pc',
       itemId: 'U' + unit + '-PC-' + part + '-PAPER',
-      unit: 'U' + unit, response: '(paper)', score: score,
+      unit: 'U' + unit, response: JSON.stringify(detail), score: score,
       evidenceTier: 'proctored', attempt: 1,
     });
     if (ins && ins.error) {
@@ -304,7 +339,126 @@ export function mountPc(app, { db, pcDb, ledgerDb, figuresSigner }) {
       console.error('POST /pc/grade insert error:', ins.error);
       return res.status(500).json({ ok: false, error: 'Database error' });
     }
-    return res.json({ ok: true, unit: unit, part: part, student: studentUsername, score: score });
+    var out = { ok: true, unit: unit, part: part, student: studentUsername, score: score };
+    if (hasPoints) { out.points = points; out.of = of; }
+    return res.json(out);
+  });
+
+  // GET /pc/parts?section=PeriodE&unit=1 (teacher) — every student's posted PC
+  // parts + the blended PC % for one unit (PC_FOLLOWTHROUGH_SPEC.md §2.2). Read by
+  // the dashboard completeness panel and by the reconcile's never-lower check.
+  app.get('/pc/parts', async (req, res) => {
+    if (!await requireTeacher(req, db)) return res.status(401).json({ ok: false, error: 'forbidden' });
+    if (!ledgerDb) return res.status(503).json({ ok: false, error: 'ledger not provisioned' });
+    var section = String((req.query && req.query.section) || '').trim();
+    var unit = parseInt(req.query && req.query.unit, 10);
+    if (!section || !Number.isInteger(unit)) {
+      return res.status(400).json({ ok: false, error: 'section + unit (int) required' });
+    }
+
+    var roster;
+    try { roster = await db.listRoster(section); } catch (err) { roster = { error: err }; }
+    if (!roster || roster.error) {
+      console.error('GET /pc/parts listRoster error:', roster && roster.error);
+      return res.status(500).json({ ok: false, error: 'Database error' });
+    }
+
+    var students = [];
+    var rosterRows = Array.isArray(roster.data) ? roster.data : [];
+    for (var i = 0; i < rosterRows.length; i++) {
+      var r = rosterRows[i];
+      if (!r || r.role === 'teacher') continue;
+      var led;
+      try { led = await ledgerDb.getLedgerByStudent(r.student_id); } catch (err) { led = { error: err }; }
+      // A missing student would look like "no parts posted" and the reconcile could
+      // post a deadline 0 over a real score: fail the whole read instead.
+      if (!led || led.error) {
+        console.error('GET /pc/parts ledger read failed for one student');
+        return res.status(500).json({ ok: false, error: 'Database error' });
+      }
+      var pcRows = (led.data || []).filter(function (row) { return row && row.source === 'pc'; });
+      var unitAgg = scorePcRows(pcRows, {}).units['U' + unit] || null;
+      students.push({
+        username: r.login_username,
+        studentId: r.student_id,
+        parts: (unitAgg && unitAgg.parts) || {},
+        pct: unitAgg ? unitAgg.pct : null,
+      });
+    }
+    return res.json({ ok: true, section: section, unit: unit, students: students });
+  });
+
+  // GET /pc/status?section=&unit= (teacher) — the AP Classroom snapshot the
+  // reconcile saw last (PC_FOLLOWTHROUGH_SPEC.md §2.3). Table: migration 0043.
+  app.get('/pc/status', async (req, res) => {
+    if (!await requireTeacher(req, db)) return res.status(401).json({ ok: false, error: 'forbidden' });
+    var section = String((req.query && req.query.section) || '').trim();
+    var unit = parseInt(req.query && req.query.unit, 10);
+    if (!section || !Number.isInteger(unit)) {
+      return res.status(400).json({ ok: false, error: 'section + unit (int) required' });
+    }
+    try {
+      var { data, error } = await pcDb.getStatus(section, unit);
+      if (error) {
+        if (error.code === '42P01') return res.status(503).json({ ok: false, error: 'run migration 0043' });
+        console.error('GET /pc/status error:', error);
+        return res.status(500).json({ ok: false, error: 'Database error' });
+      }
+      return res.json({
+        ok: true, section: section, unit: unit,
+        status: data ? data.payload : null,
+        updatedAt: data ? data.updated_at : null,
+      });
+    } catch (err) {
+      console.error('GET /pc/status throw:', err);
+      return res.status(500).json({ ok: false, error: 'Database error' });
+    }
+  });
+
+  // POST /pc/status { section, unit, payload } (teacher) — the reconcile stores its
+  // snapshot. Usernames only; unmatched AP Classroom names are counted, never stored.
+  // POST /pc/status { section, unit, reminders } (no payload) — MERGE: only the stored
+  // snapshot's `reminders` key changes (§4b: the session marks the drafts sent).
+  app.post('/pc/status', async (req, res) => {
+    if (!await requireTeacher(req, db)) return res.status(401).json({ ok: false, error: 'forbidden' });
+    var body = req.body || {};
+    var section = String(body.section || '').trim();
+    var unit = parseInt(body.unit, 10);
+    var payload = body.payload;
+    var remindersOnly = payload == null && body.reminders != null;
+    if (remindersOnly) {
+      if (!section || !Number.isInteger(unit) || typeof body.reminders !== 'object' || Array.isArray(body.reminders)) {
+        return res.status(400).json({ ok: false, error: 'section + unit (int) + reminders (object) required' });
+      }
+      try {
+        var current = await pcDb.getStatus(section, unit);
+        if (current.error) {
+          if (current.error.code === '42P01') return res.status(503).json({ ok: false, error: 'run migration 0043' });
+          console.error('POST /pc/status (reminders) read error:', current.error);
+          return res.status(500).json({ ok: false, error: 'Database error' });
+        }
+        if (!current.data || !current.data.payload) return res.status(404).json({ ok: false, error: 'no snapshot to update' });
+        payload = Object.assign({}, current.data.payload, { reminders: body.reminders });
+      } catch (err) {
+        console.error('POST /pc/status (reminders) throw:', err);
+        return res.status(500).json({ ok: false, error: 'Database error' });
+      }
+    }
+    if (!section || !Number.isInteger(unit) || !payload || typeof payload !== 'object' || Array.isArray(payload)) {
+      return res.status(400).json({ ok: false, error: 'section + unit (int) + payload (object) required' });
+    }
+    try {
+      var { error } = await pcDb.upsertStatus(section, unit, payload);
+      if (error) {
+        if (error.code === '42P01') return res.status(503).json({ ok: false, error: 'run migration 0043' });
+        console.error('POST /pc/status error:', error);
+        return res.status(500).json({ ok: false, error: 'Database error' });
+      }
+      return res.json({ ok: true, section: section, unit: unit });
+    } catch (err) {
+      console.error('POST /pc/status throw:', err);
+      return res.status(500).json({ ok: false, error: 'Database error' });
+    }
   });
 
   // POST /pc/unlock { studentUsernames: [...], unit, part }

@@ -288,6 +288,65 @@ describe('POST /pc/grade (teacher paper entry)', () => {
     });
     expect(status).toBe(404);
   });
+
+  // PC_FOLLOWTHROUGH_SPEC.md §2.1: per-part rows with points / of / note / origin.
+  async function grade(body) {
+    const led = fakeLedgerDb();
+    server = new TestServer(buildApp(mockPcDb(), rosterWithStudent(), led)); await server.start();
+    const res = await server.req('POST', '/pc/grade', { headers: { 'x-teacher-secret': TEACHER }, body: { studentUsername: USERNAME, unit: 1, ...body } });
+    return { ...res, led };
+  }
+
+  it('points + of -> score = points / of, the row carries the JSON detail', async () => {
+    const { status, json, led } = await grade({ part: 'FRQ', points: 12, of: 16, origin: 'apclassroom', note: 'from AP Classroom' });
+    expect(status).toBe(200);
+    expect(json).toMatchObject({ ok: true, part: 'FRQ', score: 0.75, points: 12, of: 16 });
+    expect(led._writes[0]).toMatchObject({ itemId: 'U1-PC-FRQ-PAPER', score: 0.75, evidenceTier: 'proctored', attempt: 1 });
+    const detail = JSON.parse(led._writes[0].response);
+    expect(detail).toMatchObject({ part: 'FRQ', points: 12, of: 16, origin: 'apclassroom', note: 'from AP Classroom' });
+    expect(typeof detail.postedAt).toBe('string');
+  });
+
+  it('a zero (points 0) is a valid row', async () => {
+    const { status, led } = await grade({ part: 'C', points: 0, of: 12 });
+    expect(status).toBe(200);
+    expect(led._writes[0]).toMatchObject({ itemId: 'U1-PC-C-PAPER', score: 0 });
+  });
+
+  it('origin defaults to teacher', async () => {
+    const { led } = await grade({ part: 'B', points: 13, of: 14 });
+    expect(JSON.parse(led._writes[0].response).origin).toBe('teacher');
+  });
+
+  it('points/of validation: of <= 0, points > of, points without of, non-numbers -> 400', async () => {
+    for (const bad of [
+      { points: 5, of: 0 }, { points: 15, of: 14 }, { points: -1, of: 14 },
+      { points: 5 }, { of: 14 }, { points: 'x', of: 14 },
+    ]) {
+      const { status, led } = await grade({ part: 'B', ...bad });
+      expect(status).toBe(400);
+      expect(led._writes).toHaveLength(0);
+      await server.stop(); server = null;
+    }
+  });
+
+  it('note longer than 300 characters -> 400; exactly 300 is fine', async () => {
+    expect((await grade({ part: 'B', points: 1, of: 14, note: 'x'.repeat(301) })).status).toBe(400);
+    await server.stop(); server = null;
+    expect((await grade({ part: 'B', points: 1, of: 14, note: 'x'.repeat(300) })).status).toBe(200);
+  });
+
+  it('unknown origin or part -> 400', async () => {
+    expect((await grade({ part: 'B', points: 1, of: 14, origin: 'robot' })).status).toBe(400);
+    await server.stop(); server = null;
+    expect((await grade({ part: 'D', points: 1, of: 14 })).status).toBe(400);
+  });
+
+  it('REST still works (deprecated) with score only', async () => {
+    const { status, led } = await grade({ part: 'REST', score: 0.5 });
+    expect(status).toBe(200);
+    expect(led._writes[0]).toMatchObject({ itemId: 'U1-PC-REST-PAPER', score: 0.5 });
+  });
 });
 
 describe('GET /pc/unlock/class (teacher makeup board)', () => {

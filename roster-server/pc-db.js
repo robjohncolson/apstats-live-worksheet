@@ -4,6 +4,8 @@
 //   pc_bank   — CB-secure PC26 banks (getBank reads the FULL payload incl. answers;
 //               the route strips answers before sending to the client).
 //   pc_unlock — per (student_username, unit, part) unlock set by the teacher.
+//   pc_status — the AP Classroom snapshot per (section, unit) the reconcile saw last
+//               (PC_FOLLOWTHROUGH_SPEC.md §2.3, migration 0043).
 
 import { createClient } from '@supabase/supabase-js';
 
@@ -15,6 +17,8 @@ export function createPcDb(client) {
     isUnlocked,            // (username, unit, part) -> { data: bool, error }
     listActiveForStudent,  // (username) -> { data: rows, error }
     listActiveUnlocks,     // () -> { data: rows, error }  (teacher class view)
+    getStatus,             // (section, unit) -> { data: { payload, updated_at }|null, error }
+    upsertStatus,          // (section, unit, payload) -> { data, error }
   };
 
   // getBank(unit, part) -> { data: { unit, part, payload }|null, error }
@@ -93,6 +97,24 @@ export function createPcDb(client) {
       .from('pc_unlock')
       .select('student_username, unit, part, unlocked_by, unlocked_at')
       .eq('status', 'active');
+  }
+
+  // getStatus(section, unit) -> { data: { payload, updated_at }|null, error }
+  async function getStatus(section, unit) {
+    return client
+      .from('pc_status')
+      .select('payload, updated_at')
+      .eq('section', section)
+      .eq('unit', unit)
+      .maybeSingle();
+  }
+
+  // upsertStatus(section, unit, payload) -> { data, error } — one row per (section, unit).
+  async function upsertStatus(section, unit, payload) {
+    return client
+      .from('pc_status')
+      .upsert([{ section: section, unit: unit, payload: payload, updated_at: new Date().toISOString() }],
+        { onConflict: 'section,unit' });
   }
 }
 

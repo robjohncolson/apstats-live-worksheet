@@ -111,6 +111,8 @@ roster-server/tests/fixtures/golden-local/
 tools/.payout-agent-logs/
 tools/.slips-agent-logs/
 tools/.weekly-dok-logs/
+# AP Classroom PC reconcile logs + page dumps (may hold real names)
+tools/.pc-reconcile-logs/
 
 # DOK ladders: LaTeX byproducts (PDFs in dok/pdf/ ARE committed)
 dok/tex/*.aux

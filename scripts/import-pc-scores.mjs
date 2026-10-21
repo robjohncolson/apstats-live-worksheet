@@ -4,7 +4,9 @@
  * or teacher-scored paper copies) into the roster ledger via POST /pc/grade.
  *
  * Each row becomes the student's proctored PC row for (unit, part); the server
- * best-wins it against any online retake. Score = points / of.
+ * blends the parts (half MCQ, half FRQ) and best-wins that against any online
+ * retake. Score = points / of. Part B, C and FRQ normally come from the nightly
+ * AP Classroom reconcile (tools/apclassroom_pc_reconcile.py); Part A is paper.
  *
  * Input file (kept OUTSIDE the repo — it holds student names and answers):
  *   section=PeriodB unit=1 part=A of=18          ← header, key=value pairs
@@ -33,8 +35,8 @@ export function parseScoreFile(text) {
   const lines = text.split(/\r?\n/).map(l => l.replace(/\s+#.*$/, '').trim()).filter(l => l && !l.startsWith('#'));
   const header = Object.fromEntries(lines[0].split(/\s+/).map(kv => kv.split('=')));
   const meta = { section: header.section, unit: Number(header.unit), part: String(header.part || '').toUpperCase(), of: Number(header.of) };
-  if (!meta.section || !Number.isInteger(meta.unit) || !/^(A|REST)$/.test(meta.part) || !(meta.of > 0)) {
-    throw new Error('header needs section=, unit=, part=A|REST, of=');
+  if (!meta.section || !Number.isInteger(meta.unit) || !/^(A|B|C|FRQ|REST)$/.test(meta.part) || !(meta.of > 0)) {
+    throw new Error('header needs section=, unit=, part=A|B|C|FRQ|REST, of=');
   }
   const rows = [];
   const skipped = [];
@@ -121,7 +123,9 @@ async function main(argv) {
   for (const p of plan) {
     const res = await fetch(`${url}/pc/grade`, {
       method: 'POST', headers,
-      body: JSON.stringify({ studentUsername: p.username, unit: meta.unit, part: meta.part, score: p.score }),
+      // points + of (PC_FOLLOWTHROUGH_SPEC.md §2.1): the row keeps its own weight for the MCQ blend.
+      body: JSON.stringify({ studentUsername: p.username, unit: meta.unit, part: meta.part,
+        points: Math.min(meta.of, Math.max(0, p.points)), of: meta.of, origin: 'paper' }),
     });
     const body = await res.json().catch(() => ({}));
     if (res.ok && body.ok !== false) { ok += 1; continue; }

@@ -27,6 +27,14 @@ export const BONUS_MULTIPLIER = 1.5;
 // DESK_SCHOOLOGY_TITLES_CED fallback (pinned equal by tests/ced-no-raw-keys.test.js).
 export const SCHOOLOGY_TITLES_CED = true;
 
+// Points per Progress Check part, by NEW unit number (PC_FOLLOWTHROUGH_SPEC.md §1.5).
+// The MCQ half of the PC blend weights each part by its points. Every per-part row the
+// reconcile or POST /pc/grade writes carries its own `of`, so this table is only the
+// fallback for a row without one. Add a unit here when its PC is built.
+export const PC_PART_POINTS = {
+  1: { A: 18, B: 14, C: 12, FRQ: 16 },
+};
+
 export const PHASE3_CONFIG = {
   // Banked bonus-sheet points are multiplied by this when read (class.js bankedBonus).
   bonusMultiplier: BONUS_MULTIPLIER,
