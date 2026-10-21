@@ -140,6 +140,26 @@ class ParserTests(unittest.TestCase):
         self.assertEqual(frq["Fig Fox"]["status"], "submitted")
         self.assertIsNone(frq["Fig Fox"]["points"])
 
+    def test_page_ready_waits_for_the_points_header_and_rows(self):
+        dashes = "Name\nPoints Earned\n(of )\nAVERAGE TIME SPENT\nPear Cat\t-\t\n1\n"
+        no_rows = "Name\nPoints Earned\n(of 14)\nAVERAGE TIME SPENT\t\t02:25\n"
+        loaded = "Name\nPoints Earned\n(of 14)\nAVERAGE TIME SPENT\nPear Cat\n9\n1\n"
+        self.assertFalse(rec.page_ready("B", dashes, "Points Earned"))
+        self.assertFalse(rec.page_ready("B", no_rows, "Points Earned"))
+        self.assertTrue(rec.page_ready("B", loaded, "Points Earned"))
+
+    def test_page_ready_frq_rejects_the_zero_over_zero_placeholder(self):
+        placeholder = "Name\nStatus\nDate Submitted\nPear Cat\tScored\t\u2014\t\n0/0\n"
+        loaded = "Name\nStatus\nDate Submitted\nPear Cat\tScored\t10/15 10:47 AM\t\n13/16\n"
+        self.assertFalse(rec.page_ready("FRQ", "Sign In", "Date Submitted"))
+        self.assertFalse(rec.page_ready("FRQ", placeholder, "Date Submitted"))
+        self.assertTrue(rec.page_ready("FRQ", loaded, "Date Submitted"))
+
+    def test_parse_progress_ignores_zero_over_zero(self):
+        rows = rec.parse_progress("Name\nStatus\nDate Submitted\nPear Cat\tScored\t\u2014\t\n0/0\n")
+        self.assertIsNone(rows["Pear Cat"]["points"])
+        self.assertEqual(rows["Pear Cat"]["status"], "submitted")
+
     def test_needs_sign_in(self):
         self.assertTrue(rec.needs_sign_in("https://account.collegeboard.org/login", "", "Points Earned"))
         self.assertTrue(rec.needs_sign_in("https://apclassroom.collegeboard.org/33", "Sign In to continue", "Points Earned"))

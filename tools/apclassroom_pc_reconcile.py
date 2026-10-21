@@ -36,7 +36,7 @@ Privacy: the repo is public. Real names live only in the private roster map
 (the log dir is gitignored). stdout shows usernames only unless --names.
 
 Secrets: ROSTER_TEACHER_SECRET from the environment only. Never printed.
-Exit codes: 0 ok, 1 an HTTP/post failure, 2 SIGN IN NEEDED.
+Exit codes: 0 ok, 1 an HTTP/post failure or a table that never loaded, 2 SIGN IN NEEDED.
 
 ASCII only. LF line endings.
 """
@@ -70,6 +70,7 @@ AP_BASE = "https://apclassroom.collegeboard.org"
 GH_REPO = "robjohncolson/apstats-live-worksheet"
 SIGN_IN_TITLE = "PC reconcile: sign-in needed"
 SIGN_IN_LINE = "SIGN IN NEEDED: open AP Classroom in the Edge rig profile"
+SIGN_IN_GRACE_S = 8  # a sign-in page must persist this long before it counts (IdP bounce)
 
 ONLINE_PARTS = ("B", "C", "FRQ")
 MCQ_PARTS = ("A", "B", "C")
@@ -77,6 +78,10 @@ MCQ_PARTS = ("A", "B", "C")
 # Mirror of roster-server/grade-config.js PC_PART_POINTS (the fallback weight of a
 # row posted without `of`). Pinned equal by tests/test_apclassroom_pc_reconcile.py.
 PC_PART_POINTS = {1: {"A": 18, "B": 14, "C": 12, "FRQ": 16}}
+
+
+class PageNotReady(Exception):
+    """The AP Classroom table rendered its header but never filled in its numbers."""
 
 
 class SignInNeeded(Exception):
@@ -266,6 +271,8 @@ def parse_progress(text: str) -> dict:
         if current is None:
             continue
         score = _SCORE_RE.search(line)
+        if score and int(score.group(2)) == 0:
+            score = None  # '0/0' is AP Classroom's not-yet-loaded placeholder
         if score and rows[current]["points"] is None:
             rows[current]["points"] = float(score.group(1)) if "." in score.group(1) else int(score.group(1))
             rows[current]["of"] = int(score.group(2))
@@ -274,6 +281,24 @@ def parse_progress(text: str) -> dict:
         if row["status"] == "scored" and row["points"] is None:
             row["status"] = "submitted"  # 'Scored' without a number: nothing to post yet
     return rows
+
+
+def page_ready(part: str, text: str, header: str) -> bool:
+    """True once the table has its header AND its numbers.
+
+    AP Classroom paints these tables in stages. Results by Student first shows
+    '(of )' and a dash per student, then '(of 14)' with no rows at all, then the
+    rows. The FRQ progress table first shows every row as 'Scored' with a '0/0'
+    score. Reading any of those early paints would look like nobody submitted
+    or everybody scored zero (and, after the close date, would zero everyone)."""
+    body = str(text or "")
+    if header not in body:
+        return False
+    if part == "FRQ":
+        return "0/0" not in body
+    if parse_points_of(body) is None:
+        return False
+    return len(parse_results_students(body)) > 0
 
 
 def needs_sign_in(url: str, text: str, header: str) -> bool:
@@ -621,19 +646,30 @@ def fetch_live_pages(class_id: str, entry: dict, dump_dir=None) -> dict:
         tab = "PROGRESS" if part == "FRQ" else "RESULTS_STUDENTS"
         header = "Date Submitted" if part == "FRQ" else "Points Earned"
         ops.navigate(cdp, "%s/%s/assignments/progress/%s?tab=%s" % (AP_BASE, class_id, assignment, tab), wait_ms=3000)
-        url, text = "", ""
-        deadline = time.time() + 30
+        url, text, previous, settled = "", "", None, False
+        deadline = time.time() + 45
+        sign_in_since = None
         while time.time() < deadline:
             page = cdp.eval_js("JSON.stringify({url: location.href, text: document.body ? document.body.innerText : ''})")
             info = json.loads(page or "{}")
             url, text = info.get("url", ""), info.get("text", "")
-            if header in text:
+            if page_ready(part, text, header) and text == previous:
+                settled = True  # ready on two polls in a row: the table stopped painting
                 break
             if needs_sign_in(url, text, header):
-                raise SignInNeeded()
+                # A live session bounces through the College Board IdP for a few
+                # seconds on its way back; only a sign-in page that STAYS counts.
+                sign_in_since = sign_in_since or time.time()
+                if time.time() - sign_in_since >= SIGN_IN_GRACE_S:
+                    raise SignInNeeded()
+            else:
+                sign_in_since = None
+            previous = text
             time.sleep(1)
         if needs_sign_in(url, text, header) or header not in text:
             raise SignInNeeded()
+        if not settled:
+            raise PageNotReady("%s table never finished loading its scores" % part)
         pages[part] = text
         if dump_dir:
             os.makedirs(dump_dir, exist_ok=True)
@@ -821,6 +857,9 @@ def main(argv=None, api=None) -> int:
             if args.apply:
                 open_sign_in_issue()
             return 2
+        except PageNotReady as err:
+            rep.out("PAGE NOT READY: %s; nothing posted" % err)
+            return 1
 
     ok = True
     for entry, pages in zip(entries, pages_by_entry):

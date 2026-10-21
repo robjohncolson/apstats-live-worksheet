@@ -4,7 +4,7 @@ Status: BUILT 2026-10-20 (Opus 5.5 implemented; Codex astra review RED -> 6 find
 dashboard already shows real names behind the secret). Accepted deviations: legacy REST rows keep max(A, REST) until a
 per-part row exists (1.3 as written would have moved the banana_otter provisional 75 before the first reconcile); never-lower is
 per PART (a replacement may never lower a stored part; the first reconcile may still lower a unit's blend, listed as
-`PC % DROPS`); reminder drafts are written in dry runs too (private file). Weekday in the draft comes from the date.
+`PC % DROPS`); reminder drafts are written in dry runs too (private file). Weekday in the draft comes from the date. FIRST LIVE RUN 2026-10-21: AP Classroom paints its tables in stages ('(of )' + dashes, then '(of N)' with no rows, FRQ rows as 'Scored 0/0'); the reader now waits for a settled, fully painted table (PageNotReady -> exit 1, nothing posted), treats 0/0 as unloaded, and gives the IdP bounce 8 s before calling it SIGN IN NEEDED. Period B per-part rows posted (37).
 
 ## 0. Teacher decisions (2026-10-20, verbatim intent)
 
