@@ -1436,7 +1436,16 @@
       return { question: q, options: options };
     }
 
-    document.getElementById('btn-open-doorways').addEventListener('click', function() {
+    // Boot-time wiring guard: every control-strip listener goes through here so one
+    // missing element (a trimmed fixture, a future layout edit) cannot throw and drop
+    // everything wired after it -- the section select, Arm Gate, Green Light and the
+    // boot() call that starts monitor mode all sit below the first listener.
+    function _wireAtBoot(id, eventName, handler) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener(eventName, handler);
+    }
+    _wireAtBoot('btn-open-doorways', 'click', function() {
       if (!boardHandle) return;
       var vals = getDoorwaysFormValues();
       if (vals.options.length < 2) { alert('Need at least 2 doorways.'); return; }
@@ -1458,7 +1467,7 @@
       document.getElementById('doorways-tally-canvas').style.display = '';
     });
 
-    document.getElementById('btn-close-doorways').addEventListener('click', function() {
+    _wireAtBoot('btn-close-doorways', 'click', function() {
       if (!boardHandle || !_activeDoorwaysId) return;
       boardHandle.closeDoorways(_activeDoorwaysId);
     });
@@ -2356,7 +2365,7 @@
       });
     })();
 
-    document.getElementById('doorways-add-option').addEventListener('click', function () {
+    _wireAtBoot('doorways-add-option', 'click', function () {
       addDoorwaysOptionRow();
     });
 
@@ -2426,14 +2435,14 @@
     })();
 
     // The "Add option" button.
-    document.getElementById('poll-add-option').addEventListener('click', function () {
+    _wireAtBoot('poll-add-option', 'click', function () {
       addPollOptionRow();
     });
 
     // ===== v2: poll Open / Close / Reveal button wiring =====
 
     // Open Poll: disabled while a gate is armed (mode exclusivity per Section 1.5).
-    document.getElementById('btn-open-poll').addEventListener('click', function () {
+    _wireAtBoot('btn-open-poll', 'click', function () {
       if (!boardHandle || typeof boardHandle.openPoll !== 'function') return;
       var question = document.getElementById('poll-question-input').value.trim();
       if (!question) { alert('Please enter a question.'); return; }
@@ -2443,12 +2452,12 @@
       boardHandle.openPoll(question, options, blind);
     });
 
-    document.getElementById('btn-close-poll').addEventListener('click', function () {
+    _wireAtBoot('btn-close-poll', 'click', function () {
       if (!boardHandle || typeof boardHandle.closePoll !== 'function') return;
       boardHandle.closePoll();
     });
 
-    document.getElementById('btn-reveal-poll').addEventListener('click', function () {
+    _wireAtBoot('btn-reveal-poll', 'click', function () {
       if (!boardHandle || typeof boardHandle.reveal !== 'function') return;
       boardHandle.reveal();
     });
@@ -2925,7 +2934,7 @@
       }
     }
 
-    document.getElementById('btn-go-live').addEventListener('click', function() {
+    _wireAtBoot('btn-go-live', 'click', function() {
       // Open the section picker by simply revealing the Section card --
       // the user then picks a section from the dropdown and the existing
       // onSectionChange handler mounts the board. Re-targeted so the
@@ -2938,8 +2947,8 @@
       }
     });
 
-    document.getElementById('btn-exit-live').addEventListener('click', exitLiveMode);
-    document.getElementById('btn-class-sound').addEventListener('click', function() {
+    _wireAtBoot('btn-exit-live', 'click', exitLiveMode);
+    _wireAtBoot('btn-class-sound', 'click', function() {
       if (!_liveSectionRef) return;
       _sendClassSound(!_classSoundOn());
     });
@@ -2961,11 +2970,11 @@
       mountBoard(section, session);
     }
 
-    document.getElementById('section-select').addEventListener('change', onSectionChange);
+    _wireAtBoot('section-select', 'change', onSectionChange);
 
     // ===== v1b: control strip button wiring =====
 
-    document.getElementById('btn-arm-gate').addEventListener('click', function () {
+    _wireAtBoot('btn-arm-gate', 'click', function () {
       if (!boardHandle || typeof boardHandle.armGate !== 'function') return;
       var theme = todayTheme();
       // s111 P4 HOTFIX: clear any stale doorways / poll first so
@@ -2980,7 +2989,7 @@
       // broadcast arrives (the reducer sets greenlight false on arm).
     });
 
-    document.getElementById('btn-green-light').addEventListener('click', function () {
+    _wireAtBoot('btn-green-light', 'click', function () {
       if (!boardHandle || typeof boardHandle.greenLight !== 'function') return;
       // The indicator lights from the broadcast-driven onStateChange summary,
       // not optimistically here -- so it never lies if the send fails.
@@ -2989,7 +2998,7 @@
       });
     });
 
-    document.getElementById('btn-reset').addEventListener('click', function () {
+    _wireAtBoot('btn-reset', 'click', function () {
       if (!boardHandle || typeof boardHandle.reset !== 'function') return;
       boardHandle.reset();
       // The indicator clears via onStateChange when the reset classroom_state

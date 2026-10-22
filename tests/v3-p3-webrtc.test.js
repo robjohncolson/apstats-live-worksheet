@@ -188,8 +188,9 @@ function makeCockpitEnv(opts) {
     + '<div id="section-region" style="display:none">'
     +   '<h2 id="section-region-title">Live -- Period <span id="live-section-label">?</span></h2>'
     +   '<button id="btn-exit-live"></button>'
-    // 513d5967 (2026-10-10, park music): the cockpit wires #btn-class-sound at boot;
-    // without it getElementById(...).addEventListener throws before startMonitorMode().
+    // 513d5967 (2026-10-10, park music): the cockpit wires #btn-class-sound at boot.
+    // Since track G (2026-10-22) boot wiring is null-guarded (_wireAtBoot), so a missing
+    // button no longer throws before startMonitorMode(); see the boot-order describe below.
     +   '<button id="btn-class-sound"></button>'
     + '</div>'
     + '<select id="section-select"><option value="PeriodE">PeriodE</option></select>'
@@ -237,6 +238,13 @@ function makeCockpitEnv(opts) {
   );
 
   var win = dom.window;
+
+  // Track G (2026-10-22): a fixture may drop elements to prove the boot-time
+  // wiring guard (_wireAtBoot) keeps startMonitorMode reachable.
+  (opts.omitIds || []).forEach(function (id) {
+    var el = dom.window.document.getElementById(id);
+    if (el && el.parentNode) el.parentNode.removeChild(el);
+  });
 
   // Canvas stub (jsdom has no getContext).
   var stubCtx = {
@@ -637,5 +645,49 @@ describe('v3 P3 cockpit hub -- studentPeers + WebRTC initiation', () => {
 
     // The PC for alice was closed (since its DC never opened in time).
     expect(alicePc._closed).toBe(true);
+  });
+});
+
+// =====================================================================
+// Track G (FABLE_SPRINT_2026_10_22B): boot order survives a missing control.
+// Before the guard, `document.getElementById('btn-class-sound').addEventListener`
+// threw at boot and every listener wired after it (section select, Arm Gate,
+// Green Light) plus boot() -> startMonitorMode() never ran.
+// =====================================================================
+
+describe('cockpit boot order -- one missing element cannot drop the rest', () => {
+  it('fixture WITHOUT #btn-class-sound still reaches startMonitorMode and wires the later controls', async () => {
+    var env = makeCockpitEnv({ omitIds: ['btn-class-sound'] });
+    expect(env.win.document.getElementById('btn-class-sound')).toBeNull();
+
+    var ctx = createContext(env.win);
+    var bootError = null;
+    try { runInContext(INLINE_SCRIPT, ctx); } catch (e) { bootError = e; }
+    expect(bootError).toBeNull();
+    await yieldTicks(2);
+
+    // startMonitorMode ran: the global presence view is shown and the monitor WS opened.
+    expect(env.win.document.getElementById('global-presence-section').style.display).toBe('');
+    expect(env.win.document.getElementById('section-region').style.display).toBe('none');
+    expect(env.MockWS.allInstances.length).toBeGreaterThanOrEqual(1);
+
+    // Controls wired AFTER the missing button still work: Go Live mounts the board.
+    for (var i = 0; i < env.MockWS.allInstances.length; i++) {
+      if (env.MockWS.allInstances[i].readyState === 0) env.MockWS.allInstances[i]._open();
+    }
+    env.win.document.getElementById('btn-go-live').click();
+    await yieldTicks(12);
+    expect(env.capture.boardOpts).not.toBeNull();
+  });
+
+  it('fixture missing several control-strip buttons still boots', async () => {
+    var env = makeCockpitEnv({ omitIds: ['btn-class-sound', 'btn-arm-gate', 'btn-green-light', 'btn-reset', 'poll-add-option'] });
+    var ctx = createContext(env.win);
+    var bootError = null;
+    try { runInContext(INLINE_SCRIPT, ctx); } catch (e) { bootError = e; }
+    expect(bootError).toBeNull();
+    await yieldTicks(2);
+    expect(env.win.document.getElementById('global-presence-section').style.display).toBe('');
+    expect(env.MockWS.allInstances.length).toBeGreaterThanOrEqual(1);
   });
 });
