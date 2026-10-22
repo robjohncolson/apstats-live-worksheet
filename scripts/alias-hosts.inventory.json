@@ -1,0 +1,1092 @@
+{
+  "generatedBy": "scripts/alias-hosts.mjs --inventory",
+  "mapping": {
+    "roster-production-12c1.up.railway.app": "roster.<domain>",
+    "curriculumrender-production.up.railway.app": "cr.<domain>",
+    "a2-live-worksheets-production.up.railway.app": "a2.<domain>",
+    "lrsl-driller-production.up.railway.app": "lrsl.<domain>",
+    "shared-grading-proxy-production.up.railway.app": "proxy.<domain>"
+  },
+  "hosts": [
+    {
+      "host": "a2-live-worksheets-production.up.railway.app",
+      "service": "a2",
+      "occurrences": 24
+    },
+    {
+      "host": "apstats-roster-production.up.railway.app",
+      "service": "unmapped",
+      "occurrences": 2
+    },
+    {
+      "host": "curriculumrender-production.up.railway.app",
+      "service": "cr",
+      "occurrences": 105
+    },
+    {
+      "host": "lrsl-driller-production.up.railway.app",
+      "service": "lrsl",
+      "occurrences": 7
+    },
+    {
+      "host": "roster-production-12c1.up.railway.app",
+      "service": "roster",
+      "occurrences": 32
+    },
+    {
+      "host": "roster-xxxx.up.railway.app",
+      "service": "unmapped",
+      "occurrences": 2
+    },
+    {
+      "host": "your-app.up.railway.app",
+      "service": "unmapped",
+      "occurrences": 4
+    }
+  ],
+  "files": {
+    "fa": [
+      {
+        "path": ".github/workflows/frq-regrade.yml",
+        "hosts": {
+          "roster-production-12c1.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "ap_stats_roadmap_square_mode.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 7,
+          "lrsl-driller-production.up.railway.app": 1
+        },
+        "occurrences": 8
+      },
+      {
+        "path": "data/frq-regrade-manifest.json",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "data/study-guide-sync-config.js",
+        "hosts": {
+          "lrsl-driller-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "lib/net-probe.js",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "railway_client.js",
+        "hosts": {
+          "your-app.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "railway_config.js",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1,
+          "your-app.up.railway.app": 1
+        },
+        "occurrences": 2
+      },
+      {
+        "path": "roster-server/doge-wallet.js",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "roster_config.js",
+        "hosts": {
+          "roster-production-12c1.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "scripts/convert-poster-bonus.mjs",
+        "hosts": {
+          "roster-production-12c1.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "scripts/enter-bonus.mjs",
+        "hosts": {
+          "roster-production-12c1.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "scripts/enter-poster.mjs",
+        "hosts": {
+          "roster-production-12c1.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "scripts/import-blooket.mjs",
+        "hosts": {
+          "roster-production-12c1.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "scripts/import-pc-scores.mjs",
+        "hosts": {
+          "roster-production-12c1.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "scripts/smoke-student-host-matrix.mjs",
+        "hosts": {
+          "roster-production-12c1.up.railway.app": 1,
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 2
+      },
+      {
+        "path": "scripts/smoke-trainer-ledger.mjs",
+        "hosts": {
+          "roster-production-12c1.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "scripts/supplement-probe-signal.mjs",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "scripts/teacher-roster.mjs",
+        "hosts": {
+          "roster-production-12c1.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "scripts/weekly-dok.mjs",
+        "hosts": {
+          "roster-production-12c1.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "study_guide_diagnostic.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1,
+          "lrsl-driller-production.up.railway.app": 1
+        },
+        "occurrences": 2
+      },
+      {
+        "path": "teacher-classroom.html",
+        "hosts": {
+          "roster-production-12c1.up.railway.app": 1,
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 2
+      },
+      {
+        "path": "teacher-dashboard.html",
+        "hosts": {
+          "roster-production-12c1.up.railway.app": 3
+        },
+        "occurrences": 3
+      },
+      {
+        "path": "teacher-guest-reconcile.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "teacher-roster-console.html",
+        "hosts": {
+          "roster-production-12c1.up.railway.app": 2
+        },
+        "occurrences": 2
+      },
+      {
+        "path": "tests/frq-regrade-job.test.js",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "tests/gradebook-feeder-wiring.test.js",
+        "hosts": {
+          "roster-production-12c1.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "tests/journeys/harness.js",
+        "hosts": {
+          "roster-production-12c1.up.railway.app": 1,
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 2
+      },
+      {
+        "path": "tests/pwa.test.js",
+        "hosts": {
+          "roster-production-12c1.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "tests/reflection-grader.test.js",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 4
+        },
+        "occurrences": 4
+      },
+      {
+        "path": "tests/roster-client.test.js",
+        "hosts": {
+          "apstats-roster-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "tests/study-guide.test.js",
+        "hosts": {
+          "lrsl-driller-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "tests/teacher-roster-uids.test.js",
+        "hosts": {
+          "roster-production-12c1.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "tests/teacher-worksheet-diagnostics.test.js",
+        "hosts": {
+          "roster-production-12c1.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "tools/apclassroom_pc_reconcile.py",
+        "hosts": {
+          "roster-production-12c1.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "tools/build_schoology_fixture.py",
+        "hosts": {
+          "roster-production-12c1.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "tools/doge-send.mjs",
+        "hosts": {
+          "roster-production-12c1.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "tools/mirror-ledger.yml",
+        "hosts": {
+          "roster-xxxx.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "tools/payout-agent.config.example.json",
+        "hosts": {
+          "roster-production-12c1.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "tools/schoology_official.py",
+        "hosts": {
+          "roster-production-12c1.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u1_lesson10_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u1_lesson1_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u1_lesson2_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u1_lesson3_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u1_lesson4_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u1_lesson5_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u1_lesson6_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u1_lesson7_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u1_lesson8_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u1_lesson9_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u2_lesson1_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u2_lesson2_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u2_lesson3_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u2_lesson4_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u2_lesson5_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u2_lesson6_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u2_lesson7_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u2_lesson8_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u2_lesson9_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u3_lesson1_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u3_lesson2_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u3_lesson3_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u3_lesson4_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u3_lesson5_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u3_lesson6-7_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 2
+        },
+        "occurrences": 2
+      },
+      {
+        "path": "u4_lesson1-2-3_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u4_lesson1-2_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u4_lesson10-12_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u4_lesson3-4-5_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u4_lesson6_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u4_lesson7-8_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u4_lesson9_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u5_lesson1-2_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u5_lesson3_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u5_lesson4_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u5_lesson5_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u5_lesson6_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u5_lesson7_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u5_lesson8_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u6_lesson1-2_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u6_lesson10_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u6_lesson11_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u6_lesson3_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u6_lesson4_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u6_lesson5_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u6_lesson6_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u6_lesson7_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u6_lesson8_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u6_lesson9_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u7_lesson1_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u7_lesson2_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u7_lesson3_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u7_lesson4_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u7_lesson5_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u7_lesson6_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u7_lesson7_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u7_lesson8_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u7_lesson9_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u8_lesson1_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u8_lesson2_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u8_lesson3_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u8_lesson4_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u8_lesson5_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u8_lesson6_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u9_lesson1_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u9_lesson2_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u9_lesson3_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u9_lesson4_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "u9_lesson5_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      }
+    ],
+    "cr": [
+      {
+        "path": "index.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 4
+        },
+        "occurrences": 4
+      },
+      {
+        "path": "js/grading/grading-engine.js",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "js/network_manager.js",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "railway-server/.env.example",
+        "hosts": {
+          "roster-production-12c1.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "railway-server/scripts/park-bonus-sweep.mjs",
+        "hosts": {
+          "roster-production-12c1.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "railway-server/server.js",
+        "hosts": {
+          "roster-production-12c1.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "railway_client.js",
+        "hosts": {
+          "your-app.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "railway_config.js",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1,
+          "your-app.up.railway.app": 1
+        },
+        "occurrences": 2
+      },
+      {
+        "path": "roster_config.js",
+        "hosts": {
+          "roster-production-12c1.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "scripts/check_orphans.ps1",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "test_escalation.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "tests/pwa.test.js",
+        "hosts": {
+          "roster-production-12c1.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "worksheets/mit_ocw_6.0001_lec1_live.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "worksheets/u3l4.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "worksheets/u3l5.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "worksheets/u3l67.html",
+        "hosts": {
+          "curriculumrender-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      }
+    ],
+    "a2": [
+      {
+        "path": "data/study-guide-sync-config.js",
+        "hosts": {
+          "lrsl-driller-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "desk.html",
+        "hosts": {
+          "a2-live-worksheets-production.up.railway.app": 2
+        },
+        "occurrences": 2
+      },
+      {
+        "path": "railway_client.js",
+        "hosts": {
+          "a2-live-worksheets-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "railway_config.js",
+        "hosts": {
+          "a2-live-worksheets-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "roster-client.js",
+        "hosts": {
+          "a2-live-worksheets-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "roster_config.js",
+        "hosts": {
+          "a2-live-worksheets-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "scripts/a2-daily-engagement.mjs",
+        "hosts": {
+          "a2-live-worksheets-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "scripts/import-blooket.mjs",
+        "hosts": {
+          "a2-live-worksheets-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "scripts/smoke-student-host-matrix.mjs",
+        "hosts": {
+          "a2-live-worksheets-production.up.railway.app": 2
+        },
+        "occurrences": 2
+      },
+      {
+        "path": "scripts/teacher-reset-passwords.mjs",
+        "hosts": {
+          "a2-live-worksheets-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "scripts/teacher-roster.mjs",
+        "hosts": {
+          "a2-live-worksheets-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "study_guide_diagnostic.html",
+        "hosts": {
+          "a2-live-worksheets-production.up.railway.app": 1,
+          "lrsl-driller-production.up.railway.app": 1
+        },
+        "occurrences": 2
+      },
+      {
+        "path": "teacher-dashboard.html",
+        "hosts": {
+          "a2-live-worksheets-production.up.railway.app": 3
+        },
+        "occurrences": 3
+      },
+      {
+        "path": "teacher-roster-console.html",
+        "hosts": {
+          "a2-live-worksheets-production.up.railway.app": 2
+        },
+        "occurrences": 2
+      },
+      {
+        "path": "tests/a2-deployment.test.js",
+        "hosts": {
+          "a2-live-worksheets-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "tests/pwa.test.js",
+        "hosts": {
+          "a2-live-worksheets-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "tests/roster-client.test.js",
+        "hosts": {
+          "apstats-roster-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "tests/study-guide.test.js",
+        "hosts": {
+          "lrsl-driller-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "tests/teacher-roster-uids.test.js",
+        "hosts": {
+          "a2-live-worksheets-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "tests/teacher-worksheet-diagnostics.test.js",
+        "hosts": {
+          "a2-live-worksheets-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "tools/build_schoology_fixture.py",
+        "hosts": {
+          "a2-live-worksheets-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "tools/ixl/ixl_bonus_run.sh",
+        "hosts": {
+          "a2-live-worksheets-production.up.railway.app": 1
+        },
+        "occurrences": 1
+      },
+      {
+        "path": "tools/mirror-ledger.yml",
+        "hosts": {
+          "roster-xxxx.up.railway.app": 1
+        },
+        "occurrences": 1
+      }
+    ]
+  }
+}
