@@ -13,15 +13,10 @@
 
 import { describe, it, expect, vi } from 'vitest';
 
-// Track B (2026-10-22): the real Desk boots in jsdom in 7-14 s on the teacher's Windows box
-// (CI Linux: under 3 s), so this harness's real-wall-clock budgets (waitFor 1 s, boot 6 s,
-// the 60-180 s test timeouts) overrun there. Environmental, not a product bug: skipped on
-// win32; FORCE_WIN_TESTS=1 runs it anyway. CI still runs it.
-const describeOnThisBox = describe.skipIf(process.platform === 'win32' && !process.env.FORCE_WIN_TESTS);
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { JSDOM } from 'jsdom';
-import { bootDesk, DESK_URL } from './journeys/harness.js';
+import { bootDesk, DESK_URL, budget } from './journeys/harness.js';
 import { deskSource, deskHtml } from './helpers/desk-source.js';
 
 const REPO = resolve(__dirname, '..');
@@ -138,7 +133,7 @@ const esc = (win, doc) => {
   target.dispatchEvent(new win.KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
 };
 
-describeOnThisBox('Phase 3 -- every registry window is framed (flag on)', { timeout: 180_000 }, () => {
+describe('Phase 3 -- every registry window is framed (flag on)', { timeout: budget(180_000) }, () => {
   it('each opener: Pico frame around the unchanged content, the dialog\'s own title, ✕ = its own close', async () => {
     const harness = await boot(true);
     try {
@@ -271,7 +266,7 @@ describeOnThisBox('Phase 3 -- every registry window is framed (flag on)', { time
 });
 
 
-describeOnThisBox('Phase 3 -- review fixes', { timeout: 180_000 }, () => {
+describe('Phase 3 -- review fixes', { timeout: budget(180_000) }, () => {
   it('Study Break: the window box and the game canvas are exactly the same with the flag on and off', async () => {
     const measure = async (flagOn) => {
       const h = await boot(flagOn);
@@ -455,7 +450,7 @@ describeOnThisBox('Phase 3 -- review fixes', { timeout: 180_000 }, () => {
   });
 });
 
-describeOnThisBox('Phase 3 -- Esc behaves as before', { timeout: 180_000 }, () => {
+describe('Phase 3 -- Esc behaves as before', { timeout: budget(180_000) }, () => {
   it('for each window, Esc leaves it in the same state with the flag on as with it off', async () => {
     const on = await boot(true);
     const off = await boot(false);
@@ -486,7 +481,7 @@ describeOnThisBox('Phase 3 -- Esc behaves as before', { timeout: 180_000 }, () =
   });
 });
 
-describeOnThisBox('Phase 3 -- flag off', { timeout: 180_000 }, () => {
+describe('Phase 3 -- flag off', { timeout: budget(180_000) }, () => {
   it('the dialogs\' DOM is byte-identical before and after pico-home.js runs (raw markup)', () => {
     // Raw markup, not the JS: the dialogs live in the HTML (C3 codemod had pointed this at deskSource()).
     const dom = new JSDOM(deskHtml().replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, ''), {

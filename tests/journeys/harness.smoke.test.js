@@ -4,11 +4,6 @@
 
 import { describe, expect, it } from 'vitest';
 
-// Track B (2026-10-22): the real Desk boots in jsdom in 7-14 s on the teacher's Windows box
-// (CI Linux: under 3 s), so this harness's real-wall-clock budgets (waitFor 1 s, boot 6 s,
-// the 60-180 s test timeouts) overrun there. Environmental, not a product bug: skipped on
-// win32; FORCE_WIN_TESTS=1 runs it anyway. CI still runs it.
-const describeOnThisBox = describe.skipIf(process.platform === 'win32' && !process.env.FORCE_WIN_TESTS);
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import {
@@ -16,11 +11,12 @@ import {
   CURRICULUM_URL,
   ROSTER_URL,
   SUPABASE_URL,
+  budget,
 } from './harness.js';
 
 const ROADMAP = JSON.parse(readFileSync(resolve(import.meta.dirname, '../../roadmap-data.json'), 'utf8'));
 
-describeOnThisBox('Desk journey harness smoke', () => {
+describe('Desk journey harness smoke', { timeout: budget(20_000) }, () => {
   it('boots the real Desk cleanly with Do Now and disk-backed roadmap tiles in under 6 seconds', async () => {
     const harness = await bootDesk();
     try {
@@ -45,7 +41,7 @@ describeOnThisBox('Desk journey harness smoke', () => {
         String(tile.dataset.topic).split('+').some((topic) => ROADMAP.lessons[topic])
       )), 'no rendered roadmap tile maps to roadmap-data.json').toBe(true);
 
-      expect(harness.bootTimeMs).toBeLessThan(6_000);
+      expect(harness.bootTimeMs).toBeLessThan(budget(6_000));
     } finally {
       harness.teardown();
     }

@@ -35,6 +35,23 @@ import { JSDOM, ResourceLoader, VirtualConsole } from 'jsdom';
 import { createFakeRoster } from './fake-roster.js';
 import { deskHtml } from '../helpers/desk-source.js';
 
+/**
+ * Real-wall-clock budget multiplier. The Desk boots in jsdom in under 3 s on CI Linux but
+ * 7-14 s on the teacher's Windows box, so every real-time budget in this harness (waitFor,
+ * the boot wait, the smoke's boot assertion, the per-test timeouts the suites pass) is
+ * multiplied by BUDGET: 1 by default (CI unaffected), 3 on win32, `HARNESS_BUDGET=<n>`
+ * overrides either. Fake-clock waits are deterministic fake milliseconds and are not scaled.
+ */
+const BUDGET_OVERRIDE = Number(process.env.HARNESS_BUDGET);
+export const BUDGET = Number.isFinite(BUDGET_OVERRIDE) && BUDGET_OVERRIDE > 0
+  ? BUDGET_OVERRIDE
+  : (process.platform === 'win32' ? 3 : 1);
+
+/** Scale a real-wall-clock budget (ms) by BUDGET. Use for `it`/`describe` timeouts. */
+export function budget(ms) {
+  return Math.round(ms * BUDGET);
+}
+
 export const DESK_URL = 'https://robjohncolson.github.io/apstats-live-worksheet/ap_stats_roadmap_square_mode.html';
 export const ROSTER_URL = 'https://roster-production-12c1.up.railway.app';
 export const CURRICULUM_URL = 'https://curriculumrender-production.up.railway.app';
@@ -472,7 +489,10 @@ function makeFlush(fakeClock) {
 function makeWaitFor(fakeClock, flush) {
   return async function waitFor(predicate, options = {}) {
     if (typeof predicate !== 'function') throw new TypeError('waitFor requires a predicate function');
-    const timeoutMs = options.timeoutMs ?? 1_000;
+    // Real-clock waits scale by BUDGET (explicit timeoutMs included, so a 1 500 ms wait
+    // written for CI holds on a slow box); fake-clock waits are deterministic and do not.
+    const requestedMs = options.timeoutMs ?? 1_000;
+    const timeoutMs = fakeClock ? requestedMs : budget(requestedMs);
     // Under the fake clock each poll costs one real host yield, so step the
     // fake clock in 25 ms increments (deterministic; a 700 ms UI delay = 28 polls
     // instead of 140). Real-timer journeys keep the fine 5 ms poll.
@@ -594,7 +614,7 @@ export async function bootDesk(opts = {}) {
   const flush = makeFlush(fakeClock);
   const waitFor = makeWaitFor(fakeClock, flush);
   try {
-    await waitForLoad(dom.window, opts.bootTimeoutMs || 2_750);
+    await waitForLoad(dom.window, budget(opts.bootTimeoutMs || 2_750));
     await flush(opts.bootFlushes || 8);
   } catch (error) {
     dom.window.close();

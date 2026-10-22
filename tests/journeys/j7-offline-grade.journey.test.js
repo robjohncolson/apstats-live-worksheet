@@ -4,12 +4,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-// Track B (2026-10-22): the real Desk boots in jsdom in 7-14 s on the teacher's Windows box
-// (CI Linux: under 3 s), so this harness's real-wall-clock budgets (waitFor 1 s, boot 6 s,
-// the 60-180 s test timeouts) overrun there. Environmental, not a product bug: skipped on
-// win32; FORCE_WIN_TESTS=1 runs it anyway. CI still runs it.
-const describeOnThisBox = describe.skipIf(process.platform === 'win32' && !process.env.FORCE_WIN_TESTS);
-import { bootDesk } from './harness.js';
+import { bootDesk, budget } from './harness.js';
 
 const NOW = '2026-07-20T12:00:00.000Z';
 const MARKS_KEY = 'apstats_desk_marks_alpha_otter';
@@ -177,7 +172,7 @@ async function expectIncidentInvariants(harness, marksBefore) {
   await expectIncidentCalendar(harness);
 }
 
-describeOnThisBox('Desk journey J7', () => {
+describe('Desk journey J7', () => {
   it.each(FAILURE_CASES)(
     'J7 cold reboot preserves the incident invariants after a real visible-tab $label /grade failure (supersedes incident-progress-reset-cache-relock, incident-progress-reset-donow-hydration, and incident-progress-reset-warm-control)',
     async ({ value, status }) => {
@@ -241,6 +236,6 @@ describeOnThisBox('Desk journey J7', () => {
         harness.teardown();
       }
     },
-    30_000,
+    budget(30_000),
   );
 });

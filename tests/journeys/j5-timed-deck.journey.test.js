@@ -6,12 +6,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-// Track B (2026-10-22): the real Desk boots in jsdom in 7-14 s on the teacher's Windows box
-// (CI Linux: under 3 s), so this harness's real-wall-clock budgets (waitFor 1 s, boot 6 s,
-// the 60-180 s test timeouts) overrun there. Environmental, not a product bug: skipped on
-// win32; FORCE_WIN_TESTS=1 runs it anyway. CI still runs it.
-const describeOnThisBox = describe.skipIf(process.platform === 'win32' && !process.env.FORCE_WIN_TESTS);
-import { bootDesk } from './harness.js';
+import { bootDesk, budget } from './harness.js';
 
 const NOW = '2026-08-18T12:00:00.000Z';
 const TOPIC = '1.1';
@@ -211,7 +206,7 @@ async function j5SettleRoster(harness) {
   });
 }
 
-describeOnThisBox('Desk journey J5', () => {
+describe('Desk journey J5', () => {
   it('J5 Full timed deck rejects a lower re-run and posts one higher best (supersedes desk-timed-deck it 17 “_ftFinish logs, recaps, and commits the score (best-wins)” and it 24 “_blooketCommit only saves a NEW best + refreshes /grade BEFORE the floor”)', async () => {
     const harness = await bootDesk({
       now: NOW,
@@ -308,5 +303,5 @@ describeOnThisBox('Desk journey J5', () => {
     } finally {
       harness.teardown();
     }
-  }, 60_000);
+  }, budget(60_000));
 });
