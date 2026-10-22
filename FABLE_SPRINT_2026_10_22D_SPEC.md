@@ -33,3 +33,18 @@ All four CLAUDE.md files: Desk size and module list, test commands (`test:quick`
 
 ## Release
 Same as sprint C per repo. Spec run log + memory.
+
+## Run log (2026-10-22, 21:40–23:30 local)
+
+| Track | Result |
+|---|---|
+| D1 fa | 4 confirmed: **status.html XSS** (remote text into innerHTML; `esc()` everywhere, run link only for github.com URLs), the 10/22 grade band had no lesson-level test (added: blanks + none/I/P/E → 80/87.5/95/105), two markup guards made vacuous by the C3 codemod (now read `deskHtml()` too), `_wireAtBoot` ids pinned. Verified clean: extraction order (acorn cross-segment check), queue parity with 729461af, Class Log token handling, shard coverage, nothing lowers a grade. c94ef250, 31f8ff6e. |
+| D1 cr/a2/class-log | 1 confirmed (cr log-mode invalid-shape header/log duplication, 67a7218). a2 + class-log: none; bundle LF claim verified both directions. Review docs committed in all three. |
+| D0 | a2 nightly "Tomorrow" draft: `lib/a2-tomorrow.js` (UMD), `scripts/draft-tomorrow.mjs`, `tools/nightly_tomorrow.ps1`, scheduled task `A2 Tomorrow Draft` 20:30 daily (registered, manual run exit 0), Desk teacher fold "Tomorrow (draft)". Do Now rule: a Jam named in the day log → the IXL skill of the next kept example → first unjammed skill → a kept packet item; nothing invented (20 tests). Notes for C 10/26, D 10/23, G 10/23 in `roster-local/tomorrow/`. |
+| D2 | Prep notes B + E for Fri 10/23 in `roster-local/prep/` (B: 2.3 Simulation Day 1, PC deadline Fri midnight, "interviewing someone next week"; E: 2.1 Day 1+2 catch-up, last E recording empty — check the phone). |
+| D3 | a2 typecheck 46 → 0 (JSDoc only; engine outputs identical 21/21); CI typecheck job blocking again. |
+| D4 | Harness budgets ×3 on win32 (`HARNESS_BUDGET` override); ten gated files un-skipped and green here (pico-home-doge too: it was the unscaled 1 s wait). |
+| D5 | class-log: 409 `section_mismatch` → re-send once with the card's section, correction persisted (470 tests). cr: see cr commit list below. a2 cardId/course check deferred (three agents already in a2). |
+| D6 | fa CLAUDE.md refreshed; a2 CLAUDE.md + CONTINUATION by D0; cr/class-log docs by their agents. |
+
+Gotcha found during release: the a2 fixture tree under `tests/fixtures/**/roster-local/` was hidden by the repo-wide `roster-local/` ignore and never reached CI (f3f64d2 un-ignores fixtures).
