@@ -182,7 +182,7 @@ Two Railway backends:
 
 - **GH Pages auto-publishes `master`** — every push goes live at the base URL above.
 - **roster-server/ auto-deploys to Railway on push to master.** Changes there are grade-affecting; flag them explicitly.
-- **Vercel mirror** — `https://apstats-live-worksheet.vercel.app` serves the same tree as a fallback rail when GH Pages is wedged. It is **manual**, not automatic: `npx vercel deploy --prod --yes` from the repo root. `vercel.json` redirects `/` to `mobile-home.html`; `.vercelignore` keeps backend source, tests, and tooling out of the upload.
+- **Vercel mirror** — `https://apstats-live-worksheet.vercel.app` serves the same tree as a fallback rail when GH Pages is wedged. Since 2026-10-22 it is **automatic**: the Vercel project (`roberts-projects-19fe2013/apstats-live-worksheet`) is GitHub-connected and builds every push to master. Do not use `npx vercel deploy` from this Windows box (the CLI upload dies on a TLS error); `status.html` shows whether the mirror matches GH Pages. `vercel.json` redirects `/` to `mobile-home.html`; `.vercelignore` keeps backend source, tests, and tooling out of the upload.
 - The teacher tests on the **public URL** (local `file://` is not a valid test surface) — commit + push promptly.
 - Commit new assets (images, sounds, fonts) before referencing them in code.
 
@@ -280,7 +280,7 @@ Do not re-add transpile work here. If a transpile session needs something from t
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **apstats-live-worksheet** (30899 symbols, 57855 relationships, 300 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **apstats-live-worksheet** (31277 symbols, 59211 relationships, 300 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > Index stale? Run `node .gitnexus/run.cjs analyze` from the project root — it auto-selects an available runner. No `.gitnexus/run.cjs` yet? `npx gitnexus analyze` (npm 11 crash → `npm i -g gitnexus`; #1939).
 
