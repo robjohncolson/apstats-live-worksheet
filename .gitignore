@@ -158,3 +158,9 @@ state/*.png
 UsersroberAppDataLocalTemp*/
 test-results/
 supabase_logs.json
+
+
+# Vercel CLI link + the OIDC token it writes (vercel link, 2026-10-22). Keep .env.example tracked.
+.vercel
+.env.local
+.env*.local
