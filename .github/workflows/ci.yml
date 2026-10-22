@@ -55,6 +55,15 @@ jobs:
         env:
           CURRICULUM_JS: ${{ github.workspace }}/curriculum_render/data/curriculum.js
         run: npm test -- --retry=2
+      # The park tests import the relay's copies of the shared modules (and its ws
+      # package) from a SIBLING checkout, ../curriculum_render, the way the local
+      # tree is laid out. actions/checkout cannot leave the workspace, so link the
+      # in-workspace checkout to the sibling path and install the relay's deps
+      # (railway-server has no lockfile, hence npm install, not ci).
+      - name: Link curriculum_render as a sibling + install relay deps
+        run: |
+          ln -sfn "$GITHUB_WORKSPACE/curriculum_render" "$GITHUB_WORKSPACE/../curriculum_render"
+          cd curriculum_render/railway-server && npm install --no-audit --no-fund
       - name: apstat-park tests
         run: npm run test:park
       - name: roster-server tests
