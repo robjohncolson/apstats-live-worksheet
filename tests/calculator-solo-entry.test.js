@@ -4,12 +4,13 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { deskSource } from './helpers/desk-source.js';
+import { deskSource, deskHtml } from './helpers/desk-source.js';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (file) => readFileSync(resolve(repo, file), 'utf8');
 const BOARD = readFileSync(resolve(repo, 'classroom-board.js'), 'utf8');
 const DESK = deskSource();
+const DESK_HTML = deskHtml(); // the markup: an app-window overlay would live here, not in the JS
 const PICO = read('pico-home.js');
 const PARK_LINK = 'ap_stats_roadmap_square_mode.html#room=calc-solo';
 // Spelled in two parts so the spec's acceptance search for the retired page name stays empty.
@@ -28,6 +29,10 @@ describe('the park door is the only calculator surface', () => {
     expect(DESK).not.toContain("id !== 'ti84'");
     expect(DESK).toContain("var isTool = (app === 'formulas');");
     expect(DESK).not.toContain(RETIRED_PAGE);
+    // C3 split: deskSource() is JS only, so the overlay/frame/link pins also read the raw HTML.
+    expect(DESK_HTML).not.toContain('app-ti84-overlay');
+    expect(DESK_HTML).not.toContain('app-ti84-frame');
+    expect(DESK_HTML).not.toContain(RETIRED_PAGE);
   });
 
   it('the Desk opens the park room with _openParkSolo (the hash deep link)', () => {

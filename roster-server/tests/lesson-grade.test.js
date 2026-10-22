@@ -1131,3 +1131,61 @@ describe('computeLessonGrades — quiz_review partial credit (E=1, P=2/3, I=1/3)
     expect(q02.credit).toBeCloseTo(2 / 3, 5);
   });
 });
+
+// ── 2026-10-22 band re-set (frqBand E 107.5 / P 92.5 / I 81.25 / ungraded 70) ──
+// Review D1 (REVIEW_2026_10_22_EVENING.md): commits 22aa29e5 + ddfccdf2 pinned the
+// config values but not the lesson numbers they were solved from. These pin the
+// production band end to end through computeLessonGrades.
+
+describe('computeLessonGrades — production frqBand targets (2026-10-22)', () => {
+  const BAND = PHASE3_CONFIG.frqBand;
+  const SINCE = PHASE3_CONFIG.frqProvisionalFloorSince;
+  const COUNTS = { '1.1': 3 };
+  const WEIGHTS = PHASE3_CONFIG.lessonFeederWeights;
+  const NEW = '2026-10-20T14:00:00Z';
+  const blanks = () => [
+    { item_id: 'WS-U1L1-Q1', source: 'worksheet', score: 1, response: null, recorded_at: NEW },
+    { item_id: 'WS-U1L1-Q2', source: 'worksheet', score: 1, response: null, recorded_at: NEW },
+    { item_id: 'WS-U1L1-Q3', source: 'worksheet', score: 1, response: null, recorded_at: NEW },
+  ];
+  const reflections = (score) => [
+    makeRow('WS-U1L1-reflect1', { source: 'frq', score, recorded_at: NEW }),
+    makeRow('WS-U1L1-reflect2', { source: 'frq', score, recorded_at: NEW }),
+  ];
+  const run = (rows) => computeLessonGrades(rows, BAND, SAMPLE_ANSWER_KEY, SAMPLE_SCHEDULE, {
+    worksheetBlankCounts: COUNTS, weights: WEIGHTS, frqFloorSince: SINCE,
+  }).get('1.1');
+
+  it('all blanks right + no reflection graded → 80 (provisional, the ungraded value)', () => {
+    const l = run(blanks());
+    expect(l.frqProvisional).toBe(true);
+    expect(l.lessonGrade).toBe(80);
+    expect(l.lessonGradeNoQuiz).toBe(80);
+  });
+
+  it('all blanks right + I,I → 87.5; P,P → 95; E,E → 105 (never above the lesson ceiling)', () => {
+    expect(run([...blanks(), ...reflections(0)]).lessonGrade).toBe(87.5);
+    expect(run([...blanks(), ...reflections(0.5)]).lessonGrade).toBe(95);
+    expect(run([...blanks(), ...reflections(1)]).lessonGrade).toBe(105);
+    expect(run([...blanks(), ...reflections(1)]).lessonGradeNoQuiz).toBe(105);
+  });
+
+  it('a graded I reads above the ungraded provisional number (grading only raises)', () => {
+    expect(BAND.I).toBeGreaterThan(BAND.ungraded);
+    expect(run([...blanks(), ...reflections(0)]).lessonGrade).toBeGreaterThan(run(blanks()).lessonGrade);
+  });
+
+  it('a reflection-only E lesson is clamped to 105, not 107.5', () => {
+    const l = run(reflections(1));
+    expect(l.W).toBe(107.5);              // the feeder keeps the band value
+    expect(l.lessonGrade).toBe(105);
+    expect(l.lessonGradeNoQuiz).toBe(105);
+  });
+
+  it('a band without `ungraded` (frozen SY2526 shape) still floors at I', () => {
+    const l = computeLessonGrades(blanks(), { E: 100, P: 85, I: 60 }, SAMPLE_ANSWER_KEY, SAMPLE_SCHEDULE, {
+      worksheetBlankCounts: COUNTS, weights: WEIGHTS, frqFloorSince: SINCE,
+    }).get('1.1');
+    expect(l.lessonGrade).toBe(73.3);
+  });
+});
