@@ -19,7 +19,7 @@ A full AP Statistics course platform: 69 video follow-along live worksheets, the
 |------|---------|
 | `index.html` | Landing page linking all apps (newly added — repo root previously 404'd) |
 | `u{unit}_lesson{range}_live.html` | The worksheet family: 69 files at root (u1–u9), indexed by `TOC.html`. Worksheet-wide rollouts are pattern-guarded to `^u\d+_lesson.+_live\.html$` |
-| `ap_stats_roadmap_square_mode.html` | **The Desk** (~14,250 lines): student home hub — roadmap lesson tiles, Do Now card with grade pills, completion calendar, resource panel, Live Classroom, Study Break Tetris, in-app gradebook. `calendar.html` is a 16-line redirect stub into it |
+| `ap_stats_roadmap_square_mode.html` + `js/desk-*.js` | **The Desk** (~23,400 inline lines after the 2026-10-22 extractions): student home hub — roadmap lesson tiles, Do Now card with grade pills, completion calendar, resource panel, Live Classroom, Study Break Tetris, in-app gradebook, teacher-only Class Log "Recording" fold. Six modules live in `js/desk-{calendar,class-log,gradebook-grid,park-bridge,progress-app,study-break}.js`, loaded with `?v=<build>` and listed in `scripts/bump-build.mjs` DESK_MODULES + `sw.js`. Tests read the Desk's JS through `tests/helpers/desk-source.js` (`deskSource()` / `deskHtml()` / `fnBody()`), never by regexing the HTML directly. `calendar.html` is a 16-line redirect stub into it |
 | `start-here.html` | Orientation + interactive v3 Grade Playground (fully static) |
 | `study_guide_diagnostic.html` | DAG/BKT diagnostic study guide; depends on `lib/` runtime (`bkt.js`, `dag-renderer.js`, `probe-selector.js`, `curriculum-charts.js`) |
 | (no page) | **TI-84 practice** = the APStat Park calculator room on the Desk's calendar board: the ONE calculator surface, no standalone page, no app window (`APSTAT_PARK_SOLO_DOOR_SPEC.md`; the standalone solo page and the Desk `ti84` window were retired 2026-10-17; the v2/v1 trainers and QA harness 2026-10-16, all in git history). Reached by the SOLO/TEAM switch door inside the room, the Desk hash (`#room=calc-solo[&skill=|&topic=]`, `#room=calc-team`) and `_openParkSolo(link)`; with no hash it opens as the team room while a class is live or in session (`apstat-park/class-session.mjs`), else solo. The native JS calculator engine is `apstat-park/calculator-native/` (byte-identical copy on the relay); the WebCEmu ROM harness is `tools/ti84-rom/` (teacher/dev only) |
@@ -76,7 +76,7 @@ The Desk hosts iframe apps via `openApp(id)` — `APP_REGISTRY` near line 12930 
 | `u3_random_block_review.html`, `u6-proportion-inference-plan.html`, `code-to-website-workshop.html` | One-off pages |
 | `u1/`–`u3/`, `u5/`–`u9/`, `u4_l*/`, `unit4guide/`, `mit_python_vid2/`, `a2_3-3/` | Source materials (transcripts, slides, PDFs) — not apps (no `u4/` dir; U4 materials live in `u4_l*/` + `unit4guide/`) |
 | `data/` | Generated data: `skill-map.*`, `lesson-schedule.json`, `answer-key.json`, study-guide maps |
-| `state/` | Cross-agent orchestration logs/prompts |
+| `state/` | Cross-agent orchestration logs/prompts; anything older than 2026-09-22 lives in `state/archive/`; new scratch (`*-codex-*prompt.md`, `*.json`, `*.png`) is gitignored |
 | `roadmap-data.json` | Baked Desk data — overridden at runtime by Supabase `lesson_urls` (see below) |
 | `roster-local/class-summaries/` | **Generated, gitignored** Class Log lesson summaries for sections B and E (`npm run pull-summaries`); see Class recordings below. Never hand-edit |
 | `*_SPEC.md` / `*_BUILD.md` | Per-feature spec/build contracts at root; `STATE_MACHINES.md`, `AI_GRADING_INTEGRATION.md` |
@@ -138,7 +138,7 @@ Three suites:
 
 | Suite | Where | Run |
 |-------|-------|-----|
-| Frontend/worksheets (Vitest + jsdom) | `tests/` (115 files) + colocated `lib/*.test.js` | `npm test` from root |
+| Frontend/worksheets (Vitest + jsdom) | `tests/` (~360 files) + colocated `lib/*.test.js` | `npm test` from root (~10 min here; CI runs it as 3 shards). `npm run test:quick` (~1 min) is the release gate. The jsdom harness suites scale their budgets ×3 on Windows (`HARNESS_BUDGET=<n>` overrides) |
 | roster-server (Vitest) | `roster-server/tests/` | `cd roster-server && npm test` |
 | Schoology tooling (pytest) | `tests/test_*.py` | `pytest tests/` |
 
@@ -180,7 +180,7 @@ Two Railway backends:
 
 ## Deployment
 
-- **GH Pages auto-publishes `master`** — every push goes live at the base URL above.
+- **GH Pages auto-publishes `master`** — every push goes live at the base URL above. CI (`.github/workflows/ci.yml`) runs the root suite in 3 vitest shards plus a park + roster-server job and a blocking typecheck; check `gh run list --workflow=ci.yml` or `status.html` — CI was red for three days in October before anyone looked.
 - **roster-server/ auto-deploys to Railway on push to master.** Changes there are grade-affecting; flag them explicitly.
 - **Vercel mirror** — `https://apstats-live-worksheet.vercel.app` serves the same tree as a fallback rail when GH Pages is wedged. Since 2026-10-22 it is **automatic**: the Vercel project (`roberts-projects-19fe2013/apstats-live-worksheet`) is GitHub-connected and builds every push to master. Do not use `npx vercel deploy` from this Windows box (the CLI upload dies on a TLS error); `status.html` shows whether the mirror matches GH Pages. `vercel.json` redirects `/` to `mobile-home.html`; `.vercelignore` keeps backend source, tests, and tooling out of the upload.
 - The teacher tests on the **public URL** (local `file://` is not a valid test surface) — commit + push promptly.
