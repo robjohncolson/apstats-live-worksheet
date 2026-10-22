@@ -8,11 +8,11 @@ const html = deskHtml();
 const html_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
 // Like desk-view-as.test.js, execute the real functions with unrelated services stubbed.
 function fn(name) {
-  const match = new RegExp('(?:async\\s+)?function\\s+' + name + '\\s*\\(').exec(html);
+  const match = new RegExp('(?:async\\s+)?function\\s+' + name + '\\s*\\(').exec(html_SRC);
   let depth = 0;
-  for (let i = html.indexOf('{', match.index); i < html.length; i++) {
-    if (html[i] === '{') depth++;
-    if (html[i] === '}' && --depth === 0) return html.slice(match.index, i + 1);
+  for (let i = html_SRC.indexOf('{', match.index); i < html_SRC.length; i++) {
+    if (html_SRC[i] === '{') depth++;
+    if (html_SRC[i] === '}' && --depth === 0) return html_SRC.slice(match.index, i + 1);
   }
   throw new Error('Unbalanced function: ' + name);
 }
@@ -43,7 +43,7 @@ function boot(fetchMock, viewAs = false) {
     MacSFX: { play() {} }, gradebookClient: { syncOfflineQueue: vi.fn(async () => ({ sent: 1, failed: 0, remaining: 0 })) }
   });
   // The expiry notice is a shared top-level const in the Desk; extract it like the functions.
-  w.eval(/const EXPIRED_SIGNIN_NOTICE = '[^']*';/.exec(html)[0].replace(/^const /, 'var '));
+  w.eval(/const EXPIRED_SIGNIN_NOTICE = '[^']*';/.exec(html_SRC)[0].replace(/^const /, 'var '));
   for (const name of ['renderDoNowGrades', 'openSignInModal', 'closeSignInModal', 'submitSignIn', '_nfSubmitPassword']) w.eval(fn(name));
   return w;
 }

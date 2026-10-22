@@ -27,7 +27,7 @@ function fnBody(name) {
 }
 
 function varLine(name) {
-  const match = new RegExp('var ' + name + ' = [^\\n]*').exec(DESK);
+  const match = new RegExp('var ' + name + ' = [^\\n]*').exec(DESK_SRC);
   if (!match) throw new Error('Desk var not found: ' + name);
   return match[0];
 }

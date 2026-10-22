@@ -13,18 +13,18 @@ import { deskSource, deskHtml } from './helpers/desk-source.js';
 const html = deskHtml();
 const html_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
 function fnSrc(name) {
-  const m = new RegExp('(?:async\\s+)?function\\s+' + name + '\\s*\\(').exec(html);
+  const m = new RegExp('(?:async\\s+)?function\\s+' + name + '\\s*\\(').exec(html_SRC);
   if (!m) throw new Error('missing ' + name);
   let depth = 0;
-  for (let i = html.indexOf('{', m.index); i < html.length; i++) {
-    if (html[i] === '{') depth++;
-    if (html[i] === '}' && --depth === 0) return html.slice(m.index, i + 1);
+  for (let i = html_SRC.indexOf('{', m.index); i < html_SRC.length; i++) {
+    if (html_SRC[i] === '{') depth++;
+    if (html_SRC[i] === '}' && --depth === 0) return html_SRC.slice(m.index, i + 1);
   }
   throw new Error('unbalanced ' + name);
 }
 // ZERO_TINT is a top-level `var`, not a function: extract the one statement.
 function zeroTintSrc() {
-  const m = /var ZERO_TINT = \{[^;]*\};/.exec(html);
+  const m = /var ZERO_TINT = \{[^;]*\};/.exec(html_SRC);
   if (!m) throw new Error('missing ZERO_TINT');
   return m[0];
 }

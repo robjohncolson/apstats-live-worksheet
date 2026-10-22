@@ -46,12 +46,12 @@ function fnBody(name) {
 }
 
 function declaration(name, opening, closing) {
-  const match = new RegExp('const\\s+' + name + '\\s*=').exec(desk);
+  const match = new RegExp('const\\s+' + name + '\\s*=').exec(desk_SRC);
   if (!match) throw new Error('Desk declaration not found: ' + name);
   let depth = 0;
-  for (let i = desk.indexOf(opening, match.index); i < desk.length; i++) {
-    if (desk[i] === opening) depth++;
-    if (desk[i] === closing && --depth === 0) return desk.slice(match.index, i + 1) + ';';
+  for (let i = desk_SRC.indexOf(opening, match.index); i < desk_SRC.length; i++) {
+    if (desk_SRC[i] === opening) depth++;
+    if (desk_SRC[i] === closing && --depth === 0) return desk_SRC.slice(match.index, i + 1) + ';';
   }
   throw new Error('Unbalanced Desk declaration: ' + name);
 }
@@ -218,7 +218,7 @@ describe('Desk missing-work rows', () => {
   });
 
   it('the Desk fallback flag matches roster-server SCHOOLOGY_TITLES_CED', () => {
-    const match = /var DESK_SCHOOLOGY_TITLES_CED = (true|false);/.exec(desk);
+    const match = /var DESK_SCHOOLOGY_TITLES_CED = (true|false);/.exec(desk_SRC);
     expect(match).toBeTruthy();
     expect(match[1] === 'true').toBe(SCHOOLOGY_TITLES_CED);
   });
@@ -286,7 +286,7 @@ describe('Calculator Skills modal (APSTAT_PARK_TRAINER_ABSORB_2_SPEC §5)', () =
     const markup = desk.slice(start, desk.indexOf('<!-- ═══ Game Window (Study Break) ═══ -->', start));
     const win = newWindow(markup);
     win.eval(CED_SOURCE);
-    win.eval(VARS.map((name) => new RegExp('var ' + name + ' = [^\n]*').exec(desk)[0]).join('\n') + '\n'
+    win.eval(VARS.map((name) => new RegExp('var ' + name + ' = [^\n]*').exec(desk_SRC)[0]).join('\n') + '\n'
       + 'function _openParkSolo() {}\n' + FUNCTIONS.map(fnBody).join('\n'));
     for (const state of STATES) {
       const skills = CALCULATOR_LEVELS.map((level) => ({ skillId: level.skillId, title: level.title, topic: level.topic,

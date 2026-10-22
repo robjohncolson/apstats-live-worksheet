@@ -105,7 +105,7 @@ describe('C3 -- Q1-Q4 quarter markers (F2: date-driven)', () => {
     const sandbox = {};
     createContext(sandbox);
     // quarterOfDate reads the QUARTER_WINDOWS const -- load both.
-    const winSrc = /const QUARTER_WINDOWS = \[[\s\S]*?\n\];/.exec(html)[0];
+    const winSrc = /const QUARTER_WINDOWS = \[[\s\S]*?\n\];/.exec(html_SRC)[0];
     runInContext(winSrc + '\n' + fnBody(html_SRC, 'quarterOfDate') +
       '\nthis.__q = quarterOfDate;', sandbox);
     return sandbox.__q;
