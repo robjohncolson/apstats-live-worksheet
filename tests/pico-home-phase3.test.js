@@ -22,7 +22,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { JSDOM } from 'jsdom';
 import { bootDesk, DESK_URL } from './journeys/harness.js';
-import { deskSource } from './helpers/desk-source.js';
+import { deskSource, deskHtml } from './helpers/desk-source.js';
 
 const REPO = resolve(__dirname, '..');
 const DESK = deskSource();
@@ -488,7 +488,8 @@ describeOnThisBox('Phase 3 -- Esc behaves as before', { timeout: 180_000 }, () =
 
 describeOnThisBox('Phase 3 -- flag off', { timeout: 180_000 }, () => {
   it('the dialogs\' DOM is byte-identical before and after pico-home.js runs (raw markup)', () => {
-    const dom = new JSDOM(DESK.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, ''), {
+    // Raw markup, not the JS: the dialogs live in the HTML (C3 codemod had pointed this at deskSource()).
+    const dom = new JSDOM(deskHtml().replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, ''), {
       url: 'https://desk.test/ap_stats_roadmap_square_mode.html', runScripts: 'outside-only',
     });
     const doc = dom.window.document;
