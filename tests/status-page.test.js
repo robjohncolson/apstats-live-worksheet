@@ -49,6 +49,9 @@ async function boot(bodies) {
     beforeParse(window) {
       window.__STATUS_NO_AUTOLOAD = true;
       window.AbortController = undefined;
+      // The fixtures carry fixed timestamps; freeze the page's clock at NOW so
+      // "age" stays in seconds/minutes no matter when the suite runs.
+      window.Date.now = () => NOW;
       window.fetch = async (url) => {
         calls.push(url);
         const body = bodies[url];
