@@ -1,4 +1,4 @@
-// GENERATED: 2026-10-10T15:40:30.925Z — do not edit directly
+// GENERATED: 2026-10-22T12:59:32.949Z — do not edit directly
 // Source: node scripts/build-skill-map.mjs
 window.SKILL_MAP = {
   "U1-L10-Q01": {

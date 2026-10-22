@@ -142,3 +142,12 @@ u1_poster/local/
 
 # Class Log lesson summaries (student questions, teacher remarks): local only, never commit
 roster-local/
+
+# Sprint scratch that agents leave in state/ (test dumps, pytest temp dirs). Never product.
+state/*.out
+state/*.xml
+state/*-pycache/
+state/*-pytemp/
+UsersroberAppDataLocalTemp*/
+test-results/
+supabase_logs.json

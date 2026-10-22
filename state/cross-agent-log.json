@@ -5187,15 +5187,1400 @@
       "timestamp": "2026-09-01T08:56:55Z",
       "files_changed": [],
       "depth": 0
+    },
+    {
+      "call_id": "f4757d3efcf6",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Read state/e-wednesday-double-codex-prompt.md in this repo and execute it end to end (plan first, th",
+      "status": "blocked",
+      "duration_seconds": 231.939,
+      "timestamp": "2026-09-11T11:39:00Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "13d075d26161",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Create `A2_SYNC_NOTES.md` at the repo root (this is the AP Stats platform repo). Do not edit any oth",
+      "status": "completed",
+      "duration_seconds": 70.54,
+      "timestamp": "2026-09-13T23:46:01Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "09f432dd2769",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Codex task 1/4 \u2014 expired-token detection in the shared clients (Phase B1 + B2)\n\nHost: Athena (Wind",
+      "status": "completed",
+      "duration_seconds": 210.143,
+      "timestamp": "2026-09-17T14:38:34Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "1db6bc3f33eb",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Codex task 2/4 \u2014 local re-hydration codemod across all 69 worksheets (Phase A + B3)\n\nHost: Athena ",
+      "status": "blocked",
+      "duration_seconds": 151.502,
+      "timestamp": "2026-09-17T14:41:16Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "30e57c4fbcae",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Codex task 2/4 \u2014 local re-hydration codemod across all 69 worksheets (Phase A + B3)\n\nHost: Athena ",
+      "status": "completed",
+      "duration_seconds": 293.511,
+      "timestamp": "2026-09-17T14:47:36Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "034f27fe245a",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Codex task 3/4 \u2014 Desk: expired sign-in is obvious, sign-out is visible (Phase B4 + B5)\n\nHost: Athe",
+      "status": "completed_with_test_limitations",
+      "duration_seconds": 257.476,
+      "timestamp": "2026-09-17T14:51:55Z",
+      "files_changed": [
+        "ap_stats_roadmap_square_mode.html",
+        "tests/desk-roster-signin.test.js"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "9dbe4d089ff6",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "# Codex task 4/4 \u2014 adversarial review of the local re-hydration + expired sign-in change\n\nHost: Athe",
+      "status": "completed",
+      "duration_seconds": 265.831,
+      "timestamp": "2026-09-17T14:57:55Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "50a781d835c7",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Codex task 5 \u2014 fix pass after the adversarial review (verdict BLOCK)\n\nHost: Athena (Windows 11). R",
+      "status": "completed",
+      "duration_seconds": 415.507,
+      "timestamp": "2026-09-17T15:07:10Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "3c8e10f589b6",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Implement WEEKLY_DOK_ISOLATION_SPEC.md (repo root) exactly. Read it first, in full; it is the contra",
+      "status": "completed",
+      "duration_seconds": 463.657,
+      "timestamp": "2026-09-20T14:51:42Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "e04f3320c7db",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Implement the pilot of RUBRIC_SLIM_SPEC.md (repo root). Read it first. Edit IN PLACE \u2014 no wrappers, ",
+      "status": "implemented",
+      "duration_seconds": 376.248,
+      "timestamp": "2026-09-21T21:59:35Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "77a0cbb14f4e",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "READ-ONLY review. Do not edit any file. Review the uncommitted working-tree changes for the RUBRIC_S",
+      "status": "completed",
+      "duration_seconds": 390.15,
+      "timestamp": "2026-09-21T22:09:47Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "3d5d9e70e0a9",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Implement the pilot of RUBRIC_SLIM_SPEC.md (repo root). Read it first. Edit IN PLACE \u2014 no wrappers, ",
+      "status": "implemented_with_constraint_conflict",
+      "duration_seconds": 447.319,
+      "timestamp": "2026-09-21T23:55:04Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "11c56e354eef",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "READ-ONLY review. Do not edit any file. Review the uncommitted working-tree changes for the RUBRIC_S",
+      "status": "completed",
+      "duration_seconds": 237.74,
+      "timestamp": "2026-09-22T00:02:38Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "8296cbfcc3ca",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "READ-ONLY review. Do not edit any file. Read RUBRIC_SLIM_SPEC.md first, then the decisions file name",
+      "status": "completed",
+      "duration_seconds": 138.321,
+      "timestamp": "2026-09-22T00:32:11Z",
+      "files_changed": [
+        "ai-grading-prompts-u4-l10-12.js",
+        "ai-grading-prompts-u4-l3.js",
+        "ai-grading-prompts-u4-l6.js",
+        "ai-grading-prompts-u4-l7-8.js",
+        "ai-grading-prompts-u5-l1-2.js",
+        "ai-grading-prompts-u5-l3.js",
+        "node_modules/.vite/vitest/results.json",
+        "scripts/rubric-slim-apply.mjs",
+        "state/rubric-slim/u2-rest-decisions.json",
+        "state/rubric-slim/u4-l3-8-decisions.json"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "6d7ffcf1d97f",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "READ-ONLY review. Do not edit any file. Read RUBRIC_SLIM_SPEC.md first (note rule 1: cap 4, or 5 whe",
+      "status": "completed",
+      "duration_seconds": 316.436,
+      "timestamp": "2026-09-22T00:41:54Z",
+      "files_changed": [
+        "ai-grading-prompts-u5-l4.js",
+        "ai-grading-prompts-u5-l5.js",
+        "ai-grading-prompts-u5-l6.js",
+        "ai-grading-prompts-u5-l7.js",
+        "ai-grading-prompts-u5-l8.js",
+        "ai-grading-prompts-u6-l10.js",
+        "ai-grading-prompts-u6-l11.js",
+        "ai-grading-prompts-u6-l4.js",
+        "ai-grading-prompts-u6-l5.js",
+        "ai-grading-prompts-u6-l6.js",
+        "ai-grading-prompts-u6-l7.js",
+        "ai-grading-prompts-u6-l8.js",
+        "ai-grading-prompts-u6-l9.js",
+        "ai-grading-prompts-u7-l1.js",
+        "ai-grading-prompts-u7-l2.js",
+        "ai-grading-prompts-u7-l3.js",
+        "ai-grading-prompts-u7-l4.js",
+        "ai-grading-prompts-u7-l5.js",
+        "ai-grading-prompts-u7-l6.js",
+        "ai-grading-prompts-u7-l7.js",
+        "ai-grading-prompts-u7-l8.js",
+        "ai-grading-prompts-u7-l9.js",
+        "ai-grading-prompts-u8-l1.js",
+        "ai-grading-prompts-u8-l4.js",
+        "ai-grading-prompts-u8-l5.js",
+        "ai-grading-prompts-u8-l6.js",
+        "node_modules/.vite/vitest/results.json",
+        "state/rubric-slim/u4-part1-decisions.json",
+        "state/rubric-slim/u5-l4-6-decisions.json",
+        "state/rubric-slim/u6-l4-7-decisions.json",
+        "state/rubric-slim/u6-l8-11-decisions.json",
+        "state/rubric-slim/u7-l3-6-decisions.json",
+        "state/rubric-slim/u7-l7-9-decisions.json",
+        "state/rubric-slim/u8-decisions.json"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "04fe03c6c0c6",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "READ-ONLY review. Do not edit any file. Read RUBRIC_SLIM_SPEC.md first (note rule 1: cap 4, or 5 whe",
+      "status": "completed",
+      "duration_seconds": 504.398,
+      "timestamp": "2026-09-22T00:53:49Z",
+      "files_changed": [
+        "GRADEBOOK_TAGGING_AUDIT.md",
+        "PC_MISCONCEPTIONS_SPEC.md",
+        "data/skill-map.js",
+        "data/skill-map.json",
+        "node_modules/.vite/vitest/results.json",
+        "roster-server/data/skill-map.json",
+        "state/rubric-slim/root-suite-2.json",
+        "state/rubric-slim/root-suite-2.log"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "dfbefa30702b",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Bonus Bank \u2014 backend (roster-server + entry script)\n\nRead `BONUS_BANK_SPEC.md` first (repo root). ",
+      "status": "completed",
+      "duration_seconds": 475.744,
+      "timestamp": "2026-09-23T21:15:40Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "0e126a45489a",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Bonus Bank \u2014 frontend (Desk ledger line + dashboard apply step)\n\nRead `BONUS_BANK_SPEC.md` (repo r",
+      "status": "completed",
+      "duration_seconds": 423.122,
+      "timestamp": "2026-09-23T21:23:41Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "cd809f057862",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "# Review: Bonus Bank (backend + frontend) \u2014 read-only adversarial review\n\nSpec: `BONUS_BANK_SPEC.md`",
+      "status": "completed",
+      "duration_seconds": 201.804,
+      "timestamp": "2026-09-23T21:28:02Z",
+      "files_changed": [
+        "node_modules/.vite/vitest/results.json"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "bb935bd2ba2e",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Bonus Bank \u2014 fix package (backend) after adversarial review\n\nContext: `BONUS_BANK_SPEC.md`, your b",
+      "status": "completed",
+      "duration_seconds": 497.567,
+      "timestamp": "2026-09-23T21:37:57Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "3a3f925cccda",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Review the diff in state/missing-work-logs/review.diff against the spec MISSING_WORK_VISIBILITY_SPEC",
+      "status": "completed",
+      "duration_seconds": 99.935,
+      "timestamp": "2026-09-25T22:10:39Z",
+      "files_changed": [
+        "GRADEBOOK_TAGGING_AUDIT.md",
+        "data/skill-map.js",
+        "data/skill-map.json",
+        "roster-server/data/skill-map.json",
+        "state/missing-work-logs/root-run.txt"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "9dc42b90f187",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Review the diff in state/missing-work-logs/teacher-inbox-review.diff against TEACHER_INBOX_ICON_SPEC",
+      "status": "failed",
+      "duration_seconds": 31.358,
+      "timestamp": "2026-09-25T23:04:17Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "c3c8ac4de9a9",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Read state/ledger-grade-agreement-codex-review-prompt.md IN FULL and carry out that review task exac",
+      "status": "completed",
+      "duration_seconds": 1452.389,
+      "timestamp": "2026-09-27T18:56:13Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "5dd809b867b9",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Read state/lesson-consistency-codex-review-prompt.md IN FULL and carry out that review task exactly ",
+      "status": "completed",
+      "duration_seconds": 171.411,
+      "timestamp": "2026-09-27T19:35:27Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "2717b86bab75",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Follow the review brief in C:/Users/rober/AppData/Local/Temp/claude/C--Users-rober-Downloads-Project",
+      "status": "completed",
+      "duration_seconds": 146.455,
+      "timestamp": "2026-09-29T17:38:13Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "1992066d007a",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "CLOSURE REVIEW, read-only, static. Re-check the UNCOMMITTED roster-server changes (git diff -- roste",
+      "status": "completed",
+      "duration_seconds": 95.26,
+      "timestamp": "2026-09-29T18:05:36Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "3f91ad7288ae",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "READ-ONLY review, static. Scope: uncommitted changes to tools/schoology_components.py, tests/test_sc",
+      "status": "completed",
+      "duration_seconds": 114.941,
+      "timestamp": "2026-09-29T22:38:35Z",
+      "files_changed": [
+        "tools/.schoology-sync-logs/fixture-PeriodE-20260929-183716.json",
+        "tools/.schoology-sync-logs/sync-PeriodB-20260929-183626.log",
+        "tools/.schoology-sync-logs/sync-PeriodE-20260929-183716.log"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "2235e39bc050",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "CLOSURE REVIEW, read-only, static, of the last commit (git show HEAD -- tools/ tests/). Re-check you",
+      "status": "completed",
+      "duration_seconds": 103.891,
+      "timestamp": "2026-09-29T22:48:31Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "adc02641e28a",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "CLOSURE REVIEW, read-only, static, of HEAD (git show HEAD -- tools/ tests/). Your two open items fro",
+      "status": "completed",
+      "duration_seconds": 79.509,
+      "timestamp": "2026-09-29T22:53:36Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "2751ed15a534",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "READ-ONLY adversarial review. Do not edit any source file.\n\nRepo: C:/Users/rober/Downloads/Projects/",
+      "status": "completed",
+      "duration_seconds": 103.977,
+      "timestamp": "2026-09-30T15:06:34Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "3a81aaa9ec97",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "READ-ONLY review ROUND 2. Do not edit files. Same scope as your previous review (state/past-due-work",
+      "status": "completed",
+      "duration_seconds": 75.335,
+      "timestamp": "2026-09-30T15:10:55Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "98bdda987198",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "READ-ONLY adversarial review. Do not edit any file.\n\nRepo: C:/Users/rober/Downloads/Projects/school/",
+      "status": "completed",
+      "duration_seconds": 249.687,
+      "timestamp": "2026-09-30T16:55:08Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "da956f4312fd",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "READ-ONLY review ROUND 2, do not edit. Your round-1 review of the red-suite triage (state/red-suite-",
+      "status": "completed",
+      "duration_seconds": 47.046,
+      "timestamp": "2026-09-30T16:57:40Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "316cfca31dde",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "READ-ONLY review, do not edit. Review ONLY `git diff -- .github/workflows/ci.yml scripts/bump-build.",
+      "status": "completed",
+      "duration_seconds": 90.115,
+      "timestamp": "2026-09-30T17:17:53Z",
+      "files_changed": [
+        "roster-server/grade.js",
+        "roster-server/lesson-grade.js"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "46b6e3c7e066",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "READ-ONLY adversarial review, do not edit. Review ONLY `git diff -- roster-server/grade.js roster-se",
+      "status": "completed",
+      "duration_seconds": 92.266,
+      "timestamp": "2026-09-30T17:24:22Z",
+      "files_changed": [
+        "roster-server/node_modules/.vite/vitest/results.json",
+        "test-results/e-wednesday-baseline/roster-server/node_modules/.vite/vitest/results.json"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "502fe2d580f0",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "READ-ONLY adversarial review, do not edit. Review ONLY `git diff -- gradebook-client.js types/global",
+      "status": "completed",
+      "duration_seconds": 111.426,
+      "timestamp": "2026-09-30T17:36:24Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "f02720dfd3c3",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "READ-ONLY review ROUND 2, do not edit. Your round-1 P2 on `git diff -- gradebook-client.js types/glo",
+      "status": "completed",
+      "duration_seconds": 71.664,
+      "timestamp": "2026-09-30T17:38:34Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "84640a623b0b",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Independent review of Phase 0 of PICO_DESK_SPEC.md (the static \"Pico Desk\" sketch). Read-only: do no",
+      "status": "completed",
+      "duration_seconds": 95.664,
+      "timestamp": "2026-10-05T22:36:57Z",
+      "files_changed": [
+        "node_modules/.vite/vitest/results.json"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "c5b2eb26235c",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Second-pass review of Phase 0 of PICO_DESK_SPEC.md (the static Pico Desk sketch). Read-only: do not ",
+      "status": "completed",
+      "duration_seconds": 94.175,
+      "timestamp": "2026-10-05T22:47:36Z",
+      "files_changed": [
+        "node_modules/.vite/vitest/results.json"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "c5ee9feddd00",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Third review of Phase 0 of PICO_DESK_SPEC.md (the static Pico Desk sketch). Read-only: do not edit, ",
+      "status": "completed",
+      "duration_seconds": 135.925,
+      "timestamp": "2026-10-05T23:27:40Z",
+      "files_changed": [
+        "node_modules/.vite/vitest/results.json"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "1d15fcfc38e3",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Fourth (re-check) review of Phase 0 of PICO_DESK_SPEC.md, the static Pico Desk sketch. Read-only: do",
+      "status": "completed",
+      "duration_seconds": 169.729,
+      "timestamp": "2026-10-05T23:36:05Z",
+      "files_changed": [
+        "node_modules/.vite/vitest/results.json"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "494aefad910a",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Independent review of Phase 1 ('the live home') of PICO_DESK_SPEC.md. Read-only: do not edit, stage,",
+      "status": "completed",
+      "duration_seconds": 191.981,
+      "timestamp": "2026-10-06T00:46:00Z",
+      "files_changed": [
+        "node_modules/.vite/vitest/results.json"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "4a7e4651e944",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Re-check of Phase 1 ('the live home') of PICO_DESK_SPEC.md after your review (call 494aefad910a, CHA",
+      "status": "completed",
+      "duration_seconds": 127.287,
+      "timestamp": "2026-10-06T00:59:29Z",
+      "files_changed": [
+        "node_modules/.vite/vitest/results.json"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "695358f3642f",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Independent review of Phase 2 ('lesson panel + My Grade') of PICO_DESK_SPEC.md. Read-only: no edits,",
+      "status": "completed",
+      "duration_seconds": 238.581,
+      "timestamp": "2026-10-06T01:17:13Z",
+      "files_changed": [
+        "node_modules/.vite/vitest/results.json"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "c2e5b71c9afe",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Re-check of Phase 2 of PICO_DESK_SPEC.md after your CHANGES NEEDED review (three P2 must-fixes: nest",
+      "status": "completed",
+      "duration_seconds": 231.655,
+      "timestamp": "2026-10-06T01:29:49Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "79bb4b70ff37",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Final re-check of Phase 2 of PICO_DESK_SPEC.md after your call c2e5b71c9afe (one P2 must-fix: poll r",
+      "status": "completed",
+      "duration_seconds": 134.675,
+      "timestamp": "2026-10-06T01:37:02Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "1fafe67c8a69",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Narrow re-check of Phase 2 of PICO_DESK_SPEC.md after your call reporting the unguarded reopenPanel ",
+      "status": "completed",
+      "duration_seconds": 103.189,
+      "timestamp": "2026-10-06T01:43:48Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "b2b7a08a27ad",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Independent review of Phase 3 ('remaining windows') of PICO_DESK_SPEC.md. Read-only: no edits, stagi",
+      "status": "completed",
+      "duration_seconds": 312.595,
+      "timestamp": "2026-10-06T02:19:12Z",
+      "files_changed": [
+        "node_modules/.vite/vitest/results.json"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "ff0e15c59388",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Re-check of Phase 3 of PICO_DESK_SPEC.md after your CHANGES NEEDED review (must-fix: Study Break geo",
+      "status": "completed",
+      "duration_seconds": 301.773,
+      "timestamp": "2026-10-06T02:46:27Z",
+      "files_changed": [
+        "node_modules/.vite/vitest/results.json"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "45d3ed11e729",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Narrow final re-check of Phase 3 of PICO_DESK_SPEC.md after your call ff0e15c59388 (two CSS must-fix",
+      "status": "completed",
+      "duration_seconds": 354.698,
+      "timestamp": "2026-10-06T03:03:19Z",
+      "files_changed": [
+        "node_modules/.vite/vitest/results.json"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "51b0293a7007",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Narrow final re-check of Phase 3 (PICO_DESK_SPEC.md) after your call 45d3ed11e729 (Study Break X ove",
+      "status": "completed",
+      "duration_seconds": 255.11,
+      "timestamp": "2026-10-06T03:17:35Z",
+      "files_changed": [
+        "PICO_DESK_SPEC.md",
+        "node_modules/.vite/vitest/results.json"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "02012c2f0adc",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Review of the 'continuous floor' change to the Pico Desk live home (PICO_DESK_SPEC.md Phase 1 'Floor",
+      "status": "completed",
+      "duration_seconds": 364.219,
+      "timestamp": "2026-10-06T09:56:24Z",
+      "files_changed": [
+        "node_modules/.vite/vitest/results.json"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "306a1b68e0f2",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Re-check of the Pico Desk 'continuous floor' change after your CHANGES NEEDED review (whole-class ev",
+      "status": "completed",
+      "duration_seconds": 297.701,
+      "timestamp": "2026-10-06T10:17:39Z",
+      "files_changed": [
+        "node_modules/.vite/vitest/results.json"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "79fa594310b2",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Narrow re-check of the Pico Desk floor after your call 306a1b68e0f2 (broadcast still scrolled after ",
+      "status": "completed",
+      "duration_seconds": 286.047,
+      "timestamp": "2026-10-06T10:35:23Z",
+      "files_changed": [
+        "node_modules/.vite/vitest/results.json"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "55dc93d80b51",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Review of a small Pico Desk change (teacher decisions): with the flag on, LESSONS lists exactly SCHE",
+      "status": "completed",
+      "duration_seconds": 138.776,
+      "timestamp": "2026-10-06T13:54:30Z",
+      "files_changed": [
+        "node_modules/.vite/vitest/results.json"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "436e5bebc0b9",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Narrow re-check after your call 55dc93d80b51 (P1: reparented challenge alert rendered beneath Pico m",
+      "status": "completed",
+      "duration_seconds": 184.903,
+      "timestamp": "2026-10-06T14:05:20Z",
+      "files_changed": [
+        "node_modules/.vite/vitest/results.json"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "e3bedcfd37c3",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Review of a bug fix (teacher report 2026-10-06: on the APStat Park floor, classmates vanished when t",
+      "status": "completed",
+      "duration_seconds": 193.14,
+      "timestamp": "2026-10-06T14:42:27Z",
+      "files_changed": [
+        "node_modules/.vite/vitest/results.json",
+        "pico-home.js"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "3eceb6e10a19",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Review of a Pico Desk presentation + floor change (teacher requests 2026-10-06). Read-only: no edits",
+      "status": "completed",
+      "duration_seconds": 294.491,
+      "timestamp": "2026-10-06T15:17:31Z",
+      "files_changed": [
+        "node_modules/.vite/vitest/results.json"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "dd304dd5e9cf",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Narrow re-check after your call 3eceb6e10a19 (three must-fixes: P1 Doge green-marker infinite observ",
+      "status": "completed",
+      "duration_seconds": 233.698,
+      "timestamp": "2026-10-06T15:37:44Z",
+      "files_changed": [
+        "node_modules/.vite/vitest/results.json"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "6ff2da2593a0",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Review of the Pico Desk MENU / PLAY modes (teacher decision 2026-10-06: in Preview-as-student, arrow",
+      "status": "completed",
+      "duration_seconds": 343.987,
+      "timestamp": "2026-10-06T19:21:57Z",
+      "files_changed": [
+        "node_modules/.vite/vitest/results.json"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "4dca5d1194b2",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Narrow re-check after your call 6ff2da2593a0 on the Pico Desk MENU/PLAY modes (three must-fixes: flo",
+      "status": "completed",
+      "duration_seconds": 147.786,
+      "timestamp": "2026-10-06T19:41:49Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "b5ca5b4baa62",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Review of a two-repo park change (teacher decisions 2026-10-06: (1) the teacher plays as a full peer",
+      "status": "completed",
+      "duration_seconds": 148.889,
+      "timestamp": "2026-10-07T00:19:09Z",
+      "files_changed": [
+        "node_modules/.vite/vitest/results.json"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "e0e588d0a3ae",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Narrow review of two fixes in C:/Users/rober/Downloads/Projects/school/follow-alongs (teacher report",
+      "status": "completed",
+      "duration_seconds": 261.094,
+      "timestamp": "2026-10-07T12:11:58Z",
+      "files_changed": [
+        "apstat-park/campaign-catalog.mjs",
+        "apstat-park/recovered/fidelity-audit.json",
+        "apstat-park/recovered/provenance.json",
+        "apstat-park/recovered/runtime.mjs",
+        "apstat-park/recovered/runtime.mjs.LEGAL.txt",
+        "apstat-park/recovered/runtime.mjs.map",
+        "apstat-park/recovered/stages.json",
+        "node_modules/.vite/vitest/results.json"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "3e23e58e766e",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Narrow review of a campaign simulation change (teacher 2026-10-07: a push box pushed off a ledge mus",
+      "status": "completed",
+      "duration_seconds": 291.496,
+      "timestamp": "2026-10-07T12:26:56Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "d3ec095865c3",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Narrow review of a campaign runtime fidelity fix in C:/Users/rober/Downloads/Projects/school/follow-",
+      "status": "completed",
+      "duration_seconds": 457.727,
+      "timestamp": "2026-10-07T14:42:20Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "bb8b829586c1",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Narrow review of a campaign runtime fidelity change in C:/Users/rober/Downloads/Projects/school/foll",
+      "status": "completed",
+      "duration_seconds": 448.746,
+      "timestamp": "2026-10-07T15:15:04Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "5262f31af711",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Narrow review of a campaign runtime change in C:/Users/rober/Downloads/Projects/school/follow-alongs",
+      "status": "completed",
+      "duration_seconds": 324.275,
+      "timestamp": "2026-10-07T16:42:12Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "8dc33d1a10d9",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Narrow review of a campaign runtime change in C:/Users/rober/Downloads/Projects/school/follow-alongs",
+      "status": "completed",
+      "duration_seconds": 228.446,
+      "timestamp": "2026-10-07T18:31:41Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "85bf0553791b",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Review of two changes landing together (client C:/Users/rober/Downloads/Projects/school/follow-along",
+      "status": "completed",
+      "duration_seconds": 256.041,
+      "timestamp": "2026-10-07T19:51:09Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "326f4a200579",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Narrow review of a 1-4 fidelity change in C:/Users/rober/Downloads/Projects/school/follow-alongs (+ ",
+      "status": "completed",
+      "duration_seconds": 295.142,
+      "timestamp": "2026-10-07T20:49:22Z",
+      "files_changed": [
+        "tools/.schoology-sync-logs/fixture-PeriodE-20261007-164504.json",
+        "tools/.schoology-sync-logs/sync-PeriodE-20261007-164504.log",
+        "tools/.schoology-sync-state.json"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "73350bc586fb",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Narrow review of a 1-4 WeightedLift fidelity change in C:/Users/rober/Downloads/Projects/school/foll",
+      "status": "completed",
+      "duration_seconds": 276.43,
+      "timestamp": "2026-10-07T21:19:26Z",
+      "files_changed": [
+        ".gitnexus/.hook-locks/slot-0.lock",
+        ".gitnexus/.hook-locks/slot-2.lock"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "9ce9af797c43",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Review of fidelity batch 1 in C:/Users/rober/Downloads/Projects/school/follow-alongs (+ relay protoc",
+      "status": "completed",
+      "duration_seconds": 364.659,
+      "timestamp": "2026-10-07T23:58:50Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "06343adabb47",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Review of fidelity batch 2 in C:/Users/rober/Downloads/Projects/school/follow-alongs (+ relay protoc",
+      "status": "completed",
+      "duration_seconds": 308.205,
+      "timestamp": "2026-10-08T00:31:59Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "7c9e694d6bc8",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Review of fidelity batch 3 in C:/Users/rober/Downloads/Projects/school/follow-alongs (+ relay protoc",
+      "status": "completed",
+      "duration_seconds": 413.506,
+      "timestamp": "2026-10-08T01:15:49Z",
+      "files_changed": [
+        ".gitignore",
+        "ap_stats_roadmap_square_mode.html",
+        "data/lesson-schedule.json",
+        "gitnexus-shadow/ap_stats_roadmap_square_mode.inline.js",
+        "gitnexus-shadow/level-editor.inline.js",
+        "gitnexus-shadow/mobile-home.inline.js",
+        "gitnexus-shadow/start-here.inline.js",
+        "gitnexus-shadow/study_guide_diagnostic.inline.js",
+        "gitnexus-shadow/teacher-classroom.inline.js",
+        "gitnexus-shadow/teacher-dashboard.inline.js",
+        "gitnexus-shadow/teacher-roster-console.inline.js",
+        "node_modules/.vite/vitest/results.json",
+        "roster-server/data/lesson-schedule.json",
+        "roster-server/node_modules/.vite/vitest/results.json",
+        "roster-server/tests/fixtures/m2b-invariance/art-hashes.json",
+        "roster-server/tests/fixtures/m2b-invariance/sy2627-empty.json",
+        "roster-server/tests/fixtures/m2b-invariance/sy2627-frq_work.json",
+        "roster-server/tests/fixtures/m2b-invariance/sy2627-mixed.json",
+        "roster-server/tests/fixtures/m2b-invariance/sy2627-quiz_partial.json",
+        "sw.js",
+        "test-results/e-wednesday-baseline/roster-server/node_modules/.vite/vitest/results.json",
+        "tests/desk-b-work-days.test.js",
+        "tests/desk-calendar-ced2026.test.js",
+        "tests/desk-e-pairing.test.js",
+        "u1_poster/tex/cards.tex",
+        "u1_poster/tex/example.aux",
+        "u1_poster/tex/example.log",
+        "u1_poster/tex/example.out",
+        "u1_poster/tex/example.pdf",
+        "u1_poster/tex/example.stdout",
+        "u1_poster/tex/student.aux",
+        "u1_poster/tex/student.log",
+        "u1_poster/tex/student.out",
+        "u1_poster/tex/student.pdf",
+        "u1_poster/tex/student.stdout",
+        "u1_poster/tex/teacher.aux",
+        "u1_poster/tex/teacher.log",
+        "u1_poster/tex/teacher.out",
+        "u1_poster/tex/teacher.pdf",
+        "u1_poster/tex/teacher.stdout",
+        "u1_poster/tex/teacher.tex",
+        "version.json",
+        "worksheet-diagnostics.js"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "c893b8521a36",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Review of fidelity batch 4 in C:/Users/rober/Downloads/Projects/school/follow-alongs (+ relay protoc",
+      "status": "completed",
+      "duration_seconds": 225.446,
+      "timestamp": "2026-10-08T01:52:49Z",
+      "files_changed": [
+        "apstat-park/campaign-solve/2-3_stage_constraint02.mjs"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "300d431c4687",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Review of fidelity batch 5 in C:/Users/rober/Downloads/Projects/school/follow-alongs (+ relay protoc",
+      "status": "completed",
+      "duration_seconds": 342.111,
+      "timestamp": "2026-10-08T02:16:38Z",
+      "files_changed": [
+        "apstat-park/campaign-solve/10-3_stage_darkness01.mjs",
+        "apstat-park/campaign-solve/10-4_stage_darkness02.mjs",
+        "apstat-park/campaign-solve/3-1_stage_coin01.mjs",
+        "apstat-park/campaign-solve/3-4_stage_time_limit01.mjs",
+        "apstat-park/campaign-solve/6-1_stage_push01.mjs",
+        "apstat-park/campaign-solve/6-2_stage_auto_scroll01.mjs",
+        "apstat-park/campaign-solve/7-3_stage_ghost01.mjs"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "a4a09aae9390",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Review of fidelity batch 6 in C:/Users/rober/Downloads/Projects/school/follow-alongs (+ relay protoc",
+      "status": "completed",
+      "duration_seconds": 757.444,
+      "timestamp": "2026-10-08T03:53:38Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "5160b318573c",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Review of fidelity batch 7 in C:/Users/rober/Downloads/Projects/school/follow-alongs (+ relay protoc",
+      "status": "completed",
+      "duration_seconds": 388.843,
+      "timestamp": "2026-10-08T04:55:03Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "cc50001a853d",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Review of fidelity batch 8 in C:/Users/rober/Downloads/Projects/school/follow-alongs (+ relay protoc",
+      "status": "completed",
+      "duration_seconds": 733.572,
+      "timestamp": "2026-10-08T06:23:51Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "25f1722e932b",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Review of fidelity batch 9 in C:/Users/rober/Downloads/Projects/school/follow-alongs (+ relay protoc",
+      "status": "completed",
+      "duration_seconds": 882.461,
+      "timestamp": "2026-10-08T07:28:06Z",
+      "files_changed": [
+        "apstat-park/recovered/fidelity-audit.json"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "1006dbb3a3b3",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Review of fidelity batch 10 in C:/Users/rober/Downloads/Projects/school/follow-alongs (+ relay proto",
+      "status": "completed",
+      "duration_seconds": 640.786,
+      "timestamp": "2026-10-08T08:35:05Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "a47c4d46976b",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Review of fidelity batch 11 in C:/Users/rober/Downloads/Projects/school/follow-alongs (+ relay proto",
+      "status": "completed",
+      "duration_seconds": 501.115,
+      "timestamp": "2026-10-08T10:01:46Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "e8bc8dd6b3e2",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Review of fidelity batch 12 in C:/Users/rober/Downloads/Projects/school/follow-alongs (+ relay proto",
+      "status": "completed",
+      "duration_seconds": 752.447,
+      "timestamp": "2026-10-08T11:21:25Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "dd9f3a066e54",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Review of fidelity batch 13 in C:/Users/rober/Downloads/Projects/school/follow-alongs (+ relay proto",
+      "status": "completed",
+      "duration_seconds": 695.957,
+      "timestamp": "2026-10-08T13:29:41Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "642a5bbcd0cf",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Review of fidelity batch 14 in C:/Users/rober/Downloads/Projects/school/follow-alongs (+ relay proto",
+      "status": "completed",
+      "duration_seconds": 579.116,
+      "timestamp": "2026-10-08T15:05:08Z",
+      "files_changed": [
+        "apstat-park/recovered/fidelity-audit.json"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "544856d0560c",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Review of the CANDY ECONOMY build (spec: PICO_DESK_SPEC.md \u2192 \"Candy economy\", items 6\u201311) across C:/",
+      "status": "completed",
+      "duration_seconds": 450.346,
+      "timestamp": "2026-10-08T17:04:11Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "c6abfd5a6211",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Review of fidelity batch 15 in C:/Users/rober/Downloads/Projects/school/follow-alongs (+ relay proto",
+      "status": "completed",
+      "duration_seconds": 600.466,
+      "timestamp": "2026-10-08T19:39:02Z",
+      "files_changed": [
+        "apstat-park/recovered/fidelity-audit.json"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "cc3cba3ca33c",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Review of fidelity batch 16 in C:/Users/rober/Downloads/Projects/school/follow-alongs (+ relay proto",
+      "status": "completed",
+      "duration_seconds": 778.653,
+      "timestamp": "2026-10-08T21:47:47Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "1fec99d80d0d",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Review of fidelity batch 17 in C:/Users/rober/Downloads/Projects/school/follow-alongs (+ relay proto",
+      "status": "completed",
+      "duration_seconds": 949.864,
+      "timestamp": "2026-10-09T00:57:27Z",
+      "files_changed": [
+        "apstat-park/recovered/fidelity-audit.json"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "30b40b8a356e",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Adversarial review of an UNCOMMITTED, grade-affecting change in this repo. Spec: POSTER_BONUS_SPEC.m",
+      "status": "completed",
+      "duration_seconds": 185.761,
+      "timestamp": "2026-10-09T23:06:19Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "7bca0f3c5ffd",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Adversarial review of an UNCOMMITTED schedule change (PR 2 of POSTER_BONUS_SPEC.md section 4, read i",
+      "status": "completed",
+      "duration_seconds": 160.175,
+      "timestamp": "2026-10-10T16:01:42Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "73128b46651c",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Review of TETRIS_SQUARES_SPEC.md implementation in C:/Users/rober/Downloads/Projects/school/follow-a",
+      "status": "completed",
+      "duration_seconds": 319.09,
+      "timestamp": "2026-10-10T17:03:52Z",
+      "files_changed": [
+        "node_modules/.vite/vitest/results.json",
+        "roster-server/node_modules/.vite/vitest/results.json",
+        "test-results/e-wednesday-baseline/roster-server/node_modules/.vite/vitest/results.json"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "a6f5049bf2b2",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Review of the APStat Park calculator activities build in C:/Users/rober/Downloads/Projects/school/fo",
+      "status": "completed",
+      "duration_seconds": 416.595,
+      "timestamp": "2026-10-10T18:54:44Z",
+      "files_changed": [
+        "node_modules/.vite/vitest/results.json"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "27d4b7999b4d",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Review ONLY these uncommitted files: apstat-park/calculator-catalog.mjs (git diff: 19 routes shorten",
+      "status": "completed",
+      "duration_seconds": 310.087,
+      "timestamp": "2026-10-12T03:33:29Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "8bab4ee9fb60",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Review ONLY the uncommitted changes to apstat-park/calculator-room.mjs, the new apstat-park/calculat",
+      "status": "completed",
+      "duration_seconds": 176.777,
+      "timestamp": "2026-10-12T03:42:02Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "7808b0723ded",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Review the UNCOMMITTED changes in this repo (git diff + the new untracked apstat-park/calculator-var",
+      "status": "completed",
+      "duration_seconds": 148.212,
+      "timestamp": "2026-10-12T13:15:03Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "3529c5dcac13",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Review the UNCOMMITTED changes in this repo AND in the sibling repo C:/Users/rober/Downloads/Project",
+      "status": "completed",
+      "duration_seconds": 170.406,
+      "timestamp": "2026-10-13T00:47:47Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "6d085472cdaf",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Read-only review of Phase 1 of `APSTAT_PARK_TRAINER_ABSORB_SPEC.md` (solo calculator room in APStat ",
+      "status": "completed",
+      "duration_seconds": 220.686,
+      "timestamp": "2026-10-15T13:14:34Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "82f8c2891fb7",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Read-only verification review. Working dir is `follow-alongs`; the relay repo is `../curriculum_rend",
+      "status": "completed",
+      "duration_seconds": 192.238,
+      "timestamp": "2026-10-15T14:29:10Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "1a3091601cfc",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Read-only verification review. Working dir is `follow-alongs`; the relay repo is `../curriculum_rend",
+      "status": "completed",
+      "duration_seconds": 221.061,
+      "timestamp": "2026-10-15T15:46:11Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "b95c52ecd995",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Read-only verification review. Working dir is `follow-alongs`; the relay repo is `../curriculum_rend",
+      "status": "completed",
+      "duration_seconds": 190.324,
+      "timestamp": "2026-10-15T17:21:27Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "ca22e86a8951",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "You are a READ-ONLY adversarial reviewer (no edits, no commits). Repo: this working directory. The u",
+      "status": "completed",
+      "duration_seconds": 104.271,
+      "timestamp": "2026-10-18T03:55:34Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "15a1d4ed9c00",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Adversarial code review (read-only; do not edit files). Model: gpt-6-astra.\n\nSpec: APSTAT_PARK_TRAIN",
+      "status": "completed",
+      "duration_seconds": 190.816,
+      "timestamp": "2026-10-18T14:12:04Z",
+      "files_changed": [
+        "GRADEBOOK_TAGGING_AUDIT.md",
+        "apstat-park/calculator-variation.test.mjs",
+        "data/skill-map.js",
+        "data/skill-map.json",
+        "roster-server/data/skill-map.json"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "69eaa2496b89",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Follow-up adversarial review (read-only; do not edit files). Model: gpt-6-astra.\nYour first pass (st",
+      "status": "completed",
+      "duration_seconds": 202.425,
+      "timestamp": "2026-10-18T14:27:05Z",
+      "files_changed": [
+        "GRADEBOOK_TAGGING_AUDIT.md",
+        "data/skill-map.js",
+        "data/skill-map.json",
+        "roster-server/data/skill-map.json"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "a35af67200b1",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "READ-ONLY adversarial review. Do not edit any file. Repo: C:/Users/rober/Downloads/Projects/school/f",
+      "status": "completed",
+      "duration_seconds": 107.365,
+      "timestamp": "2026-10-21T00:53:39Z",
+      "files_changed": [
+        "tools/.schoology-sync-logs/fixture-PeriodB-20261020-205206.json",
+        "tools/.schoology-sync-logs/sync-PeriodB-20261020-205206.log",
+        "tools/.schoology-sync-state.json"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "83be5fb3610b",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "READ-ONLY adversarial review. Do not edit any file. Repo: C:/Users/rober/Downloads/Projects/school/f",
+      "status": "completed",
+      "duration_seconds": 71.89,
+      "timestamp": "2026-10-21T14:22:18Z",
+      "files_changed": [],
+      "depth": 0
     }
   ],
   "summary": {
-    "total_calls": 442,
-    "cc_to_codex": 442,
+    "total_calls": 548,
+    "cc_to_codex": 548,
     "codex_to_cc": 0,
-    "completed": 336,
-    "failed": 75,
+    "completed": 436,
+    "failed": 76,
     "refused": 0,
-    "avg_duration_seconds": 626.969
+    "avg_duration_seconds": 563.137
   }
 }
