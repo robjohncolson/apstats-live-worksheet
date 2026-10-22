@@ -31,7 +31,10 @@ desk = desk.replace(re, `$1${stamp}$2`);
 // The old worker may still control the first navigation after a deployment.
 // Version the entry scripts too, so cache-first cannot pair new HTML with an
 // old three-door board that never imports the current calculator room.
-for (const asset of ['canvas_engine.js', 'sprite_sheet.js', 'classroom-board.js', 'pico-home.js', 'js/desk-class-log.js']) {
+const ENTRY_SCRIPTS = ['canvas_engine.js', 'sprite_sheet.js', 'classroom-board.js', 'pico-home.js'];
+// Modules extracted from the Desk's inline script (js/desk-*.js) are versioned the same way.
+const DESK_MODULES = ['js/desk-class-log.js', 'js/desk-progress-app.js'];
+for (const asset of [...ENTRY_SCRIPTS, ...DESK_MODULES]) {
   const escaped = asset.replaceAll('.', '\\.');
   const script = new RegExp('src="' + escaped + '(?:\\?v=[^"<>]*)?"', 'g');
   const matches = desk.match(script) || [];

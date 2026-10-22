@@ -5,7 +5,9 @@ import {createContext,runInContext} from 'node:vm';
 import {parse} from 'acorn';
 import {JSDOM} from 'jsdom';
 const html=readFileSync('ap_stats_roadmap_square_mode.html','utf8');
-const source=[...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g)].find(m=>m[1].includes('function showResourcePanel'))[1];
+// Every inline Desk block, joined in load order: the Desk's script is split around extracted
+// modules (js/desk-*.js, track H), so no single block holds all of these functions.
+const source=[...html.matchAll(/<script\b(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g)].map(m=>m[1]).join('\n');
 const ast=parse(source,{ecmaVersion:'latest'});
 function fn(name){const n=ast.body.find(n=>n.type==='FunctionDeclaration'&&n.id.name===name);return source.slice(n.start,n.end);}
 function load(names,globals={}){
