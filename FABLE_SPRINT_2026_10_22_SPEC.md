@@ -118,10 +118,23 @@ New student-facing features, worksheet authoring, Blooket CSVs, DOK sheets, the 
 box itself, applying the re-seal, disabling any Supabase key, any change to grading
 constants, `app.use(cors())` hardening (prepared patch exists; needs the teacher).
 
-## 3. Working notes (filled in during the run)
+## 8. Run log (2026-10-22, 08:40–10:40 local)
 
-(see §8)
+| Track | Result |
+|---|---|
+| T1 | Re-seal dry run: 32/32 password rows readable with the old key. fa push 8f951a24→48a28a6f (also carried 366a9117 + 729461af, which had never reached origin). roster redeployed on 48a28a6f, frq.mode authoritative: the PC curve and the re-seal script are live. |
+| T2 | `scripts/alias-hosts.mjs` + inventory + 12 tests (22df4314). Dry run with `--domain example.test`: fa 108 files/123 replacements, cr 16/18, a2 23/27; three unmapped placeholder hosts listed, never rewritten. NOT applied. Markdown skipped unless `--include-md`. |
+| T3 | cr 758312b→353c667, pushed, relay healthy. 7 red doorway tests were stale since d50bbca (V7.5.1 auto-close); `/park/calc/due` + `/progress` now 400 on unknown sections (unbounded section-state growth). Open security finding needs a decision (§9). `docs/review-2026-10-22.md`. |
+| T4 | a2 b8c16df→742ed62 (branch `main`), pushed, live. Content landed, CONTINUATION_PROMPT refreshed to 10/22, `deckFromRow` crash fix (a hand-edited deck row killed the process). Root suite: only the inherited failures. `docs/review-2026-10-22.md`. |
+| T5 | class-log: alarm-never-fires fix (RETIRE slot re-plans at the bell) + 3 tests, Gradle 462/462 green; `REVIEW_2026_10_22.md`. Published by `git subtree push --prefix=school/class-log class-log observer-card-db` (a98bbe6). |
+| T6 | CI had been RED since 2026-10-19: tsc TS2322 in grade.js (two untyped maps), stale F061 TOC test (TOC dropped beyond-the-exam lists in a1a2b238), five Live Classroom/park tests re-pinned (10c17eee). ci.yml per issue #2 plus the sibling link for the park tests (89e5bff0, d69d6579). Issue #2 closed. CI green on d69d6579. |
+| T7 | fa root suite 10409 tests, 5 Windows-only failures (pico-home ×3, journeys ×2), 0 new. roster-server 2066 pass (golden-master is a parallel-load flake, passes alone). Bundle regenerated (comments only), gitnexus-shadow refreshed, GitNexus reindexed. |
 
-## 8. Run log
+Not done, by design: applying the codemod (no domain), applying the re-seal (server still holds the old key), any Supabase key change, CORS hardening.
 
 ## 9. Teacher checklist (things only you can do)
+
+1. **Rotation Phase 1 is still open.** 19 `<paste …>` placeholders remain in `~/.config/apstats/rotation-2026-10-21/*.env` (Supabase secret + publishable keys for both projects, Groq, BlockCypher, Gemini, the hgvn JWT secret). Fill them in the browser, then `railway login` (every CLI session was invalidated), then say "run Phase 2": the re-seal dry run is verified and the script is deployed.
+2. **cr `classroom_join` trusts the socket packet** (`railway-server/server.js` ~3915): section, username and `role:'teacher'` are taken verbatim, no roster token. Since 10/15 the park's mastery hook banks bonus rows on roster-server for whatever username joined, so a student can earn bonus rows or campaign keys for another student, move another student's rung, or pass the teacher-only WS checks. Fix is a protocol change (token on join via the existing `verifyToken`, log mode first). Decide: ship it, or accept for now.
+3. **Pick the domain** (Grok). Then `node scripts/alias-hosts.mjs --domain <d>` to see the plan, `--apply` to rewrite, commit per repo.
+4. Smaller follow-ups from the reviews (all in the three `docs/review-2026-10-22.md` files and `class-log/REVIEW_2026_10_22.md`): a2 deck-result `section` is phone-supplied; class-log `failures24h` ignores "transcript poor" lines so the Desk strip never reddens for a bad recording; cr `AI_GRADE_AUTH` defaulting to `off` also skips the rate limiter.
