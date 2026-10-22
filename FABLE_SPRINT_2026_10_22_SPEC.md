@@ -134,6 +134,8 @@ Not done, by design: applying the codemod (no domain), applying the re-seal (ser
 
 ## 9. Teacher checklist (things only you can do)
 
+Teacher, 2026-10-22: items 1 and 3 POSTPONED (rotation, Hetzner/domain); item 2 ACCEPTED as-is. Nothing here is pending on the agent.
+
 1. **Rotation Phase 1 is still open.** 19 `<paste …>` placeholders remain in `~/.config/apstats/rotation-2026-10-21/*.env` (Supabase secret + publishable keys for both projects, Groq, BlockCypher, Gemini, the hgvn JWT secret). Fill them in the browser, then `railway login` (every CLI session was invalidated), then say "run Phase 2": the re-seal dry run is verified and the script is deployed.
 2. **cr `classroom_join` trusts the socket packet** (`railway-server/server.js` ~3915): section, username and `role:'teacher'` are taken verbatim, no roster token. Since 10/15 the park's mastery hook banks bonus rows on roster-server for whatever username joined, so a student can earn bonus rows or campaign keys for another student, move another student's rung, or pass the teacher-only WS checks. Fix is a protocol change (token on join via the existing `verifyToken`, log mode first). Decide: ship it, or accept for now.
 3. **Pick the domain** (Grok). Then `node scripts/alias-hosts.mjs --domain <d>` to see the plan, `--apply` to rewrite, commit per repo.
