@@ -143,6 +143,13 @@
 
   function shortSha(sha) { return sha ? String(sha).slice(0, 7) : '—'; }
   function num(n) { return (typeof n === 'number' && isFinite(n)) ? n : null; }
+  // Every value that comes back from a service or the GitHub API goes through innerHTML,
+  // so it is escaped here first (a PR branch name is attacker-chosen text).
+  function esc(v) {
+    return String(v === null || v === undefined ? '' : v)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+  function githubLink(url) { return String(url || '').indexOf('https://github.com/') === 0 ? esc(url) : null; }
 
   // ── Colour rules: each returns { state, rule, value, detail, at } ──────────
   // `rule` is the human sentence shown in the light's title attribute.
@@ -159,12 +166,12 @@
     var notes = [];
     if (data.ok !== true) { state = 'red'; notes.push('ok is not true'); }
     if (pf === null || pf > 0) { state = (state === 'red') ? 'red' : 'amber'; notes.push('persistFailures ' + (pf === null ? 'missing' : pf)); }
-    if (storage.degraded) { state = (state === 'red') ? 'red' : 'amber'; notes.push('FRQ storage degraded' + (storage.errorCode ? ' (' + storage.errorCode + ')' : '')); }
-    if (ctx.ciSha && data.commit && ctx.ciSha !== data.commit) { state = (state === 'red') ? 'red' : 'amber'; notes.push('deploy behind CI head ' + shortSha(ctx.ciSha)); }
+    if (storage.degraded) { state = (state === 'red') ? 'red' : 'amber'; notes.push('FRQ storage degraded' + (storage.errorCode ? ' (' + esc(storage.errorCode) + ')' : '')); }
+    if (ctx.ciSha && data.commit && ctx.ciSha !== data.commit) { state = (state === 'red') ? 'red' : 'amber'; notes.push('deploy behind CI head ' + esc(shortSha(ctx.ciSha))); }
     return {
       state: state, rule: rule,
-      value: 'commit ' + shortSha(data.commit),
-      detail: 'FRQ worker: <code>' + (worker.mode || frq.mode || '—') + '</code> · persistFailures: <code>' + (pf === null ? '—' : pf) + '</code>' +
+      value: 'commit ' + esc(shortSha(data.commit)),
+      detail: 'FRQ worker: <code>' + esc(worker.mode || frq.mode || '—') + '</code> · persistFailures: <code>' + (pf === null ? '—' : pf) + '</code>' +
         (notes.length ? '<br>' + notes.join(' · ') : ''),
       at: data.time || null
     };
@@ -175,8 +182,8 @@
     var healthy = data.status === 'healthy';
     return {
       state: healthy ? 'green' : 'amber', rule: rule,
-      value: String(data.status || '—'),
-      detail: 'connections: <code>' + (num(data.connections) === null ? '—' : data.connections) + '</code> · cache: <code>' + (data.cache || '—') + '</code> · AI grade auth: <code>' + (data.aiGradeAuth || '—') + '</code>',
+      value: esc(data.status || '—'),
+      detail: 'connections: <code>' + (num(data.connections) === null ? '—' : data.connections) + '</code> · cache: <code>' + esc(data.cache || '—') + '</code> · AI grade auth: <code>' + esc(data.aiGradeAuth || '—') + '</code>',
       at: data.timestamp || null
     };
   }
@@ -185,7 +192,7 @@
     var rule = 'Green: version.json answered. Red: no answer. (The build tag is what bump-build wrote.)';
     return {
       state: 'green', rule: rule,
-      value: 'build ' + (data.build || '—'),
+      value: 'build ' + esc(data.build || '—'),
       detail: 'GH Pages, the primary rail',
       at: num(data.ts) !== null ? new Date(data.ts).toISOString() : null
     };
@@ -196,8 +203,8 @@
     var same = ctx.pagesBuild && data.build === ctx.pagesBuild;
     return {
       state: same ? 'green' : 'amber', rule: rule,
-      value: 'build ' + (data.build || '—'),
-      detail: same ? 'Vercel mirror matches GH Pages' : 'Vercel mirror differs from GH Pages (' + (ctx.pagesBuild || 'unknown') + ')',
+      value: 'build ' + esc(data.build || '—'),
+      detail: same ? 'Vercel mirror matches GH Pages' : 'Vercel mirror differs from GH Pages (' + esc(ctx.pagesBuild || 'unknown') + ')',
       at: num(data.ts) !== null ? new Date(data.ts).toISOString() : null
     };
   }
@@ -211,9 +218,9 @@
     else if (run.conclusion === 'success') state = 'green';
     return {
       state: state, rule: rule,
-      value: run.status === 'completed' ? String(run.conclusion) : String(run.status),
-      detail: '#' + run.run_number + ' on <code>' + run.head_branch + '</code> · ' + shortSha(run.head_sha) +
-        (run.html_url ? ' · <a href="' + run.html_url + '" target="_blank" rel="noopener">open</a>' : ''),
+      value: esc(run.status === 'completed' ? run.conclusion : run.status),
+      detail: '#' + esc(run.run_number) + ' on <code>' + esc(run.head_branch) + '</code> · ' + esc(shortSha(run.head_sha)) +
+        (githubLink(run.html_url) ? ' · <a href="' + githubLink(run.html_url) + '" target="_blank" rel="noopener">open</a>' : ''),
       at: run.updated_at || run.created_at || null,
       headSha: run.head_sha || null
     };
@@ -280,7 +287,7 @@
   }
 
   function failed(t, r, rule) {
-    return { id: t.id, label: t.label, url: t.url, state: 'red', rule: rule || 'Red: no answer.', value: 'no answer', detail: r.error || 'fetch failed', at: null, checkedAt: r.checkedAt };
+    return { id: t.id, label: t.label, url: t.url, state: 'red', rule: rule || 'Red: no answer.', value: 'no answer', detail: esc(r.error || 'fetch failed'), at: null, checkedAt: r.checkedAt };
   }
 
   function render(tiles, now) {

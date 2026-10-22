@@ -146,6 +146,24 @@ describe('status.html render (stubbed fetch)', () => {
     expect(lag.roster.detail).toContain('deploy behind CI head c935058');
   });
 
+  it('renders hostile remote text as text, never as markup (branch names, status strings, error text)', async () => {
+    // Review D1 2026-10-22: every tile value/detail went through innerHTML unescaped; a PR
+    // from a fork names its own head_branch, and a service's status string is remote data.
+    const bodies = healthy();
+    bodies[URLS.ci].workflow_runs[0].head_branch = '<img src=x onerror="window.__pwned=1">';
+    bodies[URLS.ci].workflow_runs[0].html_url = 'javascript:alert(1)';
+    bodies[URLS.cr].status = '<b id="injected-status">healthy</b>';
+    bodies[URLS.pages] = new Error('<script id="injected-error">x</script>');
+    const { doc, dom } = await boot(bodies);
+    expect(doc.querySelector('img')).toBeNull();
+    expect(doc.getElementById('injected-status')).toBeNull();
+    expect(doc.getElementById('injected-error')).toBeNull();
+    expect(dom.window.__pwned).toBeUndefined();
+    expect(doc.getElementById('tile-ci').textContent).toContain('<img src=x onerror=');
+    expect(doc.getElementById('tile-ci').querySelector('a[href^="javascript:"]')).toBeNull();
+    expect(doc.getElementById('tile-cr').textContent).toContain('<b id="injected-status">');
+  });
+
   it('paints a failed CI run red', async () => {
     const bodies = healthy();
     bodies[URLS.ci].workflow_runs[0].conclusion = 'failure';
