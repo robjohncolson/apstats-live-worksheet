@@ -164,6 +164,7 @@ function frqScoreToPct(score, frqBand) {
 // { [unitNum]: score } from POSTER-U{n} rows (source 'poster'); the latest
 // attempt per item wins, a malformed score is skipped.
 export function posterScoresByUnit(posterRows) {
+  /** @type {Record<number, number|null>} */
   const out = {};
   for (const row of latestPerItem(Array.isArray(posterRows) ? posterRows : [])) {
     const m = String(row.item_id || '').match(/^POSTER-U(\d+)$/i);
@@ -337,6 +338,7 @@ export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts
   const unitPcData = {};
   // v3: per-unit raw PC % (the PC track reads raw scores, NOT the pcRawToP
   // graduated-trust curve that Phase 6 uses for P_quarter).
+  /** @type {Record<number, number|null>} */
   const unitPcRaw = {};
   for (const uKey of Object.keys(units)) {
     const uNum = unitNumber(uKey);

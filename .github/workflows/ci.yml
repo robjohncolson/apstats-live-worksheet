@@ -11,10 +11,20 @@ on:
   pull_request:
     branches: [master]
 
+# Issue #2 (2026-10-22): least-privilege token, one run per ref, npm cache, job timeouts,
+# and the apstat-park node tests (package.json test:park) which vitest never includes.
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     name: tests (root + roster-server)
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       # Full history: frq-rubric-transparency reads an older worksheet with `git show <sha>:...`.
       - uses: actions/checkout@v4
@@ -28,6 +38,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            roster-server/package-lock.json
       - name: Install root deps
         run: npm ci
       # Before the root tests: tests/doge-payout-agent imports roster-server/payout.js,
@@ -41,6 +55,8 @@ jobs:
         env:
           CURRICULUM_JS: ${{ github.workspace }}/curriculum_render/data/curriculum.js
         run: npm test -- --retry=2
+      - name: apstat-park tests
+        run: npm run test:park
       - name: roster-server tests
         working-directory: roster-server
         run: npm test -- --retry=2
@@ -48,6 +64,7 @@ jobs:
   typecheck:
     name: typecheck — grade engine + mesh/receipts + feeder (blocking)
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     # BLOCKING as of P4 (was advisory in P1-P3): a type error on the allowlist now
     # fails CI. It still never blocks a deploy — pages.yml is a separate workflow.
     steps:
@@ -55,6 +72,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            roster-server/package-lock.json
       - name: Install roster-server deps
         working-directory: roster-server
         run: npm ci

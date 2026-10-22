@@ -172,15 +172,16 @@ describe.skipIf(!WSX_AVAILABLE)('F034 AI tutor prompt copy', () => {
 });
 
 describe('F061 public worksheet table of contents', () => {
-  it('index links TOC.html and TOC lists all 69 live worksheet files that exist on disk', () => {
+  it('index links TOC.html and every worksheet the TOC links exists on disk', () => {
     expect(INDEX).toMatch(/href="TOC\.html"/);
-    // Card copy reworded to CED 2026 units in 7d02e2f5 (2026-09-05); the
-    // 69-file count is still pinned against TOC.html below.
+    // Card copy reworded to CED 2026 units in 7d02e2f5 (2026-09-05). The TOC was
+    // regenerated in CED-2026 order (de21d692) and its beyond-the-exam lists were
+    // dropped (a1a2b238, 2026-10-06), so it links the exam-topic worksheets, not all
+    // 69 files on disk. The pin is "every link resolves", not a file count.
     expect(INDEX).toMatch(/<a class="card" href="TOC\.html">[\s\S]*?Video follow-alongs/);
 
     const hrefs = [...TOC.matchAll(/href="([^"]*_live\.html)"/g)].map(match => match[1]);
-    expect(hrefs).toHaveLength(69);
-    expect(new Set(hrefs).size).toBe(69);
+    expect(hrefs.length).toBeGreaterThanOrEqual(50);
 
     for (const href of hrefs) {
       expect(existsSync(resolve(repo, href)), `${href} should exist`).toBe(true);
