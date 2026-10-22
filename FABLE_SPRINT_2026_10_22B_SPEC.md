@@ -53,3 +53,22 @@ a2's Desk shows the "Recording" fold (`desk.html` ~8058, `lib/class-log-summary.
 
 ## Release (orchestrator)
 fa: `npm run test:quick`, full root + roster suites, bump-build, gitnexus:shadow, detect_changes, push, CI green, roster `/health` commit. a2: both suites, bump-build, push, `/health`. cr: suite, push, `/health`. Update CLAUDE.md where commands or files changed. Memory + spec run log.
+
+## Run log (2026-10-22, 11:00–15:30 local)
+
+| Track | Result |
+|---|---|
+| A | fa golden-master 60 s budgets (green ×3 under load); receipt-binding 30 s. a2 score-import 20 s + retrying rmSync; a2 golden-master 45 s. |
+| B | fa: 10 jsdom-harness files `describe.skipIf(win32)` (Desk boots 7–14 s here vs <3 s in CI); `FORCE_WIN_TESTS=1` opts in. a2: the nine "inherited" failures were fork drift, not Windows — three fixed (one real harness bug: undeclared `_expiredSignInShown`), j7 skipped with reason; baseline doc updated. Both root suites: 0 failed on this box. |
+| C | `npm run test:quick`: 105 files / 1646 tests, 56 s idle. |
+| D | a2 server stores `recordingWarnings24h`; Desk strip amber on warnings, red on failures. Phone sends the count (poor transcript stamps + mic clipping/silence lines, 24 h window); class-log eafe5c4. |
+| E | deck results use the card's section (409 on mismatch); `GET /teacher/summaries?course=` filter; GH Pages already in a2 CORS. |
+| F | cr limiter runs in every AI_GRADE_AUTH mode (production is `log`, so bursts now 429). cr 9fe4d59 live. |
+| G | 14 boot-time listeners in teacher-classroom.html go through a null-guarding helper; fixture-without-button test. |
+| H | `js/desk-progress-app.js` extracted (My Progress window, 392 lines). Gradebook grid / rCal / Tetris / park bridge are pinned by text-extraction tests in 20+ files outside tests/desk-*; map in commit 951e627d. |
+| I | 102 tracked state/ files → state/archive/ (git mv; renames rode in commit 537fbc9a via the shared index). New scratch patterns ignored. |
+| J | `scripts/park-shared-modules.json` (12 modules); sync + identity test cover all; no drift found (22/22 identical). |
+| K | `status.html` live, linked from teacher-dashboard. Vercel tile will be RED: the mirror returns DEPLOYMENT_NOT_FOUND and `vercel deploy` aborts on seven access-denied junk dirs at the repo root (`UsersroberAppDataLocalTemp*`, `state/*-pycache`, `state/*-pytemp`) — delete them from an elevated shell, then `npx vercel deploy --prod --yes`. |
+| L | Desk "Recording" fold (teacher only, GH Pages origin): a2 teacher login once → `apstats_classlog_token`. 14 tests. |
+
+Release: fa a804d0cd (root 10440/0 failed here, roster 2069, CI green), cr 9fe4d59, a2 4ed2a09, class-log eafe5c4; all `/health` on the new commits. The push also carried 22aa29e5 (calmer auto-grading + band re-set, teacher's other session the same morning).
