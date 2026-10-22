@@ -19,7 +19,8 @@
     "frqBand": {
       "E": 107.5,
       "P": 92.5,
-      "I": 70
+      "I": 81.25,
+      "ungraded": 70
     },
     "frqProvisionalFloorSince": "2026-09-15",
     "frqDiagnosticCorrectThreshold": 0.5,

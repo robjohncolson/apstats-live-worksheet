@@ -7,7 +7,7 @@
  *
  * Regenerate after any engine edit:  node scripts/build-grade-engine.mjs
  * Parity is pinned by tests/grade-engine-bundle-parity.test.js.
- * engine-version: 38d61e14a863
+ * engine-version: d1f68dd5cec8
  */
 ;(function (root) {
   'use strict';
@@ -125,15 +125,18 @@
       // 2026-10-22 (teacher): with every blank right and the 1:2 blanks:reflection
       // blend, the lesson must read 80 with NO reflection graded (the provisional I),
       // 95 with P,P and 105 with E,E — so the band is solved from those targets:
-      // (100 + 2·I)/3 = 80 → I 70; (100 + 2·P)/3 = 95 → P 92.5; (100 + 2·E)/3 = 105
-      // → E 107.5. E sits above 100 on purpose; the lesson clamp (105) still holds.
-      frqBand: { E: 107.5, P: 92.5, I: 70 },
+      // (100 + 2·none)/3 = 80 → ungraded 70; (100 + 2·P)/3 = 95 → P 92.5;
+      // (100 + 2·E)/3 = 105 → E 107.5. E sits above 100 on purpose; the lesson
+      // clamp (105) still holds. Same day: a GRADED I must earn more than no
+      // reflection at all — (100 + 2·I)/3 = 87.5 → I 81.25. `ungraded` is the
+      // provisional value the floor uses for a started-but-ungraded reflection.
+      frqBand: { E: 107.5, P: 92.5, I: 81.25, ungraded: 70 },
     
       // Provisional reflection floor (FRQ_PROVISIONAL_FLOOR, 2026-09-14). A lesson
       // whose blanks are recorded but whose reflections are not yet graded used to
       // report the blanks alone as the lesson grade (100), then FALL once the
       // 2x-weight reflection feeder was graded. For worksheets STARTED on/after this
-      // date the ungraded reflection feeder counts as frqBand.I ("provisional") so
+      // date the ungraded reflection feeder counts as frqBand.ungraded ("provisional") so
       // grading can only raise the number. Earlier lessons keep the old behavior —
       // nothing already reported drops. null disables the floor entirely.
       frqProvisionalFloorSince: '2026-09-15',
@@ -849,7 +852,7 @@
     // the worksheet lowered my grade".
     //
     // Fix: for a worksheet STARTED (earliest blank recorded) on/after `floorSince`,
-    // an ungraded reflection feeder counts as frqBand.I and the lesson is flagged
+    // an ungraded reflection feeder counts as frqBand.ungraded (falls back to I) and the lesson is flagged
     // frqProvisional. Grading can then only move the number UP — I is the lowest
     // verdict. Worksheets started before the cutoff keep the old behavior so no
     // already-reported grade drops (teacher decision 2026-09-14). null = disabled.
@@ -875,7 +878,8 @@
       if (reflectionMean(acc.frqItems) != null) return null;   // a graded reflection exists
       const started = earliestTsMs(acc.worksheetItems);
       if (started == null || started < floorSinceMs) return null;
-      return frqBand.I;
+      // 2026-10-22: "no reflection yet" is worth less than a graded I.
+      return typeof frqBand.ungraded === 'number' ? frqBand.ungraded : frqBand.I;
     }
     
     // ── FRQ score → percentage (mirrors grade.js frqScoreToPct) ───────────────────
@@ -3434,7 +3438,7 @@
     normalizeResponse: __reg["scoring"].normalizeResponse,
     scoreAgainstKey: __reg["scoring"].scoreAgainstKey,
     pcPaperBlend: __reg["scoring"].pcPaperBlend,
-    _engineVersion: "38d61e14a863",
+    _engineVersion: "d1f68dd5cec8",
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = __api;

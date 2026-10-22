@@ -174,7 +174,7 @@ export function buildWorksheetBlankCounts(manifestDoc) {
 // the worksheet lowered my grade".
 //
 // Fix: for a worksheet STARTED (earliest blank recorded) on/after `floorSince`,
-// an ungraded reflection feeder counts as frqBand.I and the lesson is flagged
+// an ungraded reflection feeder counts as frqBand.ungraded (falls back to I) and the lesson is flagged
 // frqProvisional. Grading can then only move the number UP — I is the lowest
 // verdict. Worksheets started before the cutoff keep the old behavior so no
 // already-reported grade drops (teacher decision 2026-09-14). null = disabled.
@@ -200,7 +200,8 @@ function provisionalFrqFloor(acc, Cws, frqBand, floorSinceMs) {
   if (reflectionMean(acc.frqItems) != null) return null;   // a graded reflection exists
   const started = earliestTsMs(acc.worksheetItems);
   if (started == null || started < floorSinceMs) return null;
-  return frqBand.I;
+  // 2026-10-22: "no reflection yet" is worth less than a graded I.
+  return typeof frqBand.ungraded === 'number' ? frqBand.ungraded : frqBand.I;
 }
 
 // ── FRQ score → percentage (mirrors grade.js frqScoreToPct) ───────────────────

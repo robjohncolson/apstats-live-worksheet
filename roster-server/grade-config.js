@@ -97,15 +97,18 @@ export const PHASE3_CONFIG = {
   // 2026-10-22 (teacher): with every blank right and the 1:2 blanks:reflection
   // blend, the lesson must read 80 with NO reflection graded (the provisional I),
   // 95 with P,P and 105 with E,E — so the band is solved from those targets:
-  // (100 + 2·I)/3 = 80 → I 70; (100 + 2·P)/3 = 95 → P 92.5; (100 + 2·E)/3 = 105
-  // → E 107.5. E sits above 100 on purpose; the lesson clamp (105) still holds.
-  frqBand: { E: 107.5, P: 92.5, I: 70 },
+  // (100 + 2·none)/3 = 80 → ungraded 70; (100 + 2·P)/3 = 95 → P 92.5;
+  // (100 + 2·E)/3 = 105 → E 107.5. E sits above 100 on purpose; the lesson
+  // clamp (105) still holds. Same day: a GRADED I must earn more than no
+  // reflection at all — (100 + 2·I)/3 = 87.5 → I 81.25. `ungraded` is the
+  // provisional value the floor uses for a started-but-ungraded reflection.
+  frqBand: { E: 107.5, P: 92.5, I: 81.25, ungraded: 70 },
 
   // Provisional reflection floor (FRQ_PROVISIONAL_FLOOR, 2026-09-14). A lesson
   // whose blanks are recorded but whose reflections are not yet graded used to
   // report the blanks alone as the lesson grade (100), then FALL once the
   // 2x-weight reflection feeder was graded. For worksheets STARTED on/after this
-  // date the ungraded reflection feeder counts as frqBand.I ("provisional") so
+  // date the ungraded reflection feeder counts as frqBand.ungraded ("provisional") so
   // grading can only raise the number. Earlier lessons keep the old behavior —
   // nothing already reported drops. null disables the floor entirely.
   frqProvisionalFloorSince: '2026-09-15',
