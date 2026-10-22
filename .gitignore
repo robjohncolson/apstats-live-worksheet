@@ -148,6 +148,13 @@ state/*.out
 state/*.xml
 state/*-pycache/
 state/*-pytemp/
+# Sprint 2026-10-22B (track I): agent prompts, test dumps and screenshots dropped in state/
+# are scratch unless force-added (git add -f). Tracked files are unaffected; older
+# ones live under state/archive/. The cross-agent runner log stays tracked.
+state/*-codex-*prompt.md
+state/*.json
+!state/cross-agent-log.json
+state/*.png
 UsersroberAppDataLocalTemp*/
 test-results/
 supabase_logs.json
