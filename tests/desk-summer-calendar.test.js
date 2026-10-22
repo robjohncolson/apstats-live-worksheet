@@ -109,13 +109,13 @@ describe('Desk summer weeks — _summerWeeks()', () => {
 describe('Desk summer weeks — woven into rCal (structural)', () => {
   it('rCal prepends the summer weeks to its week list', () => {
     expect(DESK_SRC).toContain('function _summerWeeks');
-    expect(DESK).toMatch(/W = _sumW\.concat\(W\)/);
+    expect(DESK_SRC).toMatch(/W = _sumW\.concat\(W\)/);
   });
 
   it('summer rows get the amber .wk-summer class + CSS, and skip the quarter band', () => {
-    expect(DESK).toContain('wk._summer?" wk-summer"');
+    expect(DESK_SRC).toContain('wk._summer?" wk-summer"');
     expect(DESK).toContain('.wk-row.wk-summer .dc');
-    expect(DESK).toContain('!wk._summer'); // quarter-band divider suppressed for summer weeks
+    expect(DESK_SRC).toContain('!wk._summer'); // quarter-band divider suppressed for summer weeks
   });
 
   it('the old separate agenda was removed (rSummerCal / #summer-cal gone)', () => {
@@ -126,7 +126,7 @@ describe('Desk summer weeks — woven into rCal (structural)', () => {
   it('anchors the focus window on weekends too (bracket today by the week span)', () => {
     // the weekday-only day-cell scan misses Sat/Sun → without this, a summer
     // weekend jumped the calendar to the end of summer. Bracket fallback fixes it.
-    expect(DESK).toContain('t >= _wm && t <= _we');
+    expect(DESK_SRC).toContain('t >= _wm && t <= _we');
   });
 
   it('keeps the summer cell title readable on hover (white on black)', () => {

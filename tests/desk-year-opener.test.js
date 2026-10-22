@@ -175,7 +175,7 @@ describe('SY26-27 year opener — render + click wiring', () => {
   });
 
   it('orientation opens the grade-help explainer; styling exists', () => {
-    expect(DESK).toMatch(/inf\.kind === 'orientation'[\s\S]{0,260}openGradeHelp/);
+    expect(DESK_SRC).toMatch(/inf\.kind === 'orientation'[\s\S]{0,260}openGradeHelp/);
     expect(DESK).toContain('.cell-orient');
     expect(DESK).toContain('.cell-baseline');
   });
@@ -183,7 +183,7 @@ describe('SY26-27 year opener — render + click wiring', () => {
   it('baseline opens a no-stakes framing dialog (PCs are taken in AP Classroom, not Desk-launched)', () => {
     expect(DESK_SRC).toMatch(/inf\.kind === 'baseline'[\s\S]{0,400}_openBaselineInfo/);
     expect(DESK_SRC).toContain('function _openBaselineInfo');
-    expect(DESK).toMatch(/Baseline Check — your starting line/);
-    expect(DESK).toMatch(/only your <b>best<\/b> Progress-Check/);
+    expect(DESK_SRC).toMatch(/Baseline Check — your starting line/);
+    expect(DESK_SRC).toMatch(/only your <b>best<\/b> Progress-Check/);
   });
 });

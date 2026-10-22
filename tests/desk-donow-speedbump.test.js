@@ -110,7 +110,7 @@ describe('DN3c — D1 speed-bump wiring', () => {
   });
 
   it('calendar cell click routes through maybeBumpThenOpen (not showResourcePanel directly)', () => {
-    expect(html).toMatch(/c\.onclick=\(\)=>\{hTip\(\);maybeBumpThenOpen\(inf,ds\)\;\}/);
+    expect(html_SRC).toMatch(/c\.onclick=\(\)=>\{hTip\(\);maybeBumpThenOpen\(inf,ds\)\;\}/);
   });
 });
 

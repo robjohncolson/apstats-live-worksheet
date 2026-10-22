@@ -62,20 +62,20 @@ describe('DESK Day Grade Modal — Phase 6 structure pins', () => {
   });
 
   it('pin 04: openDayGrade(dateStr) function is defined with dateStr param', () => {
-    expect(DESK).toMatch(/function\s+openDayGrade\s*\(\s*dateStr\s*\)/);
+    expect(DESK_SRC).toMatch(/function\s+openDayGrade\s*\(\s*dateStr\s*\)/);
   });
 
   it('pin 05: calendar cells have ondblclick handler that calls openDayGrade', () => {
     // The calendar cell setup code must attach ondblclick.
-    expect(DESK).toMatch(/c\.ondblclick\s*=/);
-    expect(DESK).toMatch(/openDayGrade\s*\(\s*ds\s*\)/);
+    expect(DESK_SRC).toMatch(/c\.ondblclick\s*=/);
+    expect(DESK_SRC).toMatch(/openDayGrade\s*\(\s*ds\s*\)/);
   });
 
   it('pin 06: calendar cells have oncontextmenu handler that calls openDayGrade with preventDefault + stopPropagation (Codex MINOR fold 2026-05-20)', () => {
-    expect(DESK).toMatch(/c\.oncontextmenu\s*=/);
+    expect(DESK_SRC).toMatch(/c\.oncontextmenu\s*=/);
     // Context menu handler must prevent default AND stop propagation so the
     // right-click doesn't bubble to outer handlers / show the native menu.
-    const cellArea = DESK.slice(DESK.indexOf('c.oncontextmenu'), DESK.indexOf('c.oncontextmenu') + 200);
+    const cellArea = DESK_SRC.slice(DESK_SRC.indexOf('c.oncontextmenu'), DESK_SRC.indexOf('c.oncontextmenu') + 200);
     expect(cellArea).toMatch(/preventDefault\s*\(\s*\)/);
     expect(cellArea).toMatch(/stopPropagation\s*\(\s*\)/);
   });
@@ -143,7 +143,7 @@ describe('DESK Day Grade Modal — Phase 6 structure pins', () => {
 
   it('pin 14: single-click on cells still opens resource panel (existing onclick preserved)', () => {
     // The onclick must still call maybeBumpThenOpen.
-    expect(DESK).toMatch(/c\.onclick\s*=\s*\(\s*\)\s*=>\s*\{[^}]*maybeBumpThenOpen/);
+    expect(DESK_SRC).toMatch(/c\.onclick\s*=\s*\(\s*\)\s*=>\s*\{[^}]*maybeBumpThenOpen/);
   });
 
   it('pin 15: closeDayGrade calls _detachDayGradeKeyHandler', () => {
