@@ -49,7 +49,11 @@ beforeAll(async () => {
   RV.ISSUERS.push({ name: 'Test Device', pubkey: k.publicKeyX, kind: 'desk' }); // production issuer (no test:true)
 });
 
-describe('verifyLedgerRow — signature binding (prop 7)', () => {
+// Track A (2026-10-22): 50 signed+verified rows take ~170 ms alone but overran vitest's 5 s
+// default once under the full suite's parallel load (CPU-starved crypto). Budget: observed x3+.
+const PROPERTY_TIMEOUT_MS = 30_000;
+
+describe('verifyLedgerRow — signature binding (prop 7)', { timeout: PROPERTY_TIMEOUT_MS }, () => {
   it('accepts the legit row; rejects ANY tamper of a bound grade field (incl. attempt)', async () => {
     // verifyLedgerRow binds all of these to the signed payload (receipt-verify.js §0).
     const { receiptId, compact } = await signLedger();
@@ -98,7 +102,7 @@ describe('verifyLedgerRow — signature binding (prop 7)', () => {
   });
 });
 
-describe('domain separation (prop 8)', () => {
+describe('domain separation (prop 8)', { timeout: PROPERTY_TIMEOUT_MS }, () => {
   it('a t:submission receipt is NEVER accepted as a ledger grade row', async () => {
     // Same signer, same fields — only the domain tag differs. The grade lane must not
     // ingest a submission-lane receipt (t==='ledger' is required).

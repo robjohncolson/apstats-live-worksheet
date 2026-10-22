@@ -12,6 +12,12 @@ const SYNTHETIC_DIR = new URL('./fixtures/golden-synthetic/', import.meta.url);
 const LOCAL_DIR = new URL('./fixtures/golden-local/', import.meta.url);
 const FIXTURE_FILES = ['students.json', 'inputs.json', 'expected.json'];
 
+// Track A (2026-10-22): every boot does a fresh `import('../../server.js')` (supabase,
+// bcrypt, express). Alone the whole file takes ~7 s; under the full suite's parallel
+// load the beforeAll alone overran vitest's 15 s hook timeout (the file wall time was
+// ~46 s). Explicit budget: slowest observed run x3, rounded.
+const GOLDEN_TIMEOUT_MS = 60_000;
+
 function compareCodePoints(a, b) {
   if (a < b) return -1;
   if (a > b) return 1;
@@ -48,11 +54,11 @@ function defineOracleTests(describeOracle, label, fixture) {
         inputs: fixture.inputs,
         configOverrides: fixture.inputs.configOverrides,
       });
-    });
+    }, GOLDEN_TIMEOUT_MS);
 
     afterAll(async () => {
       if (app) await app.close();
-    });
+    }, GOLDEN_TIMEOUT_MS);
 
     it('uses the current volatile-field contract', () => {
       expect(
@@ -76,12 +82,12 @@ function defineOracleTests(describeOracle, label, fixture) {
           `GET /grade for ${student.id}`,
         );
       }
-    });
+    }, GOLDEN_TIMEOUT_MS);
 
     it('matches GET /class/grades', async () => {
       const actual = stripVolatile(await app.getClassGrades());
       expectGoldenEqual(actual, fixture.expected.classGrades, 'GET /class/grades');
-    });
+    }, GOLDEN_TIMEOUT_MS);
   });
 }
 
@@ -160,7 +166,7 @@ describe('synthetic golden master has teeth', () => {
       },
     });
     expectReadableDifference(difference, 'v3WorkWeights perturbation');
-  });
+  }, GOLDEN_TIMEOUT_MS);
 
   it('detects an isolated v3Gates floor perturbation', async () => {
     const baseline = syntheticFixture.inputs.productionGradeInputs.config.v3Gates;
@@ -173,7 +179,7 @@ describe('synthetic golden master has teeth', () => {
       },
     });
     expectReadableDifference(difference, 'v3Gates floor perturbation');
-  });
+  }, GOLDEN_TIMEOUT_MS);
 
   it('detects an isolated v3Gates ceiling perturbation', async () => {
     const baseline = syntheticFixture.inputs.productionGradeInputs.config.v3Gates;
@@ -186,7 +192,7 @@ describe('synthetic golden master has teeth', () => {
       },
     });
     expectReadableDifference(difference, 'v3Gates ceiling perturbation');
-  });
+  }, GOLDEN_TIMEOUT_MS);
 
   it('detects an isolated Blooket make-up score perturbation', async () => {
     const studentsDoc = structuredClone(syntheticFixture.studentsDoc);
@@ -204,7 +210,7 @@ describe('synthetic golden master has teeth', () => {
       configOverrides: syntheticFixture.inputs.configOverrides,
     });
     expectReadableDifference(difference, 'Blooket make-up score perturbation');
-  });
+  }, GOLDEN_TIMEOUT_MS);
 
   it('detects an isolated quiz-credit answer-key perturbation', async () => {
     const inputs = structuredClone(syntheticFixture.inputs);
@@ -216,5 +222,5 @@ describe('synthetic golden master has teeth', () => {
       configOverrides: syntheticFixture.inputs.configOverrides,
     });
     expectReadableDifference(difference, 'quiz-credit perturbation');
-  });
+  }, GOLDEN_TIMEOUT_MS);
 });
