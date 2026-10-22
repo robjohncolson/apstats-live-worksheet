@@ -9,9 +9,11 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
+import { deskSource, deskHtml } from './helpers/desk-source.js';
 
 const REPO_ROOT = resolve(__dirname, '..');
-const html = readFileSync(resolve(REPO_ROOT, 'ap_stats_roadmap_square_mode.html'), 'utf-8');
+const html = deskHtml();
+const html_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
 
 function fnBody(src, name) {
   const re = new RegExp('(?:async\\s+)?function\\s+' + name + '\\s*\\(');
@@ -31,9 +33,9 @@ function fnBody(src, name) {
 }
 
 const SRC = [
-  fnBody(html, '_soundIconSVG'),
-  fnBody(html, '_renderSoundIcon'),
-  fnBody(html, '_toggleSound'),
+  fnBody(html_SRC, '_soundIconSVG'),
+  fnBody(html_SRC, '_renderSoundIcon'),
+  fnBody(html_SRC, '_toggleSound'),
 ].join('\n');
 
 function load() {

@@ -12,9 +12,11 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 import { createContext, runInContext } from 'vm';
+import { deskSource, deskHtml } from './helpers/desk-source.js';
 
 const REPO_ROOT = resolve(__dirname, '..');
-const html = readFileSync(resolve(REPO_ROOT, 'ap_stats_roadmap_square_mode.html'), 'utf-8');
+const html = deskHtml();
+const html_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
 
 function fnBody(src, name) {
   const re = new RegExp('(?:async\\s+)?function\\s+' + name + '\\s*\\(');
@@ -53,12 +55,12 @@ describe('C2 -- current lesson emphasis', () => {
     expect(html).toMatch(/\.cal-current\s*\{[^}]*outline/);
   });
   it('paintDonowCells no longer touches cal-current (rCal owns it now)', () => {
-    const b = fnBody(html, 'paintDonowCells');
+    const b = fnBody(html_SRC, 'paintDonowCells');
     // the quoted class literal -- a comment mentioning .cal-current is fine.
     expect(b).not.toMatch(/'cal-current'/);
   });
   it('rCal marks one cell -- the calNextUpTopic lesson -- as cal-current', () => {
-    const b = fnBody(html, 'rCal');
+    const b = fnBody(html_SRC, 'rCal');
     expect(b).toMatch(/calNextUpTopic\(/);
     expect(b).toMatch(/inf\.t\s*===\s*_nextUpTopic/);
     expect(b).toMatch(/classList\.add\('cal-current'\)/);
@@ -69,8 +71,8 @@ describe('C2 -- current lesson emphasis', () => {
     const sandbox = {};
     createContext(sandbox);
     runInContext(
-      fnBody(html, 'localLessonState') + '\n' +
-      fnBody(html, 'calNextUpTopic') + '\nthis.__n = calNextUpTopic;', sandbox);
+      fnBody(html_SRC, 'localLessonState') + '\n' +
+      fnBody(html_SRC, 'calNextUpTopic') + '\nthis.__n = calNextUpTopic;', sandbox);
     return sandbox.__n;
   }
   it('calNextUpTopic -- first not-done lesson; skips review cells; null when all done', () => {
@@ -92,7 +94,7 @@ describe('C3 -- Q1-Q4 quarter markers (F2: date-driven)', () => {
     expect(html).toMatch(/\.cal-qband\s*\{/);
   });
   it('rCal emits a .cal-qband divider, date-driven via quarterOfDate', () => {
-    const b = fnBody(html, 'rCal');
+    const b = fnBody(html_SRC, 'rCal');
     expect(b).toMatch(/cal-qband/);
     expect(b).toMatch(/QUARTER_BAND_LABEL/);  // label keeps the unit list
     expect(b).toMatch(/quarterOfDate\(/);     // F2: position is date-driven
@@ -104,7 +106,7 @@ describe('C3 -- Q1-Q4 quarter markers (F2: date-driven)', () => {
     createContext(sandbox);
     // quarterOfDate reads the QUARTER_WINDOWS const -- load both.
     const winSrc = /const QUARTER_WINDOWS = \[[\s\S]*?\n\];/.exec(html)[0];
-    runInContext(winSrc + '\n' + fnBody(html, 'quarterOfDate') +
+    runInContext(winSrc + '\n' + fnBody(html_SRC, 'quarterOfDate') +
       '\nthis.__q = quarterOfDate;', sandbox);
     return sandbox.__q;
   }
@@ -130,7 +132,7 @@ describe('C3 -- Q1-Q4 quarter markers (F2: date-driven)', () => {
 
 describe('C4 -- per-cell direct-link icons removed', () => {
   it('htm() no longer builds a link-row', () => {
-    const b = fnBody(html, 'htm');
+    const b = fnBody(html_SRC, 'htm');
     expect(b).not.toMatch(/link-row/);
     expect(b).not.toMatch(/linkHtml/);
   });
@@ -181,7 +183,7 @@ describe('C5 -- CALENDAR_FOCUS: synthwave next-up + local-done greyscale', () =>
   function loadLocalLessonState() {
     const sandbox = {};
     createContext(sandbox);
-    runInContext(fnBody(html, 'localLessonState') + '\nthis.__s = localLessonState;', sandbox);
+    runInContext(fnBody(html_SRC, 'localLessonState') + '\nthis.__s = localLessonState;', sandbox);
     return sandbox.__s;
   }
   it('A8 -- localLessonState: done from a Done mark, partial from a visit-only mark', () => {
@@ -206,8 +208,8 @@ describe('C5 -- CALENDAR_FOCUS: synthwave next-up + local-done greyscale', () =>
     createContext(sandbox);
     runInContext(
       'function getRegistryEntry(t){ return t === "1.2" ? { urls: { worksheet: "w", blooket: "b" } } : { urls: {} }; }\n' +
-      fnBody(html, '_isLessonComplete') + '\n' +
-      fnBody(html, 'localLessonState') + '\nthis.__s = localLessonState;', sandbox);
+      fnBody(html_SRC, '_isLessonComplete') + '\n' +
+      fnBody(html_SRC, 'localLessonState') + '\nthis.__s = localLessonState;', sandbox);
     const s = sandbox.__s;
     expect(s('1.2', { '1.2|quiz': { ts: 'y' } })).toBe('partial');                              // quiz alone ≠ done
     expect(s('1.2', { '1.2|worksheet': { ts: 'y' } })).toBe('partial');                         // worksheet but no Blooket
@@ -216,7 +218,7 @@ describe('C5 -- CALENDAR_FOCUS: synthwave next-up + local-done greyscale', () =>
   });
   // A8b: the recede class is wired to localLessonState, NOT the REGISTRY `worst`
   it('A8b -- rCal derives the recede class from localLessonState(inf.t, _gateMarks), not REGISTRY worst', () => {
-    const b = fnBody(html, 'rCal');
+    const b = fnBody(html_SRC, 'rCal');
     expect(b).toMatch(/localLessonState\(\s*inf\.t\s*,\s*_gateMarks\s*\)/);
     expect(b).toMatch(/_localState\s*===\s*'done'\s*\?\s*'dc-localdone'/);
     expect(b).not.toMatch(/worst\s*===\s*'ready'\s*\?\s*'dc-localdone'/);
@@ -252,7 +254,7 @@ describe('C5b -- cross-device grey-out from the synced /grade score', () => {
       'var DESK_WORKSHEET_DONE_THRESHOLD = 60;\n' +
       'function _getCwsForTopic(t){ return ' + cwsLit + '; }\n' +
       'function _blooketScoreFor(t){ return ' + blLit + '; }\n' +
-      fnBody(html, '_isLessonComplete') + '\nthis.__c = _isLessonComplete;', sandbox);
+      fnBody(html_SRC, '_isLessonComplete') + '\nthis.__c = _isLessonComplete;', sandbox);
     return sandbox.__c;
   }
 
@@ -286,7 +288,7 @@ describe('C5b -- cross-device grey-out from the synced /grade score', () => {
   // flicker-free class toggle; a lock change (a synced score unlocking the next
   // lesson) escalates to ONE rCal rebuild — only when the unlock state flips.
   it('paintLocalDoneCells repaints greying flicker-free (class toggles)', () => {
-    const b = fnBody(html, 'paintLocalDoneCells');
+    const b = fnBody(html_SRC, 'paintLocalDoneCells');
     expect(b).toMatch(/querySelectorAll\('#cg \.dc\[data-topic\]'\)/);
     expect(b).toMatch(/localLessonState\(/);
     expect(b).toMatch(/dc-localdone/);
@@ -294,7 +296,7 @@ describe('C5b -- cross-device grey-out from the synced /grade score', () => {
     expect(b).toMatch(/cal-current/);
   });
   it('paintLocalDoneCells escalates to rCal ONLY when a lesson lock flips', () => {
-    const b = fnBody(html, 'paintLocalDoneCells');
+    const b = fnBody(html_SRC, 'paintLocalDoneCells');
     // detects a stale lock via the same gate rCal uses...
     expect(b).toMatch(/_isLessonUnlocked\(/);
     expect(b).toMatch(/cell-locked/);
@@ -305,13 +307,13 @@ describe('C5b -- cross-device grey-out from the synced /grade score', () => {
     expect(b).toMatch(/lockChanged\s*&&\s*typeof rCal === 'function'\)\s*rCal\(\)/);
   });
   it('renderDoNowGrades repaints local-done cells after the grade cache loads', () => {
-    const b = fnBody(html, 'renderDoNowGrades');
+    const b = fnBody(html_SRC, 'renderDoNowGrades');
     expect(b).toMatch(/_gradeLessonsCache = Array\.isArray/);
     expect(b).toMatch(/paintLocalDoneCells\(\)/);
   });
   it('_orderedPeriodTopics is shared by rCal and paintLocalDoneCells (one next-up source)', () => {
-    expect(fnBody(html, 'rCal')).toMatch(/calNextUpTopic\(_orderedPeriodTopics\(\)/);
-    expect(fnBody(html, 'paintLocalDoneCells')).toMatch(/_orderedPeriodTopics\(\)/);
+    expect(fnBody(html_SRC, 'rCal')).toMatch(/calNextUpTopic\(_orderedPeriodTopics\(\)/);
+    expect(fnBody(html_SRC, 'paintLocalDoneCells')).toMatch(/_orderedPeriodTopics\(\)/);
   });
 });
 
@@ -319,29 +321,29 @@ describe('C5b -- cross-device grey-out from the synced /grade score', () => {
 
 describe('Calendar compaction -- always show a focus window', () => {
   it('rCal defines CAL_FOCUS_WEEKS = 2', () => {
-    const b = fnBody(html, 'rCal');
+    const b = fnBody(html_SRC, 'rCal');
     expect(b).toMatch(/CAL_FOCUS_WEEKS\s*=\s*2/);
   });
 
   it('rCal slices W down to the focus window', () => {
-    const b = fnBody(html, 'rCal');
+    const b = fnBody(html_SRC, 'rCal');
     expect(b).toMatch(/W\s*=\s*W\.slice\(/);
   });
 
   it('rCal anchors the window on the today-week index when in school', () => {
-    const b = fnBody(html, 'rCal');
+    const b = fnBody(html_SRC, 'rCal');
     // Source pin: the function scans W looking for the week whose days
     // include today, then uses that index as the focus anchor.
     expect(b).toMatch(/_todayWk\s*=\s*i/);
   });
 
   it('rCal clamps the start so the window always has CAL_FOCUS_WEEKS rows', () => {
-    const b = fnBody(html, 'rCal');
+    const b = fnBody(html_SRC, 'rCal');
     expect(b).toMatch(/Math\.max\(0,\s*Math\.min\(/);
   });
 
   it('rCal falls back by date when today has no week (pre/post-school)', () => {
-    const b = fnBody(html, 'rCal');
+    const b = fnBody(html_SRC, 'rCal');
     // Pre-school: t < W[0].m -> start 0. Post-school: -> last window.
     expect(b).toMatch(/t\s*<\s*W\[0\]\.m/);
     // After CALENDAR_NAV the compaction uses _origLen (a snapshot of W.length
@@ -376,23 +378,23 @@ describe('Calendar nav -- prev/next arrows page the focus window', () => {
   });
 
   it('calStep pages by the current window size (_calStepWeeks) and re-runs rCal', () => {
-    const b = fnBody(html, 'calStep');
+    const b = fnBody(html_SRC, 'calStep');
     expect(b).toMatch(/_calPageOffset\s*\+=\s*dir\s*\*\s*_calStepWeeks/);
     expect(b).toMatch(/rCal\(\)/);
   });
 
   it("rCal applies _calPageOffset on top of today's anchor", () => {
-    const b = fnBody(html, 'rCal');
+    const b = fnBody(html_SRC, 'rCal');
     expect(b).toMatch(/_todayAnchor\s*\+\s*_calPageOffset/);
   });
 
   it('rCal toggles cal-nav-hidden on the prev arrow at the left edge', () => {
-    const b = fnBody(html, 'rCal');
+    const b = fnBody(html_SRC, 'rCal');
     expect(b).toMatch(/_np\.classList\.toggle\(\s*['"]cal-nav-hidden['"]\s*,\s*_displayStart\s*<=\s*0/);
   });
 
   it('rCal toggles cal-nav-hidden on the next arrow at the right edge', () => {
-    const b = fnBody(html, 'rCal');
+    const b = fnBody(html_SRC, 'rCal');
     expect(b).toMatch(/_nn\.classList\.toggle\(\s*['"]cal-nav-hidden['"]\s*,\s*_displayStart\s*\+\s*CAL_FOCUS_WEEKS\s*>=\s*_origLen/);
   });
 });

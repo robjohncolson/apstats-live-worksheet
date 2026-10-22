@@ -2,9 +2,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { JSDOM, VirtualConsole } from 'jsdom';
 import { readFileSync } from 'node:fs';
+import { deskSource } from './helpers/desk-source.js';
 const html = readFileSync(new URL('../teacher-dashboard.html', import.meta.url), 'utf8');
 const workspace = readFileSync(new URL('../teacher-workspace.js', import.meta.url), 'utf8');
-const desk = readFileSync(new URL('../ap_stats_roadmap_square_mode.html', import.meta.url), 'utf8');
+const desk = deskSource();
 const doms = [];
 const tick = () => new Promise(r => setTimeout(r, 20));
 const response = data => ({ ok: true, status: 200, json: async () => data });

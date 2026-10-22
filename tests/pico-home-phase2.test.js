@@ -20,6 +20,7 @@ import { describe, it, expect, vi } from 'vitest';
 // win32; FORCE_WIN_TESTS=1 runs it anyway. CI still runs it.
 const describeOnThisBox = describe.skipIf(process.platform === 'win32' && !process.env.FORCE_WIN_TESTS);
 import { bootDesk, DESK_URL } from './journeys/harness.js';
+import { deskSource } from './helpers/desk-source.js';
 
 const NOW = '2026-10-07T14:00:00.000Z';   // Wed Oct 7 2026, 10am school time
 
@@ -528,7 +529,7 @@ describeOnThisBox('Phase 2 -- review fixes', { timeout: 90_000 }, () => {
   it('pins the Desk status wording the triangle reads (a wording change must fail here)', async () => {
     const { readFileSync } = await import('node:fs');
     const { resolve } = await import('node:path');
-    const desk = readFileSync(resolve(__dirname, '..', 'ap_stats_roadmap_square_mode.html'), 'utf8');
+    const desk = deskSource();
     // The panel's own status strings, as the Desk writes them.
     expect(desk).toContain('&#10003; Completed</button>');
     expect(desk).toContain("'Flashcards 100% ✓'");

@@ -14,9 +14,11 @@ import { readFileSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { CED_SOURCE } from './fixtures/ced2026-labels.js';
+import { deskSource, deskHtml } from './helpers/desk-source.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const html = readFileSync(resolve(here, '../ap_stats_roadmap_square_mode.html'), 'utf8');
+const html = deskHtml();
+const html_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
 
 function gradebook() {
   return {

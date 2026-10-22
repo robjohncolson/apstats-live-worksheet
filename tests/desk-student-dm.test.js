@@ -22,7 +22,8 @@ import { resolve } from 'path';
 import { createContext, runInContext } from 'vm';
 
 const REPO_ROOT = resolve(__dirname, '..');
-const html = readFileSync(resolve(REPO_ROOT, 'ap_stats_roadmap_square_mode.html'), 'utf-8');
+const html = deskHtml();
+const html_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
 
 // ---------------------------------------------------------------------------
 // Utility: extract a named function body from source.
@@ -118,11 +119,11 @@ describe('student DM modal -- DOM structure', () => {
   });
 
   it('all five DM handler functions are defined in the source', () => {
-    expect(() => fnBody(html, '_openStudentDmModal')).not.toThrow();
-    expect(() => fnBody(html, '_closeStudentDmModal')).not.toThrow();
-    expect(() => fnBody(html, '_fetchStudentDmHistory')).not.toThrow();
-    expect(() => fnBody(html, '_buildSdmHistoryLi')).not.toThrow();
-    expect(() => fnBody(html, '_sendStudentDm')).not.toThrow();
+    expect(() => fnBody(html_SRC, '_openStudentDmModal')).not.toThrow();
+    expect(() => fnBody(html_SRC, '_closeStudentDmModal')).not.toThrow();
+    expect(() => fnBody(html_SRC, '_fetchStudentDmHistory')).not.toThrow();
+    expect(() => fnBody(html_SRC, '_buildSdmHistoryLi')).not.toThrow();
+    expect(() => fnBody(html_SRC, '_sendStudentDm')).not.toThrow();
   });
 });
 
@@ -156,10 +157,10 @@ function makeOpenCloseSandbox(modalDisplay) {
     // unhandled rejection that fails the suite's exit code. The fetch-cycle
     // sandbox further down already defines it.
     'var _sdmHistoryEpoch = 0;\n' +
-    fnBody(html, '_closeStudentDmModal') + '\n' +
-    fnBody(html, '_fetchStudentDmHistory') + '\n' +
-    fnBody(html, '_buildSdmHistoryLi') + '\n' +
-    fnBody(html, '_openStudentDmModal') + '\n' +
+    fnBody(html_SRC, '_closeStudentDmModal') + '\n' +
+    fnBody(html_SRC, '_fetchStudentDmHistory') + '\n' +
+    fnBody(html_SRC, '_buildSdmHistoryLi') + '\n' +
+    fnBody(html_SRC, '_openStudentDmModal') + '\n' +
     'this.__open = _openStudentDmModal;\n' +
     'this.__close = _closeStudentDmModal;\n';
   runInContext(code, sandbox);
@@ -234,7 +235,7 @@ function makeSendSandbox({ textValue, fetchStatus, fetchBody, base, token }) {
   };
   createContext(sandbox);
   runInContext(
-    fnBody(html, '_sendStudentDm') + '\n' +
+    fnBody(html_SRC, '_sendStudentDm') + '\n' +
     'this.__f = _sendStudentDm;\n',
     sandbox
   );
@@ -351,11 +352,11 @@ function makeHistorySandbox({ rows, fetchOk, base, token }) {
   // the roster path exactly as before.
   runInContext(
     'var _sdmHistoryEpoch = 0;\n' +
-    fnBody(html, '_studentNudgeToken') + '\n' +
-    fnBody(html, '_studentNudgeGuestAlias') + '\n' +
-    fnBody(html, '_studentNudgeFetch') + '\n' +
-    fnBody(html, '_buildSdmHistoryLi') + '\n' +
-    fnBody(html, '_fetchStudentDmHistory') + '\n' +
+    fnBody(html_SRC, '_studentNudgeToken') + '\n' +
+    fnBody(html_SRC, '_studentNudgeGuestAlias') + '\n' +
+    fnBody(html_SRC, '_studentNudgeFetch') + '\n' +
+    fnBody(html_SRC, '_buildSdmHistoryLi') + '\n' +
+    fnBody(html_SRC, '_fetchStudentDmHistory') + '\n' +
     'this.__f = _fetchStudentDmHistory;\n',
     sandbox
   );
@@ -416,7 +417,7 @@ function makeBuildLiSandbox() {
     },
   };
   createContext(sandbox);
-  runInContext(fnBody(html, '_buildSdmHistoryLi') + '\nthis.__f = _buildSdmHistoryLi;', sandbox);
+  runInContext(fnBody(html_SRC, '_buildSdmHistoryLi') + '\nthis.__f = _buildSdmHistoryLi;', sandbox);
   return { f: sandbox.__f, created };
 }
 
@@ -470,6 +471,7 @@ describe('student DM modal -- _buildSdmHistoryLi', () => {
 
 import { readFileSync as _rfs } from 'fs';
 import { resolve as _resolve } from 'path';
+import { deskSource, deskHtml } from './helpers/desk-source.js';
 
 describe('Codex P13 fold regressions', () => {
   const DESK_PATH = _resolve(__dirname, '..', 'ap_stats_roadmap_square_mode.html');

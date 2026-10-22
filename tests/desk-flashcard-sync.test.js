@@ -9,9 +9,10 @@ import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import FlashcardSync from '../lib/flashcard-sync.js';
+import { deskSource } from './helpers/desk-source.js';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const DESK = readFileSync(resolve(repo, 'ap_stats_roadmap_square_mode.html'), 'utf8');
+const DESK = deskSource();
 const HOME = readFileSync(resolve(repo, 'mobile-home.html'), 'utf8');
 
 function fnBody(src, name) {

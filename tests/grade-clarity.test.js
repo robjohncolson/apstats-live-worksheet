@@ -8,10 +8,12 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { deskSource, deskHtml } from './helpers/desk-source.js';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const START = readFileSync(resolve(repo, 'start-here.html'), 'utf8');
-const DESK = readFileSync(resolve(repo, 'ap_stats_roadmap_square_mode.html'), 'utf8');
+const DESK = deskHtml();
+const DESK_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
 // Just the "How your grade works" modal markup.
 const MODAL = DESK.slice(DESK.indexOf('<div id="grade-help-overlay"'), DESK.indexOf('<!-- ═══ My Gradebook Modal'));
 

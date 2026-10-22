@@ -12,10 +12,12 @@ import { readFileSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { JSDOM } from 'jsdom';
+import { deskSource, deskHtml } from './helpers/desk-source.js';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const deskPath = resolve(repo, 'ap_stats_roadmap_square_mode.html');
-const DESK = existsSync(deskPath) ? readFileSync(deskPath, 'utf8') : null;
+const DESK = existsSync(deskPath) ? deskHtml() : null;
+const DESK_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
 
 function fnBody(src, name) {
   const re = new RegExp('(?:async\\s+)?function\\s+' + name + '\\s*\\(');
@@ -47,7 +49,7 @@ describe('Desk: Blooket flashcard verification', () => {
     // button became a persistent "Flashcards" launcher (mode picker) — the score
     // shows in a separate colored chip (FLASHCARD_TIMED_DECK_BUILD.md).
     expect(DESK, 'the BLOOKET_GATE_MS constant must be gone').not.toMatch(/BLOOKET_GATE_MS/);
-    const body = fnBody(DESK, 'showResourcePanel');
+    const body = fnBody(DESK_SRC, 'showResourcePanel');
     // The launcher routes to studentMark(..., 'blooket') and is always clickable.
     expect(body).toMatch(/studentMark\(this,[^\n]*blooket/);
     expect(body).toMatch(/Do flashcards \(your score = Blooket grade\)/);
@@ -58,7 +60,7 @@ describe('Desk: Blooket flashcard verification', () => {
   });
 
   it('03: _doneBtn no longer handles blooket (it is launcher + chip in its row now)', () => {
-    const body = fnBody(DESK, '_doneBtn');
+    const body = fnBody(DESK_SRC, '_doneBtn');
     expect(body).not.toMatch(/artifact\s*===\s*['"]blooket['"]/);
     // quiz + worksheet branches are untouched.
     expect(body).toMatch(/artifact\s*===\s*['"]quiz['"]/);
@@ -66,7 +68,7 @@ describe('Desk: Blooket flashcard verification', () => {
   });
 
   it('04: studentMark routes blooket to openBlooketFlashcards (NOT the inline score prompt)', () => {
-    const body = fnBody(DESK, 'studentMark');
+    const body = fnBody(DESK_SRC, 'studentMark');
     // Branch on blooket BEFORE the quiz branch and returns early.
     expect(body).toMatch(/artifact\s*===\s*['"]blooket['"]/);
     expect(body).toMatch(/openBlooketFlashcards\s*\(\s*btn\s*,\s*topicId\s*\)/);
@@ -84,7 +86,7 @@ describe('Desk: Blooket flashcard verification', () => {
 
   it('06: CSV path resolver maps topic to u{U}_l{key}_blooket.csv via the registry', () => {
     expect(DESK).toMatch(/function\s+_bfCsvPath\s*\(/);
-    const body = fnBody(DESK, '_bfCsvPath');
+    const body = fnBody(DESK_SRC, '_bfCsvPath');
     expect(body).toMatch(/getRegistryEntry/);
     expect(body).toMatch(/_blooket\.csv/);
     // Combined-worksheet keys (1-2) must map to underscores (l1_l2).
@@ -93,7 +95,7 @@ describe('Desk: Blooket flashcard verification', () => {
 
   it('07: CSV parser handles quoted fields with embedded commas + newlines', () => {
     expect(DESK).toMatch(/function\s+_bfParseCsv\s*\(/);
-    const body = fnBody(DESK, '_bfParseCsv');
+    const body = fnBody(DESK_SRC, '_bfParseCsv');
     // Tracks an inQuote flag for proper RFC-4180 parsing.
     expect(body).toMatch(/inQuote/);
     // Handles the doubled-quote escape ("") inside a quoted field.
@@ -102,7 +104,7 @@ describe('Desk: Blooket flashcard verification', () => {
 
   it('08: deck builder skips template/header rows and reads Q# / question text / 4 answers / correct#', () => {
     expect(DESK).toMatch(/function\s+_bfRowsToDeck\s*\(/);
-    const body = fnBody(DESK, '_bfRowsToDeck');
+    const body = fnBody(DESK_SRC, '_bfRowsToDeck');
     // The Blooket CSV puts the correct-answer number in column 7 (0-indexed).
     expect(body).toMatch(/parseInt\s*\(\s*\(r\[7\]/);
     // Answers in cols 2..5.
@@ -113,12 +115,12 @@ describe('Desk: Blooket flashcard verification', () => {
 
   it('09: deck is shuffled per-attempt (random order)', () => {
     expect(DESK).toMatch(/function\s+_bfShuffle\s*\(/);
-    const body = fnBody(DESK, '_bfShuffle');
+    const body = fnBody(DESK_SRC, '_bfShuffle');
     expect(body).toMatch(/Math\.random/);
   });
 
   it('10: _bfAnswer scores the click and locks the choice buttons (no double-click)', () => {
-    const body = fnBody(DESK, '_bfAnswer');
+    const body = fnBody(DESK_SRC, '_bfAnswer');
     expect(body).toMatch(/_bfState\.answered/);
     expect(body).toMatch(/_bfState\.score\s*\+=\s*1/);
     expect(body).toMatch(/btns\[i\]\.disabled\s*=\s*true/);
@@ -128,7 +130,7 @@ describe('Desk: Blooket flashcard verification', () => {
   });
 
   it('10b: _bfAnswer early-stops once the pass is secured (8 of 10) — no need to answer the rest', () => {
-    const body = fnBody(DESK, '_bfAnswer');
+    const body = fnBody(DESK_SRC, '_bfAnswer');
     // Pass count = ceil(threshold * deck length); once score reaches it, finish.
     expect(body).toMatch(/Math\.ceil\(BLOOKET_PASS_THRESHOLD \* _bfState\.deck\.length\)/);
     expect(body).toMatch(/_bfState\.score\s*>=\s*_passCount/);
@@ -136,7 +138,7 @@ describe('Desk: Blooket flashcard verification', () => {
   });
 
   it('11: _bfFinish gates auto-mark on ≥ 80% pass + commits via _blooketCommit', () => {
-    const body = fnBody(DESK, '_bfFinish');
+    const body = fnBody(DESK_SRC, '_bfFinish');
     expect(body).toMatch(/BLOOKET_PASS_THRESHOLD/);
     // The quick pass now commits through _blooketCommit (best-wins + refresh).
     expect(body).toMatch(/_blooketCommit\s*\(\s*btn\s*,\s*topicId\s*,\s*score\s*\)/);
@@ -145,7 +147,7 @@ describe('Desk: Blooket flashcard verification', () => {
   });
 
   it('12: _bfFinish only commits the score when passed===true', () => {
-    const body = fnBody(DESK, '_bfFinish');
+    const body = fnBody(DESK_SRC, '_bfFinish');
     const commitIdx = body.indexOf('_blooketCommit');
     expect(commitIdx).toBeGreaterThan(-1);
     const slice = body.slice(0, commitIdx);
@@ -154,21 +156,21 @@ describe('Desk: Blooket flashcard verification', () => {
 
   it('13: blooket row shows a launcher (not an immediate Done) + best-wins commit exists', () => {
     // The launcher label tells the student the click opens flashcards, not a mark.
-    const body = fnBody(DESK, 'showResourcePanel');
+    const body = fnBody(DESK_SRC, 'showResourcePanel');
     expect(body).toMatch(/Do flashcards/);
     // _blooketCommit implements best-wins (re-running can't lower the score).
     expect(DESK).toMatch(/async\s+function\s+_blooketCommit\s*\(/);
-    const commit = fnBody(DESK, '_blooketCommit');
+    const commit = fnBody(DESK_SRC, '_blooketCommit');
     expect(commit).toMatch(/score\s*>\s*floor/);              // only save a NEW best
     expect(commit).toMatch(/_studentMarkSave\s*\(\s*btn\s*,\s*topic\s*,\s*['"]blooket['"]/);
   });
 
   it('13b: the blooket SCORE shows as a colored chip from _blooketScoreFor (not a bare Done)', () => {
     expect(DESK).toMatch(/function\s+_blooketScoreFor\s*\(/);
-    const helper = fnBody(DESK, '_blooketScoreFor');
+    const helper = fnBody(DESK_SRC, '_blooketScoreFor');
     expect(helper).toMatch(/_gradeLessonsCache/);
     expect(helper).toMatch(/\.blooket/);
-    const body = fnBody(DESK, 'showResourcePanel');
+    const body = fnBody(DESK_SRC, 'showResourcePanel');
     // The chip is built from the blooket score against the 80% gate.
     expect(body).toMatch(/_scoreChip\(\s*_blScore\s*,\s*80\s*\)/);
     expect(body).toMatch(/_blooketScoreFor\(/);
@@ -179,7 +181,7 @@ describe('Desk: Blooket flashcard verification', () => {
     // (which saves progress first) + _bfCloseUI (which clears in-memory
     // state without touching localStorage). The state-clearing lives in
     // _bfCloseUI now.
-    const body = fnBody(DESK, '_bfCloseUI');
+    const body = fnBody(DESK_SRC, '_bfCloseUI');
     expect(body).toMatch(/_bfState\.topic\s*=\s*null/);
     expect(body).toMatch(/_bfState\.deck\s*=\s*\[\]/);
   });
@@ -201,7 +203,7 @@ describe('Desk: Blooket flashcard verification', () => {
   it('17: the quick check (_bfStartQuick) tries to resume saved progress before fetching CSV', () => {
     // The quick-mode load logic moved from openBlooketFlashcards (now the mode
     // picker) into _bfStartQuick (FLASHCARD_TIMED_DECK_BUILD.md).
-    const body = fnBody(DESK, '_bfStartQuick');
+    const body = fnBody(DESK_SRC, '_bfStartQuick');
     expect(body).toMatch(/_bfLoadProgress\s*\(\s*topicId\s*\)/);
     const loadIdx = body.indexOf('_bfLoadProgress');
     const fetchIdx = body.indexOf('await fetch');
@@ -209,19 +211,19 @@ describe('Desk: Blooket flashcard verification', () => {
   });
 
   it('18: _bfNext saves progress after each advance', () => {
-    const body = fnBody(DESK, '_bfNext');
+    const body = fnBody(DESK_SRC, '_bfNext');
     expect(body).toMatch(/_bfSaveProgress\s*\(\s*\)/);
     // Must increment idx and save together.
     expect(body).toMatch(/_bfState\.idx\s*\+=\s*1/);
   });
 
   it('19: closeBlooketFlashcards saves progress (Cancel preserves resume state)', () => {
-    const body = fnBody(DESK, 'closeBlooketFlashcards');
+    const body = fnBody(DESK_SRC, 'closeBlooketFlashcards');
     expect(body).toMatch(/_bfSaveProgress\s*\(\s*\)/);
   });
 
   it('20: _bfFinish clears progress on pass (deck complete) before auto-mark', () => {
-    const body = fnBody(DESK, '_bfFinish');
+    const body = fnBody(DESK_SRC, '_bfFinish');
     expect(body).toMatch(/_bfClearProgress\s*\(\s*topicId\s*\)/);
     // The clear must be inside the if(passed) block (before the auto-mark
     // setTimeout). Walk backward from the clear call to confirm.
@@ -231,20 +233,20 @@ describe('Desk: Blooket flashcard verification', () => {
   });
 
   it('21: storage key is scoped per student email', () => {
-    const body = fnBody(DESK, '_bfStorageKey');
+    const body = fnBody(DESK_SRC, '_bfStorageKey');
     expect(body).toMatch(/getStudentEmail/);
     expect(body).toMatch(/apstats_desk_bf_progress_/);
   });
 
   it('22: load defensively returns null if saved idx is past deck length (corruption guard)', () => {
-    const body = fnBody(DESK, '_bfLoadProgress');
+    const body = fnBody(DESK_SRC, '_bfLoadProgress');
     // Must check that idx < deck.length before returning the entry.
     expect(body).toMatch(/entry\.deck\.length/);
     expect(body).toMatch(/idx\s*\|\|\s*0\s*\)\s*>=\s*entry\.deck\.length/);
   });
 
   it('23: retry button clears + reshuffles + saves new shuffle (fresh start)', () => {
-    const body = fnBody(DESK, '_bfFinish');
+    const body = fnBody(DESK_SRC, '_bfFinish');
     // Retry handler must reshuffle, reset idx/score, and save.
     expect(body).toMatch(/_bfShuffle\s*\(\s*_bfState\.deck\s*\)/);
     expect(body).toMatch(/_bfSaveProgress\s*\(\s*\)/);
@@ -252,14 +254,14 @@ describe('Desk: Blooket flashcard verification', () => {
 
   // ── 2026-05-20: difficulty-aware top-10 deck trim ──────────────────────────
   it('24: _bfRowsToDeck carries qnum on each card (for tag lookup)', () => {
-    const body = fnBody(DESK, '_bfRowsToDeck');
+    const body = fnBody(DESK_SRC, '_bfRowsToDeck');
     // qnum must be on the pushed card.
     expect(body).toMatch(/deck\.push\s*\(\s*\{\s*qnum\s*:\s*qnum/);
   });
 
   it('25: _bfLoadDifficultyTags fetches data/blooket-difficulty.json + caches', () => {
     expect(DESK).toMatch(/async\s+function\s+_bfLoadDifficultyTags\s*\(/);
-    const body = fnBody(DESK, '_bfLoadDifficultyTags');
+    const body = fnBody(DESK_SRC, '_bfLoadDifficultyTags');
     expect(body).toMatch(/data\/blooket-difficulty\.json/);
     expect(body).toMatch(/_bfDifficultyTags/);
     // Caches: returns existing value if already set.
@@ -268,12 +270,12 @@ describe('Desk: Blooket flashcard verification', () => {
 
   it('26: _bfSelectTop10 function exists and targets 10 cards', () => {
     expect(DESK).toMatch(/function\s+_bfSelectTop10\s*\(/);
-    const body = fnBody(DESK, '_bfSelectTop10');
+    const body = fnBody(DESK_SRC, '_bfSelectTop10');
     expect(body).toMatch(/TARGET\s*=\s*10/);
   });
 
   it('27: _bfSelectTop10 orders hard → med → easy → untagged then slices to TARGET', () => {
-    const body = fnBody(DESK, '_bfSelectTop10');
+    const body = fnBody(DESK_SRC, '_bfSelectTop10');
     // Buckets present.
     expect(body).toMatch(/hard\s*=\s*\[\]/);
     expect(body).toMatch(/med\s*=\s*\[\]/);
@@ -286,19 +288,19 @@ describe('Desk: Blooket flashcard verification', () => {
   });
 
   it('28: _bfSelectTop10 returns all cards when deck.length <= 10', () => {
-    const body = fnBody(DESK, '_bfSelectTop10');
+    const body = fnBody(DESK_SRC, '_bfSelectTop10');
     expect(body).toMatch(/allCards\.length\s*<=\s*TARGET/);
   });
 
   it('29: _bfSelectTop10 falls back to first-TARGET when tagsForFile is empty', () => {
-    const body = fnBody(DESK, '_bfSelectTop10');
+    const body = fnBody(DESK_SRC, '_bfSelectTop10');
     expect(body).toMatch(/Object\.keys\s*\(\s*tagsForFile\s*\)\.length\s*===\s*0/);
     // The fallback returns allCards.slice(0, TARGET).
     expect(body).toMatch(/allCards\.slice\s*\(\s*0\s*,\s*TARGET\s*\)/);
   });
 
   it('30: the quick check (_bfStartQuick) calls _bfSelectTop10 in the fresh-load branch', () => {
-    const body = fnBody(DESK, '_bfStartQuick');
+    const body = fnBody(DESK_SRC, '_bfStartQuick');
     expect(body).toMatch(/_bfLoadDifficultyTags\s*\(/);
     expect(body).toMatch(/_bfSelectTop10\s*\(/);
     // Selection happens BEFORE the shuffle.
@@ -311,7 +313,7 @@ describe('Desk: Blooket flashcard verification', () => {
 
   it('30b: the FULL timed deck (_ftStart) does NOT trim to top-10 (uses every card)', () => {
     expect(DESK).toMatch(/async\s+function\s+_ftStart\s*\(/);
-    const body = fnBody(DESK, '_ftStart');
+    const body = fnBody(DESK_SRC, '_ftStart');
     expect(body).toMatch(/_bfRowsToDeck\s*\(\s*_bfParseCsv/);
     expect(body, 'full deck must not call _bfSelectTop10').not.toMatch(/_bfSelectTop10/);
     expect(body).toMatch(/_ftCreateRound/);
@@ -319,7 +321,7 @@ describe('Desk: Blooket flashcard verification', () => {
 
   it('31: _bfSelectTop10 smoke-test — hard-first ordering on synthetic input', () => {
     // Pull the function body out of the source and run it for real.
-    const src = fnBody(DESK, '_bfSelectTop10');
+    const src = fnBody(DESK_SRC, '_bfSelectTop10');
     // eslint-disable-next-line no-new-func
     const factory = new Function('return (' + src + ');');
     const _bfSelectTop10 = factory();
@@ -360,7 +362,7 @@ describe('Desk: Blooket flashcard verification', () => {
   });
 
   it('32: _bfSelectTop10 smoke-test — fewer than 10 cards returned unchanged', () => {
-    const src = fnBody(DESK, '_bfSelectTop10');
+    const src = fnBody(DESK_SRC, '_bfSelectTop10');
     // eslint-disable-next-line no-new-func
     const factory = new Function('return (' + src + ');');
     const _bfSelectTop10 = factory();
@@ -372,7 +374,7 @@ describe('Desk: Blooket flashcard verification', () => {
   });
 
   it('33: _bfSelectTop10 smoke-test — empty tags falls back to first-10', () => {
-    const src = fnBody(DESK, '_bfSelectTop10');
+    const src = fnBody(DESK_SRC, '_bfSelectTop10');
     // eslint-disable-next-line no-new-func
     const factory = new Function('return (' + src + ');');
     const _bfSelectTop10 = factory();
@@ -390,7 +392,7 @@ describe('Desk: Blooket flashcard verification', () => {
   });
 
   it('35: keydown handler has active-element guard (INPUT/TEXTAREA/SELECT/contentEditable)', () => {
-    const body = fnBody(DESK, '_bfKeydownHandler');
+    const body = fnBody(DESK_SRC, '_bfKeydownHandler');
     expect(body).toMatch(/tag\s*===\s*['"]INPUT['"]/);
     expect(body).toMatch(/tag\s*===\s*['"]TEXTAREA['"]/);
     expect(body).toMatch(/tag\s*===\s*['"]SELECT['"]/);
@@ -398,7 +400,7 @@ describe('Desk: Blooket flashcard verification', () => {
   });
 
   it('36: keydown handler has modifier guard (ctrl/meta/alt/shift)', () => {
-    const body = fnBody(DESK, '_bfKeydownHandler');
+    const body = fnBody(DESK_SRC, '_bfKeydownHandler');
     expect(body).toMatch(/e\.ctrlKey/);
     expect(body).toMatch(/e\.metaKey/);
     expect(body).toMatch(/e\.altKey/);
@@ -406,19 +408,19 @@ describe('Desk: Blooket flashcard verification', () => {
   });
 
   it('37: keydown handler maps letters a-d to choice indices 0-3', () => {
-    const body = fnBody(DESK, '_bfKeydownHandler');
+    const body = fnBody(DESK_SRC, '_bfKeydownHandler');
     // Letter map present.
     expect(body).toMatch(/['"]abcd['"]\.indexOf\s*\(\s*key\s*\)/);
   });
 
   it('38: keydown handler maps numbers 1-4 to choice indices', () => {
-    const body = fnBody(DESK, '_bfKeydownHandler');
+    const body = fnBody(DESK_SRC, '_bfKeydownHandler');
     expect(body).toMatch(/key\s*===\s*['"]1['"]/);
     expect(body).toMatch(/parseInt\s*\(\s*key\s*,\s*10\s*\)\s*-\s*1/);
   });
 
   it('39: keydown handler advances on Enter when already answered + next visible', () => {
-    const body = fnBody(DESK, '_bfKeydownHandler');
+    const body = fnBody(DESK_SRC, '_bfKeydownHandler');
     expect(body).toMatch(/_bfState\.answered/);
     expect(body).toMatch(/key\s*===\s*['"]enter['"]/);
     expect(body).toMatch(/bf-next/);
@@ -426,7 +428,7 @@ describe('Desk: Blooket flashcard verification', () => {
   });
 
   it('40: the quick check (_bfStartQuick) attaches the keydown listener after rendering', () => {
-    const body = fnBody(DESK, '_bfStartQuick');
+    const body = fnBody(DESK_SRC, '_bfStartQuick');
     expect(body).toMatch(/addEventListener\s*\(\s*['"]keydown['"]\s*,\s*_bfKeydownHandler\s*\)/);
     // Attach AFTER first render call (so initial card is showing).
     const renderIdx = body.indexOf('_bfRenderCard()');
@@ -436,12 +438,12 @@ describe('Desk: Blooket flashcard verification', () => {
   });
 
   it('41: _bfCloseUI detaches keydown listener (no leak between modal opens)', () => {
-    const body = fnBody(DESK, '_bfCloseUI');
+    const body = fnBody(DESK_SRC, '_bfCloseUI');
     expect(body).toMatch(/removeEventListener\s*\(\s*['"]keydown['"]\s*,\s*_bfKeydownHandler\s*\)/);
   });
 
   it('42: progress text in _bfRenderCard mentions the keyboard shortcut hint', () => {
-    const body = fnBody(DESK, '_bfRenderCard');
+    const body = fnBody(DESK_SRC, '_bfRenderCard');
     expect(body).toMatch(/a-d\s+or\s+1-4/);
   });
 
@@ -485,7 +487,7 @@ describe('Desk: Blooket flashcard verification', () => {
 
   // ── 2026-05-20: _bfSelectTop10 edge-case smoke tests ──────────────────────
   it('45: _bfSelectTop10 smoke — deck with ZERO hard cards still yields 10', () => {
-    const src = fnBody(DESK, '_bfSelectTop10');
+    const src = fnBody(DESK_SRC, '_bfSelectTop10');
     // eslint-disable-next-line no-new-func
     const _bfSelectTop10 = new Function('return (' + src + ');')();
 
@@ -505,7 +507,7 @@ describe('Desk: Blooket flashcard verification', () => {
   });
 
   it('46: _bfSelectTop10 smoke — untagged qnums sink to the end, never dropped', () => {
-    const src = fnBody(DESK, '_bfSelectTop10');
+    const src = fnBody(DESK_SRC, '_bfSelectTop10');
     // eslint-disable-next-line no-new-func
     const _bfSelectTop10 = new Function('return (' + src + ');')();
 
@@ -546,7 +548,7 @@ describe('Desk: Blooket flashcard verification', () => {
     };
     const fakeState = { answered, idx: 0, deck };
     const fakeAnswer = (i) => calls.answered.push(i);
-    const src = fnBody(DESK, '_bfKeydownHandler');
+    const src = fnBody(DESK_SRC, '_bfKeydownHandler');
     // eslint-disable-next-line no-new-func
     const handler = new Function('document', '_bfState', '_bfAnswer',
       'return (' + src + ');')(fakeDoc, fakeState, fakeAnswer);
@@ -634,13 +636,13 @@ describe('Desk: Blooket flashcard verification', () => {
     const timedState = { topic: null, btn: null, round: null, answered: false };
     const calls = { renderIdxs: [], finishCount: 0, finishPct: null };
     const source = [
-      fnBody(DESK, '_bfStorageKey'),
-      fnBody(DESK, '_bfSaveProgress'),
-      fnBody(DESK, '_bfLoadProgress'),
-      fnBody(DESK, '_bfAnswer'),
-      fnBody(DESK, '_bfCloseUI'),
-      fnBody(DESK, 'closeBlooketFlashcards'),
-      fnBody(DESK, '_bfStartQuick')
+      fnBody(DESK_SRC, '_bfStorageKey'),
+      fnBody(DESK_SRC, '_bfSaveProgress'),
+      fnBody(DESK_SRC, '_bfLoadProgress'),
+      fnBody(DESK_SRC, '_bfAnswer'),
+      fnBody(DESK_SRC, '_bfCloseUI'),
+      fnBody(DESK_SRC, 'closeBlooketFlashcards'),
+      fnBody(DESK_SRC, '_bfStartQuick')
     ].join('\n');
     // eslint-disable-next-line no-new-func
     const makeApi = new Function(
@@ -738,16 +740,16 @@ describe('Desk: Blooket flashcard verification', () => {
     const commit = vi.fn(async function () {});
     const rendered = [];
     const source = [
-      fnBody(DESK, '_bfStorageKey'),
-      fnBody(DESK, '_bfSaveProgress'),
-      fnBody(DESK, '_bfLoadProgress'),
-      fnBody(DESK, '_bfClearProgress'),
-      fnBody(DESK, '_bfAnswer'),
-      fnBody(DESK, '_bfNext'),
-      fnBody(DESK, '_bfFinish'),
-      fnBody(DESK, '_bfCloseUI'),
-      fnBody(DESK, 'closeBlooketFlashcards'),
-      fnBody(DESK, '_bfStartQuick')
+      fnBody(DESK_SRC, '_bfStorageKey'),
+      fnBody(DESK_SRC, '_bfSaveProgress'),
+      fnBody(DESK_SRC, '_bfLoadProgress'),
+      fnBody(DESK_SRC, '_bfClearProgress'),
+      fnBody(DESK_SRC, '_bfAnswer'),
+      fnBody(DESK_SRC, '_bfNext'),
+      fnBody(DESK_SRC, '_bfFinish'),
+      fnBody(DESK_SRC, '_bfCloseUI'),
+      fnBody(DESK_SRC, 'closeBlooketFlashcards'),
+      fnBody(DESK_SRC, '_bfStartQuick')
     ].join('\n');
     // eslint-disable-next-line no-new-func
     const makeApi = new Function(

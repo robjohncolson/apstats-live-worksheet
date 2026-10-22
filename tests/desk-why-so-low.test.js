@@ -8,10 +8,12 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { deskSource, deskHtml } from './helpers/desk-source.js';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const deskPath = resolve(repo, 'ap_stats_roadmap_square_mode.html');
-const DESK = existsSync(deskPath) ? readFileSync(deskPath, 'utf8') : null;
+const DESK = existsSync(deskPath) ? deskHtml() : null;
+const DESK_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
 
 function fnBody(src, name) {
   const re = new RegExp('(?:async\\s+)?function\\s+' + name + '\\s*\\(');
@@ -49,7 +51,7 @@ describe('Why-so-low coach: markup + wiring', () => {
   });
 
   it('04: renderDoNowGrades calls renderWhySoLow (typeof-guarded)', () => {
-    const body = fnBody(DESK, 'renderDoNowGrades');
+    const body = fnBody(DESK_SRC, 'renderDoNowGrades');
     expect(body).toMatch(/typeof\s+renderWhySoLow\s*===\s*'function'/);
     expect(body).toMatch(/renderWhySoLow\(curQ,\s*q\)/);
     // The helper host is cleared on every entry (no stale breakdown).
@@ -58,7 +60,7 @@ describe('Why-so-low coach: markup + wiring', () => {
 });
 
 describe('Why-so-low coach: renderWhySoLow', () => {
-  const body = DESK ? fnBody(DESK, 'renderWhySoLow') : '';
+  const body = DESK ? fnBody(DESK_SRC, 'renderWhySoLow') : '';
 
   it('10: renders nothing when there is no grade to explain', () => {
     expect(body).toMatch(/quarterGrade/);
@@ -77,7 +79,7 @@ describe('Why-so-low coach: renderWhySoLow', () => {
 });
 
 describe('Why-so-low coach: _buildCoachContext shape', () => {
-  const body = DESK ? fnBody(DESK, '_buildCoachContext') : '';
+  const body = DESK ? fnBody(DESK_SRC, '_buildCoachContext') : '';
 
   it('20: carries the quarter grade + both tracks + ceiling', () => {
     expect(body).toMatch(/quarterGrade/);
@@ -99,7 +101,7 @@ describe('Why-so-low coach: _buildCoachContext shape', () => {
 });
 
 describe('Why-so-low coach: bottleneck diagnosis (40% gate)', () => {
-  const body = DESK ? fnBody(DESK, '_coachBottleneckText') : '';
+  const body = DESK ? fnBody(DESK_SRC, '_coachBottleneckText') : '';
 
   it('30: flags a sub-40 track as the cap', () => {
     expect(body).toMatch(/<\s*40/);
@@ -112,7 +114,7 @@ describe('Why-so-low coach: bottleneck diagnosis (40% gate)', () => {
 });
 
 describe('Why-so-low coach: _coachAsk (AI mini-chat)', () => {
-  const body = DESK ? fnBody(DESK, '_coachAsk') : '';
+  const body = DESK ? fnBody(DESK_SRC, '_coachAsk') : '';
 
   it('40: POSTs to the cr AI server /api/ai/coach', () => {
     expect(body).toMatch(/RAILWAY_SERVER_URL/);
@@ -142,7 +144,7 @@ describe('Why-so-low coach: _coachAsk (AI mini-chat)', () => {
 
 describe('Why-so-low coach: XSS-safe rendering', () => {
   it('50: panel builder uses textContent, never innerHTML with data', () => {
-    const body = fnBody(DESK, '_renderCoachPanel');
+    const body = fnBody(DESK_SRC, '_renderCoachPanel');
     expect(body).toMatch(/textContent/);
     // The only innerHTML use is the clear-to-empty reset.
     const innerHtmlAssigns = body.match(/\.innerHTML\s*=\s*([^;]+)/g) || [];
@@ -155,86 +157,86 @@ describe('Why-so-low coach: XSS-safe rendering', () => {
 describe('Why-so-low coach: review folds (open-panel preservation, races, a11y)', () => {
   it('60: _coachPanelOpen detects an expanded panel', () => {
     expect(DESK).toMatch(/function\s+_coachPanelOpen\s*\(/);
-    const body = fnBody(DESK, '_coachPanelOpen');
+    const body = fnBody(DESK_SRC, '_coachPanelOpen');
     expect(body).toMatch(/\.wsl-panel/);
     expect(body).toMatch(/display\s*!==\s*'none'/);
   });
 
   it('61: renderWhySoLow bails when a panel is already open (preserve chat)', () => {
-    const body = fnBody(DESK, 'renderWhySoLow');
+    const body = fnBody(DESK_SRC, 'renderWhySoLow');
     expect(body).toMatch(/if\s*\(_coachPanelOpen\(\)\)\s*return/);
   });
 
   it('62: renderDoNowGrades only clears the helper when no panel is open', () => {
-    const body = fnBody(DESK, 'renderDoNowGrades');
+    const body = fnBody(DESK_SRC, 'renderDoNowGrades');
     expect(body).toMatch(/!_coachPanelOpen\(\)/);
   });
 
   it('63: _coachAsk guards writes with isConnected (no orphaned-node write)', () => {
-    const body = fnBody(DESK, '_coachAsk');
+    const body = fnBody(DESK_SRC, '_coachAsk');
     expect(body).toMatch(/cEl\.isConnected/);
     expect(body).toMatch(/askBtn\.isConnected/);
   });
 
   it('64: the Enter path is gated by the in-flight (disabled) button', () => {
-    const body = fnBody(DESK, '_renderCoachPanel');
+    const body = fnBody(DESK_SRC, '_renderCoachPanel');
     expect(body).toMatch(/if\s*\(ask\.disabled\)\s*return/);
   });
 
   it('65: single-track bottleneck branches (PC/Work not started yet)', () => {
-    const body = fnBody(DESK, '_coachBottleneckText');
+    const body = fnBody(DESK_SRC, '_coachBottleneckText');
     expect(body).toMatch(/has not started yet/);
     expect(body).toMatch(/wkNum\s*&&\s*!pcNum/);
     expect(body).toMatch(/pcNum\s*&&\s*!wkNum/);
   });
 
   it('66: transcript is an aria-live log region', () => {
-    const body = fnBody(DESK, '_renderCoachPanel');
+    const body = fnBody(DESK_SRC, '_renderCoachPanel');
     expect(body).toMatch(/setAttribute\('role',\s*'log'\)/);
     expect(body).toMatch(/setAttribute\('aria-live',\s*'polite'\)/);
   });
 
   it('67: button + prompt adapt to a healthy grade (not always "Why so low?")', () => {
-    const wsl = fnBody(DESK, 'renderWhySoLow');
+    const wsl = fnBody(DESK_SRC, 'renderWhySoLow');
     expect(wsl).toMatch(/Grade breakdown/);
     expect(wsl).toMatch(/grade\s*<\s*80/);
-    const panel = fnBody(DESK, '_renderCoachPanel');
+    const panel = fnBody(DESK_SRC, '_renderCoachPanel');
     expect(panel).toMatch(/What should I focus on\?/);
   });
 
   it('68: privacy note is accurate (never your name)', () => {
-    const body = fnBody(DESK, '_renderCoachPanel');
+    const body = fnBody(DESK_SRC, '_renderCoachPanel');
     expect(body).toMatch(/never your name/);
   });
 
   it('70: _buildCoachContext carries quizTotal + strips the unit U-prefix', () => {
-    const body = fnBody(DESK, '_buildCoachContext');
+    const body = fnBody(DESK_SRC, '_buildCoachContext');
     expect(body).toMatch(/quizTotal/);
     expect(body).toMatch(/replace\(\/\^\[Uu\]\//);
   });
 
   it('71: _renderCoachPanel only shows a quiz line when quizTotal > 0 (no "quiz not done" for no-quiz topics)', () => {
-    const body = fnBody(DESK, '_renderCoachPanel');
+    const body = fnBody(DESK_SRC, '_renderCoachPanel');
     expect(body).toMatch(/w\.quizTotal\s*>\s*0/);
   });
 });
 
 describe('Why-so-low coach: prioritize by biggest deficit (worst component)', () => {
   it('80: _buildCoachContext computes each lesson lowest component + a biggestWin', () => {
-    const body = fnBody(DESK, '_buildCoachContext');
+    const body = fnBody(DESK_SRC, '_buildCoachContext');
     expect(body).toMatch(/w\.low/);
     expect(body).toMatch(/comps\.reduce/);
     expect(body).toMatch(/ctx\.biggestWin\s*=/);
   });
 
   it('81: weakLessons are ranked worst-component-first, not by overall grade', () => {
-    const body = fnBody(DESK, '_buildCoachContext');
+    const body = fnBody(DESK_SRC, '_buildCoachContext');
     // sort key falls back to grade only when a lesson has no graded component
     expect(body).toMatch(/a\.low \? a\.low\.score : a\.grade/);
   });
 
   it('82: _renderCoachPanel leads with the biggest win + suppresses nextTask when present', () => {
-    const body = fnBody(DESK, '_renderCoachPanel');
+    const body = fnBody(DESK_SRC, '_renderCoachPanel');
     expect(body).toMatch(/ctx\.biggestWin/);
     expect(body).toMatch(/Biggest win/);
     expect(body).toMatch(/if \(!ctx\.biggestWin && ctx\.nextTask/);
@@ -243,7 +245,7 @@ describe('Why-so-low coach: prioritize by biggest deficit (worst component)', ()
 
 describe('Why-so-low coach: Blooket make-up awareness', () => {
   it('90: _buildCoachContext carries workTracks + a blooket summary (track/due/done/todo)', () => {
-    const body = fnBody(DESK, '_buildCoachContext');
+    const body = fnBody(DESK_SRC, '_buildCoachContext');
     expect(body).toMatch(/workTracks/);
     expect(body).toMatch(/q\.blooketDue/);
     expect(body).toMatch(/blooketTodo/);
@@ -251,13 +253,13 @@ describe('Why-so-low coach: Blooket make-up awareness', () => {
   });
 
   it('91: weakLessons carry per-lesson blooket + hasBlooket (vs "no Blooket exists")', () => {
-    const body = fnBody(DESK, '_buildCoachContext');
+    const body = fnBody(DESK_SRC, '_buildCoachContext');
     expect(body).toMatch(/blooket:\s*\(typeof l\.blooket/);
     expect(body).toMatch(/hasBlooket:\s*!!l\.hasBlooket/);
   });
 
   it('92: _renderCoachPanel surfaces the Blooket line (the deck score is the grade, no pass mark)', () => {
-    const body = fnBody(DESK, '_renderCoachPanel');
+    const body = fnBody(DESK_SRC, '_renderCoachPanel');
     expect(body).toMatch(/ctx\.blooket\s*&&\s*ctx\.blooket\.due\s*>\s*0/);
     expect(body).toMatch(/Blooket:/);
     expect(body).toMatch(/flashcards/);
@@ -266,7 +268,7 @@ describe('Why-so-low coach: Blooket make-up awareness', () => {
   });
 
   it('93: a weak-lesson line mentions Blooket ONLY when the lesson has one', () => {
-    const body = fnBody(DESK, '_renderCoachPanel');
+    const body = fnBody(DESK_SRC, '_renderCoachPanel');
     expect(body).toMatch(/w\.hasBlooket/);
     expect(body).toMatch(/Blooket not done/);
   });
@@ -274,12 +276,12 @@ describe('Why-so-low coach: Blooket make-up awareness', () => {
 
 describe('Why-so-low coach: PC-not-open + flashcard gate', () => {
   it('A1: _buildCoachContext threads pcDue (defaults false so a missing field never invents PC work)', () => {
-    const body = fnBody(DESK, '_buildCoachContext');
+    const body = fnBody(DESK_SRC, '_buildCoachContext');
     expect(body).toMatch(/pcDue:\s*!!\(q && q\.pcDue === true\)/);
   });
 
   it('A2: _buildCoachContext builds flashcardGate from worksheet-done-but-flashcard-owed lessons', () => {
-    const body = fnBody(DESK, '_buildCoachContext');
+    const body = fnBody(DESK_SRC, '_buildCoachContext');
     expect(body).toMatch(/flashcardGate/);
     expect(body).toMatch(/_fl\.hasBlooket/);          // lesson must actually have flashcards
     expect(body).toMatch(/_fcws\s*>=\s*60/);          // worksheet done
@@ -287,7 +289,7 @@ describe('Why-so-low coach: PC-not-open + flashcard gate', () => {
   });
 
   it('A3: _renderCoachPanel explains unfinished flashcards without blocking other lessons', () => {
-    const body = fnBody(DESK, '_renderCoachPanel');
+    const body = fnBody(DESK_SRC, '_renderCoachPanel');
     expect(body).toMatch(/ctx\.flashcardGate/);
     expect(body).toMatch(/Flashcards to finish/);
     expect(body).toMatch(/Nothing is locked; every lesson stays open\./);   // the lesson gate went on 2026-09-10
@@ -296,15 +298,15 @@ describe('Why-so-low coach: PC-not-open + flashcard gate', () => {
 
 describe('coach facts match the zero-date rule (teacher 2026-09-26: "does this AI coach have accurate understanding of the dynamics?")', () => {
   it('_buildCoachContext ships the Missing-work list with zero dates and counting/tentative flags', () => {
-    const body = fnBody(DESK, '_buildCoachContext');
+    const body = fnBody(DESK_SRC, '_buildCoachContext');
     expect(body).toMatch(/ctx\.missing = _coachMissingList\(\)/);
-    const helper = fnBody(DESK, '_coachMissingList');
+    const helper = fnBody(DESK_SRC, '_coachMissingList');
     expect(helper).toMatch(/_zeroCurrentWarnings\(\)/);
     expect(helper).toMatch(/past: Boolean\(w\.past\)/);
     expect(helper).toMatch(/slice\(0, 12\)/);
   });
   it('"First:" is the missing work (counting now, else soonest date); the low recorded score follows as "Then:"', () => {
-    const fn = new Function('cedLabel', fnBody(DESK, '_coachFirstText') + '\nreturn _coachFirstText;')((k) => ({ text: 'Topic ' + k }));
+    const fn = new Function('cedLabel', fnBody(DESK_SRC, '_coachFirstText') + '\nreturn _coachFirstText;')((k) => ({ text: 'Topic ' + k }));
     expect(fn([])).toBe('');
     expect(fn([{ lesson: '1.1', kind: 'worksheet', zeroDate: '2026-09-20', day: 'Sun 9/20', past: true },
                { lesson: '1.3', kind: 'quiz', zeroDate: '2026-09-27', day: 'Sun 9/27', past: false }]))
@@ -314,11 +316,11 @@ describe('coach facts match the zero-date rule (teacher 2026-09-26: "does this A
                { lesson: '1.3', kind: 'blooket', zeroDate: '2026-09-27', day: 'Sun 9/27', past: false },
                { lesson: '1.4', kind: 'worksheet', zeroDate: '2026-09-29', day: 'Tue 9/29', past: false }]))
       .toBe('\u26A0 First: Topic 1.3 worksheet; Topic 1.3 quiz; Topic 1.3 flashcards become a 0 after Sun 9/27 — turn in anything before then and there is no 0.');
-    const panel = fnBody(DESK, '_renderCoachPanel');
+    const panel = fnBody(DESK_SRC, '_renderCoachPanel');
     expect(panel).toContain("firstLine ? 'Then: your ' : '\ud83c\udfaf Biggest win: your '".replace('\\ud83c\\udfaf', '🎯'));
   });
   it('the panel never says un-done work "counts as 0 until you do it", never caps a deck at 80%, never says "unlock"', () => {
-    const body = fnBody(DESK, '_renderCoachPanel');
+    const body = fnBody(DESK_SRC, '_renderCoachPanel');
     expect(body).not.toMatch(/count as 0 until you do them/);
     expect(body).not.toMatch(/Make one up to 80%/);
     expect(body).not.toMatch(/unlock/i);
@@ -357,7 +359,7 @@ describe('coach credits a PC on file and work done ahead (EFFORT_VISIBILITY_SPEC
     createContext(s);
     runInContext(['_zeroTodayIso', '_zeroDayText', '_effortPcSchedule', '_effortTopicNumber', '_effortFacts',
       '_coachMissingList', '_coachFirstText', '_coachBottleneckText', '_buildCoachContext', '_renderCoachPanel']
-      .map(name => fnBody(DESK, name)).join('\n'), s);
+      .map(name => fnBody(DESK_SRC, name)).join('\n'), s);
     return { s, close: () => dom.window.close() };
   }
 
@@ -369,7 +371,7 @@ describe('coach credits a PC on file and work done ahead (EFFORT_VISIBILITY_SPEC
         all: [{ unit: 1, pct: 66.7, counting: false, countsFrom: '2026-10-13', day: 'Tue 10/13' }] });
       expect(ctx.ahead.map(a => a.lessonKey)).toEqual(['1.6', '1.7']);
       expect(ctx.aheadCount).toBe(2);
-      expect(fnBody(DESK, '_buildCoachContext')).toContain('ctx.ahead = _ef.ahead.slice(0, 8);');
+      expect(fnBody(DESK_SRC, '_buildCoachContext')).toContain('ctx.ahead = _ef.ahead.slice(0, 8);');
     } finally { t.close(); }
   });
 
@@ -400,20 +402,20 @@ describe('coach credits a PC on file and work done ahead (EFFORT_VISIBILITY_SPEC
 
 describe('coach reply is shown as plain text (teacher 2026-09-26: the live reply showed literal ** asterisks)', () => {
   it('_coachPlainText strips bold, underscores, backticks and heading marks, keeps the words', () => {
-    const fn = new Function(fnBody(DESK, '_coachPlainText') + '\nreturn _coachPlainText;')();
+    const fn = new Function(fnBody(DESK_SRC, '_coachPlainText') + '\nreturn _coachPlainText;')();
     expect(fn('fix your **1.1 worksheet at 70%** first')).toBe('fix your 1.1 worksheet at 70% first');
     expect(fn('## Plan\n- __1.3 quiz__ becomes a 0 after `Sun 9/27`')).toBe('Plan\n- 1.3 quiz becomes a 0 after Sun 9/27');
     expect(fn(null)).toBe('');
-    expect(fnBody(DESK, '_coachAsk')).toContain('_coachPlainText(answer)');
+    expect(fnBody(DESK_SRC, '_coachAsk')).toContain('_coachPlainText(answer)');
   });
 });
 
 describe('a topic\u2019s full title appears once (teacher 2026-09-26: the live reply repeated it four times)', () => {
   it('_coachOnceTopics keeps the first "Topic 1.3" and shortens the rest to "1.3"; other topics keep their own first mention', () => {
-    const fn = new Function(fnBody(DESK, '_coachOnceTopics') + '\nreturn _coachOnceTopics;')();
+    const fn = new Function(fnBody(DESK_SRC, '_coachOnceTopics') + '\nreturn _coachOnceTopics;')();
     expect(fn('Do the Topic 1.3 worksheet, the Topic 1.3 quiz and the Topic 1.3 flashcards. Then Topic 1.4 and Topic 1.3 again.'))
       .toBe('Do the Topic 1.3 worksheet, the 1.3 quiz and the 1.3 flashcards. Then Topic 1.4 and 1.3 again.');
     expect(fn('Lesson 2.1 then lesson 2.1')).toBe('Lesson 2.1 then 2.1');
-    expect(fnBody(DESK, '_coachAsk')).toContain('cedReferenceText(_coachOnceTopics(_coachPlainText(answer)))');
+    expect(fnBody(DESK_SRC, '_coachAsk')).toContain('cedReferenceText(_coachOnceTopics(_coachPlainText(answer)))');
   });
 });

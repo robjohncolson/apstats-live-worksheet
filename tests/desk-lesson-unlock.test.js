@@ -14,9 +14,11 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 import { createContext, runInContext } from 'vm';
+import { deskSource, deskHtml } from './helpers/desk-source.js';
 
 const REPO_ROOT = resolve(__dirname, '..');
-const html = readFileSync(resolve(REPO_ROOT, 'ap_stats_roadmap_square_mode.html'), 'utf-8');
+const html = deskHtml();
+const html_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
 
 function fnBody(src, name) {
   const re = new RegExp('(?:async\\s+)?function\\s+' + name + '\\s*\\(');
@@ -71,17 +73,17 @@ describe('lesson-unlock -- structure', () => {
   });
 
   it('lesson access no longer requires a teacher override', () => {
-    const b = fnBody(html, '_isLessonUnlocked');
+    const b = fnBody(html_SRC, '_isLessonUnlocked');
     expect(b).toMatch(/return true/);
     expect(b).not.toMatch(/_isTopicLessonUnlocked\s*\(/);
   });
   it('helpers are defined', () => {
-    expect(() => fnBody(html, '_readLessonUnlocks')).not.toThrow();
-    expect(() => fnBody(html, '_isTopicLessonUnlocked')).not.toThrow();
-    expect(() => fnBody(html, '_refreshLessonUnlocks')).not.toThrow();
-    expect(() => fnBody(html, '_showOverrideGateModal')).not.toThrow();
-    expect(() => fnBody(html, '_hideOverrideGateModal')).not.toThrow();
-    expect(() => fnBody(html, '_confirmOverrideGate')).not.toThrow();
+    expect(() => fnBody(html_SRC, '_readLessonUnlocks')).not.toThrow();
+    expect(() => fnBody(html_SRC, '_isTopicLessonUnlocked')).not.toThrow();
+    expect(() => fnBody(html_SRC, '_refreshLessonUnlocks')).not.toThrow();
+    expect(() => fnBody(html_SRC, '_showOverrideGateModal')).not.toThrow();
+    expect(() => fnBody(html_SRC, '_hideOverrideGateModal')).not.toThrow();
+    expect(() => fnBody(html_SRC, '_confirmOverrideGate')).not.toThrow();
   });
 });
 
@@ -97,7 +99,7 @@ function loadReadUnlocks(localItems, sessionItems, viewAsCtx) {
     _viewAsContext: () => viewAsCtx,
   };
   createContext(sandbox);
-  runInContext(fnBody(html, '_readLessonUnlocks') + '\nthis.__f = _readLessonUnlocks;', sandbox);
+  runInContext(fnBody(html_SRC, '_readLessonUnlocks') + '\nthis.__f = _readLessonUnlocks;', sandbox);
   return sandbox.__f;
 }
 
@@ -149,8 +151,8 @@ function loadIsTopicUnlocked(unlocks) {
   };
   createContext(sandbox);
   runInContext(
-    fnBody(html, '_readLessonUnlocks') + '\n' +
-    fnBody(html, '_isTopicLessonUnlocked') + '\n' +
+    fnBody(html_SRC, '_readLessonUnlocks') + '\n' +
+    fnBody(html_SRC, '_isTopicLessonUnlocked') + '\n' +
     'this.__f = _isTopicLessonUnlocked;',
     sandbox);
   return sandbox.__f;
@@ -193,9 +195,9 @@ function loadIsLessonUnlocked(unlocks, role) {
   };
   createContext(sandbox);
   runInContext(
-    fnBody(html, '_readLessonUnlocks') + '\n' +
-    fnBody(html, '_isTopicLessonUnlocked') + '\n' +
-    fnBody(html, '_isLessonUnlocked') + '\n' +
+    fnBody(html_SRC, '_readLessonUnlocks') + '\n' +
+    fnBody(html_SRC, '_isTopicLessonUnlocked') + '\n' +
+    fnBody(html_SRC, '_isLessonUnlocked') + '\n' +
     'this.__f = _isLessonUnlocked;',
     sandbox);
   return sandbox.__f;
@@ -251,7 +253,7 @@ describe('lesson-unlock -- _showOverrideGateModal', () => {
       _viewAsContext: () => ({ studentId: 'stu_x', username: 'alice', realName: 'Alice Anderson' }),
     };
     createContext(sandbox);
-    runInContext(fnBody(html, '_showOverrideGateModal') + '\nthis.__f = _showOverrideGateModal;', sandbox);
+    runInContext(fnBody(html_SRC, '_showOverrideGateModal') + '\nthis.__f = _showOverrideGateModal;', sandbox);
     sandbox.__f('1.7');
     expect(els['override-gate-modal'].style.display).toBe('block');
     expect(els['ogm-student-name'].textContent).toBe('Alice Anderson');
@@ -268,7 +270,7 @@ describe('lesson-unlock -- _showOverrideGateModal', () => {
       _viewAsContext: () => null,
     };
     createContext(sandbox);
-    runInContext(fnBody(html, '_showOverrideGateModal') + '\nthis.__f = _showOverrideGateModal;', sandbox);
+    runInContext(fnBody(html_SRC, '_showOverrideGateModal') + '\nthis.__f = _showOverrideGateModal;', sandbox);
     sandbox.__f('1.7');
     expect(els['override-gate-modal'].style.display).toBe('none');
   });
@@ -309,7 +311,7 @@ function loadConfirm({ lessonKey, fetchOk = true, fetchBody, viewAs, token = 'TO
     },
   };
   createContext(sandbox);
-  runInContext(fnBody(html, '_confirmOverrideGate') + '\nthis.__f = _confirmOverrideGate;', sandbox);
+  runInContext(fnBody(html_SRC, '_confirmOverrideGate') + '\nthis.__f = _confirmOverrideGate;', sandbox);
   return { f: sandbox.__f, fetches, els, sessStore };
 }
 

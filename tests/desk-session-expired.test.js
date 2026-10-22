@@ -2,8 +2,10 @@
 import { describe, it, expect, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { JSDOM } from 'jsdom';
+import { deskSource, deskHtml } from './helpers/desk-source.js';
 
-const html = readFileSync(new URL('../ap_stats_roadmap_square_mode.html', import.meta.url), 'utf8');
+const html = deskHtml();
+const html_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
 // Like desk-view-as.test.js, execute the real functions with unrelated services stubbed.
 function fn(name) {
   const match = new RegExp('(?:async\\s+)?function\\s+' + name + '\\s*\\(').exec(html);

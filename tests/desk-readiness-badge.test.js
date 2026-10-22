@@ -4,9 +4,11 @@ import { describe, expect, it, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { deskSource, deskHtml } from './helpers/desk-source.js';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const DESK = readFileSync(resolve(repo, 'ap_stats_roadmap_square_mode.html'), 'utf8');
+const DESK = deskHtml();
+const DESK_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
 
 function fnBody(src, name) {
   const re = new RegExp('(?:async\\s+)?function\\s+' + name + '\\s*\\(');
@@ -31,7 +33,7 @@ describe('Desk readiness badge — static contract', () => {
   });
 
   it('renders the badge after the score chip only inside the readinessBadge flag gate', () => {
-    const panel = fnBody(DESK, 'showResourcePanel');
+    const panel = fnBody(DESK_SRC, 'showResourcePanel');
     const gate = panel.indexOf("_fcFlag('readinessBadge')");
     const lookup = panel.indexOf('_srsReadinessFor', gate);
     const badge = panel.indexOf('class="fc-ready-badge"', gate);
@@ -49,7 +51,7 @@ describe('Desk readiness badge — static contract', () => {
   });
 
   it('keeps lesson completion independent of readiness', () => {
-    const completion = fnBody(DESK, '_isLessonComplete');
+    const completion = fnBody(DESK_SRC, '_isLessonComplete');
 
     expect(completion).not.toMatch(/readiness/i);
     expect(completion).not.toContain('_srsReadinessFor');
@@ -63,7 +65,7 @@ describe('Desk readiness badge — executed flag guard', () => {
     });
     const readinessFor = new Function(
       '_fcFlag', '_srsFoldedState',
-      'return (' + fnBody(DESK, '_srsReadinessFor') + ');'
+      'return (' + fnBody(DESK_SRC, '_srsReadinessFor') + ');'
     )(() => false, foldedState);
 
     expect(readinessFor('deck.csv')).toBe(null);

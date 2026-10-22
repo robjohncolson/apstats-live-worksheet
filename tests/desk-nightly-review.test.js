@@ -7,8 +7,10 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { deskSource, deskHtml } from './helpers/desk-source.js';
 
-const DESK = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), '..', 'ap_stats_roadmap_square_mode.html'), 'utf8');
+const DESK = deskHtml();
+const DESK_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
 
 describe('Desk — Nightly Review teacher surface (Phase 2)', () => {
   it('replaces the nightly badge with Recent work', () => {

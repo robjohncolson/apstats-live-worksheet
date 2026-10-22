@@ -7,8 +7,9 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 import { extractVideos, extractDriveIds, parseDriveConfirm } from '../scripts/fetch-offline-videos.mjs';
+import { deskSource } from './helpers/desk-source.js';
 
-const DESK = readFileSync(resolve(import.meta.dirname, '..', 'ap_stats_roadmap_square_mode.html'), 'utf8');
+const DESK = deskSource();
 const vids = extractVideos(DESK);
 
 describe('extractVideos (offline video acquisition plan)', () => {

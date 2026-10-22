@@ -16,8 +16,10 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
+import { deskSource, deskHtml } from './helpers/desk-source.js';
 
-const html = readFileSync(resolve(__dirname, '..', 'ap_stats_roadmap_square_mode.html'), 'utf-8');
+const html = deskHtml();
+const html_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
 
 describe('localLessonState consolidates with the gate oracle', () => {
   it('reuses _isLessonComplete + the registry gate artifacts, not "any artifact"', () => {

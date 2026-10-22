@@ -22,9 +22,10 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { JSDOM } from 'jsdom';
 import { bootDesk, DESK_URL } from './journeys/harness.js';
+import { deskSource } from './helpers/desk-source.js';
 
 const REPO = resolve(__dirname, '..');
-const DESK = readFileSync(resolve(REPO, 'ap_stats_roadmap_square_mode.html'), 'utf8');
+const DESK = deskSource();
 const PICO = readFileSync(resolve(REPO, 'pico-home.js'), 'utf8');
 const NOW = '2026-10-07T14:00:00.000Z';
 

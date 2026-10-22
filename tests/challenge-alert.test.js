@@ -12,9 +12,11 @@ import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { JSDOM } from 'jsdom';
 import { runInContext, createContext } from 'node:vm';
+import { deskSource, deskHtml } from './helpers/desk-source.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const html = readFileSync(resolve(ROOT, 'ap_stats_roadmap_square_mode.html'), 'utf8');
+const html = deskHtml();
+const html_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
 
 function objLiteral(src, decl) {
   const start = src.indexOf(decl);

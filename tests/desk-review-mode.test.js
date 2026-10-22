@@ -6,9 +6,11 @@ import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { JSDOM } from 'jsdom';
 import { loadCedLabels } from './fixtures/ced2026-labels.js';
+import { deskSource, deskHtml } from './helpers/desk-source.js';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const DESK = readFileSync(resolve(repo, 'ap_stats_roadmap_square_mode.html'), 'utf8');
+const DESK = deskHtml();
+const DESK_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
 
 function fnBody(src, name) {
   const re = new RegExp('(?:async\\s+)?function\\s+' + name + '\\s*\\(');
@@ -33,9 +35,9 @@ describe('Desk review mode — static contract', () => {
   it('loads flags at boot and resolves them with roster, section, URL, and storage context', () => {
     expect(DESK).toMatch(/var\s+_fcFlags\s*=\s*\{\s*flags\s*:\s*\{\s*\}\s*\}/);
     expect(DESK).toMatch(/_fcLoadFlags\s*\(\s*\)/);
-    const load = fnBody(DESK, '_fcLoadFlags');
+    const load = fnBody(DESK_SRC, '_fcLoadFlags');
     expect(load).toMatch(/FlashcardFlags\.loadFlags\s*\(\s*fetchImpl\s*,\s*build\s*\)/);
-    const resolveFlag = fnBody(DESK, '_fcFlag');
+    const resolveFlag = fnBody(DESK_SRC, '_fcFlag');
     expect(resolveFlag).toMatch(/FlashcardFlags\.resolveFlag/);
     expect(resolveFlag).toMatch(/username\s*:/);
     expect(resolveFlag).toMatch(/section\s*:/);
@@ -70,12 +72,12 @@ describe('Desk review mode — static contract', () => {
       .map((match) => match[1]);
     expect(reviewFunctions).toEqual(declared);
     for (const name of reviewFunctions) {
-      expect(fnBody(DESK, name), name).not.toMatch(forbidden);
+      expect(fnBody(DESK_SRC, name), name).not.toMatch(forbidden);
     }
   });
 
   it('_bfCloseUI clears review state and removes its keyboard handler', () => {
-    const body = fnBody(DESK, '_bfCloseUI');
+    const body = fnBody(DESK_SRC, '_bfCloseUI');
     expect(body).toMatch(/_rvState\.queue\s*=\s*\[\]/);
     expect(body).toMatch(/_rvState\.current\s*=\s*null/);
     expect(body).toMatch(/removeEventListener\s*\(\s*['"]keydown['"]\s*,\s*_rvKeydownHandler\s*\)/);
@@ -119,7 +121,7 @@ function rateHarness(options = {}) {
   const factory = new Function(
     '_rvState', 'FlashcardSrs', 'FlashcardStore', '_srsAppendLog',
     '_rvRenderCard', '_rvFinish', '_viewAsContext', 'window', 'Date',
-    fnBody(DESK, '_rvRate') + '\nreturn _rvRate;'
+    fnBody(DESK_SRC, '_rvRate') + '\nreturn _rvRate;'
   );
   const rate = factory(
     state, FlashcardSrs, FlashcardStore, append, render, finish,
@@ -143,7 +145,7 @@ describe('Desk review mode — executed rating flow', () => {
       'Date', '_rvState', '_srsRoundId', 'document', '_bfShowQuizUI',
       '_rvRenderCard', '_rvKeydownHandler',
       'cedLabel',
-      fnBody(DESK, '_rvStart') + '\nreturn _rvStart;'
+      fnBody(DESK_SRC, '_rvStart') + '\nreturn _rvStart;'
     );
     const start = factory(
       () => null,
@@ -225,7 +227,7 @@ describe('Desk review mode — executed rating flow', () => {
     };
     const factory = new Function(
       '_rvState', 'document', 'FlashcardSrs', 'Date',
-      fnBody(DESK, '_rvFinish') + '\nreturn _rvFinish;'
+      fnBody(DESK_SRC, '_rvFinish') + '\nreturn _rvFinish;'
     );
     const finish = factory(
       state,
@@ -257,7 +259,7 @@ describe('Desk review mode — executed rating flow', () => {
     const rate = vi.fn();
     const factory = new Function(
       '_rvState', 'document', '_rvRate',
-      fnBody(DESK, '_rvAnswer') + '\nreturn _rvAnswer;'
+      fnBody(DESK_SRC, '_rvAnswer') + '\nreturn _rvAnswer;'
     );
     const answer = factory(state, dom.window.document, rate);
     answer(0);

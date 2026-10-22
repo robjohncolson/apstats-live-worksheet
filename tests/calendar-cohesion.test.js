@@ -12,9 +12,11 @@ import { readFileSync } from 'fs';
 import { resolve } from 'path';
 import { createContext, runInContext } from 'vm';
 import { loadCedLabels } from './fixtures/ced2026-labels.js';
+import { deskSource, deskHtml } from './helpers/desk-source.js';
 
 const REPO_ROOT = resolve(__dirname, '..');
-const html = readFileSync(resolve(REPO_ROOT, 'ap_stats_roadmap_square_mode.html'), 'utf-8');
+const html = deskHtml();
+const html_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
 
 function fnBody(src, name) {
   const re = new RegExp('(?:async\\s+)?function\\s+' + name + '\\s*\\(');
@@ -38,12 +40,12 @@ function fnBody(src, name) {
 
 describe('Item 1 -- legend decodes overlay states (not just unit colors)', () => {
   it('updateLegend emits a collapsed <details class="legend-states"> key', () => {
-    const b = fnBody(html, 'updateLegend');
+    const b = fnBody(html_SRC, 'updateLegend');
     expect(b).toMatch(/<details class="legend-states">/);
     expect(b).toMatch(/<summary>What the marks mean<\/summary>/);
   });
   it('the key labels every overlay signal', () => {
-    const b = fnBody(html, 'updateLegend');
+    const b = fnBody(html_SRC, 'updateLegend');
     for (const label of ['Today', 'Up next', 'Done', 'In progress', 'Ahead',
                          'Locked', 'Progress Check', 'Poster', 'Class poll']) {
       expect(b).toContain(label);
@@ -52,7 +54,7 @@ describe('Item 1 -- legend decodes overlay states (not just unit colors)', () =>
     expect(b).not.toContain('status-dot status-ready');
   });
   it('swatches reuse the LIVE cell classes so the key cannot drift from the CSS', () => {
-    const b = fnBody(html, 'updateLegend');
+    const b = fnBody(html_SRC, 'updateLegend');
     expect(b).toMatch(/legend-st cell-today/);
     expect(b).toMatch(/legend-st cal-current/);
     expect(b).toMatch(/legend-st cell-u1 dc-done/);   // real done class → carries the ✓ glyph
@@ -67,7 +69,7 @@ describe('Item 1 -- legend decodes overlay states (not just unit colors)', () =>
     expect(html).toMatch(/\.legend-states \.dc-ahead\s*\{[^}]*animation:\s*none/);
   });
   it('the legend-states key is collapsed by default (no [open] attr in the markup)', () => {
-    const b = fnBody(html, 'updateLegend');
+    const b = fnBody(html_SRC, 'updateLegend');
     expect(b).not.toMatch(/<details class="legend-states" open>/);
   });
 });
@@ -76,12 +78,12 @@ describe('Item 1 -- legend decodes overlay states (not just unit colors)', () =>
 
 describe('Item 2 -- cells are keyboard-focusable + activatable', () => {
   it('rCal makes interactive cells role=button + tabbable', () => {
-    const b = fnBody(html, 'rCal');
+    const b = fnBody(html_SRC, 'rCal');
     expect(b).toMatch(/setAttribute\(\s*['"]role['"]\s*,\s*['"]button['"]\s*\)/);
     expect(b).toMatch(/\.tabIndex\s*=\s*0/);
   });
   it('rCal binds Enter/Space to re-use the existing onclick (honors lock + Do-Now guards)', () => {
-    const b = fnBody(html, 'rCal');
+    const b = fnBody(html_SRC, 'rCal');
     expect(b).toMatch(/addEventListener\(\s*['"]keydown['"]/);
     expect(b).toMatch(/ev\.key\s*===\s*['"]Enter['"]/);
     expect(b).toMatch(/c\.click\(\)/);
@@ -153,7 +155,7 @@ describe('Item 9 -- up-next style switcher (default unchanged)', () => {
     expect(html).toMatch(/@keyframes antsMarch/);
   });
   it('the style is set on <body> so the legend swatch previews it live', () => {
-    const b = fnBody(html, '_applyCalcurStyle');
+    const b = fnBody(html_SRC, '_applyCalcurStyle');
     expect(b).toMatch(/document\.body\.setAttribute\(\s*['"]data-calcur['"]/);
   });
   it('the alternatives honor reduced-motion', () => {
@@ -162,7 +164,7 @@ describe('Item 9 -- up-next style switcher (default unchanged)', () => {
   it('setCalcurStyle persists + _applyCalcurStyle reflects the pick onto #cg', () => {
     expect(html).toMatch(/function setCalcurStyle\s*\(/);
     expect(html).toMatch(/function _applyCalcurStyle\s*\(/);
-    const b = fnBody(html, '_applyCalcurStyle');
+    const b = fnBody(html_SRC, '_applyCalcurStyle');
     expect(b).toMatch(/setAttribute\(\s*['"]data-calcur['"]/);
     expect(b).toMatch(/localStorage\.getItem\(\s*CALCUR_KEY/);
     expect(b).toMatch(/sel\.value\s*=\s*v/);   // re-sync the picker after updateLegend rebuilds it
@@ -171,9 +173,9 @@ describe('Item 9 -- up-next style switcher (default unchanged)', () => {
   it('marching ants is the default up-next style', () => {
     expect(html).toMatch(/CALCUR_DEFAULT\s*=\s*'ants'/);
     // the dropdown marks ants as the default option
-    expect(fnBody(html, 'updateLegend')).toMatch(/value="ants">Marching ants \(default\)/);
+    expect(fnBody(html_SRC, 'updateLegend')).toMatch(/value="ants">Marching ants \(default\)/);
     // updateLegend renders the picker + applies the saved pick
-    const u = fnBody(html, 'updateLegend');
+    const u = fnBody(html_SRC, 'updateLegend');
     expect(u).toMatch(/id="calcur-pick"/);
     expect(u).toMatch(/_applyCalcurStyle\(\)/);
   });
@@ -188,7 +190,7 @@ describe('Item 12 -- mobile clamps the subtitle (does not hide it)', () => {
 
 describe('Item 13 -- honest pace-aware progress', () => {
   it('rProg delegates to _computePace + draws a done-fill + a pace label', () => {
-    const b = fnBody(html, 'rProg');
+    const b = fnBody(html_SRC, 'rProg');
     expect(b).toMatch(/_computePace\(_orderedPeriodTopics\(\)/);
     expect(b).toMatch(/prog-fill/);
     expect(b).toMatch(/to catch up/);
@@ -199,7 +201,7 @@ describe('Item 13 -- honest pace-aware progress', () => {
     expect(html).toMatch(/\.prog-fill\s*\{[^}]*position:\s*absolute/);
   });
   it('renderDoNowGrades recomputes rProg once the grade cache warms', () => {
-    const b = fnBody(html, 'renderDoNowGrades');
+    const b = fnBody(html_SRC, 'renderDoNowGrades');
     expect(b).toMatch(/rProg\(\)/);
   });
 
@@ -211,7 +213,7 @@ describe('Item 13 -- honest pace-aware progress', () => {
     createContext(sandbox);
     runInContext(
       'function localLessonState(t){ return (' + JSON.stringify(doneSet || {}) + ')[t] ? "done" : ""; }\n' +
-      fnBody(html, '_computePace') + '\nthis.__p = _computePace;', sandbox);
+      fnBody(html_SRC, '_computePace') + '\nthis.__p = _computePace;', sandbox);
     return sandbox.__p;
   }
   it('_computePace counts ONLY deduped dot-lessons (specials + dups excluded from total)', () => {
@@ -240,14 +242,14 @@ describe('Item 13 -- honest pace-aware progress', () => {
 
 describe('Item 14 -- tooltip is honest (no dead links)', () => {
   it('sTip drops the unclickable resource anchors and shows an open-hint instead', () => {
-    const b = fnBody(html, 'sTip');
+    const b = fnBody(html_SRC, 'sTip');
     expect(b).not.toMatch(/re\.urls\.worksheet/);
     expect(b).not.toMatch(/Schoology Folder/);
     expect(b).toMatch(/Click to open/);
     expect(b).toMatch(/tt-status/);   // the Schoology Posted/Scheduled status line remains
   });
   it('sTip no longer shows the deprecated readiness line or the broken double-click hint', () => {
-    const b = fnBody(html, 'sTip');
+    const b = fnBody(html_SRC, 'sTip');
     expect(b).not.toMatch(/Ready ✓/);             // the Ready/Partial/Pending readiness line is gone
     expect(b).not.toMatch(/double-click for grade/);
   });
@@ -255,13 +257,13 @@ describe('Item 14 -- tooltip is honest (no dead links)', () => {
 
 describe('Teacher view -- only the "partial" browsing noise is suppressed for a teacher-as-self', () => {
   it('rCal drops only partial for a teacher, keeping real done', () => {
-    const r = fnBody(html, 'rCal');
+    const r = fnBody(html_SRC, 'rCal');
     expect(r).toMatch(/_suppressProgress\s*=\s*\(typeof _deskIsTeacher/);
     expect(r).toMatch(/_suppressProgress\s*&&\s*_localState\s*===\s*'partial'/);
     expect(r).toMatch(/localLessonState\(\s*inf\.t\s*,\s*_gateMarks\s*\)/);   // still computed (done survives)
   });
   it('paintLocalDoneCells does the same (so it does not come back after the cache warms)', () => {
-    const p = fnBody(html, 'paintLocalDoneCells');
+    const p = fnBody(html_SRC, 'paintLocalDoneCells');
     expect(p).toMatch(/suppressProgress\s*=\s*\(typeof _deskIsTeacher/);
     expect(p).toMatch(/suppressProgress\s*&&\s*st\s*===\s*'partial'/);
   });
@@ -271,7 +273,7 @@ describe('Teacher view -- only the "partial" browsing noise is suppressed for a 
 
 describe('Item 3 -- aria-label + screen-reader live region', () => {
   it('rCal sets aria-label on cells and aria-current on the next-up cell', () => {
-    const b = fnBody(html, 'rCal');
+    const b = fnBody(html_SRC, 'rCal');
     expect(b).toMatch(/setAttribute\(\s*['"]aria-label['"]/);
     expect(b).toMatch(/setAttribute\(\s*['"]aria-current['"]\s*,\s*['"]step['"]\s*\)/);
     expect(b).toMatch(/cellAria\(/);
@@ -284,18 +286,18 @@ describe('Item 3 -- aria-label + screen-reader live region', () => {
     expect(html).toMatch(/\.sr-only\s*\{[^}]*clip:\s*rect\(/);
   });
   it('rCal writes a window summary into #cal-sr (paging announces)', () => {
-    const b = fnBody(html, 'rCal');
+    const b = fnBody(html_SRC, 'rCal');
     expect(b).toMatch(/getElementById\(['"]cal-sr['"]\)/);
     expect(b).toMatch(/Calendar showing/);
   });
   it('rCal appends the human state suffixes to the aria-label', () => {
-    const b = fnBody(html, 'rCal');
+    const b = fnBody(html_SRC, 'rCal');
     expect(b).toMatch(/\(next up\)/);
     expect(b).toMatch(/\(completed\)/);
     expect(b).toMatch(/locked — finish/);
   });
   it('paintDonowCells mirrors the SERVER done/ahead state into the aria-label, idempotently', () => {
-    const b = fnBody(html, 'paintDonowCells');
+    const b = fnBody(html_SRC, 'paintDonowCells');
     expect(b).toMatch(/getAttribute\(\s*['"]aria-label['"]\s*\)/);
     expect(b).toMatch(/\(completed, ahead of schedule\)/);
     expect(b).toMatch(/indexOf\(\s*['"]\(completed/);   // dedup guard
@@ -308,7 +310,7 @@ describe('Item 3 -- aria-label + screen-reader live region', () => {
     createContext(sandbox);
     runInContext(
       "const R='review',OFF='off',EX='exam',PO='post',NC='noclass';\n" +
-      fnBody(html, 'cellAria') + '\nthis.__a = cellAria;', sandbox);
+      fnBody(html_SRC, 'cellAria') + '\nthis.__a = cellAria;', sandbox);
     return sandbox.__a;
   }
   it('cellAria -- sentinels, lessons, PCs, and due dates render as flat text', () => {
@@ -375,7 +377,7 @@ describe('Item 7 -- dim levels are named :root vars', () => {
     expect(html).toMatch(/\.dc-done:not\(\.cell-today\):not\(\.cal-current\)\s*\{[^}]*grayscale[^}]*opacity:\s*var\(--cell-done-dim\)/);
   });
   it('htm names the double-topic badge const (no bare `let db`)', () => {
-    const b = fnBody(html, 'htm');
+    const b = fnBody(html_SRC, 'htm');
     expect(b).toMatch(/const doubleBadge\s*=/);
     expect(b).not.toMatch(/let db\s*=/);
   });
@@ -385,14 +387,14 @@ describe('Item 7 -- dim levels are named :root vars', () => {
 
 describe('Window redesign -- dynamic sizing', () => {
   it('CAL_FOCUS_WEEKS is a let starting at 2, with MIN/MAX bounds', () => {
-    const b = fnBody(html, 'rCal');
+    const b = fnBody(html_SRC, 'rCal');
     expect(b).toMatch(/let\s+CAL_FOCUS_WEEKS\s*=\s*2/);
     expect(b).toMatch(/CAL_MIN_WEEKS\s*=\s*1/);
     // 2026-08-19: the cap is viewport-aware (2 weeks on short screens, else 4).
     expect(b).toMatch(/CAL_MAX_WEEKS\s*=\s*(\d+|_calShort \? 2 : 4)/);
   });
   it('rCal sizes toward the next-up week and publishes the step width', () => {
-    const b = fnBody(html, 'rCal');
+    const b = fnBody(html_SRC, 'rCal');
     expect(b).toMatch(/_nextUpWk/);
     expect(b).toMatch(/CAL_FOCUS_WEEKS\s*=\s*Math\.min\(\s*CAL_MAX_WEEKS/);
     expect(b).toMatch(/_calStepWeeks\s*=\s*CAL_FOCUS_WEEKS/);
@@ -405,12 +407,12 @@ describe('Window redesign -- Today button', () => {
   });
   it('calToday resets paging to today and re-renders', () => {
     expect(html).toMatch(/function\s+calToday\s*\(\s*\)/);
-    const b = fnBody(html, 'calToday');
+    const b = fnBody(html_SRC, 'calToday');
     expect(b).toMatch(/_calPageOffset\s*=\s*0/);
     expect(b).toMatch(/rCal\(\)/);
   });
   it('rCal dims the Today button when already on today (offset 0)', () => {
-    const b = fnBody(html, 'rCal');
+    const b = fnBody(html_SRC, 'rCal');
     expect(b).toMatch(/cal-today-off['"]\s*,\s*_calPageOffset\s*===\s*0/);
   });
   it('the off-state keeps its flex slot (opacity/pointer-events, never display:none)', () => {
@@ -421,13 +423,13 @@ describe('Window redesign -- Today button', () => {
 
 describe('Window redesign -- summer-aware next-up', () => {
   it('rCal computes a summer next-up and marks the summer cell (fall line kept verbatim)', () => {
-    const b = fnBody(html, 'rCal');
+    const b = fnBody(html_SRC, 'rCal');
     expect(b).toMatch(/calNextUpTopic\(_orderedSummerTopics\(\)/);
     expect(b).toMatch(/inf\.t === _nextUpTopic/);   // frozen fall pin still present
     expect(b).toMatch(/wk\._summer\s*&&\s*_summerNextUp\s*&&\s*inf\.t\s*===\s*_summerNextUp/);
   });
   it('paintLocalDoneCells mirrors the summer next-up (survives the post-cache repaint)', () => {
-    const b = fnBody(html, 'paintLocalDoneCells');
+    const b = fnBody(html_SRC, 'paintLocalDoneCells');
     expect(b).toMatch(/_orderedSummerTopics\(\)/);
     expect(b).toMatch(/dataset\.summer\s*===\s*'1'\s*&&\s*summerNextUp/);
   });
@@ -437,9 +439,9 @@ describe('Window redesign -- summer-aware next-up', () => {
     sandbox.window._summerSchedule = (scheduleJson === undefined) ? null : scheduleJson;
     createContext(sandbox);
     runInContext(
-      fnBody(html, '_orderedSummerTopics') + '\n' +
-      fnBody(html, 'localLessonState') + '\n' +
-      fnBody(html, 'calNextUpTopic') + '\n' +
+      fnBody(html_SRC, '_orderedSummerTopics') + '\n' +
+      fnBody(html_SRC, 'localLessonState') + '\n' +
+      fnBody(html_SRC, 'calNextUpTopic') + '\n' +
       'this.__o = _orderedSummerTopics; this.__n = calNextUpTopic;', sandbox);
     return sandbox;
   }
@@ -484,10 +486,10 @@ describe('Sticky core (layout P4, 2026-08-19)', () => {
 
 describe('Today button always goes to the current date (teacher 2026-10-02)', () => {
   it('calToday asks rCal to anchor on today', () => {
-    expect(fnBody(html, 'calToday')).toMatch(/_calOnToday\s*=\s*true/);
+    expect(fnBody(html_SRC, 'calToday')).toMatch(/_calOnToday\s*=\s*true/);
   });
   it('rCal only re-anchors on an overdue next-up week before Today is pressed', () => {
-    const b = fnBody(html, 'rCal');
+    const b = fnBody(html_SRC, 'rCal');
     expect(b).toMatch(/else\s+if\s*\(\s*!_calOnToday\s*\)\s*\{\s*_winAnchor\s*=\s*_nextUpWk/);
     expect(b).toMatch(/cal-today-off['"]\s*,\s*_calPageOffset\s*===\s*0\s*&&\s*_calShowsToday/);
   });

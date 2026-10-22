@@ -10,18 +10,20 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { deskSource, deskHtml } from './helpers/desk-source.js';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const DESK = readFileSync(resolve(repo, 'ap_stats_roadmap_square_mode.html'), 'utf8');
+const DESK = deskHtml();
+const DESK_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
 
 function fnBody(name) {
-  const m = new RegExp('function\\s+' + name + '\\s*\\(').exec(DESK);
+  const m = new RegExp('function\\s+' + name + '\\s*\\(').exec(DESK_SRC);
   if (!m) throw new Error('fn not found: ' + name);
-  const i = DESK.indexOf('{', m.index);
+  const i = DESK_SRC.indexOf('{', m.index);
   let depth = 0;
-  for (let j = i; j < DESK.length; j++) {
-    if (DESK[j] === '{') depth++;
-    else if (DESK[j] === '}') { depth--; if (depth === 0) return DESK.slice(m.index, j + 1); }
+  for (let j = i; j < DESK_SRC.length; j++) {
+    if (DESK_SRC[j] === '{') depth++;
+    else if (DESK_SRC[j] === '}') { depth--; if (depth === 0) return DESK_SRC.slice(m.index, j + 1); }
   }
   throw new Error('unbalanced: ' + name);
 }

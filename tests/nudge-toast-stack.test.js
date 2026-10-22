@@ -11,9 +11,11 @@ import { describe, it, expect, vi } from 'vitest';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 import { createContext, runInContext } from 'vm';
+import { deskSource, deskHtml } from './helpers/desk-source.js';
 
 const REPO_ROOT = resolve(__dirname, '..');
-const html = readFileSync(resolve(REPO_ROOT, 'ap_stats_roadmap_square_mode.html'), 'utf-8');
+const html = deskHtml();
+const html_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
 
 function fnBody(src, name) {
   const re = new RegExp('(?:async\\s+)?function\\s+' + name + '\\s*\\(');
@@ -170,11 +172,11 @@ function buildSandbox({ warnLines, chimeCalls } = {}) {
   const code = [
     'var MAX_NUDGE_STACK = 4;',
     'var _activeNudges = new Map();',
-    fnBody(html, '_showNudgeToast'),
-    fnBody(html, '_hideNudgeToast'),
-    fnBody(html, '_hideNudgeToastById'),
-    fnBody(html, '_sendNudgeReplyForId'),
-    fnBody(html, '_sendNudgeReply'),
+    fnBody(html_SRC, '_showNudgeToast'),
+    fnBody(html_SRC, '_hideNudgeToast'),
+    fnBody(html_SRC, '_hideNudgeToastById'),
+    fnBody(html_SRC, '_sendNudgeReplyForId'),
+    fnBody(html_SRC, '_sendNudgeReply'),
     'this.__show = _showNudgeToast;',
     'this.__hide = _hideNudgeToast;',
     'this.__hideById = _hideNudgeToastById;',

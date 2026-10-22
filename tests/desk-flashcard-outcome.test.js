@@ -12,8 +12,9 @@ import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { JSDOM } from 'jsdom';
 import { createContext, runInContext } from 'node:vm';
+import { deskSource } from './helpers/desk-source.js';
 
-const html = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), '..', 'ap_stats_roadmap_square_mode.html'), 'utf8');
+const html = deskSource();
 
 function fnSrc(name) {
   const m = new RegExp('(?:async\\s+)?function\\s+' + name + '\\s*\\(').exec(html);

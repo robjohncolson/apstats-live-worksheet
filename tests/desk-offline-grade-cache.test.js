@@ -14,8 +14,9 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
+import { deskSource } from './helpers/desk-source.js';
 
-const DESK = readFileSync(resolve(import.meta.dirname, '..', 'ap_stats_roadmap_square_mode.html'), 'utf8');
+const DESK = deskSource();
 
 function fnBody(src, name) {
   const start = src.indexOf('function ' + name);

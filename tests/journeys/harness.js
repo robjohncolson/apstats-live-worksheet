@@ -33,6 +33,7 @@ import { dirname, extname, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { JSDOM, ResourceLoader, VirtualConsole } from 'jsdom';
 import { createFakeRoster } from './fake-roster.js';
+import { deskHtml } from '../helpers/desk-source.js';
 
 export const DESK_URL = 'https://robjohncolson.github.io/apstats-live-worksheet/ap_stats_roadmap_square_mode.html';
 export const ROSTER_URL = 'https://roster-production-12c1.up.railway.app';
@@ -41,7 +42,7 @@ export const SUPABASE_URL = 'https://hgvnytaqmuybzbotosyj.supabase.co';
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const DESK_PATH = resolve(REPO_ROOT, 'ap_stats_roadmap_square_mode.html');
-const DESK_HTML = readFileSync(DESK_PATH, 'utf8');
+const DESK_HTML = deskHtml();
 const PAGE_PREFIX = '/apstats-live-worksheet/';
 const HOST_SET_TIMEOUT = globalThis.setTimeout.bind(globalThis);
 const SUPABASE_ROUTE_KEYS = new Set([

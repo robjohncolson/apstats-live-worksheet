@@ -10,9 +10,11 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 import { createContext, runInContext } from 'vm';
+import { deskSource, deskHtml } from './helpers/desk-source.js';
 
 const REPO_ROOT = resolve(__dirname, '..');
-const html = readFileSync(resolve(REPO_ROOT, 'ap_stats_roadmap_square_mode.html'), 'utf-8');
+const html = deskHtml();
+const html_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
 
 function fnBody(src, name) {
   const re = new RegExp('(?:async\\s+)?function\\s+' + name + '\\s*\\(');
@@ -38,7 +40,7 @@ function fnBody(src, name) {
 
 describe('DN3c — D5 one-calendar collapse', () => {
   it('computeDefaultYear() returns SY26-27 unconditionally (no summer/date branch)', () => {
-    const b = fnBody(html, 'computeDefaultYear');
+    const b = fnBody(html_SRC, 'computeDefaultYear');
     expect(b).toMatch(/return\s*"SY26-27"\s*;/);
     // Strip // comments before checking for branch LOGIC (the explanatory
     // comment legitimately mentions SUMMER26 as kept-dead-code).
@@ -49,7 +51,7 @@ describe('DN3c — D5 one-calendar collapse', () => {
     // runtime
     const sb = {};
     createContext(sb);
-    runInContext(fnBody(html, 'computeDefaultYear') + '\nthis.__y = computeDefaultYear();', sb);
+    runInContext(fnBody(html_SRC, 'computeDefaultYear') + '\nthis.__y = computeDefaultYear();', sb);
     expect(sb.__y).toBe('SY26-27');
   });
 
@@ -67,7 +69,7 @@ describe('DN3c — D5 one-calendar collapse', () => {
   });
 
   it('countdown labels are static Exam Day / Days to Exam (no isSummer)', () => {
-    const b = fnBody(html, 'rCD');
+    const b = fnBody(html_SRC, 'rCD');
     expect(b).not.toMatch(/isSummer/);
     expect(b).toMatch(/textContent='Exam Day'/);
     expect(b).toMatch(/textContent='Days to Exam'/);
@@ -85,13 +87,13 @@ describe('DN3c — D5 one-calendar collapse', () => {
   });
 
   it('cycleYear() is inert (no loadYear / no SCHEDULE_DEFS cycling)', () => {
-    const b = fnBody(html, 'cycleYear');
+    const b = fnBody(html_SRC, 'cycleYear');
     expect(b).not.toMatch(/loadYear\s*\(/);
     expect(b).not.toMatch(/Object\.keys\(SCHEDULE_DEFS\)/);
     // runtime: calling it does nothing / does not throw
     const sb = { loadYear: () => { throw new Error('cycleYear must not loadYear'); }, console };
     createContext(sb);
-    runInContext(fnBody(html, 'cycleYear') + '\nthis.__c = cycleYear;', sb);
+    runInContext(fnBody(html_SRC, 'cycleYear') + '\nthis.__c = cycleYear;', sb);
     expect(() => sb.__c()).not.toThrow();
   });
 });
@@ -141,9 +143,9 @@ function makeBump({ donow, brokenDom, doNowLocalState } = {}) {
   createContext(sandbox);
   runInContext(
     'var _bumpAcked = false;\n' +
-    fnBody(html, 'donowLessonCovers') + '\n' +
-    fnBody(html, 'closeDoNowBump') + '\n' +
-    fnBody(html, 'maybeBumpThenOpen') + '\n' +
+    fnBody(html_SRC, 'donowLessonCovers') + '\n' +
+    fnBody(html_SRC, 'closeDoNowBump') + '\n' +
+    fnBody(html_SRC, 'maybeBumpThenOpen') + '\n' +
     'this.__m = maybeBumpThenOpen; this.__getAck = function(){return _bumpAcked;};', sandbox);
   return { run: sandbox.__m, el, opened, getAck: sandbox.__getAck };
 }

@@ -11,6 +11,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { deskSource } from './helpers/desk-source.js';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const deskPath = resolve(repo, 'ap_stats_roadmap_square_mode.html');
@@ -18,7 +19,7 @@ const startHerePath = resolve(repo, 'start-here.html');
 const sgPath = resolve(repo, 'study_guide_diagnostic.html');
 const tutorDir = resolve(repo, 'ai-tutor');
 
-const DESK = existsSync(deskPath) ? readFileSync(deskPath, 'utf8') : null;
+const DESK = existsSync(deskPath) ? deskSource() : null;
 const START = existsSync(startHerePath) ? readFileSync(startHerePath, 'utf8') : null;
 const SG = existsSync(sgPath) ? readFileSync(sgPath, 'utf8') : null;
 

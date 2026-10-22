@@ -7,6 +7,7 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import { JSDOM } from 'jsdom';
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import { deskSource, deskHtml } from './helpers/desk-source.js';
 
 const root = join(__dirname, '..');
 const schedule = JSON.parse(readFileSync(join(root, 'data/lesson-schedule.json'), 'utf8'));
@@ -93,7 +94,7 @@ describe('teacher-week.html', () => {
 });
 
 describe('teacher-week.html as the Desk "This Week" app', () => {
-  const desk = readFileSync(join(root, 'ap_stats_roadmap_square_mode.html'), 'utf8');
+  const desk = deskHtml();
 
   it('has a desktop icon, an iframe window and a registry entry, and hands teachers the CED codes', () => {
     expect(desk).toMatch(/<div class="app-icon" data-app="week"[^>]*ondblclick="openApp\('week'\)"/);

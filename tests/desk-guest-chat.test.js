@@ -9,10 +9,11 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
+import { deskSource } from './helpers/desk-source.js';
 
 const ROOT = resolve(__dirname, '..');
 let html = '';
-beforeAll(() => { html = readFileSync(resolve(ROOT, 'ap_stats_roadmap_square_mode.html'), 'utf8'); });
+beforeAll(() => { html = deskSource(); });
 
 describe('Desk teacher chat — guests can READ teacher messages by alias', () => {
   it('_studentNudgeGuestAlias gates on apstats_guest_active + a Guest_ alias', () => {

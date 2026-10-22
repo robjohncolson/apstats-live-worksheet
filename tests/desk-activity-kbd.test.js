@@ -16,10 +16,12 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { deskSource, deskHtml } from './helpers/desk-source.js';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const deskPath = resolve(repo, 'ap_stats_roadmap_square_mode.html');
-const DESK = existsSync(deskPath) ? readFileSync(deskPath, 'utf8') : null;
+const DESK = existsSync(deskPath) ? deskHtml() : null;
+const DESK_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
 
 function fnBody(src, name) {
   const re = new RegExp('function\\s+' + name + '\\s*\\(');
@@ -54,19 +56,19 @@ describe('V4 Desk activity wiring (C5.2 planner-direct edits)', () => {
   });
 
   it('pin 04: _activityRendererForType resolves bridge-mean to window.ActivityBridge', () => {
-    const body = fnBody(DESK, '_activityRendererForType');
+    const body = fnBody(DESK_SRC, '_activityRendererForType');
     expect(body).toMatch(/'bridge-mean'/);
     expect(body).toMatch(/window\.ActivityBridge/);
   });
 
   it('pin 05: _handleActivityState helper is defined', () => {
-    const body = fnBody(DESK, '_handleActivityState');
+    const body = fnBody(DESK_SRC, '_handleActivityState');
     expect(body).toMatch(/summary/);
     expect(body).toMatch(/_activityHandle/);
   });
 
   it('pin 06: _handleActivityState mounts on live activity, calls updateState, handles finished + null', () => {
-    const body = fnBody(DESK, '_handleActivityState');
+    const body = fnBody(DESK_SRC, '_handleActivityState');
     // Mount path: creates the div, inserts before classroom-board-mount.
     expect(body).toMatch(/createElement\(['"]div['"]\)/);
     expect(body).toMatch(/insertBefore/);
@@ -80,7 +82,7 @@ describe('V4 Desk activity wiring (C5.2 planner-direct edits)', () => {
   });
 
   it('pin 07: onStateChange in _mountClassroomBoard stashes _lastClassroomSummary AND calls _handleActivityState', () => {
-    const body = fnBody(DESK, '_mountClassroomBoard');
+    const body = fnBody(DESK_SRC, '_mountClassroomBoard');
     expect(body).toMatch(/_lastClassroomSummary\s*=\s*summary/);
     expect(body).toMatch(/_handleActivityState\s*\(\s*summary\s*\)/);
   });
@@ -132,7 +134,7 @@ describe('V4 Desk activity wiring (C5.2 planner-direct edits)', () => {
   // destroys the fresh renderer mid-session.
   it('pin 13: _activityTeardownTimer is declared and cleared on live transition', () => {
     expect(DESK).toMatch(/var\s+_activityTeardownTimer\s*=\s*null/);
-    const body = fnBody(DESK, '_handleActivityState');
+    const body = fnBody(DESK_SRC, '_handleActivityState');
     // The teardown timer must be assigned via setTimeout AND cleared via
     // clearTimeout when the next live activity arrives.
     expect(body).toMatch(/_activityTeardownTimer\s*=\s*setTimeout/);

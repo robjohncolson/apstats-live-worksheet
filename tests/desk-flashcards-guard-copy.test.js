@@ -4,10 +4,12 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { deskSource, deskHtml } from './helpers/desk-source.js';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const deskPath = resolve(repo, 'ap_stats_roadmap_square_mode.html');
-const DESK = existsSync(deskPath) ? readFileSync(deskPath, 'utf8') : null;
+const DESK = existsSync(deskPath) ? deskHtml() : null;
+const DESK_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
 
 function fnBody(src, name) {
   const re = new RegExp('(?:async\\s+)?function\\s+' + name + '\\s*\\(');
@@ -22,7 +24,7 @@ function fnBody(src, name) {
 }
 
 function loadMayScore(win, viewAsContext) {
-  const src = fnBody(DESK, '_mayScore');
+  const src = fnBody(DESK_SRC, '_mayScore');
   // eslint-disable-next-line no-new-func
   return new Function('window', '_viewAsContext', 'return (' + src + ');')(win, viewAsContext);
 }
@@ -31,22 +33,22 @@ describe('Desk flashcards — scoring guards', () => {
   it('_mayScore exists and guards every flashcard commit step', () => {
     expect(DESK).toMatch(/function\s+_mayScore\s*\(/);
     for (const name of ['_bfFinish', '_ftFinish', '_blooketCommit']) {
-      expect(fnBody(DESK, name), name + ' must consult _mayScore').toMatch(/_mayScore\s*\(\s*\)/);
+      expect(fnBody(DESK_SRC, name), name + ' must consult _mayScore').toMatch(/_mayScore\s*\(\s*\)/);
     }
-    expect(fnBody(DESK, '_blooketCommit')).toMatch(
+    expect(fnBody(DESK_SRC, '_blooketCommit')).toMatch(
       /\{\s*if\s*\(typeof\s+_mayScore\s*===\s*['"]function['"]\s*&&\s*!_mayScore\(\)\)\s*return;/
     );
   });
 
   it('_bfFinish has no commit or progress-clear token before the pass gate', () => {
-    const body = fnBody(DESK, '_bfFinish');
+    const body = fnBody(DESK_SRC, '_bfFinish');
     const passedIdx = body.indexOf('if (passed');
     expect(passedIdx).toBeGreaterThan(-1);
     expect(body.slice(0, passedIdx)).not.toMatch(/_blooketCommit|_bfClearProgress/);
   });
 
   it('_bfFinish uses one scoring decision and labels a read-only pass honestly', () => {
-    const body = fnBody(DESK, '_bfFinish');
+    const body = fnBody(DESK_SRC, '_bfFinish');
     expect(body).toMatch(
       /var\s+canScore\s*=\s*\(typeof\s+_mayScore\s*!==\s*['"]function['"]\)\s*\|\|\s*_mayScore\(\)/
     );
@@ -56,7 +58,7 @@ describe('Desk flashcards — scoring guards', () => {
 
   it('localStorage writers guard view-as first and worksheet read-only second', () => {
     for (const name of ['_bfSaveProgress', '_ftLogToStore']) {
-      const body = fnBody(DESK, name);
+      const body = fnBody(DESK_SRC, name);
       const viewAsIdx = body.indexOf("typeof _viewAsContext === 'function'");
       const readOnlyIdx = body.indexOf("typeof window !== 'undefined'");
       const tryIdx = body.indexOf('try {');
@@ -85,7 +87,7 @@ describe('Desk flashcards — scoring guards', () => {
 
 describe('Desk flashcards — timed keyboard guards and honest picker', () => {
   it('_ftKeydownHandler guards editable focus, modifiers, and a hidden overlay', () => {
-    const body = fnBody(DESK, '_ftKeydownHandler');
+    const body = fnBody(DESK_SRC, '_ftKeydownHandler');
     expect(body).toMatch(/document\.activeElement/);
     expect(body).toMatch(/tag\s*===\s*['"]INPUT['"]/);
     expect(body).toMatch(/tag\s*===\s*['"]TEXTAREA['"]/);
@@ -97,7 +99,7 @@ describe('Desk flashcards — timed keyboard guards and honest picker', () => {
   });
 
   it('the timed deck note states the credit rule and current best honestly', () => {
-    const body = fnBody(DESK, '_bfCreditNote');
+    const body = fnBody(DESK_SRC, '_bfCreditNote');
     expect(body).toMatch(/your Blooket grade/);
     // Teacher 2026-10-12: the score IS the grade — no pass mark in student copy.
     expect(body).toMatch(/point for point/);
@@ -128,8 +130,8 @@ describe('Desk flashcards — modal accessibility', () => {
   });
 
   it('card renders focus the first choice and close restores launcher focus', () => {
-    expect(fnBody(DESK, '_bfRenderCard')).toMatch(/firstChoice[\s\S]*\.focus\(\)/);
-    expect(fnBody(DESK, '_ftRenderCard')).toMatch(/firstChoice[\s\S]*\.focus\(\)/);
-    expect(fnBody(DESK, '_bfCloseUI')).toMatch(/_bfState\.btn[\s\S]*\.focus\(\)/);
+    expect(fnBody(DESK_SRC, '_bfRenderCard')).toMatch(/firstChoice[\s\S]*\.focus\(\)/);
+    expect(fnBody(DESK_SRC, '_ftRenderCard')).toMatch(/firstChoice[\s\S]*\.focus\(\)/);
+    expect(fnBody(DESK_SRC, '_bfCloseUI')).toMatch(/_bfState\.btn[\s\S]*\.focus\(\)/);
   });
 });

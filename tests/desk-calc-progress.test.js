@@ -7,19 +7,21 @@ import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { JSDOM } from 'jsdom';
+import { deskSource, deskHtml } from './helpers/desk-source.js';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (file) => readFileSync(resolve(repo, file), 'utf8');
-const DESK = read('ap_stats_roadmap_square_mode.html');
+const DESK = deskHtml();
+const DESK_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
 const CED_SOURCE = read('js/ced2026-crosswalk.js') + '\n' + read('js/ced2026-labels.js');
 
 function fnBody(name) {
-  const match = new RegExp('function\\s+' + name + '\\s*\\(').exec(DESK);
+  const match = new RegExp('function\\s+' + name + '\\s*\\(').exec(DESK_SRC);
   if (!match) throw new Error('Desk function not found: ' + name);
   let depth = 0;
-  for (let i = DESK.indexOf('{', match.index); i < DESK.length; i++) {
-    if (DESK[i] === '{') depth++;
-    else if (DESK[i] === '}' && --depth === 0) return DESK.slice(match.index, i + 1);
+  for (let i = DESK_SRC.indexOf('{', match.index); i < DESK_SRC.length; i++) {
+    if (DESK_SRC[i] === '{') depth++;
+    else if (DESK_SRC[i] === '}' && --depth === 0) return DESK_SRC.slice(match.index, i + 1);
   }
   throw new Error('Unbalanced Desk function: ' + name);
 }

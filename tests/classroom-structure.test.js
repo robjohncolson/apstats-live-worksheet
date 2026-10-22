@@ -6,6 +6,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { deskSource, deskHtml } from './helpers/desk-source.js';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (p) => {
@@ -13,7 +14,8 @@ const read = (p) => {
   return existsSync(full) ? readFileSync(full, 'utf8') : null;
 };
 
-const DESK = read('ap_stats_roadmap_square_mode.html');
+const DESK = deskHtml();
+const DESK_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
 const COCKPIT = read('teacher-classroom.html');
 const BOARD = read('classroom-board.js');
 
@@ -65,7 +67,7 @@ describe('Live Classroom v1a - Desk integration', () => {
   });
 
   it('D4: the mount helper guards on session + the optional component', () => {
-    const body = fnBody(DESK, '_mountClassroomBoard');
+    const body = fnBody(DESK_SRC, '_mountClassroomBoard');
     expect(body).toMatch(/rosterClient/);
     expect(body).toMatch(/typeof\s+window\.ClassroomBoard/);
     expect(body).toMatch(/ClassroomBoard\.mount/);
@@ -79,7 +81,7 @@ describe('Live Classroom v1a - Desk integration', () => {
   it('D4: guests retired — a no-roster-session visitor mounts NO presence avatar', () => {
     // Strip line comments: the contract is about CODE (a comment legitimately names
     // the removed guest behavior).
-    const body = fnBody(DESK, '_mountClassroomBoard').replace(/\/\/[^\n]*/g, '');
+    const body = fnBody(DESK_SRC, '_mountClassroomBoard').replace(/\/\/[^\n]*/g, '');
     // The chosen-guest resurrect block is gone: no guest flag / alias / Guest_ pattern.
     expect(body).not.toMatch(/apstats_guest_active/);
     expect(body).not.toMatch(/getGuestIdentity/);
@@ -94,7 +96,7 @@ describe('Live Classroom v1a - Desk integration', () => {
   it('D5: _periodToSection never returns null, maps bare letters, defaults to PeriodX', () => {
     // Strip line comments first so comment prose cannot trip the code
     // assertions below.
-    const code = fnBody(DESK, '_periodToSection').replace(/\/\/[^\n]*/g, '');
+    const code = fnBody(DESK_SRC, '_periodToSection').replace(/\/\/[^\n]*/g, '');
     expect(code).not.toMatch(/return\s+null/);
     expect(code).toMatch(/return\s+['"]PeriodX['"]/);
     // A bare period letter maps to Period<LETTER> for future periods.
@@ -316,7 +318,7 @@ describe('Live Classroom r3 - hue opt in mount call', () => {
   });
 
   it('Desk _mountClassroomBoard passes hue from rosterClient.current().spriteHue', () => {
-    const body = fnBody(DESK, '_mountClassroomBoard');
+    const body = fnBody(DESK_SRC, '_mountClassroomBoard');
     expect(body).toMatch(/hue\s*:/);
     expect(body).toMatch(/spriteHue/);
   });
@@ -506,13 +508,13 @@ describe('Live Classroom v1c - synchronized video start', () => {
   });
 
   it('Desk _mountClassroomBoard passes onStartVideo into the board mount', () => {
-    const body = fnBody(DESK, '_mountClassroomBoard');
+    const body = fnBody(DESK_SRC, '_mountClassroomBoard');
     expect(body).toMatch(/onStartVideo\s*:/);
   });
 
   it('Desk _focusTodayLessonVideo opens the resource panel directly (no synthetic click)', () => {
     expect(DESK).toMatch(/function\s+_focusTodayLessonVideo\s*\(/);
-    const body = fnBody(DESK, '_focusTodayLessonVideo');
+    const body = fnBody(DESK_SRC, '_focusTodayLessonVideo');
     // Codex F3 MAJOR: must call showResourcePanel directly, NOT cell.click()
     // -- a synthetic click re-enters the lock-dialog / Do-Now-bump guards.
     expect(body).toMatch(/showResourcePanel\s*\(/);

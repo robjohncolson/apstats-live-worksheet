@@ -5,6 +5,7 @@ import path from 'node:path';
 import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { runInNewContext } from 'node:vm';
+import { deskSource } from './helpers/desk-source.js';
 import { missingWork, quarterGrade, isCandidate, doFirst, latexText, boxSummary,
   renderTex, parseArgs, assertSafeOut, retakeStep, schoologyGrade, officialGrade, officialPcSentence } from '../scripts/weekly-slips.mjs';
 
@@ -19,7 +20,7 @@ const LESSONS = [
   { lessonKey: '1.10', zeroDate: { B: null, E: null }, lessonGradeNoQuiz: null, Cws: null },
   { lessonKey: '9.9', lessonGradeNoQuiz: null },
 ];
-const html = readFileSync(path.join(repo, 'ap_stats_roadmap_square_mode.html'), 'utf8');
+const html = deskSource();
 const start = html.indexOf('function _zeroWarnings(');
 const end = html.indexOf('function _zeroTodayIso(', start);
 const deskMissing = runInNewContext(`var ZERO_WARN_DAYS = 3; ${html.slice(start, end)}; _zeroWarnings`);

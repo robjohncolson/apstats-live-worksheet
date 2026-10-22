@@ -5,12 +5,13 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { JSDOM } from 'jsdom';
 import { addressFromWIF, deriveWIF, NETWORKS } from '../tools/lib/doge-keys.mjs';
+import { deskSource } from './helpers/desk-source.js';
 
 const source = file => readFileSync(new URL('../' + file, import.meta.url), 'utf8');
 const STUDENT_SOURCE = source('js/student-wallet-print.js');
 const RENDERER_SOURCE = source('js/wallet-print-sheets.js');
 const QR_SOURCE = source('vendor/qrcode-generator/qrcode-2.0.4.js');
-const DESK = source('ap_stats_roadmap_square_mode.html');
+const DESK = deskSource();
 // Deterministic public test material, never a real student wallet.
 const WIF = deriveWIF(Buffer.alloc(32, 17), NETWORKS.mainnet.wif);
 const ADDRESS = addressFromWIF(WIF);

@@ -12,10 +12,12 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { deskSource, deskHtml } from './helpers/desk-source.js';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const deskPath = resolve(repo, 'ap_stats_roadmap_square_mode.html');
-const DESK = existsSync(deskPath) ? readFileSync(deskPath, 'utf8') : null;
+const DESK = existsSync(deskPath) ? deskHtml() : null;
+const DESK_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
 
 function fnBody(src, name) {
   const re = new RegExp('(?:async\\s+)?function\\s+' + name + '\\s*\\(');
@@ -40,7 +42,7 @@ describe('Desk: no-guest-mode sign-in wall', () => {
 
   it('01: _deskAccessGranted gates on the live roster session and fails OPEN', () => {
     expect(DESK).toMatch(/function\s+_deskAccessGranted\s*\(/);
-    const body = fnBody(DESK, '_deskAccessGranted');
+    const body = fnBody(DESK_SRC, '_deskAccessGranted');
     // Gates on the LIVE roster session (not the legacy localStorage key) so a
     // cleared session re-walls the Desk instead of leaving a zombie.
     expect(body).toMatch(/rosterClient\.current\s*\(/);
@@ -58,7 +60,7 @@ describe('Desk: no-guest-mode sign-in wall', () => {
   });
 
   it('04: openSignInModal sets the wall flag + toggles the Cancel button', () => {
-    const body = fnBody(DESK, 'openSignInModal');
+    const body = fnBody(DESK_SRC, 'openSignInModal');
     expect(body).toMatch(/_signinWallActive\s*=/);
     expect(body).toMatch(/!_deskAccessGranted\s*\(\s*\)/);
     // typeof-guarded so the desk-roster-signin vm-test sandbox keeps passing.
@@ -69,7 +71,7 @@ describe('Desk: no-guest-mode sign-in wall', () => {
   });
 
   it('05: closeSignInModal refuses to dismiss while the wall is up + not signed in', () => {
-    const body = fnBody(DESK, 'closeSignInModal');
+    const body = fnBody(DESK_SRC, 'closeSignInModal');
     // typeof-guarded form: _signinWallActive && typeof guard && !granted → return.
     expect(body).toMatch(/_signinWallActive\s*&&\s*typeof\s+_deskAccessGranted\s*===\s*'function'\s*&&\s*!_deskAccessGranted\s*\(\s*\)\s*\)\s*return/);
   });
@@ -88,7 +90,7 @@ describe('Desk: no-guest-mode sign-in wall', () => {
   // Gates on the LIVE roster session (rosterClient.current()), not the legacy
   // localStorage key, so a cleared session (e.g. cr sign-out) re-pops the wall.
   function makeAccessGranted({ signedIn = false, teacher = false, throwIt = false } = {}) {
-    const src = fnBody(DESK, '_deskAccessGranted');
+    const src = fnBody(DESK_SRC, '_deskAccessGranted');
     const window = { rosterClient: { current: () => { if (throwIt) throw new Error('boom'); return signedIn ? { studentId: 'sid' } : null; } } };
     const _deskIsTeacher = () => teacher;
     // eslint-disable-next-line no-new-func

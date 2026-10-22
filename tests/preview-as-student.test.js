@@ -13,9 +13,11 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 import { createContext, runInContext } from 'vm';
+import { deskSource, deskHtml } from './helpers/desk-source.js';
 
 const REPO_ROOT = resolve(__dirname, '..');
-const html = readFileSync(resolve(REPO_ROOT, 'ap_stats_roadmap_square_mode.html'), 'utf-8');
+const html = deskHtml();
+const html_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
 
 function fnBody(src, name) {
   const re = new RegExp('(?:async\\s+)?function\\s+' + name + '\\s*\\(');
@@ -51,7 +53,7 @@ const FLAG = 'apstats_preview_as_student';
 
 describe('preview-as-student -- structure', () => {
   it('_deskIsTeacher honours the per-tab preview flag', () => {
-    const b = fnBody(html, '_deskIsTeacher');
+    const b = fnBody(html_SRC, '_deskIsTeacher');
     expect(b).toMatch(/sessionStorage\.getItem\('apstats_preview_as_student'\)\s*===\s*'1'/);
     expect(b).toMatch(/return false/);
   });
@@ -76,7 +78,7 @@ describe('preview-as-student -- structure', () => {
 function loadDeskIsTeacher(session, local) {
   const sandbox = { sessionStorage: session, localStorage: local };
   createContext(sandbox);
-  runInContext(fnBody(html, '_deskIsTeacher') + '\nthis.__f = _deskIsTeacher;', sandbox);
+  runInContext(fnBody(html_SRC, '_deskIsTeacher') + '\nthis.__f = _deskIsTeacher;', sandbox);
   return sandbox.__f;
 }
 
@@ -111,8 +113,8 @@ function loadToggle(session) {
   const sandbox = { sessionStorage: session, location: { reload: () => { reloaded += 1; } } };
   createContext(sandbox);
   runInContext(
-    fnBody(html, '_previewAsStudentActive') + '\n' +
-    fnBody(html, '_togglePreviewAsStudent') + '\n' +
+    fnBody(html_SRC, '_previewAsStudentActive') + '\n' +
+    fnBody(html_SRC, '_togglePreviewAsStudent') + '\n' +
     'this.__active = _previewAsStudentActive; this.__toggle = _togglePreviewAsStudent;',
     sandbox);
   return { active: sandbox.__active, toggle: sandbox.__toggle, reloaded: () => reloaded };
@@ -147,8 +149,8 @@ describe('preview-as-student -- toggle', () => {
     };
     createContext(sandbox);
     runInContext(
-      fnBody(html, '_previewAsStudentActive') + '\n' +
-      fnBody(html, '_togglePreviewAsStudent') + '\n' +
+      fnBody(html_SRC, '_previewAsStudentActive') + '\n' +
+      fnBody(html_SRC, '_togglePreviewAsStudent') + '\n' +
       'this.__toggle = _togglePreviewAsStudent;',
       sandbox);
     return sandbox.__toggle;
@@ -182,8 +184,8 @@ function loadRender(session, item, badge) {
   };
   createContext(sandbox);
   runInContext(
-    fnBody(html, '_previewAsStudentActive') + '\n' +
-    fnBody(html, '_renderPreviewAsStudentUI') + '\n' +
+    fnBody(html_SRC, '_previewAsStudentActive') + '\n' +
+    fnBody(html_SRC, '_renderPreviewAsStudentUI') + '\n' +
     'this.__r = _renderPreviewAsStudentUI;',
     sandbox);
   return sandbox.__r;

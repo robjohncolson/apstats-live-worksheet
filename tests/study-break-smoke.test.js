@@ -12,9 +12,10 @@ import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { deskSource } from './helpers/desk-source.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const html = fs.readFileSync(path.join(__dirname, '..', 'ap_stats_roadmap_square_mode.html'), 'utf8');
+const html = deskSource();
 
 function makeCtx() {
   const store = {};

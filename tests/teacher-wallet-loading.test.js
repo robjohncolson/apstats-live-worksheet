@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { JSDOM } from 'jsdom';
 import { webcrypto } from 'node:crypto';
 import { deriveWIF, addressFromWIF, NETWORKS } from '../tools/lib/doge-keys.mjs';
+import { deskSource, deskHtml } from './helpers/desk-source.js';
 
 const SOURCE = readFileSync(new URL('../js/teacher-wallet-loading.js', import.meta.url), 'utf8');
 const SCANNER_SOURCE = readFileSync(new URL('../js/wallet-qr-scanner.js', import.meta.url), 'utf8');
@@ -293,7 +294,7 @@ describe('teacher wallet print controls', () => {
   });
 
   it('shares print assets while keeping class print controls on the teacher dashboard', () => {
-    const desk = readFileSync(new URL('../ap_stats_roadmap_square_mode.html', import.meta.url), 'utf8');
+    const desk = deskHtml();
     expect(DASH).toContain('id="wallet-print-btn"');
     expect(DASH).toContain('_walletLoader.openPrint()');
     for (const file of ['js/wallet-print-sheets.js', 'vendor/qrcode-generator/qrcode-2.0.4.js']) {
@@ -445,7 +446,7 @@ describe('generated wallet assignments', () => {
     expect(DASH).toContain('id="wallet-generate-btn"');
     expect(DASH).toContain('generationUnavailableReason');
     expect(DASH).toContain('_walletLoader.openGenerate()');
-    expect(readFileSync(new URL('../ap_stats_roadmap_square_mode.html', import.meta.url), 'utf8')).not.toContain('wallet-generate-btn');
+    expect(deskHtml()).not.toContain('wallet-generate-btn');
   });
 });
 
@@ -549,7 +550,7 @@ describe('teacher import and reveal dialogs', () => {
     expect(DASH).toContain('_walletLoader.decorateAddressCell(addrTd, s)');
     for (const file of ['doge-keys.js', 'js/teacher-wallet-loading.js', 'js/wallet-qr-scanner.js']) {
       expect(DASH).toContain('src="' + file + '"');
-      expect(readFileSync(new URL('../ap_stats_roadmap_square_mode.html', import.meta.url), 'utf8')).not.toContain('src="' + file + '"');
+      expect(deskHtml()).not.toContain('src="' + file + '"');
     }
   });
   it('can toggle custody off and on after a matching WIF scan without losing the ready state', async () => {

@@ -11,9 +11,11 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
+import { deskSource, deskHtml } from './helpers/desk-source.js';
 
 const REPO_ROOT = resolve(__dirname, '..');
-const html = readFileSync(resolve(REPO_ROOT, 'ap_stats_roadmap_square_mode.html'), 'utf-8');
+const html = deskHtml();
+const html_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
 
 function fnBody(src, name) {
   const re = new RegExp('(?:async\\s+)?function\\s+' + name + '\\s*\\(');
@@ -86,15 +88,15 @@ describe('nudge toast -- structure (T2 stacked)', () => {
   });
 
   it('_playNudgeChime, _showNudgeToast, _hideNudgeToast, _sendNudgeReply functions exist', () => {
-    expect(fnBody(html, '_playNudgeChime')).toMatch(/window\.sfx\.play\('mac:nudgeChime'\)/);   // SFX_SPEC: the shared engine
-    expect(fnBody(html, '_showNudgeToast')).toMatch(/_activeNudges/);
-    expect(fnBody(html, '_hideNudgeToast')).toMatch(/_hideNudgeToastById/);
-    expect(fnBody(html, '_sendNudgeReply')).toMatch(/oldestId/);
+    expect(fnBody(html_SRC, '_playNudgeChime')).toMatch(/window\.sfx\.play\('mac:nudgeChime'\)/);   // SFX_SPEC: the shared engine
+    expect(fnBody(html_SRC, '_showNudgeToast')).toMatch(/_activeNudges/);
+    expect(fnBody(html_SRC, '_hideNudgeToast')).toMatch(/_hideNudgeToastById/);
+    expect(fnBody(html_SRC, '_sendNudgeReply')).toMatch(/oldestId/);
   });
 
   it('_hideNudgeToastById and _sendNudgeReplyForId helpers exist', () => {
-    expect(fnBody(html, '_hideNudgeToastById')).toMatch(/_activeNudges/);
-    expect(fnBody(html, '_sendNudgeReplyForId')).toMatch(/nudge-reply/);
+    expect(fnBody(html_SRC, '_hideNudgeToastById')).toMatch(/_activeNudges/);
+    expect(fnBody(html_SRC, '_sendNudgeReplyForId')).toMatch(/nudge-reply/);
   });
 
   it('MAX_NUDGE_STACK is defined as 4', () => {

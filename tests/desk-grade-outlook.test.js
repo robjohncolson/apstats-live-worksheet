@@ -9,10 +9,12 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { deskSource, deskHtml } from './helpers/desk-source.js';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const deskPath = resolve(repo, 'ap_stats_roadmap_square_mode.html');
-const DESK = existsSync(deskPath) ? readFileSync(deskPath, 'utf8') : null;
+const DESK = existsSync(deskPath) ? deskHtml() : null;
+const DESK_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
 
 function fnBody(src, name) {
   const re = new RegExp('(?:async\\s+)?function\\s+' + name + '\\s*\\(');
@@ -60,7 +62,7 @@ describe('Desk grade outlook (Q1-Q4 strip in Do Now card)', () => {
   });
 
   it('02b: renderDoNowGrades renders the "Schoology today" chip from data.gradebook and the early-bonus chip from the quarter fields', () => {
-    const body = fnBody(DESK, 'renderDoNowGrades');
+    const body = fnBody(DESK_SRC, 'renderDoNowGrades');
     expect(body).toMatch(/data\.gradebook/);
     expect(body).toMatch(/schoologyTotal/);
     expect(body).toMatch(/'Schoology today'/);
@@ -75,7 +77,7 @@ describe('Desk grade outlook (Q1-Q4 strip in Do Now card)', () => {
   });
 
   it('04: renderDoNowGrades calls /grade with the token query param', () => {
-    const body = fnBody(DESK, 'renderDoNowGrades');
+    const body = fnBody(DESK_SRC, 'renderDoNowGrades');
     // P2 (TEACHER_STUDENT_CONSOLE_P2_BUILD.md §3.6): the fetch is now wrapped
     // by _maybeViewAsFetch (typeof-guarded), so the literal pattern is split
     // across endpoint construction + fetch invocation. The endpoint string
@@ -86,14 +88,14 @@ describe('Desk grade outlook (Q1-Q4 strip in Do Now card)', () => {
   });
 
   it('05: renderDoNowGrades iterates Q1, Q2, Q3, Q4 in order', () => {
-    const body = fnBody(DESK, 'renderDoNowGrades');
+    const body = fnBody(DESK_SRC, 'renderDoNowGrades');
     // The order array literal is pinned so future refactors don't accidentally
     // drop a quarter or reorder them.
     expect(body).toMatch(/\[\s*['"]Q1['"]\s*,\s*['"]Q2['"]\s*,\s*['"]Q3['"]\s*,\s*['"]Q4['"]\s*\]/);
   });
 
   it('06: renderDoNowGrades reads quarterGrade, pcAvg, workAvg (v3 tracks) from the response', () => {
-    const body = fnBody(DESK, 'renderDoNowGrades');
+    const body = fnBody(DESK_SRC, 'renderDoNowGrades');
     expect(body).toMatch(/\.quarterGrade\b/);
     // EFFORT_VISIBILITY_V2_SPEC §3: the ↑ceiling left the pill (the coach still has it).
     expect(body).not.toMatch(/q\.ceiling\b/);
@@ -104,7 +106,7 @@ describe('Desk grade outlook (Q1-Q4 strip in Do Now card)', () => {
   });
 
   it('07: renderDoNowGrades creates pills via createElement (no innerHTML XSS surface)', () => {
-    const body = fnBody(DESK, 'renderDoNowGrades');
+    const body = fnBody(DESK_SRC, 'renderDoNowGrades');
     // Per the structure-test policy (no innerHTML on response data), pills
     // must be assembled via createElement + textContent.
     expect(body).toMatch(/createElement\s*\(\s*['"]span['"]/);
@@ -117,7 +119,7 @@ describe('Desk grade outlook (Q1-Q4 strip in Do Now card)', () => {
   });
 
   it('08: renderDoNowGrades wraps the fetch + render in try/catch (never throws)', () => {
-    const body = fnBody(DESK, 'renderDoNowGrades');
+    const body = fnBody(DESK_SRC, 'renderDoNowGrades');
     expect(body).toMatch(/try\s*\{/);
     expect(body).toMatch(/catch\s*\(/);
     // On any failure path, the host must hide.
@@ -125,7 +127,7 @@ describe('Desk grade outlook (Q1-Q4 strip in Do Now card)', () => {
   });
 
   it('09: renderDoNow calls renderDoNowGrades on the success path, typeof-guarded + fire-and-forget', () => {
-    const body = fnBody(DESK, 'renderDoNow');
+    const body = fnBody(DESK_SRC, 'renderDoNow');
     // The call site itself.
     expect(body).toMatch(/renderDoNowGrades\s*\(\s*baseUrl\s*,\s*token\s*\)/);
     // The call must be fire-and-forget (not awaited) so it never blocks the
@@ -142,7 +144,7 @@ describe('Desk grade outlook (Q1-Q4 strip in Do Now card)', () => {
   });
 
   it('10: renderDoNow hides the strip at the top of every entry (no stale state)', () => {
-    const body = fnBody(DESK, 'renderDoNow');
+    const body = fnBody(DESK_SRC, 'renderDoNow');
     // The top-of-function reset clears innerHTML and sets display:none so
     // the strip never shows stale pills when the student signs out / loses
     // their token / etc.
@@ -163,14 +165,14 @@ describe('Desk grade outlook (Q1-Q4 strip in Do Now card)', () => {
   });
 
   it('12: the pill no longer carries the ↑ceiling (EFFORT_VISIBILITY_V2_SPEC §3: it confused the wording)', () => {
-    const body = fnBody(DESK, 'renderDoNowGrades');
+    const body = fnBody(DESK_SRC, 'renderDoNowGrades');
     expect(body).not.toMatch(/['"]↑['"]/);
     expect(body).not.toContain('qceil');
     expect(DESK).not.toMatch(/\.qpill \.qceil/);
   });
 
   it('13: grade strip uses the ROSTER_SERVICE_URL (not Supabase) — server-mediated rule (Phase 0 §6.5)', () => {
-    const body = fnBody(DESK, 'renderDoNowGrades');
+    const body = fnBody(DESK_SRC, 'renderDoNowGrades');
     // Phase 0 §6.5: the Desk NEVER hits Supabase directly. The fetch path
     // must use the baseUrl param (which renderDoNow sources from
     // window.ROSTER_SERVICE_URL).
@@ -182,14 +184,14 @@ describe('Desk grade outlook (Q1-Q4 strip in Do Now card)', () => {
   // ── Phase 6 pins (+5) ───────────────────────────────────────────────────────
 
   it('14: renderDoNowGrades reads lessonsDue, lessonsGraded, lessonsTotal from response (Phase 6)', () => {
-    const body = fnBody(DESK, 'renderDoNowGrades');
+    const body = fnBody(DESK_SRC, 'renderDoNowGrades');
     expect(body).toMatch(/\.lessonsDue\b/);
     expect(body).toMatch(/\.lessonsGraded\b/);
     expect(body).toMatch(/\.lessonsTotal\b/);
   });
 
   it('15: pill tooltip text includes lessons-graded and due-so-far (Phase 6 tooltip upgrade)', () => {
-    const body = fnBody(DESK, 'renderDoNowGrades');
+    const body = fnBody(DESK_SRC, 'renderDoNowGrades');
     // The tooltip must reference "lesson" (singular or plural) for the lesson count.
     expect(body).toMatch(/lesson/);
     // Must include "due so far" phrasing.
@@ -197,14 +199,14 @@ describe('Desk grade outlook (Q1-Q4 strip in Do Now card)', () => {
   });
 
   it('16: _gradeLessonsCache is populated with data.lessons when present (Phase 6 cache)', () => {
-    const body = fnBody(DESK, 'renderDoNowGrades');
+    const body = fnBody(DESK_SRC, 'renderDoNowGrades');
     // Must cache the lessons array for the modal.
     expect(body).toMatch(/_gradeLessonsCache\s*=/);
     expect(body).toMatch(/data\.lessons/);
   });
 
   it('17: empty-state pill renders when lessonsDue is 0 (no quarters counted yet)', () => {
-    const body = fnBody(DESK, 'renderDoNowGrades');
+    const body = fnBody(DESK_SRC, 'renderDoNowGrades');
     // The pill class includes "empty" when gradeRaw is null.
     expect(body).toMatch(/qpill.*empty/);
     // The empty pill text must be the dash character.
@@ -213,14 +215,14 @@ describe('Desk grade outlook (Q1-Q4 strip in Do Now card)', () => {
 
   it('18: renderDoNowGrades caches lessons array as _gradeLessonsCache (null for non-array)', () => {
     // Must handle missing/non-array data.lessons gracefully.
-    const body = fnBody(DESK, 'renderDoNowGrades');
+    const body = fnBody(DESK_SRC, 'renderDoNowGrades');
     expect(body).toMatch(/Array\.isArray\s*\(\s*data\.lessons\s*\)/);
   });
 
   // ── 2026-06: show only the CURRENT quarter + the two v3 tracks ───────────────
 
   it('19: shows only the CURRENT quarter (quarterOfDate(today)), with a fallback', () => {
-    const body = fnBody(DESK, 'renderDoNowGrades');
+    const body = fnBody(DESK_SRC, 'renderDoNowGrades');
     expect(body, 'picks the current quarter via quarterOfDate').toMatch(/quarterOfDate\s*\(/);
     expect(body, 'renders a single current-quarter pill keyed by curQ').toMatch(/curQ/);
     // No per-quarter render loop anymore (the order array remains only as the
@@ -229,7 +231,7 @@ describe('Desk grade outlook (Q1-Q4 strip in Do Now card)', () => {
   });
 
   it('20: renders the two v3 tracks INSIDE the pill (qrule / qtrack spans), not as separate PC / Work chips', () => {
-    const body = fnBody(DESK, 'renderDoNowGrades');
+    const body = fnBody(DESK_SRC, 'renderDoNowGrades');
     expect(body).toMatch(/_gradePillRule\s*\(\s*pcAvg\s*,\s*workAvg/);
     expect(body).toContain("rule.className = 'qrule';");
     expect(body).toContain("trackSpan.className = 'qtrack';");
@@ -241,7 +243,7 @@ describe('Desk grade outlook (Q1-Q4 strip in Do Now card)', () => {
 
 describe('the pill rule, in words (EFFORT_VISIBILITY_V2_SPEC §3)', () => {
   // Pure function: run it straight out of the Desk source.
-  const rule = new Function(fnBody(DESK, '_gradePillRule') + '\nreturn _gradePillRule;')();
+  const rule = new Function(fnBody(DESK_SRC, '_gradePillRule') + '\nreturn _gradePillRule;')();
   const text = (pieces) => pieces.map(p => p.text).join('');
   const tracks = (pieces) => pieces.filter(p => p.track).map(p => p.text);
   it('PC not counting yet, a PC on file: Work only, with the day the PC counts', () => {
@@ -267,7 +269,7 @@ describe('the pill rule, in words (EFFORT_VISIBILITY_V2_SPEC §3)', () => {
 });
 
 describe('"show the math" (teacher 2026-09-27: the rule as inequalities, and why Schoology differs)', () => {
-  const lines = new Function('DESK_V3_WORK_WEIGHTS', 'DESK_SCHOOLOGY_WEIGHTS', fnBody(DESK, '_gradeMathLines') + '\nreturn _gradeMathLines;')(
+  const lines = new Function('DESK_V3_WORK_WEIGHTS', 'DESK_SCHOOLOGY_WEIGHTS', fnBody(DESK_SRC, '_gradeMathLines') + '\nreturn _gradeMathLines;')(
     { lessons: 0.30, quizzes: 0.30, posters: 0.30, blooket: 0.10 }, { Lesson: 15, Quizzes: 15, Posters: 15, Blooket: 5, 'Progress Check': 50 });
   it('PC not counting yet: names PC as — with its date, builds Work from its parts, states the two-case rule, plugs in, and explains Schoology', () => {
     const out = lines({ grade: 86, pcAvg: null, workAvg: 84.4, pcDay: 'Tue 10/13', pcOnFile: true,
@@ -305,7 +307,7 @@ describe('"show the math" (teacher 2026-09-27: the rule as inequalities, and why
       expect(lines({ ...base, ...extra }).some(l => l.startsWith('Once your'))).toBe(false);
     }
     // The Do Now wiring passes the projection fields from the gradebook quarter.
-    const body = fnBody(DESK, 'renderDoNowGrades');
+    const body = fnBody(DESK_SRC, 'renderDoNowGrades');
     expect(body).toContain('schoologyProjectedTotal: (_gbq && typeof _gbq.schoologyProjectedTotal');
     expect(body).toContain('_effortAheadProjectionSentence(curQ, _aheadCount)');
   });
@@ -322,8 +324,8 @@ describe('"show the math" (teacher 2026-09-27: the rule as inequalities, and why
     expect(sch).toEqual(gg.SCHOOLOGY_CATEGORY_WEIGHTS);
   });
   it('renderDoNowGrades adds the toggle after the Schoology chip', () => {
-    const body = fnBody(DESK, 'renderDoNowGrades');
+    const body = fnBody(DESK_SRC, 'renderDoNowGrades');
     expect(body).toContain('_gradeMathToggle(host, {');
-    expect(fnBody(DESK, '_gradeMathToggle')).toContain("btn.textContent = 'show the math'");
+    expect(fnBody(DESK_SRC, '_gradeMathToggle')).toContain("btn.textContent = 'show the math'");
   });
 });

@@ -9,10 +9,12 @@ import { fileURLToPath } from 'node:url';
 import { JSDOM } from 'jsdom';
 import { createContext, runInContext } from 'node:vm';
 import { beforeAll } from 'vitest';
+import { deskSource, deskHtml } from './helpers/desk-source.js';
 let C;
 beforeAll(async () => { await import('../lib/class-snapshot.js'); C = globalThis.ClassSnapshot; });
 
-const html = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), '..', 'ap_stats_roadmap_square_mode.html'), 'utf8');
+const html = deskHtml();
+const html_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
 function fnSrc(name) {
   const m = new RegExp('(?:async\\s+)?function\\s+' + name + '\\s*\\(').exec(html);
   if (!m) throw new Error('missing ' + name);

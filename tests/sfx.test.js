@@ -11,11 +11,13 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { deskSource, deskHtml } from './helpers/desk-source.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(__dirname, '..');
 const LIB = fs.readFileSync(path.join(root, 'lib', 'sfx.js'), 'utf8');
-const DESK = fs.readFileSync(path.join(root, 'ap_stats_roadmap_square_mode.html'), 'utf8');
+const DESK = deskHtml();
+const DESK_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
 const PICO = fs.readFileSync(path.join(root, 'pico-home.js'), 'utf8');
 
 // ── a recording Web Audio stand-in ─────────────────────────────────────────

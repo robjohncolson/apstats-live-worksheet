@@ -4,9 +4,11 @@ import { describe, it, expect, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { deskSource, deskHtml } from './helpers/desk-source.js';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const DESK = readFileSync(resolve(repo, 'ap_stats_roadmap_square_mode.html'), 'utf8');
+const DESK = deskHtml();
+const DESK_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
 
 function fnBody(src, name) {
   const re = new RegExp('(?:async\\s+)?function\\s+' + name + '\\s*\\(');
@@ -58,7 +60,7 @@ function makeAnswerHarness() {
   const factory = new Function(
     '_bfState', '_bfSaveProgress', 'document', 'BLOOKET_PASS_THRESHOLD',
     'Date', 'setTimeout', '_bfFinish', '_bfNext',
-    fnBody(DESK, '_bfAnswer') + '\nreturn _bfAnswer;'
+    fnBody(DESK_SRC, '_bfAnswer') + '\nreturn _bfAnswer;'
   );
   const answer = factory(
     state,
@@ -75,19 +77,19 @@ function makeAnswerHarness() {
 
 describe('Desk quick flashcards — two-action stage flow', () => {
   it('stores the correct-answer timer and clears it in Next and teardown', () => {
-    const answer = fnBody(DESK, '_bfAnswer');
+    const answer = fnBody(DESK_SRC, '_bfAnswer');
     expect(answer).toMatch(/_bfState\.advanceId\s*=\s*setTimeout/);
     expect(answer).toMatch(/_bfNext\s*\(\s*\)[\s\S]*?\},\s*700\s*\)/);
 
     for (const name of ['_bfNext', '_bfCloseUI']) {
-      const body = fnBody(DESK, name);
+      const body = fnBody(DESK_SRC, name);
       expect(body).toMatch(/clearTimeout\(\s*_bfState\.advanceId\s*\)/);
       expect(body).toMatch(/_bfState\.advanceId\s*=\s*null/);
     }
   });
 
   it('returns from the pass branch before the auto-advance assignment', () => {
-    const body = fnBody(DESK, '_bfAnswer');
+    const body = fnBody(DESK_SRC, '_bfAnswer');
     const passStart = body.indexOf('if (_bfState.score >= _passCount)');
     const finishTimer = body.indexOf('_bfState.finishId = setTimeout', passStart);
     const passReturn = body.indexOf('return;', finishTimer);
@@ -112,7 +114,7 @@ describe('Desk quick flashcards — two-action stage flow', () => {
   });
 
   it('Enter uses _bfNext when the hidden Next button has a pending timer', () => {
-    const body = fnBody(DESK, '_bfKeydownHandler');
+    const body = fnBody(DESK_SRC, '_bfKeydownHandler');
     expect(body).toMatch(/key\s*===\s*['"]enter['"]/);
     expect(body).toMatch(/nextBtn\.style\.display\s*===\s*['"]none['"][\s\S]*?_bfState\.advanceId\s*!==\s*null/);
     expect(body).toMatch(/_bfState\.advanceId\s*!==\s*null[\s\S]*?_bfNext\s*\(\s*\)/);

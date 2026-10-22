@@ -1,8 +1,9 @@
 import { it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
+import { deskSource } from './helpers/desk-source.js';
 
 it('falls back to three frequent labels safely, retaining persistence precedence and the empty state', () => {
-  const html = readFileSync('ap_stats_roadmap_square_mode.html', 'utf8');
+  const html = deskSource();
   const start = html.indexOf('function _paintReviewByItem(host, data)');
   const source = html.slice(start, html.indexOf('\n}', start) + 2);
   const paint = new Function('document', '_reviewToggleBtns', '_reviewEditTemplates', '_reviewRefresh',
@@ -21,7 +22,7 @@ it('falls back to three frequent labels safely, retaining persistence precedence
 });
 
 it('renders the Nightly Review recurring line as text even with hostile labels', () => {
-  const html = readFileSync('ap_stats_roadmap_square_mode.html', 'utf8');
+  const html = deskSource();
   const start = html.indexOf('function _paintReviewByItem(host, data)');
   const source = html.slice(start, html.indexOf('\n}', start) + 2);
   const paint = new Function('document', '_reviewToggleBtns', '_reviewEditTemplates', '_reviewRefresh',

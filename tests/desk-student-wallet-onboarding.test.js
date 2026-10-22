@@ -9,9 +9,10 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { deskSource } from './helpers/desk-source.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const DESK = readFileSync(resolve(ROOT, 'ap_stats_roadmap_square_mode.html'), 'utf8');
+const DESK = deskSource();
 
 const WORDS = [
   'abandon', 'ability', 'able', 'about', 'above', 'absent',

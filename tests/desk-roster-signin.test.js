@@ -14,6 +14,7 @@ import { JSDOM } from 'jsdom';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 import { createContext, runInContext } from 'vm';
+import { deskSource, deskHtml } from './helpers/desk-source.js';
 
 const REPO_ROOT = resolve(__dirname, '..');
 const DESK_PATH = resolve(REPO_ROOT, 'ap_stats_roadmap_square_mode.html');
@@ -22,7 +23,7 @@ let html;
 let document;
 
 beforeAll(() => {
-  html = readFileSync(DESK_PATH, 'utf-8');
+  html = deskHtml();
   // No runScripts — we only inspect the parsed DOM + raw source.
   document = new JSDOM(html).window.document;
 });

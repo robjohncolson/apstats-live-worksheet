@@ -10,10 +10,12 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { deskSource, deskHtml } from './helpers/desk-source.js';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const deskPath = resolve(repo, 'ap_stats_roadmap_square_mode.html');
-const DESK = existsSync(deskPath) ? readFileSync(deskPath, 'utf8') : null;
+const DESK = existsSync(deskPath) ? deskHtml() : null;
+const DESK_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
 
 function fnBody(src, name) {
   const re = new RegExp('function\\s+' + name + '\\s*\\(');
@@ -42,7 +44,7 @@ describe('V7.1 Desk integration (additive overlay -- C7 + planner-direct revert)
   });
 
   it('pin 03: _activityRendererForType maps level -> window.ActivityLevel', () => {
-    const body = fnBody(DESK, '_activityRendererForType');
+    const body = fnBody(DESK_SRC, '_activityRendererForType');
     expect(body).toMatch(/type\s*===\s*['"]level['"]/);
     expect(body).toMatch(/window\.ActivityLevel/);
   });
@@ -61,7 +63,7 @@ describe('V7.1 Desk integration (additive overlay -- C7 + planner-direct revert)
   });
 
   it('pin 06: _handleActivityState does NOT set classroom-board.style.display = none', () => {
-    const body = fnBody(DESK, '_handleActivityState');
+    const body = fnBody(DESK_SRC, '_handleActivityState');
     // The whole function body must NOT contain a "style.display = 'none'"
     // applied to the board element. (Other elements may set display=none;
     // we scope the assertion to mentions of "board".)
@@ -70,7 +72,7 @@ describe('V7.1 Desk integration (additive overlay -- C7 + planner-direct revert)
   });
 
   it('pin 07: _handleActivityState fast-restart-across-types path keeps destroy + remount logic', () => {
-    const body = fnBody(DESK, '_handleActivityState');
+    const body = fnBody(DESK_SRC, '_handleActivityState');
     // The Codex MAJOR 5 fold pattern: _activityHandleType !== act.type
     // triggers destroy + null + mount-removal.
     expect(body).toMatch(/_activityHandleType\s*!==\s*act\.type/);
@@ -78,7 +80,7 @@ describe('V7.1 Desk integration (additive overlay -- C7 + planner-direct revert)
   });
 
   it('pin 08: updateState payload still extends with level + levelKey + lessonKey for level activities', () => {
-    const body = fnBody(DESK, '_handleActivityState');
+    const body = fnBody(DESK_SRC, '_handleActivityState');
     expect(body).toMatch(/act\.type\s*===\s*['"]level['"]\s*&&\s*act\.level/);
     expect(body).toMatch(/level:\s*act\.level/);
     expect(body).toMatch(/levelKey/);
@@ -86,12 +88,12 @@ describe('V7.1 Desk integration (additive overlay -- C7 + planner-direct revert)
   });
 
   it('pin 09: V4/V5/V6 renderers still receive act.state directly (no breakage)', () => {
-    const body = fnBody(DESK, '_handleActivityState');
+    const body = fnBody(DESK_SRC, '_handleActivityState');
     expect(body).toMatch(/var\s+payloadForRenderer\s*=\s*act\.state/);
   });
 
   it('pin 10: the level renderer mount call propagates currentUsername + boardHandle', () => {
-    const body = fnBody(DESK, '_handleActivityState');
+    const body = fnBody(DESK_SRC, '_handleActivityState');
     expect(body).toMatch(/Renderer\.mount\(\s*_activityMount\s*,\s*\{[\s\S]*currentUsername[\s\S]*boardHandle[\s\S]*\}\s*\)/);
   });
 });

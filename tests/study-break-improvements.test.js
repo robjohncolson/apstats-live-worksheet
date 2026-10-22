@@ -10,13 +10,15 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { deskSource, deskHtml } from './helpers/desk-source.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const html = fs.readFileSync(path.join(__dirname, '..', 'ap_stats_roadmap_square_mode.html'), 'utf8');
+const html = deskHtml();
+const html_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
 
-const SB_START = html.indexOf('const studyBreak = {');
-const SB_END = html.indexOf('\n};\n', SB_START);
-const sb = html.slice(SB_START, SB_END);
+const SB_START = html_SRC.indexOf('const studyBreak = {');
+const SB_END = html_SRC.indexOf('\n};\n', SB_START);
+const sb = html_SRC.slice(SB_START, SB_END);
 
 /** Extract `    name(args) { ... }` from the studyBreak object literal as a callable Function. */
 function method(name) {

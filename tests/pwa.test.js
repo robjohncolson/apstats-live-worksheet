@@ -9,12 +9,14 @@ import { JSDOM } from 'jsdom';
 import { readFileSync, existsSync } from 'fs';
 import { resolve } from 'path';
 import { createContext, runInContext } from 'vm';
+import { deskSource, deskHtml } from './helpers/desk-source.js';
 
 const repo = resolve(import.meta.dirname, '..');
 const read = (f) => readFileSync(resolve(repo, f), 'utf8');
 const SW = read('sw.js');
 const REG = read('pwa-register.js');
-const DESK = read('ap_stats_roadmap_square_mode.html');
+const DESK = deskHtml();
+const DESK_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
 
 function extractFn(src, name) {
   const s = src.indexOf('function ' + name);

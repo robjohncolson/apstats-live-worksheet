@@ -11,9 +11,10 @@ import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createContext, runInContext } from 'node:vm';
 import { loadCedLabels } from './fixtures/ced2026-labels.js';
+import { deskSource } from './helpers/desk-source.js';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const html = readFileSync(resolve(repo, 'ap_stats_roadmap_square_mode.html'), 'utf8');
+const html = deskSource();
 
 function fnBody(src, name) {
   const re = new RegExp(

@@ -6,8 +6,10 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { deskSource, deskHtml } from './helpers/desk-source.js';
 
-const DESK = readFileSync(resolve('ap_stats_roadmap_square_mode.html'), 'utf8');
+const DESK = deskHtml();
+const DESK_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
 
 describe('Teacher menu → DOK ladders app window', () => {
   it('registers the dok app pointing at the GH Pages DOK index', () => {

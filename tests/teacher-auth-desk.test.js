@@ -9,12 +9,14 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { deskSource, deskHtml } from './helpers/desk-source.js';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const deskPath = resolve(repo, 'ap_stats_roadmap_square_mode.html');
 const classroomPath = resolve(repo, 'teacher-classroom.html');
 
-const DESK = existsSync(deskPath) ? readFileSync(deskPath, 'utf8') : null;
+const DESK = existsSync(deskPath) ? deskHtml() : null;
+const DESK_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
 const CLASSROOM = existsSync(classroomPath) ? readFileSync(classroomPath, 'utf8') : null;
 
 function fnBody(src, name) {
@@ -68,7 +70,7 @@ describe('WI-5f: retired access-code UI is absent from the Desk', () => {
   });
 
   it('standalone teacher fast-path variables are gone from submitSignIn', () => {
-    const body = fnBody(DESK, 'submitSignIn');
+    const body = fnBody(DESK_SRC, 'submitSignIn');
     // These variable names were unique to the standalone fast-path.
     expect(body).not.toMatch(/expectedCode\b/);
     expect(body).not.toMatch(/fieldsToCheck\b/);
@@ -78,7 +80,7 @@ describe('WI-5f: retired access-code UI is absent from the Desk', () => {
   });
 
   it('post-signin access-code re-check variables are gone from submitSignIn', () => {
-    const body = fnBody(DESK, 'submitSignIn');
+    const body = fnBody(DESK_SRC, 'submitSignIn');
     expect(body).not.toMatch(/codeMatchAfter\b/);
     expect(body).not.toMatch(/expectedLcAfter\b/);
     expect(body).not.toMatch(/fieldsAfter\b/);
@@ -93,18 +95,18 @@ describe('WI-5f: updateUserRoleUI reads the roster session', () => {
   });
 
   it('updateUserRoleUI reads rosterClient.current() for the session', () => {
-    const body = fnBody(DESK, 'updateUserRoleUI');
+    const body = fnBody(DESK_SRC, 'updateUserRoleUI');
     expect(body).toMatch(/rosterClient/);
     expect(body).toMatch(/current\s*\(\s*\)/);
   });
 
   it('updateUserRoleUI derives isTeacher from session.role === "teacher"', () => {
-    const body = fnBody(DESK, 'updateUserRoleUI');
+    const body = fnBody(DESK_SRC, 'updateUserRoleUI');
     expect(body).toMatch(/\.role\s*===\s*['"]teacher['"]/);
   });
 
   it('updateUserRoleUI syncs apstats_user_role cache from the session', () => {
-    const body = fnBody(DESK, 'updateUserRoleUI');
+    const body = fnBody(DESK_SRC, 'updateUserRoleUI');
     expect(body).toMatch(/apstats_user_role/);
     // Both set and remove must be present (teacher vs non-teacher paths).
     expect(body).toMatch(/setItem\s*\(\s*['"]apstats_user_role['"]/);
@@ -112,7 +114,7 @@ describe('WI-5f: updateUserRoleUI reads the roster session', () => {
   });
 
   it('updateUserRoleUI shows/hides menu-item-teacher based on session role', () => {
-    const body = fnBody(DESK, 'updateUserRoleUI');
+    const body = fnBody(DESK_SRC, 'updateUserRoleUI');
     expect(body).toMatch(/menu-item-teacher/);
     expect(body).toMatch(/style\.display/);
   });

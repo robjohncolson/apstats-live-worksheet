@@ -11,9 +11,10 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { deskSource } from './helpers/desk-source.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const desk = readFileSync(resolve(ROOT, 'ap_stats_roadmap_square_mode.html'), 'utf8');
+const desk = deskSource();
 
 // _studentMarkSave body -- generous slice; the next function carries no
 // renderDoNowGrades reference, so a small overshoot is harmless. (Bumped to

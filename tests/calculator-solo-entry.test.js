@@ -4,11 +4,12 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { deskSource } from './helpers/desk-source.js';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (file) => readFileSync(resolve(repo, file), 'utf8');
 const BOARD = readFileSync(resolve(repo, 'classroom-board.js'), 'utf8');
-const DESK = read('ap_stats_roadmap_square_mode.html');
+const DESK = deskSource();
 const PICO = read('pico-home.js');
 const PARK_LINK = 'ap_stats_roadmap_square_mode.html#room=calc-solo';
 // Spelled in two parts so the spec's acceptance search for the retired page name stays empty.

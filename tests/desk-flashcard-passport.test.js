@@ -5,9 +5,11 @@ import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { JSDOM } from 'jsdom';
+import { deskSource, deskHtml } from './helpers/desk-source.js';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const DESK = readFileSync(resolve(repo, 'ap_stats_roadmap_square_mode.html'), 'utf8');
+const DESK = deskHtml();
+const DESK_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
 
 function fnBody(src, name) {
   const re = new RegExp('(?:async\\s+)?function\\s+' + name + '\\s*\\(');
@@ -23,7 +25,7 @@ function fnBody(src, name) {
 
 describe('Desk flashcard passport — static contract', () => {
   it('exports the store state and SRS log as a dated JSON download, with a view-as guard', () => {
-    const body = fnBody(DESK, '_fcpExport');
+    const body = fnBody(DESK_SRC, '_fcpExport');
 
     expect(body).toMatch(/typeof\s+_viewAsContext\s*===\s*['"]function['"]/);
     expect(body).toMatch(/window\.__WS_READ_ONLY__/);
@@ -37,7 +39,7 @@ describe('Desk flashcard passport — static contract', () => {
   });
 
   it('previews import counts, requires Import or Cancel, then refreshes cached due state', () => {
-    const body = fnBody(DESK, '_fcpImportFile');
+    const body = fnBody(DESK_SRC, '_fcpImportFile');
 
     expect(body).toMatch(/typeof\s+_viewAsContext\s*===\s*['"]function['"]/);
     expect(body).toMatch(/store\.previewImport\(text\)/);
@@ -56,7 +58,7 @@ describe('Desk flashcard passport — static contract', () => {
   });
 
   it('hides the Flashcard progress row from students — only ?fcPassport=1 AND a teacher-role session renders it', () => {
-    const panel = fnBody(DESK, 'showResourcePanel');
+    const panel = fnBody(DESK_SRC, 'showResourcePanel');
     const hatch = panel.indexOf('_fcpEscapeHatch');
     const guard = panel.indexOf("typeof FlashcardStore !== 'undefined'");
     const label = panel.indexOf('Flashcard progress', guard);
@@ -75,12 +77,12 @@ describe('Desk flashcard passport — static contract', () => {
 
   it('syncs practice through lib/flashcard-sync.js: flag-gated, view-as/read-only guarded, best-effort', () => {
     expect(DESK).toContain('<script src="lib/flashcard-sync.js" onerror=""></script>');
-    const allowed = fnBody(DESK, '_fcSyncAllowed');
+    const allowed = fnBody(DESK_SRC, '_fcSyncAllowed');
     expect(allowed).toMatch(/_fcFlag\('flashcardSync'\)/);
     expect(allowed).toMatch(/_viewAsContext\(\)/);
     expect(allowed).toMatch(/window\.__WS_READ_ONLY__/);
 
-    const client = fnBody(DESK, '_fcSyncClient');
+    const client = fnBody(DESK_SRC, '_fcSyncClient');
     expect(client).toMatch(/FlashcardSync\.createSyncClient\(\{/);
     expect(client).toMatch(/window\.ROSTER_SERVICE_URL/);
     expect(client).toMatch(/rosterClient\.token\(\)/);
@@ -91,23 +93,23 @@ describe('Desk flashcard passport — static contract', () => {
     expect(client).toMatch(/_srsRenderDueChip\(dueHost, _srsDueSnapshot\(\)\)/);
     expect(client).not.toMatch(/renderDoNowGrades\(/);
 
-    const push = fnBody(DESK, '_srsSyncViaTrainerState');
+    const push = fnBody(DESK_SRC, '_srsSyncViaTrainerState');
     expect(push).toMatch(/_fcSyncAllowed\(\)/);
     expect(push).toMatch(/client\.schedulePush\(\)/);
-    const pull = fnBody(DESK, '_srsSyncPull');
+    const pull = fnBody(DESK_SRC, '_srsSyncPull');
     expect(pull).toMatch(/client\.pull\(/);
 
     // Hooks: every log write pushes; boot (flags loaded), the three sign-in
     // tails, and the flashcard picker pull.
-    expect(fnBody(DESK, '_srsAppendLog')).toMatch(/_srsSyncViaTrainerState\(\)/);
-    expect(fnBody(DESK, '_fcLoadFlags')).toMatch(/_srsSyncPull\(\{ force: true \}\)/);
-    expect(fnBody(DESK, 'openBlooketFlashcards')).toMatch(/_srsSyncPull\(\)/);
+    expect(fnBody(DESK_SRC, '_srsAppendLog')).toMatch(/_srsSyncViaTrainerState\(\)/);
+    expect(fnBody(DESK_SRC, '_fcLoadFlags')).toMatch(/_srsSyncPull\(\{ force: true \}\)/);
+    expect(fnBody(DESK_SRC, 'openBlooketFlashcards')).toMatch(/_srsSyncPull\(\)/);
     const signInPulls = DESK.match(/localStorage\.setItem\('apstats_desk_student_email', legacyKey\);(?:[^\n]*\n){1,3}[^\n]*_srsSyncPull\(\{ force: true \}\)/g) || [];
     expect(signInPulls.length).toBe(3);
     // Page-hide flush.
     expect(DESK).toMatch(/addEventListener\('pagehide', function \(\) \{\s*if \(typeof _srsSyncFlush === 'function'\) _srsSyncFlush\(\);/);
     // Review-mode ratings still push through the same helper.
-    expect(fnBody(DESK, '_rvRate')).toMatch(/_srsSyncViaTrainerState\(\)/);
+    expect(fnBody(DESK_SRC, '_rvRate')).toMatch(/_srsSyncViaTrainerState\(\)/);
   });
 });
 
@@ -124,7 +126,7 @@ describe('Desk flashcard passport — executed refusal', () => {
     const factory = new Function(
       'FlashcardStore', 'localStorage', 'getStudentEmail', '_viewAsContext',
       'window', 'showDialog', 'FileReader',
-      fnBody(DESK, '_fcpImportFile') + '\nreturn _fcpImportFile;'
+      fnBody(DESK_SRC, '_fcpImportFile') + '\nreturn _fcpImportFile;'
     );
     const importFile = factory(
       { createStore },
@@ -172,7 +174,7 @@ describe('Desk flashcard passport — executed refusal', () => {
     const factory = new Function(
       'FlashcardStore', 'localStorage', 'getStudentEmail', '_viewAsContext',
       'window', 'showDialog', 'FileReader', 'document', 'closeDialog',
-      fnBody(DESK, '_fcpImportFile') + '\nreturn _fcpImportFile;'
+      fnBody(DESK_SRC, '_fcpImportFile') + '\nreturn _fcpImportFile;'
     );
     const importFile = factory(
       { createStore },

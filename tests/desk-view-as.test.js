@@ -16,9 +16,11 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 import { createContext, runInContext } from 'vm';
+import { deskSource, deskHtml } from './helpers/desk-source.js';
 
 const REPO_ROOT = resolve(__dirname, '..');
-const html = readFileSync(resolve(REPO_ROOT, 'ap_stats_roadmap_square_mode.html'), 'utf-8');
+const html = deskHtml();
+const html_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
 const dashHtml = readFileSync(resolve(REPO_ROOT, 'teacher-dashboard.html'), 'utf-8');
 
 function fnBody(src, name) {
@@ -83,34 +85,34 @@ describe('view-as -- structure', () => {
   });
 
   it('_deskIsTeacher honours both preview-as-student AND view-as flags', () => {
-    const b = fnBody(html, '_deskIsTeacher');
+    const b = fnBody(html_SRC, '_deskIsTeacher');
     expect(b).toMatch(/sessionStorage\.getItem\('apstats_preview_as_student'\)\s*===\s*'1'/);
     expect(b).toMatch(/sessionStorage\.getItem\('apstats_view_as_context'\)/);
   });
 
   it('renderDoNow fetch is routed through _maybeViewAsFetch', () => {
-    const b = fnBody(html, 'renderDoNow');
+    const b = fnBody(html_SRC, 'renderDoNow');
     expect(b).toMatch(/_maybeViewAsFetch\(\s*['"]\/donow['"]/);
   });
 
   it('renderDoNowGrades fetch is routed through _maybeViewAsFetch', () => {
-    const b = fnBody(html, 'renderDoNowGrades');
+    const b = fnBody(html_SRC, 'renderDoNowGrades');
     expect(b).toMatch(/_maybeViewAsFetch\(/);
     expect(b).toMatch(/\/grade/);
   });
 
   it('_fetchPollArchive is routed through _maybeViewAsFetch', () => {
-    const b = fnBody(html, '_fetchPollArchive');
+    const b = fnBody(html_SRC, '_fetchPollArchive');
     expect(b).toMatch(/_maybeViewAsFetch\(\s*['"]\/poll-archive['"]/);
   });
 
   it('recordProgress short-circuits when view-as is active', () => {
-    const b = fnBody(html, 'recordProgress');
+    const b = fnBody(html_SRC, 'recordProgress');
     expect(b).toMatch(/_viewAsContext\(\)/);
   });
 
   it('recordLinkVisit short-circuits when view-as is active', () => {
-    const b = fnBody(html, 'recordLinkVisit');
+    const b = fnBody(html_SRC, 'recordLinkVisit');
     expect(b).toMatch(/_viewAsContext\(\)/);
   });
 
@@ -126,7 +128,7 @@ describe('view-as -- structure', () => {
 function loadViewAsContext(session) {
   const sandbox = { sessionStorage: session, JSON };
   createContext(sandbox);
-  runInContext(fnBody(html, '_viewAsContext') + '\nthis.__f = _viewAsContext;', sandbox);
+  runInContext(fnBody(html_SRC, '_viewAsContext') + '\nthis.__f = _viewAsContext;', sandbox);
   return sandbox.__f;
 }
 
@@ -169,7 +171,7 @@ describe('view-as -- _viewAsContext reader', () => {
 function loadDeskIsTeacher(session, local) {
   const sandbox = { sessionStorage: session, localStorage: local };
   createContext(sandbox);
-  runInContext(fnBody(html, '_deskIsTeacher') + '\nthis.__f = _deskIsTeacher;', sandbox);
+  runInContext(fnBody(html_SRC, '_deskIsTeacher') + '\nthis.__f = _deskIsTeacher;', sandbox);
   return sandbox.__f;
 }
 
@@ -213,8 +215,8 @@ function loadMaybeViewAsFetch(session, token) {
   };
   createContext(sandbox);
   runInContext(
-    fnBody(html, '_viewAsContext') + '\n' +
-    fnBody(html, '_maybeViewAsFetch') + '\n' +
+    fnBody(html_SRC, '_viewAsContext') + '\n' +
+    fnBody(html_SRC, '_maybeViewAsFetch') + '\n' +
     'this.__f = _maybeViewAsFetch;',
     sandbox);
   return sandbox.__f;
@@ -306,8 +308,8 @@ function loadRenderBanner(session, doc) {
   const sandbox = { sessionStorage: session, JSON, document: doc };
   createContext(sandbox);
   runInContext(
-    fnBody(html, '_viewAsContext') + '\n' +
-    fnBody(html, '_renderViewAsBanner') + '\n' +
+    fnBody(html_SRC, '_viewAsContext') + '\n' +
+    fnBody(html_SRC, '_renderViewAsBanner') + '\n' +
     'this.__r = _renderViewAsBanner;',
     sandbox);
   return sandbox.__r;
@@ -372,7 +374,7 @@ describe('view-as -- _exitViewAs', () => {
       },
     };
     createContext(sandbox);
-    runInContext(fnBody(html, '_exitViewAs') + '\nthis.__f = _exitViewAs;', sandbox);
+    runInContext(fnBody(html_SRC, '_exitViewAs') + '\nthis.__f = _exitViewAs;', sandbox);
     sandbox.__f();
     expect(ss.getItem(KEY)).toBe(null);
   });
@@ -386,8 +388,8 @@ function loadApplyReadOnly(session, doc) {
   const sandbox = { sessionStorage: session, JSON, document: doc };
   createContext(sandbox);
   runInContext(
-    fnBody(html, '_viewAsContext') + '\n' +
-    fnBody(html, '_applyViewAsReadOnly') + '\n' +
+    fnBody(html_SRC, '_viewAsContext') + '\n' +
+    fnBody(html_SRC, '_applyViewAsReadOnly') + '\n' +
     'this.__f = _applyViewAsReadOnly;',
     sandbox);
   return sandbox.__f;
@@ -455,7 +457,7 @@ function loadWireLinks(viewAsCtx) {
   // Use the sandbox's _viewAsContext stub (do NOT pull in the real sessionStorage
   // reader here) so the test drives active/inactive directly.
   runInContext(
-    fnBody(html, '_wireViewAsWorksheetLinks') + '\n' +
+    fnBody(html_SRC, '_wireViewAsWorksheetLinks') + '\n' +
     'this.__f = _wireViewAsWorksheetLinks;',
     sandbox);
   sandbox.__f();
@@ -625,7 +627,7 @@ describe('view-as -- write-helper short-circuits', () => {
     'recordLinkVisit',
   ]) {
     it(`${name} short-circuits on _viewAsContext (typeof-guarded)`, () => {
-      const b = fnBody(html, name);
+      const b = fnBody(html_SRC, name);
       expect(b).toMatch(/typeof\s+_viewAsContext\s*===\s*['"]function['"]\s*&&\s*_viewAsContext\(\)/);
     });
   }
@@ -651,7 +653,7 @@ function loadBfSaveProgress(viewAsCtx) {
     _bfState: { topic: 't', deck: [1, 2, 3], idx: 0, score: { correct: 0, wrong: 0 } },
   };
   createContext(sandbox);
-  runInContext(fnBody(html, '_bfSaveProgress') + '\nthis.__f = _bfSaveProgress;', sandbox);
+  runInContext(fnBody(html_SRC, '_bfSaveProgress') + '\nthis.__f = _bfSaveProgress;', sandbox);
   return { f: sandbox.__f, captured };
 }
 
@@ -676,18 +678,18 @@ describe('view-as -- _bfSaveProgress behavioral', () => {
 
 describe('view-as -- typeof-guard fallback preserves inactive-path fetch shape', () => {
   it('renderDoNow fallback constructs /donow with Bearer student token', () => {
-    const b = fnBody(html, 'renderDoNow');
+    const b = fnBody(html_SRC, 'renderDoNow');
     // The fallback object literal must spell out the original endpoint + headers.
     expect(b).toMatch(/\{\s*endpoint:\s*['"]\/donow['"][\s\S]{0,80}'Authorization':\s*'Bearer\s*'\s*\+\s*token/);
   });
 
   it('renderDoNowGrades fallback constructs /grade?token= with empty headers', () => {
-    const b = fnBody(html, 'renderDoNowGrades');
+    const b = fnBody(html_SRC, 'renderDoNowGrades');
     expect(b).toMatch(/\{\s*endpoint:\s*['"]\/grade\?token=['"]\s*\+\s*encodeURIComponent\s*\(\s*token\s*\)[\s\S]{0,40}headers:\s*\{\s*\}/);
   });
 
   it('_fetchPollArchive fallback constructs /poll-archive with Bearer header', () => {
-    const b = fnBody(html, '_fetchPollArchive');
+    const b = fnBody(html_SRC, '_fetchPollArchive');
     expect(b).toMatch(/\{\s*endpoint:\s*['"]\/poll-archive['"][\s\S]{0,80}'Authorization':\s*'Bearer\s*'\s*\+\s*token/);
   });
 });

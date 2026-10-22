@@ -10,11 +10,12 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
+import { deskSource } from './helpers/desk-source.js';
 
 const ROOT = resolve(__dirname, '..');
 let desk = '', version = null;
 beforeAll(() => {
-  desk = readFileSync(resolve(ROOT, 'ap_stats_roadmap_square_mode.html'), 'utf8');
+  desk = deskSource();
   version = JSON.parse(readFileSync(resolve(ROOT, 'version.json'), 'utf8'));
 });
 

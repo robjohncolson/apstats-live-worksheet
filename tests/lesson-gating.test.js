@@ -2,7 +2,8 @@
 // Exercise the live access policy, rather than a second copy of the retired gate.
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
-const html = readFileSync(new URL('../ap_stats_roadmap_square_mode.html', import.meta.url), 'utf8');
+import { deskSource } from './helpers/desk-source.js';
+const html = deskSource();
 const source = html.match(/function _isLessonUnlocked\([^)]*\)\s*\{[^}]*\}/)[0];
 const unlocked = new Function('return (' + source + ');')();
 

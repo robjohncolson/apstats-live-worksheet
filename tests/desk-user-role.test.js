@@ -16,10 +16,12 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { deskSource, deskHtml } from './helpers/desk-source.js';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const deskPath = resolve(repo, 'ap_stats_roadmap_square_mode.html');
-const DESK = existsSync(deskPath) ? readFileSync(deskPath, 'utf8') : null;
+const DESK = existsSync(deskPath) ? deskHtml() : null;
+const DESK_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
 
 function fnBody(src, name) {
   const re = new RegExp('(?:async\\s+)?function\\s+' + name + '\\s*\\(');
@@ -54,7 +56,7 @@ describe('Desk: user-role gating + sign-in teacher checkbox', () => {
   });
 
   it('05: updateUserRoleUI derives teacher from rosterClient session role', () => {
-    const body = fnBody(DESK, 'updateUserRoleUI');
+    const body = fnBody(DESK_SRC, 'updateUserRoleUI');
     // Reads the roster session.
     expect(body).toMatch(/rosterClient/);
     expect(body).toMatch(/current\s*\(\s*\)/);
@@ -75,7 +77,7 @@ describe('Desk: user-role gating + sign-in teacher checkbox', () => {
   it('10e: Do Now sign-in nudge points at the User menu (not the renamed Student menu)', () => {
     // The renderDoNow nudge string was stale: "Student > Gradebook" but
     // the menu is now "User > Sign In". Updated.
-    const body = fnBody(DESK, 'renderDoNow');
+    const body = fnBody(DESK_SRC, 'renderDoNow');
     expect(body).not.toMatch(/Student\s*[▸>]\s*Gradebook/);
     expect(body).toMatch(/User\s*[▸>]\s*Sign In/);
   });
@@ -95,7 +97,7 @@ describe('Desk: user-role gating + sign-in teacher checkbox', () => {
   });
 
   it('13: _addKnownUser dedupes case-insensitively + caps; no synthetic-identity special case', () => {
-    const body = fnBody(DESK, '_addKnownUser');
+    const body = fnBody(DESK_SRC, '_addKnownUser');
     // The retired standalone-teacher identity (teacher@desk.local) is gone --
     // _addKnownUser must not carry that special case any more.
     expect(body).not.toMatch(/teacher@desk\.local/);
@@ -105,12 +107,12 @@ describe('Desk: user-role gating + sign-in teacher checkbox', () => {
   });
 
   it('14: openSignInModal re-populates the datalist on every open', () => {
-    const body = fnBody(DESK, 'openSignInModal');
+    const body = fnBody(DESK_SRC, 'openSignInModal');
     expect(body).toMatch(/_populateUsernameDatalist\s*\(\s*\)/);
   });
 
   it('15: roster sign-in success path adds to known users', () => {
-    const body = fnBody(DESK, 'submitSignIn');
+    const body = fnBody(DESK_SRC, 'submitSignIn');
     // The roster-signin success path calls _addKnownUser with the legacy key.
     expect(body).toMatch(/_addKnownUser\s*\(\s*legacyKey\s*\)/);
   });
@@ -129,7 +131,7 @@ describe('Desk: user-role gating + sign-in teacher checkbox', () => {
     // per-section fetch lives in _fetchSectionRoster which _fetchPeriodRoster
     // calls -- once for the primary section, again for PeriodX on empty.
     expect(DESK).toMatch(/async\s+function\s+_fetchSectionRoster\s*\(/);
-    const body = fnBody(DESK, '_fetchSectionRoster');
+    const body = fnBody(DESK_SRC, '_fetchSectionRoster');
     expect(body).toMatch(/\/roster\/section\//);
     expect(body).toMatch(/encodeURIComponent\s*\(\s*section\s*\)/);
     // Cache + TTL.
@@ -144,7 +146,7 @@ describe('Desk: user-role gating + sign-in teacher checkbox', () => {
     // isolation and check the actual mapping. This is more robust than
     // grepping the body, which was generalized in the Live Classroom
     // v1a work (explicit B/E literals -> a bare-letter rule).
-    const fn = new Function('return (' + fnBody(DESK, '_periodToSection') + ')')();
+    const fn = new Function('return (' + fnBody(DESK_SRC, '_periodToSection') + ')')();
     expect(fn('B')).toBe('PeriodB');
     expect(fn('E')).toBe('PeriodE');
     expect(fn('X')).toBe('PeriodX');
@@ -155,7 +157,7 @@ describe('Desk: user-role gating + sign-in teacher checkbox', () => {
   });
 
   it('19: _renderRosterDropdown filters by realName OR username + caps at 50 rows', () => {
-    const body = fnBody(DESK, '_renderRosterDropdown');
+    const body = fnBody(DESK_SRC, '_renderRosterDropdown');
     expect(body).toMatch(/r\.realName/);
     expect(body).toMatch(/r\.username/);
     expect(body).toMatch(/toLowerCase\s*\(\s*\)/);
@@ -166,7 +168,7 @@ describe('Desk: user-role gating + sign-in teacher checkbox', () => {
   });
 
   it('20: row click fills the username field and focuses the password field', () => {
-    const body = fnBody(DESK, '_renderRosterDropdown');
+    const body = fnBody(DESK_SRC, '_renderRosterDropdown');
     // Sets the username input value.
     expect(body).toMatch(/uInp\.value\s*=\s*r\.username/);
     // Closes the dropdown.
@@ -177,7 +179,7 @@ describe('Desk: user-role gating + sign-in teacher checkbox', () => {
   });
 
   it('21: openSignInModal wires focus + click + input events on the username field', () => {
-    const body = fnBody(DESK, 'openSignInModal');
+    const body = fnBody(DESK_SRC, 'openSignInModal');
     expect(body).toMatch(/uInp\.onfocus\s*=/);
     expect(body).toMatch(/uInp\.onclick\s*=/);
     // The username field's oninput is re-bound to filter the dropdown.
@@ -186,13 +188,13 @@ describe('Desk: user-role gating + sign-in teacher checkbox', () => {
   });
 
   it('22: outside pointer-down closes the dropdown without swallowing the click', () => {
-    const body = fnBody(DESK, 'openSignInModal');
+    const body = fnBody(DESK_SRC, 'openSignInModal');
     expect(body).toMatch(/addEventListener\s*\(\s*['"]pointerdown['"]/);
     expect(body).toMatch(/_closeRosterDropdown/);
   });
 
   it('22b: Escape closes only the open roster dropdown', () => {
-    const body = fnBody(DESK, 'openSignInModal');
+    const body = fnBody(DESK_SRC, 'openSignInModal');
     expect(body).toMatch(/ov\.onkeydown\s*=\s*function/);
     expect(body).toMatch(/e\.key\s*!==\s*['"]Escape['"]/);
     expect(body).toMatch(/e\.stopPropagation\s*\(\s*\)/);
@@ -200,18 +202,18 @@ describe('Desk: user-role gating + sign-in teacher checkbox', () => {
   });
 
   it('23: closeSignInModal also closes the roster dropdown', () => {
-    const body = fnBody(DESK, 'closeSignInModal');
+    const body = fnBody(DESK_SRC, 'closeSignInModal');
     expect(body).toMatch(/_closeRosterDropdown/);
   });
 
   it('10b: updateStudentMenu shows "Teacher:" prefix when role=teacher (status surfaces role)', () => {
-    const body = fnBody(DESK, 'updateStudentMenu');
+    const body = fnBody(DESK_SRC, 'updateStudentMenu');
     expect(body).toMatch(/apstats_user_role/);
     expect(body).toMatch(/Teacher:/);
   });
 
   it('11: signOutStudent clears the user role + refreshes the menu', () => {
-    const body = fnBody(DESK, 'signOutStudent');
+    const body = fnBody(DESK_SRC, 'signOutStudent');
     expect(body).toMatch(/removeItem\s*\(\s*['"]apstats_user_role['"]/);
     expect(body).toMatch(/updateUserRoleUI\s*\(\s*\)/);
   });

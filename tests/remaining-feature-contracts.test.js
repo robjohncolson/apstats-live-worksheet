@@ -11,6 +11,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createContext, runInContext } from 'node:vm';
+import { deskSource } from './helpers/desk-source.js';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const START = readFileSync(resolve(repo, 'start-here.html'), 'utf8');
@@ -24,7 +25,7 @@ const WSX_AVAILABLE = existsSync(WSX_PATH);
 const WSX = WSX_AVAILABLE ? readFileSync(WSX_PATH, 'utf8') : '';
 // Pin the LIVE shipping surfaces (not the dead wsx.js extraction) for features
 // that were only manually documented before the audit.
-const DESK = readFileSync(resolve(repo, 'ap_stats_roadmap_square_mode.html'), 'utf8');
+const DESK = deskSource();
 const SG = readFileSync(resolve(repo, 'study_guide_diagnostic.html'), 'utf8');
 
 function extractStartHereProgressScript() {

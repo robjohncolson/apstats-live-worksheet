@@ -7,6 +7,7 @@ import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { JSDOM } from 'jsdom';
+import { deskHtml, deskSource as readDeskSource } from './helpers/desk-source.js';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const schedulePaths = [
@@ -18,27 +19,28 @@ const scheduleSha256 = '5b360bb0537b626f1af704f0bff62bfd5000ed39382d7ad84d0024de
 function bColumn(bytes) {
   return bytes.toString('utf8').split(/\r?\n/).filter(line => /^\s*"B":/.test(line) && !/^\s*"B": \[\]/.test(line)).join('\n');
 }
-const deskSource = readFileSync(resolve(repo, 'ap_stats_roadmap_square_mode.html'), 'utf8');
+const deskSource = deskHtml();
+const deskSource_SRC = readDeskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
 const crosswalk = JSON.parse(readFileSync(resolve(repo, '2026-crosswalk.json'), 'utf8')).map;
 
 function functionSource(name) {
-  const match = new RegExp('(?:async\\s+)?function\\s+' + name + '\\s*\\(').exec(deskSource);
+  const match = new RegExp('(?:async\\s+)?function\\s+' + name + '\\s*\\(').exec(deskSource_SRC);
   if (!match) throw new Error('Desk function not found: ' + name);
   let depth = 0;
-  for (let index = deskSource.indexOf('{', match.index); index < deskSource.length; index += 1) {
-    if (deskSource[index] === '{') depth += 1;
-    if (deskSource[index] === '}' && --depth === 0) return deskSource.slice(match.index, index + 1);
+  for (let index = deskSource_SRC.indexOf('{', match.index); index < deskSource_SRC.length; index += 1) {
+    if (deskSource_SRC[index] === '{') depth += 1;
+    if (deskSource_SRC[index] === '}' && --depth === 0) return deskSource_SRC.slice(match.index, index + 1);
   }
   throw new Error('Unbalanced Desk function: ' + name);
 }
 
 function declarationSource(name, opening, closing) {
-  const match = new RegExp('const\\s+' + name + '\\s*=').exec(deskSource);
+  const match = new RegExp('const\\s+' + name + '\\s*=').exec(deskSource_SRC);
   if (!match) throw new Error('Desk declaration not found: ' + name);
   let depth = 0;
-  for (let index = deskSource.indexOf(opening, match.index); index < deskSource.length; index += 1) {
-    if (deskSource[index] === opening) depth += 1;
-    if (deskSource[index] === closing && --depth === 0) return deskSource.slice(match.index, index + 1) + ';';
+  for (let index = deskSource_SRC.indexOf(opening, match.index); index < deskSource_SRC.length; index += 1) {
+    if (deskSource_SRC[index] === opening) depth += 1;
+    if (deskSource_SRC[index] === closing && --depth === 0) return deskSource_SRC.slice(match.index, index + 1) + ';';
   }
   throw new Error('Unbalanced Desk declaration: ' + name);
 }

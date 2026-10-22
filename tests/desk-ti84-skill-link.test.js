@@ -6,11 +6,9 @@
 import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
+import { deskSource } from './helpers/desk-source.js';
 
-const deskSrc = fs.readFileSync(
-  path.resolve(__dirname, '..', 'ap_stats_roadmap_square_mode.html'),
-  'utf8',
-);
+const deskSrc = deskSource();
 
 function extract(name) {
   const match = deskSrc.match(new RegExp(`function ${name}\\([\\s\\S]*?\\n\\}`));

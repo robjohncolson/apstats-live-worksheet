@@ -5,9 +5,10 @@ import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { JSDOM } from 'jsdom';
+import { deskSource } from './helpers/desk-source.js';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const desk = readFileSync(resolve(repo, 'ap_stats_roadmap_square_mode.html'), 'utf8');
+const desk = deskSource();
 const labelSource = ['js/ced2026-crosswalk.js', 'js/ced2026-labels.js']
   .map(path => readFileSync(resolve(repo, path), 'utf8')).join('\n');
 

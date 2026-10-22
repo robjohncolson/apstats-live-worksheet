@@ -9,17 +9,19 @@ import { readFileSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { JSDOM } from 'jsdom';
+import { deskSource, deskHtml } from './helpers/desk-source.js';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const deskPath = resolve(repo, 'ap_stats_roadmap_square_mode.html');
-const DESK = existsSync(deskPath) ? readFileSync(deskPath, 'utf8') : null;
+const DESK = existsSync(deskPath) ? deskHtml() : null;
+const DESK_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
 
 it('day-grade display renders 105 and the earned exit-ticket bonus', () => {
   const dom = new JSDOM('<div id="day-grade-overlay"></div><div id="day-grade-header"></div><div id="day-grade-body"></div>');
   try {
     const rows = [{ lessonKey: '1.1', lessonGrade: 105, exitBonus: 5, due: { E: '2026-09-09' } }];
     const open = new Function('document', '_gradeLessonsCache', 'cedLabel', '_attachDayGradeKeyHandler',
-      fnBody(DESK, 'openDayGrade') + ';return openDayGrade;')(dom.window.document, rows, key => ({ text: key }), () => {});
+      fnBody(DESK_SRC, 'openDayGrade') + ';return openDayGrade;')(dom.window.document, rows, key => ({ text: key }), () => {});
     open('Sep 9');
     const text = dom.window.document.getElementById('day-grade-body').textContent;
     expect(text).toContain('105.0');
@@ -83,13 +85,13 @@ describe('DESK Day Grade Modal — Phase 6 structure pins', () => {
   });
 
   it('pin 08: keydown handler body has Esc + closeDayGrade call', () => {
-    const body = fnBody(DESK, '_attachDayGradeKeyHandler');
+    const body = fnBody(DESK_SRC, '_attachDayGradeKeyHandler');
     expect(body).toMatch(/['"]Escape['"]/);
     expect(body).toMatch(/closeDayGrade\s*\(\s*\)/);
   });
 
   it('pin 09: keydown handler has active-element guard for INPUT|TEXTAREA|SELECT|isContentEditable', () => {
-    const body = fnBody(DESK, '_attachDayGradeKeyHandler');
+    const body = fnBody(DESK_SRC, '_attachDayGradeKeyHandler');
     expect(body).toMatch(/INPUT/);
     expect(body).toMatch(/TEXTAREA/);
     expect(body).toMatch(/SELECT/);
@@ -97,19 +99,19 @@ describe('DESK Day Grade Modal — Phase 6 structure pins', () => {
   });
 
   it('pin 10: keydown handler has modifier-key guard (ctrlKey|metaKey|altKey)', () => {
-    const body = fnBody(DESK, '_attachDayGradeKeyHandler');
+    const body = fnBody(DESK_SRC, '_attachDayGradeKeyHandler');
     expect(body).toMatch(/ctrlKey/);
     expect(body).toMatch(/metaKey/);
     expect(body).toMatch(/altKey/);
   });
 
   it('pin 11: openDayGrade renders "No lessons due this day" empty-state', () => {
-    const body = fnBody(DESK, 'openDayGrade');
+    const body = fnBody(DESK_SRC, 'openDayGrade');
     expect(body).toMatch(/No lessons due this day/);
   });
 
   it('pin 12: openDayGrade uses createElement + textContent for response data (no innerHTML XSS)', () => {
-    const body = fnBody(DESK, 'openDayGrade');
+    const body = fnBody(DESK_SRC, 'openDayGrade');
     // Must use createElement for card construction.
     expect(body).toMatch(/createElement\s*\(\s*['"]div['"]/);
     expect(body).toMatch(/\.textContent\s*=/);
@@ -120,13 +122,13 @@ describe('DESK Day Grade Modal — Phase 6 structure pins', () => {
   });
 
   it('pin 12b: openDayGrade renders a per-lesson "Blooket:" line when lesson.blooket is present', () => {
-    const body = fnBody(DESK, 'openDayGrade');
+    const body = fnBody(DESK_SRC, 'openDayGrade');
     expect(body).toMatch(/lesson\.blooket\s*!=\s*null/);
     expect(body).toMatch(/Blooket:\s/);
   });
 
   it('pin 12c: openDayGrade shows the quiz SCORE % from lesson.Q (what feeds the grade)', () => {
-    const body = fnBody(DESK, 'openDayGrade');
+    const body = fnBody(DESK_SRC, 'openDayGrade');
     expect(body).toMatch(/lesson\.Q\s*!=\s*null/);
     expect(body).toMatch(/Quiz:\s/);
   });
@@ -135,7 +137,7 @@ describe('DESK Day Grade Modal — Phase 6 structure pins', () => {
     // Module-level var for the lessons cache.
     expect(DESK).toMatch(/var\s+_gradeLessonsCache\s*=\s*null/);
     // renderDoNowGrades must write to it.
-    const gradesBody = fnBody(DESK, 'renderDoNowGrades');
+    const gradesBody = fnBody(DESK_SRC, 'renderDoNowGrades');
     expect(gradesBody).toMatch(/_gradeLessonsCache\s*=/);
   });
 
@@ -145,7 +147,7 @@ describe('DESK Day Grade Modal — Phase 6 structure pins', () => {
   });
 
   it('pin 15: closeDayGrade calls _detachDayGradeKeyHandler', () => {
-    const body = fnBody(DESK, 'closeDayGrade');
+    const body = fnBody(DESK_SRC, 'closeDayGrade');
     expect(body).toMatch(/_detachDayGradeKeyHandler\s*\(\s*\)/);
   });
 });

@@ -12,9 +12,11 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 import { createContext, runInContext } from 'vm';
+import { deskSource, deskHtml } from './helpers/desk-source.js';
 
 const REPO_ROOT = resolve(__dirname, '..');
-const html = readFileSync(resolve(REPO_ROOT, 'ap_stats_roadmap_square_mode.html'), 'utf-8');
+const html = deskHtml();
+const html_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
 
 function fnBody(src, name) {
   const re = new RegExp('(?:async\\s+)?function\\s+' + name + '\\s*\\(');
@@ -45,20 +47,20 @@ describe('DN3b — wiring', () => {
   });
 
   it('rCal tags lesson cells with data-topic + data-dts and repaints', () => {
-    const b = fnBody(html, 'rCal');
+    const b = fnBody(html_SRC, 'rCal');
     expect(b).toMatch(/dataset\.topic\s*=\s*inf\.t/);
     expect(b).toMatch(/dataset\.dts\s*=\s*\+dt/);
     expect(b).toMatch(/paintDonowCells\(\)/);
   });
 
   it('renderDoNow stashes _donowData and repaints (typeof-guarded → DN3a stays decoupled)', () => {
-    const b = fnBody(html, 'renderDoNow');
+    const b = fnBody(html_SRC, 'renderDoNow');
     expect(b).toMatch(/_donowData\s*=\s*data/);
     expect(b).toMatch(/typeof\s+paintDonowCells\s*===\s*'function'\s*\)\s*paintDonowCells\(\)/);
   });
 
   it('paintDonowCells only toggles classes (no rCal rebuild → no flicker)', () => {
-    const b = fnBody(html, 'paintDonowCells');
+    const b = fnBody(html_SRC, 'paintDonowCells');
     expect(b).not.toMatch(/rCal\(/);
     expect(b).toMatch(/classList\.remove\('dc-partial', 'dc-done', 'dc-ahead'\)/);
     expect(b).not.toMatch(/'cal-current'/);  // CALENDAR_FOCUS -- rCal owns the class now
@@ -72,9 +74,9 @@ function loadHelpers(donow) {
   createContext(sandbox);
   runInContext(
     'var _donowData = ' + JSON.stringify(donow || null) + ';\n' +
-    fnBody(html, 'donowLessonCovers') + '\n' +
-    fnBody(html, 'donowCellState') + '\n' +
-    fnBody(html, 'paintDonowCells') + '\n' +
+    fnBody(html_SRC, 'donowLessonCovers') + '\n' +
+    fnBody(html_SRC, 'donowCellState') + '\n' +
+    fnBody(html_SRC, 'paintDonowCells') + '\n' +
     'this.__c = donowLessonCovers; this.__s = donowCellState; this.__p = paintDonowCells;' +
     'this.__set = function (d) { _donowData = d; };', sandbox);
   return sandbox;
@@ -166,9 +168,9 @@ describe('DN3b runtime — paintDonowCells (overlay incl. ahead)', () => {
     createContext(sandbox);
     runInContext(
       'var _donowData = ' + JSON.stringify(donow) + ';\n' +
-      fnBody(html, 'donowLessonCovers') + '\n' +
-      fnBody(html, 'donowCellState') + '\n' +
-      fnBody(html, 'paintDonowCells') + '\nthis.__p = paintDonowCells;', sandbox);
+      fnBody(html_SRC, 'donowLessonCovers') + '\n' +
+      fnBody(html_SRC, 'donowCellState') + '\n' +
+      fnBody(html_SRC, 'paintDonowCells') + '\nthis.__p = paintDonowCells;', sandbox);
     sandbox.__p();
   }
 

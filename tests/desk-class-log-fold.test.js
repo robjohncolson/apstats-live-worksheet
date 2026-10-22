@@ -12,9 +12,11 @@ import { JSDOM } from 'jsdom';
 import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { deskSource, deskHtml } from './helpers/desk-source.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const DESK = readFileSync(resolve(ROOT, 'ap_stats_roadmap_square_mode.html'), 'utf8');
+const DESK = deskHtml();
+const DESK_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
 const SW = readFileSync(resolve(ROOT, 'sw.js'), 'utf8');
 const BUMP = readFileSync(resolve(ROOT, 'scripts/bump-build.mjs'), 'utf8');
 const LIB = readFileSync(resolve(ROOT, 'lib/class-log-summary.js'), 'utf8');

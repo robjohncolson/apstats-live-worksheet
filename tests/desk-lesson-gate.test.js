@@ -17,10 +17,12 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { deskSource, deskHtml } from './helpers/desk-source.js';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const deskPath = resolve(repo, 'ap_stats_roadmap_square_mode.html');
-const DESK = existsSync(deskPath) ? readFileSync(deskPath, 'utf8') : null;
+const DESK = existsSync(deskPath) ? deskHtml() : null;
+const DESK_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
 
 function fnBody(src, name) {
   const re = new RegExp('(?:async\\s+)?function\\s+' + name + '\\s*\\(');
@@ -51,20 +53,20 @@ describe('Desk: sequential lesson gate', () => {
   });
 
   it('02: lesson access is open without reading completion or identity state', () => {
-    const body = fnBody(DESK, '_isLessonUnlocked');
+    const body = fnBody(DESK_SRC, '_isLessonUnlocked');
     expect(body).toMatch(/return true/);
     expect(body).not.toMatch(/_isLessonComplete\s*\(/);
     expect(body).not.toMatch(/_deskIsTeacher\s*\(/);
   });
 
   it('03: missing, stale, or incomplete evidence never blocks access', () => {
-    const src = fnBody(DESK, '_isLessonUnlocked');
+    const src = fnBody(DESK_SRC, '_isLessonUnlocked');
     const fn = new Function('return (' + src + ');')();
     expect(fn('1.2', null, '1.1', null, null, true)).toBe(true);
   });
 
   it('04: rCal applies the gate via the canonical topic-predecessor', () => {
-    const body = fnBody(DESK, 'rCal');
+    const body = fnBody(DESK_SRC, 'rCal');
     expect(body).toMatch(/_isLessonUnlocked\s*\(/);
     expect(body).toMatch(/cell-locked/);
     // §8: gates on _prevTopicInSequence(inf.t), NOT the buggy walk-order trail.
@@ -77,7 +79,7 @@ describe('Desk: sequential lesson gate', () => {
   });
 
   it('04b: the locked-cell onclick captures per-iteration consts (no closure bug)', () => {
-    const body = fnBody(DESK, 'rCal');
+    const body = fnBody(DESK_SRC, 'rCal');
     // The three values are captured in one const statement before the onclick,
     // using the per-cell _prevTopic (canonical predecessor), not a mutating loop var.
     expect(body).toMatch(/const\s+_lockTopic\s*=\s*inf\.t\s*,\s*_lockPrev\s*=\s*_prevTopic\s*,\s*_lockDs\s*=\s*ds/);
@@ -85,7 +87,7 @@ describe('Desk: sequential lesson gate', () => {
   });
 
   it('05: _studentMarkSave re-renders the calendar so the next lesson unlocks live', () => {
-    const body = fnBody(DESK, '_studentMarkSave');
+    const body = fnBody(DESK_SRC, '_studentMarkSave');
     expect(body).toMatch(/rCal\s*\(\s*\)/);
   });
 
@@ -110,7 +112,7 @@ describe('Desk: sequential lesson gate', () => {
 
   // ── _isLessonComplete real-execution smoke tests ──────────────────────────
   function makeIsLessonComplete() {
-    const src = fnBody(DESK, '_isLessonComplete');
+    const src = fnBody(DESK_SRC, '_isLessonComplete');
     const getRegistryEntry = (topic) => {
       if (topic === 'both') return { urls: { worksheet: 'w', blooket: 'b' } };
       if (topic === 'wsonly') return { urls: { worksheet: 'w' } };
@@ -143,7 +145,7 @@ describe('Desk: sequential lesson gate', () => {
 
   // ── _isLessonUnlocked real-execution smoke tests ──────────────────────────
   function makeIsLessonUnlocked({ teacher = false, complete = false } = {}) {
-    const src = fnBody(DESK, '_isLessonUnlocked');
+    const src = fnBody(DESK_SRC, '_isLessonUnlocked');
     const _deskIsTeacher = () => teacher;
     const _isLessonComplete = () => complete;
     // eslint-disable-next-line no-new-func
@@ -187,7 +189,7 @@ describe('Desk: sequential lesson gate', () => {
 
   // ── _deskIsTeacher real-execution smoke ───────────────────────────────────
   it('19: _deskIsTeacher reads apstats_user_role from localStorage', () => {
-    const src = fnBody(DESK, '_deskIsTeacher');
+    const src = fnBody(DESK_SRC, '_deskIsTeacher');
     const mk = (role) => {
       const localStorage = { getItem: (k) => (k === 'apstats_user_role' ? role : null) };
       // eslint-disable-next-line no-new-func
@@ -213,7 +215,7 @@ describe('Desk: sequential lesson gate', () => {
   });
 
   it('22: _prevTopicInSequence — canonical predecessor (deduped), null for the first', () => {
-    const src = fnBody(DESK, '_prevTopicInSequence');
+    const src = fnBody(DESK_SRC, '_prevTopicInSequence');
     // eslint-disable-next-line no-new-func
     const fn = new Function('_orderedPeriodTopics', 'return (' + src + ');')(
       () => ['1.1', '1.2', '1.2', '1.3', '1.4']   // 1.2 repeats (a multi-day lesson)
@@ -229,7 +231,7 @@ describe('Desk: sequential lesson gate', () => {
     // The live period-E pacing is COMBINED (1.2+1.3, 1.4+1.5, ...), but summer
     // cells carry individual topics 1.1..1.10 — they must resolve against the
     // summer schedule, NOT the combined fall sequence (the blocker the review caught).
-    const src = fnBody(DESK, '_prevSummerTopic');
+    const src = fnBody(DESK_SRC, '_prevSummerTopic');
     const lessons = ['1.1','1.2','1.3','1.4','1.5','1.6','1.7','1.8','1.9','1.10'].map((t) => ({ topic: t }));
     // eslint-disable-next-line no-new-func
     const fn = new Function('window', 'return (' + src + ');')({ _summerSchedule: { lessons } });
@@ -241,7 +243,7 @@ describe('Desk: sequential lesson gate', () => {
   });
 
   it('24: _prevTopicInSequence — LIVE period-E COMBINED sequence (fall cells)', () => {
-    const src = fnBody(DESK, '_prevTopicInSequence');
+    const src = fnBody(DESK_SRC, '_prevTopicInSequence');
     const E = ['1.1', '1.2+1.3', '1.4+1.5', '1.6', '1.7+1.8', '1.9+1.10', '2.1'];
     // eslint-disable-next-line no-new-func
     const fn = new Function('_orderedPeriodTopics', 'return (' + src + ');')(() => E);
@@ -252,7 +254,7 @@ describe('Desk: sequential lesson gate', () => {
   });
 
   it('25: _isLessonComplete — a combined "A+B" is complete when BOTH parts are done (bridge)', () => {
-    const src = fnBody(DESK, '_isLessonComplete');
+    const src = fnBody(DESK_SRC, '_isLessonComplete');
     const getRegistryEntry = () => ({ urls: { worksheet: 'w' } });   // every topic has a worksheet
     // eslint-disable-next-line no-new-func
     const fn = new Function('getRegistryEntry', 'return (' + src + ');')(getRegistryEntry);

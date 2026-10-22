@@ -21,10 +21,12 @@ import { cedTopicLabel, expandedTopicKeys, CED_CROSSWALK } from '../lib/ced-labe
 import { buildGradebookColumns } from '../roster-server/gradebook-grid.js';
 import { cedAssignmentTitle, cedRetitleGradebook } from '../roster-server/ced-titles.js';
 import { SCHOOLOGY_TITLES_CED } from '../roster-server/grade-config.js';
+import { deskSource, deskHtml } from './helpers/desk-source.js';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (file) => readFileSync(resolve(repo, file), 'utf8');
-const desk = read('ap_stats_roadmap_square_mode.html');
+const desk = deskHtml();
+const desk_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
 const CED_SOURCE = read('js/ced2026-crosswalk.js') + '\n' + read('js/ced2026-labels.js');
 const SCHEDULE = JSON.parse(read('data/lesson-schedule.json'));
 const COLUMN_TITLES = JSON.parse(read('data/ced-column-titles.json')).columns;
@@ -33,12 +35,12 @@ const opened = [];
 afterEach(() => opened.splice(0).forEach((win) => win.close()));
 
 function fnBody(name) {
-  const match = new RegExp('(?:async\\s+)?function\\s+' + name + '\\s*\\(').exec(desk);
+  const match = new RegExp('(?:async\\s+)?function\\s+' + name + '\\s*\\(').exec(desk_SRC);
   if (!match) throw new Error('Desk function not found: ' + name);
   let depth = 0;
-  for (let i = desk.indexOf('{', match.index); i < desk.length; i++) {
-    if (desk[i] === '{') depth++;
-    else if (desk[i] === '}' && --depth === 0) return desk.slice(match.index, i + 1);
+  for (let i = desk_SRC.indexOf('{', match.index); i < desk_SRC.length; i++) {
+    if (desk_SRC[i] === '{') depth++;
+    else if (desk_SRC[i] === '}' && --depth === 0) return desk_SRC.slice(match.index, i + 1);
   }
   throw new Error('Unbalanced Desk function: ' + name);
 }

@@ -6,9 +6,11 @@ import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { JSDOM } from 'jsdom';
 import { loadCedLabels } from './fixtures/ced2026-labels.js';
+import { deskSource, deskHtml } from './helpers/desk-source.js';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const DESK = readFileSync(resolve(repo, 'ap_stats_roadmap_square_mode.html'), 'utf8');
+const DESK = deskHtml();
+const DESK_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
 
 function fnBody(src, name) {
   const re = new RegExp('(?:async\\s+)?function\\s+' + name + '\\s*\\(');
@@ -26,7 +28,7 @@ describe('Desk due-today deck — static contract', () => {
   // moved to journeys/j6-review-mode.journey.test.js — J6 all-ON flags show the due chip and Review; Good updates the folded store, advances, and Again stays practice-only (supersedes desk-due-today “renders the chip only behind dueTodayDeck in renderDoNowGrades” and desk-review-mode “adds the Review button only inside the reviewMode flag gate” / “logs one good review entry, applies it, saves, and advances”)
 
   it('adds the per-csv due suffix immediately after the Blooket score chip', () => {
-    const panel = fnBody(DESK, 'showResourcePanel');
+    const panel = fnBody(DESK_SRC, 'showResourcePanel');
     expect(panel).toMatch(/_fcFlag\('dueTodayDeck'\)/);
     expect(panel).toMatch(/_blDueSummary\.byCsv\[_blCsv\]/);
     expect(panel).toContain("' · ' + _blDue + ' due'");
@@ -34,9 +36,9 @@ describe('Desk due-today deck — static contract', () => {
   });
 
   it('shares one cached fold and invalidates it whenever the SRS log changes', () => {
-    const fold = fnBody(DESK, '_srsFoldedState');
-    const start = fnBody(DESK, '_rvStart');
-    const append = fnBody(DESK, '_srsAppendLog');
+    const fold = fnBody(DESK_SRC, '_srsFoldedState');
+    const start = fnBody(DESK_SRC, '_rvStart');
+    const append = fnBody(DESK_SRC, '_srsAppendLog');
     expect(fold).toMatch(/FlashcardStore\.createStore/);
     expect(fold).toMatch(/store\.load\(\)/);
     expect(fold).toMatch(/store\.readSrsLog\(\)/);
@@ -47,8 +49,8 @@ describe('Desk due-today deck — static contract', () => {
   });
 
   it('_rvStartMixed caps at 20, fetches once per csv, and skips bonus or optional lessons', () => {
-    const body = fnBody(DESK, '_rvStartMixed');
-    const plans = fnBody(DESK, '_srsCoreDeckPlans');
+    const body = fnBody(DESK_SRC, '_rvStartMixed');
+    const plans = fnBody(DESK_SRC, '_srsCoreDeckPlans');
     expect(body).toMatch(/FlashcardSrs\.dueCards\([^;]+todayDay\)/);
     expect(body).toMatch(/allowedDueIds\.slice\(0,\s*20\)/);
     expect(body).toMatch(/Promise\.all\(plans\.map/);
@@ -61,8 +63,8 @@ describe('Desk due-today deck — static contract', () => {
   });
 
   it('shows a per-card lesson label and logs mixed ratings with that card own topic and csv', () => {
-    const render = fnBody(DESK, '_rvRenderCard');
-    const rate = fnBody(DESK, '_rvRate');
+    const render = fnBody(DESK_SRC, '_rvRenderCard');
+    const rate = fnBody(DESK_SRC, '_rvRate');
     expect(render).toMatch(/_rvState\.mixed\s*&&\s*card\._rvLabel/);
     expect(render.indexOf('question.appendChild(label)')).toBeLessThan(render.indexOf('question.appendChild(stem)'));
     expect(rate).toMatch(/card\._rvTopic/);
@@ -100,9 +102,9 @@ describe('Desk due-today deck — executed behavior', () => {
       '_viewAsContext', 'window', 'Date', 'REGISTRY', '_bfCsvPath', '_srsCsvFor', 'cedHelpers',
       'cedHelpers.configureCedLabels(() => REGISTRY); const cedLabel = cedHelpers.cedLabel;\n' +
       'var _srsFoldCache = null;\n' +
-        fnBody(DESK, '_srsFoldedState') + '\n' +
-        fnBody(DESK, '_srsCoreDeckPlans') + '\n' +
-        fnBody(DESK, '_srsDueSummary') + '\nreturn _srsDueSummary;'
+        fnBody(DESK_SRC, '_srsFoldedState') + '\n' +
+        fnBody(DESK_SRC, '_srsCoreDeckPlans') + '\n' +
+        fnBody(DESK_SRC, '_srsDueSummary') + '\nreturn _srsDueSummary;'
     );
     const summarize = factory(
       FlashcardStore,
@@ -137,7 +139,7 @@ describe('Desk due-today deck — executed behavior', () => {
     const factory = new Function(
       'FlashcardStore', 'FlashcardSrs', 'localStorage', 'getStudentEmail',
       '_viewAsContext', 'window', 'Date',
-      'var _srsFoldCache = null;\n' + fnBody(DESK, '_srsFoldedState') +
+      'var _srsFoldCache = null;\n' + fnBody(DESK_SRC, '_srsFoldedState') +
         '\nreturn _srsFoldedState;'
     );
     const foldedState = factory(
@@ -168,8 +170,8 @@ describe('Desk due-today deck — executed behavior', () => {
     const factory = new Function(
       'FlashcardSrs', '_srsFoldedState', 'REGISTRY', '_bfCsvPath', '_srsCsvFor', 'Date', 'cedHelpers',
       'cedHelpers.configureCedLabels(() => REGISTRY); const cedLabel = cedHelpers.cedLabel;\n' +
-      fnBody(DESK, '_srsCoreDeckPlans') + '\n' +
-        fnBody(DESK, '_srsDueSummary') + '\nreturn _srsDueSummary;'
+      fnBody(DESK_SRC, '_srsCoreDeckPlans') + '\n' +
+        fnBody(DESK_SRC, '_srsDueSummary') + '\nreturn _srsDueSummary;'
     );
     const summarize = factory(
       {
@@ -213,8 +215,8 @@ describe('Desk due-today deck — executed behavior', () => {
       '_rvState', '_srsRoundId', 'document', '_bfShowQuizUI', '_rvRenderCard',
       '_rvKeydownHandler', 'cedHelpers',
       'cedHelpers.configureCedLabels(() => REGISTRY); const cedLabel = cedHelpers.cedLabel;\n' +
-      fnBody(DESK, '_srsCoreDeckPlans') + '\n' +
-        fnBody(DESK, '_rvStartMixed') + '\nreturn _rvStartMixed;'
+      fnBody(DESK_SRC, '_srsCoreDeckPlans') + '\n' +
+        fnBody(DESK_SRC, '_rvStartMixed') + '\nreturn _rvStartMixed;'
     );
     const startMixed = factory(
       () => null,
@@ -258,7 +260,7 @@ describe('Desk due-today deck — executed behavior', () => {
     const getStudentEmail = vi.fn();
     const factory = new Function(
       '_viewAsContext', 'window', 'getStudentEmail',
-      fnBody(DESK, '_srsDueSnapshot') + '\nreturn _srsDueSnapshot;'
+      fnBody(DESK_SRC, '_srsDueSnapshot') + '\nreturn _srsDueSnapshot;'
     );
     const snapshot = factory(() => ({ studentId: 'student-1' }), {}, getStudentEmail);
 
@@ -278,7 +280,7 @@ describe('Desk due-today deck — executed behavior', () => {
     const factory = new Function(
       '_viewAsContext', 'window', 'getStudentEmail', 'FlashcardSrs', 'Date',
       'sessionStorage', '_srsDueSummary',
-      fnBody(DESK, '_srsDueSnapshot') + '\nreturn _srsDueSnapshot;'
+      fnBody(DESK_SRC, '_srsDueSnapshot') + '\nreturn _srsDueSnapshot;'
     );
     const snapshot = factory(
       () => null,
@@ -301,7 +303,7 @@ describe('Desk due-today deck — executed behavior', () => {
   it('_srsDueSummary returns only due zero when libraries are unavailable', () => {
     const factory = new Function(
       'FlashcardSrs', '_srsFoldedState',
-      fnBody(DESK, '_srsDueSummary') + '\nreturn _srsDueSummary;'
+      fnBody(DESK_SRC, '_srsDueSummary') + '\nreturn _srsDueSummary;'
     );
     expect(factory(undefined, () => null)()).toEqual({ due: 0 });
   });
@@ -314,7 +316,7 @@ describe('Desk due-today deck — executed behavior', () => {
     const startMixed = vi.fn();
     const factory = new Function(
       'document', '_rvStartMixed',
-      fnBody(DESK, '_srsPaintReviewIcon') + '\n' + fnBody(DESK, '_srsRenderDueChip') + '\nreturn _srsRenderDueChip;'
+      fnBody(DESK_SRC, '_srsPaintReviewIcon') + '\n' + fnBody(DESK_SRC, '_srsRenderDueChip') + '\nreturn _srsRenderDueChip;'
     );
     return { dom, startMixed, renderChip: factory(dom.window.document, startMixed) };
   }
@@ -341,7 +343,7 @@ describe('Desk due-today deck — executed behavior', () => {
   it('the desktop icon exists, opens the mixed deck, and the session header says what it is', () => {
     expect(DESK).toMatch(/<div class="app-icon" data-app="review"[^>]*ondblclick="openReview\(\)"/);
     expect(DESK).toContain('<div class="icon-label">Review</div>');
-    expect(fnBody(DESK, 'openReview')).toContain('_rvStartMixed()');
+    expect(fnBody(DESK_SRC, 'openReview')).toContain('_rvStartMixed()');
     expect(DESK).toContain("title.textContent = 'Spaced repetition practice only \\u2014 never for a grade'");
     expect(DESK).toMatch(/\.app-icon\[data-app="review"\]\.review-has-due \.icon-img \{ animation: icon-bob/);
   });

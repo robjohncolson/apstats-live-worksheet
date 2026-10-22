@@ -15,19 +15,21 @@ import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { JSDOM } from 'jsdom';
 import { DESK_ATLAS, DESK_ATLAS_SIZE } from '../apstat-park/assets/pico-desk-atlas.mjs';
+import { deskHtml, deskSource as readDeskSource } from './helpers/desk-source.js';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const deskSource = readFileSync(resolve(repo, 'ap_stats_roadmap_square_mode.html'), 'utf8');
+const deskSource = deskHtml();
+const deskSource_SRC = readDeskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
 const picoSource = readFileSync(resolve(repo, 'pico-home.js'), 'utf8');
 const bumpSource = readFileSync(resolve(repo, 'scripts/bump-build.mjs'), 'utf8');
 
 function functionSource(name) {
-  const match = new RegExp('(?:async\\s+)?function\\s+' + name + '\\s*\\(').exec(deskSource);
+  const match = new RegExp('(?:async\\s+)?function\\s+' + name + '\\s*\\(').exec(deskSource_SRC);
   if (!match) throw new Error('Desk function not found: ' + name);
   let depth = 0;
-  for (let index = deskSource.indexOf('{', match.index); index < deskSource.length; index += 1) {
-    if (deskSource[index] === '{') depth += 1;
-    if (deskSource[index] === '}' && --depth === 0) return deskSource.slice(match.index, index + 1);
+  for (let index = deskSource_SRC.indexOf('{', match.index); index < deskSource_SRC.length; index += 1) {
+    if (deskSource_SRC[index] === '{') depth += 1;
+    if (deskSource_SRC[index] === '}' && --depth === 0) return deskSource_SRC.slice(match.index, index + 1);
   }
   throw new Error('Unbalanced Desk function: ' + name);
 }

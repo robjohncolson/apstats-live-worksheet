@@ -40,10 +40,11 @@ import { JSDOM } from 'jsdom';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 import { createContext, runInContext } from 'vm';
+import { deskSource } from './helpers/desk-source.js';
 
 const REPO_ROOT = resolve(import.meta.dirname, '..');
 const BOARD_SRC = readFileSync(resolve(REPO_ROOT, 'classroom-board.js'), 'utf8');
-const HTML_SRC  = readFileSync(resolve(REPO_ROOT, 'ap_stats_roadmap_square_mode.html'), 'utf8');
+const HTML_SRC  = deskSource();
 
 // --- minimal MockWebSocket (copied shape from classroom-board-scroll) ----
 

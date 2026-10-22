@@ -6,10 +6,11 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { JSDOM } from 'jsdom';
 import { computeDonow } from '../roster-server/donow.js';
+import { deskSource } from './helpers/desk-source.js';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (file) => readFileSync(resolve(repo, file), 'utf8');
-const desk = read('ap_stats_roadmap_square_mode.html');
+const desk = deskSource();
 const cedSource = read('js/ced2026-crosswalk.js') + '\n' + read('js/ced2026-labels.js');
 const manifest = JSON.parse(read('data/work-manifest.json'));
 const opened = [];

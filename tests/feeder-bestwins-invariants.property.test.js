@@ -34,10 +34,11 @@ import fc from 'fast-check';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createContext, runInContext } from 'node:vm';
+import { deskSource } from './helpers/desk-source.js';
 
 const repo = resolve(import.meta.dirname, '..');
 const HOME = readFileSync(resolve(repo, 'mobile-home.html'), 'utf8');
-const DESK = readFileSync(resolve(repo, 'ap_stats_roadmap_square_mode.html'), 'utf8');
+const DESK = deskSource();
 const FLASHCARDS = readFileSync(resolve(repo, 'flashcards.js'), 'utf8');
 
 function fnBody(src, name) {

@@ -10,9 +10,11 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { deskSource, deskHtml } from './helpers/desk-source.js';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const DESK = readFileSync(resolve(repo, 'ap_stats_roadmap_square_mode.html'), 'utf8');
+const DESK = deskHtml();
+const DESK_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
 
 function fnBody(src, name) {
   const m = new RegExp('function\\s+' + name + '\\s*\\(').exec(src);
@@ -26,7 +28,7 @@ function fnBody(src, name) {
   throw new Error('unbalanced: ' + name);
 }
 
-const SRC = ['_ymdISO', '_parseISODate', '_mondayOf', '_summerWeeks'].map((n) => fnBody(DESK, n)).join('\n');
+const SRC = ['_ymdISO', '_parseISODate', '_mondayOf', '_summerWeeks'].map((n) => fnBody(DESK_SRC, n)).join('\n');
 
 const SCHED = {
   firstDayOfSchool: '2026-09-01',

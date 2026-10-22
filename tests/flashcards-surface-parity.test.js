@@ -6,9 +6,10 @@ import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createContext, runInContext } from 'node:vm';
 import { JSDOM } from 'jsdom';
+import { deskSource } from './helpers/desk-source.js';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const DESK = readFileSync(resolve(repo, 'ap_stats_roadmap_square_mode.html'), 'utf8');
+const DESK = deskSource();
 const MOBILE = readFileSync(resolve(repo, 'mobile-home.html'), 'utf8');
 const ENGINE = readFileSync(resolve(repo, 'flashcards.js'), 'utf8');
 

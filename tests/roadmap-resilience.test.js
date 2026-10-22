@@ -1,9 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { deskSource, deskHtml } from './helpers/desk-source.js';
 
 const REPO_ROOT = resolve(__dirname, '..');
-const html = readFileSync(resolve(REPO_ROOT, 'ap_stats_roadmap_square_mode.html'), 'utf-8');
+const html = deskHtml();
+const html_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
 
 function fnBody(src, name) {
   const re = new RegExp('(?:async\\s+)?function\\s+' + name + '\\s*\\(');
@@ -26,7 +28,7 @@ function fnBody(src, name) {
 describe('roadmap network resilience', () => {
   it('bounds fetches with AbortController and a shared timeout', () => {
     expect(html).toContain('const ROADMAP_FETCH_TIMEOUT_MS = 5500');
-    const body = fnBody(html, '_roadmapFetch');
+    const body = fnBody(html_SRC, '_roadmapFetch');
     expect(body).toMatch(/AbortController/);
     expect(body).toMatch(/setTimeout/);
     expect(body).toMatch(/controller\.abort/);
@@ -34,7 +36,7 @@ describe('roadmap network resilience', () => {
   });
 
   it('loadRegistry uses saved data before live refresh and reports fallback state', () => {
-    const body = fnBody(html, 'loadRegistry');
+    const body = fnBody(html_SRC, 'loadRegistry');
     expect(body).toMatch(/_readRoadmapCache\(ROADMAP_REGISTRY_CACHE_KEY/);
     expect(body).toMatch(/_mergeRegistryData\(saved\.data\)/);
     expect(body).toMatch(/_roadmapFetchJsonRetry\('roadmap-data\.json'/);
@@ -43,7 +45,7 @@ describe('roadmap network resilience', () => {
   });
 
   it('loadSupabaseOverlay accepts partial results and saves the overlay cache', () => {
-    const body = fnBody(html, 'loadSupabaseOverlay');
+    const body = fnBody(html_SRC, 'loadSupabaseOverlay');
     expect(body).toMatch(/Promise\.allSettled/);
     expect(body).toMatch(/gotFresh/);
     expect(body).toMatch(/_writeRoadmapCache\(_overlayCacheKey\(period\)/);
@@ -54,23 +56,23 @@ describe('roadmap network resilience', () => {
   it('shows a compact network status region near the calendar', () => {
     expect(html).toMatch(/id="roadmap-status"[^>]*role="status"[^>]*aria-live="polite"/);
     expect(html).toMatch(/#roadmap-status\[data-net="offline"\]/);
-    expect(fnBody(html, '_wireRoadmapNetworkStatus')).toMatch(/addEventListener\('offline'/);
+    expect(fnBody(html_SRC, '_wireRoadmapNetworkStatus')).toMatch(/addEventListener\('offline'/);
   });
 });
 
 describe('roadmap UI clarity and performance', () => {
   it('resource panels render a conditional suggested work order', () => {
-    const coach = fnBody(html, '_lessonCoachHtml');
+    const coach = fnBody(html_SRC, '_lessonCoachHtml');
     expect(coach).toMatch(/Suggested work order/);
     expect(coach).toMatch(/Preview the idea/);
     expect(coach).toMatch(/Work the follow-along/);
     expect(coach).toMatch(/Check understanding/);
     expect(coach).toMatch(/Repair misses with flashcards/);
-    expect(fnBody(html, 'showResourcePanel')).toMatch(/_lessonCoachHtml\(inf, ids, regEntry\)/);
+    expect(fnBody(html_SRC, 'showResourcePanel')).toMatch(/_lessonCoachHtml\(inf, ids, regEntry\)/);
   });
 
   it('rCal batches DOM work through a document fragment', () => {
-    const body = fnBody(html, 'rCal');
+    const body = fnBody(html_SRC, 'rCal');
     expect(body).toMatch(/document\.createDocumentFragment\(\)/);
     expect(body).toMatch(/_frag\.appendChild\(_qb\)/);
     expect(body).toMatch(/_frag\.appendChild\(r\)/);
@@ -78,8 +80,8 @@ describe('roadmap UI clarity and performance', () => {
   });
 
   it('live roster fetches keep the raw-fetch fallback for isolated tests', () => {
-    expect(fnBody(html, 'renderDoNow')).toMatch(/typeof _roadmapFetch === 'function'[\s\S]*fetch\(baseUrl \+ __va\.endpoint/);
-    expect(fnBody(html, 'renderDoNowGrades')).toMatch(/typeof _roadmapFetch === 'function'[\s\S]*fetch\(baseUrl \+ __va\.endpoint/);
-    expect(fnBody(html, '_fetchPollArchive')).toMatch(/typeof _roadmapFetch === 'function'[\s\S]*fetch\(baseUrl \+ __va\.endpoint/);
+    expect(fnBody(html_SRC, 'renderDoNow')).toMatch(/typeof _roadmapFetch === 'function'[\s\S]*fetch\(baseUrl \+ __va\.endpoint/);
+    expect(fnBody(html_SRC, 'renderDoNowGrades')).toMatch(/typeof _roadmapFetch === 'function'[\s\S]*fetch\(baseUrl \+ __va\.endpoint/);
+    expect(fnBody(html_SRC, '_fetchPollArchive')).toMatch(/typeof _roadmapFetch === 'function'[\s\S]*fetch\(baseUrl \+ __va\.endpoint/);
   });
 });

@@ -19,9 +19,10 @@ import { describe, it, expect, vi } from 'vitest';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 import { runInContext, createContext } from 'vm';
+import { deskSource } from './helpers/desk-source.js';
 
 const REPO_ROOT = resolve(__dirname, '..');
-const html = readFileSync(resolve(REPO_ROOT, 'ap_stats_roadmap_square_mode.html'), 'utf-8');
+const html = deskSource();
 const faClient = readFileSync(resolve(REPO_ROOT, 'railway_client.js'), 'utf-8');
 const crClient = readFileSync(resolve(REPO_ROOT, '..', 'curriculum_render', 'railway_client.js'), 'utf-8');
 const crServer = readFileSync(resolve(REPO_ROOT, '..', 'curriculum_render', 'railway-server', 'server.js'), 'utf-8');

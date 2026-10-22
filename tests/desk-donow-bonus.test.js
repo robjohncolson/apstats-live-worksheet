@@ -4,9 +4,10 @@ import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { JSDOM } from 'jsdom';
 import { createContext, runInContext } from 'node:vm';
+import { deskSource } from './helpers/desk-source.js';
 
 // BONUS_DONOW_SPEC: one banked-bonus sentence under the Do Now grade pill.
-const html = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), '..', 'ap_stats_roadmap_square_mode.html'), 'utf8');
+const html = deskSource();
 
 function fnSrc(name) {
   const match = new RegExp('(?:async\\s+)?function\\s+' + name + '\\s*\\(').exec(html);

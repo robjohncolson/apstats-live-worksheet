@@ -10,8 +10,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
+import { deskSource } from './helpers/desk-source.js';
 
-const html = readFileSync(resolve(__dirname, '..', 'ap_stats_roadmap_square_mode.html'), 'utf-8');
+const html = deskSource();
 
 // Extract an object method `name(args) { ... }` into a standalone callable (this-bound at call).
 function methodFn(src, name) {

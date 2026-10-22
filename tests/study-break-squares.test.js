@@ -16,9 +16,11 @@ import { describe, it, expect, beforeAll, beforeEach, afterAll, vi } from 'vites
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { deskSource, deskHtml } from './helpers/desk-source.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const html = fs.readFileSync(path.join(__dirname, '..', 'ap_stats_roadmap_square_mode.html'), 'utf8');
+const html = deskHtml();
+const html_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
 const sfxLib = fs.readFileSync(path.join(__dirname, '..', 'lib', 'sfx.js'), 'utf8');
 
 // A 2D context that records every call (method name + args) and every gradient's colour stops.
@@ -87,12 +89,12 @@ const drawLog = [];
 const sent = [];
 
 beforeAll(() => {
-  const start = html.indexOf('const studyBreak = {');
-  const end = html.indexOf('\n};\n', start);
-  const sbSrc = html.slice(start, end) + '\n};\nwindow.studyBreak = studyBreak; window.closeGame = function () { studyBreak.close(); };';
-  const sfxStart = html.indexOf('const SFX = {');
-  const sfxEnd = html.indexOf('\n};\n', sfxStart);
-  const sfxSrc = html.slice(sfxStart, sfxEnd) + '\n};\nwindow.__SFX = SFX;';
+  const start = html_SRC.indexOf('const studyBreak = {');
+  const end = html_SRC.indexOf('\n};\n', start);
+  const sbSrc = html_SRC.slice(start, end) + '\n};\nwindow.studyBreak = studyBreak; window.closeGame = function () { studyBreak.close(); };';
+  const sfxStart = html_SRC.indexOf('const SFX = {');
+  const sfxEnd = html_SRC.indexOf('\n};\n', sfxStart);
+  const sfxSrc = html_SRC.slice(sfxStart, sfxEnd) + '\n};\nwindow.__SFX = SFX;';
 
   document.body.innerHTML = `
     <div id="game-overlay" style="display:none"><div class="game-window">

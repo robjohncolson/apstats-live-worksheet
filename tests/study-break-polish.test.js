@@ -2,11 +2,13 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { deskSource, deskHtml } from './helpers/desk-source.js';
 
-const html = readFileSync(resolve(__dirname, '..', 'ap_stats_roadmap_square_mode.html'), 'utf8');
-const start = html.indexOf('const studyBreak = {');
-const source = html.slice(start, html.indexOf('\n};\n', start) + 3);
-const dogeSource = html.slice(html.indexOf('const DogePresence = {'));
+const html = deskHtml();
+const html_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
+const start = html_SRC.indexOf('const studyBreak = {');
+const source = html_SRC.slice(start, html_SRC.indexOf('\n};\n', start) + 3);
+const dogeSource = html_SRC.slice(html_SRC.indexOf('const DogePresence = {'));
 
 function fnSrc(name, src = source) {
   const start = src.indexOf('\n    ' + name + '(');
