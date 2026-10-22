@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#161616">
+<meta name="robots" content="noindex">
+<title>AP Stats — Is everything up?</title>
+<!--
+  status.html — "Is everything up?" (FABLE_SPRINT_2026_10_22B_SPEC track K)
+
+  Static, no auth, no secrets. Every source below is a PUBLIC endpoint:
+    roster /health, cr /health, a2 /health, version.json (GH Pages + Vercel mirror)
+    and the latest CI run from the unauthenticated GitHub Actions API.
+  The GitHub API is rate-limited to 60 requests/hour per IP, so the page fetches
+  each source ONCE per load and never polls. Press "Check again" to reload.
+
+  Linked from teacher-dashboard.html (teacher surface), not from index.html.
+-->
+<style>
+  :root {
+    --sg-bg: #E5E3D2;        /* Tango: platinum */
+    --sg-text: #161616;
+    --sg-accent: #A8330A;    /* ink-tangerine */
+    --sg-bar-track: #D3D1C2;
+    --sg-bg-card: #F7F5EE;
+    --sg-border: #A9A79A;
+    --sg-text-dim: #6E6C62;
+    --sg-low: #B03A2E;
+    --sg-high: #25663F;
+    --st-green: #25663F;
+    --st-green-bg: #DCEBDF;
+    --st-amber: #8A5A00;
+    --st-amber-bg: #F6E7B8;
+    --st-red: #B03A2E;
+    --st-red-bg: #F3D6D1;
+    --st-grey: #6E6C62;
+    --st-grey-bg: #E9E7DA;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: var(--sg-bg);
+    color: var(--sg-text);
+    min-height: 100vh;
+  }
+  .page-header {
+    background: var(--sg-bg-card);
+    border-bottom: 3px solid #FF5B19;   /* Tango accent rule */
+    padding: 16px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px 14px;
+  }
+  .page-header h1 { margin: 0; font-size: 1.25rem; font-weight: 800; color: var(--sg-accent); }
+  .page-header .subtitle { margin: 0; font-size: 0.82rem; color: var(--sg-text-dim); flex: 1 1 240px; }
+  .page-header a { color: var(--sg-accent); }
+  button#check-again {
+    font: inherit; font-size: 0.85rem; font-weight: 600;
+    background: var(--sg-bg-card); color: var(--sg-accent);
+    border: 1px solid var(--sg-border); border-radius: 6px;
+    padding: 6px 12px; cursor: pointer;
+  }
+  button#check-again:hover { border-color: var(--sg-accent); }
+  .main { padding: 16px; max-width: 1100px; margin: 0 auto; }
+  .summary { font-size: 0.95rem; margin: 0 0 14px; color: var(--sg-text-dim); }
+  .summary strong { color: var(--sg-text); }
+  .tiles {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr));
+    gap: 12px;
+  }
+  .tile {
+    background: var(--sg-bg-card);
+    border: 1px solid var(--sg-border);
+    border-left: 8px solid var(--st-grey);
+    border-radius: 8px;
+    padding: 12px 14px;
+    min-width: 0;
+  }
+  .tile h2 { margin: 0 0 4px; font-size: 0.95rem; display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+  .tile h2 .light {
+    font-size: 0.7rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+    padding: 2px 8px; border-radius: 999px; white-space: nowrap;
+    background: var(--st-grey-bg); color: var(--st-grey);
+  }
+  .tile .value { font-size: 1.15rem; font-weight: 700; word-break: break-word; margin: 2px 0; }
+  .tile .detail { font-size: 0.82rem; color: var(--sg-text-dim); line-height: 1.45; word-break: break-word; }
+  .tile .detail code { font-family: Consolas, "Courier New", monospace; font-size: 0.82rem; }
+  .tile .age { font-size: 0.78rem; color: var(--sg-text-dim); margin-top: 6px; }
+  .tile .url { font-size: 0.72rem; color: var(--sg-text-dim); margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tile .url a { color: inherit; }
+  .tile[data-state="green"] { border-left-color: var(--st-green); }
+  .tile[data-state="green"] .light { background: var(--st-green-bg); color: var(--st-green); }
+  .tile[data-state="amber"] { border-left-color: var(--st-amber); }
+  .tile[data-state="amber"] .light { background: var(--st-amber-bg); color: var(--st-amber); }
+  .tile[data-state="red"] { border-left-color: var(--st-red); }
+  .tile[data-state="red"] .light { background: var(--st-red-bg); color: var(--st-red); }
+  .tile[data-state="pending"] { opacity: 0.75; }
+  .rules { margin-top: 20px; font-size: 0.8rem; color: var(--sg-text-dim); line-height: 1.5; }
+  .rules summary { cursor: pointer; font-weight: 600; }
+  .rules ul { padding-left: 18px; margin: 6px 0; }
+</style>
+</head>
+<body>
+
+  <div class="page-header">
+    <h1>AP Stats — Is everything up?</h1>
+    <p class="subtitle">Public health of every service the course runs on. Checked once when this page loads; nothing polls.
+      <a href="teacher-dashboard.html">&larr; Teacher workspace</a></p>
+    <button id="check-again" type="button">Check again</button>
+  </div>
+
+  <div class="main">
+    <p class="summary" id="summary">Checking&hellip;</p>
+    <div class="tiles" id="tiles" aria-live="polite"></div>
+
+    <details class="rules">
+      <summary>How the colours are decided</summary>
+      <ul>
+        <li><strong>Green</strong>: the endpoint answered, reports itself healthy, and nothing is lagging.</li>
+        <li><strong>Amber</strong>: it answered, but something needs a look (persist failures, degraded storage, CI still running, a mirror behind GH Pages, a deploy behind the last green CI).</li>
+        <li><strong>Red</strong>: it did not answer, answered an error, or CI failed.</li>
+        <li>Hover a tile's light for the exact rule. "Age" is how old the service's own timestamp is; "checked" is when this page fetched it.</li>
+      </ul>
+    </details>
+  </div>
+
+<script>
+(function () {
+  'use strict';
+
+  // ── Sources (all public, no auth) ──────────────────────────────────────────
+  var ROSTER_URL  = 'https://roster-production-12c1.up.railway.app/health';
+  var CR_URL      = 'https://curriculumrender-production.up.railway.app/health';
+  var A2_URL      = 'https://a2-live-worksheets-production.up.railway.app/health';
+  var PAGES_URL   = 'https://robjohncolson.github.io/apstats-live-worksheet/version.json';
+  var VERCEL_URL  = 'https://apstats-live-worksheet.vercel.app/version.json';
+  var CI_URL      = 'https://api.github.com/repos/robjohncolson/apstats-live-worksheet/actions/workflows/ci.yml/runs?per_page=1';
+  var FETCH_TIMEOUT_MS = 10000;
+
+  function shortSha(sha) { return sha ? String(sha).slice(0, 7) : '—'; }
+  function num(n) { return (typeof n === 'number' && isFinite(n)) ? n : null; }
+
+  // ── Colour rules: each returns { state, rule, value, detail, at } ──────────
+  // `rule` is the human sentence shown in the light's title attribute.
+
+  function judgeHealthServer(label, data, ctx) {
+    var pf = data.receipts ? num(data.receipts.persistFailures) : null;
+    var frq = data.frq || {};
+    var worker = frq.worker || {};
+    var storage = frq.storage || {};
+    var rule = 'Green: ok:true, persistFailures 0, FRQ storage not degraded' +
+      (ctx.ciSha ? ', deployed commit = last CI head' : '') +
+      '. Amber: persistFailures > 0, degraded storage, or commit behind CI. Red: no answer or ok:false.';
+    var state = 'green';
+    var notes = [];
+    if (data.ok !== true) { state = 'red'; notes.push('ok is not true'); }
+    if (pf === null || pf > 0) { state = (state === 'red') ? 'red' : 'amber'; notes.push('persistFailures ' + (pf === null ? 'missing' : pf)); }
+    if (storage.degraded) { state = (state === 'red') ? 'red' : 'amber'; notes.push('FRQ storage degraded' + (storage.errorCode ? ' (' + storage.errorCode + ')' : '')); }
+    if (ctx.ciSha && data.commit && ctx.ciSha !== data.commit) { state = (state === 'red') ? 'red' : 'amber'; notes.push('deploy behind CI head ' + shortSha(ctx.ciSha)); }
+    return {
+      state: state, rule: rule,
+      value: 'commit ' + shortSha(data.commit),
+      detail: 'FRQ worker: <code>' + (worker.mode || frq.mode || '—') + '</code> · persistFailures: <code>' + (pf === null ? '—' : pf) + '</code>' +
+        (notes.length ? '<br>' + notes.join(' · ') : ''),
+      at: data.time || null
+    };
+  }
+
+  function judgeCr(data) {
+    var rule = 'Green: status "healthy". Amber: any other status text. Red: no answer.';
+    var healthy = data.status === 'healthy';
+    return {
+      state: healthy ? 'green' : 'amber', rule: rule,
+      value: String(data.status || '—'),
+      detail: 'connections: <code>' + (num(data.connections) === null ? '—' : data.connections) + '</code> · cache: <code>' + (data.cache || '—') + '</code> · AI grade auth: <code>' + (data.aiGradeAuth || '—') + '</code>',
+      at: data.timestamp || null
+    };
+  }
+
+  function judgePages(data) {
+    var rule = 'Green: version.json answered. Red: no answer. (The build tag is what bump-build wrote.)';
+    return {
+      state: 'green', rule: rule,
+      value: 'build ' + (data.build || '—'),
+      detail: 'GH Pages, the primary rail',
+      at: num(data.ts) !== null ? new Date(data.ts).toISOString() : null
+    };
+  }
+
+  function judgeVercel(data, ctx) {
+    var rule = 'Green: build equals GH Pages. Amber: a different build (mirror is behind; run npx vercel deploy --prod). Red: no answer.';
+    var same = ctx.pagesBuild && data.build === ctx.pagesBuild;
+    return {
+      state: same ? 'green' : 'amber', rule: rule,
+      value: 'build ' + (data.build || '—'),
+      detail: same ? 'Vercel mirror matches GH Pages' : 'Vercel mirror differs from GH Pages (' + (ctx.pagesBuild || 'unknown') + ')',
+      at: num(data.ts) !== null ? new Date(data.ts).toISOString() : null
+    };
+  }
+
+  function judgeCi(data) {
+    var rule = 'Green: last CI run on ci.yml concluded success. Amber: still queued/in progress. Red: failure, cancelled, or no run.';
+    var run = data && data.workflow_runs && data.workflow_runs[0];
+    if (!run) return { state: 'red', rule: rule, value: 'no runs', detail: '', at: null };
+    var state = 'red';
+    if (run.status !== 'completed') state = 'amber';
+    else if (run.conclusion === 'success') state = 'green';
+    return {
+      state: state, rule: rule,
+      value: run.status === 'completed' ? String(run.conclusion) : String(run.status),
+      detail: '#' + run.run_number + ' on <code>' + run.head_branch + '</code> · ' + shortSha(run.head_sha) +
+        (run.html_url ? ' · <a href="' + run.html_url + '" target="_blank" rel="noopener">open</a>' : ''),
+      at: run.updated_at || run.created_at || null,
+      headSha: run.head_sha || null
+    };
+  }
+
+  // ── Fetch once per source; never polls ─────────────────────────────────────
+  function fetchJson(url) {
+    var ctl = (typeof AbortController === 'function') ? new AbortController() : null;
+    var timer = ctl ? setTimeout(function () { ctl.abort(); }, FETCH_TIMEOUT_MS) : null;
+    var opts = { cache: 'no-store', headers: { Accept: 'application/json' } };
+    if (ctl) opts.signal = ctl.signal;
+    return fetch(url, opts).then(function (res) {
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return res.json();
+    }).finally(function () { if (timer) clearTimeout(timer); });
+  }
+
+  function fetchSafe(url) {
+    return fetchJson(url).then(
+      function (data) { return { ok: true, data: data, checkedAt: Date.now() }; },
+      function (err) { return { ok: false, error: (err && err.message) || String(err), checkedAt: Date.now() }; }
+    );
+  }
+
+  // ── Rendering ──────────────────────────────────────────────────────────────
+  function ageText(iso, now) {
+    if (!iso) return 'no timestamp';
+    var t = Date.parse(iso);
+    if (isNaN(t)) return 'no timestamp';
+    var s = Math.max(0, Math.round((now - t) / 1000));
+    if (s < 60) return s + ' s ago';
+    if (s < 3600) return Math.round(s / 60) + ' min ago';
+    if (s < 86400) return Math.round(s / 3600) + ' h ago';
+    return Math.round(s / 86400) + ' d ago';
+  }
+
+  function clock(ms) {
+    var d = new Date(ms);
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function tileHtml(t, now) {
+    var light = t.state === 'pending' ? 'checking' : t.state;
+    return '<section class="tile" id="tile-' + t.id + '" data-state="' + t.state + '">' +
+      '<h2>' + t.label + ' <span class="light" title="' + t.rule.replace(/"/g, '&quot;') + '">' + light + '</span></h2>' +
+      '<div class="value">' + t.value + '</div>' +
+      '<div class="detail">' + t.detail + '</div>' +
+      '<div class="age">age: ' + ageText(t.at, now) + (t.checkedAt ? ' · checked ' + clock(t.checkedAt) : '') + '</div>' +
+      '<div class="url"><a href="' + t.url + '" target="_blank" rel="noopener">' + t.url.replace(/^https:\/\//, '') + '</a></div>' +
+      '</section>';
+  }
+
+  var TILES = [
+    { id: 'roster', label: 'roster-server', url: ROSTER_URL },
+    { id: 'cr',     label: 'curriculum render', url: CR_URL },
+    { id: 'a2',     label: 'a2 roster-server', url: A2_URL },
+    { id: 'pages',  label: 'GH Pages', url: PAGES_URL },
+    { id: 'vercel', label: 'Vercel mirror', url: VERCEL_URL },
+    { id: 'ci',     label: 'CI (GitHub Actions)', url: CI_URL }
+  ];
+
+  function pending(t) {
+    return { id: t.id, label: t.label, url: t.url, state: 'pending', rule: 'Not fetched yet.', value: '…', detail: '', at: null, checkedAt: null };
+  }
+
+  function failed(t, r, rule) {
+    return { id: t.id, label: t.label, url: t.url, state: 'red', rule: rule || 'Red: no answer.', value: 'no answer', detail: r.error || 'fetch failed', at: null, checkedAt: r.checkedAt };
+  }
+
+  function render(tiles, now) {
+    var el = document.getElementById('tiles');
+    el.innerHTML = tiles.map(function (t) { return tileHtml(t, now); }).join('');
+    var counts = { green: 0, amber: 0, red: 0, pending: 0 };
+    tiles.forEach(function (t) { counts[t.state] = (counts[t.state] || 0) + 1; });
+    var sum = document.getElementById('summary');
+    if (counts.pending) { sum.textContent = 'Checking…'; return; }
+    if (counts.red) sum.innerHTML = '<strong>' + counts.red + ' down</strong> · ' + counts.amber + ' to look at · ' + counts.green + ' fine';
+    else if (counts.amber) sum.innerHTML = '<strong>Up, ' + counts.amber + ' to look at</strong> · ' + counts.green + ' fine';
+    else sum.innerHTML = '<strong>Everything is up.</strong>';
+  }
+
+  function load() {
+    var now = Date.now();
+    render(TILES.map(pending), now);
+    var results = {};
+    return Promise.all(TILES.map(function (t) {
+      return fetchSafe(t.url).then(function (r) { results[t.id] = r; });
+    })).then(function () {
+      now = Date.now();
+      var ci = results.ci.ok ? judgeCi(results.ci.data) : null;
+      var ciSha = ci ? ci.headSha : null;
+      var pagesBuild = results.pages.ok ? results.pages.data.build : null;
+
+      function build(t, judged) {
+        var r = results[t.id];
+        if (!r.ok) return failed(t, r, judged && judged.rule);
+        judged.id = t.id; judged.label = t.label; judged.url = t.url; judged.checkedAt = r.checkedAt;
+        return judged;
+      }
+
+      var tiles = [
+        build(TILES[0], results.roster.ok ? judgeHealthServer('roster', results.roster.data, { ciSha: ciSha }) : null),
+        build(TILES[1], results.cr.ok ? judgeCr(results.cr.data) : null),
+        build(TILES[2], results.a2.ok ? judgeHealthServer('a2', results.a2.data, {}) : null),
+        build(TILES[3], results.pages.ok ? judgePages(results.pages.data) : null),
+        build(TILES[4], results.vercel.ok ? judgeVercel(results.vercel.data, { pagesBuild: pagesBuild }) : null),
+        build(TILES[5], ci)
+      ];
+      render(tiles, now);
+      return tiles;
+    });
+  }
+
+  window.StatusPage = {
+    URLS: { roster: ROSTER_URL, cr: CR_URL, a2: A2_URL, pages: PAGES_URL, vercel: VERCEL_URL, ci: CI_URL },
+    judgeHealthServer: judgeHealthServer, judgeCr: judgeCr, judgePages: judgePages, judgeVercel: judgeVercel, judgeCi: judgeCi,
+    ageText: ageText, load: load
+  };
+
+  document.getElementById('check-again').addEventListener('click', function () { location.reload(); });
+
+  // One fetch per load, no polling (GitHub API: 60 req/h per IP unauthenticated).
+  if (!window.__STATUS_NO_AUTOLOAD) load();
+})();
+</script>
+</body>
+</html>

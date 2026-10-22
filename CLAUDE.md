@@ -42,6 +42,7 @@ The Desk hosts iframe apps via `openApp(id)` — `APP_REGISTRY` near line 12930 
 | `teacher-classroom.html` | Live Classroom cockpit: presence/poll board, Arm Gate / Green Light controls |
 | `teacher-code-generator.html` | Deterministic unit unlock codes (static) |
 | `teacher-roster-console.html` | **LOCAL-ONLY** (per its own header comment) — bulk enroll, passwords, delete-student, Schoology UIDs. Do NOT link from public pages |
+| `status.html` | **Is everything up?** — static, no auth: roster/cr/a2 `/health`, `version.json` on GH Pages + Vercel, latest CI run (public GitHub API, one fetch per load, never polls); green/amber/red tiles with the rule in the light's title. Linked from the teacher-dashboard header only; test `tests/status-page.test.js` |
 
 ### Backend
 
