@@ -7,7 +7,7 @@
  *
  * Regenerate after any engine edit:  node scripts/build-grade-engine.mjs
  * Parity is pinned by tests/grade-engine-bundle-parity.test.js.
- * engine-version: 6c274b73b112
+ * engine-version: ee7a1bc60774
  */
 ;(function (root) {
   'use strict';
@@ -2978,6 +2978,7 @@
     // { [unitNum]: score } from POSTER-U{n} rows (source 'poster'); the latest
     // attempt per item wins, a malformed score is skipped.
     function posterScoresByUnit(posterRows) {
+      /** @type {Record<number, number|null>} */
       const out = {};
       for (const row of latestPerItem(Array.isArray(posterRows) ? posterRows : [])) {
         const m = String(row.item_id || '').match(/^POSTER-U(\d+)$/i);
@@ -3151,6 +3152,7 @@
       const unitPcData = {};
       // v3: per-unit raw PC % (the PC track reads raw scores, NOT the pcRawToP
       // graduated-trust curve that Phase 6 uses for P_quarter).
+      /** @type {Record<number, number|null>} */
       const unitPcRaw = {};
       for (const uKey of Object.keys(units)) {
         const uNum = unitNumber(uKey);
@@ -3417,7 +3419,7 @@
     normalizeResponse: __reg["scoring"].normalizeResponse,
     scoreAgainstKey: __reg["scoring"].scoreAgainstKey,
     pcPaperBlend: __reg["scoring"].pcPaperBlend,
-    _engineVersion: "6c274b73b112",
+    _engineVersion: "ee7a1bc60774",
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = __api;
