@@ -188,6 +188,9 @@ function makeCockpitEnv(opts) {
     + '<div id="section-region" style="display:none">'
     +   '<h2 id="section-region-title">Live -- Period <span id="live-section-label">?</span></h2>'
     +   '<button id="btn-exit-live"></button>'
+    // 513d5967 (2026-10-10, park music): the cockpit wires #btn-class-sound at boot;
+    // without it getElementById(...).addEventListener throws before startMonitorMode().
+    +   '<button id="btn-class-sound"></button>'
     + '</div>'
     + '<select id="section-select"><option value="PeriodE">PeriodE</option></select>'
     + '<div id="status-row"></div>'

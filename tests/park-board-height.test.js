@@ -1,5 +1,8 @@
 // APStat Park: the board grows to a level's height only while the level is
 // open (setBoardHeight), and every exit restores the 220 px calendar strip.
+// 3f28fa8d (2026-10-04): a playable mount (student role / playable:true) reserves the
+// full student play area at startup instead: round(750 * min(1, clientWidth / 720)),
+// with DEFAULT_BOARD_W = 320 when clientWidth is 0 (jsdom) -> 333 px, groundY 283.
 import { describe, it, expect, vi } from 'vitest';
 import { JSDOM } from 'jsdom';
 import { readFileSync } from 'node:fs';
@@ -44,12 +47,12 @@ function mountBoard(dpr = 2) {
 function doorButtons(host) { return [...host.querySelectorAll('[data-classroom-native]')]; }
 
 describe('park-only board height', () => {
-  it('starts at 220: CSS size, backing store at the device pixel ratio, groundY 170', () => {
+  it('starts with the reserved play area (333 in jsdom): CSS size, backing store at the device pixel ratio, groundY 283', () => {
     const { handle, canvas, engine } = mountBoard(2);
-    expect(handle.getBoardHeight()).toBe(220);
-    expect(canvas.style.height).toBe('220px');
-    expect(canvas.height).toBe(440);
-    expect(engine.groundY).toBe(170);
+    expect(handle.getBoardHeight()).toBe(333);
+    expect(canvas.style.height).toBe('333px');
+    expect(canvas.height).toBe(666);
+    expect(engine.groundY).toBe(283);
   });
 
   it('setBoardHeight grows the CSS and backing-store height and moves groundY', () => {
@@ -85,7 +88,8 @@ describe('park-only board height', () => {
     // The calendar's park_doorway entity re-places the buttons each tick.
     const tick = () => engine.entities.get('park_doorway').update(1 / 60);
     tick();
-    for (const b of doorButtons(host)) expect(b.style.top).toBe('138px');
+    // Reserved play area at mount (3f28fa8d): groundY 283 -> door top 251.
+    for (const b of doorButtons(host)) expect(b.style.top).toBe('251px');
     handle.setBoardHeight(240); tick();
     for (const b of doorButtons(host)) expect(b.style.top).toBe('158px');
     handle.setBoardHeight(); tick();

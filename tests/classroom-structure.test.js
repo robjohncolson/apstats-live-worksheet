@@ -40,7 +40,8 @@ describe('Live Classroom v1a - Desk integration', () => {
   });
 
   it('D1: loads classroom-board.js as a sibling script', () => {
-    expect(DESK).toMatch(/<script\s+src=["']classroom-board\.js["']><\/script>/i);
+    // 4c0b1338 (2026-10-05) versions the game entry scripts (?v=<build>) to bypass stale worker caches.
+    expect(DESK).toMatch(/<script\s+src=["']classroom-board\.js(\?v=[^"']*)?["']><\/script>/i);
   });
 
   it('D2: has the classroom board mount point', () => {
@@ -68,9 +69,10 @@ describe('Live Classroom v1a - Desk integration', () => {
     expect(body).toMatch(/rosterClient/);
     expect(body).toMatch(/typeof\s+window\.ClassroomBoard/);
     expect(body).toMatch(/ClassroomBoard\.mount/);
-    // The Desk embed is the student board (BUILD D4): role is the
-    // literal 'student', never derived from the teacher-role flag.
-    expect(body).toMatch(/role\s*:\s*['"]student['"]/);
+    // d8dee592 (2026-10-05) restored the playable teacher desk: the Desk embed is
+    // the student board for students and the teacher board for the teacher
+    // (role from _deskIsTeacher()), never from the legacy apstats_user_role flag.
+    expect(body).toMatch(/role\s*:\s*_deskIsTeacher\(\)\s*\?\s*['"]teacher['"]\s*:\s*['"]student['"]/);
     expect(body).not.toMatch(/apstats_user_role/);
   });
 
@@ -322,9 +324,10 @@ describe('Live Classroom r3 - hue opt in mount call', () => {
 
 describe('Live Classroom r3 - Desk loads engine scripts', () => {
   it('the Desk loads canvas_engine.js and sprite_sheet.js before classroom-board.js', () => {
-    const idxEngine = DESK.indexOf('src="canvas_engine.js"');
-    const idxSprite = DESK.indexOf('src="sprite_sheet.js"');
-    const idxBoard  = DESK.indexOf('src="classroom-board.js"');
+    // 4c0b1338: the Desk's copies carry a ?v=<build> cache-bust, so match the src prefix only.
+    const idxEngine = DESK.indexOf('src="canvas_engine.js');
+    const idxSprite = DESK.indexOf('src="sprite_sheet.js');
+    const idxBoard  = DESK.indexOf('src="classroom-board.js');
     expect(idxEngine).toBeGreaterThan(-1);
     expect(idxSprite).toBeGreaterThan(-1);
     expect(idxBoard).toBeGreaterThan(-1);

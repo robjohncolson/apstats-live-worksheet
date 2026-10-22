@@ -62,8 +62,10 @@ describe('cockpit nudge panel -- structure', () => {
   });
 
   it('mount-board call wires onClassroomMessage handler for nudge reply + ack', () => {
-    expect(html).toMatch(/onClassroomMessage:\s*function[\s\S]{0,400}classroom_student_nudge_reply/);
-    expect(html).toMatch(/onClassroomMessage:\s*function[\s\S]{0,600}classroom_teacher_nudge_ack/);
+    // 0a0274f1 (2026-10-10, park music) reads classroom_sound_state at the top of the
+    // handler, pushing the nudge branches ~500 / ~670 chars in; windows widened to match.
+    expect(html).toMatch(/onClassroomMessage:\s*function[\s\S]{0,700}classroom_student_nudge_reply/);
+    expect(html).toMatch(/onClassroomMessage:\s*function[\s\S]{0,900}classroom_teacher_nudge_ack/);
   });
 
   it('onStateChange callback refreshes recipient list', () => {

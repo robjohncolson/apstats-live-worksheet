@@ -56,7 +56,8 @@ describe('Desk loads ti84-plot.js', () => {
     // Match the <script> tag strings, not the bare filenames — 'classroom-board.js'
     // also appears in earlier comments, so indexOf on the bare name would find the
     // comment (25k chars away) instead of the tag.
-    const cbIdx = DESK.indexOf('src="classroom-board.js"');
+    // 4c0b1338: classroom-board.js carries a ?v=<build> cache-bust in the Desk; match the prefix.
+    const cbIdx = DESK.indexOf('src="classroom-board.js');
     const plotIdx = DESK.indexOf('src="ti84-plot.js"');
     expect(cbIdx).toBeGreaterThan(-1);
     expect(plotIdx).toBeGreaterThan(-1);
