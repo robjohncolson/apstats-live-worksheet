@@ -908,7 +908,7 @@ describe('FRQ coverage — retry, triggers, on-load regrade (2026-08-19)', () =>
     } finally { vi.useRealTimers(); }
   });
 
-  it('20 s of idle after typing triggers an auto grade', async () => {
+  it('60 s of idle after typing triggers an auto grade (20 s graded students mid-sentence)', async () => {
     vi.useFakeTimers();
     try {
       addTextarea('reflect1', '');
@@ -920,7 +920,7 @@ describe('FRQ coverage — retry, triggers, on-load regrade (2026-08-19)', () =>
       const ta = document.getElementById('reflect1');
       ta.value = 'A sufficiently long reflection answer typed by the student right now.';
       ta.dispatchEvent(new Event('input', { bubbles: true }));
-      await vi.advanceTimersByTimeAsync(19000);
+      await vi.advanceTimersByTimeAsync(59000);
       expect(mocks.gradeReflection).not.toHaveBeenCalled();
       await vi.advanceTimersByTimeAsync(1100);
       await vi.advanceTimersByTimeAsync(10);
@@ -1258,7 +1258,9 @@ describe('authoritative FRQ contractual state copy and stale guard', () => {
       appealCount: null,
       result: { score: 1, feedback: 'Feedback for old text.' }
     });
-    expect(statusText()).toBe('This response is already graded — appeal to have your revised answer reviewed.');
+    // score 1 = E: the top score, so no re-read is offered (an E never carries an appeal control).
+    expect(statusText()).toBe('This answer already earned the top score (E). Keep writing for yourself — there is nothing more to grade.');
+    expect(document.getElementById('reflect1-ai-status').querySelector('.ai-frq-appeal-control')).toBeNull();
     expect(mocks.showFeedback).not.toHaveBeenCalled();
 
     await hook.renderStatus(itemId, {
@@ -1571,8 +1573,33 @@ describe('authoritative appeals', () => {
       const control = status.querySelector('.ai-frq-appeal-control');
       expect(status.dataset.frqState).toBe(expectedState);
       expect(control).not.toBeNull();
-      expect(control.value).toBe('Appeal this grade…');
+      // An edited-after-grade answer offers a plain re-read; an untouched one offers an appeal.
+      expect(control.value).toBe(expectedState === 'already-graded-edited' ? 'Re-read my finished answer…' : 'Appeal this grade…');
     }
+  });
+
+  it('a verdict that lands while the student is still in the box reads as "so far" and offers a re-read (teacher 2026-10-22)', async () => {
+    addTextarea('reflect1', 'A sufficiently long reflection answer that is still being written.');
+    installShippedFlow();
+    const hook = window.__aiFrqTicketClient;
+    const ta = document.getElementById('reflect1');
+    const hash = await hook.hash(ta.value.trim());
+    ta.focus();
+    expect(document.activeElement).toBe(ta);
+    await hook.renderStatus('WS-U6L1-2-reflect1', {
+      status: 'graded', score: 0.5, responseHash: hash, gradedAt: new Date().toISOString(), appealCount: 0,
+      result: { score: 0.5, feedback: 'Partial so far.' }
+    });
+    const status = document.getElementById('reflect1-ai-status');
+    expect(status.querySelector('.ai-status-copy').textContent).toBe(
+      '✓ Graded what you have so far: Partially Correct — still writing? Keep going. When you finish, tap "Re-read my finished answer"; your grade only goes up.');
+    const control = status.querySelector('.ai-frq-appeal-control');
+    expect(control.value).toBe('Re-read my finished answer…');
+    ta.blur();
+    // Opening the re-read pre-fills the reason so the student only has to submit.
+    control.click();
+    const reason = document.getElementById('appeal-text-reflect1') || document.querySelector('#appeal-form-reflect1 textarea');
+    expect(reason && reason.value).toBe('I kept writing after the automatic grade — please read the finished answer.');
   });
 
   it('omits the inline appeal control when the authoritative appeal count is exhausted', async () => {

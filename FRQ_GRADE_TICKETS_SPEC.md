@@ -204,7 +204,7 @@ Add nullable/defaulted columns to `item_ledger`; do not add a table:
 |---|---|
 | `frq_response_version bigint not null default 0` | Increment whenever the canonical ungraded response changes. |
 | `frq_response_hash text` | SHA-256 of the exact trimmed UTF-8 response used in the prompt. |
-| `frq_ready_at timestamptz` | Debounce/coalescing boundary. Routine draft = now + 20 s; blur/Done/manual request = now + 2 s. |
+| `frq_ready_at timestamptz` | Debounce/coalescing boundary. Routine draft = now + 60 s (was 20 s until 2026-10-22: it graded students mid-sentence); blur/Done/manual request = now + 2 s. |
 | `frq_claim_token uuid` | Unpredictable ownership token returned only to the worker. |
 | `frq_claim_owner text` | Diagnostic instance id; never an auth boundary. |
 | `frq_claimed_until timestamptz` | Lease expiry; a crashed worker's row becomes claimable again. |
@@ -429,7 +429,7 @@ Keep the current fill-in-the-blank `/api/ai/grade-worksheet` branch unchanged ex
 5. Poll `/ledger/frq-status?prefix=...` every 2 s only while at least one visible item is pending; stop on all-terminal, page hidden, or 2 minutes, and resume on visibility/online/manual action.
 6. Reuse `showFeedback()` only with roster-server's stored `frq_result`. Never render a direct curriculum verdict as authoritative.
 7. Replace/wrap `submitAppeal` so authoritative mode posts only item id + appeal text to roster-server and polls; legacy mode retains the current function.
-8. On `blur`, Check Answers, manual Grade with AI, hidden, and pagehide, flush the latest response with `requestGrade:true`. On ordinary input, the existing draft save remains and receives the 20 s readiness debounce.
+8. On `blur`, Check Answers, manual Grade with AI, hidden, and pagehide, flush the latest response with `requestGrade:true`. On ordinary input, the existing draft save remains and receives the 60 s readiness debounce (20 s before 2026-10-22).
 9. Continue stale-text protection by comparing the status `responseHash` to the current textarea before rendering. A verdict for old text is never painted onto new text.
 
 All worksheet changes remain expressible in the single injected block and are rolled out with:
@@ -590,7 +590,7 @@ In-flight processes must stop on deploy; any late duplicate is still floor/versi
 | E1 | Offline before server acknowledgement | Existing OfflineQueue stores latest owned response. UI says local-only. On replay, `/ledger/record` creates the ticket; only then status becomes queued. |
 | E2 | Old offline/cached client includes a numeric score | Authoritative server ignores the score, accepts the response/readiness hint, returns `clientScoreIgnored:true`, and grades server-side. |
 | E3 | Response under 20 characters | Save as `draft`, do not claim or spend a model call. This matches the current selection threshold (`tools/regrade-ungraded-frqs.mjs:50-52`). |
-| E4 | Pause while still typing | Routine draft sets 20 s readiness. Each changed draft increments version/moves readiness. Blur/Done sends the explicit 2 s readiness hint. |
+| E4 | Pause while still typing | Routine draft sets 60 s readiness (20 s before 2026-10-22). Each changed draft increments version/moves readiness. Blur/Done sends the explicit 2 s readiness hint. |
 | E5 | Edit after claim | Draft atomically invalidates claim/increments version. Old verdict is stale and cannot write or render. |
 | E6 | Worker and external sweep grade concurrently | Both use atomic apply. Final score is max; losing/equal result does not overwrite result/receipt. |
 | E7 | Draft and verdict race | Draft RPC preserves any numeric score; verdict version check rejects old response. Null cannot overwrite numeric. |

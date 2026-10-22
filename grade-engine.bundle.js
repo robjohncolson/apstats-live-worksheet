@@ -7,7 +7,7 @@
  *
  * Regenerate after any engine edit:  node scripts/build-grade-engine.mjs
  * Parity is pinned by tests/grade-engine-bundle-parity.test.js.
- * engine-version: ee7a1bc60774
+ * engine-version: 38d61e14a863
  */
 ;(function (root) {
   'use strict';
@@ -122,7 +122,12 @@
       // reflection graded P cost 30 points on a 2x-weight feeder (all blanks right +
       // P,P = 80). Students called the grading "too harsh"; the teacher agreed.
       // Applied at rollup, so every already-graded lesson re-tunes with no data edit.
-      frqBand: { E: 100, P: 85, I: 60 },
+      // 2026-10-22 (teacher): with every blank right and the 1:2 blanks:reflection
+      // blend, the lesson must read 80 with NO reflection graded (the provisional I),
+      // 95 with P,P and 105 with E,E — so the band is solved from those targets:
+      // (100 + 2·I)/3 = 80 → I 70; (100 + 2·P)/3 = 95 → P 92.5; (100 + 2·E)/3 = 105
+      // → E 107.5. E sits above 100 on purpose; the lesson clamp (105) still holds.
+      frqBand: { E: 107.5, P: 92.5, I: 70 },
     
       // Provisional reflection floor (FRQ_PROVISIONAL_FLOOR, 2026-09-14). A lesson
       // whose blanks are recorded but whose reflections are not yet graded used to
@@ -890,6 +895,11 @@
     // EXCLUDES: WS-U{N}-L{n}-DESK_DONE, WS-U{N}L{key}-reflect{n}, etc.
     const BLANK_ITEM_PATTERN = /^WS-U(\d+)L([\d-]+)-Q\d+$/;
     
+    // Every per-lesson number (lessonGrade, lessonGradeNoQuiz) is clamped to this
+    // ceiling: 100 plus the largest exit-ticket bonus. The frqBand E value may sit
+    // above 100 (2026-10-22), so the clamp applies with or without an exit ticket.
+    const LESSON_MAX = 105;
+    
     // ── computeLessonGrades ───────────────────────────────────────────────────────
     //
     // Walk the ledger rows (latest-per-item already resolved) and accumulate
@@ -1179,7 +1189,10 @@
         acc.frqFloor = frqFloor;                       // I band when provisional, else null
         acc.frqProvisional = frqFloor != null && W == null;
         acc.Q = Q != null ? Math.round(Q * 10) / 10 : null;
-        acc.lessonGrade = B != null ? Math.round(B * 10) / 10 : null;
+        // The lesson surface is 0..105 (the exit-ticket ceiling). The E band sits above
+        // 100 since 2026-10-22 so blanks + E,E land on 105; a reflection-only E lesson
+        // would otherwise read 107.5, so every lesson number is clamped here.
+        acc.lessonGrade = B != null ? Math.round(Math.min(LESSON_MAX, B) * 10) / 10 : null;
         // Lessons-track value EXCLUDING the quiz feeder: {Cws, W} weighted (ws:W),
         // renormalized over present feeders. This is exactly computeQuarterV3's
         // lessonTrackValue (lessonGradeNoQuiz) — surfaced so the in-app/Schoology
@@ -1198,7 +1211,7 @@
           if (accWfeed != null) { num += wWeight  * accWfeed; den += wWeight; }
           if (den > 0) Bnq = num / den;
         }
-        acc.lessonGradeNoQuiz = Bnq != null ? Math.round(Bnq * 10) / 10 : null;
+        acc.lessonGradeNoQuiz = Bnq != null ? Math.round(Math.min(LESSON_MAX, Bnq) * 10) / 10 : null;
     
         // Exit tickets retain all helpful credit and add a bonus. Cws and W stay
         // unchanged: completion gates and the original feeder displays still use them.
@@ -1209,7 +1222,7 @@
           const withoutExit = blendLessonFeeders(Cws, reflectionMean(acc.frqItems, frqFloor), Q, weights);
           acc.exitCounted = B != null && (withoutExit == null || B > withoutExit);
           const base = withoutExit == null ? B : Math.max(/** @type {number} */ (B), withoutExit);
-          acc.lessonGrade = base == null ? null : Math.round(Math.min(105, base + acc.exitBonus) * 10) / 10;
+          acc.lessonGrade = base == null ? null : Math.round(Math.min(LESSON_MAX, base + acc.exitBonus) * 10) / 10;
           const noQuiz = lessonGradeNoQuiz(acc, weights);
           acc.lessonGradeNoQuiz = noQuiz == null ? null : Math.round(noQuiz * 10) / 10;
         }
@@ -1835,7 +1848,7 @@
       // blanks can only RAISE the lesson, never fall below its FRQ-only (W) value.
       // (When W is absent, Cws stands alone unchanged.) See GRADE_FIX_F1_F3_BUILD.md.
       const withExit = fixCwsReveal && result.W != null ? Math.max(blended, result.W) : blended;
-      if (!result.exitBonus) return withExit;
+      if (!result.exitBonus) return Math.min(LESSON_MAX, withExit);
     
       const reflections = reflectionMean(result.frqItems, floor);
       // Match the existing rounded W sibling used by this no-quiz track.
@@ -1843,7 +1856,7 @@
       let withoutExit = blendLessonFeeders(result.Cws, W, null, weights);
       if (fixCwsReveal && W != null) withoutExit = Math.max(/** @type {number} */ (withoutExit), W);
       const base = withoutExit == null ? withExit : Math.max(withExit, withoutExit);
-      return Math.min(105, base + result.exitBonus);
+      return Math.min(LESSON_MAX, base + result.exitBonus);
     }
     
     // [0,1] → 0..100 with one-decimal rounding (the 0..100 response surface).
@@ -3021,7 +3034,9 @@
         if (pct == null) continue; // not yet graded → excluded from W denominator
         const u = unitKeyOf(row);
         const w = wByUnit[u] || (wByUnit[u] = { sum: 0, n: 0 });
-        w.sum += pct;
+        // The unit path has no bonus surface: an E band above 100 (2026-10-22) is
+        // worth exactly 100 here. The 105 ceiling belongs to the lesson path only.
+        w.sum += Math.min(100, pct);
         w.n += 1;
       }
     
@@ -3419,7 +3434,7 @@
     normalizeResponse: __reg["scoring"].normalizeResponse,
     scoreAgainstKey: __reg["scoring"].scoreAgainstKey,
     pcPaperBlend: __reg["scoring"].pcPaperBlend,
-    _engineVersion: "ee7a1bc60774",
+    _engineVersion: "38d61e14a863",
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = __api;

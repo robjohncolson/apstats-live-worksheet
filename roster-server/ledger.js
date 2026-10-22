@@ -28,6 +28,7 @@ function countWords(text) {
 }
 let frqMigrationDegradedLogged = false;
 const FRQ_RESPONSE_MAX_BYTES = 8 * 1024;
+const FRQ_DRAFT_READY_MS = 60_000;   // routine-draft readiness (see /ledger/record)
 const APPEAL_MAX_BYTES = 2 * 1024;
 const FRQ_APPEAL_LIMIT = 3;
 const RATE_WINDOW_MS = 60_000;
@@ -420,7 +421,10 @@ export function mountLedger(app, {
 
       const responseHash = createHash('sha256').update(canonicalResponse, 'utf8').digest('hex');
       const hasLegacyScore = typeof score === 'number' && Number.isFinite(score);
-      const readyDelayMs = requestGrade === true || hasLegacyScore ? 2_000 : 20_000;
+      // A routine draft (student still typing) becomes gradeable after 60 s of
+      // quiet; leaving the box / Grade with AI asks for 2 s. 20 s (the original
+      // E4 value) graded students mid-sentence (teacher, 2026-10-22).
+      const readyDelayMs = requestGrade === true || hasLegacyScore ? 2_000 : FRQ_DRAFT_READY_MS;
       let draftResult;
       try {
         draftResult = await frqDb.recordFrqDraft({

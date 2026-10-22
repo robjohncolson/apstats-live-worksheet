@@ -2929,6 +2929,12 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
                             });
                         }
                         if (typeof showFeedback === 'function') showFeedback(ta.id, result);
+                        if (!manual && _aiStillWriting(ta)) {
+                            // Automatic pass caught the student mid-sentence. In this
+                            // mode the next idle/blur pass re-grades the new text by itself.
+                            var soFar = _aiStatusEl(ta.id, true);
+                            if (soFar) soFar.textContent = 'Graded what you have so far — keep writing. It re-grades when you leave the box, and your grade only goes up.';
+                        }
                         if (typeof recordReflectionToGradebook === 'function') recordReflectionToGradebook(ta.id, answer, result.score);
                         if (floor >= 0) upgrades++;   // an actual RAISE over a prior grade (not a first-ever grade)
                     } catch (_) { _aiClearWaiting(ta.id, '⚠️ Grading hit an error — saved; it will be retried automatically.'); }
@@ -3444,7 +3450,7 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
                 var text = form.querySelector('textarea')
                     || document.getElementById('appeal-text-' + taId)
                     || document.getElementById('appealText-' + taId);
-                if (text) text.value = '';
+                if (text) text.value = (control && control.__aiFrqReread) ? _AI_FRQ_REREAD_REASON : '';
                 _aiRenderFrqLastAppeal(taId, item);
                 _aiSyncFrqAppealCount(form, item);
                 _aiShowRevisedAppealNotice(taId, item, form);
@@ -3453,7 +3459,17 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
                 try { if (text) text.focus(); } catch (_) {}
                 return true;
             }
-            function _aiEnsureFrqAppealControl(taId, item) {
+            // Keep-writing copy (teacher, 2026-10-22): a verdict that lands while the
+            // student is still typing must not read as a final judgement. Under the
+            // server-graded mode a graded answer is re-read through the (bounded)
+            // appeal path, so the control is relabelled as a plain re-read.
+            var _AI_FRQ_KEEP_WRITING_COPY = ' — still writing? Keep going. When you finish, tap "Re-read my finished answer"; your grade only goes up.';
+            var _AI_FRQ_REREAD_LABEL = 'Re-read my finished answer…';
+            var _AI_FRQ_REREAD_REASON = 'I kept writing after the automatic grade — please read the finished answer.';
+            function _aiStillWriting(ta) {
+                try { return !!ta && document.activeElement === ta; } catch (_) { return false; }
+            }
+            function _aiEnsureFrqAppealControl(taId, item, label) {
                 if (!_aiFrqAppealAllowed(item)) {
                     _aiRemoveFrqAppealControl(taId);
                     return null;
@@ -3465,14 +3481,16 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
                     control = document.createElement('input');
                     control.type = 'button';
                     control.className = 'appeal-btn ai-frq-appeal-control';
-                    control.value = 'Appeal this grade…';
-                    control.setAttribute('aria-label', 'Appeal this grade');
                     control.setAttribute('aria-expanded', 'false');
                     control.onclick = function () {
                         _aiOpenExistingFrqAppealForm(taId, control.__aiFrqAppealItem, control);
                     };
                     status.appendChild(control);
                 }
+                var reread = label === _AI_FRQ_REREAD_LABEL;
+                control.value = reread ? _AI_FRQ_REREAD_LABEL : 'Appeal this grade…';
+                control.setAttribute('aria-label', reread ? 'Re-read my finished answer' : 'Appeal this grade');
+                control.__aiFrqReread = reread;
                 control.__aiFrqAppealItem = item;
                 return control;
             }
@@ -3539,9 +3557,11 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
                                 _aiClearAuthoritativeVerdict(taId);
                                 var editedCopy = _aiFrqAppealExhausted(item)
                                     ? "This response is already graded. You've used all 3 appeals for this question."
-                                    : 'This response is already graded — appeal to have your revised answer reviewed.';
+                                    : _aiFrqScoreLetter(item) === 'E'
+                                        ? 'This answer already earned the top score (E). Keep writing for yourself — there is nothing more to grade.'
+                                        : 'Graded before you finished? Keep writing — then tap "Re-read my finished answer". Your grade can only go up.';
                                 _aiSetFrqStatusText(taId, editedCopy, 'already-graded-edited');
-                                _aiEnsureFrqAppealControl(taId, item);
+                                _aiEnsureFrqAppealControl(taId, item, _AI_FRQ_REREAD_LABEL);
                                 return;
                             }
                         }
@@ -3566,10 +3586,15 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
                             } else if (away) {
                                 _aiSetFrqStatusText(taId, '✓ Graded while you were away: ' + label, 'graded-away', true, '', announcementKey);
                                 _aiFrqAwayShown[itemId] = String(item.gradedAt || '');
+                            } else if (_aiStillWriting(ta) && _aiFrqScoreLetter(item) !== 'E') {
+                                // The student is still in the box: this verdict read a draft.
+                                // Say so calmly — the finished answer is re-read on request
+                                // and a later verdict can only raise the grade.
+                                _aiSetFrqStatusText(taId, '✓ Graded what you have so far: ' + label + _AI_FRQ_KEEP_WRITING_COPY, 'graded', true, '', announcementKey);
                             } else {
                                 _aiSetFrqStatusText(taId, '✓ Graded: ' + label, 'graded', true, '', announcementKey);
                             }
-                            _aiEnsureFrqAppealControl(taId, item);
+                            _aiEnsureFrqAppealControl(taId, item, _aiStillWriting(ta) ? _AI_FRQ_REREAD_LABEL : null);   // an E never gets a control
                             _aiFrqAnnouncedGrade[itemId] = announcementKey;
                             try { if (markerKey && item.gradedAt) localStorage.setItem(markerKey, String(item.gradedAt)); } catch (_) {}
                             return;
@@ -3738,7 +3763,7 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
             var _aiOriginalDraftSaver = null;
             function _aiScheduleDraftGrade(taId, answer, startedAt) {
                 _aiClearOwnedTimeout(_aiDraftGradeTimers[taId]);
-                var delay = Math.max(0, 20000 - (Date.now() - startedAt));
+                var delay = Math.max(0, 60000 - (Date.now() - startedAt));   // 60 s after the draft started (was 20 s)
                 _aiDraftGradeTimers[taId] = _aiSetOwnedTimeout(function () {
                     delete _aiDraftGradeTimers[taId];
                     var ta = document.getElementById(taId);
@@ -4321,7 +4346,7 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
                             _aiScheduleDraftSave(ta);
                             return;
                         }
-                        if ((ta.value || '').trim().length >= 20) _aiScheduleAutoGrade(20000);   // 20 s idle
+                        if ((ta.value || '').trim().length >= 20) _aiScheduleAutoGrade(60000);   // 60 s idle (was 20 s — graded students mid-sentence)
                     });
                     _aiAddOwnedListener(ta, 'blur', function () {
                         if (_aiIsAuthoritative()) {

@@ -207,7 +207,9 @@ export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts
     if (pct == null) continue; // not yet graded → excluded from W denominator
     const u = unitKeyOf(row);
     const w = wByUnit[u] || (wByUnit[u] = { sum: 0, n: 0 });
-    w.sum += pct;
+    // The unit path has no bonus surface: an E band above 100 (2026-10-22) is
+    // worth exactly 100 here. The 105 ceiling belongs to the lesson path only.
+    w.sum += Math.min(100, pct);
     w.n += 1;
   }
 

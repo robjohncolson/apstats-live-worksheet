@@ -174,11 +174,12 @@ describe('POST /ledger/record FRQ mode matrix', () => {
     expect(Date.parse(frqDb.drafts[0].readyAt) - Date.now()).toBeLessThanOrEqual(2_000);
   });
 
-  it('uses twenty-second readiness for a draft and two seconds for requestGrade', async () => {
+  it('uses sixty-second readiness for a draft and two seconds for requestGrade', async () => {
     mode = 'authoritative';
     await record();
     const draftDelay = Date.parse(frqDb.drafts[0].readyAt) - Date.now();
-    expect(draftDelay).toBeGreaterThan(18_000);
+    expect(draftDelay).toBeGreaterThan(58_000);
+    expect(draftDelay).toBeLessThanOrEqual(60_000);
     await record({ requestGrade: true });
     const requestedDelay = Date.parse(frqDb.drafts[1].readyAt) - Date.now();
     expect(requestedDelay).toBeLessThanOrEqual(2_000);

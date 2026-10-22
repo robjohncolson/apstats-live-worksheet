@@ -410,9 +410,10 @@ describe('GET /class/snapshot?by=assignment', () => {
     ]);
     expect(r.body.assignments[0]).toEqual({
       key: '1.1:worksheet', lessonKey: '1.1', track: 'worksheet', title: '1.1 Follow-Along',
-      zeroDate: '2026-09-25', n: 6, values: [0, 100, 100, 100, 100, 100],
-      fiveNumber: { min: 0, q1: 100, median: 100, q3: 100, max: 100 },
-      iqr: 0, fences: { low: 100, high: 100 }, outliers: [0], zeros: 1,
+      // A reflection-only E lesson: the E band (107.5, 2026-10-22) clamped to the 105 lesson ceiling.
+      zeroDate: '2026-09-25', n: 6, values: [0, 105, 105, 105, 105, 105],
+      fiveNumber: { min: 0, q1: 105, median: 105, q3: 105, max: 105 },
+      iqr: 0, fences: { low: 105, high: 105 }, outliers: [0], zeros: 1,
     });
     expect(r.body.assignments[1]).toMatchObject({ title: '1.1 Quiz', values: [0, 100, 100, 100, 100, 100], zeros: 1 });
     expect(r.body.assignments[2]).toMatchObject({ title: '1.1 Blooket', values: [0, 29, 43, 57, 71, 86], zeros: 1 });
@@ -532,8 +533,8 @@ describe('GET /class/snapshot?section=all (both periods pooled)', () => {
     const byKey = Object.fromEntries(r.body.assignments.map(item => [item.key, item]));
     // 1.1 worksheet: due in both → 12 values, E's earlier date wins
     expect(byKey['1.1:worksheet']).toMatchObject({ n: 12, zeroDate: '2026-09-23', zeros: 2 });
-    expect(byKey['1.1:worksheet'].values).toEqual([0, 0, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100]);
-    expect(byKey['1.1:worksheet'].fiveNumber).toEqual({ min: 0, q1: 100, median: 100, q3: 100, max: 100 });
+    expect(byKey['1.1:worksheet'].values).toEqual([0, 0, 105, 105, 105, 105, 105, 105, 105, 105, 105, 105]);
+    expect(byKey['1.1:worksheet'].fiveNumber).toEqual({ min: 0, q1: 105, median: 105, q3: 105, max: 105 });
     // 1.2 worksheet: due only in B today → B's 6 (all missing → 0); E has nothing recorded for 1.2,
     // so it lends no values and no zeros before its own date
     expect(byKey['1.2:worksheet']).toMatchObject({ n: 6, zeroDate: '2026-09-25', zeros: 6 });

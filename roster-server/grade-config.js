@@ -94,7 +94,12 @@ export const PHASE3_CONFIG = {
   // reflection graded P cost 30 points on a 2x-weight feeder (all blanks right +
   // P,P = 80). Students called the grading "too harsh"; the teacher agreed.
   // Applied at rollup, so every already-graded lesson re-tunes with no data edit.
-  frqBand: { E: 100, P: 85, I: 60 },
+  // 2026-10-22 (teacher): with every blank right and the 1:2 blanks:reflection
+  // blend, the lesson must read 80 with NO reflection graded (the provisional I),
+  // 95 with P,P and 105 with E,E — so the band is solved from those targets:
+  // (100 + 2·I)/3 = 80 → I 70; (100 + 2·P)/3 = 95 → P 92.5; (100 + 2·E)/3 = 105
+  // → E 107.5. E sits above 100 on purpose; the lesson clamp (105) still holds.
+  frqBand: { E: 107.5, P: 92.5, I: 70 },
 
   // Provisional reflection floor (FRQ_PROVISIONAL_FLOOR, 2026-09-14). A lesson
   // whose blanks are recorded but whose reflections are not yet graded used to
