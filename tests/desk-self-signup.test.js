@@ -95,8 +95,8 @@ describe('teacher onboarding + class gradebook (static)', () => {
   });
 
   it('openClassGradebook + _selectClassStudent are defined in source', () => {
-    expect(html).toMatch(/async\s+function\s+openClassGradebook\s*\(/);
-    expect(html).toMatch(/function\s+_selectClassStudent\s*\(/);
+    expect(deskSource()).toMatch(/async\s+function\s+openClassGradebook\s*\(/);
+    expect(deskSource()).toMatch(/function\s+_selectClassStudent\s*\(/);
   });
 
   it('the redundant Do-Now "Class Gradebook" chip was removed (Teacher Tools is the single entry)', () => {
@@ -106,7 +106,7 @@ describe('teacher onboarding + class gradebook (static)', () => {
     // The Do-Now grade strip no longer builds a cgChip.
     expect(html).not.toContain('cgChip');
     expect(document.getElementById('menu-teacher').innerHTML).toContain('openTeacherTools()');
-    expect(html).toContain('openClassGradebook()');
+    expect(deskSource()).toContain('openClassGradebook()');
   });
 });
 
