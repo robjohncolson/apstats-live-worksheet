@@ -1,0 +1,21 @@
+{
+  "_comment": "The park calculator modules that MUST be byte-identical on the client (apstat-park/) and the relay (../curriculum_render/railway-server/apstat-park/). scripts/sync-park-calculator.mjs copies exactly this set (plus calculator-native/ via its manifest.mjs); apstat-park/calculator-lobby.test.mjs 'client and relay use identical block rules' fails on any drift. Add a module here the moment the relay imports it — a module missing from this list was the 'copied by hand' tax of absorb round 2 (calculator-handheld, calculator-data-entry).",
+  "sharedModules": [
+    "calculator-catalog.mjs",
+    "calculator-curriculum.mjs",
+    "calculator-data-entry.mjs",
+    "calculator-engine.mjs",
+    "calculator-goals.mjs",
+    "calculator-handheld.mjs",
+    "calculator-lobby.mjs",
+    "calculator-mission.mjs",
+    "calculator-patterns.mjs",
+    "calculator-recognition.mjs",
+    "calculator-srs.mjs",
+    "calculator-variation.mjs"
+  ],
+  "nativeDir": "calculator-native",
+  "nativeExtraFiles": [
+    "manifest.mjs"
+  ]
+}

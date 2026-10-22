@@ -3,9 +3,34 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { createLobby, advanceLobby, pushersFor, TEAM_BLOCK } from './calculator-lobby.mjs';
 
+// Track J (2026-10-22): the shared set comes from scripts/park-shared-modules.json (+ the
+// native manifest), the same list scripts/sync-park-calculator.mjs copies -- so a module
+// added there is guarded here without a second edit. Fix drift with `node scripts/sync-park-calculator.mjs`.
+const SHARED = JSON.parse(fs.readFileSync(new URL('../scripts/park-shared-modules.json', import.meta.url), 'utf8'));
+const RELAY = new URL('../../curriculum_render/railway-server/apstat-park/', import.meta.url);
+const { nativeScriptFilenames } = await import('./calculator-native/manifest.mjs');
+
+function sharedFiles() {
+  const native = [...nativeScriptFilenames, ...SHARED.nativeExtraFiles].map((f) => SHARED.nativeDir + '/' + f);
+  return [...SHARED.sharedModules, ...native];
+}
+
 test('client and relay use identical block rules', () => {
-  assert.equal(fs.readFileSync(new URL('./calculator-lobby.mjs', import.meta.url), 'utf8'),
-    fs.readFileSync(new URL('../../curriculum_render/railway-server/apstat-park/calculator-lobby.mjs', import.meta.url), 'utf8'));
+  assert.ok(SHARED.sharedModules.includes('calculator-lobby.mjs'));
+  for (const file of sharedFiles()) {
+    assert.equal(fs.readFileSync(new URL('./' + file, import.meta.url), 'utf8'),
+      fs.readFileSync(new URL(file, RELAY), 'utf8'),
+      file + ' differs between client and relay; run node scripts/sync-park-calculator.mjs');
+  }
+});
+
+test('every calculator module the relay imports from its own copy is in the shared manifest', () => {
+  // A relay-side `import './calculator-x.mjs'` where apstat-park/calculator-x.mjs also exists
+  // means both sides carry the module -- it must be in the synced set or it drifts by hand.
+  const clientFiles = new Set(fs.readdirSync(new URL('./', import.meta.url)));
+  const relayFiles = fs.readdirSync(RELAY).filter((f) => f.endsWith('.mjs') && !f.includes('.test.'));
+  const missing = relayFiles.filter((f) => clientFiles.has(f) && !SHARED.sharedModules.includes(f));
+  assert.deepEqual(missing, [], 'present on both sides but not in scripts/park-shared-modules.json');
 });
 
 test('the live count includes a five-player pushing chain, not spectators or stale input', () => {
