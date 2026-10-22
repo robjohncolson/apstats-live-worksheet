@@ -2626,6 +2626,15 @@
     #bf-overlay .bf-feedback{margin-top:8px;font-size:11px;font-style:italic}
     #bf-overlay .bf-result-pass{color:var(--ok);font-weight:bold}
     #bf-overlay .bf-result-fail{color:var(--bad);font-weight:bold}
+    /* Teacher-only Class Log "Recording" fold (js/desk-class-log.js). */
+    #resource-body .desk-classlog{margin-top:10px;padding-top:8px;border-top:1px solid #aaa}
+    #resource-body .desk-classlog>summary{cursor:pointer;font-weight:bold;font-size:10px}
+    #resource-body .desk-classlog .a2-rec-label{margin:6px 0 2px;font-weight:bold}
+    #resource-body .desk-classlog .a2-rec-list{margin:0 0 4px 16px;padding:0}
+    #resource-body .desk-classlog .a2-week-muted{color:var(--plat-lo);margin:4px 0}
+    #resource-body .desk-classlog-signin{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+    #resource-body .desk-classlog-signin input{font-size:11px;padding:2px 4px}
+    #resource-body .desk-classlog-status{font-size:10px}
     #resource-body .fc-ready-badge{display:inline-block;margin-left:6px;padding:1px 5px;
       border:1px solid #777;border-radius:8px;background:#f0f0f0;color:#444;
       font-size:9px;line-height:1.2;white-space:nowrap}
@@ -2945,6 +2954,10 @@
 <script src="lib/flashcard-flags.js" onerror=""></script>
 <script src="lib/flashcard-sync.js" onerror=""></script>
 <script src="lib/sfx.js" onerror=""></script>
+<!-- Teacher-only Class Log "Recording" fold on the day panel (track L): the summary
+     lib copied from a2 + the Desk glue (a2 sign-in token, mount). Both fail soft. -->
+<script src="lib/class-log-summary.js" onerror=""></script>
+<script src="js/desk-class-log.js?v=2026-10-22-reqs" onerror=""></script>
 <script src="pwa-register.js"></script>
 <script src="js/wallet_logic.js"></script>
 <script type="module" src="js/student-wallet.js"></script>
@@ -12004,7 +12017,20 @@ function _showWorkDayPanel(inf, dateStr) {
         finish.onclick = function () { showResourcePanel(next.inf, next.dateStr); };
     }
     body.appendChild(finish);
+    if (typeof _mountClassLogFold === 'function') _mountClassLogFold(body, dateStr);
     document.getElementById('resource-overlay').style.display = 'block';
+}
+
+// Teacher-only Class Log "Recording" fold (js/desk-class-log.js): what the phone
+// summarised for this section-day, read from the a2 roster-server. The calendar
+// hands the panel "Oct 19"; the module resolves it inside the current school year.
+// Self-gated on _deskIsTeacher() inside mount(); students never get the fold.
+function _mountClassLogFold(body, dateStr) {
+    try {
+        if (!window.DeskClassLog || !body) return;
+        var iso = DeskClassLog.isoFromDisplay(dateStr, typeof tdy === 'function' ? tdy() : new Date());
+        DeskClassLog.mount(window, body, iso, cP);
+    } catch (_) { /* the fold must never break the panel */ }
 }
 
 function _showBreakDayPanel(inf, dateStr) {
@@ -12546,6 +12572,7 @@ function showResourcePanel(inf, dateStr) {
     }
 
     document.getElementById('resource-body').innerHTML = html;
+    if (typeof _mountClassLogFold === 'function') _mountClassLogFold(document.getElementById('resource-body'), dateStr);
     document.getElementById('resource-overlay').style.display = 'block';
     _lastResourcePanel = { inf: inf, dateStr: dateStr };
 

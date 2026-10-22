@@ -26,6 +26,7 @@ const CORE = [
   'data/blooket-difficulty.json', 'data/blooket-topic-csv.json',
   'data/flashcard-flags.json',
   'js/ced2026-crosswalk.js', 'js/ced2026-labels.js',
+  'lib/class-log-summary.js', 'js/desk-class-log.js',
 ];
 
 // Pure decision (unit-tested via extraction): 'navigate' | 'asset' | 'passthrough'.
