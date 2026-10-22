@@ -114,6 +114,11 @@ npm install
 # Run tests
 npm test
 
+# Fast gate (~2 min): grade engine (golden-master*, lesson-grade*), Desk contracts
+# (tests/desk-*), CI-pinning tests and alias-hosts. Prints its wall time as "Duration".
+# Full suites stay the release gate. Config: vitest.quick.config.js
+npm run test:quick
+
 # Run a single test file
 npx vitest run tests/grading-prompts.test.js
 
