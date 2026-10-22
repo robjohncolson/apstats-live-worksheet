@@ -14,7 +14,7 @@ import { readFileSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { CED_SOURCE } from './fixtures/ced2026-labels.js';
-import { deskSource, deskHtml } from './helpers/desk-source.js';
+import { deskSource, deskHtml, deskHtmlInlined } from './helpers/desk-source.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const html = deskHtml();
@@ -48,7 +48,7 @@ let win, doc, loaded = false;
 
 beforeAll(async () => {
   try {
-    const dom = new JSDOM(html, {
+    const dom = new JSDOM(deskHtmlInlined(), { // js/desk-*.js pasted inline: no resource loader here
       runScripts: 'dangerously', url: 'https://example.test/desk.html', pretendToBeVisual: true,
       beforeParse(window) { window.eval(CED_SOURCE); },
     });

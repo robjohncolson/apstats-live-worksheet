@@ -95,13 +95,14 @@ describe('teacher-week.html', () => {
 
 describe('teacher-week.html as the Desk "This Week" app', () => {
   const desk = deskHtml();
+  const deskJs = deskSource(); // code slices read the Desk JS incl. js/desk-*.js modules
 
   it('has a desktop icon, an iframe window and a registry entry, and hands teachers the CED codes', () => {
     expect(desk).toMatch(/<div class="app-icon" data-app="week"[^>]*ondblclick="openApp\('week'\)"/);
     expect(desk).toMatch(/id="app-week-overlay"/);
     expect(desk).toMatch(/id="app-week-frame"/);
     expect(desk).toMatch(/week:\s*\{\s*url:\s*'teacher-week\.html'/);
-    const launch = desk.slice(desk.indexOf('function appLaunchUrl'), desk.indexOf('function openApp('));
+    const launch = deskJs.slice(deskJs.indexOf('function appLaunchUrl'), deskJs.indexOf('function openApp('));
     expect(launch).toContain("'?ced=1'");
     expect(launch).toContain("'?ced=0'");
     expect(launch).toContain('_deskIsTeacher()');
@@ -109,7 +110,7 @@ describe('teacher-week.html as the Desk "This Week" app', () => {
 
   it("hands teachers the DOK app's print-slips panel (?teacher=1); students get the plain URL", async () => {
     const { runInNewContext } = await import('node:vm');
-    const source = desk.slice(desk.indexOf('function appLaunchUrl'), desk.indexOf('function openApp('));
+    const source = deskJs.slice(deskJs.indexOf('function appLaunchUrl'), deskJs.indexOf('function openApp('));
     const launchFor = teacher => runInNewContext(source + '; appLaunchUrl',
       { _deskIsTeacher: () => teacher, _ti84TodayTopic: () => null, _todayLessonInf: null });
     const dok = { url: 'https://robjohncolson.github.io/apstats-live-worksheet/dok/index.html' };

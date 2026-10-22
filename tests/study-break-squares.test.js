@@ -490,9 +490,9 @@ describe('§3 the gold lines reported to bet/resolve', () => {
 
   it('wording: lobby "Stake 1 🍬 · a gold clear doubles the pot"; in game "pot 2 🍬 · gold ×2"', () => {
     expect(html).toContain('>Stake 1 🍬 · a gold clear doubles the pot</div>');
-    expect(html).not.toContain('winner takes 2 🍬, loser pays 1');
-    expect(html).toContain("' \\u00b7 pot 2 \\ud83c\\udf6c \\u00b7 gold \\u00d72'");
-    expect(html).toMatch(/same trust level as the base stake/);
+    expect(html_SRC).not.toContain('winner takes 2 🍬, loser pays 1');
+    expect(html_SRC).toContain("' \\u00b7 pot 2 \\ud83c\\udf6c \\u00b7 gold \\u00d72'");
+    expect(html_SRC).toMatch(/same trust level as the base stake/);
   });
 
   it('the resolve body carries { me: myGoldClears, opponent: oppGoldClears }', async () => {

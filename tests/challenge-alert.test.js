@@ -170,7 +170,7 @@ describe('Study Break challenge alert (source pins)', () => {
   });
 
   it('the in-game modal breathes too and stops on resolution', () => {
-    const dlg = html.slice(html.indexOf('showChallengeDialog(fromUser) {'), html.indexOf('startMatch(data) {'));
+    const dlg = html_SRC.slice(html_SRC.indexOf('showChallengeDialog(fromUser) {'), html_SRC.indexOf('startMatch(data) {'));
     expect(dlg).toContain("document.body.classList.add('challenge-waiting')");
     expect((dlg.match(/classList\.remove\('challenge-waiting'\)/g) || []).length).toBeGreaterThanOrEqual(2);
   });

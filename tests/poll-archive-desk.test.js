@@ -165,7 +165,7 @@ describe('_fetchPollArchive function', () => {
 
 describe('rCal poll-dot indicator', () => {
   it('16: rCal function exists', () => {
-    expect(DESK).toMatch(/function\s+rCal\s*\(\s*\)/);
+    expect(DESK_SRC).toMatch(/function\s+rCal\s*\(\s*\)/);
   });
 
   it('17: rCal creates a .poll-dot element when _pollArchive has entries for that date', () => {

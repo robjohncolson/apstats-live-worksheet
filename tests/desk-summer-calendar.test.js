@@ -108,7 +108,7 @@ describe('Desk summer weeks — _summerWeeks()', () => {
 
 describe('Desk summer weeks — woven into rCal (structural)', () => {
   it('rCal prepends the summer weeks to its week list', () => {
-    expect(DESK).toContain('function _summerWeeks');
+    expect(DESK_SRC).toContain('function _summerWeeks');
     expect(DESK).toMatch(/W = _sumW\.concat\(W\)/);
   });
 

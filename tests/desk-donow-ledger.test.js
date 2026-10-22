@@ -45,7 +45,7 @@ describe('Do Now card — readiness color + single My Ledger entry', () => {
     expect(paint).toMatch(/Score breakdown · vs Schoology/);
     expect(paint).toContain('renderMyGradebook(_firstGradebookQuarter(_activeGradebook), bdBody, bdTabs)');
     // renderMyGradebook accepts injectable containers (defaults preserve the modal)
-    expect(DESK).toMatch(/function renderMyGradebook\(qk, bodyEl, tabsEl\)/);
+    expect(DESK_SRC).toMatch(/function renderMyGradebook\(qk, bodyEl, tabsEl\)/);
   });
 
   it('moved "how grades work" to a Help menu', () => {

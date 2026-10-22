@@ -406,7 +406,7 @@ describe('Window redesign -- Today button', () => {
     expect(html).toMatch(/id=["']cal-today["'][^>]*onclick=["']calToday\(\)/);
   });
   it('calToday resets paging to today and re-renders', () => {
-    expect(html).toMatch(/function\s+calToday\s*\(\s*\)/);
+    expect(html_SRC).toMatch(/function\s+calToday\s*\(\s*\)/);
     const b = fnBody(html_SRC, 'calToday');
     expect(b).toMatch(/_calPageOffset\s*=\s*0/);
     expect(b).toMatch(/rCal\(\)/);

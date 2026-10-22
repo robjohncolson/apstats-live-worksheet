@@ -181,8 +181,8 @@ describe('SY26-27 year opener — render + click wiring', () => {
   });
 
   it('baseline opens a no-stakes framing dialog (PCs are taken in AP Classroom, not Desk-launched)', () => {
-    expect(DESK).toMatch(/inf\.kind === 'baseline'[\s\S]{0,400}_openBaselineInfo/);
-    expect(DESK).toContain('function _openBaselineInfo');
+    expect(DESK_SRC).toMatch(/inf\.kind === 'baseline'[\s\S]{0,400}_openBaselineInfo/);
+    expect(DESK_SRC).toContain('function _openBaselineInfo');
     expect(DESK).toMatch(/Baseline Check — your starting line/);
     expect(DESK).toMatch(/only your <b>best<\/b> Progress-Check/);
   });

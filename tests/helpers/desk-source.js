@@ -3,6 +3,8 @@
 // into js/desk-*.js modules (FABLE_SPRINT_2026_10_22C_SPEC.md track C3).
 //
 //   deskHtml()    the raw ap_stats_roadmap_square_mode.html (markup pins: <script src>, ids)
+//   deskHtmlInlined()  the raw file with each js/desk-*.js pasted back inline in place of its
+//                 <script src> (JSDOM boots with runScripts: 'dangerously' and no resource loader)
 //   deskSource()  every inline <script> block plus every js/desk-*.js module the Desk loads,
 //                 concatenated in load order (document order of the <script> tags)
 //   fnBody(name)  the source text of `function name(...) {...}` found in deskSource()
@@ -48,6 +50,20 @@ export function deskSource() {
   }
   sourceCache = parts.join('\n');
   return sourceCache;
+}
+
+// The raw Desk with every js/desk-*.js module pasted back inline where its <script src> stood:
+// what a JSDOM boot with runScripts: 'dangerously' and no resource loader needs to execute the
+// same code the single-script Desk used to run (other <script src> tags are left as they are).
+let inlinedCache = null;
+export function deskHtmlInlined() {
+  if (inlinedCache !== null) return inlinedCache;
+  inlinedCache = deskHtml().replace(SCRIPT_TAG, (tag, attrs) => {
+    const src = DESK_MODULE_SRC.exec(attrs);
+    if (!src) return tag;
+    return '<script>\n' + readFileSync(resolve(ROOT, src[1]), 'utf8') + '</script>';
+  });
+  return inlinedCache;
 }
 
 export function fnBodyOf(src, name) {

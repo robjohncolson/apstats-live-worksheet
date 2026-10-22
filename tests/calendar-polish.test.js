@@ -373,8 +373,8 @@ describe('Calendar nav -- prev/next arrows page the focus window', () => {
   });
 
   it('defines _calPageOffset and calStep at module scope', () => {
-    expect(html).toMatch(/let\s+_calPageOffset\s*=\s*0/);
-    expect(html).toMatch(/function\s+calStep\s*\(\s*dir\s*\)/);
+    expect(html_SRC).toMatch(/let\s+_calPageOffset\s*=\s*0/);
+    expect(html_SRC).toMatch(/function\s+calStep\s*\(\s*dir\s*\)/);
   });
 
   it('calStep pages by the current window size (_calStepWeeks) and re-runs rCal', () => {

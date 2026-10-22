@@ -7,7 +7,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { deskSource, deskHtml, deskModulePaths, fnBody, fnBodyOf } from './helpers/desk-source.js';
+import { deskSource, deskHtml, deskHtmlInlined, deskModulePaths, fnBody, fnBodyOf } from './helpers/desk-source.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -33,6 +33,15 @@ describe('deskHtml / deskSource', () => {
     expect(before).toBe(true);
     expect(src.indexOf('/* ═══ DIALOG ═══ */')).toBeLessThan(src.indexOf('const ProgressApp = {'));
     expect(src.indexOf('const ProgressApp = {')).toBeLessThan(src.indexOf('/* ═══ APP LAUNCHER ═══ */'));
+  });
+  it('deskHtmlInlined() pastes each js/desk-*.js back where its <script src> stood, leaving other src tags alone', () => {
+    const inlined = deskHtmlInlined();
+    expect(inlined).not.toMatch(/<script src="js\/desk-[^"]+"/);
+    expect(inlined).toContain('<script src="classroom-board.js?v=');
+    for (const path of deskModulePaths()) expect(inlined).toContain('<script>\n' + readFileSync(resolve(ROOT, path), 'utf8') + '</script>');
+    // Same JS, same order, as deskSource().
+    const inlineOnly = [...inlined.matchAll(/<script\b(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g)].map((m) => m[1]).join('\n');
+    expect(inlineOnly.replace(/\s+/g, ' ')).toBe(deskSource().replace(/\s+/g, ' '));
   });
   it('is memoised (same string instance on every call)', () => {
     expect(deskSource()).toBe(deskSource());
