@@ -44,7 +44,9 @@ Same as sprint C per repo. Spec run log + memory.
 | D2 | Prep notes B + E for Fri 10/23 in `roster-local/prep/` (B: 2.3 Simulation Day 1, PC deadline Fri midnight, "interviewing someone next week"; E: 2.1 Day 1+2 catch-up, last E recording empty — check the phone). |
 | D3 | a2 typecheck 46 → 0 (JSDoc only; engine outputs identical 21/21); CI typecheck job blocking again. |
 | D4 | Harness budgets ×3 on win32 (`HARNESS_BUDGET` override); ten gated files un-skipped and green here (pico-home-doge too: it was the unscaled 1 s wait). |
-| D5 | class-log: 409 `section_mismatch` → re-send once with the card's section, correction persisted (470 tests). cr: see cr commit list below. a2 cardId/course check deferred (three agents already in a2). |
+| D5 | class-log: 409 `section_mismatch` → re-send once with the card's section, correction persisted (470 tests). cr (44e9647): `/api/ai/grade` + appeal bad shapes → 400 via `grade-shape.js` (six constructed 500s closed, incl. a regex-metachar template key), bonus rail `posted`/`failed` ring of 500, `rate-ip` marker on anonymous log-mode 429s, `queryText` too-long vs missing. 78 files / 1909 tests. a2 cardId/course check deferred (three agents already in a2). |
 | D6 | fa CLAUDE.md refreshed; a2 CLAUDE.md + CONTINUATION by D0; cr/class-log docs by their agents. |
 
 Gotcha found during release: the a2 fixture tree under `tests/fixtures/**/roster-local/` was hidden by the repo-wide `roster-local/` ignore and never reached CI (f3f64d2 un-ignores fixtures).
+
+Release: fa ff7c3976 (CI green on abb272ec; roster live), a2 f3f64d2 (CI green, typecheck blocking; live), cr 44e9647, class-log subtree (470 Kotlin tests). a2 fixture un-ignore was the one post-push fix.
