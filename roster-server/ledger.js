@@ -1072,6 +1072,60 @@ export function mountLedger(app, {
     return res.json(body);
   });
 
+  // ── POST /ledger/quiz-reset ─────────────────────────────────────────────────
+  // Teacher-only. Give a student their one explained retry back on a keyed quiz
+  // item (QUIZ_FIRST_ANSWER_SPEC v2): deletes the attempt-2 row (and any later
+  // row) of (student, 'curriculum_quiz', item). The attempt-1 row stays, so the
+  // first answer is still the kept first answer and the quiz app reopens the
+  // retry form. The quiz app drops its local "accepted retry" record when the
+  // ledger restore finds no attempt-2 row (restoreOwnAnswersFromLedger).
+  //
+  //   body: { studentId | username, itemId }
+  //   → 200 { ok:true, studentId, itemId, deleted:n, rows:[{ledger_id, attempt, response}] }
+  //        deleted:0 means there was no retry to reset (the first answer is untouched)
+  //   → 400 bad body · 401 · 404 unknown username · 503 ledger db has no delete
+  app.post('/ledger/quiz-reset', async (req, res) => {
+    if (!await requireTeacher(req, rosterDb)) return res.status(401).json({ ok: false, error: 'forbidden' });
+    const body = req.body || {};
+    const itemId = typeof body.itemId === 'string' ? body.itemId.trim() : '';
+    if (!/^[A-Za-z0-9_-]{1,64}$/.test(itemId)) {
+      return res.status(400).json({ ok: false, error: 'itemId is required (letters, digits, - and _ only)' });
+    }
+
+    let studentId = typeof body.studentId === 'string' ? body.studentId.trim() : '';
+    const username = typeof body.username === 'string' ? body.username.trim() : '';
+    if (!studentId && !username) {
+      return res.status(400).json({ ok: false, error: 'studentId or username is required' });
+    }
+    if (!studentId) {
+      if (!rosterDb || typeof rosterDb.findByUsername !== 'function') {
+        return res.status(503).json({ ok: false, error: 'roster lookup unavailable' });
+      }
+      let found;
+      try {
+        found = await rosterDb.findByUsername(username);
+      } catch (_) {
+        found = { error: true };
+      }
+      if (!found || found.error || !found.data || !found.data.student_id) {
+        return res.status(404).json({ ok: false, error: 'unknown username' });
+      }
+      studentId = found.data.student_id;
+    }
+
+    if (typeof db.deleteLedgerRows !== 'function') {
+      return res.status(503).json({ ok: false, error: 'ledger delete unavailable' });
+    }
+    const removed = await db.deleteLedgerRows({ studentId, source: 'curriculum_quiz', itemId, minAttempt: 2 });
+    if (removed.error) {
+      console.error('[ledger] quiz-reset delete failed', removed.error);
+      return res.status(500).json({ ok: false, error: 'Database error' });
+    }
+    const rows = Array.isArray(removed.data) ? removed.data : [];
+    console.log(`[ledger] quiz-reset student=${studentId} item=${itemId} deleted=${rows.length}`);
+    return res.json({ ok: true, studentId, itemId, deleted: rows.length, rows });
+  });
+
   // ── GET /ledger/student/:studentId ──────────────────────────────────────────
   // PERSISTENT_ANSWERS_BUILD.md §3 extension:
   //   Query: prefix (optional) — strict prefix filter on item_id. Rejects any

@@ -187,7 +187,7 @@ describe('teacher-dashboard.html — Phase 4a structure', () => {
       //  - /payout/       (DOGE batch rail: preview + seal a public-address work queue;
       //                    the browser never broadcasts or receives wallet key material)
       // Concatenated paths (postJson('/x/' + act, ...)) capture just the prefix.
-      const ok = t.path.startsWith('/remediation/') || t.path.startsWith('/wallet/') || t.path.startsWith('/teacher/nudge') || t.path.startsWith('/admin/') || t.path.startsWith('/pc/unlock') || t.path.startsWith('/class/quarter/') || t.path.startsWith('/payout/');
+      const ok = t.path.startsWith('/remediation/') || t.path.startsWith('/wallet/') || t.path.startsWith('/teacher/nudge') || t.path.startsWith('/admin/') || t.path.startsWith('/pc/unlock') || t.path.startsWith('/class/quarter/') || t.path.startsWith('/payout/') || t.path === '/ledger/quiz-reset';
       expect(ok, `POST to "${t.path}" violates the /class/* read-only intent`).toBe(true);
     }
   });

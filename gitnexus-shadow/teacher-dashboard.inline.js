@@ -1126,6 +1126,27 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     // ===== guardrails =====
     // The x-teacher-secret is NEVER auto-persisted client-side. It is read
     // fresh from the input on every fetch (see api()).
@@ -3140,6 +3161,55 @@
     }
 
     $('manage-students-load-btn').addEventListener('click', loadManagedStudents);
+
+    // ── Quiz retry reset ─────────────────────────────────────────────────
+    function quizResetStatus(text, color) {
+      var el = $('quiz-reset-status');
+      if (!el) return;
+      el.textContent = text;
+      el.style.color = color || '';
+    }
+
+    async function resetQuizRetry() {
+      var button = $('quiz-reset-btn');
+      var username = $('quiz-reset-username').value.trim();
+      var itemId = $('quiz-reset-item').value.trim();
+      if (!username || !itemId) {
+        quizResetStatus('Enter the student login UID and the quiz item id.', '#a33');
+        return;
+      }
+      button.disabled = true;
+      quizResetStatus('Resetting…');
+      try {
+        var result = await postJson('/ledger/quiz-reset', { username: username, itemId: itemId }, teacherSecret());
+        if (result.networkError) {
+          quizResetStatus('Network error: ' + result.networkError, '#a33');
+          return;
+        }
+        if (result.status === 401) {
+          quizResetStatus('Forbidden — sign in as a teacher or check the teacher secret.', '#a33');
+          return;
+        }
+        if (result.status === 404) {
+          quizResetStatus('No student with that login UID.', '#a33');
+          return;
+        }
+        if (result.status !== 200 || !result.data || !result.data.ok) {
+          quizResetStatus('Reset failed: ' + ((result.data && result.data.error) || ('HTTP ' + result.status)), '#a33');
+          return;
+        }
+        if (!result.data.deleted) {
+          quizResetStatus('Nothing to reset — ' + username + ' has no retry on ' + itemId + ' (the retry is still open to them).', '#8a6d00');
+          return;
+        }
+        var removed = (result.data.rows || []).map(function (r) { return 'attempt ' + r.attempt + ' = ' + r.response; }).join(', ');
+        quizResetStatus('Retry reset for ' + username + ' on ' + itemId + ' (removed ' + removed + '). They reload the quiz and the retry form reopens.', '#25663F');
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    $('quiz-reset-btn').addEventListener('click', resetQuizRetry);
 
     // Gradebook quarter selector: re-render from the stashed payload (no refetch).
     QUARTERS.forEach(function (q) {

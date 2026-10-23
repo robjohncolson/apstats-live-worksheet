@@ -67,12 +67,15 @@ async function writeWithReasoningFallback(row, reasoning, write) {
 export function createLedgerDb(client) {
   return { insertLedgerRow, insertLedgerRowIfAbsent, updateLedgerReceipt, updateFrqFeedback, getLedgerByStudent, getLedgerByItem, getRowsByLedgerIds, deleteLedgerRows };
 
-  // Delete every attempt of one (student, source, item). Teacher routes only
-  // (the poster conversion, POSTER_WORK_TRACK_SPEC.md). Returns { data: rows[], error }.
-  async function deleteLedgerRows({ studentId, source, itemId }) {
-    return client.from('item_ledger').delete()
-      .eq('student_id', studentId).eq('source', source).eq('item_id', itemId)
-      .select('ledger_id');
+  // Delete the attempts of one (student, source, item). Teacher routes only
+  // (the poster conversion, POSTER_WORK_TRACK_SPEC.md; the quiz retry reset).
+  // `minAttempt` keeps the attempts below it: 2 removes only the retry rows.
+  // Returns { data: rows[], error }.
+  async function deleteLedgerRows({ studentId, source, itemId, minAttempt }) {
+    let query = client.from('item_ledger').delete()
+      .eq('student_id', studentId).eq('source', source).eq('item_id', itemId);
+    if (Number.isInteger(minAttempt) && minAttempt > 1) query = query.gte('attempt', minAttempt);
+    return query.select('ledger_id, attempt, response');
   }
 
   // Compare-and-set only the feedback JSON. Never include score, receipts, or
