@@ -302,6 +302,7 @@ describe('POST /ledger/record', () => {
       r = await quiz({ response: 'B', score: 1 });
       expect(r.status).toBe(200);
       expect(r.body.firstAnswerKept).toBe(true);
+      expect(r.body.keptResponse).toBe('C');   // the quiz app turns the ignored letter into the retry
       expect(quizRow().response).toBe('C');
       expect(quizRow().score).toBe(0);
     });

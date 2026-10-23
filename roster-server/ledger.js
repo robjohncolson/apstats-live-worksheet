@@ -521,6 +521,7 @@ export function mountLedger(app, {
     // retry (attempt 2) becomes THE grade. Enforced here so a modified client can't bypass it (see
     // the FROZEN CONTRACT above for the refusal reasons). Unkeyed items (FRQ) skip all of this.
     let firstAnswerKept = false;
+    let keptResponse = null;   // the stored first answer the client is told about
     let persistedAttempt = attempt ?? 1;
     let retryInsertOnly = false;
     const quizKeyEntry = source === 'curriculum_quiz' ? await quizKeyEntryFor(itemId) : null;
@@ -570,6 +571,7 @@ export function mountLedger(app, {
         response = first.response;
         effectiveScore = (first.score === null || first.score === undefined) ? effectiveScore : first.score;
         firstAnswerKept = true;
+        keptResponse = first.response;
       }
     }
 
@@ -623,7 +625,9 @@ export function mountLedger(app, {
       ok: true,
       ledgerId:     data.ledger_id,
       evidenceTier: data.evidence_tier,
-      ...(firstAnswerKept ? { firstAnswerKept: true } : {})
+      // keptResponse lets the quiz app turn a first answer sent from a fresh device (before its
+      // ledger restore landed) into the explained retry instead of silently losing it.
+      ...(firstAnswerKept ? { firstAnswerKept: true, keptResponse } : {})
     };
     const username = await resolveReceiptUsername(resolveUsername, studentId);
     const receipt = issueLedgerReceipt({
