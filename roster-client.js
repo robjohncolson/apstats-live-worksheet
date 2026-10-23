@@ -36,6 +36,9 @@
   function clearSession() {
     try {
       localStorage.removeItem(STORAGE_KEY);
+      // The Recording fold's separate teacher credential must not outlive sign-out.
+      localStorage.removeItem('apstats_classlog_token');
+      localStorage.removeItem('apstats_user_role');
     } catch (_) {
       // blocked — silently skip
     }

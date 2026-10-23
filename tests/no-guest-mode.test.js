@@ -15,10 +15,10 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { deskSource } from './helpers/desk-source.js';
+import { deskSource, deskHtml } from './helpers/desk-source.js';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const DESK = deskSource();
+const DESK = deskSource() + '\n' + deskHtml();
 const RAILWAY = readFileSync(resolve(repo, 'railway_client.js'), 'utf8');
 const STUDYGUIDE = readFileSync(resolve(repo, 'study_guide_diagnostic.html'), 'utf8');
 

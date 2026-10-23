@@ -15,11 +15,11 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { deskSource } from './helpers/desk-source.js';
+import { deskSource, deskHtml } from './helpers/desk-source.js';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const deskPath = resolve(repo, 'ap_stats_roadmap_square_mode.html');
-const DESK = existsSync(deskPath) ? deskSource() : null;
+const DESK = existsSync(deskPath) ? deskSource() + '\n' + deskHtml() : null;
 
 function fnBody(src, name) {
   const re = new RegExp('(?:async\\s+)?function\\s+' + name + '\\s*\\(');

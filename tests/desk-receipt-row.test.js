@@ -10,10 +10,10 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { deskSource } from './helpers/desk-source.js';
+import { deskSource, deskHtml } from './helpers/desk-source.js';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const DESK = deskSource();
+const DESK = deskSource() + '\n' + deskHtml();
 
 function fnBody(src, name) {
   const re = new RegExp('function\\s+' + name + '\\s*\\(');

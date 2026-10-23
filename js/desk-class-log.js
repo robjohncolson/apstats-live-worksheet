@@ -59,6 +59,7 @@
   // a2 teacher sign-in. Resolves to the token (already stored); rejects with a
   // message safe to show on the panel.
   function signIn(win, username, password) {
+    if (!isTeacher(win)) return Promise.reject(new Error('Teacher sign-in is required'));
     var user = String(username || '').trim();
     if (!user || !password) return Promise.reject(new Error('Username and password are required'));
     return win.fetch(BASE + '/roster/verify', {
@@ -71,6 +72,7 @@
         var body = res.body || {};
         if (!body.ok || !body.token) throw new Error(body.error || ('Sign-in failed (HTTP ' + res.status + ')'));
         if (body.role !== 'teacher') throw new Error('That account is not a teacher on the Algebra 2 roster');
+        if (!isTeacher(win)) throw new Error('Teacher sign-in is required');
         writeToken(win, body.token);
         return body.token;
       });

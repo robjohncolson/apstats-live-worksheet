@@ -8,10 +8,10 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { deskSource } from './helpers/desk-source.js';
+import { deskSource, deskHtml } from './helpers/desk-source.js';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const DESK = deskSource();
+const DESK = deskSource() + '\n' + deskHtml();
 
 describe('Wallet receipt feed — Sessions-only (no Lessons/Types/Days tabs)', () => {
   it('no tab-strip renderer remains', () => {

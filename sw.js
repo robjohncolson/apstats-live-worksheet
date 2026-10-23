@@ -45,7 +45,10 @@ function cacheStrategyFor(request, selfOrigin) {
 
 self.addEventListener('install', (e) => {
   self.skipWaiting();
-  e.waitUntil(caches.open(CACHE).then((c) => Promise.allSettled(CORE.map((u) => c.add(u)))));
+  // The first online visit loads these before this worker controls the page.
+  // Cache the exact versioned URLs too, so its first offline reload can boot.
+  const urls = CORE.concat(CORE.filter((u) => u.startsWith('js/desk-')).map((u) => u + '?v=' + BUILD));
+  e.waitUntil(caches.open(CACHE).then((c) => Promise.allSettled(urls.map((u) => c.add(u)))));
 });
 
 self.addEventListener('activate', (e) => {
