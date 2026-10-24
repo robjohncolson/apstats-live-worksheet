@@ -254,6 +254,30 @@
         "label:chose e on u3 l6 q02",
         "random-selection-assignment"
       ]
+    },
+    {
+      "at": "2026-10-23T21:00:00.000Z",
+      "keys": [
+        "label:chose a on u2 l2 q02",
+        "label:chose a on u3 l3 q02",
+        "label:chose b on u2 l2 q02",
+        "label:chose b on u3 l6 q02",
+        "label:chose c on u1 l8 q01",
+        "label:chose c on u1 l9 q01",
+        "label:chose c on u2 l2 q02",
+        "label:chose c on u3 l5 q01",
+        "label:chose c on u3 l6 q01",
+        "label:chose d on u2 l2 q01",
+        "label:chose d on u3 l2 q06",
+        "label:chose d on u3 l4 q03",
+        "label:chose d on u3 l5 q04",
+        "label:chose d on u3 l6 q02",
+        "label:chose e on u1 l6 q02",
+        "label:chose e on u1 l7 q04",
+        "label:chose e on u3 l4 q03",
+        "label:ws u3l3 exitticket",
+        "random-selection-assignment"
+      ]
     }
   ]
 }
