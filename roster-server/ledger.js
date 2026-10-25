@@ -9,7 +9,7 @@
 // Without this, a check_violation surfaces as a generic 500 "Database error"
 // and the writer dies silently (how study_guide_diagnostic was lost for weeks).
 import { issueLedgerReceipt, recordReceiptPersistFailure, verifyReviewGrant } from './receipts.js';
-import { requireTeacher } from './teacher-auth.js';
+import { requireTeacher, teacherSecretMatches } from './teacher-auth.js';
 import { createHash } from 'node:crypto';
 import { parseServerReflectionItemId } from './frq-prompt.js';
 import { answerKeyMapOrNull, isCorrect as isKeyCorrect } from './scoring.js';
@@ -1138,7 +1138,9 @@ export function mountLedger(app, {
   //          would silently widen the filter. Real item_ids only use [A-Za-z0-9-].
   //
   //   Auth (ANY):
-  //     - Header  x-teacher-secret == process.env.ROSTER_TEACHER_SECRET, OR
+  //     - Header  x-teacher-secret == the shared teacher key (getTeacherKey())
+  //               or the legacy long ROSTER_TEACHER_SECRET (teacherSecretMatches,
+  //               the same rule as requireTeacher's path A), OR
   //     - Header  Authorization: Bearer <token> OR query ?token=<token>
   //               AND verifyToken(token) === :studentId (self-read), OR
   //     - A token whose sid != :studentId but whose role === 'teacher'
@@ -1157,9 +1159,9 @@ export function mountLedger(app, {
     const { studentId } = req.params;
 
     // ── Auth resolution ────────────────────────────────────────────────────
-    const teacherSecret = process.env.ROSTER_TEACHER_SECRET;
-    const providedTeacher = req.headers['x-teacher-secret'];
-    let teacherOk = teacherSecret && providedTeacher === teacherSecret;
+    // The nightly Schoology sync reads posters here with the SHARED teacher
+    // key, so this must accept it (checking only the long secret 401'd them).
+    let teacherOk = teacherSecretMatches(req);
 
     // Extract token from Authorization: Bearer <t> OR ?token=<t>.
     let token = null;

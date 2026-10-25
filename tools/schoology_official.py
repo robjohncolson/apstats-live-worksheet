@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import os
 import re
 import sys
@@ -129,8 +130,9 @@ def pc_for_quarter(student: dict, quarter: str):
 # --------------------------------------------------------------------------- #
 
 def roster_secret() -> str:
-    """roster-server/.env first: it holds the current (rotated) secret. The ledger route
-    rejects the older value still set in the Windows user environment (401, 2026-10-02)."""
+    """roster-server/.env first: it holds the long legacy secret. The Windows user
+    environment holds the shared teacher key, which every teacher-gated route (including
+    GET /ledger/student since 2026-10-25) also accepts."""
     env_path = os.path.join(REPO_ROOT, "roster-server", ".env")
     if os.path.exists(env_path):
         with open(env_path, encoding="utf-8") as fh:
@@ -246,14 +248,52 @@ def read_gradebook(ops, cdp, course_id: str) -> dict:
     return out
 
 
+def override_cell_center(raw) -> tuple[float, float] | None:
+    """(x, y) from the JS that locates the override cell, or None when the cell was not found.
+
+    EdgeCDP.eval_js returns None or {} when that JS throws (the row has no override cell
+    in the DOM). Anything that is not a JSON list of two finite numbers counts as not found.
+    """
+    if not isinstance(raw, str):
+        return None
+    try:
+        point = json.loads(raw)
+    except ValueError:
+        return None
+    if not isinstance(point, list) or len(point) != 2:
+        return None
+    for n in point:
+        if not _is_finite_number(n):
+            return None
+    return point[0], point[1]
+
+
+def _is_finite_number(n) -> bool:
+    """A real, finite number: JSON true/false, NaN, Infinity and absurdly large ints are not."""
+    if isinstance(n, bool) or not isinstance(n, (int, float)):
+        return False
+    try:
+        return math.isfinite(float(n))
+    except OverflowError:
+        return False
+
+
 def write_official(ops, cdp, row: int, value: float) -> dict:
-    """Open the override cell with a real click (its input stays hidden until then), then type."""
+    """Open the override cell with a real click (its input stays hidden until then), then type.
+
+    A row whose override cell is not on the page fails alone and writes nothing, so
+    main() reports it and goes on (2026-10-24: one missing cell crashed the whole step
+    and that section's official grades never reached the Desk).
+    """
     js = ('(function(){var c=document.querySelector("#grader-grid-cell-gp_override-%s");'
           'c.scrollIntoView({block:"center",inline:"center"});var q=c.getBoundingClientRect();'
           'return JSON.stringify([q.x+q.width/2,q.y+q.height/2]);})()' % row)
     cdp.eval_js(js)
     time.sleep(0.4)
-    x, y = json.loads(cdp.eval_js(js))
+    point = override_cell_center(cdp.eval_js(js))
+    if point is None:
+        return {"ok": False, "error": "override cell for row %s not found" % row}
+    x, y = point
     cdp.click(int(x), int(y))
     time.sleep(0.6)
     return ops.write_override(cdp, row, value, gp=True)

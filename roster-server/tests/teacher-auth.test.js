@@ -17,6 +17,7 @@ import bcrypt from 'bcryptjs';
 import { randomBytes } from 'crypto';
 import { createApp } from '../server.js';
 import { signToken } from '../token.js';
+import { teacherSecretMatches } from '../teacher-auth.js';
 
 // -- Fake DB -------------------------------------------------------------------
 //
@@ -732,5 +733,56 @@ describe('POST /remediation/complete -- dual-auth', () => {
       body: { assignmentId: id },
     });
     expect(status).toBe(401);
+  });
+});
+
+// -- teacherSecretMatches: requireTeacher's path (A) on its own ----------------
+//
+// The x-teacher-secret rule shared by requireTeacher and GET /ledger/student/:id.
+// The outer beforeEach sets ROSTER_TEACHER_SECRET to a random long secret and
+// the outer afterEach deletes it.
+
+describe('teacherSecretMatches -- x-teacher-secret rule', () => {
+  function reqWith(secret) {
+    if (secret === undefined) return { headers: {} };
+    return { headers: { 'x-teacher-secret': secret } };
+  }
+
+  // These tests set or clear TEACHER_KEY; put the host's value back afterwards.
+  let savedTeacherKey;
+  beforeEach(() => {
+    savedTeacherKey = process.env.TEACHER_KEY;
+    delete process.env.TEACHER_KEY;
+  });
+  afterEach(() => {
+    if (savedTeacherKey === undefined) delete process.env.TEACHER_KEY;
+    else process.env.TEACHER_KEY = savedTeacherKey;
+  });
+
+  it('accepts the shared default key when TEACHER_KEY is unset', () => {
+    expect(teacherSecretMatches(reqWith('apteacher2627'))).toBe(true);
+  });
+
+  it('accepts the legacy long secret', () => {
+    expect(teacherSecretMatches(reqWith(teacherSecret))).toBe(true);
+  });
+
+  it('rejects a missing, empty or wrong header', () => {
+    expect(teacherSecretMatches(reqWith(undefined))).toBe(false);
+    expect(teacherSecretMatches(reqWith(''))).toBe(false);
+    expect(teacherSecretMatches(reqWith('wrong-secret'))).toBe(false);
+  });
+
+  it('a custom TEACHER_KEY replaces the published default; the long secret still works', () => {
+    process.env.TEACHER_KEY = 'custom-key-for-test';
+    expect(teacherSecretMatches(reqWith('custom-key-for-test'))).toBe(true);
+    expect(teacherSecretMatches(reqWith('apteacher2627'))).toBe(false);
+    expect(teacherSecretMatches(reqWith(teacherSecret))).toBe(true);
+  });
+
+  it('ignores a legacy secret that is just the published default key', () => {
+    process.env.ROSTER_TEACHER_SECRET = 'apteacher2627';
+    process.env.TEACHER_KEY = 'custom-key-for-test';
+    expect(teacherSecretMatches(reqWith('apteacher2627'))).toBe(false);
   });
 });

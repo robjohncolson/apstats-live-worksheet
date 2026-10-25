@@ -635,7 +635,8 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
   });
 
   // ── GET /roster/list (TR1 — teacher-gated) ───────────────────────────────────
-  // Header: x-teacher-secret == process.env.ROSTER_TEACHER_SECRET; 401 otherwise.
+  // Auth: requireTeacher -- x-teacher-secret (the shared teacher key or the
+  // legacy long secret) OR a verified teacher token; 401 otherwise.
   // Query: ?section= (optional filter).
   //   → 200 { ok:true, students:[{ realName, username, section, status,
   //           currentPassword, mustChangePassword, createdAt }] }

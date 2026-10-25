@@ -172,5 +172,51 @@ class TestBonusMultiplier(unittest.TestCase):
             self.assertEqual(so.banked_bonus_points("stu", "Q1", "s"), 7.5)
 
 
+class TestWriteOfficial(unittest.TestCase):
+    """2026-10-24: one row with no override cell crashed the whole official-grade step."""
+
+    def setUp(self):
+        patcher = mock.patch.object(so.time, "sleep", lambda _seconds: None)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_missing_override_cell_fails_that_row_without_clicking_or_writing(self):
+        cdp = mock.Mock()
+        cdp.eval_js.return_value = None  # EdgeCDP.eval_js when the JS throws (None or {})
+        ops = mock.Mock()
+
+        result = so.write_official(ops, cdp, 7, 91.5)
+
+        self.assertEqual(result, {"ok": False, "error": "override cell for row 7 not found"})
+        cdp.click.assert_not_called()
+        ops.write_override.assert_not_called()
+
+    def test_a_result_that_is_not_two_numbers_also_fails_that_row(self):
+        for raw in [{}, 42, "", "not json", "[]", "[10]", "[10,20,30]", '{"x":10,"y":20}',
+                    "[null,null]", "[true,false]", '["10","20"]', "[NaN,20]",
+                    "[1" + "0" * 400 + ",20]"]:
+            with self.subTest(raw=raw):
+                cdp = mock.Mock()
+                cdp.eval_js.return_value = raw
+                ops = mock.Mock()
+
+                result = so.write_official(ops, cdp, 3, 88.0)
+
+                self.assertEqual(result, {"ok": False, "error": "override cell for row 3 not found"})
+                cdp.click.assert_not_called()
+                ops.write_override.assert_not_called()
+
+    def test_found_cell_is_clicked_at_its_center_then_written(self):
+        cdp = mock.Mock()
+        cdp.eval_js.return_value = "[10,20]"
+        ops = mock.Mock()
+
+        result = so.write_official(ops, cdp, 7, 91.5)
+
+        cdp.click.assert_called_once_with(10, 20)
+        ops.write_override.assert_called_once_with(cdp, 7, 91.5, gp=True)
+        self.assertIs(result, ops.write_override.return_value)
+
+
 if __name__ == "__main__":
     unittest.main()

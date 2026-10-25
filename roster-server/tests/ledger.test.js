@@ -906,6 +906,17 @@ describe('GET /ledger/student/:studentId', () => {
     return srv.request('GET', `/ledger/student/${studentId}`, { headers });
   }
 
+  // The shared-key tests below set or clear TEACHER_KEY; put the host's value back.
+  let savedTeacherKey;
+  beforeEach(() => {
+    savedTeacherKey = process.env.TEACHER_KEY;
+    delete process.env.TEACHER_KEY;
+  });
+  afterEach(() => {
+    if (savedTeacherKey === undefined) delete process.env.TEACHER_KEY;
+    else process.env.TEACHER_KEY = savedTeacherKey;
+  });
+
   it('valid teacher secret → 200 {ok:true, rows:[]}  (empty store)', async () => {
     const { status, body } = await getStudent(validStudentId, {
       'x-teacher-secret': teacherSecret
@@ -949,6 +960,49 @@ describe('GET /ledger/student/:studentId', () => {
     expect(status).toBe(401);
     expect(body.ok).toBe(false);
     expect(body.error).toBe('forbidden');
+  });
+
+  // ── The shared teacher key (what the nightly Schoology sync sends) ─────────
+  // This route used to accept only the long ROSTER_TEACHER_SECRET, so every
+  // nightly poster read was a 401. getTeacherKey() falls back to the published
+  // default 'apteacher2627' when TEACHER_KEY is unset.
+
+  it('shared teacher key (default apteacher2627, TEACHER_KEY unset) → 200 {ok:true, rows:[]}', async () => {
+    const { status, body } = await getStudent(validStudentId, {
+      'x-teacher-secret': 'apteacher2627'
+    });
+
+    expect(status).toBe(200);
+    expect(body).toEqual({ ok: true, rows: [] });
+  });
+
+  it('custom TEACHER_KEY → 200, and the published default apteacher2627 is then 401', async () => {
+    process.env.TEACHER_KEY = 'custom-key-for-test';
+
+    const custom = await getStudent(validStudentId, { 'x-teacher-secret': 'custom-key-for-test' });
+    expect(custom.status).toBe(200);
+    expect(custom.body).toEqual({ ok: true, rows: [] });
+
+    const published = await getStudent(validStudentId, { 'x-teacher-secret': 'apteacher2627' });
+    expect(published.status).toBe(401);
+    expect(published.body).toEqual({ ok: false, error: 'forbidden' });
+  });
+
+  it('the nightly poster read (shared key + ?prefix=POSTER-) → 200 with only the poster row', async () => {
+    ledgerDb.store.set(`${validStudentId}|poster|POSTER-U1|1`, {
+      student_id: validStudentId, source: 'poster', item_id: 'POSTER-U1',
+      score: 115, attempt: 1, recorded_at: new Date().toISOString()
+    });
+    await srv.request('POST', '/ledger/record', {
+      body: { token: validToken, source: 'worksheet', itemId: 'WS-U1L2-Q1', response: 'a' }
+    });
+
+    const { status, body } = await srv.request('GET', `/ledger/student/${validStudentId}?prefix=POSTER-`, {
+      headers: { 'x-teacher-secret': 'apteacher2627' }
+    });
+
+    expect(status).toBe(200);
+    expect(body.rows.map(r => r.item_id)).toEqual(['POSTER-U1']);
   });
 });
 

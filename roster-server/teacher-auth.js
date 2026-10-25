@@ -2,7 +2,10 @@
 //
 // Implements the Section 1 security model:
 //   A request is a teacher iff EITHER:
-//   (A) x-teacher-secret header === ROSTER_TEACHER_SECRET, OR
+//   (A) the x-teacher-secret header equals EITHER the shared teacher key
+//       (getTeacherKey(): env TEACHER_KEY, default 'apteacher2627') OR the
+//       legacy long ROSTER_TEACHER_SECRET, while it is still configured and
+//       is not just the published default key (see teacherSecretMatches), OR
 //   (B) a roster token resolves via verifyToken() to a studentId whose
 //       db.getRoleByStudentId() returns 'teacher'.
 //
@@ -30,6 +33,26 @@ function isPublishedTeacherKey(value) {
   return typeof value === 'string' && value.trim() === 'apteacher2627';
 }
 
+// teacherSecretMatches(req) -> boolean
+//
+// Path (A) of requireTeacher on its own, for routes that check the header
+// themselves (GET /ledger/student/:studentId). The x-teacher-secret header
+// must equal EITHER:
+//   - the shared teacher key (getTeacherKey(), default 'apteacher2627'), OR
+//   - the legacy long ROSTER_TEACHER_SECRET, while it is still configured.
+//     A configured value that is just the published default key is ignored.
+// Synchronous: no DB, never writes to res.
+export function teacherSecretMatches(req) {
+  const provided = req.headers['x-teacher-secret'];
+  if (!provided) return false;
+  if (provided === getTeacherKey()) return true;
+
+  const legacySecret = process.env.ROSTER_TEACHER_SECRET;
+  if (!legacySecret) return false;
+  if (isPublishedTeacherKey(legacySecret)) return false;
+  return provided === legacySecret;
+}
+
 // Extract a bearer token from Authorization: Bearer <t> or ?token=<t>.
 // Mirrors the pattern in ledger.js GET /ledger/student/:studentId exactly.
 function extractToken(req) {
@@ -46,21 +69,14 @@ function extractToken(req) {
 
 // requireTeacher(req, db) -> Promise<boolean>
 //
-// Path (A): x-teacher-secret matches ROSTER_TEACHER_SECRET -> true.
+// Path (A): teacherSecretMatches(req) -- the shared teacher key or the legacy
+//           long secret in x-teacher-secret -> true.
 // Path (B): valid token -> studentId -> role === 'teacher' -> true.
 // Anything else (no match, bad token, DB error, missing role) -> false.
 export async function requireTeacher(req, db) {
-  // Path (A): x-teacher-secret matches EITHER the legacy long secret (if still
-  // configured) OR the simple shared teacher key (getTeacherKey(), default
-  // 'apteacher2627'). The simple key is the deprecation path for the long secret.
-  const configuredTeacherSecret = process.env.ROSTER_TEACHER_SECRET;
-  const teacherSecret = isPublishedTeacherKey(configuredTeacherSecret)
-    ? null
-    : configuredTeacherSecret;
-  const provided = req.headers['x-teacher-secret'];
-  if (provided && (provided === getTeacherKey() || (teacherSecret && provided === teacherSecret))) {
-    return true;
-  }
+  // Path (A): x-teacher-secret. The shared key is the deprecation path for the
+  // long secret; both are accepted (see teacherSecretMatches).
+  if (teacherSecretMatches(req)) return true;
 
   // Path (B): roster token resolved to a teacher role.
   const token = extractToken(req);
