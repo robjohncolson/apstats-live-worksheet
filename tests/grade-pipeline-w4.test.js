@@ -57,7 +57,9 @@ describe('W1 fold -- day-grade modal shows the worksheet score, not a raw count'
     // day-grade modal must show the worksheet score (lesson.Cws), not the
     // misleading "Worksheet completed: N" count of recorded rows.
     const modalIdx = desk.indexOf('Array.isArray(items.worksheet)');
-    const modalBody = modalIdx === -1 ? '' : desk.slice(modalIdx, modalIdx + 1600);
+    // 2600 chars: the quiz fallback that sits between the anchor and the worksheet line grew
+    // with the half-credit rendering (2026-10-26); the worksheet line itself is unchanged.
+    const modalBody = modalIdx === -1 ? '' : desk.slice(modalIdx, modalIdx + 2600);
 
     it('the day-grade modal worksheet branch exists', () => {
         expect(modalBody.length).toBeGreaterThan(0);
