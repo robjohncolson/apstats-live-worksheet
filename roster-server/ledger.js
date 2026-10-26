@@ -13,6 +13,7 @@ import { requireTeacher, teacherSecretMatches } from './teacher-auth.js';
 import { createHash } from 'node:crypto';
 import { parseServerReflectionItemId } from './frq-prompt.js';
 import { answerKeyMapOrNull, isCorrect as isKeyCorrect } from './scoring.js';
+import { QUIZ_RETRIES_CLOSED_FROM } from './grade-config.js';
 
 let receiptPersistenceNotProvisionedLogged = false;
 
@@ -310,6 +311,11 @@ export function mountLedger(app, {
     return res.status(409).json({ ok: false, error: 'retry not allowed', reason });
   }
 
+  // The retry is removed (QUIZ_RETRY_REMOVAL_SPEC.md rule 3): the first answer is the grade.
+  function quizRetriesClosed(at = Date.now()) {
+    return at >= Date.parse(QUIZ_RETRIES_CLOSED_FROM);
+  }
+
   // Spec v2 §1.7: the retry rule applies only to items that HAVE an answer-key entry (multiple
   // choice). Free-response quiz items share source 'curriculum_quiz' but have no key; they keep
   // unlimited revisions (latest row wins) exactly as before. A key that cannot be loaded counts as
@@ -343,6 +349,8 @@ export function mountLedger(app, {
   //       'already-retried'       an attempt-2 row already exists (incl. a concurrent race)
   //       'correct-first'         the attempt-1 response matches the key
   //       'explanation-required'  reasoning has fewer than 3 words (letters/digits)
+  //       'retries-closed'        attempt 2 at or after QUIZ_RETRIES_CLOSED_FROM (the retry is
+  //                               removed; the first answer is the grade)
   //     → 500 when the ledger cannot be read for an attempt-2 check
   //   Header (optional): x-proctor-secret
   //   Behavior: verifyToken(token) → studentId; 401 if absent/expired.
@@ -520,6 +528,7 @@ export function mountLedger(app, {
     // and they explain the change of mind. The grade engine scores the latest row per item, so the
     // retry (attempt 2) becomes THE grade. Enforced here so a modified client can't bypass it (see
     // the FROZEN CONTRACT above for the refusal reasons). Unkeyed items (FRQ) skip all of this.
+    // Since QUIZ_RETRIES_CLOSED_FROM every attempt 2 is refused with 'retries-closed'.
     let firstAnswerKept = false;
     let keptResponse = null;   // the stored first answer the client is told about
     let persistedAttempt = attempt ?? 1;
@@ -537,6 +546,9 @@ export function mountLedger(app, {
       }
       if (attemptNo >= 3) {
         return refuseQuizRetry(res, 'no-more-attempts');
+      }
+      if (attemptNo === 2 && quizRetriesClosed()) {
+        return refuseQuizRetry(res, 'retries-closed');
       }
       persistedAttempt = attemptNo;
 
@@ -603,7 +615,12 @@ export function mountLedger(app, {
       if (typeof db.insertLedgerRowIfAbsent !== 'function') {
         return res.status(500).json({ ok: false, error: 'Database error' });
       }
-      const result = await db.insertLedgerRowIfAbsent(rowToWrite);
+      // Check the cutoff again after the awaited ledger read: a retry that passed the early
+      // check just before it must not land after it. The row is stamped with this same instant,
+      // so an accepted retry is always recorded before the cutoff (never at half credit).
+      const retryAt = Date.now();
+      if (quizRetriesClosed(retryAt)) return refuseQuizRetry(res, 'retries-closed');
+      const result = await db.insertLedgerRowIfAbsent({ ...rowToWrite, recordedAt: new Date(retryAt).toISOString() });
       error = result && result.error;
       if (!error && !(result && result.inserted)) {
         return refuseQuizRetry(res, 'already-retried');
@@ -625,8 +642,8 @@ export function mountLedger(app, {
       ok: true,
       ledgerId:     data.ledger_id,
       evidenceTier: data.evidence_tier,
-      // keptResponse lets the quiz app turn a first answer sent from a fresh device (before its
-      // ledger restore landed) into the explained retry instead of silently losing it.
+      // keptResponse lets the quiz app show a fresh device (one that answered before its ledger
+      // restore landed) the kept first answer as settled, instead of silently losing it.
       ...(firstAnswerKept ? { firstAnswerKept: true, keptResponse } : {})
     };
     const username = await resolveReceiptUsername(resolveUsername, studentId);
@@ -1077,12 +1094,13 @@ export function mountLedger(app, {
   });
 
   // ── POST /ledger/quiz-reset ─────────────────────────────────────────────────
-  // Teacher-only. Give a student their one explained retry back on a keyed quiz
-  // item (QUIZ_FIRST_ANSWER_SPEC v2): deletes the attempt-2 row (and any later
-  // row) of (student, 'curriculum_quiz', item). The attempt-1 row stays, so the
-  // first answer is still the kept first answer and the quiz app reopens the
-  // retry form. The quiz app drops its local "accepted retry" record when the
-  // ledger restore finds no attempt-2 row (restoreOwnAnswersFromLedger).
+  // Teacher-only. Deletes a recorded retry on a keyed quiz item: the attempt-2
+  // row (and any later row) of (student, 'curriculum_quiz', item). The attempt-1
+  // row stays and becomes the graded row. Retries are closed
+  // (QUIZ_RETRIES_CLOSED_FROM; QUIZ_RETRY_REMOVAL_SPEC.md rule 3), so a reset gives
+  // nothing back: POST /ledger/record refuses a new attempt 2 with 'retries-closed'.
+  // The quiz app drops its local "accepted retry" record when the ledger restore
+  // finds no attempt-2 row (restoreOwnAnswersFromLedger).
   //
   //   body: { studentId | username, itemId }
   //   → 200 { ok:true, studentId, itemId, deleted:n, rows:[{ledger_id, attempt, response}] }

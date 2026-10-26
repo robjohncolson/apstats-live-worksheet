@@ -263,6 +263,13 @@ export function quizRetryCutoff(config) {
   return QUIZ_RETRY_HALF_CREDIT_FROM;
 }
 
+// Quiz retry removed (QUIZ_RETRY_REMOVAL_SPEC.md, teacher 2026-10-26 evening):
+// from this instant POST /ledger/record refuses a quiz retry (attempt 2) with
+// reason 'retries-closed', so the first answer is the grade. Any graded retry is
+// a second draw on five options. The same instant as the half-credit cutoff, so
+// no retry is ever recorded at half credit; earlier retries keep full credit.
+export const QUIZ_RETRIES_CLOSED_FROM = QUIZ_RETRY_HALF_CREDIT_FROM;
+
 // unitNumber("U4") | "4" | 4 → 4 ; anything unparseable → null.
 export function unitNumber(u) {
   if (u == null) return null;

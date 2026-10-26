@@ -1,6 +1,8 @@
-// desk-quiz-half-credit.test.js — the Desk reads a correct quiz retry as half credit
-// (QUIZ_RETRY_HALF_CREDIT_SPEC.md §2): the rule copy says so, a half item shows as "½",
-// and a count shown as a score sums credit.
+// desk-quiz-half-credit.test.js — the quiz rule copy and the quiz credit text.
+// The retry is removed (QUIZ_RETRY_REMOVAL_SPEC.md): the copy says the first answer is
+// the grade and never offers a retry or half credit for one. The half-credit renderer
+// from QUIZ_RETRY_HALF_CREDIT_SPEC.md §2 stays: a half item shows as "½", and a count
+// shown as a score sums credit.
 //
 // @vitest-environment node
 
@@ -16,15 +18,25 @@ function quizCreditText() {
   return new Function(fnBody('_quizCreditText') + '\nreturn _quizCreditText;')();
 }
 
-describe('Desk — quiz retry half credit', () => {
-  it('the grade-rules copy says a correct retry earns half credit', () => {
+describe('Desk — quiz: the first answer is the grade', () => {
+  it('the grade-rules copy says one answer per question, no retry', () => {
     const html = deskHtml();
-    expect(html).toContain('a correct retry earns <b>half credit</b>');
-    expect(html).not.toContain('with a short explanation &mdash; that answer counts');
+    expect(html).toContain('<b>Quizzes</b>: one answer per question; <b>the first answer is the grade</b>.');
+    expect(html).not.toContain('a correct retry earns');
+    expect(html).not.toContain('<b>one retry</b>');
   });
 
-  it('the quiz Done tooltip names the half-credit retry', () => {
-    expect(fnBody('_doneBtn')).toContain('half credit for a correct retry');
+  it('the quiz Done tooltip states the first-answer rule, not a retry', () => {
+    const body = fnBody('_doneBtn');
+    expect(body).toContain('one answer per question: the first answer is the grade');
+    expect(body).not.toContain('half credit for a correct retry');
+  });
+
+  it('the Desk code comments say a half comes only from history, not from a retry', () => {
+    const src = deskSource();
+    expect(src).not.toMatch(/a correct\s*(\/\/\s*)?retry earns half credit/);
+    expect(src).not.toContain('a half-credit retry reads as a half');
+    expect(src).toContain('history: retries are closed, QUIZ_RETRY_REMOVAL_SPEC.md');
   });
 
   it('_quizCreditText: whole numbers plain, a half as ½, thirds to one decimal', () => {
@@ -52,8 +64,10 @@ describe('Desk — quiz retry half credit', () => {
 });
 
 describe('start-here.html — the quiz rule in words', () => {
-  it('says a correct retry earns half credit, not that the retry is the score', () => {
-    expect(START_HERE).toContain('after you write a short explanation; a correct retry earns <strong>half credit</strong>.');
+  it('says the first answer is the grade and offers no retry', () => {
+    expect(START_HERE).toContain('<strong>Quizzes: one answer per question.</strong> <strong>The first answer is the grade</strong>, so there is no retry.');
+    expect(START_HERE).not.toContain('a correct retry earns');
+    expect(START_HERE).not.toContain('one explained retry');
     expect(START_HERE).not.toContain('that second answer is your score');
   });
 });

@@ -605,9 +605,10 @@
     </div>
 
     <!-- Quiz retry reset: POST /ledger/quiz-reset (teacher-only). Deletes one student's attempt-2 row
-         on one keyed quiz item so the quiz app offers the explained retry again. The first answer stays. -->
+         on one keyed quiz item. The first answer stays. Retries closed 2026-10-26
+         (QUIZ_RETRY_REMOVAL_SPEC.md), so the retry does not reopen: the first answer becomes the grade. -->
     <div class="section" id="quiz-reset-section">
-      <h2 class="section-title">Reset a quiz retry <span class="dim" style="font-size:0.8rem">(a mis-click on the explained retry — gives that one item's retry back; the first answer stays)</span></h2>
+      <h2 class="section-title">Reset a quiz retry <span class="dim" style="font-size:0.8rem">(retries closed 2026-10-26 — removes a recorded retry on one item; the first answer stays and becomes the grade)</span></h2>
       <div class="row-2">
         <div class="form-row">
           <label for="quiz-reset-username">Student login UID</label>
@@ -622,7 +623,7 @@
         <button class="btn" id="quiz-reset-btn">Reset retry</button>
         <span class="hint" id="quiz-reset-status" role="status"></span>
       </div>
-      <div class="hint">The student reloads the quiz (or signs in again) and the retry form reopens on that item. Item ids are the stored keys (U&lt;unit&gt;-L&lt;lesson&gt;-Q&lt;n&gt;), visible in the student's ledger rows.</div>
+      <div class="hint">Retries are closed, so the quiz does not offer the retry again: the student's first answer on that item is the grade. Item ids are the stored keys (U&lt;unit&gt;-L&lt;lesson&gt;-Q&lt;n&gt;), visible in the student's ledger rows.</div>
     </div>
 
     <!-- Pacing overview: each student's readiness color (same as their wallet) -->
@@ -3199,11 +3200,11 @@
           return;
         }
         if (!result.data.deleted) {
-          quizResetStatus('Nothing to reset — ' + username + ' has no retry on ' + itemId + ' (the retry is still open to them).', '#8a6d00');
+          quizResetStatus('Nothing to reset — ' + username + ' has no retry on ' + itemId + '.', '#8a6d00');
           return;
         }
         var removed = (result.data.rows || []).map(function (r) { return 'attempt ' + r.attempt + ' = ' + r.response; }).join(', ');
-        quizResetStatus('Retry reset for ' + username + ' on ' + itemId + ' (removed ' + removed + '). They reload the quiz and the retry form reopens.', '#25663F');
+        quizResetStatus('Retry reset for ' + username + ' on ' + itemId + ' (removed ' + removed + '). Their first answer on that item is now the grade.', '#25663F');
       } finally {
         button.disabled = false;
       }

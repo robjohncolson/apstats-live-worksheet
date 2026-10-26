@@ -1147,6 +1147,7 @@
 
 
 
+
     // ===== guardrails =====
     // The x-teacher-secret is NEVER auto-persisted client-side. It is read
     // fresh from the input on every fetch (see api()).
@@ -3199,11 +3200,11 @@
           return;
         }
         if (!result.data.deleted) {
-          quizResetStatus('Nothing to reset — ' + username + ' has no retry on ' + itemId + ' (the retry is still open to them).', '#8a6d00');
+          quizResetStatus('Nothing to reset — ' + username + ' has no retry on ' + itemId + '.', '#8a6d00');
           return;
         }
         var removed = (result.data.rows || []).map(function (r) { return 'attempt ' + r.attempt + ' = ' + r.response; }).join(', ');
-        quizResetStatus('Retry reset for ' + username + ' on ' + itemId + ' (removed ' + removed + '). They reload the quiz and the retry form reopens.', '#25663F');
+        quizResetStatus('Retry reset for ' + username + ' on ' + itemId + ' (removed ' + removed + '). Their first answer on that item is now the grade.', '#25663F');
       } finally {
         button.disabled = false;
       }

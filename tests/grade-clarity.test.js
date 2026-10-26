@@ -93,8 +93,9 @@ describe('ap_stats_roadmap_square_mode.html — Desk "how grades work" modal', (
     expect(text).toContain('3 days before');                                 // Desk ZERO_WARN_DAYS
     expect(text).toContain('+5 / +3 / +1');                                  // exit-ticket bonus
     expect(text).toContain('+7.5 / +4.5 / +1.5');                            // 5/3/1 x BONUS_MULTIPLIER 1.5
-    expect(text).toContain('one retry');
-    expect(text).toContain('half credit');
+    expect(text).toMatch(/the first answer is the grade/i);              // QUIZ_RETRY_REMOVAL_SPEC.md
+    expect(text).not.toContain('one retry');
+    expect(text).toContain('half credit');                                  // talk it through
     expect(text).toMatch(/official/);
     expect(text).toContain('Candy, keys and games never change your grade.');
   });
@@ -132,8 +133,9 @@ describe('start-here.html — the full explanation carries the same numbers', ()
     expect(text).toContain('+5 (E), +3 (P), or +1 (I)');
     expect(text).toContain('+7.5 / +4.5 / +1.5');
     expect(text).toContain('up to +5 a quarter');
-    expect(text).toContain('one retry');
-    expect(text).toContain('half credit');
+    expect(text).toMatch(/the first answer is the grade/i);              // QUIZ_RETRY_REMOVAL_SPEC.md
+    expect(text).not.toContain('one retry');
+    expect(text).toContain('half credit');                                  // talk it through
     expect(text).toContain('Candy, keys and games never change your grade.');
     expect(text).toContain("Today's estimate");
   });

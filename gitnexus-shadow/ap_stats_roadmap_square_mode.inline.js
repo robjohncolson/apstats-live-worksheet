@@ -6840,9 +6840,9 @@ var DESK_WORKSHEET_DONE_THRESHOLD = 60;
 //   scorePct = credit sum / total  (out of the WHOLE quiz — unanswered counts as
 //   wrong, so it's a real quiz score: 1 right of 3 = 33%, 2 of 3 = 66%, not
 //   "100% of what you answered"). eligible = scorePct >= the threshold.
-// q.credit is set server-side: 1 for a correct first answer, 0.5 for a correct
-// retry (QUIZ_RETRY_HALF_CREDIT_SPEC.md), or an AI-review credit; q.correct =
-// full credit only.
+// q.credit is set server-side: 1 for a correct answer or an AI-review credit
+// (a 0.5 retry can no longer happen: retries closed, QUIZ_RETRY_REMOVAL_SPEC.md);
+// q.correct = full credit only.
 function _quizPerfFor(topicId) {
   try {
     if (!topicId || !Array.isArray(_gradeLessonsCache)) return null;
@@ -6875,8 +6875,9 @@ function _quizPerfFor(topicId) {
   } catch (_) { return null; }
 }
 
-// A quiz credit sum as text: whole numbers plain, a half as "½" (a correct
-// retry earns half credit), anything else (AI-review thirds) to one decimal.
+// A quiz credit sum as text: whole numbers plain, a half as "½" (only from
+// history: retries are closed, QUIZ_RETRY_REMOVAL_SPEC.md), anything else
+// (AI-review thirds) to one decimal.
 function _quizCreditText(n) {
   // Snap to sixths first so float drift (0.5 + 2/3 + 1/3) still reads as a half.
   var r = Math.round(n * 6) / 6;
@@ -12230,7 +12231,7 @@ function showResourcePanel(inf, dateStr) {
                 // Score = credit out of the whole quiz (E=1, P=2/3, I=1/3 from an
                 // AI review), e.g. 2 full of 3 = 66%.
                 var _qnn = Math.round(perf.scorePct);
-                var _qtip = 'Quiz score ' + _qnn + '% (half credit for a correct retry, partial credit for AI-reviewed answers) — unlocks at ' + DESK_QUIZ_DONE_THRESHOLD + '%+.';
+                var _qtip = 'Quiz score ' + _qnn + '% (one answer per question: the first answer is the grade; partial credit for AI-reviewed answers) — unlocks at ' + DESK_QUIZ_DONE_THRESHOLD + '%+.';
                 if (!perf.eligible) {
                     return ' <button class="s7btn chicago s7btn-locked" disabled style="font-size:9px;padding:1px 4px;margin-left:4px" title="' + _qtip + '">Done (' + _qnn + '%)</button>';
                 }
@@ -20935,7 +20936,8 @@ function openDayGrade(dateStr) {
             if (lesson.Q != null) {
                 parts.push('Quiz: ' + (Math.round(lesson.Q * 10) / 10) + '%');
             } else if (quizzes.length > 0) {
-                // A count shown as a score sums credit: a half-credit retry reads as a half.
+                // A count shown as a score sums credit: a half (only from history, retries are
+                // closed) reads as a half.
                 // No "correct" label: 1½/2 is credit, and only one of those items is correct.
                 var creditSum = quizzes.reduce(function (s, q) {
                     return s + (typeof q.credit === 'number' ? q.credit : (q.correct ? 1 : 0));
@@ -23256,7 +23258,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-10-26-2hnb';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-10-26-ap01';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

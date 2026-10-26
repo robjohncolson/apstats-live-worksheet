@@ -94,9 +94,10 @@ export function createLedgerDb(client) {
 
   // Upsert a ledger row on (student_id, source, item_id, attempt).
   // Returns { data, error } — data has ledger_id and evidence_tier on success.
-  // [recordedAt] is OPTIONAL and only set by the faithful restore path
-  // (admin-restore.js), which replays issuer-signed rows byte-for-byte and must
-  // preserve the original timestamp so the recomputed commit-chain heads match.
+  // [recordedAt] is OPTIONAL. The faithful restore path (admin-restore.js) sets it:
+  // it replays issuer-signed rows byte-for-byte and must preserve the original
+  // timestamp so the recomputed commit-chain heads match. The quiz retry
+  // (insertLedgerRowIfAbsent) sets it to the instant it checked the retry cutoff.
   // Every other caller omits it and gets the original now() behavior.
   // [frqResult]/[gradedAt] are OPTIONAL (2026-09-09): the legacy /ledger/frq-regrade
   // path stores the grader's verdict + feedback alongside the score so the worksheet can

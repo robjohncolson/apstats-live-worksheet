@@ -2,7 +2,7 @@
 // Injects a fake in-memory ledgerDb — NO network, NO real Supabase.
 // Uses Node's built-in http + fetch (Node 18+) to test the Express app.
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import http from 'http';
 import { generateKeyPairSync, randomBytes, sign } from 'crypto';
 import { createApp } from '../server.js';
@@ -10,6 +10,7 @@ import { signToken } from '../token.js';
 import { createLedgerDb, isMissingColumnError } from '../ledger-db.js';
 import { verifyReviewGrant } from '../receipts.js';
 import { latestPerItem, isCorrect } from '../scoring.js';
+import { QUIZ_RETRIES_CLOSED_FROM } from '../grade-config.js';
 
 // ── Fake in-memory roster db (minimal — only needed for createApp) ────────────
 
@@ -32,7 +33,7 @@ function createFakeLedgerDb() {
   // store keyed by "studentId|source|itemId|attempt"
   const store = new Map();
 
-  function buildRow({ studentId, source, itemId, unit, topic, skill, response, score, evidenceTier, attempt, reasoning }) {
+  function buildRow({ studentId, source, itemId, unit, topic, skill, response, score, evidenceTier, attempt, recordedAt, reasoning }) {
     return {
       ledger_id:     `ledger-${Date.now()}-${Math.random().toString(36).slice(2)}`,
       student_id:    studentId,
@@ -45,7 +46,7 @@ function createFakeLedgerDb() {
       score:         score  ?? null,
       evidence_tier: evidenceTier,
       attempt,
-      recorded_at:   new Date().toISOString(),
+      recorded_at:   recordedAt || new Date().toISOString(),
       graded_at:     null,
       ...(reasoning ? { reasoning } : {})
     };
@@ -281,7 +282,16 @@ describe('POST /ledger/record', () => {
     return ledgerDb.store.get(`${validStudentId}|curriculum_quiz|${itemId}|${attempt}`);
   }
 
-  async function withKeyedServer(fn, loadAnswerKey = async () => ({ answerKey: { [QUIZ_ITEM]: { answerKey: 'B' } } })) {
+  // Retries close at QUIZ_RETRIES_CLOSED_FROM (QUIZ_RETRY_REMOVAL_SPEC.md rule 3). The route reads
+  // Date.now(), so these tests pin the clock: an hour before the cutoff unless a test says `at`.
+  // The token is re-signed under the pinned clock so it never reads as expired.
+  const CLOSED_AT = Date.parse(QUIZ_RETRIES_CLOSED_FROM);
+  const BEFORE_CLOSE = CLOSED_AT - 60 * 60 * 1000;
+
+  async function withKeyedServer(fn, loadAnswerKey = async () => ({ answerKey: { [QUIZ_ITEM]: { answerKey: 'B' } } }), { at = BEFORE_CLOSE } = {}) {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(at);
+    validToken = signToken(validStudentId);
     const keyed = new TestServer(createApp(rosterDb, ledgerDb, undefined, loadAnswerKey));
     await keyed.start();
     try {
@@ -291,6 +301,7 @@ describe('POST /ledger/record', () => {
       await fn(quiz);
     } finally {
       await keyed.stop();
+      vi.useRealTimers();
     }
   }
 
@@ -320,6 +331,107 @@ describe('POST /ledger/record', () => {
       expect(quizRow(2).response).toBe('B');
       expect(quizRow(2).reasoning).toBe(REASON);
     });
+  });
+
+  it('quiz retries close at midnight EDT ending Monday 2026-10-26, the half-credit cutoff', () => {
+    expect(QUIZ_RETRIES_CLOSED_FROM).toBe('2026-10-27T04:00:00Z');
+  });
+
+  it('quiz attempt 2: refused with retries-closed at and after the cutoff, nothing written', async () => {
+    for (const at of [CLOSED_AT, CLOSED_AT + 1, CLOSED_AT + 7 * 24 * 60 * 60 * 1000]) {
+      ledgerDb.store.clear();
+      await withKeyedServer(async (quiz) => {
+        await quiz({ response: 'C', attempt: 1 });
+        const r = await quiz({ response: 'B', attempt: 2, reasoning: REASON });
+        expect(r.status).toBe(409);
+        expect(r.body).toEqual({ ok: false, error: 'retry not allowed', reason: 'retries-closed' });
+        expect(quizRow(2)).toBeUndefined();
+        expect(quizRow(1).response).toBe('C');
+      }, undefined, { at });
+    }
+  });
+
+  it('quiz attempt 2 after the cutoff: refused before any ledger read, even when the read would fail', async () => {
+    await withKeyedServer(async (quiz) => {
+      await quiz({ response: 'C', attempt: 1 });
+      let reads = 0;
+      const read = ledgerDb.getLedgerByStudent;
+      ledgerDb.getLedgerByStudent = async (...args) => { reads += 1; return read(...args); };
+      ledgerDb.readResult = { data: null, error: { message: 'boom' } };
+      try {
+        const r = await quiz({ response: 'B', attempt: 2, reasoning: REASON });
+        expect(r.status).toBe(409);
+        expect(r.body.reason).toBe('retries-closed');
+        expect(reads).toBe(0);
+      } finally {
+        ledgerDb.getLedgerByStudent = read;
+        ledgerDb.readResult = null;
+      }
+    }, undefined, { at: CLOSED_AT });
+  });
+
+  it('quiz attempt 2: refused when the clock crosses the cutoff during the ledger read, nothing written', async () => {
+    await withKeyedServer(async (quiz) => {
+      await quiz({ response: 'C', attempt: 1 });
+      const read = ledgerDb.getLedgerByStudent;
+      ledgerDb.getLedgerByStudent = async (...args) => {
+        const result = await read(...args);
+        vi.setSystemTime(CLOSED_AT + 5);
+        return result;
+      };
+      try {
+        const r = await quiz({ response: 'B', attempt: 2, reasoning: REASON });
+        expect(r.status).toBe(409);
+        expect(r.body).toEqual({ ok: false, error: 'retry not allowed', reason: 'retries-closed' });
+        expect(quizRow(2)).toBeUndefined();
+      } finally {
+        ledgerDb.getLedgerByStudent = read;
+      }
+    }, undefined, { at: CLOSED_AT - 1 });
+  });
+
+  it('quiz attempt 2 accepted just before the cutoff is stamped with the checked instant, not a later one', async () => {
+    await withKeyedServer(async (quiz) => {
+      await quiz({ response: 'C', attempt: 1 });
+      ledgerDb.beforeInsertIfAbsent = async () => { vi.setSystemTime(CLOSED_AT + 5); };
+      try {
+        const r = await quiz({ response: 'B', attempt: 2, reasoning: REASON });
+        expect(r.status).toBe(200);
+        expect(quizRow(2).recorded_at).toBe(new Date(CLOSED_AT - 1).toISOString());
+      } finally {
+        ledgerDb.beforeInsertIfAbsent = null;
+      }
+    }, undefined, { at: CLOSED_AT - 1 });
+  });
+
+  it('quiz attempt 2: still accepted one millisecond before the cutoff', async () => {
+    await withKeyedServer(async (quiz) => {
+      await quiz({ response: 'C', attempt: 1 });
+      const r = await quiz({ response: 'B', attempt: 2, reasoning: REASON });
+      expect(r.status).toBe(200);
+      expect(quizRow(2).response).toBe('B');
+    }, undefined, { at: CLOSED_AT - 1 });
+  });
+
+  it('quiz attempt 1 after the cutoff: unchanged (recorded, and a later attempt-1 keeps the first)', async () => {
+    await withKeyedServer(async (quiz) => {
+      let r = await quiz({ response: 'C', attempt: 1 });
+      expect(r.status).toBe(200);
+      expect(r.body.firstAnswerKept).toBeUndefined();
+      r = await quiz({ response: 'B', attempt: 1 });
+      expect(r.status).toBe(200);
+      expect(r.body).toMatchObject({ firstAnswerKept: true, keptResponse: 'C' });
+      expect(quizRow(1).response).toBe('C');
+    }, undefined, { at: CLOSED_AT + 1 });
+  });
+
+  it('quiz FRQ (no answer-key entry) after the cutoff: later attempts still save', async () => {
+    await withKeyedServer(async (quiz) => {
+      await quiz({ itemId: QUIZ_NO_KEY_ITEM, response: 'draft one', attempt: 1 });
+      const r = await quiz({ itemId: QUIZ_NO_KEY_ITEM, response: 'draft two', attempt: 2 });
+      expect(r.status).toBe(200);
+      expect(quizRow(2, QUIZ_NO_KEY_ITEM).response).toBe('draft two');
+    }, undefined, { at: CLOSED_AT + 1 });
   });
 
   it('quiz attempt 2: refused when the first answer was correct', async () => {

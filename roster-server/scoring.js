@@ -64,6 +64,9 @@ export function isCorrect(response, answerKey) {
 // retry (attempt 2) recorded on or after cutoffIso earns 0.5, anything wrong 0.
 // A retry before the cutoff, or with a missing/unparseable recorded_at, keeps
 // full credit: a stored grade never goes down. No cutoff = the rule is off.
+// The 0.5 branch can no longer fire for a new row: retries close at the same
+// instant (QUIZ_RETRIES_CLOSED_FROM, QUIZ_RETRY_REMOVAL_SPEC.md), and
+// /ledger/record stamps an accepted retry with the instant it checked.
 export function quizCredit(row, keyEntry, cutoffIso) {
   if (!keyEntry || keyEntry.answerKey == null) return 0;
   if (!isCorrect(row?.response, keyEntry.answerKey)) return 0;
