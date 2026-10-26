@@ -13,7 +13,8 @@
 //   - computeQuarterFromLessons({ quarterKey, config, lessonMap, schedule, ... })
 //   - buildLessonsArray(lessonMap, schedule) → lessons[]
 
-import { quarterOfDate, quarterOfUnit } from './grade-config.js';
+import { quarterOfDate, quarterOfUnit, quizRetryCutoff } from './grade-config.js';
+import { quizCredit } from './scoring.js';
 
 // ── Item-ID → lesson parsing ───────────────────────────────────────────────────
 
@@ -248,9 +249,11 @@ const LESSON_MAX = 105;
 // frqBand: { E, P, I } config.
 // answerKey: map of itemId → { answerKey, ... } (for quiz scoring).
 // schedule: topicKey → entry (to expand combined worksheets).
-// opts: { worksheetBlankCounts, weights }
+// opts: { worksheetBlankCounts, weights, quizRetryHalfCreditFrom }
 //   - worksheetBlankCounts: { "<unit>.<lessonKey>": <int> } or null/undefined
 //   - weights: { ws, W, Q } — lessonFeederWeights; defaults to { ws:1, W:2, Q:3 }
+//   - quizRetryHalfCreditFrom: ISO cutoff for the half-credit retry (null = off;
+//     absent = the production cutoff in grade-config.js)
 //
 // Note: this function intentionally does NOT filter by "due date" —
 // that is applied at the quarter level in computeQuarterFromLessons.
@@ -265,6 +268,7 @@ export function computeLessonGrades(rows, frqBand, answerKey, schedule, opts) {
     : new Set((opts && opts.bonusTopics) || []);
   const weights = (opts && opts.weights) || { ws: 1, W: 2, Q: 3 };
   const frqFloorSince = parseFloorSince(opts && opts.frqFloorSince);
+  const quizCutoff = quizRetryCutoff(opts);
 
   // lessonMap: topicKey → accumulator
   const byTopic = new Map();
@@ -286,29 +290,6 @@ export function computeLessonGrades(rows, frqBand, answerKey, schedule, opts) {
       });
     }
     return byTopic.get(topicKey);
-  }
-
-  function isCorrect(response, keyEntry) {
-    if (!keyEntry || keyEntry.answerKey == null) return false;
-    const r = normalizeResponse(response);
-    if (r == null) return false;
-    return r === String(keyEntry.answerKey).trim().toLowerCase();
-  }
-
-  function normalizeResponse(response) {
-    if (response == null) return null;
-    if (typeof response === 'string' || typeof response === 'number') {
-      return String(response).trim().toLowerCase();
-    }
-    if (Array.isArray(response)) {
-      return response.length ? normalizeResponse(response[0]) : null;
-    }
-    if (typeof response === 'object') {
-      for (const k of ['value', 'answer', 'selected', 'choice', 'key']) {
-        if (response[k] != null) return normalizeResponse(response[k]);
-      }
-    }
-    return null;
   }
 
   // AI-review partial credit per quiz item (generalizes the s125 quiz_exception):
@@ -409,10 +390,11 @@ export function computeLessonGrades(rows, frqBand, answerKey, schedule, opts) {
       } else if (src === 'curriculum_quiz') {
         const keyEntry = answerKey && answerKey[row.item_id];
         if (keyEntry && keyEntry.answerKey != null) {
-          // Partial credit = max of the answer-key result (1/0) and any AI-review
-          // credit (E=1, P=2/3, I=1/3) for this item. "correct" = full credit.
+          // Partial credit = max of the answer-key result (1, 0.5 for a correct
+          // retry after the cutoff, else 0) and any AI-review credit (E=1,
+          // P=2/3, I=1/3) for this item. "correct" = full credit.
           const credit = Math.max(
-            isCorrect(row.response, keyEntry) ? 1 : 0,
+            quizCredit(row, keyEntry, quizCutoff),
             reviewCredit.get(row.item_id) || 0
           );
           acc.quizItems.push({ itemId: row.item_id, correct: credit >= 1, credit, ts });

@@ -19,6 +19,7 @@ import {
   quarterOfDate,
   pcRawToP,
   pcCurvePct,
+  quizRetryCutoff,
 } from './grade-config.js';
 import {
   latestPerItem,
@@ -188,8 +189,10 @@ export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts
   // the per-unit P curve below needs it before the lesson schedule is resolved.
   const eventSchedule = (opts && opts.eventSchedule) || null;
 
-  // ── Q: cr-quiz correctness % per unit (re-scored vs key) ─────────────────
-  const qAgg = scoreAgainstKey(bySource('curriculum_quiz'), answerKey);
+  // ── Q: cr-quiz credit % per unit (re-scored vs key; a correct retry after
+  // the cutoff is half credit, QUIZ_RETRY_HALF_CREDIT_SPEC.md) ─────────────
+  const quizCutoff = quizRetryCutoff(config);
+  const qAgg = scoreAgainstKey(bySource('curriculum_quiz'), answerKey, quizCutoff);
   // ── PC raw %: Progress Check — makeup (server-scored vs pc_bank, honors
   // row.score) OR legacy proctored (re-scored vs key), per-unit best-wins.
   // GATED: OFF (config.pcTrack.enabled === false) → no PC row touches the grade
@@ -327,6 +330,7 @@ export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts
     trainerMap,
     bonusTopics: bonusTopicSet,
     frqFloorSince: config.frqProvisionalFloorSince || null,
+    quizRetryHalfCreditFrom: quizCutoff,
   });
 
   // Quiz-bearing topics (gradable quizTotal > 0) — the v3 Quiz-track denominator,

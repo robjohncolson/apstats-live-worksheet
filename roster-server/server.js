@@ -1106,7 +1106,7 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
   // Mounts GET /rollup (cr-quiz feeder per-unit correctness rollup).
   // ledgerDb + loadAnswerKey injected; tests pass fakes.
   if (ledgerDb && loadAnswerKey) {
-    mountRollup(app, { verifyToken, ledgerDb, loadAnswerKey: _gradingLoadAnswerKey });
+    mountRollup(app, { verifyToken, ledgerDb, loadAnswerKey: _gradingLoadAnswerKey, config: gradeConfig });
   }
 
   // ── DOGE Effort Wallet (DOGE_WALLET_SPEC Phase 2 additive) ───────────────────

@@ -7,7 +7,7 @@
  *
  * Regenerate after any engine edit:  node scripts/build-grade-engine.mjs
  * Parity is pinned by tests/grade-engine-bundle-parity.test.js.
- * engine-version: d1f68dd5cec8
+ * engine-version: 9bebed0c7eb6
  */
 ;(function (root) {
   'use strict';
@@ -277,6 +277,20 @@
       pcTrack: { enabled: process.env.PC_TRACK_ENABLED === 'true' },
     };
     
+    // Quiz retry half credit (QUIZ_RETRY_HALF_CREDIT_SPEC.md, teacher 2026-10-26).
+    // A correct retry recorded on or after this instant earns 0.5, not 1: with a
+    // full-credit retry a pure guesser on five options expects 40%, exactly the Quiz
+    // Done gate. Midnight EDT ending Monday 2026-10-26, so every retry made under the
+    // announced full-credit rule keeps it. Kept outside PHASE3_CONFIG on purpose: the
+    // m2b invariance fixtures pin that object key for key. A config that names
+    // quizRetryHalfCreditFrom wins (tests: configOverrides; null turns the rule off).
+    const QUIZ_RETRY_HALF_CREDIT_FROM = '2026-10-27T04:00:00Z';
+    
+    function quizRetryCutoff(config) {
+      if (config && config.quizRetryHalfCreditFrom !== undefined) return config.quizRetryHalfCreditFrom;
+      return QUIZ_RETRY_HALF_CREDIT_FROM;
+    }
+    
     // unitNumber("U4") | "4" | 4 → 4 ; anything unparseable → null.
     function unitNumber(u) {
       if (u == null) return null;
@@ -321,7 +335,7 @@
       }
       return Math.max(0, Math.min(100, Math.round(p * 10) / 10));
     }
-    return { PHASE3_CONFIG: PHASE3_CONFIG, PC_PART_POINTS: PC_PART_POINTS, unitNumber: unitNumber, quarterOfUnit: quarterOfUnit, quarterOfDate: quarterOfDate, pcRawToP: pcRawToP, PC_CURVE: PC_CURVE, pcCurvePct: pcCurvePct };
+    return { PHASE3_CONFIG: PHASE3_CONFIG, PC_PART_POINTS: PC_PART_POINTS, unitNumber: unitNumber, quarterOfUnit: quarterOfUnit, quarterOfDate: quarterOfDate, pcRawToP: pcRawToP, PC_CURVE: PC_CURVE, pcCurvePct: pcCurvePct, QUIZ_RETRY_HALF_CREDIT_FROM: QUIZ_RETRY_HALF_CREDIT_FROM, quizRetryCutoff: quizRetryCutoff };
   })();
 
   // ── scoring.js ──────────────────────────────────────────────────────
@@ -333,7 +347,7 @@
     // Phase-2 /rollup cr-quiz aggregation", not a fork). Logic is byte-equivalent
     // to rollup.js's original local helpers — the 13 rollup tests pin it.
     
-    const { PC_PART_POINTS } = __reg["grade-config"];
+    const { PC_PART_POINTS, QUIZ_RETRY_HALF_CREDIT_FROM } = __reg["grade-config"];
     
     // blooketScore -- the authoritative per-student per-Blooket score on [0,1].
     // SINGLE SOURCE OF TRUTH: the POST /class/blooket endpoint, the import tool, and
@@ -385,6 +399,28 @@
       const r = normalizeResponse(response);
       if (r == null || answerKey == null) return false;
       return r === String(answerKey).trim().toLowerCase();
+    }
+    
+    // quizCredit -- one keyed quiz row's credit: 1, 0.5 or 0
+    // (QUIZ_RETRY_HALF_CREDIT_SPEC.md §1). A correct first answer earns 1, a correct
+    // retry (attempt 2) recorded on or after cutoffIso earns 0.5, anything wrong 0.
+    // A retry before the cutoff, or with a missing/unparseable recorded_at, keeps
+    // full credit: a stored grade never goes down. No cutoff = the rule is off.
+    function quizCredit(row, keyEntry, cutoffIso) {
+      if (!keyEntry || keyEntry.answerKey == null) return 0;
+      if (!isCorrect(row?.response, keyEntry.answerKey)) return 0;
+      return isHalfCreditRetry(row, cutoffIso) ? 0.5 : 1;
+    }
+    
+    function isHalfCreditRetry(row, cutoffIso) {
+      // A garbage attempt (NaN) reads as a first answer, as latestPerItem reads it.
+      const attempt = Number(row?.attempt ?? 1);
+      if (!(attempt >= 2)) return false;
+      const cutoff = Date.parse(cutoffIso || '');
+      if (!Number.isFinite(cutoff)) return false;
+      const recordedAt = Date.parse(row?.recorded_at || '');
+      if (!Number.isFinite(recordedAt)) return false;
+      return recordedAt >= cutoff;
     }
     
     function rowStableId(row) {
@@ -487,12 +523,14 @@
     }
     
     // Score one source's latest-attempt rows vs the answer key, aggregated per
-    // unit. Used for cr-quiz (Q) and PC (P raw%). Returns
-    // { units: { U1:{attempted,graded,correct,ungradable,pct} }, totals:{...} }.
-    function scoreAgainstKey(rows, answerKey) {
+    // unit. Used for cr-quiz (Q). Returns
+    // { units: { U1:{attempted,graded,correct,credit,ungradable,pct} }, totals:{...} }.
+    // pct = credit / graded: a half-credit retry counts 0.5 (quizCredit); `correct`
+    // stays the count of full-credit items.
+    function scoreAgainstKey(rows, answerKey, cutoffIso = QUIZ_RETRY_HALF_CREDIT_FROM) {
       const units = {};
       const ensure = (u) =>
-        (units[u] || (units[u] = { attempted: 0, graded: 0, correct: 0, ungradable: 0 }));
+        (units[u] || (units[u] = { attempted: 0, graded: 0, correct: 0, credit: 0, ungradable: 0 }));
     
       for (const row of latestPerItem(rows)) {
         const itemId = row.item_id;
@@ -504,20 +542,23 @@
           continue;
         }
         u.graded += 1;
-        if (isCorrect(row.response, keyEntry.answerKey)) u.correct += 1;
+        const credit = quizCredit(row, keyEntry, cutoffIso);
+        u.credit += credit;
+        if (credit >= 1) u.correct += 1;
       }
     
-      const totals = { attempted: 0, graded: 0, correct: 0, ungradable: 0 };
+      const totals = { attempted: 0, graded: 0, correct: 0, credit: 0, ungradable: 0 };
       for (const u of Object.keys(units)) {
         const x = units[u];
-        x.pct = x.graded > 0 ? Math.round((x.correct / x.graded) * 1000) / 10 : null;
+        x.pct = x.graded > 0 ? Math.round((x.credit / x.graded) * 1000) / 10 : null;
         totals.attempted += x.attempted;
         totals.graded += x.graded;
         totals.correct += x.correct;
+        totals.credit += x.credit;
         totals.ungradable += x.ungradable;
       }
       totals.pct = totals.graded > 0
-        ? Math.round((totals.correct / totals.graded) * 1000) / 10
+        ? Math.round((totals.credit / totals.graded) * 1000) / 10
         : null;
     
       return { units, totals };
@@ -671,7 +712,7 @@
       if (mcqHalf != null) return 100 * mcqHalf;
       return 100 * frqHalf;
     }
-    return { blooketScore: blooketScore, normalizeResponse: normalizeResponse, isCorrect: isCorrect, stableLedgerSort: stableLedgerSort, latestPerItem: latestPerItem, unitOf: unitOf, answerKeyMapOrNull: answerKeyMapOrNull, skillMapValidOrNull: skillMapValidOrNull, scoreAgainstKey: scoreAgainstKey, scorePcRows: scorePcRows, pcPaperBlend: pcPaperBlend };
+    return { blooketScore: blooketScore, normalizeResponse: normalizeResponse, isCorrect: isCorrect, quizCredit: quizCredit, stableLedgerSort: stableLedgerSort, latestPerItem: latestPerItem, unitOf: unitOf, answerKeyMapOrNull: answerKeyMapOrNull, skillMapValidOrNull: skillMapValidOrNull, scoreAgainstKey: scoreAgainstKey, scorePcRows: scorePcRows, pcPaperBlend: pcPaperBlend };
   })();
 
   // ── lesson-grade.js ──────────────────────────────────────────────────────
@@ -691,7 +732,8 @@
     //   - computeQuarterFromLessons({ quarterKey, config, lessonMap, schedule, ... })
     //   - buildLessonsArray(lessonMap, schedule) → lessons[]
     
-    const { quarterOfDate, quarterOfUnit } = __reg["grade-config"];
+    const { quarterOfDate, quarterOfUnit, quizRetryCutoff } = __reg["grade-config"];
+    const { quizCredit } = __reg["scoring"];
     
     // ── Item-ID → lesson parsing ───────────────────────────────────────────────────
     
@@ -926,9 +968,11 @@
     // frqBand: { E, P, I } config.
     // answerKey: map of itemId → { answerKey, ... } (for quiz scoring).
     // schedule: topicKey → entry (to expand combined worksheets).
-    // opts: { worksheetBlankCounts, weights }
+    // opts: { worksheetBlankCounts, weights, quizRetryHalfCreditFrom }
     //   - worksheetBlankCounts: { "<unit>.<lessonKey>": <int> } or null/undefined
     //   - weights: { ws, W, Q } — lessonFeederWeights; defaults to { ws:1, W:2, Q:3 }
+    //   - quizRetryHalfCreditFrom: ISO cutoff for the half-credit retry (null = off;
+    //     absent = the production cutoff in grade-config.js)
     //
     // Note: this function intentionally does NOT filter by "due date" —
     // that is applied at the quarter level in computeQuarterFromLessons.
@@ -943,6 +987,7 @@
         : new Set((opts && opts.bonusTopics) || []);
       const weights = (opts && opts.weights) || { ws: 1, W: 2, Q: 3 };
       const frqFloorSince = parseFloorSince(opts && opts.frqFloorSince);
+      const quizCutoff = quizRetryCutoff(opts);
     
       // lessonMap: topicKey → accumulator
       const byTopic = new Map();
@@ -964,29 +1009,6 @@
           });
         }
         return byTopic.get(topicKey);
-      }
-    
-      function isCorrect(response, keyEntry) {
-        if (!keyEntry || keyEntry.answerKey == null) return false;
-        const r = normalizeResponse(response);
-        if (r == null) return false;
-        return r === String(keyEntry.answerKey).trim().toLowerCase();
-      }
-    
-      function normalizeResponse(response) {
-        if (response == null) return null;
-        if (typeof response === 'string' || typeof response === 'number') {
-          return String(response).trim().toLowerCase();
-        }
-        if (Array.isArray(response)) {
-          return response.length ? normalizeResponse(response[0]) : null;
-        }
-        if (typeof response === 'object') {
-          for (const k of ['value', 'answer', 'selected', 'choice', 'key']) {
-            if (response[k] != null) return normalizeResponse(response[k]);
-          }
-        }
-        return null;
       }
     
       // AI-review partial credit per quiz item (generalizes the s125 quiz_exception):
@@ -1087,10 +1109,11 @@
           } else if (src === 'curriculum_quiz') {
             const keyEntry = answerKey && answerKey[row.item_id];
             if (keyEntry && keyEntry.answerKey != null) {
-              // Partial credit = max of the answer-key result (1/0) and any AI-review
-              // credit (E=1, P=2/3, I=1/3) for this item. "correct" = full credit.
+              // Partial credit = max of the answer-key result (1, 0.5 for a correct
+              // retry after the cutoff, else 0) and any AI-review credit (E=1,
+              // P=2/3, I=1/3) for this item. "correct" = full credit.
               const credit = Math.max(
-                isCorrect(row.response, keyEntry) ? 1 : 0,
+                quizCredit(row, keyEntry, quizCutoff),
                 reviewCredit.get(row.item_id) || 0
               );
               acc.quizItems.push({ itemId: row.item_id, correct: credit >= 1, credit, ts });
@@ -2896,7 +2919,7 @@
     // The `units` field on the response is UNCHANGED in shape and values
     // (teacher dashboard via class.js fans out computeGrade and reads it).
     
-    const { PHASE3_CONFIG, unitNumber, quarterOfUnit, quarterOfDate, pcRawToP, pcCurvePct } = __reg["grade-config"];
+    const { PHASE3_CONFIG, unitNumber, quarterOfUnit, quarterOfDate, pcRawToP, pcCurvePct, quizRetryCutoff } = __reg["grade-config"];
     const { latestPerItem, unitOf, answerKeyMapOrNull, scoreAgainstKey, scorePcRows } = __reg["scoring"];
     const { buildWorksheetBlankCounts, computeLessonGrades, computeQuarterFromLessons, computeQuarterV3, buildLessonsArray, computeQuizTotals, todayInTz, sectionToPeriod, deriveQuarterBands, pcDatesFor, pcUnitsInQuarter, posterUnitsInQuarter } = __reg["lesson-grade"];
     const { buildGradebook } = __reg["gradebook-grid"];
@@ -3019,8 +3042,10 @@
       // the per-unit P curve below needs it before the lesson schedule is resolved.
       const eventSchedule = (opts && opts.eventSchedule) || null;
     
-      // ── Q: cr-quiz correctness % per unit (re-scored vs key) ─────────────────
-      const qAgg = scoreAgainstKey(bySource('curriculum_quiz'), answerKey);
+      // ── Q: cr-quiz credit % per unit (re-scored vs key; a correct retry after
+      // the cutoff is half credit, QUIZ_RETRY_HALF_CREDIT_SPEC.md) ─────────────
+      const quizCutoff = quizRetryCutoff(config);
+      const qAgg = scoreAgainstKey(bySource('curriculum_quiz'), answerKey, quizCutoff);
       // ── PC raw %: Progress Check — makeup (server-scored vs pc_bank, honors
       // row.score) OR legacy proctored (re-scored vs key), per-unit best-wins.
       // GATED: OFF (config.pcTrack.enabled === false) → no PC row touches the grade
@@ -3158,6 +3183,7 @@
         trainerMap,
         bonusTopics: bonusTopicSet,
         frqFloorSince: config.frqProvisionalFloorSince || null,
+        quizRetryHalfCreditFrom: quizCutoff,
       });
     
       // Quiz-bearing topics (gradable quizTotal > 0) — the v3 Quiz-track denominator,
@@ -3438,7 +3464,7 @@
     normalizeResponse: __reg["scoring"].normalizeResponse,
     scoreAgainstKey: __reg["scoring"].scoreAgainstKey,
     pcPaperBlend: __reg["scoring"].pcPaperBlend,
-    _engineVersion: "d1f68dd5cec8",
+    _engineVersion: "9bebed0c7eb6",
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = __api;

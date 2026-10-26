@@ -1,5 +1,5 @@
 // rollup.js — mounts GET /rollup onto an Express app (Gradebook Phase 2b).
-// Call mountRollup(app, { verifyToken, ledgerDb, loadAnswerKey }) from createApp().
+// Call mountRollup(app, { verifyToken, ledgerDb, loadAnswerKey, config }) from createApp().
 //
 // The cr-quiz GRADE feeder rollup: scores a student's `curriculum_quiz`
 // item_ledger rows (DN2d wrote them with `score` deliberately omitted) against
@@ -19,11 +19,12 @@
 // is re-exported because rollup.test.js imports it from this module.
 import {
   normalizeResponse as _normalizeResponse,
-  isCorrect,
+  quizCredit,
   latestPerItem,
   unitOf,
   answerKeyMapOrNull,
 } from './scoring.js';
+import { quizRetryCutoff } from './grade-config.js';
 
 export const normalizeResponse = _normalizeResponse;
 
@@ -42,14 +43,16 @@ function extractToken(req) {
 
 // ── Route mounter ─────────────────────────────────────────────────────────────
 
-export function mountRollup(app, { verifyToken, ledgerDb, loadAnswerKey }) {
+export function mountRollup(app, { verifyToken, ledgerDb, loadAnswerKey, config }) {
 
   // GET /rollup
   //   Auth: roster token via Authorization: Bearer <t> OR ?token=.
   //   Reads the student's curriculum_quiz item_ledger rows + the bundled
   //   answer key; scores latest attempt per item; aggregates per unit.
-  //   → 200 { ok, asOf, units: { U1: {attempted,graded,correct,crQuizPct} },
-  //           totals: {attempted,graded,correct,ungradable,crQuizPct} }
+  //   → 200 { ok, asOf, units: { U1: {attempted,graded,correct,credit,crQuizPct} },
+  //           totals: {attempted,graded,correct,credit,ungradable,crQuizPct} }
+  //   crQuizPct = credit / graded: a correct retry after the cutoff is 0.5
+  //   (quizCredit, QUIZ_RETRY_HALF_CREDIT_SPEC.md); `correct` counts full credit.
   //   NO grade math (Phase 3). Read-only w.r.t. item_ledger.
   app.get('/rollup', async (req, res) => {
     const rawToken = extractToken(req);
@@ -98,8 +101,10 @@ export function mountRollup(app, { verifyToken, ledgerDb, loadAnswerKey }) {
       .filter(r => r?.source !== 'bonus' && r?.source !== 'bonus_applied')
       .filter(r => r && r.source === 'curriculum_quiz');
 
+    // Same cutoff as /grade, so configOverrides reach both routes.
+    const cutoff = quizRetryCutoff(config);
     const units = {};
-    const ensure = (u) => (units[u] || (units[u] = { attempted: 0, graded: 0, correct: 0, ungradable: 0 }));
+    const ensure = (u) => (units[u] || (units[u] = { attempted: 0, graded: 0, correct: 0, credit: 0, ungradable: 0 }));
 
     for (const row of latestPerItem(rows)) {
       const itemId = row.item_id;
@@ -112,20 +117,23 @@ export function mountRollup(app, { verifyToken, ledgerDb, loadAnswerKey }) {
         continue;
       }
       u.graded += 1;
-      if (isCorrect(row.response, keyEntry.answerKey)) u.correct += 1;
+      const credit = quizCredit(row, keyEntry, cutoff);
+      u.credit += credit;
+      if (credit >= 1) u.correct += 1;
     }
 
-    const totals = { attempted: 0, graded: 0, correct: 0, ungradable: 0 };
+    const totals = { attempted: 0, graded: 0, correct: 0, credit: 0, ungradable: 0 };
     for (const u of Object.keys(units).sort()) {
       const x = units[u];
-      x.crQuizPct = x.graded > 0 ? Math.round((x.correct / x.graded) * 1000) / 10 : null;
+      x.crQuizPct = x.graded > 0 ? Math.round((x.credit / x.graded) * 1000) / 10 : null;
       totals.attempted += x.attempted;
       totals.graded += x.graded;
       totals.correct += x.correct;
+      totals.credit += x.credit;
       totals.ungradable += x.ungradable;
     }
     totals.crQuizPct = totals.graded > 0
-      ? Math.round((totals.correct / totals.graded) * 1000) / 10
+      ? Math.round((totals.credit / totals.graded) * 1000) / 10
       : null;
 
     // Stable, sorted unit order in the response.

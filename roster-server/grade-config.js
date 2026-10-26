@@ -249,6 +249,20 @@ export const PHASE3_CONFIG = {
   pcTrack: { enabled: process.env.PC_TRACK_ENABLED === 'true' },
 };
 
+// Quiz retry half credit (QUIZ_RETRY_HALF_CREDIT_SPEC.md, teacher 2026-10-26).
+// A correct retry recorded on or after this instant earns 0.5, not 1: with a
+// full-credit retry a pure guesser on five options expects 40%, exactly the Quiz
+// Done gate. Midnight EDT ending Monday 2026-10-26, so every retry made under the
+// announced full-credit rule keeps it. Kept outside PHASE3_CONFIG on purpose: the
+// m2b invariance fixtures pin that object key for key. A config that names
+// quizRetryHalfCreditFrom wins (tests: configOverrides; null turns the rule off).
+export const QUIZ_RETRY_HALF_CREDIT_FROM = '2026-10-27T04:00:00Z';
+
+export function quizRetryCutoff(config) {
+  if (config && config.quizRetryHalfCreditFrom !== undefined) return config.quizRetryHalfCreditFrom;
+  return QUIZ_RETRY_HALF_CREDIT_FROM;
+}
+
 // unitNumber("U4") | "4" | 4 → 4 ; anything unparseable → null.
 export function unitNumber(u) {
   if (u == null) return null;

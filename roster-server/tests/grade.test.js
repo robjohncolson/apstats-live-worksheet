@@ -359,13 +359,26 @@ describe('GET /grade — model math', () => {
   });
 
   it('latest attempt wins (attempt 2 supersedes attempt 1)', async () => {
+    // Dated before the half-credit cutoff: a grandfathered retry keeps full credit.
+    const before = '2026-10-20T15:00:00.000Z';
     const rows = [
-      makeRow('U1-L1-Q01', 'X', { attempt: 1 }),  // wrong
-      makeRow('U1-L1-Q01', 'B', { attempt: 2 }),  // right → wins → Q=100
+      makeRow('U1-L1-Q01', 'X', { attempt: 1, recorded_at: before }),  // wrong
+      makeRow('U1-L1-Q01', 'B', { attempt: 2, recorded_at: before }),  // right → wins → Q=100
     ];
     const ctx = await startServer(rows); srv = ctx.server;
     const { body } = await srv.get(`/grade?token=${ctx.token}`);
     expect(body.units.U1.Q).toBe(100);
+  });
+
+  it('a correct retry on or after the cutoff is half credit (Q=50)', async () => {
+    const after = '2026-10-28T15:00:00.000Z';
+    const rows = [
+      makeRow('U1-L1-Q01', 'X', { attempt: 1, recorded_at: after }),  // wrong
+      makeRow('U1-L1-Q01', 'B', { attempt: 2, recorded_at: after }),  // right retry → 0.5
+    ];
+    const ctx = await startServer(rows); srv = ctx.server;
+    const { body } = await srv.get(`/grade?token=${ctx.token}`);
+    expect(body.units.U1.Q).toBe(50);
   });
 
   it('empty ledger → empty units, all quarters null', async () => {

@@ -72,7 +72,7 @@ class TestServer {
   }
 }
 
-async function startServer(rows = [], { loadAnswerKey = okAnswerKey, ledgerOpts = {} } = {}) {
+async function startServer(rows = [], { loadAnswerKey = okAnswerKey, ledgerOpts = {}, configOverrides } = {}) {
   process.env.ROSTER_TOKEN_SECRET = `tok-${randomBytes(16).toString('hex')}`;
   process.env.NODE_ENV = 'test';
   const studentId = `uuid-rollup-${randomBytes(8).toString('hex')}`;
@@ -80,7 +80,8 @@ async function startServer(rows = [], { loadAnswerKey = okAnswerKey, ledgerOpts 
   // All fixture rows belong to the test student (matches donow harness intent;
   // any caller-supplied student_id is overridden so the signed token matches).
   const ledgerDb = createFakeLedgerDb(rows.map(r => ({ ...r, student_id: studentId })), ledgerOpts);
-  const app = createApp(createFakeRosterDb(), ledgerDb, fakeLoadManifest, loadAnswerKey);
+  const app = createApp(createFakeRosterDb(), ledgerDb, fakeLoadManifest, loadAnswerKey,
+    undefined, undefined, undefined, undefined, configOverrides);
   const server = new TestServer(app);
   await server.start();
   return { server, studentId, token, ledgerDb };
@@ -124,13 +125,42 @@ describe('GET /rollup — scoring', () => {
 
   it('latest attempt wins (attempt 2 supersedes attempt 1)', async () => {
     const sid = 'uuid-rollup-att';
+    // Dated before the half-credit cutoff: a grandfathered retry keeps full credit.
+    const before = '2026-10-20T15:00:00.000Z';
     const rows = [
-      makeRow(sid, 'U1-L1-Q01', 'A', { attempt: 1 }),  // wrong
-      makeRow(sid, 'U1-L1-Q01', 'B', { attempt: 2 }),  // right → wins
+      makeRow(sid, 'U1-L1-Q01', 'A', { attempt: 1, recorded_at: before }),  // wrong
+      makeRow(sid, 'U1-L1-Q01', 'B', { attempt: 2, recorded_at: before }),  // right → wins
     ];
     const ctx = await startServer(rows); srv = ctx.server;
     const { body } = await srv.get(`/rollup?token=${ctx.token}`);
-    expect(body.units.U1).toMatchObject({ attempted: 1, graded: 1, correct: 1 });
+    expect(body.units.U1).toMatchObject({ attempted: 1, graded: 1, correct: 1, credit: 1 });
+  });
+
+  it('a correct retry on or after the cutoff aggregates as half credit', async () => {
+    const sid = 'uuid-rollup-half';
+    const after = '2026-10-28T15:00:00.000Z';
+    const rows = [
+      makeRow(sid, 'U1-L1-Q01', 'B', { attempt: 1, recorded_at: after }),  // first answer right → 1
+      makeRow(sid, 'U1-L1-Q02', 'A', { attempt: 1, recorded_at: after }),  // wrong
+      makeRow(sid, 'U1-L1-Q02', 'C', { attempt: 2, recorded_at: after }),  // right retry → 0.5
+    ];
+    const ctx = await startServer(rows); srv = ctx.server;
+    const { body } = await srv.get(`/rollup?token=${ctx.token}`);
+    expect(body.units.U1).toMatchObject({ attempted: 2, graded: 2, correct: 1, credit: 1.5, crQuizPct: 75 });
+    expect(body.totals).toMatchObject({ correct: 1, credit: 1.5, crQuizPct: 75 });
+  });
+
+  it('honours the configOverrides cutoff, as /grade does (null = rule off)', async () => {
+    const sid = 'uuid-rollup-half-off';
+    const after = '2026-10-28T15:00:00.000Z';
+    const rows = [
+      makeRow(sid, 'U1-L1-Q01', 'B', { attempt: 1, recorded_at: after }),
+      makeRow(sid, 'U1-L1-Q02', 'A', { attempt: 1, recorded_at: after }),
+      makeRow(sid, 'U1-L1-Q02', 'C', { attempt: 2, recorded_at: after }),
+    ];
+    const ctx = await startServer(rows, { configOverrides: { quizRetryHalfCreditFrom: null } }); srv = ctx.server;
+    const { body } = await srv.get(`/rollup?token=${ctx.token}`);
+    expect(body.units.U1).toMatchObject({ correct: 2, credit: 2, crQuizPct: 100 });
   });
 
   it('item with no answer-key entry → ungradable (excluded from graded denominator)', async () => {

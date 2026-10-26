@@ -5,7 +5,7 @@
 // Phase-2 /rollup cr-quiz aggregation", not a fork). Logic is byte-equivalent
 // to rollup.js's original local helpers — the 13 rollup tests pin it.
 
-import { PC_PART_POINTS } from './grade-config.js';
+import { PC_PART_POINTS, QUIZ_RETRY_HALF_CREDIT_FROM } from './grade-config.js';
 
 // blooketScore -- the authoritative per-student per-Blooket score on [0,1].
 // SINGLE SOURCE OF TRUTH: the POST /class/blooket endpoint, the import tool, and
@@ -57,6 +57,28 @@ export function isCorrect(response, answerKey) {
   const r = normalizeResponse(response);
   if (r == null || answerKey == null) return false;
   return r === String(answerKey).trim().toLowerCase();
+}
+
+// quizCredit -- one keyed quiz row's credit: 1, 0.5 or 0
+// (QUIZ_RETRY_HALF_CREDIT_SPEC.md §1). A correct first answer earns 1, a correct
+// retry (attempt 2) recorded on or after cutoffIso earns 0.5, anything wrong 0.
+// A retry before the cutoff, or with a missing/unparseable recorded_at, keeps
+// full credit: a stored grade never goes down. No cutoff = the rule is off.
+export function quizCredit(row, keyEntry, cutoffIso) {
+  if (!keyEntry || keyEntry.answerKey == null) return 0;
+  if (!isCorrect(row?.response, keyEntry.answerKey)) return 0;
+  return isHalfCreditRetry(row, cutoffIso) ? 0.5 : 1;
+}
+
+function isHalfCreditRetry(row, cutoffIso) {
+  // A garbage attempt (NaN) reads as a first answer, as latestPerItem reads it.
+  const attempt = Number(row?.attempt ?? 1);
+  if (!(attempt >= 2)) return false;
+  const cutoff = Date.parse(cutoffIso || '');
+  if (!Number.isFinite(cutoff)) return false;
+  const recordedAt = Date.parse(row?.recorded_at || '');
+  if (!Number.isFinite(recordedAt)) return false;
+  return recordedAt >= cutoff;
 }
 
 function rowStableId(row) {
@@ -159,12 +181,14 @@ export function skillMapValidOrNull(skillMap) {
 }
 
 // Score one source's latest-attempt rows vs the answer key, aggregated per
-// unit. Used for cr-quiz (Q) and PC (P raw%). Returns
-// { units: { U1:{attempted,graded,correct,ungradable,pct} }, totals:{...} }.
-export function scoreAgainstKey(rows, answerKey) {
+// unit. Used for cr-quiz (Q). Returns
+// { units: { U1:{attempted,graded,correct,credit,ungradable,pct} }, totals:{...} }.
+// pct = credit / graded: a half-credit retry counts 0.5 (quizCredit); `correct`
+// stays the count of full-credit items.
+export function scoreAgainstKey(rows, answerKey, cutoffIso = QUIZ_RETRY_HALF_CREDIT_FROM) {
   const units = {};
   const ensure = (u) =>
-    (units[u] || (units[u] = { attempted: 0, graded: 0, correct: 0, ungradable: 0 }));
+    (units[u] || (units[u] = { attempted: 0, graded: 0, correct: 0, credit: 0, ungradable: 0 }));
 
   for (const row of latestPerItem(rows)) {
     const itemId = row.item_id;
@@ -176,20 +200,23 @@ export function scoreAgainstKey(rows, answerKey) {
       continue;
     }
     u.graded += 1;
-    if (isCorrect(row.response, keyEntry.answerKey)) u.correct += 1;
+    const credit = quizCredit(row, keyEntry, cutoffIso);
+    u.credit += credit;
+    if (credit >= 1) u.correct += 1;
   }
 
-  const totals = { attempted: 0, graded: 0, correct: 0, ungradable: 0 };
+  const totals = { attempted: 0, graded: 0, correct: 0, credit: 0, ungradable: 0 };
   for (const u of Object.keys(units)) {
     const x = units[u];
-    x.pct = x.graded > 0 ? Math.round((x.correct / x.graded) * 1000) / 10 : null;
+    x.pct = x.graded > 0 ? Math.round((x.credit / x.graded) * 1000) / 10 : null;
     totals.attempted += x.attempted;
     totals.graded += x.graded;
     totals.correct += x.correct;
+    totals.credit += x.credit;
     totals.ungradable += x.ungradable;
   }
   totals.pct = totals.graded > 0
-    ? Math.round((totals.correct / totals.graded) * 1000) / 10
+    ? Math.round((totals.credit / totals.graded) * 1000) / 10
     : null;
 
   return { units, totals };
