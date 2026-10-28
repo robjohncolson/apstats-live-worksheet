@@ -164,3 +164,16 @@ supabase_logs.json
 .vercel
 .env.local
 .env*.local
+
+# --- local scratch and student data, never commit (2026-10-28) ---
+tools/.schoology-sync-logs/
+/[0-9]*_[0-9]*.PDF
+state/periodb-uids.csv
+__pycache__/
+*.pyc
+u1_poster/photos/
+u1_poster/tex/*_feedback.*
+u1_poster/tex/*.aux
+u1_poster/tex/*.log
+u1_poster/tex/*.out
+u1_poster/tex/*.stdout
