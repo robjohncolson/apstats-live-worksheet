@@ -278,6 +278,39 @@
         "label:ws u3l3 exitticket",
         "random-selection-assignment"
       ]
+    },
+    {
+      "at": "2026-10-30T21:00:00.000Z",
+      "keys": [
+        "conditional-denominator",
+        "conditioning-direction",
+        "label:chose a on u2 l2 q02",
+        "label:chose a on u3 l3 q02",
+        "label:chose a on u3 l4 q01",
+        "label:chose a on u4 l3 q02",
+        "label:chose a on u4 l3 q06",
+        "label:chose b on u2 l2 q02",
+        "label:chose b on u2 l3 q02",
+        "label:chose b on u3 l3 q02",
+        "label:chose b on u3 l6 q02",
+        "label:chose b on u4 l2 q01",
+        "label:chose b on u4 l3 q03",
+        "label:chose c on u1 l9 q01",
+        "label:chose c on u2 l2 q02",
+        "label:chose c on u4 l2 q02",
+        "label:chose d on u2 l2 q01",
+        "label:chose d on u2 l3 q04",
+        "label:chose d on u2 l3 q06",
+        "label:chose d on u3 l2 q06",
+        "label:chose d on u4 l2 q02",
+        "label:chose e on u3 l6 q02",
+        "label:count how many of the 5 are correct in each trial",
+        "label:one trial generating 5 random numbers one per question",
+        "label:repeat the five question trial many times and use the proportion with at least 3 correct as the probability estimate",
+        "label:success 3 or more correct out of 5",
+        "label:ws u2l2 exitticket",
+        "label:ws u3l3 exitticket"
+      ]
     }
   ]
 }
