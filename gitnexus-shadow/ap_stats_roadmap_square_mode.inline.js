@@ -10495,9 +10495,15 @@ function cedTeacherBridgeAllowed() {
 // assignment URL (.../33/assessments/assignments/<id>) into that period's
 // variant. Leave a period out until its id is known (its students see the
 // "teacher shares the link" panel). Never guess an id.
+// Units 1-5 are fully assigned for both sections. Unit 3's mid-unit MCQ Part A/B
+// and Unit 4's mid-unit check are NOT assigned (no schedule date), so there is
+// no U3-PCA / U4-PCA entry on purpose.
 var PC_ASSIGNMENT_URL = 'https://apclassroom.collegeboard.org/33/assessments/assignments/';
 var PC_LINKS = {
-    'U1-PCA': { url: 'https://apclassroom.collegeboard.org/33/assignments?quizId=21010399&type=', label: 'MCQ Part A' },
+    'U1-PCA': { label: 'MCQ Part A',
+        B: { url: PC_ASSIGNMENT_URL + '80784414' },
+        E: { url: PC_ASSIGNMENT_URL + '80784578' }
+    },
     'U1-PC1': { label: 'Unit 1 Progress Check — Day 1',
         B: { links: [
             { url: PC_ASSIGNMENT_URL + '81595010', label: 'MCQ Part B (14 questions)' },
@@ -10513,14 +10519,53 @@ var PC_LINKS = {
         E: { url: PC_ASSIGNMENT_URL + '81743492' }
     },
     'U2-PCA': { label: 'MCQ Part A',
-        B: { url: PC_ASSIGNMENT_URL + '82255720' }
-        // E id: teacher to supply
+        B: { url: PC_ASSIGNMENT_URL + '82255720' },
+        E: { url: PC_ASSIGNMENT_URL + '82259752' }
+    },
+    'U2-PC1': { label: 'Unit 2 Progress Check — Day 1',
+        B: { links: [
+            { url: PC_ASSIGNMENT_URL + '82259948', label: 'MCQ Part B' },
+            { url: PC_ASSIGNMENT_URL + '82260072', label: 'MCQ Part C' }
+        ] },
+        E: { links: [
+            { url: PC_ASSIGNMENT_URL + '82259947', label: 'MCQ Part B' },
+            { url: PC_ASSIGNMENT_URL + '82260070', label: 'MCQ Part C' }
+        ] }
+    },
+    'U2-PC2': { label: 'FRQ (Day 2)',
+        B: { url: PC_ASSIGNMENT_URL + '82260319' },
+        E: { url: PC_ASSIGNMENT_URL + '82260482' }
+    },
+    'U3-PC1': { label: 'Unit 3 Progress Check — Day 1',
+        B: { links: [
+            { url: PC_ASSIGNMENT_URL + '82260921', label: 'MCQ Part C' },
+            { url: PC_ASSIGNMENT_URL + '82261065', label: 'MCQ Part D' }
+        ] },
+        E: { links: [
+            { url: PC_ASSIGNMENT_URL + '82260920', label: 'MCQ Part C' },
+            { url: PC_ASSIGNMENT_URL + '82261064', label: 'MCQ Part D' }
+        ] }
+    },
+    'U3-PC2': { label: 'FRQ (Day 2)',
+        B: { url: PC_ASSIGNMENT_URL + '82261155' },
+        E: { url: PC_ASSIGNMENT_URL + '82261154' }
+    },
+    'U4-PC1': { label: 'MCQ Part C (Day 1)',
+        B: { url: PC_ASSIGNMENT_URL + '82261388' },
+        E: { url: PC_ASSIGNMENT_URL + '82261387' }
+    },
+    'U4-PC2': { label: 'FRQ (Day 2)',
+        B: { url: PC_ASSIGNMENT_URL + '82261590' },
+        E: { url: PC_ASSIGNMENT_URL + '82261589' }
+    },
+    'U5-PC1': { label: 'MCQ Part A (Day 1)',
+        B: { url: PC_ASSIGNMENT_URL + '82262123' },
+        E: { url: PC_ASSIGNMENT_URL + '82262122' }
+    },
+    'U5-PC2': { label: 'FRQ (Day 2)',
+        B: { url: PC_ASSIGNMENT_URL + '82262256' },
+        E: { url: PC_ASSIGNMENT_URL + '82262255' }
     }
-    // 'U2-PC1': { label: 'Unit 2 Progress Check — Day 1',
-    //     B: { links: [ { url: PC_ASSIGNMENT_URL + '<id>', label: 'MCQ Part B' },
-    //                   { url: PC_ASSIGNMENT_URL + '<id>', label: 'MCQ Part C' } ] },
-    //     E: { links: [ ...same, E ids... ] } },
-    // 'U2-PC2': { label: 'FRQ (Day 2)', B: { url: PC_ASSIGNMENT_URL + '<id>' }, E: { url: PC_ASSIGNMENT_URL + '<id>' } },
 };
 // One variant ({url} or {links}) as a list of {url, label}.
 function _pcVariantLinks(variant, label) {
@@ -23302,7 +23347,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-11-02-gvm5';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-11-02-rdr0';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

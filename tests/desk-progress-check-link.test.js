@@ -25,14 +25,33 @@ function page(today,period='B'){
 }
 const pc1={t:'U1-PC1',n:'Unit 1 Progress Check (Day 1)',u:1,kind:'pc',admin:1};
 describe('Progress Check launch links',()=>{
- it('U1 MCQ Part A points at the AP Classroom assignment',()=>{
+ it('U1 MCQ Part A is per period: B opens 80784414, E opens 80784578',()=>{
   const {s}=page(pcA);
-  expect(s.PC_LINKS['U1-PCA'].url).toBe('https://apclassroom.collegeboard.org/33/assignments?quizId=21010399&type=');
+  expect(s.pcLinksFor('U1-PCA','B')).toEqual([{url:'https://apclassroom.collegeboard.org/33/assessments/assignments/80784414',label:'MCQ Part A'}]);
+  expect(s.pcLinksFor('U1-PCA','E')).toEqual([{url:'https://apclassroom.collegeboard.org/33/assessments/assignments/80784578',label:'MCQ Part A'}]);
  });
- it('U2 MCQ Part A: Period B opens 82255720, Period E has no id yet',()=>{
+ it('U2 MCQ Part A: Period B opens 82255720, Period E opens 82259752',()=>{
   const {s}=page(pcA);
   expect(s.pcLinksFor('U2-PCA','B')).toEqual([{url:'https://apclassroom.collegeboard.org/33/assessments/assignments/82255720',label:'MCQ Part A'}]);
-  expect(s.pcLinksFor('U2-PCA','E')).toEqual([]);
+  expect(s.pcLinksFor('U2-PCA','E')).toEqual([{url:'https://apclassroom.collegeboard.org/33/assessments/assignments/82259752',label:'MCQ Part A'}]);
+ });
+ it('a U3 Day 1 B student gets MCQ Part C then Part D',()=>{
+  const {s}=page(pcA,'B');
+  expect(s.pcLinksFor('U3-PC1')).toEqual([{url:'https://apclassroom.collegeboard.org/33/assessments/assignments/82260921',label:'MCQ Part C'},{url:'https://apclassroom.collegeboard.org/33/assessments/assignments/82261065',label:'MCQ Part D'}]);
+ });
+ it('a U5 Day 2 E student gets the E FRQ',()=>{
+  const {s}=page(pcA,'E');
+  expect(s.pcLinksFor('U5-PC2')).toEqual([{url:'https://apclassroom.collegeboard.org/33/assessments/assignments/82262255',label:'FRQ (Day 2)'}]);
+ });
+ it('every unit 1-5 PC1 / PC2 tile has links for both B and E, and no U3-PCA / U4-PCA entry',()=>{
+  const {s}=page(pcA);const PC='https://apclassroom.collegeboard.org/33/assessments/assignments/';
+  for(let u=1;u<=5;u++)for(const d of ['PC1','PC2'])for(const p of ['B','E']){
+   const links=s.pcLinksFor('U'+u+'-'+d,p);
+   expect(links.length,'U'+u+'-'+d+' '+p).toBeGreaterThan(0);
+   for(const l of links)expect(l.url.startsWith(PC)&&/^[0-9]+$/.test(l.url.slice(PC.length))).toBe(true);
+  }
+  expect(s.PC_LINKS['U3-PCA']).toBeUndefined();
+  expect(s.PC_LINKS['U4-PCA']).toBeUndefined();
  });
  it('U1 Day 1 (MCQ Part B + C) lists one button per assignment, Part B first, with the B ids for a B student',()=>{
   const {dom,s}=page(pc1,'B');try{
@@ -60,8 +79,7 @@ describe('Progress Check launch links',()=>{
    expect([...d.querySelectorAll('#resource-body a')].map(a=>a.href)).toEqual(['https://apclassroom.collegeboard.org/33/assessments/assignments/81743327','https://apclassroom.collegeboard.org/33/assessments/assignments/81743453']);
    const u2a={t:'U2-PCA',n:'Unit 2 MCQ Part A',u:2,kind:'pc',part:'A'};
    s.showResourcePanel(u2a,'Nov 2');
-   expect(d.querySelector('#resource-body a')).toBeNull();
-   expect(d.getElementById('resource-body').textContent).toContain('teacher shares the link');
+   expect(d.querySelector('#resource-body a').href).toBe('https://apclassroom.collegeboard.org/33/assessments/assignments/82259752');
   }finally{dom.window.close();}
  });
  it('no period (teacher / guest) lists both periods, B first, labelled by period',()=>{
@@ -72,15 +90,16 @@ describe('Progress Check launch links',()=>{
     {url:'https://apclassroom.collegeboard.org/33/assessments/assignments/81743327',label:'Period E · MCQ Part B (14 questions)'},
     {url:'https://apclassroom.collegeboard.org/33/assessments/assignments/81743453',label:'Period E · MCQ Part C (12 questions)'}]);
    expect(s.pcLinksFor('U1-PC2').map(l=>l.label)).toEqual(['Period B · FRQ (Day 2)','Period E · FRQ (Day 2)']);
-   expect(s.pcLinksFor('U2-PCA')).toEqual([{url:'https://apclassroom.collegeboard.org/33/assessments/assignments/82255720',label:'Period B · MCQ Part A'}]);
+   expect(s.pcLinksFor('U2-PCA')).toEqual([{url:'https://apclassroom.collegeboard.org/33/assessments/assignments/82255720',label:'Period B · MCQ Part A'},{url:'https://apclassroom.collegeboard.org/33/assessments/assignments/82259752',label:'Period E · MCQ Part A'}]);
    s.showResourcePanel(pc1,'Oct 13');
    expect([...dom.window.document.querySelectorAll('#resource-body a')].map(a=>a.textContent)[2]).toBe('Period E · MCQ Part B (14 questions) → ');
   }finally{dom.window.close();}
  });
  it('a legacy single-url entry applies to every period',()=>{
   const {s}=page(pcA);
-  const want=[{url:s.PC_LINKS['U1-PCA'].url,label:'MCQ Part A'}];
-  for(const p of ['B','E',null])expect(s.pcLinksFor('U1-PCA',p)).toEqual(want);
+  s.PC_LINKS['UX-PCA']={url:'https://x.example/a',label:'MCQ Part A'};
+  const want=[{url:'https://x.example/a',label:'MCQ Part A'}];
+  for(const p of ['B','E',null])expect(s.pcLinksFor('UX-PCA',p)).toEqual(want);
   s.PC_LINKS['UX-PC1']={label:'Day 1',links:[{url:'https://x.example/1',label:'one'}]};
   expect(s.pcLinksFor('UX-PC1','E')).toEqual([{url:'https://x.example/1',label:'one'}]);
  });
@@ -90,7 +109,7 @@ describe('Progress Check launch links',()=>{
    expect(d.getElementById('resource-overlay').style.display).toBe('block');
    expect(d.getElementById('resource-header').textContent).toBe('Unit 1 MCQ Part A');
    const a=d.querySelector('#resource-body a');
-   expect(a.href).toBe(s.PC_LINKS['U1-PCA'].url);expect(a.target).toBe('_blank');expect(a.rel).toBe('noopener');
+   expect(a.href).toBe('https://apclassroom.collegeboard.org/33/assessments/assignments/80784414');expect(a.target).toBe('_blank');expect(a.rel).toBe('noopener');
    expect(d.getElementById('resource-body').textContent).toContain('College Board');
    expect(d.getElementById('resource-body').textContent).toContain('paper copy');
   }finally{dom.window.close();}
