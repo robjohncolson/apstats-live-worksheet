@@ -10494,7 +10494,8 @@ var PC_LINKS = {
         { url: 'https://apclassroom.collegeboard.org/33/assessments/assignments/81595010', label: 'MCQ Part B (14 questions)' },
         { url: 'https://apclassroom.collegeboard.org/33/assessments/assignments/81595024', label: 'MCQ Part C (12 questions)' }
     ], label: 'Unit 1 Progress Check — Day 1' },
-    'U1-PC2': { url: 'https://apclassroom.collegeboard.org/33/assessments/assignments/81595036', label: 'FRQ (Day 2)' }
+    'U1-PC2': { url: 'https://apclassroom.collegeboard.org/33/assessments/assignments/81595036', label: 'FRQ (Day 2)' },
+    'U2-PCA': { url: 'https://apclassroom.collegeboard.org/33/assessments/assignments/82255720', label: 'MCQ Part A' }
 };
 // Every assignment a PC tile opens, in order (one `url` or several `links`).
 function pcLinksFor(tileId) {
@@ -23258,7 +23259,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-10-26-ap01';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-11-02-2r2f';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

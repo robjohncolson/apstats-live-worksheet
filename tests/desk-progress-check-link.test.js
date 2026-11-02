@@ -29,6 +29,10 @@ describe('Progress Check launch links',()=>{
   const {s}=page(pcA);
   expect(s.PC_LINKS['U1-PCA'].url).toBe('https://apclassroom.collegeboard.org/33/assignments?quizId=21010399&type=');
  });
+ it('U2 MCQ Part A points at the AP Classroom assignment',()=>{
+  const {s}=page(pcA);
+  expect(s.PC_LINKS['U2-PCA'].url).toBe('https://apclassroom.collegeboard.org/33/assessments/assignments/82255720');
+ });
  it('U1 Day 1 (MCQ Part B + C) lists one button per assignment, Part B first',()=>{
   const {dom,s}=page(pc1);try{
    const links=s.pcLinksFor('U1-PC1');
