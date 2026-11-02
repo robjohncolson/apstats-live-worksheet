@@ -7,7 +7,7 @@
  *
  * Regenerate after any engine edit:  node scripts/build-grade-engine.mjs
  * Parity is pinned by tests/grade-engine-bundle-parity.test.js.
- * engine-version: 2fc665a59360
+ * engine-version: 93d2fdfbd916
  */
 ;(function (root) {
   'use strict';
@@ -296,7 +296,10 @@
     // reason 'retries-closed', so the first answer is the grade. Any graded retry is
     // a second draw on five options. The same instant as the half-credit cutoff, so
     // no retry is ever recorded at half credit; earlier retries keep full credit.
-    const QUIZ_RETRIES_CLOSED_FROM = QUIZ_RETRY_HALF_CREDIT_FROM;
+    // Retries re-opened 2026-11-02 at the teacher's request (a student could no longer
+    // explain a wrong answer): null = retries stay open, and a correct retry earns
+    // half credit under QUIZ_RETRY_HALF_CREDIT_FROM. Set an ISO instant to close them again.
+    const QUIZ_RETRIES_CLOSED_FROM = null;
     
     // unitNumber("U4") | "4" | 4 → 4 ; anything unparseable → null.
     function unitNumber(u) {
@@ -413,9 +416,9 @@
     // retry (attempt 2) recorded on or after cutoffIso earns 0.5, anything wrong 0.
     // A retry before the cutoff, or with a missing/unparseable recorded_at, keeps
     // full credit: a stored grade never goes down. No cutoff = the rule is off.
-    // The 0.5 branch can no longer fire for a new row: retries close at the same
-    // instant (QUIZ_RETRIES_CLOSED_FROM, QUIZ_RETRY_REMOVAL_SPEC.md), and
-    // /ledger/record stamps an accepted retry with the instant it checked.
+    // Retries were closed 2026-10-27 and re-opened 2026-11-02 (QUIZ_RETRIES_CLOSED_FROM
+    // null), so a correct retry recorded now earns 0.5. /ledger/record stamps an
+    // accepted retry with the instant it checked.
     function quizCredit(row, keyEntry, cutoffIso) {
       if (!keyEntry || keyEntry.answerKey == null) return 0;
       if (!isCorrect(row?.response, keyEntry.answerKey)) return 0;
@@ -3474,7 +3477,7 @@
     normalizeResponse: __reg["scoring"].normalizeResponse,
     scoreAgainstKey: __reg["scoring"].scoreAgainstKey,
     pcPaperBlend: __reg["scoring"].pcPaperBlend,
-    _engineVersion: "2fc665a59360",
+    _engineVersion: "93d2fdfbd916",
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = __api;

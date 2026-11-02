@@ -1,7 +1,8 @@
 // POST /ledger/quiz-reset — the teacher deletes a recorded retry on one keyed quiz
 // item: only the attempt-2+ rows of (student, curriculum_quiz, item) go; the
-// attempt-1 row stays and becomes the graded row. Retries are closed, so a reset
-// gives nothing back (QUIZ_RETRY_REMOVAL_SPEC.md rule 3).
+// attempt-1 row stays and becomes the graded row. Retries are open again since
+// 2026-11-02 (QUIZ_RETRIES_CLOSED_FROM null), so a reset gives the student their
+// explained retry back.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import express from 'express';
 import http from 'node:http';
@@ -102,10 +103,15 @@ describe('POST /ledger/quiz-reset', () => {
     expect(result.body).toMatchObject({ ok: true, deleted: 0, rows: [] });
   });
 
-  // QUIZ_RETRY_REMOVAL_SPEC.md rule 3: the reset stays a teacher tool after retries close.
-  it('still deletes the retry rows after retries have closed', async () => {
+  // Retries re-opened 2026-11-02: QUIZ_RETRIES_CLOSED_FROM is null.
+  it('retries are open (QUIZ_RETRIES_CLOSED_FROM is null)', () => {
+    expect(QUIZ_RETRIES_CLOSED_FROM).toBeNull();
+  });
+
+  // The reset works the same on either side of the old 2026-10-27 cutoff.
+  it('still deletes the retry rows after the old 2026-10-27 cutoff', async () => {
     vi.useFakeTimers({ toFake: ['Date'] });
-    vi.setSystemTime(Date.parse(QUIZ_RETRIES_CLOSED_FROM) + 1);
+    vi.setSystemTime(Date.parse('2026-10-27T04:00:00Z') + 1);
     try {
       const result = await reset({ studentId: 'stu-period-b-1', itemId: 'U2-L2-Q01' });
       expect(result.status).toBe(200);

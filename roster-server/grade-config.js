@@ -268,7 +268,10 @@ export function quizRetryCutoff(config) {
 // reason 'retries-closed', so the first answer is the grade. Any graded retry is
 // a second draw on five options. The same instant as the half-credit cutoff, so
 // no retry is ever recorded at half credit; earlier retries keep full credit.
-export const QUIZ_RETRIES_CLOSED_FROM = QUIZ_RETRY_HALF_CREDIT_FROM;
+// Retries re-opened 2026-11-02 at the teacher's request (a student could no longer
+// explain a wrong answer): null = retries stay open, and a correct retry earns
+// half credit under QUIZ_RETRY_HALF_CREDIT_FROM. Set an ISO instant to close them again.
+export const QUIZ_RETRIES_CLOSED_FROM = null;
 
 // unitNumber("U4") | "4" | 4 → 4 ; anything unparseable → null.
 export function unitNumber(u) {

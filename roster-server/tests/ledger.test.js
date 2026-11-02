@@ -11,6 +11,7 @@ import { createLedgerDb, isMissingColumnError } from '../ledger-db.js';
 import { verifyReviewGrant } from '../receipts.js';
 import { latestPerItem, isCorrect } from '../scoring.js';
 import { QUIZ_RETRIES_CLOSED_FROM } from '../grade-config.js';
+import { quizRetriesClosedAt } from '../ledger.js';
 
 // ── Fake in-memory roster db (minimal — only needed for createApp) ────────────
 
@@ -282,13 +283,14 @@ describe('POST /ledger/record', () => {
     return ledgerDb.store.get(`${validStudentId}|curriculum_quiz|${itemId}|${attempt}`);
   }
 
-  // Retries close at QUIZ_RETRIES_CLOSED_FROM (QUIZ_RETRY_REMOVAL_SPEC.md rule 3). The route reads
-  // Date.now(), so these tests pin the clock: an hour before the cutoff unless a test says `at`.
+  // Retries closed at 2026-10-27T04:00Z (QUIZ_RETRY_REMOVAL_SPEC.md rule 3) and re-opened
+  // 2026-11-02 (QUIZ_RETRIES_CLOSED_FROM = null). The route reads Date.now(), so these tests pin
+  // the clock: an hour before the old cutoff unless a test says `at`.
   // The token is re-signed under the pinned clock so it never reads as expired.
-  const CLOSED_AT = Date.parse(QUIZ_RETRIES_CLOSED_FROM);
-  const BEFORE_CLOSE = CLOSED_AT - 60 * 60 * 1000;
+  const OLD_CUTOFF = Date.parse('2026-10-27T04:00:00Z');
+  const BEFORE_OLD_CUTOFF = OLD_CUTOFF - 60 * 60 * 1000;
 
-  async function withKeyedServer(fn, loadAnswerKey = async () => ({ answerKey: { [QUIZ_ITEM]: { answerKey: 'B' } } }), { at = BEFORE_CLOSE } = {}) {
+  async function withKeyedServer(fn, loadAnswerKey = async () => ({ answerKey: { [QUIZ_ITEM]: { answerKey: 'B' } } }), { at = BEFORE_OLD_CUTOFF } = {}) {
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(at);
     validToken = signToken(validStudentId);
@@ -333,87 +335,57 @@ describe('POST /ledger/record', () => {
     });
   });
 
-  it('quiz retries close at midnight EDT ending Monday 2026-10-26, the half-credit cutoff', () => {
-    expect(QUIZ_RETRIES_CLOSED_FROM).toBe('2026-10-27T04:00:00Z');
+  it('quiz retries are open: QUIZ_RETRIES_CLOSED_FROM is null since 2026-11-02 (teacher re-opened them)', () => {
+    expect(QUIZ_RETRIES_CLOSED_FROM).toBeNull();
   });
 
-  it('quiz attempt 2: refused with retries-closed at and after the cutoff, nothing written', async () => {
-    for (const at of [CLOSED_AT, CLOSED_AT + 1, CLOSED_AT + 7 * 24 * 60 * 60 * 1000]) {
+  it('quiz attempt 2: accepted at, just after and a week after the old 2026-10-27 cutoff', async () => {
+    for (const at of [OLD_CUTOFF, OLD_CUTOFF + 1, OLD_CUTOFF + 7 * 24 * 60 * 60 * 1000]) {
       ledgerDb.store.clear();
       await withKeyedServer(async (quiz) => {
         await quiz({ response: 'C', attempt: 1 });
         const r = await quiz({ response: 'B', attempt: 2, reasoning: REASON });
-        expect(r.status).toBe(409);
-        expect(r.body).toEqual({ ok: false, error: 'retry not allowed', reason: 'retries-closed' });
-        expect(quizRow(2)).toBeUndefined();
+        expect(r.status).toBe(200);
+        expect(r.body.ok).toBe(true);
         expect(quizRow(1).response).toBe('C');
+        expect(quizRow(2).response).toBe('B');
+        expect(quizRow(2).reasoning).toBe(REASON);
       }, undefined, { at });
     }
   });
 
-  it('quiz attempt 2 after the cutoff: refused before any ledger read, even when the read would fail', async () => {
+  it('quiz attempt 2 is stamped with the instant it was checked, not a later one', async () => {
+    const at = OLD_CUTOFF + 60 * 1000;
     await withKeyedServer(async (quiz) => {
       await quiz({ response: 'C', attempt: 1 });
-      let reads = 0;
-      const read = ledgerDb.getLedgerByStudent;
-      ledgerDb.getLedgerByStudent = async (...args) => { reads += 1; return read(...args); };
-      ledgerDb.readResult = { data: null, error: { message: 'boom' } };
-      try {
-        const r = await quiz({ response: 'B', attempt: 2, reasoning: REASON });
-        expect(r.status).toBe(409);
-        expect(r.body.reason).toBe('retries-closed');
-        expect(reads).toBe(0);
-      } finally {
-        ledgerDb.getLedgerByStudent = read;
-        ledgerDb.readResult = null;
-      }
-    }, undefined, { at: CLOSED_AT });
-  });
-
-  it('quiz attempt 2: refused when the clock crosses the cutoff during the ledger read, nothing written', async () => {
-    await withKeyedServer(async (quiz) => {
-      await quiz({ response: 'C', attempt: 1 });
-      const read = ledgerDb.getLedgerByStudent;
-      ledgerDb.getLedgerByStudent = async (...args) => {
-        const result = await read(...args);
-        vi.setSystemTime(CLOSED_AT + 5);
-        return result;
-      };
-      try {
-        const r = await quiz({ response: 'B', attempt: 2, reasoning: REASON });
-        expect(r.status).toBe(409);
-        expect(r.body).toEqual({ ok: false, error: 'retry not allowed', reason: 'retries-closed' });
-        expect(quizRow(2)).toBeUndefined();
-      } finally {
-        ledgerDb.getLedgerByStudent = read;
-      }
-    }, undefined, { at: CLOSED_AT - 1 });
-  });
-
-  it('quiz attempt 2 accepted just before the cutoff is stamped with the checked instant, not a later one', async () => {
-    await withKeyedServer(async (quiz) => {
-      await quiz({ response: 'C', attempt: 1 });
-      ledgerDb.beforeInsertIfAbsent = async () => { vi.setSystemTime(CLOSED_AT + 5); };
+      ledgerDb.beforeInsertIfAbsent = async () => { vi.setSystemTime(at + 5); };
       try {
         const r = await quiz({ response: 'B', attempt: 2, reasoning: REASON });
         expect(r.status).toBe(200);
-        expect(quizRow(2).recorded_at).toBe(new Date(CLOSED_AT - 1).toISOString());
+        expect(quizRow(2).recorded_at).toBe(new Date(at).toISOString());
       } finally {
         ledgerDb.beforeInsertIfAbsent = null;
       }
-    }, undefined, { at: CLOSED_AT - 1 });
+    }, undefined, { at });
   });
 
-  it('quiz attempt 2: still accepted one millisecond before the cutoff', async () => {
-    await withKeyedServer(async (quiz) => {
-      await quiz({ response: 'C', attempt: 1 });
-      const r = await quiz({ response: 'B', attempt: 2, reasoning: REASON });
-      expect(r.status).toBe(200);
-      expect(quizRow(2).response).toBe('B');
-    }, undefined, { at: CLOSED_AT - 1 });
+  it('quizRetriesClosedAt: with a date set the guard still closes retries at and after it', () => {
+    const closedFrom = '2026-10-27T04:00:00Z';
+    const closedAt = Date.parse(closedFrom);
+    expect(quizRetriesClosedAt(closedAt - 1, closedFrom)).toBe(false);
+    expect(quizRetriesClosedAt(closedAt, closedFrom)).toBe(true);
+    expect(quizRetriesClosedAt(closedAt + 7 * 24 * 60 * 60 * 1000, closedFrom)).toBe(true);
   });
 
-  it('quiz attempt 1 after the cutoff: unchanged (recorded, and a later attempt-1 keeps the first)', async () => {
+  it('quizRetriesClosedAt: no date, or one that does not parse, leaves retries open', () => {
+    const now = OLD_CUTOFF + 1;
+    expect(quizRetriesClosedAt(now, null)).toBe(false);
+    expect(quizRetriesClosedAt(now, undefined)).toBe(false);
+    expect(quizRetriesClosedAt(now, '')).toBe(false);
+    expect(quizRetriesClosedAt(now, 'not a date')).toBe(false);
+  });
+
+  it('quiz attempt 1 after the old cutoff: unchanged (recorded, and a later attempt-1 keeps the first)', async () => {
     await withKeyedServer(async (quiz) => {
       let r = await quiz({ response: 'C', attempt: 1 });
       expect(r.status).toBe(200);
@@ -422,16 +394,16 @@ describe('POST /ledger/record', () => {
       expect(r.status).toBe(200);
       expect(r.body).toMatchObject({ firstAnswerKept: true, keptResponse: 'C' });
       expect(quizRow(1).response).toBe('C');
-    }, undefined, { at: CLOSED_AT + 1 });
+    }, undefined, { at: OLD_CUTOFF + 1 });
   });
 
-  it('quiz FRQ (no answer-key entry) after the cutoff: later attempts still save', async () => {
+  it('quiz FRQ (no answer-key entry) after the old cutoff: later attempts still save', async () => {
     await withKeyedServer(async (quiz) => {
       await quiz({ itemId: QUIZ_NO_KEY_ITEM, response: 'draft one', attempt: 1 });
       const r = await quiz({ itemId: QUIZ_NO_KEY_ITEM, response: 'draft two', attempt: 2 });
       expect(r.status).toBe(200);
       expect(quizRow(2, QUIZ_NO_KEY_ITEM).response).toBe('draft two');
-    }, undefined, { at: CLOSED_AT + 1 });
+    }, undefined, { at: OLD_CUTOFF + 1 });
   });
 
   it('quiz attempt 2: refused when the first answer was correct', async () => {

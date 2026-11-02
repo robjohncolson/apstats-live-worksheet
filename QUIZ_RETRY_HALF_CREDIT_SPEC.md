@@ -1,6 +1,6 @@
 # Quiz retry: a correct retry earns half credit (spec v1, 2026-10-26)
 
-Status: implemented 2026-10-26, awaiting the orchestrator gate; superseded the same evening: retries close at the same cutoff, QUIZ_RETRY_REMOVAL_SPEC.md
+Status: implemented 2026-10-26, awaiting the orchestrator gate; superseded the same evening: retries close at the same cutoff, QUIZ_RETRY_REMOVAL_SPEC.md; retries re-opened 2026-11-02 at the teacher's request (QUIZ_RETRIES_CLOSED_FROM = null), so this half-credit rule applies again
 
 ## 0. Decision
 
