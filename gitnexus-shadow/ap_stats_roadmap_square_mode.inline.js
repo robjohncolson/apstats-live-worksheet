@@ -10486,22 +10486,67 @@ function cedTeacherBridgeAllowed() {
 // PCs are taken in AP Classroom (College Board sign-in), never inside the Desk:
 // the tile / Do Now only open the assignment. A missing key renders a
 // "your teacher shares the link in class" panel, so unlinked PCs never break.
-// A day with several assignments (Day 1 = MCQ Part B + Part C) lists them in `links`.
+//
+// Two entry shapes:
+//   { url, label } or { links: [...], label }  -> the same link(s) for every period
+//   { label, B: {url}|{links}, E: {url}|{links} } -> per-period links
+// AP Classroom assignment ids are PER SECTION: Period B and Period E get a
+// different id for the same PC. To add a unit, copy each section's id from its
+// assignment URL (.../33/assessments/assignments/<id>) into that period's
+// variant. Leave a period out until its id is known (its students see the
+// "teacher shares the link" panel). Never guess an id.
+var PC_ASSIGNMENT_URL = 'https://apclassroom.collegeboard.org/33/assessments/assignments/';
 var PC_LINKS = {
     'U1-PCA': { url: 'https://apclassroom.collegeboard.org/33/assignments?quizId=21010399&type=', label: 'MCQ Part A' },
-    'U1-PC1': { links: [
-        { url: 'https://apclassroom.collegeboard.org/33/assessments/assignments/81595010', label: 'MCQ Part B (14 questions)' },
-        { url: 'https://apclassroom.collegeboard.org/33/assessments/assignments/81595024', label: 'MCQ Part C (12 questions)' }
-    ], label: 'Unit 1 Progress Check — Day 1' },
-    'U1-PC2': { url: 'https://apclassroom.collegeboard.org/33/assessments/assignments/81595036', label: 'FRQ (Day 2)' },
-    'U2-PCA': { url: 'https://apclassroom.collegeboard.org/33/assessments/assignments/82255720', label: 'MCQ Part A' }
+    'U1-PC1': { label: 'Unit 1 Progress Check — Day 1',
+        B: { links: [
+            { url: PC_ASSIGNMENT_URL + '81595010', label: 'MCQ Part B (14 questions)' },
+            { url: PC_ASSIGNMENT_URL + '81595024', label: 'MCQ Part C (12 questions)' }
+        ] },
+        E: { links: [
+            { url: PC_ASSIGNMENT_URL + '81743327', label: 'MCQ Part B (14 questions)' },
+            { url: PC_ASSIGNMENT_URL + '81743453', label: 'MCQ Part C (12 questions)' }
+        ] }
+    },
+    'U1-PC2': { label: 'FRQ (Day 2)',
+        B: { url: PC_ASSIGNMENT_URL + '81595036' },
+        E: { url: PC_ASSIGNMENT_URL + '81743492' }
+    },
+    'U2-PCA': { label: 'MCQ Part A',
+        B: { url: PC_ASSIGNMENT_URL + '82255720' }
+        // E id: teacher to supply
+    }
+    // 'U2-PC1': { label: 'Unit 2 Progress Check — Day 1',
+    //     B: { links: [ { url: PC_ASSIGNMENT_URL + '<id>', label: 'MCQ Part B' },
+    //                   { url: PC_ASSIGNMENT_URL + '<id>', label: 'MCQ Part C' } ] },
+    //     E: { links: [ ...same, E ids... ] } },
+    // 'U2-PC2': { label: 'FRQ (Day 2)', B: { url: PC_ASSIGNMENT_URL + '<id>' }, E: { url: PC_ASSIGNMENT_URL + '<id>' } },
 };
-// Every assignment a PC tile opens, in order (one `url` or several `links`).
-function pcLinksFor(tileId) {
+// One variant ({url} or {links}) as a list of {url, label}.
+function _pcVariantLinks(variant, label) {
+    if (!variant) return [];
+    if (variant.links && variant.links.length) return variant.links;
+    return variant.url ? [{ url: variant.url, label: variant.label || label }] : [];
+}
+// Every assignment a PC tile opens, in order, for one period ('B' | 'E').
+// period defaults to the signed-in student's period. A null period (teacher,
+// guest, signed out) gets both periods' links, labelled "Period B · " / "Period E · ".
+function pcLinksFor(tileId, period) {
     var entry = (typeof PC_LINKS !== 'undefined') ? PC_LINKS[tileId] : null;
     if (!entry) return [];
-    if (entry.links && entry.links.length) return entry.links;
-    return entry.url ? [{ url: entry.url, label: entry.label }] : [];
+    var perPeriod = !!(entry.B || entry.E);
+    if (!perPeriod) return _pcVariantLinks(entry, entry.label);
+    if (period === undefined) {
+        period = (typeof _currentRosterPeriod === 'function') ? _currentRosterPeriod() : null;
+    }
+    if (period) return _pcVariantLinks(entry[period], entry.label);
+    var both = [];
+    ['B', 'E'].forEach(function (p) {
+        _pcVariantLinks(entry[p], entry.label).forEach(function (link) {
+            both.push({ url: link.url, label: 'Period ' + p + ' · ' + (link.label || 'Open in AP Classroom') });
+        });
+    });
+    return both;
 }
 // Poster-day materials, keyed by the unit's poster tile id (U{u}-Poster; the
 // day-2 tile U{u}-Poster2 shares the entry via posterLinksFor). `student`
@@ -23257,7 +23302,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-11-02-fq06';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-11-02-gvm5';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

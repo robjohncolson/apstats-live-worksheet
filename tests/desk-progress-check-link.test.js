@@ -14,13 +14,13 @@ function fn(name){const n=ast.body.find(n=>n.type==='FunctionDeclaration'&&n.id.
 function decl(name){const n=ast.body.filter(n=>n.type==='VariableDeclaration').flatMap(n=>n.declarations).find(n=>n.id.name===name).init;return 'var '+name+'='+source.slice(n.start,n.end);}
 const pcA={t:'U1-PCA',n:'Unit 1 MCQ Part A',u:1,kind:'pc',part:'A'};
 const pc2={t:'U9-PC2',n:'Unit 9 Progress Check (Day 2)',u:9,kind:'pc',admin:2};
-function page(today){
+function page(today,period='B'){
  const dom=new JSDOM('<div id="resource-header"></div><div id="resource-body"></div><div id="resource-overlay" style="display:none"></div><div id="tip"></div><div id="donow-card"><div class="donow-body"><div id="donow-msg"></div></div></div>',{url:'https://desk.example/'});
  const s=createContext({R:'review',OFF:'off',EX:'exam',PO:'post',NC:'noclass',cYear:'SY26-27',cP:'B',window:dom.window,document:dom.window.document,
   _lastResourcePanel:null,_todayLessonInf:today,_donowData:null,tdy:()=>new Date(2026,8,21),getStudentEmail:()=>'',getStudentMarks:()=>({}),
-  getRegistryEntry:()=>null,getAllRegistryEntries:()=>[],tip:dom.window.document.getElementById('tip'),DN:['Sun','Mon','Tue','Wed','Thu','Fri','Sat']});
+  getRegistryEntry:()=>null,_currentRosterPeriod:()=>period,getAllRegistryEntries:()=>[],tip:dom.window.document.getElementById('tip'),DN:['Sun','Mon','Tue','Wed','Thu','Fri','Sat']});
  for(const path of ['js/ced2026-crosswalk.js','js/ced2026-labels.js'])runInContext(readFileSync(path,'utf8'),s);
- runInContext([decl('PC_LINKS'),...['pcLinksFor','groupTopics','groupLabel','_showProgressCheckPanel','_showWorkDayPanel','_showBreakDayPanel','showResourcePanel','sTip','_resourcePanelEsc','renderDoNow','localLessonState'].map(fn)].join('\n'),s);
+ runInContext([decl('PC_ASSIGNMENT_URL'),decl('PC_LINKS'),...['_pcVariantLinks','pcLinksFor','groupTopics','groupLabel','_showProgressCheckPanel','_showWorkDayPanel','_showBreakDayPanel','showResourcePanel','sTip','_resourcePanelEsc','renderDoNow','localLessonState'].map(fn)].join('\n'),s);
  return {dom,s};
 }
 const pc1={t:'U1-PC1',n:'Unit 1 Progress Check (Day 1)',u:1,kind:'pc',admin:1};
@@ -29,18 +29,18 @@ describe('Progress Check launch links',()=>{
   const {s}=page(pcA);
   expect(s.PC_LINKS['U1-PCA'].url).toBe('https://apclassroom.collegeboard.org/33/assignments?quizId=21010399&type=');
  });
- it('U2 MCQ Part A points at the AP Classroom assignment',()=>{
+ it('U2 MCQ Part A: Period B opens 82255720, Period E has no id yet',()=>{
   const {s}=page(pcA);
-  expect(s.PC_LINKS['U2-PCA'].url).toBe('https://apclassroom.collegeboard.org/33/assessments/assignments/82255720');
+  expect(s.pcLinksFor('U2-PCA','B')).toEqual([{url:'https://apclassroom.collegeboard.org/33/assessments/assignments/82255720',label:'MCQ Part A'}]);
+  expect(s.pcLinksFor('U2-PCA','E')).toEqual([]);
  });
- it('U1 Day 1 (MCQ Part B + C) lists one button per assignment, Part B first',()=>{
-  const {dom,s}=page(pc1);try{
+ it('U1 Day 1 (MCQ Part B + C) lists one button per assignment, Part B first, with the B ids for a B student',()=>{
+  const {dom,s}=page(pc1,'B');try{
    const links=s.pcLinksFor('U1-PC1');
-   expect(links[0].url).toBe('https://apclassroom.collegeboard.org/33/assessments/assignments/81595010');
+   expect(links.map(l=>l.url)).toEqual(['https://apclassroom.collegeboard.org/33/assessments/assignments/81595010','https://apclassroom.collegeboard.org/33/assessments/assignments/81595024']);
    expect(links[0].label).toMatch(/Part B/);
-   expect(links[1].url).toBe('https://apclassroom.collegeboard.org/33/assessments/assignments/81595024');
    expect(links[1].label).toMatch(/Part C/);
-   expect(s.pcLinksFor('U1-PC2')[0].url).toBe('https://apclassroom.collegeboard.org/33/assessments/assignments/81595036');
+   expect(s.pcLinksFor('U1-PC2')).toEqual([{url:'https://apclassroom.collegeboard.org/33/assessments/assignments/81595036',label:'FRQ (Day 2)'}]);
    s.showResourcePanel(pc1,'Oct 13');const d=dom.window.document;
    const as=[...d.querySelectorAll('#resource-body a')];
    expect(as.map(a=>a.href)).toEqual(links.map(l=>l.url));
@@ -48,9 +48,41 @@ describe('Progress Check launch links',()=>{
    const day2={t:'U1-PC2',n:'Unit 1 Progress Check (Day 2)',u:1,kind:'pc',admin:2};
    s.showResourcePanel(day2,'Oct 15');
    expect(d.querySelector('#resource-body a').textContent).toContain('FRQ');
+   expect(d.querySelector('#resource-body a').href).toBe('https://apclassroom.collegeboard.org/33/assessments/assignments/81595036');
    expect(s.pcLinksFor('U9-PC2')).toEqual([]);
-   expect(s.pcLinksFor('U1-PCA')).toEqual([{url:s.PC_LINKS['U1-PCA'].url,label:s.PC_LINKS['U1-PCA'].label}]);
   }finally{dom.window.close();}
+ });
+ it('an E student gets the E assignment ids, in the panel too',()=>{
+  const {dom,s}=page(pc1,'E');try{
+   expect(s.pcLinksFor('U1-PC1').map(l=>l.url)).toEqual(['https://apclassroom.collegeboard.org/33/assessments/assignments/81743327','https://apclassroom.collegeboard.org/33/assessments/assignments/81743453']);
+   expect(s.pcLinksFor('U1-PC2').map(l=>l.url)).toEqual(['https://apclassroom.collegeboard.org/33/assessments/assignments/81743492']);
+   s.showResourcePanel(pc1,'Oct 21');const d=dom.window.document;
+   expect([...d.querySelectorAll('#resource-body a')].map(a=>a.href)).toEqual(['https://apclassroom.collegeboard.org/33/assessments/assignments/81743327','https://apclassroom.collegeboard.org/33/assessments/assignments/81743453']);
+   const u2a={t:'U2-PCA',n:'Unit 2 MCQ Part A',u:2,kind:'pc',part:'A'};
+   s.showResourcePanel(u2a,'Nov 2');
+   expect(d.querySelector('#resource-body a')).toBeNull();
+   expect(d.getElementById('resource-body').textContent).toContain('teacher shares the link');
+  }finally{dom.window.close();}
+ });
+ it('no period (teacher / guest) lists both periods, B first, labelled by period',()=>{
+  const {dom,s}=page(pc1,null);try{
+   expect(s.pcLinksFor('U1-PC1')).toEqual([
+    {url:'https://apclassroom.collegeboard.org/33/assessments/assignments/81595010',label:'Period B · MCQ Part B (14 questions)'},
+    {url:'https://apclassroom.collegeboard.org/33/assessments/assignments/81595024',label:'Period B · MCQ Part C (12 questions)'},
+    {url:'https://apclassroom.collegeboard.org/33/assessments/assignments/81743327',label:'Period E · MCQ Part B (14 questions)'},
+    {url:'https://apclassroom.collegeboard.org/33/assessments/assignments/81743453',label:'Period E · MCQ Part C (12 questions)'}]);
+   expect(s.pcLinksFor('U1-PC2').map(l=>l.label)).toEqual(['Period B · FRQ (Day 2)','Period E · FRQ (Day 2)']);
+   expect(s.pcLinksFor('U2-PCA')).toEqual([{url:'https://apclassroom.collegeboard.org/33/assessments/assignments/82255720',label:'Period B · MCQ Part A'}]);
+   s.showResourcePanel(pc1,'Oct 13');
+   expect([...dom.window.document.querySelectorAll('#resource-body a')].map(a=>a.textContent)[2]).toBe('Period E · MCQ Part B (14 questions) → ');
+  }finally{dom.window.close();}
+ });
+ it('a legacy single-url entry applies to every period',()=>{
+  const {s}=page(pcA);
+  const want=[{url:s.PC_LINKS['U1-PCA'].url,label:'MCQ Part A'}];
+  for(const p of ['B','E',null])expect(s.pcLinksFor('U1-PCA',p)).toEqual(want);
+  s.PC_LINKS['UX-PC1']={label:'Day 1',links:[{url:'https://x.example/1',label:'one'}]};
+  expect(s.pcLinksFor('UX-PC1','E')).toEqual([{url:'https://x.example/1',label:'one'}]);
  });
  it('the tile opens a panel with an AP Classroom link, new tab, no resource rows',()=>{
   const {dom,s}=page(pcA);try{
