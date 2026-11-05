@@ -11713,7 +11713,7 @@ const RESOURCES = {
     videos: [
       { url: "https://apclassroom.collegeboard.org/d/nsd56rqpjj?sui=33,4", altUrl: "https://drive.google.com/file/d/1TwLZF8dM35fcduBwRzmQUWgSTCynk5tV/view?usp=drive_link" },
       { url: "https://apclassroom.collegeboard.org/d/5dfvjr08nh?sui=33,4", altUrl: "https://drive.google.com/file/d/1qOQsPzsOeNQJHu18PJwUbfsQyjrdP2pV/view?usp=drive_link" },
-      { url: "https://apclassroom.collegeboard.org/d/j9zx3pjmpi?sui=33,4", altUrl: null }
+      { url: "https://apclassroom.collegeboard.org/d/j9zx3pjmpi?sui=33,4", altUrl: "https://drive.google.com/file/d/1kjdg_Vr0IREDMmXNYbF4alIcq9D_9hRw/view?usp=drive_link" }
     ],
     blookets: [
       { url: "https://dashboard.blooket.com/set/69719a57390d28db6d7edfa9", title: "u4l6blooket" },
@@ -23347,7 +23347,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-11-02-rdr0';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-11-05-c2li';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.
