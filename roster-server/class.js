@@ -17,8 +17,9 @@ import { buildGradebook } from './gradebook-grid.js';
 import { cedRetitleGradebook } from './ced-titles.js';
 import { todayInTz, combineV3 } from './lesson-grade.js';
 import { requireTeacher } from './teacher-auth.js';
-import { issueLedgerReceipt, recordReceiptPersistFailure } from './receipts.js';
-import { backfillStudentReceipts } from './backfill.js';
+import { issueLedgerReceipt, recordReceiptPersistFailure, getTrustedIssuerPubkeys } from './receipts.js';
+import { backfillStudentReceipts, resignStaleReceipts } from './backfill.js';
+import { publicKeyFromX } from './snapshot-verify.js';
 import { computeEffort } from './doge-econ.js';
 import { computeMisconceptions } from './misconceptions.js';
 import { loadMisconceptionAssets } from './misconception-assets.js';
@@ -988,8 +989,16 @@ export function mountClass(app, {
     return res.json(bodyOut);
   });
 
+  // ?resign=stale also repairs rows whose receipt is ours but signs content the row
+  // no longer holds (resignStaleReceipts). Without it: receiptless rows only.
   app.post('/class/backfill-receipts', async (req, res) => {
     if (!await requireTeacher(req, db)) return res.status(401).json({ ok: false, error: 'forbidden' });
+
+    const resignStale = req.query.resign === 'stale';
+    const pubKeys = resignStale ? getTrustedIssuerPubkeys().map(publicKeyFromX) : [];
+    if (resignStale && !pubKeys.length) {
+      return res.status(503).json({ ok: false, error: 'receipt issuer unavailable' });
+    }
 
     const { rows, error } = await listRoster(db, req.query.section);
     if (error) {
@@ -999,6 +1008,9 @@ export function mountClass(app, {
 
     let studentsProcessed = 0;
     let receiptsBackfilled = 0;
+    let receiptsResigned = 0;
+    const resigned = [];
+    const refused = [];
     const errors = [];
 
     for (const rosterRow of rows) {
@@ -1019,12 +1031,20 @@ export function mountClass(app, {
         const result = await backfillStudentReceipts(ledgerRows, ledgerDb, rosterRow.login_username);
         receiptsBackfilled += result.receiptsBackfilled;
         for (const rowError of result.errors) errors.push({ studentId, ...rowError });
+
+        if (!resignStale) continue;
+        const repair = await resignStaleReceipts(ledgerRows, ledgerDb, rosterRow.login_username, pubKeys);
+        receiptsResigned += repair.receiptsResigned;
+        for (const entry of repair.resigned) resigned.push({ studentId, ...entry });
+        for (const entry of repair.refused) refused.push({ studentId, ...entry });
+        for (const rowError of repair.errors) errors.push({ studentId, ...rowError });
       } catch (err) {
         errors.push({ studentId, error: err && err.message ? err.message : String(err || 'Backfill failed') });
       }
     }
 
-    return res.json({ ok: true, studentsProcessed, receiptsBackfilled, errors });
+    if (!resignStale) return res.json({ ok: true, studentsProcessed, receiptsBackfilled, errors });
+    return res.json({ ok: true, studentsProcessed, receiptsBackfilled, receiptsResigned, resigned, refused, errors });
   });
 
   // ── GET /class/mastery?section= ─────────────────────────────────────────────

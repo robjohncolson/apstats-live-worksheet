@@ -18,6 +18,7 @@ export function createFrqLedgerDb(client) {
     failFrqClaim,
     queueFrqAppeal,
     updateFrqReceiptIfScore,
+    updateFrqDraftReceipt,
     getFrqStatusRows,
     getFrqShadowRows,
     probeHealth,
@@ -109,6 +110,44 @@ export function createFrqLedgerDb(client) {
         })
         .eq('ledger_id', ledgerId)
         .eq('score', expectedScore)
+        .select('ledger_id');
+      const handled = observeResult(result);
+
+      if (handled && handled.degraded) {
+        return { ...handled, matched: false };
+      }
+      if (handled && handled.error) {
+        return { matched: false, error: handled.error };
+      }
+      return {
+        matched: Boolean(handled && Array.isArray(handled.data) && handled.data.length),
+        error: null,
+      };
+    } catch (error) {
+      const handled = observeThrownError(error);
+      return { ...handled, matched: false };
+    }
+  }
+
+  // A draft receipt is score-less. Persist it only while the row is still ungraded
+  // AND still holds the signed response version, so it can never overwrite the
+  // worker's graded receipt or land on a newer draft.
+  async function updateFrqDraftReceipt(
+    ledgerId,
+    responseVersion,
+    receiptId,
+    receiptCompact,
+  ) {
+    try {
+      const result = await client
+        .from('item_ledger')
+        .update({
+          receipt_id: receiptId,
+          receipt_compact: receiptCompact,
+        })
+        .eq('ledger_id', ledgerId)
+        .is('score', null)
+        .eq('frq_response_version', responseVersion)
         .select('ledger_id');
       const handled = observeResult(result);
 

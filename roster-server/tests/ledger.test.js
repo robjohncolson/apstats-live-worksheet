@@ -980,6 +980,29 @@ describe('createLedgerDb', () => {
     expect(upsertRows[0].recorded_at).toEqual(expect.any(String));
     expect(new Date(upsertRows[0].recorded_at).toISOString()).toBe(upsertRows[0].recorded_at);
   });
+
+  // An overwrite must never keep a receipt that signed the old score/response
+  // (the snapshot verifier fails the whole snapshot on that).
+  it('clears the receipt columns in the upsert payload', async () => {
+    let upsertRow = null;
+    const client = {
+      from() {
+        return {
+          upsert(rows) {
+            upsertRow = rows[0];
+            return { select() { return { async single() { return { data: { ledger_id: 'L1', evidence_tier: 'practice' }, error: null }; } }; } };
+          },
+        };
+      },
+    };
+
+    await createLedgerDb(client).insertLedgerRow({
+      studentId: 'stu-1', source: 'worksheet', itemId: 'WS-U1L4-Q32', response: 'b', score: 1, evidenceTier: 'practice', attempt: 1,
+    });
+
+    expect(upsertRow).toHaveProperty('receipt_id', null);
+    expect(upsertRow).toHaveProperty('receipt_compact', null);
+  });
 });
 
 // ── GET /ledger/student/:studentId ────────────────────────────────────────────

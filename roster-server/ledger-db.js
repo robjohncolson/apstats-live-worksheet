@@ -105,6 +105,10 @@ export function createLedgerDb(client) {
   // [reasoning] is OPTIONAL (quiz retry, QUIZ_FIRST_ANSWER_SPEC v2): included only when a
   // non-empty string is given. Until migration 0037 adds the column, the upsert is retried
   // WITHOUT it so a missing column can never lose the answer itself.
+  // The receipt columns are ALWAYS cleared: an upsert can overwrite score/response in
+  // place, and the old receipt would then sign content the row no longer holds (the
+  // snapshot verifier fails on that; an unsigned row is merely counted). Callers that
+  // sign re-persist a fresh receipt with updateLedgerReceipt right after.
   async function insertLedgerRow({ studentId, source, itemId, unit, topic, skill, response, score, evidenceTier, attempt, recordedAt, frqResult, gradedAt, reasoning }) {
     const extra = {};
     if (frqResult && typeof frqResult === 'object') {
@@ -123,6 +127,8 @@ export function createLedgerDb(client) {
       evidence_tier: evidenceTier,
       attempt:       attempt     ?? 1,
       recorded_at:   recordedAt  || new Date().toISOString(),
+      receipt_id:      null,
+      receipt_compact: null,
       ...extra
     };
     const upsertRow = (row) => client

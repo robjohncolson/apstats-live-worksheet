@@ -266,6 +266,11 @@ function createSelectBuilder(db, table) {
       state.filters.push({ kind: 'in', column, values });
       return builder;
     },
+    is(column, value) {
+      if (value !== null) throw new Error('fixture .is() supports null only');
+      state.filters.push({ kind: 'is-null', column });
+      return builder;
+    },
     then(onFulfilled, onRejected) {
       return executeSelect(db, table, state).then(onFulfilled, onRejected);
     },
@@ -293,6 +298,10 @@ async function executeSelect(db, table, state) {
       if (filter.kind === 'eq') {
         params.push(filter.value);
         clauses.push(`${filter.column} = $${params.length}`);
+        continue;
+      }
+      if (filter.kind === 'is-null') {
+        clauses.push(`${filter.column} is null`);
         continue;
       }
 

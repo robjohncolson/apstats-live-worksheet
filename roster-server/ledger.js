@@ -316,6 +316,43 @@ export function mountLedger(app, {
     return receipt;
   }
 
+  // Sign the draft the student just saved (no score: that is how ungraded rows are
+  // signed). Never for a graded row: the FRQ worker owns that receipt. The write is
+  // conditioned on "still ungraded, same response version" (updateFrqDraftReceipt),
+  // so a verdict or a newer draft that lands first always wins. Best-effort.
+  async function persistFrqDraftReceipt(ticket, { studentId, itemId, response }) {
+    if (!ticket || ticket.status === 'graded') return;
+    const ledgerId = ticket.ledger_id ?? ticket.ledgerId;
+    const responseVersion = Number(ticket.response_version ?? ticket.responseVersion);
+    if (!ledgerId || !Number.isFinite(responseVersion)) return;
+    if (!frqDb || typeof frqDb.updateFrqDraftReceipt !== 'function') return;
+
+    const username = await resolveReceiptUsername(resolveUsername, studentId);
+    const receipt = issueLedgerReceipt({
+      studentId,
+      username,
+      source: 'frq',
+      itemId,
+      attempt: 1,
+      evidenceTier: 'practice',
+      response,
+      gradingProvenance: 'self',
+    });
+    if (!receipt) return;
+
+    try {
+      const persisted = await frqDb.updateFrqDraftReceipt(
+        ledgerId,
+        responseVersion,
+        receipt.receiptId,
+        receipt.compact,
+      );
+      if (persisted && persisted.error) handleReceiptPersistenceError(persisted.error, ledgerId);
+    } catch (error) {
+      handleReceiptPersistenceError(error, ledgerId);
+    }
+  }
+
   // ── Quiz retry helpers (QUIZ_FIRST_ANSWER_SPEC v2 §2) ──────────────────────
   function refuseQuizRetry(res, reason) {
     return res.status(409).json({ ok: false, error: 'retry not allowed', reason });
@@ -470,6 +507,7 @@ export function mountLedger(app, {
       }
       const ticket = rpcFirst(draftResult);
       if (!ticket) return res.status(500).json({ ok: false, error: 'Database error' });
+      await persistFrqDraftReceipt(ticket, { studentId, itemId, response: canonicalResponse });
       return res.json({
         ok: true,
         applied: false,

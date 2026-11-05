@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import express from 'express';
 import http from 'node:http';
 import { createStudentSlidingWindow, mountLedger } from '../ledger.js';
+import { initReceipts, receiptInternals } from '../receipts.js';
 
 const bundle = {
   schoolYear: 'SY2627',
@@ -227,6 +228,64 @@ describe('POST /ledger/record FRQ mode matrix', () => {
     expect(limited.status).toBe(429);
     expect(limited.body.retryable).toBe(true);
     expect(frqDb.drafts).toHaveLength(2);
+  });
+});
+
+describe('POST /ledger/record FRQ draft receipt', () => {
+  const TEST_PRIVATE_KEY = 'MC4CAQAwBQYDK2VwBCIEIIq2JsDpBMHpUzaFF6mPR0vUv1T2gzXGX7k/AQSYjyl0';
+
+  beforeEach(() => {
+    process.env.RECEIPT_ISSUER_PRIVATE_KEY = TEST_PRIVATE_KEY;
+    initReceipts();
+    frqDb.draftReceipts = [];
+    frqDb.updateFrqDraftReceipt = async (ledgerId, responseVersion, receiptId, receiptCompact) => {
+      frqDb.draftReceipts.push({ ledgerId, responseVersion, receiptId, receiptCompact });
+      return { matched: true, error: null };
+    };
+  });
+
+  afterEach(() => {
+    delete process.env.RECEIPT_ISSUER_PRIVATE_KEY;
+    initReceipts();
+  });
+
+  function payloadOf(compact) {
+    return JSON.parse(Buffer.from(compact.split('.')[0], 'base64url').toString('utf8'));
+  }
+
+  it('signs an ungraded draft without a score, bound to the stored response version', async () => {
+    mode = 'authoritative';
+    const result = await record({ response: '  A sufficiently long reflection answer.  ', score: 1 });
+    expect(result.status).toBe(200);
+    expect(frqDb.draftReceipts).toHaveLength(1);
+
+    const persisted = frqDb.draftReceipts[0];
+    expect(persisted).toMatchObject({ ledgerId: 'frq-ledger-1', responseVersion: 2 });
+    const payload = payloadOf(persisted.receiptCompact);
+    expect(payload).toMatchObject({ t: 'ledger', sid: 'student-a', src: 'frq', i: 'WS-U1L1-reflect1', a: 1, g: 'self' });
+    expect('sc' in payload).toBe(false);
+    const expectedAh = createHash('sha256')
+      .update(receiptInternals.stringifyResponse('A sufficiently long reflection answer.'), 'utf8')
+      .digest('hex').slice(0, 16);
+    expect(payload.ah).toBe(expectedAh);
+  });
+
+  it('never signs a draft over a graded row', async () => {
+    mode = 'authoritative';
+    frqDb.recordFrqDraft = async () => ({ data: [{ ledger_id: 'graded-id', status: 'graded', response_version: 7 }] });
+    const result = await record();
+    expect(result.status).toBe(200);
+    expect(frqDb.draftReceipts).toHaveLength(0);
+  });
+
+  it('still answers 200 when persisting the draft receipt fails', async () => {
+    mode = 'authoritative';
+    frqDb.updateFrqDraftReceipt = async () => { throw new Error('db down'); };
+    const warning = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const result = await record();
+    expect(result.status).toBe(200);
+    expect(result.body.status).toBe('queued');
+    warning.mockRestore();
   });
 });
 

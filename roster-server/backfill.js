@@ -1,4 +1,11 @@
 import { issueLedgerReceipt, recordReceiptPersistFailure } from './receipts.js';
+import { verifyRecord } from './snapshot-verify.js';
+import { rowToRecord } from './admin-snapshot.js';
+
+// Breaks that mean "our own receipt, but the row changed under it" (an in-place
+// overwrite left the old receipt behind). Re-signing from the row's current content
+// is safe for these: the signature itself verified against our issuer.
+const STALE_KINDS = new Set(['score-tampered', 'response-tampered', 'attempt-tampered']);
 
 let receiptPersistenceNotProvisionedLogged = false;
 
@@ -79,4 +86,56 @@ export async function backfillStudentReceipts(rows, ledgerDb, username) {
   }
 
   return { receiptsBackfilled, errors };
+}
+
+async function persistReceipt(row, issued, ledgerDb, errors) {
+  if (!ledgerDb || typeof ledgerDb.updateLedgerReceipt !== 'function' || !row.ledger_id) return;
+  try {
+    const result = await ledgerDb.updateLedgerReceipt(row.ledger_id, {
+      receiptId: issued.receiptId,
+      receiptCompact: issued.compact
+    });
+    if (result && result.error) handleReceiptPersistenceError(result.error, row.ledger_id, errors);
+  } catch (err) {
+    handleReceiptPersistenceError(err, row.ledger_id, errors);
+  }
+}
+
+// Repair (POST /class/backfill-receipts?resign=stale): for every row that HAS a
+// receipt, run the snapshot verifier. A row whose receipt is ours but binds stale
+// content (STALE_KINDS only) is re-signed from its CURRENT content. Anything else
+// that fails (bad-signature, wrong-type, sid/item/source mismatch) is not ours to
+// bless: it is reported in `refused` and left untouched.
+// [pubKeys] = the issuer trust set as KeyObjects (snapshot-verify publicKeyFromX).
+export async function resignStaleReceipts(rows, ledgerDb, username, pubKeys) {
+  const errors = [];
+  const resigned = [];
+  const refused = [];
+
+  for (const row of Array.isArray(rows) ? rows : []) {
+    if (!row || !row.receipt_compact) continue;
+
+    const check = verifyRecord(rowToRecord(row, row.student_id), pubKeys, row.student_id);
+    if (check.ok) continue;
+
+    const kinds = check.breaks.map((b) => b.kind);
+    const entry = { ledgerId: row.ledger_id, itemId: row.item_id, source: row.source, attempt: row.attempt ?? 1, kinds };
+    if (!kinds.every((kind) => STALE_KINDS.has(kind))) {
+      refused.push(entry);
+      continue;
+    }
+
+    const issued = issueLedgerReceipt(rowReceiptArgs(row, username, parsedRecordedAt(row)));
+    if (!issued) {
+      errors.push({ ledgerId: row.ledger_id, itemId: row.item_id, error: 'receipt issuer unavailable' });
+      continue;
+    }
+
+    row.receipt_id = issued.receiptId;
+    row.receipt_compact = issued.compact;
+    resigned.push(entry);
+    await persistReceipt(row, issued, ledgerDb, errors);
+  }
+
+  return { receiptsResigned: resigned.length, resigned, refused, errors };
 }
