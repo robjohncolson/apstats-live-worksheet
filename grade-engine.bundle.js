@@ -7,7 +7,7 @@
  *
  * Regenerate after any engine edit:  node scripts/build-grade-engine.mjs
  * Parity is pinned by tests/grade-engine-bundle-parity.test.js.
- * engine-version: 93d2fdfbd916
+ * engine-version: f0cd4349161b
  */
 ;(function (root) {
   'use strict';
@@ -811,6 +811,42 @@
       return null;
     }
     
+    // Topics in `unit` whose schedule worksheetKey is exactly `lessonKey`.
+    function topicsWithWorksheetKey(unit, lessonKey, schedule) {
+      const matches = [];
+      for (const [topicKey, entry] of Object.entries(schedule)) {
+        if (entry && entry.unit === unit && entry.worksheetKey === lessonKey) {
+          matches.push(topicKey);
+        }
+      }
+      return matches;
+    }
+    
+    // First and last lesson number of a dashed worksheet key ("3-4-5" -> [3, 5]),
+    // or null when the key is not a plain run of lesson numbers.
+    function worksheetKeyEnds(key) {
+      const parts = String(key).split('-');
+      if (parts.length < 2) return null;
+      const nums = parts.map((p) => Number(p));
+      if (nums.some((n) => !Number.isInteger(n))) return null;
+      return [nums[0], nums[nums.length - 1]];
+    }
+    
+    // Topics in `unit` whose multi-lesson worksheetKey spans the same first and
+    // last lesson as `lessonKey` ("3-5" matches "3-4-5", never "1-2" or "3-4").
+    function topicsWithWorksheetRange(unit, lessonKey, schedule) {
+      const wanted = worksheetKeyEnds(lessonKey);
+      if (!wanted) return [];
+      const matches = [];
+      for (const [topicKey, entry] of Object.entries(schedule)) {
+        if (!entry || entry.unit !== unit) continue;
+        const ends = worksheetKeyEnds(entry.worksheetKey);
+        if (!ends) continue;
+        if (ends[0] === wanted[0] && ends[1] === wanted[1]) matches.push(topicKey);
+      }
+      return matches;
+    }
+    
     // ── Expand a lessonKey to topic keys using the lesson schedule ─────────────────
     //
     // A worksheetKey like "1-2" in unit 4 maps to topics 4.1 AND 4.2
@@ -835,12 +871,12 @@
       // If the lessonKey contains dashes, it's a combined worksheet.
       // Find all topics in the given unit whose worksheetKey matches.
       if (lessonKey.includes('-')) {
-        const matches = [];
-        for (const [topicKey, entry] of Object.entries(schedule)) {
-          if (entry && entry.unit === unit && entry.worksheetKey === lessonKey) {
-            matches.push(topicKey);
-          }
-        }
+        let matches = topicsWithWorksheetKey(unit, lessonKey, schedule);
+        // A worksheet may stamp its items with the RANGE form of its key
+        // ("U4L3-5" for the schedule's "3-4-5"): same first and last lesson,
+        // the middle ones implied. Without this, every row from such a sheet
+        // belonged to no lesson at all (Yolandys, old 4.3, 2026-11-05).
+        if (matches.length === 0) matches = topicsWithWorksheetRange(unit, lessonKey, schedule);
         // A shared worksheet must not fan its rows into bonus topics — that
         // double-weights the worksheet and resurrects the topic as a graded
         // lesson (Codex HIGH, 2026-08-07: old-3.7 via the 3.6-7 worksheet).
@@ -3477,7 +3513,7 @@
     normalizeResponse: __reg["scoring"].normalizeResponse,
     scoreAgainstKey: __reg["scoring"].scoreAgainstKey,
     pcPaperBlend: __reg["scoring"].pcPaperBlend,
-    _engineVersion: "93d2fdfbd916",
+    _engineVersion: "f0cd4349161b",
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = __api;

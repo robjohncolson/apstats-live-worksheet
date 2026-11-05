@@ -93,6 +93,35 @@ describe('expandLessonKey — combined-worksheet expansion', () => {
     expect(result.sort()).toEqual(['4.1', '4.2']);
   });
 
+  // 2026-11-05: u4_lesson3-4-5_live.html stamps its items "WS-U4L3-5-..." while the
+  // schedule's worksheetKey is "3-4-5". The range form expands to the same topics.
+  const RANGE_SCHEDULE = {
+    ...SAMPLE_SCHEDULE,
+    '4.3': { unit: 4, topicKey: '4.3', worksheetKey: '3-4-5', periods: { B: null, E: null }, combinedWith: ['4.4', '4.5'] },
+    '4.4': { unit: 4, topicKey: '4.4', worksheetKey: '3-4-5', periods: { B: null, E: null }, combinedWith: ['4.3', '4.5'] },
+    '4.5': { unit: 4, topicKey: '4.5', worksheetKey: '3-4-5', periods: { B: null, E: null }, combinedWith: ['4.3', '4.4'] },
+  };
+
+  it('range key "3-5" expands to the schedule "3-4-5" topics', () => {
+    expect(expandLessonKey(4, '3-5', RANGE_SCHEDULE).sort()).toEqual(['4.3', '4.4', '4.5']);
+  });
+
+  it('the exact key "3-4-5" still expands as before', () => {
+    expect(expandLessonKey(4, '3-4-5', RANGE_SCHEDULE).sort()).toEqual(['4.3', '4.4', '4.5']);
+  });
+
+  it('a range that spans two different worksheets matches nothing ("1-3")', () => {
+    expect(expandLessonKey(4, '1-3', RANGE_SCHEDULE)).toEqual([]);
+  });
+
+  it('a range never matches a worksheet with different ends ("3-4")', () => {
+    expect(expandLessonKey(4, '3-4', RANGE_SCHEDULE)).toEqual([]);
+  });
+
+  it('the range form respects the bonus filter', () => {
+    expect(expandLessonKey(4, '3-5', RANGE_SCHEDULE, new Set(['4.5'])).sort()).toEqual(['4.3', '4.4']);
+  });
+
   it('solo key "6" in unit 4 → ["4.6"]', () => {
     expect(expandLessonKey(4, '6', SAMPLE_SCHEDULE)).toEqual(['4.6']);
   });
