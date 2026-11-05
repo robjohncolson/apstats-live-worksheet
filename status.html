@@ -123,6 +123,7 @@
         <li><strong>Green</strong>: the endpoint answered, reports itself healthy, and nothing is lagging.</li>
         <li><strong>Amber</strong>: it answered, but something needs a look (persist failures, degraded storage, CI still running, a mirror behind GH Pages, a deploy behind the last green CI).</li>
         <li><strong>Red</strong>: it did not answer, answered an error, or CI failed.</li>
+        <li><strong>Ledger snapshot</strong> and <strong>PC reconcile</strong> are nightly jobs on the teacher's machine. Each one reports its last run to roster-server, which keeps it in memory only: right after a roster deploy they read "unknown" (amber) until the job runs again.</li>
         <li>Hover a tile's light for the exact rule. "Age" is how old the service's own timestamp is; "checked" is when this page fetched it.</li>
       </ul>
     </details>
@@ -226,6 +227,76 @@
     };
   }
 
+  // -- Nightly jobs on the teacher's machines (roster /health `jobs`) --
+  // Each job POSTs its outcome to the roster server (/admin/job-result) at the end
+  // of a run; the server keeps the latest in memory, so after a deploy it is null
+  // ("unknown") until the job runs again.
+  var JOB_STALE_MS = 36 * 3600 * 1000;
+
+  function jobAgeMs(result, now) {
+    var t = Date.parse(result && result.at);
+    return isNaN(t) ? Infinity : now - t;
+  }
+
+  // 'green' | 'amber' | 'red' for one job result (null = never reported).
+  function jobState(result, now) {
+    if (!result) return 'amber';
+    if (result.ok !== true) return 'red';
+    if (num(result.breaks) !== null && result.breaks > 0) return 'red';
+    if (jobAgeMs(result, now) > JOB_STALE_MS) return 'amber';
+    return 'green';
+  }
+
+  function worstState(states) {
+    if (states.indexOf('red') >= 0) return 'red';
+    if (states.indexOf('amber') >= 0) return 'amber';
+    return 'green';
+  }
+
+  function judgeSnapshot(data, now) {
+    var rule = 'Green: the nightly ledger snapshot verified with 0 breaks within the last 36 h. ' +
+      'Amber: no report since the last roster deploy, or the last report is older than 36 h. ' +
+      'Red: the verification failed or found breaks > 0.';
+    var r = (data.jobs || {}).snapshot || null;
+    var state = jobState(r, now);
+    if (!r) {
+      return { state: state, rule: rule, value: 'unknown',
+        detail: 'no report since the last roster deploy (tools/nightly-backup.mjs posts after it verifies)', at: null };
+    }
+    var breaks = num(r.breaks);
+    var value = 'verified';
+    if (state === 'red') value = (breaks !== null && breaks > 0) ? breaks + ' break(s)' : 'failed';
+    else if (state === 'amber') value = 'stale';
+    return { state: state, rule: rule, value: esc(value),
+      detail: esc(r.message || '') + (breaks !== null ? '; breaks: <code>' + breaks + '</code>' : ''), at: r.at || null };
+  }
+
+  function pcLine(section, r, now) {
+    if (!r) return section + ': no report';
+    var age = jobAgeMs(r, now) > JOB_STALE_MS ? ' (stale)' : '';
+    return section + ': ' + esc(r.ok === true ? 'ok' : (r.message || 'failed')) + age;
+  }
+
+  function judgePcReconcile(data, now) {
+    var rule = 'Green: both PeriodB and PeriodE reconciles exited 0 within the last 36 h. ' +
+      'Amber: a section has no report since the last roster deploy, or its last report is older than 36 h. ' +
+      'Red: a section\'s last run failed (exit 2 = SIGN IN NEEDED: sign the Edge rig into AP Classroom).';
+    var jobs = data.jobs || {};
+    var b = jobs.pcReconcileB || null;
+    var e = jobs.pcReconcileE || null;
+    var state = worstState([jobState(b, now), jobState(e, now)]);
+    var value = { green: 'ok', amber: 'unknown', red: 'failed' }[state];
+    if (state === 'amber' && b && e) value = 'stale';
+    var times = [b, e].filter(Boolean).map(function (r) { return r.at; }).filter(Boolean).sort();
+    return { state: state, rule: rule, value: value,
+      detail: pcLine('B', b, now) + '; ' + pcLine('E', e, now), at: times.length ? times[0] : null };
+  }
+
+  // A job tile when the roster server itself did not answer: its own tile is already red.
+  function jobUnknown(rule) {
+    return { state: 'amber', rule: rule, value: 'unknown', detail: 'roster-server did not answer', at: null };
+  }
+
   // ── Fetch once per source; never polls ─────────────────────────────────────
   function fetchJson(url) {
     var ctl = (typeof AbortController === 'function') ? new AbortController() : null;
@@ -281,6 +352,11 @@
     { id: 'vercel', label: 'Vercel mirror', url: VERCEL_URL },
     { id: 'ci',     label: 'CI (GitHub Actions)', url: CI_URL }
   ];
+  // Read from the roster /health answer above (no extra fetch).
+  var JOB_TILES = [
+    { id: 'snapshot', label: 'Ledger snapshot', url: ROSTER_URL },
+    { id: 'pcreconcile', label: 'PC reconcile', url: ROSTER_URL }
+  ];
 
   function pending(t) {
     return { id: t.id, label: t.label, url: t.url, state: 'pending', rule: 'Not fetched yet.', value: '…', detail: '', at: null, checkedAt: null };
@@ -304,7 +380,7 @@
 
   function load() {
     var now = Date.now();
-    render(TILES.map(pending), now);
+    render(TILES.concat(JOB_TILES).map(pending), now);
     var results = {};
     return Promise.all(TILES.map(function (t) {
       return fetchSafe(t.url).then(function (r) { results[t.id] = r; });
@@ -321,13 +397,22 @@
         return judged;
       }
 
+      function jobTile(t, judge) {
+        var r = results.roster;
+        var judged = r.ok ? judge(r.data, now) : jobUnknown(judge({}, now).rule);
+        judged.id = t.id; judged.label = t.label; judged.url = t.url; judged.checkedAt = r.checkedAt;
+        return judged;
+      }
+
       var tiles = [
         build(TILES[0], results.roster.ok ? judgeHealthServer('roster', results.roster.data, { ciSha: ciSha }) : null),
         build(TILES[1], results.cr.ok ? judgeCr(results.cr.data) : null),
         build(TILES[2], results.a2.ok ? judgeHealthServer('a2', results.a2.data, {}) : null),
         build(TILES[3], results.pages.ok ? judgePages(results.pages.data) : null),
         build(TILES[4], results.vercel.ok ? judgeVercel(results.vercel.data, { pagesBuild: pagesBuild }) : null),
-        build(TILES[5], ci)
+        build(TILES[5], ci),
+        jobTile(JOB_TILES[0], judgeSnapshot),
+        jobTile(JOB_TILES[1], judgePcReconcile)
       ];
       render(tiles, now);
       return tiles;
@@ -337,6 +422,7 @@
   window.StatusPage = {
     URLS: { roster: ROSTER_URL, cr: CR_URL, a2: A2_URL, pages: PAGES_URL, vercel: VERCEL_URL, ci: CI_URL },
     judgeHealthServer: judgeHealthServer, judgeCr: judgeCr, judgePages: judgePages, judgeVercel: judgeVercel, judgeCi: judgeCi,
+    judgeSnapshot: judgeSnapshot, judgePcReconcile: judgePcReconcile,
     ageText: ageText, load: load
   };
 

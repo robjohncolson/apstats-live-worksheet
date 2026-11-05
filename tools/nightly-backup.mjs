@@ -45,6 +45,24 @@ function indexByReceipt(snap) {
   return m;
 }
 
+// Tell the roster server how tonight's verification went, so status.html can show it
+// (POST /admin/job-result, job 'snapshot'). code: 'verified' | 'breaks' | 'pull-failed';
+// the server turns it into the public message (no free text leaves this machine).
+// Best-effort: a failed report is logged and never changes this script's exit code.
+async function reportSnapshotResult(cfg, code, breaks) {
+  try {
+    const res = await fetch(cfg.rosterUrl.replace(/\/$/, '') + '/admin/job-result', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-teacher-secret': cfg.teacherKey },
+      body: JSON.stringify({ job: 'snapshot', code, breaks, at: new Date().toISOString() }),
+      signal: AbortSignal.timeout(15000),
+    });
+    if (res.status !== 200) console.error('job-result report: HTTP ' + res.status);
+  } catch (e) {
+    console.error('job-result report failed:', e.message);
+  }
+}
+
 async function main() {
   const cfg = loadConfig();
   if (!cfg.rosterUrl || !cfg.teacherKey) { console.error('need rosterUrl + teacherKey (via --config json, flags, or env)'); process.exit(2); }
@@ -62,7 +80,11 @@ async function main() {
     const res = await fetch(cfg.rosterUrl.replace(/\/$/, '') + '/admin/snapshot', { headers: { 'x-teacher-secret': cfg.teacherKey } });
     if (res.status !== 200) throw new Error('HTTP ' + res.status + ' (check the teacher key / URL)');
     snap = await res.json();
-  } catch (e) { console.error('pull failed:', e.message); process.exit(1); }
+  } catch (e) {
+    console.error('pull failed:', e.message);
+    await reportSnapshotResult(cfg, 'pull-failed', null);
+    process.exit(1);
+  }
 
   const date = snap.asOfDateNY || new Date().toISOString().slice(0, 10);
   fs.writeFileSync(path.join(snapDir, date + '.json'), JSON.stringify(snap, null, 2));
@@ -139,6 +161,9 @@ async function main() {
   const recs = (snap.students || []).reduce((n, x) => n + (((x.bundle && x.bundle.records) || []).length), 0);
   fs.appendFileSync(path.join(cfg.backupDir, 'ANCHORS.md'),
     `${date}  root=${snap.epoch && snap.epoch.root || '-'}  students=${(snap.students || []).length}  records=${recs}  verify=${rep.ok ? 'OK' : 'FAIL'}  at=${new Date().toISOString()}\n`);
+
+  const breakCount = rep.breaks ? rep.breaks.length : 0;
+  await reportSnapshotResult(cfg, rep.ok ? 'verified' : 'breaks', breakCount);
 
   console.log(review);
   console.log('\nSaved: ' + path.join(snapDir, date + '.json'));

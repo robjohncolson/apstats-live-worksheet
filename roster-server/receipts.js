@@ -226,6 +226,29 @@ export function issueLedgerReceipt({
   }
 }
 
+// The receipt as insertLedgerRow / insertLedgerRowIfAbsent fields, so a write path can sign
+// first and persist row + receipt in ONE statement. A null receipt (issuer off, or the
+// issuance failed) gives {}: the row is written unsigned, never with a stale receipt.
+export function receiptFields(receipt) {
+  if (!receipt) return {};
+  return { receiptId: receipt.receiptId, receiptCompact: receipt.compact };
+}
+
+// Sign one insertLedgerRow-shaped row ({ studentId, source, itemId, score, attempt,
+// evidenceTier, response }) for the student [username]. Null when the issuer is off.
+export function issueRowReceipt(row, username) {
+  return issueLedgerReceipt({
+    studentId: row.studentId,
+    username: username || undefined,
+    source: row.source,
+    itemId: row.itemId,
+    score: row.score,
+    attempt: row.attempt ?? 1,
+    evidenceTier: row.evidenceTier,
+    response: row.response
+  });
+}
+
 export function issueTranscriptReceipt({
   sid,
   u,

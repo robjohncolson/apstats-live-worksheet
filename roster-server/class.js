@@ -17,7 +17,7 @@ import { buildGradebook } from './gradebook-grid.js';
 import { cedRetitleGradebook } from './ced-titles.js';
 import { todayInTz, combineV3 } from './lesson-grade.js';
 import { requireTeacher } from './teacher-auth.js';
-import { issueLedgerReceipt, recordReceiptPersistFailure, getTrustedIssuerPubkeys } from './receipts.js';
+import { issueRowReceipt, receiptFields, getTrustedIssuerPubkeys } from './receipts.js';
 import { backfillStudentReceipts, resignStaleReceipts } from './backfill.js';
 import { publicKeyFromX } from './snapshot-verify.js';
 import { computeEffort } from './doge-econ.js';
@@ -25,25 +25,11 @@ import { computeMisconceptions } from './misconceptions.js';
 import { loadMisconceptionAssets } from './misconception-assets.js';
 import { loadMisconceptionTriage } from './misconception-triage.js';
 
-let receiptPersistenceNotProvisionedLogged = false;
-
-function isReceiptPersistenceNotProvisioned(err) {
-  if (!err) return false;
-  const code = String(err.code || '');
-  const msg = String(err.message || '').toLowerCase();
-  return code === '42703' || msg.includes('undefined_column') || msg.includes('undefined column');
-}
-
-function handleReceiptPersistenceError(err, ledgerId) {
-  if (isReceiptPersistenceNotProvisioned(err)) {
-    if (!receiptPersistenceNotProvisionedLogged) {
-      receiptPersistenceNotProvisionedLogged = true;
-      console.info('receipt persistence not provisioned; continuing without stored receipt columns');
-    }
-    return;
-  }
-  recordReceiptPersistFailure();
-  console.warn('Receipt persistence failed for ledgerId:', ledgerId, err);
+// [row] plus the receipt signed for it, so the upsert writes row + receipt in ONE
+// statement (a later overwrite can never leave an old receipt behind). Issuer off:
+// the row goes out with null receipt columns.
+function withReceipt(row, username) {
+  return { ...row, ...receiptFields(issueRowReceipt(row, username)) };
 }
 
 async function resolveReceiptUsername(resolveUsername, studentId) {
@@ -613,11 +599,12 @@ export function mountClass(app, {
         continue;
       }
       try {
-        const { error } = await ledgerDb.insertLedgerRow({
+        const row = {
           studentId: matches[0].student_id, source: 'bonus', itemId: `BONUS-${sheetId}`,
           score: BONUS_POINTS[entry.grade], attempt: 1, evidenceTier: 'practice',
           response: JSON.stringify({ grade: entry.grade, quarter, title: title.trim() }),
-        });
+        };
+        const { error } = await ledgerDb.insertLedgerRow(withReceipt(row, matches[0].login_username));
         if (error) throw error;
         written += 1;
       } catch (error) {
@@ -655,11 +642,12 @@ export function mountClass(app, {
         continue;
       }
       try {
-        const { error } = await ledgerDb.insertLedgerRow({
+        const row = {
           studentId: matches[0].student_id, source: 'poster', itemId: `POSTER-U${unit}`, unit: `U${unit}`,
           score: normalized.score, attempt: 1, evidenceTier: 'practice',
           response: JSON.stringify({ grade: normalized.grade, quarter, unit, title: title.trim() }),
-        });
+        };
+        const { error } = await ledgerDb.insertLedgerRow(withReceipt(row, matches[0].login_username));
         if (error) throw error;
         written += 1;
       } catch (error) {
@@ -705,12 +693,13 @@ export function mountClass(app, {
           grade: normalized.grade, score: normalized.score };
         if (dryRun) { converted.push(record); remainingBonusPosterRows += 1; continue; }
         try {
-          const inserted = await ledgerDb.insertLedgerRow({
+          const posterRow = {
             studentId: student.student_id, source: 'poster', itemId: `POSTER-U${unit}`, unit: `U${unit}`,
             score: normalized.score, attempt: 1, evidenceTier: 'practice',
             response: JSON.stringify({ grade: normalized.grade, quarter: detail?.quarter || null, unit,
               title: detail?.title || `Unit ${unit} Poster`, convertedFrom: row.item_id }),
-          });
+          };
+          const inserted = await ledgerDb.insertLedgerRow(withReceipt(posterRow, student.login_username));
           if (inserted.error) throw inserted.error;
           const removed = await ledgerDb.deleteLedgerRows({ studentId: student.student_id, source: 'bonus', itemId: row.item_id });
           if (removed.error) throw removed.error;
@@ -756,11 +745,12 @@ export function mountClass(app, {
         rows.push(audit);
         if (dryRun) continue;
         const { studentId, username, realName, ...detail } = audit;
-        const { inserted, error } = await ledgerDb.insertLedgerRowIfAbsent({
+        const appliedRow = {
           studentId, source: 'bonus_applied', itemId: `BONUS-APPLIED-${quarter}`,
           score: audit.adjustedGrade, attempt: 1, evidenceTier: 'practice',
           response: JSON.stringify({ ...detail, appliedAt: new Date().toISOString() }),
-        });
+        };
+        const { inserted, error } = await ledgerDb.insertLedgerRowIfAbsent(withReceipt(appliedRow, username));
         if (error) throw error;
         if (inserted) applied += 1;
         else skipped.push({ studentId, username, reason: 'already applied' });
@@ -926,21 +916,23 @@ export function mountClass(app, {
       }
 
       const score = blooketScore(correct, attempted, total);
+      const row = {
+        studentId,
+        source: 'blooket',
+        itemId,
+        unit: unitLabel,
+        response: { correct, attempted, total },
+        score,
+        evidenceTier: 'practice', // teacher-imported in-class work; matches other recorded rows (no cap-tier effect)
+        attempt: 1,
+      };
+      // Signed BEFORE the write so the receipt rides in the same upsert as the row.
+      const username = await resolveReceiptUsername(resolveUsername, studentId);
+      const receipt = issueRowReceipt(row, username);
 
       let error;
-      let data;
       try {
-        const result = await ledgerDb.insertLedgerRow({
-          studentId,
-          source: 'blooket',
-          itemId,
-          unit: unitLabel,
-          response: { correct, attempted, total },
-          score,
-          evidenceTier: 'practice', // teacher-imported in-class work; matches other recorded rows (no cap-tier effect)
-          attempt: 1,
-        });
-        data = result && result.data;
+        const result = await ledgerDb.insertLedgerRow({ ...row, ...receiptFields(receipt) });
         error = result && result.error;
       } catch (err) {
         error = err;
@@ -955,33 +947,7 @@ export function mountClass(app, {
       }
 
       recorded += 1;
-      const username = await resolveReceiptUsername(resolveUsername, studentId);
-      const receipt = issueLedgerReceipt({
-        studentId,
-        username,
-        source: 'blooket',
-        itemId,
-        score,
-        attempt: 1,
-        evidenceTier: 'practice',
-        response: { correct, attempted, total }
-      });
-      if (receipt) {
-        receipts[`${itemId}:${studentId}`] = receipt;
-        if (data && data.ledger_id && ledgerDb && typeof ledgerDb.updateLedgerReceipt === 'function') {
-          try {
-            const persistResult = await ledgerDb.updateLedgerReceipt(data.ledger_id, {
-              receiptId: receipt.receiptId,
-              receiptCompact: receipt.compact
-            });
-            if (persistResult && persistResult.error) {
-              handleReceiptPersistenceError(persistResult.error, data.ledger_id);
-            }
-          } catch (err) {
-            handleReceiptPersistenceError(err, data.ledger_id);
-          }
-        }
-      }
+      if (receipt) receipts[`${itemId}:${studentId}`] = receipt;
     }
 
     const bodyOut = { ok: true, itemId, recorded, skipped, errors };

@@ -5,10 +5,11 @@
 //
 // @vitest-environment node
 
-import { describe, it, expect, beforeAll, afterEach } from 'vitest';
+import { describe, it, expect, beforeAll, afterEach, vi } from 'vitest';
 import http from 'http';
 import { createApp } from '../server.js';
 import { signToken } from '../token.js';
+import { initReceipts } from '../receipts.js';
 
 let realBkt;
 beforeAll(async () => { await import('../bkt.js'); realBkt = globalThis.BKT; });
@@ -235,6 +236,48 @@ describe('POST /pc/:unit/:part/submit', () => {
     server = new TestServer(buildApp(mockPcDb({ unlocked: true }), fakeRosterDb(), led)); await server.start();
     const { status } = await server.req('POST', '/pc/1/A/submit', { body: { responses: [] } });
     expect(status).toBe(401);
+  });
+});
+
+// 2026-11-05: pc rows are signed BEFORE the write; the receipt rides in the same
+// insertLedgerRow call (the fake has no updateLedgerReceipt: a second write would be lost).
+describe('pc receipts ride in the row write', () => {
+  afterEach(() => { vi.unstubAllEnvs(); initReceipts(); });
+
+  function payloadOf(compact) {
+    return JSON.parse(Buffer.from(compact.split('.')[0], 'base64url').toString('utf8'));
+  }
+
+  it('POST /pc/grade signs the -PAPER row (proctored, with the student username)', async () => {
+    vi.stubEnv('RECEIPT_ISSUER_PRIVATE_KEY', 'MC4CAQAwBQYDK2VwBCIEIEtFFgiPZyvBY+Udt3F77ZOHGypDcMHVJV9ck+a6kToO');
+    initReceipts();
+    const roster = fakeRosterDb();
+    roster.findByUsername = async () => ({ data: { student_id: SID, login_username: USERNAME }, error: null });
+    const led = fakeLedgerDb();
+    server = new TestServer(buildApp(mockPcDb(), roster, led)); await server.start();
+    const { status } = await server.req('POST', '/pc/grade', {
+      headers: { 'x-teacher-secret': TEACHER },
+      body: { studentUsername: USERNAME, unit: 2, part: 'A', points: 15, of: 19, origin: 'apclassroom' },
+    });
+    expect(status).toBe(200);
+    expect(payloadOf(led._writes[0].receiptCompact)).toMatchObject({
+      sid: SID, u: USERNAME, src: 'pc', i: 'U2-PC-A-PAPER', sc: 15 / 19, a: 1, e: 'proctored',
+    });
+    expect(led._writes[0].receiptId).toEqual(expect.any(String));
+  });
+
+  it('POST /pc/:unit/:part/submit signs each scored row', async () => {
+    vi.stubEnv('RECEIPT_ISSUER_PRIVATE_KEY', 'MC4CAQAwBQYDK2VwBCIEIEtFFgiPZyvBY+Udt3F77ZOHGypDcMHVJV9ck+a6kToO');
+    initReceipts();
+    const led = fakeLedgerDb();
+    server = new TestServer(buildApp(mockPcDb({ unlocked: true }), fakeRosterDb(), led)); await server.start();
+    await server.req('POST', '/pc/1/A/submit', {
+      headers: { authorization: `Bearer ${STUDENT_TOKEN}` },
+      body: { responses: [{ itemId: 'U1-PC26-MCQ-A-Q01', response: 'B' }] },
+    });
+    expect(payloadOf(led._writes[0].receiptCompact)).toMatchObject({
+      sid: SID, u: USERNAME, src: 'pc', i: 'U1-PC26-MCQ-A-Q01', sc: 1, e: 'practice',
+    });
   });
 });
 

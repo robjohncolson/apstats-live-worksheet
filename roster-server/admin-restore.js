@@ -87,7 +87,7 @@ export function mountAdminRestore(app, { db, ledgerDb }) {
       }
       const payload = vr.payload;
 
-      let data, error;
+      let error;
       try {
         const result = await ledgerDb.insertLedgerRow({
           studentId: rec.studentId,
@@ -100,9 +100,12 @@ export function mountAdminRestore(app, { db, ledgerDb }) {
           score: (rec.score === undefined ? null : rec.score), // AS-IS — verified by signature
           evidenceTier: payload.e || 'practice',               // from the SIGNED payload
           attempt: payload.a ?? 1,                             // SIGNED attempt (verifyRecord already bound rec.attempt to it)
-          recordedAt: rec.recorded_at || undefined             // preserve original timestamp
+          recordedAt: rec.recorded_at || undefined,            // preserve original timestamp
+          // The ORIGINAL receipt (never re-issued), in the SAME upsert as the row, so the
+          // restored chain is identical and the row can never land unsigned.
+          receiptId: rec.receipt_id,
+          receiptCompact: rec.receipt_compact
         });
-        data = result && result.data;
         error = result && result.error;
       } catch (err) {
         error = err;
@@ -113,16 +116,6 @@ export function mountAdminRestore(app, { db, ledgerDb }) {
         continue;
       }
       restored += 1;
-
-      // Preserve the ORIGINAL receipt (do NOT re-issue) so the restored chain is identical.
-      if (data && data.ledger_id && rec.receipt_compact && typeof ledgerDb.updateLedgerReceipt === 'function') {
-        try {
-          await ledgerDb.updateLedgerReceipt(data.ledger_id, {
-            receiptId: rec.receipt_id,
-            receiptCompact: rec.receipt_compact
-          });
-        } catch (_) { /* best-effort; the row is already restored */ }
-      }
     }
 
     // ── Reviews (NIGHTLY_REVIEW_SPEC §8) ──────────────────────────────────────

@@ -17,6 +17,7 @@ import { generateUsername } from './username.js';
 import { mountLedger } from './ledger.js';
 import { mountLedgerImport } from './ledger-import.js';
 import { mountAdminSnapshot } from './admin-snapshot.js';
+import { createJobResults, mountJobResults } from './job-results.js';
 import { mountAdminRestore } from './admin-restore.js';
 import { mountDonow } from './donow.js';
 import { mountRollup } from './rollup.js';
@@ -235,6 +236,10 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
 
   // ── GET /health ─────────────────────────────────────────────────────────────
   // FROZEN CONTRACT 2: → 200 { ok:true, service:"roster", time:"<iso>" }
+  // `jobs`: the last reported outcome of each teacher-machine nightly job
+  // (job-results.js; in-memory, null until the job reports after a deploy).
+  const _jobResults = createJobResults();
+  mountJobResults(app, { db, jobResults: _jobResults });
   app.get('/health', (_req, res) => {
     res.json({
       ok: true, service: 'roster', time: new Date().toISOString(), receipts: getReceiptHealth(),
@@ -248,6 +253,7 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
           : { degraded: true, errorCode: 'not_configured', lastDegradedAt: null },
         worker: { ..._frqWorker.counters },
       },
+      jobs: _jobResults.snapshot(),
     });
   });
 

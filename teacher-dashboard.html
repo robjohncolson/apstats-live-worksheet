@@ -285,6 +285,8 @@
     .manage-status-active { background: #dcebdd; color: var(--sg-high); }
     .manage-status-archived { background: #d6d4cc; color: #55534c; }
     .manage-test-badge { margin-left: 6px; background: #fff3a3; color: #6f5510; }
+    /* Rows whose item id names a lesson the schedule does not know (they count for nothing). */
+    .orphan-badge { margin-left: 6px; padding: 1px 6px; border-radius: 8px; font-size: 0.7rem; font-weight: bold; background: #ffe2a8; color: #7a4a00; cursor: help; }
     .manage-student-action {
       border: 1px solid var(--sg-border);
       border-radius: 999px;
@@ -2197,6 +2199,23 @@
         + 'Bets = Study Break candy bets (wins–losses, net candy); the class net sums to zero — a big negative is a kid being farmed.';
     }
 
+    // Amber badge for rows the engine could not place in any lesson (item id names a
+    // lesson the schedule does not know). Teacher-only: /class/grades sends orphanRows.
+    function orphanBadgeHtml(orphanRows) {
+      if (!orphanRows || !(orphanRows.count > 0)) return '';
+      var title = orphanRows.count + ' row(s) name a lesson the schedule does not know; they count for nothing. ' +
+        'First: ' + (orphanRows.samples || []).join(', ');
+      return '<span class="orphan-badge" title="' + escHtml(title) + '">' + escHtml(String(orphanRows.count)) + ' unplaced</span>';
+    }
+
+    // The PC column shows pcRawPct: the curved PC % the v3 quarter reads. The title
+    // carries the uncurved %. (unitGrade is the retired Phase 6 max(banked, P).)
+    function pcCellTitle(urec) {
+      if (!urec || urec.pcRawPct == null) return 'No PC score yet';
+      var uncurved = urec.pcUncurvedPct != null ? urec.pcUncurvedPct : urec.pcRawPct;
+      return 'PC ' + fmt1(urec.pcRawPct) + '% (curved, used by the quarter); uncurved ' + fmt1(uncurved) + '%';
+    }
+
     function renderGradesTable(payload) {
       var thead = $('grades-thead');
       var tbody = $('grades-tbody');
@@ -2215,7 +2234,7 @@
       // Header row
       var headCells = ['Name', 'Username', 'Section'];
       QUARTERS.forEach(function (q) { headCells.push(q); });
-      UNITS.forEach(function (u) { headCells.push(u); });
+      UNITS.forEach(function (u) { headCells.push(u + ' PC'); });
       headCells.push('Completion');
       var trh = '<tr>' + headCells.map(function (h) {
         return '<th>' + escHtml(h) + '</th>';
@@ -2234,7 +2253,7 @@
       var rowsHtml = [];
       sorted.forEach(function (s) {
         var cells = [];
-        cells.push('<td>' + studentNameHtml(s) + '</td>');
+        cells.push('<td>' + studentNameHtml(s) + orphanBadgeHtml(s.orphanRows) + '</td>');
         cells.push('<td class="uname mono">' + escHtml(s.username || '') + '</td>');
         cells.push('<td class="dim">' + escHtml(s.section || '') + '</td>');
 
@@ -2256,8 +2275,7 @@
 
         UNITS.forEach(function (u) {
           var urec = s.units && s.units[u];
-          var ug = urec ? urec.unitGrade : null;
-          cells.push('<td class="num">' + escHtml(fmt1(ug)) + '</td>');
+          cells.push('<td class="num" title="' + escHtml(pcCellTitle(urec)) + '">' + escHtml(fmt1(urec ? urec.pcRawPct : null)) + '</td>');
         });
 
         // Compact completion summary: ws:N · q:M · pc:K (sums across units present)
@@ -4279,10 +4297,10 @@
         html.push('<div><strong>Current quarter:</strong> ' + escHtml(fmt1(q.quarterGrade)) +
                   (q.ceiling != null ? ' &uarr; ' + escHtml(fmt1(q.ceiling)) : '') + '</div>');
       }
-      // Per-unit grades
+      // Per-unit PC % (curved, the number the v3 quarter reads)
       var units = payload.units || {};
       var unitLine = Object.keys(units).sort().map(function(k) {
-        return k + ': ' + fmt1(units[k] && units[k].unitGrade);
+        return escHtml(k) + ' PC: ' + escHtml(fmt1(units[k] && units[k].pcRawPct));
       }).join(' &nbsp; ');
       if (unitLine) html.push('<div class="dim" style="font-size:0.82rem">' + unitLine + '</div>');
       el.innerHTML = html.join('');

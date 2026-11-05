@@ -18,12 +18,19 @@
 import { requireTeacher } from './teacher-auth.js';
 import { verifyToken } from './token.js';
 import { isCorrect, scorePcRows } from './scoring.js';
+import { issueRowReceipt, receiptFields } from './receipts.js';
 
 // Only these fields ever reach the client. WHITELIST (not blacklist) so a new
 // answer-bearing field in a future bank can never leak: `answer`,
 // `rationaleCorrect`, and `rubric` are omitted by construction. questionParts
 // carries only {label, lead?, prompt?, subparts[]} — the question, no answers.
 const CLIENT_FIELDS = ['id', 'type', 'n', 'stimulus', 'stem', 'choices', 'questionParts', 'visual', 'glossary'];
+
+// [row] plus the receipt signed for it: row + receipt go out in ONE upsert statement,
+// so an overwrite can never keep an old receipt. Issuer off: null receipt columns.
+function withReceipt(row, username) {
+  return Object.assign({}, row, receiptFields(issueRowReceipt(row, username)));
+}
 
 function stripForClient(item) {
   var out = {};
@@ -257,11 +264,11 @@ export function mountPc(app, { db, pcDb, ledgerDb, figuresSigner }) {
       } else {
         finalScore = (prior == null) ? credit : Math.max(credit, prior);
       }
-      var ins = await ledgerDb.insertLedgerRow({
+      var ins = await ledgerDb.insertLedgerRow(withReceipt({
         studentId: who.studentId, source: 'pc', itemId: itemId,
         unit: 'U' + unit, response: r.response, score: finalScore,
         evidenceTier: 'practice', attempt: 1,
-      });
+      }, who.username));
       if (ins && ins.error) {
         if (ins.error.code === '23514') return res.status(503).json({ ok: false, error: "source 'pc' not provisioned — run migration 0011" });
         console.error('POST /pc submit insert error:', ins.error);
@@ -328,12 +335,12 @@ export function mountPc(app, { db, pcDb, ledgerDb, figuresSigner }) {
       return res.status(404).json({ ok: false, error: 'no such student' });
     }
 
-    var ins = await ledgerDb.insertLedgerRow({
+    var ins = await ledgerDb.insertLedgerRow(withReceipt({
       studentId: found.data.student_id, source: 'pc',
       itemId: 'U' + unit + '-PC-' + part + '-PAPER',
       unit: 'U' + unit, response: JSON.stringify(detail), score: score,
       evidenceTier: 'proctored', attempt: 1,
-    });
+    }, found.data.login_username));
     if (ins && ins.error) {
       if (ins.error.code === '23514') return res.status(503).json({ ok: false, error: "source 'pc' not provisioned — run migration 0011" });
       console.error('POST /pc/grade insert error:', ins.error);

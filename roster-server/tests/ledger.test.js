@@ -8,7 +8,8 @@ import { generateKeyPairSync, randomBytes, sign } from 'crypto';
 import { createApp } from '../server.js';
 import { signToken } from '../token.js';
 import { createLedgerDb, isMissingColumnError } from '../ledger-db.js';
-import { verifyReviewGrant } from '../receipts.js';
+import { getReceiptIssuer, initReceipts, verifyReviewGrant } from '../receipts.js';
+import { publicKeyFromX, verifyRecord } from '../snapshot-verify.js';
 import { latestPerItem, isCorrect } from '../scoring.js';
 import { QUIZ_RETRIES_CLOSED_FROM } from '../grade-config.js';
 import { quizRetriesClosedAt } from '../ledger.js';
@@ -34,7 +35,7 @@ function createFakeLedgerDb() {
   // store keyed by "studentId|source|itemId|attempt"
   const store = new Map();
 
-  function buildRow({ studentId, source, itemId, unit, topic, skill, response, score, evidenceTier, attempt, recordedAt, reasoning }) {
+  function buildRow({ studentId, source, itemId, unit, topic, skill, response, score, evidenceTier, attempt, recordedAt, reasoning, receiptId, receiptCompact }) {
     return {
       ledger_id:     `ledger-${Date.now()}-${Math.random().toString(36).slice(2)}`,
       student_id:    studentId,
@@ -49,6 +50,8 @@ function createFakeLedgerDb() {
       attempt,
       recorded_at:   recordedAt || new Date().toISOString(),
       graded_at:     null,
+      receipt_id:      receiptId || null,
+      receipt_compact: receiptCompact || null,
       ...(reasoning ? { reasoning } : {})
     };
   }
@@ -59,6 +62,12 @@ function createFakeLedgerDb() {
     // `beforeInsertIfAbsent` runs just before the first-write-wins insert (race simulation).
     readResult: null,
     beforeInsertIfAbsent: null,
+    // Every write path signs inside the upsert; a separate receipt update is a regression.
+    receiptUpdates: [],
+    async updateLedgerReceipt(ledgerId, receipt) {
+      fake.receiptUpdates.push({ ledgerId, ...receipt });
+      return { error: null };
+    },
 
     // First writer wins (mirrors the ignoreDuplicates upsert): never updates an existing row.
     async insertLedgerRowIfAbsent(opts) {
@@ -70,7 +79,7 @@ function createFakeLedgerDb() {
       return { data: [row], error: null, inserted: true };
     },
 
-    async insertLedgerRow({ studentId, source, itemId, unit, topic, skill, response, score, evidenceTier, attempt, reasoning }) {
+    async insertLedgerRow({ studentId, source, itemId, unit, topic, skill, response, score, evidenceTier, attempt, reasoning, receiptId, receiptCompact }) {
       const key = `${studentId}|${source}|${itemId}|${attempt}`;
 
       const row = {
@@ -87,6 +96,8 @@ function createFakeLedgerDb() {
         attempt,
         recorded_at:   new Date().toISOString(),
         graded_at:     null,
+        receipt_id:      receiptId || null,
+        receipt_compact: receiptCompact || null,
         ...(reasoning ? { reasoning } : {})
       };
 
@@ -566,6 +577,87 @@ describe('POST /ledger/record', () => {
     });
   });
 
+  // -- Receipts ride in the row upsert (2026-11-05) --------------------------------
+  // The receipt is signed BEFORE the write and stored by the same statement, so a row and
+  // its receipt can never disagree (a failed second update left stale receipts for weeks).
+  const RECEIPT_KEY = 'MC4CAQAwBQYDK2VwBCIEIEtFFgiPZyvBY+Udt3F77ZOHGypDcMHVJV9ck+a6kToO';
+
+  async function withIssuer(fn) {
+    vi.stubEnv('RECEIPT_ISSUER_PRIVATE_KEY', RECEIPT_KEY);
+    initReceipts();
+    try {
+      await fn();
+    } finally {
+      vi.unstubAllEnvs();
+      initReceipts();
+    }
+  }
+
+  function verifiesAgainstIssuer(row) {
+    const rec = {
+      studentId: row.student_id, itemId: row.item_id, source: row.source,
+      score: row.score, attempt: row.attempt, response: row.response,
+      receipt_compact: row.receipt_compact,
+    };
+    return verifyRecord(rec, publicKeyFromX(getReceiptIssuer().pubkey), row.student_id);
+  }
+
+  it('receipts: /ledger/record stores the receipt in the row write, with no second receipt update', async () => {
+    await withIssuer(async () => {
+      const r = await record({ itemId: 'WS-U4L1-Q1', response: 'first', score: 1 });
+      expect(r.status).toBe(200);
+      const row = ledgerDb.store.get(`${validStudentId}|worksheet|WS-U4L1-Q1|1`);
+      expect(row.receipt_id).toBe(r.body.receipt.receiptId);
+      expect(row.receipt_compact).toBe(r.body.receipt.compact);
+      expect(ledgerDb.receiptUpdates).toEqual([]);
+      expect(verifiesAgainstIssuer(row).ok).toBe(true);
+    });
+  });
+
+  it('receipts: two fast re-answers leave the row signed for the LAST write (no reordering race)', async () => {
+    await withIssuer(async () => {
+      await Promise.all([
+        record({ itemId: 'WS-U4L1-Q1', response: 'a', score: 0 }),
+        record({ itemId: 'WS-U4L1-Q1', response: 'b', score: 1 }),
+      ]);
+      const row = ledgerDb.store.get(`${validStudentId}|worksheet|WS-U4L1-Q1|1`);
+      expect(verifiesAgainstIssuer(row)).toMatchObject({ ok: true, breaks: [] });
+      expect(ledgerDb.receiptUpdates).toEqual([]);
+    });
+  });
+
+  it('receipts: the proctored tier is signed from the server-derived tier, before the write', async () => {
+    await withIssuer(async () => {
+      const r = await record({ itemId: 'WS-U4L1-Q1', response: 'p', score: 1 }, { 'x-proctor-secret': proctorSecret });
+      const payload = JSON.parse(Buffer.from(r.body.receipt.compact.split('.')[0], 'base64url').toString('utf8'));
+      expect(r.body.evidenceTier).toBe('proctored');
+      expect(payload.e).toBe('proctored');
+    });
+  });
+
+  it('receipts: the quiz retry (insert-if-absent) carries its receipt in the insert', async () => {
+    await withIssuer(async () => {
+      await withKeyedServer(async (quiz) => {
+        await quiz({ response: 'C', attempt: 1 });
+        const r = await quiz({ response: 'B', attempt: 2, reasoning: REASON });
+        expect(r.status).toBe(200);
+        expect(quizRow(2).receipt_compact).toBe(r.body.receipt.compact);
+        expect(quizRow(2).receipt_id).toBe(r.body.receipt.receiptId);
+        expect(verifiesAgainstIssuer(quizRow(2)).ok).toBe(true);
+        expect(ledgerDb.receiptUpdates).toEqual([]);
+      });
+    });
+  });
+
+  it('receipts: issuer off writes the row with null receipt columns and no receipt in the body', async () => {
+    const r = await record({ itemId: 'WS-U4L1-Q1', response: 'x', score: 1 });
+    expect(r.status).toBe(200);
+    expect(r.body.receipt).toBeUndefined();
+    const row = ledgerDb.store.get(`${validStudentId}|worksheet|WS-U4L1-Q1|1`);
+    expect(row.receipt_id).toBeNull();
+    expect(row.receipt_compact).toBeNull();
+  });
+
   it('quiz: other sources are untouched by the retry rule', async () => {
     await record({ source: 'worksheet', itemId: 'WS-U4L1-Q1', response: { answer: 'first' } });
     await record({ source: 'worksheet', itemId: 'WS-U4L1-Q1', response: { answer: 'second' } });
@@ -1003,6 +1095,28 @@ describe('createLedgerDb', () => {
     expect(upsertRow).toHaveProperty('receipt_id', null);
     expect(upsertRow).toHaveProperty('receipt_compact', null);
   });
+
+  it('writes a given receipt in the SAME upsert payload as the row', async () => {
+    let upsertRow = null;
+    const client = {
+      from() {
+        return {
+          upsert(rows) {
+            upsertRow = rows[0];
+            return { select() { return { async single() { return { data: { ledger_id: 'L1', evidence_tier: 'practice' }, error: null }; } }; } };
+          },
+          update() { throw new Error('no separate receipt update expected'); },
+        };
+      },
+    };
+
+    await createLedgerDb(client).insertLedgerRow({
+      studentId: 'stu-1', source: 'worksheet', itemId: 'WS-U1L4-Q32', response: 'b', score: 1, evidenceTier: 'practice', attempt: 1,
+      receiptId: 'rid-1', receiptCompact: 'payload.sig',
+    });
+
+    expect(upsertRow).toMatchObject({ score: 1, response: 'b', receipt_id: 'rid-1', receipt_compact: 'payload.sig' });
+  });
 });
 
 // ── GET /ledger/student/:studentId ────────────────────────────────────────────
@@ -1369,6 +1483,23 @@ describe('createLedgerDb insertLedgerRow reasoning', () => {
     expect(client.upserts[0].options).toMatchObject({ ignoreDuplicates: true });
     const second = await db.insertLedgerRowIfAbsent({ ...baseRow, response: 'C', reasoning: 'another reason here' });
     expect(second.inserted).toBe(false);
+  });
+
+  it('insertLedgerRowIfAbsent writes the receipt in the insert itself (nulls without one)', async () => {
+    const client = fakeIfAbsentSupabase({ missingColumn: false });
+    const db = createLedgerDb(client);
+    await db.insertLedgerRowIfAbsent({ ...baseRow, receiptId: 'rid-2', receiptCompact: 'p.s' });
+    await db.insertLedgerRowIfAbsent({ ...baseRow, itemId: 'U1-L7-Q04' });
+    expect(client.upserts[0].row).toMatchObject({ receipt_id: 'rid-2', receipt_compact: 'p.s' });
+    expect(client.upserts[1].row).toMatchObject({ receipt_id: null, receipt_compact: null });
+  });
+
+  it('the reasoning-column fallback keeps the receipt on the retried write', async () => {
+    const client = fakeSupabase({ missingColumn: true });
+    await createLedgerDb(client).insertLedgerRow({ ...baseRow, reasoning: 'changed my mind here', receiptId: 'rid-3', receiptCompact: 'p.s' });
+    expect(client.upserts).toHaveLength(2);
+    expect(client.upserts[1]).toMatchObject({ receipt_id: 'rid-3', receipt_compact: 'p.s' });
+    expect('reasoning' in client.upserts[1]).toBe(false);
   });
 
   it('insertLedgerRowIfAbsent retries WITHOUT reasoning when the column does not exist yet', async () => {

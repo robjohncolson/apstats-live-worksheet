@@ -154,7 +154,8 @@ function frqScoreToPct(score, frqBand) {
 }
 
 // ── Pure compute (extracted for class fan-out reuse; behaviour-identical) ────
-// computeGrade(ledgerRows, answerKey, config, opts) → { units, quarters, completion, lessons }
+// computeGrade(ledgerRows, answerKey, config, opts) -> { units, quarters, completion, lessons, orphanRows? }
+// (orphanRows only when some row names an unscheduled lesson; teacher payloads only.)
 // Phase-3 tests pin behaviour; class.js fans out over the roster calling this.
 // opts.lessonSchedule: the lesson-schedule.json .lessons map (or null for graceful degrade).
 // opts.eventSchedule: { progressChecks, posters } from the same file, keyed by NEW
@@ -585,7 +586,26 @@ export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts
   const completionOut = {};
   for (const u of Object.keys(completion).sort()) completionOut[u] = completion[u];
 
-  return { units: unitsOut, quarters, completion: completionOut, lessons };
+  /** @type {{ units: any, quarters: any, completion: any, lessons: any, orphanRows?: { count: number, samples: string[] } }} */
+  const result = { units: unitsOut, quarters, completion: completionOut, lessons };
+  // Teacher-only signal: rows that name a lesson the schedule does not know.
+  // Present only when there is at least one, so every other payload keeps its
+  // shape. GET /grade destructures the four fields above and never sends it.
+  const orphanRows = summarizeOrphanRows(/** @type {any} */ (lessonMap).orphans);
+  if (orphanRows) result.orphanRows = orphanRows;
+  return result;
+}
+
+const ORPHAN_SAMPLE_SIZE = 5;
+
+// { count, samples: [first itemIds] } for the orphan rows, or null when none.
+/** @param {Array<{ itemId: string }>|undefined} orphans */
+export function summarizeOrphanRows(orphans) {
+  if (!Array.isArray(orphans) || orphans.length === 0) return null;
+  return {
+    count: orphans.length,
+    samples: orphans.slice(0, ORPHAN_SAMPLE_SIZE).map((o) => o.itemId),
+  };
 }
 
 // ── Route mounter ─────────────────────────────────────────────────────────────

@@ -64,6 +64,11 @@ async function writeWithReasoningFallback(row, reasoning, write) {
   return write(row);
 }
 
+// The receipt columns of one upsert row: the receipt signed for THIS write, or nulls.
+function receiptColumns(receiptId, receiptCompact) {
+  return { receipt_id: receiptId || null, receipt_compact: receiptCompact || null };
+}
+
 export function createLedgerDb(client) {
   return { insertLedgerRow, insertLedgerRowIfAbsent, updateLedgerReceipt, updateFrqFeedback, getLedgerByStudent, getLedgerByItem, getRowsByLedgerIds, deleteLedgerRows };
 
@@ -105,11 +110,13 @@ export function createLedgerDb(client) {
   // [reasoning] is OPTIONAL (quiz retry, QUIZ_FIRST_ANSWER_SPEC v2): included only when a
   // non-empty string is given. Until migration 0037 adds the column, the upsert is retried
   // WITHOUT it so a missing column can never lose the answer itself.
-  // The receipt columns are ALWAYS cleared: an upsert can overwrite score/response in
-  // place, and the old receipt would then sign content the row no longer holds (the
-  // snapshot verifier fails on that; an unsigned row is merely counted). Callers that
-  // sign re-persist a fresh receipt with updateLedgerReceipt right after.
-  async function insertLedgerRow({ studentId, source, itemId, unit, topic, skill, response, score, evidenceTier, attempt, recordedAt, frqResult, gradedAt, reasoning }) {
+  // [receiptId]/[receiptCompact] are OPTIONAL: the caller signs the row BEFORE the write
+  // and the receipt lands in this SAME upsert statement, so a row and its receipt can
+  // never disagree (no second update to fail, no race between two fast re-answers).
+  // When absent the receipt columns are written as null: an upsert can overwrite
+  // score/response in place, and an old receipt would then sign content the row no
+  // longer holds (the snapshot verifier fails on that; an unsigned row is merely counted).
+  async function insertLedgerRow({ studentId, source, itemId, unit, topic, skill, response, score, evidenceTier, attempt, recordedAt, frqResult, gradedAt, reasoning, receiptId, receiptCompact }) {
     const extra = {};
     if (frqResult && typeof frqResult === 'object') {
       extra.frq_result = frqResult;
@@ -127,8 +134,7 @@ export function createLedgerDb(client) {
       evidence_tier: evidenceTier,
       attempt:       attempt     ?? 1,
       recorded_at:   recordedAt  || new Date().toISOString(),
-      receipt_id:      null,
-      receipt_compact: null,
+      ...receiptColumns(receiptId, receiptCompact),
       ...extra
     };
     const upsertRow = (row) => client
@@ -142,12 +148,15 @@ export function createLedgerDb(client) {
   // First writer wins: an existing application must never be overwritten.
   // Returns { data: rows[], error, inserted }. [reasoning] as in insertLedgerRow (optional,
   // missing-column fallback) — the quiz retry (attempt 2) is written through here.
-  async function insertLedgerRowIfAbsent({ studentId, source, itemId, unit, topic, skill, response, score, evidenceTier, attempt, recordedAt, frqResult, gradedAt, reasoning }) {
+  // [receiptId]/[receiptCompact] as in insertLedgerRow: signed before, written in the same
+  // statement (an ignored duplicate writes nothing, receipt included).
+  async function insertLedgerRowIfAbsent({ studentId, source, itemId, unit, topic, skill, response, score, evidenceTier, attempt, recordedAt, frqResult, gradedAt, reasoning, receiptId, receiptCompact }) {
     const payload = {
       student_id: studentId, source, item_id: itemId,
       unit: unit || null, topic: topic || null, skill: skill || null,
       response, score: score ?? null, evidence_tier: evidenceTier,
       attempt: attempt ?? 1, recorded_at: recordedAt || new Date().toISOString(),
+      ...receiptColumns(receiptId, receiptCompact),
     };
     if (frqResult && typeof frqResult === 'object') {
       payload.frq_result = frqResult;
@@ -160,7 +169,8 @@ export function createLedgerDb(client) {
     return { data, error, inserted: !error && Array.isArray(data) && data.length > 0 };
   }
 
-  // Persist a signed receipt after the grade row is safely recorded.
+  // Re-persist a receipt on an EXISTING row by ledger_id. Only the repair tools use this
+  // (backfill.js, admin-restore.js); write paths sign inside the upsert instead.
   // Returns { error }; callers treat this as best-effort.
   async function updateLedgerReceipt(ledgerId, { receiptId, receiptCompact }) {
     const { error } = await client

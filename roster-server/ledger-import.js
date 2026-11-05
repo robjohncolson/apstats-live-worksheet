@@ -10,7 +10,7 @@
 // No new migration: it writes the same item_ledger as /ledger/record.
 
 import { requireTeacher } from './teacher-auth.js';
-import { issueLedgerReceipt, recordReceiptPersistFailure } from './receipts.js';
+import { issueLedgerReceipt, receiptFields } from './receipts.js';
 
 const MAX_RECORDS = 5000; // sane ceiling for one import call
 
@@ -23,11 +23,14 @@ function isSourceNotProvisioned(e) {
   return msg.includes('item_ledger_source_check');
 }
 
-function isReceiptPersistenceNotProvisioned(err) {
-  if (!err) return false;
-  const code = String(err.code || '');
-  const msg = String(err.message || '').toLowerCase();
-  return code === '42703' || msg.includes('undefined_column') || msg.includes('undefined column');
+// The student's login username for the receipt, or undefined (never fails the import).
+async function resolveImportUsername(resolveUsername, studentId) {
+  if (typeof resolveUsername !== 'function') return undefined;
+  try {
+    return (await resolveUsername(studentId)) || undefined;
+  } catch (_) {
+    return undefined;
+  }
 }
 
 // Flatten the accepted body shapes into one flat record list.
@@ -94,7 +97,22 @@ export function mountLedgerImport(app, { db, ledgerDb, resolveUsername }) {
       const score = (rec.score === undefined ? null : rec.score);
       const attempt = rec.attempt ?? 1;
 
-      const { data, error } = await ledgerDb.insertLedgerRow({
+      // Sign BEFORE the write so imported rows match the /ledger/record contract:
+      // row + receipt in ONE upsert. Issuer off (or issuance failed): unsigned row.
+      const username = await resolveImportUsername(resolveUsername, rec.studentId);
+      const receipt = issueLedgerReceipt({
+        studentId: rec.studentId,
+        username,
+        source: rec.source,
+        itemId: rec.itemId,
+        score,
+        attempt,
+        evidenceTier: 'practice',
+        response: rec.response,
+        gradingProvenance: 'offline-import',
+      });
+
+      const { error } = await ledgerDb.insertLedgerRow({
         studentId: rec.studentId,
         source: rec.source,
         itemId: rec.itemId,
@@ -105,6 +123,7 @@ export function mountLedgerImport(app, { db, ledgerDb, resolveUsername }) {
         score,
         evidenceTier: 'practice', // offline = self-reported, never proctored
         attempt,
+        ...receiptFields(receipt),
       });
 
       if (error) {
@@ -119,33 +138,6 @@ export function mountLedgerImport(app, { db, ledgerDb, resolveUsername }) {
         continue;
       }
       imported += 1;
-
-      // Best-effort: re-issue + persist a server receipt so imported rows match
-      // the /ledger/record contract (a verifiable chain). Never fails the import.
-      try {
-        let username;
-        if (typeof resolveUsername === 'function') {
-          try { username = await resolveUsername(rec.studentId); } catch (_) { username = undefined; }
-        }
-        const receipt = issueLedgerReceipt({
-          studentId: rec.studentId,
-          username,
-          source: rec.source,
-          itemId: rec.itemId,
-          score,
-          attempt,
-          evidenceTier: data.evidence_tier,
-          response: rec.response,
-          gradingProvenance: 'offline-import',
-        });
-        if (receipt && data.ledger_id && ledgerDb && typeof ledgerDb.updateLedgerReceipt === 'function') {
-          const pr = await ledgerDb.updateLedgerReceipt(data.ledger_id, {
-            receiptId: receipt.receiptId,
-            receiptCompact: receipt.compact,
-          });
-          if (pr && pr.error && !isReceiptPersistenceNotProvisioned(pr.error)) recordReceiptPersistFailure();
-        }
-      } catch (_) { /* best-effort */ }
     }
 
     return res.json({ ok: true, total: records.length, imported, skipped, errors, ...(provisioningWarning ? { provisioningWarning: true } : {}) });

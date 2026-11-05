@@ -48,4 +48,26 @@ if ($Base) { $pyArgs += @('--base', $Base) }
 $code = $LASTEXITCODE
 
 Add-Content -Path $log -Value ("[" + (Get-Date -Format 'HH:mm:ss') + "] === daily_pc_reconcile done (exit $code) ===")
+
+# Report the outcome to the roster server so status.html shows it (POST /admin/job-result).
+# Best-effort: a failed report is logged and never changes the exit code. Only the scheduled
+# -Apply run reports (a dry run is not the nightly job).
+# The server only accepts an allowlisted code and writes the public message itself.
+# Exit 0 = ok, 2 = sign-in-needed, anything else (1 = a page not ready or a post failed) = failed.
+function Send-JobResult([int]$exitCode) {
+  $job = if ($Section -eq 'PeriodE') { 'pcReconcileE' } else { 'pcReconcileB' }
+  $code = 'failed'
+  if ($exitCode -eq 0) { $code = 'ok' }
+  if ($exitCode -eq 2) { $code = 'sign-in-needed' }
+  $url = if ($Base) { $Base.TrimEnd('/') } else { 'https://roster-production-12c1.up.railway.app' }
+  $body = @{ job = $job; code = $code; at = (Get-Date).ToUniversalTime().ToString('o') } | ConvertTo-Json -Compress
+  try {
+    Invoke-RestMethod -Method Post -Uri "$url/admin/job-result" -ContentType 'application/json' -Headers @{ 'x-teacher-secret' = $env:ROSTER_TEACHER_SECRET } -Body $body -TimeoutSec 15 | Out-Null
+    Add-Content -Path $log -Value "job-result reported: $job $code (exit $exitCode)"
+  } catch {
+    Add-Content -Path $log -Value ("job-result report failed: " + $_.Exception.Message)
+  }
+}
+if ($Apply) { Send-JobResult $code }
+
 exit $code

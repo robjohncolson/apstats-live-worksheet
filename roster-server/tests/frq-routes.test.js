@@ -716,6 +716,35 @@ describe('POST /ledger/frq-regrade mode matrix', () => {
     }
   });
 
+  // 2026-11-05: the legacy regrade signs BEFORE the write; the receipt rides in the same
+  // insertLedgerRow call, never in a second (raceable, failable) receipt update.
+  it('legacy regrade writes the receipt in the same row write (no separate receipt update)', async () => {
+    process.env.RECEIPT_ISSUER_PRIVATE_KEY = 'MC4CAQAwBQYDK2VwBCIEIIq2JsDpBMHpUzaFF6mPR0vUv1T2gzXGX7k/AQSYjyl0';
+    initReceipts();
+    try {
+      mode = 'off';
+      legacyDb.updateLedgerReceipt = vi.fn(async () => ({ error: null }));
+      legacyDb.getLedgerByStudent = async () => ({ data: [{
+        ledger_id: 'existing', student_id: 'student-a', source: 'frq', item_id: 'WS-U1L1-reflect1',
+        attempt: 1, response: 'Original response', score: null, evidence_tier: 'practice',
+      }], error: null });
+      const result = await server.request('POST', '/ledger/frq-regrade', {
+        headers: { 'x-teacher-secret': 'teacher-key' },
+        body: { studentId: 'student-a', itemId: 'WS-U1L1-reflect1', score: 0.5, provenance: 'ai-batch' },
+      });
+      expect(result.status).toBe(200);
+      const write = legacyDb.writes.at(-1);
+      expect(write.receiptId).toBe(result.body.receipt.receiptId);
+      expect(write.receiptCompact).toBe(result.body.receipt.compact);
+      const payload = JSON.parse(Buffer.from(write.receiptCompact.split('.')[0], 'base64url').toString('utf8'));
+      expect(payload).toMatchObject({ src: 'frq', i: 'WS-U1L1-reflect1', sc: 0.5, a: 1, e: 'practice' });
+      expect(legacyDb.updateLedgerReceipt).not.toHaveBeenCalled();
+    } finally {
+      delete process.env.RECEIPT_ISSUER_PRIVATE_KEY;
+      initReceipts();
+    }
+  });
+
   it('authoritative requires hash/version, returns stale 409, and preserves floor-held 200', async () => {
     mode = 'authoritative';
     frqDb.statusRows = [{

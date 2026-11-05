@@ -254,6 +254,20 @@ describe('teacher bonus routes', () => {
       { onConflict: 'student_id,source,item_id,attempt', ignoreDuplicates: true });
     expect(select).toHaveBeenCalledWith('*');
   });
+  // 2026-11-05: bonus + bonus_applied rows are signed BEFORE the write (same statement).
+  it('signs /class/bonus and /class/quarter/apply-bonus rows inside the write', async () => {
+    vi.stubEnv('RECEIPT_ISSUER_PRIVATE_KEY', 'MC4CAQAwBQYDK2VwBCIEIEtFFgiPZyvBY+Udt3F77ZOHGypDcMHVJV9ck+a6kToO');
+    initReceipts();
+    const { request, writes } = await start();
+    await request('/class/bonus', { sheetId: 'U1-screen-time', title: 'Screen Time', quarter: 'Q1',
+      entries: [{ username: 'pear_cat', grade: 'P' }] });
+    await request('/class/quarter/apply-bonus', { quarter: 'Q1', dryRun: false });
+    const payloadOf = w => JSON.parse(Buffer.from(w.receiptCompact.split('.')[0], 'base64url').toString('utf8'));
+    expect(writes.map(w => w.source)).toEqual(['bonus', 'bonus_applied']);
+    expect(payloadOf(writes[0])).toMatchObject({ sid: 's1', u: 'pear_cat', src: 'bonus', sc: 3 });
+    expect(payloadOf(writes[1])).toMatchObject({ sid: 's1', u: 'pear_cat', src: 'bonus_applied', i: 'BONUS-APPLIED-Q1' });
+    expect(writes.every(w => typeof w.receiptId === 'string' && w.receiptId)).toBe(true);
+  });
   it('writes an audit once, and reports already-applied students on the second call', async () => {
     const { request, writes } = await start();
     const first = await request('/class/quarter/apply-bonus', { quarter: 'Q1', dryRun: false });

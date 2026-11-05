@@ -4,7 +4,9 @@
 Covers: the page parsers on the sanitized fixtures (fake names, real layout),
 paper_blend parity with the JS engine numbers (roster-server/tests/pc-paper-blend.test.js),
 never-lower, deadline zeroing, exclude + map precedence, the login-needed exit code,
-and that dry runs post nothing. HTTP is a fake object; nothing touches the network.
+that dry runs post nothing, and (Unit 2 on) an online Part A, the points total read
+from the page, closeDate null and the registry's reconcilable entries. HTTP is a fake
+object; nothing touches the network.
 
 ASCII only. LF line endings.
 """
@@ -27,6 +29,7 @@ sys.path.insert(0, TOOLS_DIR)
 import apclassroom_pc_reconcile as rec  # noqa: E402
 
 FIXTURE_DIR = os.path.join(TOOLS_DIR, "fixtures", "apclassroom", "periodE-u1")
+U2_FIXTURE_DIR = os.path.join(TOOLS_DIR, "fixtures", "apclassroom", "periodB-u2")
 REGISTRY_PATH = os.path.join(REPO_ROOT, "data", "apclassroom-assignments.json")
 
 
@@ -39,8 +42,21 @@ ENTRY = {
     "unit": 1, "section": "PeriodE",
     "parts": {"A": {"of": 18, "origin": "paper"}, "B": {"id": "81743327", "of": 14},
               "C": {"id": "81743453", "of": 12}, "FRQ": {"id": "81743492", "of": 16}},
-    "dueDate": "2026-10-23", "closeDate": "2026-10-24", "active": True,
+    "dueDate": "2026-10-23", "closeDate": "2026-10-24",
 }
+
+# Unit 2: Part A online with the registry total; B and FRQ totals only on the page.
+U2_ENTRY = {
+    "unit": 2, "section": "PeriodB",
+    "parts": {"A": {"id": "82255720", "of": 19}, "B": {"id": "82259948"},
+              "C": {"id": "82260072"}, "FRQ": {"id": "82260319"}},
+    "dueDate": "2026-11-23", "closeDate": None,
+}
+
+
+def read_u2_fixture(part):
+    with open(os.path.join(U2_FIXTURE_DIR, part + ".txt"), encoding="utf-8") as f:
+        return f.read()
 
 STUDENTS = [
     {"username": "pear_cat", "realName": "Pear Cat"},
@@ -290,6 +306,99 @@ class PlanTests(unittest.TestCase):
         self.assertEqual(json.loads(snap)["assignments"], {"B": "81743327", "C": "81743453", "FRQ": "81743492"})
 
 
+class OnlinePartATests(unittest.TestCase):
+    """Unit 2 on: Part A is assigned online; totals come from the page when the registry has none."""
+
+    def u2_pages(self):
+        return {"A": read_u2_fixture("A"), "B": read_u2_fixture("B")}
+
+    def plan(self, entry=None, pages=None, stored=None, today="2026-11-05"):
+        return rec.build_plan(entry or U2_ENTRY, pages if pages is not None else self.u2_pages(),
+                              STUDENTS, stored or {}, ROSTER_MAP, today)
+
+    def posts(self, plan):
+        return {(p["username"], p["part"]): (p["points"], p["of"]) for p in plan["posts"]}
+
+    def test_part_a_with_an_id_is_read_like_b_and_c(self):
+        plan = self.plan()
+        self.assertEqual(self.posts(plan), {
+            ("fig_fox", "A"): (17, 19), ("kiwi_bee", "A"): (19, 19), ("plum_owl", "A"): (12, 19),
+            ("fig_fox", "B"): (11, 15), ("kiwi_bee", "B"): (15, 15), ("plum_owl", "B"): (9, 15),
+        })
+        self.assertEqual(plan["warnings"], [])
+        self.assertEqual(plan["snapshot"]["assignments"],
+                         {"A": "82255720", "B": "82259948", "C": "82260072", "FRQ": "82260319"})
+        self.assertEqual(plan["snapshot"]["students"]["pear_cat"]["A"], {"status": "not_submitted"})
+
+    def test_paper_part_a_without_an_id_is_never_read(self):
+        u1_pages = dict(pages(), A=read_u2_fixture("A"))           # an A page that must be ignored
+        plan = rec.build_plan(ENTRY, u1_pages, STUDENTS, stored_fixture(), ROSTER_MAP, "2026-10-20")
+        self.assertNotIn("A", {p["part"] for p in plan["posts"]})
+        self.assertNotIn("A", plan["snapshot"]["assignments"])
+
+    def test_page_total_is_used_when_the_registry_has_none(self):
+        self.assertIsNone(U2_ENTRY["parts"]["B"].get("of"))
+        plan = self.plan()
+        self.assertEqual({p["of"] for p in plan["posts"] if p["part"] == "B"}, {15})
+
+    def test_registry_total_wins_and_a_disagreement_warns(self):
+        entry = json.loads(json.dumps(U2_ENTRY))
+        entry["parts"]["A"]["of"] = 20
+        plan = self.plan(entry)
+        self.assertEqual({p["of"] for p in plan["posts"] if p["part"] == "A"}, {20})
+        self.assertEqual(plan["warnings"],
+                         ["part A: registry of 20 disagrees with the page (of 19); using the registry"])
+
+    def test_no_total_anywhere_posts_nothing_but_keeps_statuses(self):
+        headless = read_u2_fixture("B").replace("(of 15)", "(of )")
+        plan = self.plan(pages={"A": read_u2_fixture("A"), "B": headless})
+        self.assertNotIn("B", {p["part"] for p in plan["posts"]})
+        self.assertIn("part B: no points total in the registry or on the page; statuses kept, nothing posted",
+                      plan["warnings"])
+        self.assertEqual(plan["snapshot"]["students"]["pear_cat"]["B"], {"status": "not_submitted"})
+        self.assertEqual({t["username"]: t["missing"] for t in plan["reminders"]}["pear_cat"], ["A", "B"])
+
+    def test_frq_total_comes_from_its_scores(self):
+        entry = dict(U2_ENTRY, parts={"FRQ": {"id": "82260319"}})
+        plan = self.plan(entry, pages={"FRQ": read_fixture("FRQ")})
+        self.assertEqual(self.posts(plan)[("fig_fox", "FRQ")], (13, 16))
+
+    def test_close_date_null_never_zeroes(self):
+        plan = self.plan(today="2099-01-01")
+        self.assertEqual(plan["zeroed"], 0)
+        self.assertFalse([p for p in plan["posts"] if p.get("zero")])
+        self.assertIsNone(plan["snapshot"]["closeDate"])
+        self.assertFalse(rec.is_closed(U2_ENTRY, "2099-01-01"))
+        self.assertTrue(rec.is_closed(ENTRY, "2026-10-24"))
+
+    def test_never_lower_holds_for_part_a(self):
+        stored = {"kiwi_bee": {"username": "kiwi_bee", "parts": {"A": part(19, 19)}, "pct": 100.0},
+                  "plum_owl": {"username": "plum_owl", "parts": {"A": part(15, 19)}, "pct": 78.9}}
+        plan = self.plan(stored=stored)
+        self.assertEqual(plan["would_lower"], ["plum_owl"])                 # AP shows 12/19 < 15/19
+        self.assertEqual(plan["skipped_same"], 1)                            # kiwi_bee A 19/19 stored
+        self.assertNotIn(("plum_owl", "B"), self.posts(plan))                # the whole student waits
+
+    def test_a_part_the_server_does_not_take_is_reported_not_posted(self):
+        entry = {"unit": 3, "section": "PeriodB", "parts": {"C": {"id": "1"}, "D": {"id": "2"}},
+                 "dueDate": "2027-01-15", "closeDate": None}
+        plan = self.plan(entry, pages={"C": read_u2_fixture("B")})
+        self.assertEqual({p["part"] for p in plan["posts"]}, {"C"})
+        self.assertIn("part D: POST /pc/grade takes A, B, C and FRQ only; not reconciled", plan["warnings"])
+
+    def test_reminders_name_part_a(self):
+        plan = self.plan(today="2026-11-22")
+        got = {t["username"]: t["missing"] for t in plan["reminders"]}
+        self.assertEqual(got["pear_cat"], ["A", "B"])
+        self.assertIn("MCQ Part A and MCQ Part B", rec.draft_reminder("Pear", 2, "x", ["B", "A"]))
+
+    def test_reconcilable_means_a_part_with_an_id(self):
+        self.assertTrue(rec.is_reconcilable(U2_ENTRY))
+        self.assertTrue(rec.is_reconcilable({"parts": {"FRQ": {"id": "9"}}}))
+        self.assertFalse(rec.is_reconcilable({"parts": {"A": {"of": 18, "origin": "paper"}}}))
+        self.assertFalse(rec.is_reconcilable({"parts": {"D": {"id": "9"}}}))   # only A, B, C, FRQ post
+
+
 class ReminderTests(unittest.TestCase):
     """Section 4b: drafts the day before a due date. Nothing is ever sent here."""
 
@@ -325,6 +434,109 @@ class ReminderTests(unittest.TestCase):
         self.assertEqual(drafts["dueDate"], "2026-10-23")
 
 
+class FakeCdp:
+    """The Edge rig's page: answers eval_js with whatever the last navigate() opened."""
+
+    def __init__(self, page_for_url):
+        self.page_for_url = page_for_url   # url -> (location.href, innerText)
+        self.url = ""
+
+    def eval_js(self, _src):
+        href, text = self.page_for_url(self.url)
+        return json.dumps({"url": href, "text": text})
+
+
+class FakeOps:
+    """Stand-in for tools/schoology_ops.py (connect + navigate) in a live-read test."""
+
+    def __init__(self, page_for_url):
+        self.cdp = FakeCdp(page_for_url)
+
+    def connect(self, reuse=True):
+        return self.cdp
+
+    def navigate(self, cdp, url, wait_ms=0):
+        cdp.url = url
+
+
+class LiveRead:
+    """Context manager: fetch_live_pages talks to FakeOps, with a short page timeout."""
+
+    def __init__(self, page_for_url):
+        self.ops = FakeOps(page_for_url)
+
+    def __enter__(self):
+        self.saved = (sys.modules.get("schoology_ops"), rec.PAGE_TIMEOUT_S, rec.time.sleep, rec.shutil.which)
+        sys.modules["schoology_ops"] = self.ops
+        rec.PAGE_TIMEOUT_S = 0.2
+        rec.time.sleep = lambda _s: None
+        rec.shutil.which = lambda _name: None          # no gh: no issue call
+        return self
+
+    def __exit__(self, *_exc):
+        module, rec.PAGE_TIMEOUT_S, rec.time.sleep, rec.shutil.which = self.saved
+        if module is None:
+            sys.modules.pop("schoology_ops", None)
+        else:
+            sys.modules["schoology_ops"] = module
+
+
+AP_URL = "https://apclassroom.collegeboard.org/33/assignments/progress/x"
+
+
+def u1_page(url):
+    """The U1 fixture for ENTRY's ids; a loading page (no table header) for anything else."""
+    for name, cfg in ENTRY["parts"].items():
+        if cfg.get("id") and "/" + cfg["id"] + "?" in url:
+            return AP_URL, read_fixture(name)
+    return AP_URL, "Resources & Assignments\nLoading..."
+
+
+class LiveReaderTests(unittest.TestCase):
+    def test_a_headerless_page_is_not_ready_not_sign_in(self):
+        with LiveRead(lambda _url: (AP_URL, "Resources & Assignments\nSomething went wrong")):
+            with self.assertRaises(rec.PageNotReady):
+                rec.fetch_live_pages("33", ENTRY)
+
+    def test_a_sign_in_page_is_sign_in_needed(self):
+        with LiveRead(lambda _url: ("https://account.collegeboard.org/login", "College Board\nSign In")):
+            with self.assertRaises(rec.SignInNeeded):
+                rec.fetch_live_pages("33", ENTRY)
+
+    def test_a_loaded_table_is_read(self):
+        with LiveRead(u1_page):
+            got = rec.fetch_live_pages("33", ENTRY)
+        self.assertEqual(sorted(got), ["B", "C", "FRQ"])
+
+
+class FrqWithoutTotalTests(unittest.TestCase):
+    """No registry `of` and no scored row: statuses still count, nothing posts."""
+
+    PAGE = ("Name\nStatus\nDate Submitted\nStart Date\nDue Date\nTimer\nScore\nFeedback\n"
+            "Fig Fox Submitted 11/04 02:21 PM\n11/02/2026 8:00 AM\n\n11/23/2026 1:15 PM\n\n-\nScore\n\n"
+            "Pear Cat In progress \u2014\n11/02/2026 8:00 AM\n\n11/23/2026 1:15 PM\n\n-\nScore\n\n"
+            "Plum Owl Not started -\n11/02/2026 8:00 AM\n\n11/23/2026 1:15 PM\n\n-\nScore\n")
+
+    def entry(self, close=None):
+        return {"unit": 2, "section": "PeriodB", "parts": {"FRQ": {"id": "82260319"}},
+                "dueDate": "2026-11-23", "closeDate": close}
+
+    def test_statuses_survive_an_unknown_total(self):
+        plan = rec.build_plan(self.entry(), {"FRQ": self.PAGE}, STUDENTS, {}, ROSTER_MAP, "2026-11-22")
+        self.assertEqual(plan["posts"], [])
+        self.assertEqual(plan["needs_scoring"], ["fig_fox"])
+        self.assertEqual({t["username"]: t["missing"] for t in plan["reminders"]},
+                         {"pear_cat": ["FRQ"], "plum_owl": ["FRQ"]})
+        self.assertEqual(plan["snapshot"]["students"]["fig_fox"]["FRQ"]["status"], "submitted")
+        self.assertIn("part FRQ: no points total in the registry or on the page; statuses kept, nothing posted",
+                      plan["warnings"])
+
+    def test_no_zero_without_a_total_even_after_close(self):
+        plan = rec.build_plan(self.entry("2026-11-24"), {"FRQ": self.PAGE}, STUDENTS, {}, ROSTER_MAP, "2026-11-30")
+        self.assertEqual(plan["posts"], [])
+        self.assertEqual(plan["zeroed"], 0)
+
+
 class MainTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.mkdtemp(prefix="pc-reconcile-test-")
@@ -336,9 +548,9 @@ class MainTests(unittest.TestCase):
             json.dump(ROSTER_MAP, f)
         self.log = os.path.join(self.tmp, "run.log")
 
-    def run_main(self, extra, api):
+    def run_main(self, extra, api, unit="1"):
         argv = ["--section", "PeriodE", "--registry", self.registry, "--roster-map", self.roster_map,
-                "--today", "2026-10-24", "--log", self.log] + extra
+                "--today", "2026-10-24", "--log", self.log] + (["--unit", unit] if unit else []) + extra
         buf = io.StringIO()
         with redirect_stdout(buf):
             code = rec.main(argv, api=api)
@@ -371,7 +583,7 @@ class MainTests(unittest.TestCase):
     def test_day_before_writes_private_drafts_and_snapshot_flag(self):
         api = FakeApi()
         argv = ["--section", "PeriodE", "--registry", self.registry, "--roster-map", self.roster_map,
-                "--today", "2026-10-22", "--log", self.log, "--fixture", FIXTURE_DIR, "--apply"]
+                "--today", "2026-10-22", "--log", self.log, "--unit", "1", "--fixture", FIXTURE_DIR, "--apply"]
         with redirect_stdout(io.StringIO()):
             self.assertEqual(rec.main(argv, api=api), 0)
         path = os.path.join(self.tmp, "reminders-PeriodE-U1-2026-10-22.json")
@@ -396,30 +608,78 @@ class MainTests(unittest.TestCase):
         self.assertEqual(api.posts, [])                                        # no zero over a real score
         self.assertIn("GET /pc/parts not ok", out)
 
-    def test_every_entry_is_read_before_anything_is_written(self):
-        second = dict(ENTRY, unit=2)
+    def write_two_unit_registry(self, first, second):
         with open(self.registry, "w", encoding="utf-8") as f:
-            json.dump({"classId": "33", "progressChecks": [ENTRY, second]}, f)
-        calls = []
-        original_read = rec.read_fixture_pages
-        original_which = rec.shutil.which
+            json.dump({"classId": "33", "progressChecks": [first, second]}, f)
 
-        def flaky_read(path):
-            calls.append(path)
-            if len(calls) == 2:
-                raise rec.SignInNeeded()
-            return original_read(path)
+    def u2_entry(self):
+        parts = {name: dict(cfg, id=cfg["id"][::-1]) if cfg.get("id") else dict(cfg)
+                 for name, cfg in ENTRY["parts"].items()}
+        return dict(ENTRY, unit=2, parts=parts)
 
-        rec.read_fixture_pages = flaky_read
-        rec.shutil.which = lambda _name: None
-        try:
-            api = FakeApi()
-            code, _out = self.run_main(["--fixture", FIXTURE_DIR, "--apply"], api)
-        finally:
-            rec.read_fixture_pages = original_read
-            rec.shutil.which = original_which
+    def test_every_entry_is_read_before_anything_is_written(self):
+        u2 = self.u2_entry()
+        self.write_two_unit_registry(ENTRY, u2)
+
+        def page(url):
+            if "/" + u2["parts"]["B"]["id"] + "?" in url:
+                return "https://account.collegeboard.org/login", "College Board\nSign In"
+            return u1_page(url)
+
+        api = FakeApi()
+        with LiveRead(page):
+            code, _out = self.run_main(["--apply"], api, unit=None)
         self.assertEqual(code, 2)
         self.assertEqual(api.posts, [])                                        # entry 1 was not applied
+
+    def test_a_fixture_never_writes_another_unit(self):
+        self.write_two_unit_registry(ENTRY, self.u2_entry())
+        api = FakeApi()
+        code, out = self.run_main(["--fixture", FIXTURE_DIR, "--apply"], api, unit=None)
+        self.assertEqual(code, 2)
+        self.assertEqual(api.posts, [])
+        self.assertIn("--fixture/--dump need --unit N", out)
+        code, _ = self.run_main(["--dump", self.tmp], FakeApi(), unit=None)
+        self.assertEqual(code, 2)                                               # a dump dir is one unit too
+
+        code, _ = self.run_main(["--fixture", FIXTURE_DIR, "--apply"], api, unit="1")
+        self.assertEqual(code, 0)
+        self.assertEqual({b["unit"] for p, b in api.posts if p in ("/pc/grade", "/pc/status")}, {1})
+
+    def test_a_fixture_needs_a_unit_with_an_entry(self):
+        code, out = self.run_main(["--fixture", FIXTURE_DIR], FakeApi(), unit="4")
+        self.assertEqual(code, 2)
+        self.assertIn("(found 0)", out)
+
+    def test_u2_fixture_dry_run_reads_part_a(self):
+        with open(self.registry, "w", encoding="utf-8") as f:
+            json.dump({"classId": "33", "progressChecks": [U2_ENTRY]}, f)
+        api = FakeApi(stored={})
+        argv = ["--section", "PeriodB", "--registry", self.registry, "--roster-map", self.roster_map,
+                "--today", "2026-11-05", "--log", self.log, "--unit", "2", "--fixture", U2_FIXTURE_DIR]
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            code = rec.main(argv, api=api)
+        out = buf.getvalue()
+        self.assertEqual(code, 0)
+        self.assertEqual(api.posts, [])
+        self.assertIn("== PeriodB U2 (close never, today 2026-11-05) DRY RUN ==", out)
+        self.assertIn("A 17/19", out)
+        self.assertIn("B 11/15", out)
+
+    def test_a_headerless_table_skips_only_its_entry(self):
+        # U2 (not open yet) stays on a loading page with no table header and no sign-in
+        # prompt; it is read FIRST, and U1 still posts afterwards.
+        self.write_two_unit_registry(self.u2_entry(), ENTRY)
+        api = FakeApi()
+        with LiveRead(u1_page):
+            code, out = self.run_main(["--apply"], api, unit=None)
+        self.assertEqual(code, 1)
+        self.assertIn("PAGE NOT READY: U2 B table never showed its header", out)
+        self.assertNotIn(rec.SIGN_IN_LINE, out)
+        grades = [b for p, b in api.posts if p == "/pc/grade"]
+        self.assertTrue(grades)
+        self.assertEqual({b["unit"] for b in grades}, {1})
 
     def test_unsent_reminders_are_carried_forward(self):
         unsent = {"draftedAt": "2026-10-22T20:00:00Z", "count": 3, "sent": False}
@@ -478,10 +738,15 @@ class MainTests(unittest.TestCase):
 
     def test_registry_file_is_public_safe(self):
         registry = rec.load_registry(REGISTRY_PATH)
-        self.assertEqual(len(rec.active_entries(registry, "PeriodE")), 1)
+        # Every entry with an AP Classroom id reconciles (Units 1-5 for both sections).
+        self.assertEqual([int(e["unit"]) for e in rec.active_entries(registry, "PeriodE")], [1, 2, 3, 4, 5])
         self.assertEqual(rec.active_entries(registry, "PeriodB")[0]["parts"]["FRQ"]["id"], "81595036")
+        self.assertEqual(rec.active_entries(registry, "PeriodB", unit=2)[0]["parts"]["A"], {"id": "82255720", "of": 19})
+        self.assertEqual(rec.active_entries(registry, "PeriodE", unit=2)[0]["parts"]["A"], {"id": "82259752", "of": 19})
         for entry in registry["progressChecks"]:
-            self.assertEqual(set(entry), {"unit", "section", "parts", "dueDate", "closeDate", "active"})
+            self.assertEqual(set(entry), {"unit", "section", "parts", "dueDate", "closeDate"})
+            for name, cfg in entry["parts"].items():
+                self.assertLessEqual(set(cfg), {"id", "of", "origin"}, name)   # ids + totals, nothing else
 
 
 if __name__ == "__main__":

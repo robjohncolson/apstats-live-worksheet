@@ -9,6 +9,7 @@ import { mountClass } from '../class.js';
 import { mountLedger } from '../ledger.js';
 import { computeGrade, posterScoresByUnit } from '../grade.js';
 import { buildGradebook } from '../gradebook-grid.js';
+import { initReceipts } from '../receipts.js';
 import { CONFIG, GRADE_OPTS, ANSWER_KEY, SCHEDULE } from './fixtures/sim-world.js';
 
 const TEACHER = 'poster-test-secret';
@@ -21,6 +22,10 @@ const bankedPoster = (studentId, grade) => ({ student_id: studentId, source: 'bo
   response: JSON.stringify({ grade, quarter: 'Q1', title: 'Unit 1 Poster (Data, Graph, Sentence)' }) });
 const dokSheet = { student_id: 's1', source: 'bonus', item_id: 'BONUS-screen-time', score: 5, attempt: 1,
   response: JSON.stringify({ grade: 'E', quarter: 'Q1', title: 'Screen Time' }) };
+
+function receiptPayload(compact) {
+  return JSON.parse(Buffer.from(compact.split('.')[0], 'base64url').toString('utf8'));
+}
 
 const servers = [];
 afterEach(async () => {
@@ -125,6 +130,25 @@ describe('POST /class/poster', () => {
     const { request } = await start();
     const res = await request('/ledger/record', { token: 'student-token', source: 'poster', itemId: 'POSTER-U1', response: '{}', score: 115 }, false);
     expect(res.status).toBe(403);
+  });
+});
+
+// 2026-11-05: poster rows are signed BEFORE the write; the receipt rides in the same
+// insertLedgerRow call, so a re-entered poster can never keep the old score's receipt.
+describe('poster receipts ride in the row write', () => {
+  afterEach(() => initReceipts());
+
+  it('/class/poster and /class/poster/convert sign each row they write', async () => {
+    vi.stubEnv('RECEIPT_ISSUER_PRIVATE_KEY', 'MC4CAQAwBQYDK2VwBCIEIEtFFgiPZyvBY+Udt3F77ZOHGypDcMHVJV9ck+a6kToO');
+    initReceipts();
+    const { request, writes } = await start({ ledger: [bankedPoster('s2', 'P')] });
+    await request('/class/poster', { unit: 1, quarter: 'Q1', title: 'Unit 1 Poster', section: 'PeriodB',
+      entries: [{ username: 'pear_cat', score: 92 }] });
+    await request('/class/poster/convert', { dryRun: false });
+    expect(writes).toHaveLength(2);
+    expect(receiptPayload(writes[0].receiptCompact)).toMatchObject({ sid: 's1', u: 'pear_cat', src: 'poster', i: 'POSTER-U1', sc: 92 });
+    expect(receiptPayload(writes[1].receiptCompact)).toMatchObject({ sid: 's2', u: 'kiwi_toad', src: 'poster', i: 'POSTER-U1', sc: 100 });
+    expect(writes.every(w => typeof w.receiptId === 'string' && w.receiptId)).toBe(true);
   });
 });
 

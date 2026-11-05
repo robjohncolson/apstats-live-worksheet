@@ -7,7 +7,7 @@
  *
  * Regenerate after any engine edit:  node scripts/build-grade-engine.mjs
  * Parity is pinned by tests/grade-engine-bundle-parity.test.js.
- * engine-version: f0cd4349161b
+ * engine-version: 529d1302a7c2
  */
 ;(function (root) {
   'use strict';
@@ -741,6 +741,7 @@
     //   - expandLessonKey(unit, lessonKey, schedule) → [topicKey, ...]
     //   - buildWorksheetBlankCounts(manifestDoc) → { "<unit>.<lessonKey>": <int> }
     //   - computeLessonGrades(rows, frqBand, answerKey, schedule, opts) → Map<topicKey, lessonResult>
+    //       (the Map also carries a non-enumerable `orphans` array: rows whose lesson is unscheduled)
     //   - quarterOfLesson(entry, period, config) → 'Q1'..'Q4'
     //   - computeQuarterFromLessons({ quarterKey, config, lessonMap, schedule, ... })
     //   - buildLessonsArray(lessonMap, schedule) → lessons[]
@@ -1121,6 +1122,10 @@
         }
       }
     
+      // Rows whose id parses to a lesson that expandLessonKey cannot find.
+      /** @type {Array<{ itemId: string, source: string, unit: number, lessonKey: string }>} */
+      const orphans = [];
+    
       for (const row of (Array.isArray(rows) ? rows : [])) {
         if (!row || !row.item_id) continue;
         const parsed = parseItemLesson(row.item_id);
@@ -1129,7 +1134,12 @@
         if (lessonKey === null) continue; // PC items are unit-scoped, skip here
     
         const topicKeys = expandLessonKey(unit, lessonKey, schedule, bonusTopics);
-        if (!topicKeys.length) continue;
+        if (!topicKeys.length) {
+          // The id names a lesson the schedule does not know: the row counts for
+          // nothing. Record it so the teacher can see it (never changes a grade).
+          orphans.push({ itemId: row.item_id, source: row.source || '', unit, lessonKey });
+          continue;
+        }
     
         const ts = row.recorded_at || null;
         const src = row.source || '';
@@ -1339,6 +1349,9 @@
         }
       }
     
+      // Non-enumerable so the Map keeps its shape for every existing caller
+      // (iteration, JSON, equality); read it as `lessonMap.orphans`.
+      Object.defineProperty(byTopic, 'orphans', { value: orphans, enumerable: false });
       return byTopic;
     }
     
@@ -3056,7 +3069,8 @@
     }
     
     // ── Pure compute (extracted for class fan-out reuse; behaviour-identical) ────
-    // computeGrade(ledgerRows, answerKey, config, opts) → { units, quarters, completion, lessons }
+    // computeGrade(ledgerRows, answerKey, config, opts) -> { units, quarters, completion, lessons, orphanRows? }
+    // (orphanRows only when some row names an unscheduled lesson; teacher payloads only.)
     // Phase-3 tests pin behaviour; class.js fans out over the roster calling this.
     // opts.lessonSchedule: the lesson-schedule.json .lessons map (or null for graceful degrade).
     // opts.eventSchedule: { progressChecks, posters } from the same file, keyed by NEW
@@ -3487,7 +3501,26 @@
       const completionOut = {};
       for (const u of Object.keys(completion).sort()) completionOut[u] = completion[u];
     
-      return { units: unitsOut, quarters, completion: completionOut, lessons };
+      /** @type {{ units: any, quarters: any, completion: any, lessons: any, orphanRows?: { count: number, samples: string[] } }} */
+      const result = { units: unitsOut, quarters, completion: completionOut, lessons };
+      // Teacher-only signal: rows that name a lesson the schedule does not know.
+      // Present only when there is at least one, so every other payload keeps its
+      // shape. GET /grade destructures the four fields above and never sends it.
+      const orphanRows = summarizeOrphanRows(/** @type {any} */ (lessonMap).orphans);
+      if (orphanRows) result.orphanRows = orphanRows;
+      return result;
+    }
+    
+    const ORPHAN_SAMPLE_SIZE = 5;
+    
+    // { count, samples: [first itemIds] } for the orphan rows, or null when none.
+    /** @param {Array<{ itemId: string }>|undefined} orphans */
+    function summarizeOrphanRows(orphans) {
+      if (!Array.isArray(orphans) || orphans.length === 0) return null;
+      return {
+        count: orphans.length,
+        samples: orphans.slice(0, ORPHAN_SAMPLE_SIZE).map((o) => o.itemId),
+      };
     }
     return { computeGrade: computeGrade, posterScoresByUnit: posterScoresByUnit, resolveBlooketLists: resolveBlooketLists, BLOOKET_PRESENCE: BLOOKET_PRESENCE, BLOOKET_REQUIRED: BLOOKET_REQUIRED };
   })();
@@ -3513,7 +3546,7 @@
     normalizeResponse: __reg["scoring"].normalizeResponse,
     scoreAgainstKey: __reg["scoring"].scoreAgainstKey,
     pcPaperBlend: __reg["scoring"].pcPaperBlend,
-    _engineVersion: "f0cd4349161b",
+    _engineVersion: "529d1302a7c2",
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = __api;

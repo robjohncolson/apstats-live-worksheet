@@ -145,15 +145,16 @@ Payload (no real names: usernames only; unmatched AP Classroom names are COUNTED
   "progressChecks": [
     { "unit": 1, "section": "PeriodB", "parts": { "A": { "of": 18, "origin": "paper" },
         "B": { "id": "81595010", "of": 14 }, "C": { "id": "81595024", "of": 12 }, "FRQ": { "id": "81595036", "of": 16 } },
-      "dueDate": "2026-10-15", "closeDate": "2026-10-24", "active": true },
+      "dueDate": "2026-10-15", "closeDate": "2026-10-24" },
     { "unit": 1, "section": "PeriodE", "parts": { "A": { "of": 18, "origin": "paper" },
         "B": { "id": "81743327", "of": 14 }, "C": { "id": "81743453", "of": 12 }, "FRQ": { "id": "81743492", "of": 16 } },
-      "dueDate": "2026-10-23", "closeDate": "2026-10-24", "active": true }
+      "dueDate": "2026-10-23", "closeDate": "2026-10-24" }
   ]
 }
 ```
-Part A is paper (entered by `scripts/import-pc-scores.mjs`, never reconciled). `active:false` retires an entry once a
-unit is fully closed and zeroed. Period B's close date is 10/24 too (teacher: Zabdy and Angie Gamez FRQs still owed;
+Part A is paper (entered by `scripts/import-pc-scores.mjs`, never reconciled) unless it has an `id` (Unit 2 on: read
+online like B and C). There is no `active` flag: an entry reconciles when any part has an `id`.
+Period B's close date is 10/24 too (teacher: Zabdy and Angie Gamez FRQs still owed;
 Rubiat's Part C; Olivia's paper row is a Part A matter and stays manual).
 
 Private companion (NOT tracked), default path `%USERPROFILE%/grade-backups/apclassroom/roster-map.json`, override
@@ -178,7 +179,7 @@ python tools/apclassroom_pc_reconcile.py --section PeriodE --fixture tools/fixtu
 python tools/apclassroom_pc_reconcile.py --section PeriodE --dump tools/.pc-reconcile-logs/periodE-u1/         # save page texts
 ```
 
-Per active registry entry for the section:
+Per registry entry of the section with at least one part `id`:
 1. For B and C: navigate `https://apclassroom.collegeboard.org/{classId}/assignments/progress/{id}?tab=RESULTS_STUDENTS`,
    wait for the table (poll `document.body.innerText` for the "Points Earned" header, up to 30 s), read innerText, parse
    student blocks: `Name`, `points` (`-` = not submitted; a bare number = submitted+scored), testing sessions, submitted
@@ -211,7 +212,7 @@ Per active registry entry for the section:
 do their work, and then prepare messages to send to them in Schoology; I look them over and say yes or refine, and
 you send")
 
-8. When today (school date) == `dueDate - 1 day` for an active entry, or `--remind` is passed, the reconcile writes
+8. When today (school date) == `dueDate - 1 day` for a reconcilable entry, or `--remind` is passed, the reconcile writes
    `reminders-{section}-U{unit}-{date}.json` into the log dir (PRIVATE, gitignored) with one entry per matched student
    who has at least one part among B, C, FRQ with status `not_submitted` or `in_progress`:
    ```

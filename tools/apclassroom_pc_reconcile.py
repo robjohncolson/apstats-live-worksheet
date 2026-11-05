@@ -1,19 +1,35 @@
 """apclassroom_pc_reconcile.py -- nightly AP Classroom -> roster Progress Check reconcile.
 
-PC_FOLLOWTHROUGH_SPEC.md section 4. For every ACTIVE registry entry of a section
-(data/apclassroom-assignments.json) it reads the AP Classroom tables for the online
-parts (MCQ B and C: Results by Student; FRQ: Progress), matches names to roster
-usernames, and posts one ledger row per scored part through POST /pc/grade. After
-the close date it posts an explicit 0 (with a note) for every part that was never
-submitted. Part A is paper and is never touched here.
+PC_FOLLOWTHROUGH_SPEC.md section 4. For every registry entry of a section
+(data/apclassroom-assignments.json) that has at least one part with an AP Classroom
+assignment `id`, it reads the AP Classroom table of every such part (MCQ A, B and
+C: Results by Student; FRQ: Progress), matches names to roster usernames, and posts
+one ledger row per scored part through POST /pc/grade. After the close date it
+posts an explicit 0 (with a note) for every part that was never submitted.
+
+Parts:
+  * A part WITH an `id` is online and reconciled, Part A included (Unit 2 on
+    assigns Part A online). A part with `origin: "paper"` and no `id` (Unit 1
+    Part A) is never touched here.
+  * Only A, B, C and FRQ are posted (the parts POST /pc/grade takes). Any other
+    part in the registry (Unit 3 "D") is reported and skipped.
+  * Points total (`of`): the registry `of` wins when it is there; otherwise the
+    page's "Points Earned (of N)" header (FRQ: the "13/16" scores). A registry
+    `of` that disagrees with the page is printed as a WARN. A part with no known
+    total posts nothing (WARN), but its statuses still feed needs-scoring, the
+    reminder drafts and the snapshot.
+  * `closeDate: null` means the check never closes: nothing is ever zeroed.
 
     python tools/apclassroom_pc_reconcile.py --section PeriodE              # dry run: prints the plan
     python tools/apclassroom_pc_reconcile.py --section PeriodE --apply      # posts rows + snapshot
-    python tools/apclassroom_pc_reconcile.py --section PeriodE --fixture tools/fixtures/apclassroom/periodE-u1/
-    python tools/apclassroom_pc_reconcile.py --section PeriodE --dump tools/.pc-reconcile-logs/periodE-u1/
+    python tools/apclassroom_pc_reconcile.py --section PeriodE --unit 1 --fixture tools/fixtures/apclassroom/periodE-u1/
+    python tools/apclassroom_pc_reconcile.py --section PeriodE --unit 1 --dump tools/.pc-reconcile-logs/periodE-u1/
     python tools/apclassroom_pc_reconcile.py --section PeriodE --remind     # write reminder drafts now
 
-A fixture or dump directory holds B.txt, C.txt and FRQ.txt (the page innerText).
+A fixture or dump directory holds A.txt, B.txt, C.txt and FRQ.txt (the page
+innerText); a missing file is a part that is not read. One directory is ONE unit:
+--fixture and --dump require --unit N (exit 2 otherwise), so a fixture can never
+write another unit's rows.
 
 Rules:
   * Dry run (the default) posts NOTHING, not even the snapshot.
@@ -37,6 +53,10 @@ Privacy: the repo is public. Real names live only in the private roster map
 
 Secrets: ROSTER_TEACHER_SECRET from the environment only. Never printed.
 Exit codes: 0 ok, 1 an HTTP/post failure or a table that never loaded, 2 SIGN IN NEEDED.
+A table that never loads (no header, never settles) skips ITS entry only (nothing
+of that entry is posted); the other entries still run, and the exit code is 1.
+SIGN IN NEEDED (exit 2, nothing posted) needs affirmative evidence: a sign-in page
+or a URL off AP Classroom.
 
 ASCII only. LF line endings.
 """
@@ -71,9 +91,11 @@ GH_REPO = "robjohncolson/apstats-live-worksheet"
 SIGN_IN_TITLE = "PC reconcile: sign-in needed"
 SIGN_IN_LINE = "SIGN IN NEEDED: open AP Classroom in the Edge rig profile"
 SIGN_IN_GRACE_S = 8  # a sign-in page must persist this long before it counts (IdP bounce)
+PAGE_TIMEOUT_S = 45  # a table that is not ready by then skips its entry
 
-ONLINE_PARTS = ("B", "C", "FRQ")
+ONLINE_PARTS = ("B", "C", "FRQ")   # the per-part rows of the blend (mirror of scoring.js)
 MCQ_PARTS = ("A", "B", "C")
+RECONCILE_PARTS = ("A", "B", "C", "FRQ")   # the parts POST /pc/grade takes, in report order
 
 # Mirror of roster-server/grade-config.js PC_PART_POINTS (the fallback weight of a
 # row posted without `of`). Pinned equal by tests/test_apclassroom_pc_reconcile.py.
@@ -363,7 +385,7 @@ def zero_note(due_date: str) -> str:
     return "Not submitted by %s: scored 0. Schedule a retake with Mr. Colson." % due_date
 
 
-PART_LABELS = {"B": "MCQ Part B", "C": "MCQ Part C", "FRQ": "the FRQ"}
+PART_LABELS = {"A": "MCQ Part A", "B": "MCQ Part B", "C": "MCQ Part C", "FRQ": "the FRQ"}
 
 
 def due_date_text(due_date: str, pages: dict) -> str:
@@ -382,7 +404,7 @@ def due_date_text(due_date: str, pages: dict) -> str:
 
 def draft_reminder(first_name: str, unit: int, due_text: str, missing_parts: list) -> str:
     """The deterministic reminder message (PC_FOLLOWTHROUGH_SPEC.md section 4b)."""
-    labels = [PART_LABELS[p] for p in ONLINE_PARTS if p in missing_parts]
+    labels = [PART_LABELS[p] for p in RECONCILE_PARTS if p in missing_parts]
     if len(labels) == 1:
         parts_text = labels[0]
     else:
@@ -399,7 +421,7 @@ def reminder_targets(by_user: dict, display_names: dict) -> list:
     out = []
     for username in sorted(by_user):
         statuses = by_user[username]
-        missing = [p for p in ONLINE_PARTS
+        missing = [p for p in RECONCILE_PARTS
                    if statuses.get(p, {}).get("status") in ("not_submitted", "in_progress")]
         if missing:
             out.append({"username": username, "displayName": display_names.get(username, username), "missing": missing})
@@ -423,13 +445,15 @@ def build_reminder_drafts(entry: dict, pages: dict, targets: list, drafted_at: s
             "draftedAt": drafted_at, "students": students}
 
 
-def _ap_status(part: str, row: dict, of: int) -> dict:
-    """One AP Classroom row -> the snapshot status for one part."""
+def _ap_status(part: str, row: dict, of: int, registry_of=None) -> dict:
+    """One AP Classroom row -> the snapshot status for one part.
+
+    A scored FRQ row carries its own total ('13/16'); the registry `of` still wins."""
     if part == "FRQ":
         out = {"status": row["status"]}
         if row["status"] == "scored":
             out["points"] = row["points"]
-            out["of"] = row["of"] or of
+            out["of"] = registry_of or row["of"] or of
     elif row["points"] is None:
         out = {"status": "not_submitted"}
     else:
@@ -445,29 +469,84 @@ def _same(stored: dict, points, of) -> bool:
     return stored.get("points") == points and stored.get("of") == of
 
 
+def online_parts(entry: dict) -> list:
+    """The entry's parts this script reads: A, B, C, FRQ with an AP Classroom id."""
+    parts_cfg = entry.get("parts") or {}
+    return [p for p in RECONCILE_PARTS if (parts_cfg.get(p) or {}).get("id")]
+
+
+def is_reconcilable(entry: dict) -> bool:
+    """True when the entry has at least one online part (a part with an id)."""
+    return bool(online_parts(entry))
+
+
+def is_closed(entry: dict, today: str) -> bool:
+    """closeDate null = the check never closes, so nothing is ever zeroed."""
+    close = entry.get("closeDate")
+    if not close:
+        return False
+    return today >= close
+
+
+def _positive_int(value):
+    """A registry `of` -> int > 0, or None (absent, 0, junk)."""
+    number = _positive_number(value)
+    return int(number) if number is not None else None
+
+
+def page_points_of(part: str, text: str, rows: dict):
+    """The total the page shows: '(of 19)' for MCQ, the most common 'n/16' for FRQ."""
+    if part != "FRQ":
+        return parse_points_of(text)
+    totals = [row["of"] for row in rows.values() if row.get("of")]
+    if not totals:
+        return None
+    return max(set(totals), key=totals.count)
+
+
+def resolve_points_of(part: str, cfg: dict, text: str, rows: dict, warnings: list):
+    """The part's points total: the registry `of` (override) else the page's."""
+    registry_of = _positive_int(cfg.get("of"))
+    page_of = page_points_of(part, text, rows)
+    if registry_of and page_of and registry_of != page_of:
+        warnings.append("part %s: registry of %d disagrees with the page (of %d); using the registry"
+                        % (part, registry_of, page_of))
+    return registry_of or page_of
+
+
 def build_plan(entry: dict, pages: dict, students: list, stored: dict, roster_map: dict, today: str) -> dict:
     """Everything the run would do for one registry entry, without doing it.
 
-    pages:  {'B': text, 'C': text, 'FRQ': text}
+    pages:  {'A': text, 'B': text, 'C': text, 'FRQ': text} (only the parts read)
     stored: {username: {'parts': {...}, 'pct': n}} from GET /pc/parts
     """
     unit = int(entry["unit"])
     parts_cfg = entry["parts"]
-    closed = today >= entry["closeDate"]
+    closed = is_closed(entry, today)
     note = zero_note(entry["dueDate"])
+    warnings = ["part %s: POST /pc/grade takes A, B, C and FRQ only; not reconciled" % p
+                for p in sorted(parts_cfg) if p not in RECONCILE_PARTS]
 
     parsed = {}
-    for part in ONLINE_PARTS:
-        if part not in pages or not parts_cfg.get(part, {}).get("id"):
+    points_of = {}   # part -> the total every post of that part uses
+    for part in online_parts(entry):
+        if part not in pages:
             continue
-        parsed[part] = parse_progress(pages[part]) if part == "FRQ" else parse_results_students(pages[part])
+        rows = parse_progress(pages[part]) if part == "FRQ" else parse_results_students(pages[part])
+        of = resolve_points_of(part, parts_cfg[part], pages[part], rows, warnings)
+        if of is None:
+            # Statuses still count (needs scoring, reminders, snapshot); only posts need a total.
+            warnings.append("part %s: no points total in the registry or on the page; statuses kept, nothing posted" % part)
+        parsed[part] = rows
+        points_of[part] = of
 
     excluded_names = set()
     unmatched_names = set()
     by_user = {}        # username -> {part: snapshot status}
     display_names = {}  # username -> the AP Classroom name (private: reminder drafts only)
     for part, rows in parsed.items():
-        of = parts_cfg[part]["of"]
+        of = points_of[part]
+        registry_of = _positive_int(parts_cfg[part].get("of"))
         for name, row in rows.items():
             kind, username = match_name(name, students, roster_map)
             if kind == "excluded":
@@ -476,11 +555,11 @@ def build_plan(entry: dict, pages: dict, students: list, stored: dict, roster_ma
             if kind == "unmatched":
                 unmatched_names.add(name)
                 continue
-            by_user.setdefault(username, {})[part] = _ap_status(part, row, of)
+            by_user.setdefault(username, {})[part] = _ap_status(part, row, of, registry_of)
             display_names.setdefault(username, name)
 
     plan = {"posts": [], "would_lower": [], "drops": [], "needs_scoring": [],
-            "skipped_same": 0, "zeroed": 0,
+            "skipped_same": 0, "zeroed": 0, "warnings": warnings,
             "unmatched_names": sorted(unmatched_names), "excluded": len(excluded_names),
             "reminders": reminder_targets(by_user, display_names)}
 
@@ -488,12 +567,14 @@ def build_plan(entry: dict, pages: dict, students: list, stored: dict, roster_ma
         statuses = by_user[username]
         have = (stored.get(username) or {}).get("parts") or {}
         posts = []
-        for part in ONLINE_PARTS:
+        for part in RECONCILE_PARTS:
             st = statuses.get(part)
             if not st:
                 continue
-            of = parts_cfg[part]["of"]
+            of = points_of[part]
             if st["status"] == "scored":
+                if not st.get("of"):
+                    continue  # no total to post against (warned above)
                 if _same(have.get(part), st["points"], st["of"]):
                     plan["skipped_same"] += 1
                     continue
@@ -501,7 +582,7 @@ def build_plan(entry: dict, pages: dict, students: list, stored: dict, roster_ma
                 continue
             if part == "FRQ" and st["status"] == "submitted":
                 plan["needs_scoring"].append(username)
-            if not closed or st["status"] == "submitted":
+            if not closed or st["status"] == "submitted" or not of:
                 continue
             if have.get(part):
                 if have[part].get("points") == 0:
@@ -537,8 +618,8 @@ def build_plan(entry: dict, pages: dict, students: list, stored: dict, roster_ma
 
     plan["snapshot"] = {
         "fetchedAt": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "assignments": {p: parts_cfg[p]["id"] for p in ONLINE_PARTS if parts_cfg.get(p, {}).get("id")},
-        "closeDate": entry["closeDate"],
+        "assignments": {p: parts_cfg[p]["id"] for p in online_parts(entry)},
+        "closeDate": entry.get("closeDate"),
         "unmatched": len(unmatched_names),
         "excluded": len(excluded_names),
         "students": by_user,
@@ -556,9 +637,10 @@ def load_registry(path: str) -> dict:
 
 
 def active_entries(registry: dict, section: str, unit=None) -> list:
+    """The section's reconcilable entries: those with at least one part with an id."""
     out = []
     for entry in registry.get("progressChecks", []):
-        if entry.get("section") != section or not entry.get("active"):
+        if entry.get("section") != section or not is_reconcilable(entry):
             continue
         if unit is not None and int(entry["unit"]) != int(unit):
             continue
@@ -621,7 +703,7 @@ def fetch_stored(api, section: str, unit: int) -> dict:
 
 def read_fixture_pages(fixture_dir: str) -> dict:
     pages = {}
-    for part in ONLINE_PARTS:
+    for part in RECONCILE_PARTS:
         path = os.path.join(fixture_dir, part + ".txt")
         if os.path.exists(path):
             with open(path, encoding="utf-8") as f:
@@ -634,20 +716,18 @@ def read_fixture_pages(fixture_dir: str) -> dict:
 
 
 def fetch_live_pages(class_id: str, entry: dict, dump_dir=None) -> dict:
-    """Read the three AP Classroom tables through the Edge CDP rig."""
+    """Read the AP Classroom table of every online part through the Edge CDP rig."""
     import schoology_ops as ops  # Edge rig; only needed for a live run
 
     cdp = ops.connect(reuse=True)
     pages = {}
-    for part in ONLINE_PARTS:
-        assignment = entry["parts"].get(part, {}).get("id")
-        if not assignment:
-            continue
+    for part in online_parts(entry):
+        assignment = entry["parts"][part]["id"]
         tab = "PROGRESS" if part == "FRQ" else "RESULTS_STUDENTS"
         header = "Date Submitted" if part == "FRQ" else "Points Earned"
         ops.navigate(cdp, "%s/%s/assignments/progress/%s?tab=%s" % (AP_BASE, class_id, assignment, tab), wait_ms=3000)
         url, text, previous, settled = "", "", None, False
-        deadline = time.time() + 45
+        deadline = time.time() + PAGE_TIMEOUT_S
         sign_in_since = None
         while time.time() < deadline:
             page = cdp.eval_js("JSON.stringify({url: location.href, text: document.body ? document.body.innerText : ''})")
@@ -666,8 +746,12 @@ def fetch_live_pages(class_id: str, entry: dict, dump_dir=None) -> dict:
                 sign_in_since = None
             previous = text
             time.sleep(1)
-        if needs_sign_in(url, text, header) or header not in text:
+        # Only a sign-in page (or a URL off AP Classroom) is SIGN IN NEEDED. A page with
+        # no table header (loading, an error, a check not open yet) skips the entry.
+        if needs_sign_in(url, text, header):
             raise SignInNeeded()
+        if header not in text:
+            raise PageNotReady("%s table never showed its header" % part)
         if not settled:
             raise PageNotReady("%s table never finished loading its scores" % part)
         pages[part] = text
@@ -766,7 +850,10 @@ def run_entry(entry: dict, pages: dict, api, roster_map: dict, today: str, apply
     if remind or should_remind(today, entry["dueDate"]):
         write_reminder_drafts(entry, pages, plan, today, drafts_dir, rep)
 
-    rep.out("== %s U%d (close %s, today %s) %s ==" % (section, unit, entry["closeDate"], today, "APPLY" if apply else "DRY RUN"))
+    rep.out("== %s U%d (close %s, today %s) %s ==" % (section, unit, entry.get("closeDate") or "never",
+                                                     today, "APPLY" if apply else "DRY RUN"))
+    for warning in plan["warnings"]:
+        rep.out("  WARN %s" % warning)
     for post in plan["posts"]:
         tag = "ZERO" if post.get("zero") else "POST"
         rep.out("  %s %-18s %s %s/%s" % (tag, post["username"], post["part"], post["points"], post["of"]))
@@ -837,14 +924,21 @@ def main(argv=None, api=None) -> int:
 
     registry = load_registry(args.registry)
     entries = active_entries(registry, args.section, args.unit)
+    if (args.fixture or args.dump) and (args.unit is None or len(entries) != 1):
+        # One directory holds ONE unit's pages: never apply it to (or dump over) another unit.
+        rep.out("ERROR: --fixture/--dump need --unit N matching exactly one registry entry (found %d)." % len(entries))
+        return 2
     if not entries:
-        rep.out("No active Progress Check for %s in the registry." % args.section)
+        rep.out("No Progress Check with an AP Classroom id for %s in the registry." % args.section)
         return 0
     roster_map = load_roster_map(args.roster_map)
     today = args.today or today_school_date()
 
     # Read and validate EVERY entry's pages before writing anything: a sign-in
     # failure on a later entry must not leave an earlier one half applied.
+    # A table that never loads skips its own entry (nothing of it is posted); the
+    # other entries still run and the exit code is 1.
+    ok = True
     pages_by_entry = []
     for entry in entries:
         try:
@@ -858,11 +952,13 @@ def main(argv=None, api=None) -> int:
                 open_sign_in_issue()
             return 2
         except PageNotReady as err:
-            rep.out("PAGE NOT READY: %s; nothing posted" % err)
-            return 1
+            rep.out("PAGE NOT READY: U%s %s; nothing of this entry posted" % (entry["unit"], err))
+            pages_by_entry.append(None)
+            ok = False
 
-    ok = True
     for entry, pages in zip(entries, pages_by_entry):
+        if pages is None:
+            continue
         try:
             drafts_dir = os.path.dirname(args.log) if args.log else DEFAULT_LOG_DIR
             ok = run_entry(entry, pages, api, roster_map, today, args.apply, rep, args.remind, drafts_dir) and ok

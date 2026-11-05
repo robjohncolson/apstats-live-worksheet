@@ -9,6 +9,7 @@
 //   - expandLessonKey(unit, lessonKey, schedule) → [topicKey, ...]
 //   - buildWorksheetBlankCounts(manifestDoc) → { "<unit>.<lessonKey>": <int> }
 //   - computeLessonGrades(rows, frqBand, answerKey, schedule, opts) → Map<topicKey, lessonResult>
+//       (the Map also carries a non-enumerable `orphans` array: rows whose lesson is unscheduled)
 //   - quarterOfLesson(entry, period, config) → 'Q1'..'Q4'
 //   - computeQuarterFromLessons({ quarterKey, config, lessonMap, schedule, ... })
 //   - buildLessonsArray(lessonMap, schedule) → lessons[]
@@ -389,6 +390,10 @@ export function computeLessonGrades(rows, frqBand, answerKey, schedule, opts) {
     }
   }
 
+  // Rows whose id parses to a lesson that expandLessonKey cannot find.
+  /** @type {Array<{ itemId: string, source: string, unit: number, lessonKey: string }>} */
+  const orphans = [];
+
   for (const row of (Array.isArray(rows) ? rows : [])) {
     if (!row || !row.item_id) continue;
     const parsed = parseItemLesson(row.item_id);
@@ -397,7 +402,12 @@ export function computeLessonGrades(rows, frqBand, answerKey, schedule, opts) {
     if (lessonKey === null) continue; // PC items are unit-scoped, skip here
 
     const topicKeys = expandLessonKey(unit, lessonKey, schedule, bonusTopics);
-    if (!topicKeys.length) continue;
+    if (!topicKeys.length) {
+      // The id names a lesson the schedule does not know: the row counts for
+      // nothing. Record it so the teacher can see it (never changes a grade).
+      orphans.push({ itemId: row.item_id, source: row.source || '', unit, lessonKey });
+      continue;
+    }
 
     const ts = row.recorded_at || null;
     const src = row.source || '';
@@ -607,6 +617,9 @@ export function computeLessonGrades(rows, frqBand, answerKey, schedule, opts) {
     }
   }
 
+  // Non-enumerable so the Map keeps its shape for every existing caller
+  // (iteration, JSON, equality); read it as `lessonMap.orphans`.
+  Object.defineProperty(byTopic, 'orphans', { value: orphans, enumerable: false });
   return byTopic;
 }
 

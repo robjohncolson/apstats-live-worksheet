@@ -8,7 +8,7 @@
 // pre-migration condition maps to 503; every other DB error is a real 500.
 // Without this, a check_violation surfaces as a generic 500 "Database error"
 // and the writer dies silently (how study_guide_diagnostic was lost for weeks).
-import { issueLedgerReceipt, recordReceiptPersistFailure, verifyReviewGrant } from './receipts.js';
+import { issueLedgerReceipt, receiptFields, recordReceiptPersistFailure, verifyReviewGrant } from './receipts.js';
 import { requireTeacher, teacherSecretMatches } from './teacher-auth.js';
 import { createHash } from 'node:crypto';
 import { parseServerReflectionItemId } from './frq-prompt.js';
@@ -644,6 +644,21 @@ export function mountLedger(app, {
       ? 'proctored'
       : 'practice';
 
+    // Sign BEFORE the write: the receipt rides in the same upsert as the row, so a row
+    // and its receipt can never disagree (null when the issuer is off: row stays unsigned).
+    const username = await resolveReceiptUsername(resolveUsername, studentId);
+    const receipt = issueLedgerReceipt({
+      studentId,
+      username,
+      source,
+      itemId,
+      score: effectiveScore,
+      attempt: persistedAttempt,
+      evidenceTier,
+      response,
+      gradingProvenance
+    });
+
     const rowToWrite = {
       studentId,
       source,
@@ -655,7 +670,8 @@ export function mountLedger(app, {
       score: effectiveScore,
       evidenceTier,
       attempt: persistedAttempt,
-      ...(reasoning ? { reasoning } : {})
+      ...(reasoning ? { reasoning } : {}),
+      ...receiptFields(receipt)
     };
 
     let data;
@@ -695,33 +711,7 @@ export function mountLedger(app, {
       // restore landed) the kept first answer as settled, instead of silently losing it.
       ...(firstAnswerKept ? { firstAnswerKept: true, keptResponse } : {})
     };
-    const username = await resolveReceiptUsername(resolveUsername, studentId);
-    const receipt = issueLedgerReceipt({
-      studentId,
-      username,
-      source,
-      itemId,
-      score: effectiveScore,
-      attempt: persistedAttempt,
-      evidenceTier: data.evidence_tier,
-      response,
-      gradingProvenance
-    });
     if (receipt) body.receipt = receipt;
-    if (receipt && data.ledger_id && db && typeof db.updateLedgerReceipt === 'function') {
-      try {
-        const persistResult = await db.updateLedgerReceipt(data.ledger_id, {
-          receiptId: receipt.receiptId,
-          receiptCompact: receipt.compact
-        });
-        if (persistResult && persistResult.error) {
-          handleReceiptPersistenceError(persistResult.error, data.ledger_id);
-        }
-      } catch (err) {
-        handleReceiptPersistenceError(err, data.ledger_id);
-      }
-    }
-
     return res.json(body);
   });
 
@@ -1098,6 +1088,13 @@ export function mountLedger(app, {
     if (stored !== null && Number.isFinite(stored) && incoming <= stored) {
       return res.json({ ok: true, applied: false, ledgerId: existing.ledger_id, score: stored });
     }
+    const evidenceTier = existing.evidence_tier || 'practice';
+    const username = await resolveReceiptUsername(resolveUsername, studentId);
+    const receipt = issueLedgerReceipt({
+      studentId, username, source: 'frq', itemId, score: incoming, attempt: attemptNo,
+      evidenceTier, response: existing.response,
+      gradingProvenance: provenance ? String(provenance).slice(0, 32) : 'ai-batch'
+    });
     const { data, error } = await db.insertLedgerRow({
       studentId,
       source: 'frq',
@@ -1107,7 +1104,7 @@ export function mountLedger(app, {
       skill: existing.skill,
       response: existing.response,
       score: incoming,
-      evidenceTier: existing.evidence_tier || 'practice',
+      evidenceTier,
       attempt: attemptNo,
       // 2026-09-09: the legacy path keeps the verdict + feedback too (same shape as the
       // authoritative result) so a non-canary student's worksheet can explain the grade.
@@ -1119,26 +1116,15 @@ export function mountLedger(app, {
         ...(feedbackText ? { feedback: feedbackText } : {}),
         ...elementDetails,
       },
-      gradedAt: new Date().toISOString()
+      gradedAt: new Date().toISOString(),
+      ...receiptFields(receipt)
     });
     if (error) {
       console.error('Ledger frq-regrade error:', error);
       return res.status(500).json({ ok: false, error: 'Database error' });
     }
     const body = { ok: true, applied: true, ledgerId: data.ledger_id, score: incoming };
-    const username = await resolveReceiptUsername(resolveUsername, studentId);
-    const receipt = issueLedgerReceipt({
-      studentId, username, source: 'frq', itemId, score: incoming, attempt: attemptNo,
-      evidenceTier: data.evidence_tier, response: existing.response,
-      gradingProvenance: provenance ? String(provenance).slice(0, 32) : 'ai-batch'
-    });
     if (receipt) body.receipt = receipt;
-    if (receipt && data.ledger_id && db && typeof db.updateLedgerReceipt === 'function') {
-      try {
-        const persistResult = await db.updateLedgerReceipt(data.ledger_id, { receiptId: receipt.receiptId, receiptCompact: receipt.compact });
-        if (persistResult && persistResult.error) handleReceiptPersistenceError(persistResult.error, data.ledger_id);
-      } catch (err) { handleReceiptPersistenceError(err, data.ledger_id); }
-    }
     return res.json(body);
   });
 

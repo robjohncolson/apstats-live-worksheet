@@ -26,10 +26,21 @@ const URLS = {
 const SHA = 'c9350587ea5397aa6a34eeb8e58781cb3dc60d4d';
 const NOW = Date.parse('2026-10-22T15:20:00Z');
 
+const HOURS_AGO = (h) => new Date(NOW - h * 3600 * 1000).toISOString();
+
+function freshJobs() {
+  return {
+    snapshot: { ok: true, code: 'verified', message: 'verified', breaks: 0, at: HOURS_AGO(12) },
+    pcReconcileB: { ok: true, code: 'ok', message: 'reconciled', breaks: null, at: HOURS_AGO(23) },
+    pcReconcileE: { ok: true, code: 'ok', message: 'reconciled', breaks: null, at: HOURS_AGO(23) },
+  };
+}
+
 function healthy() {
   return {
     [URLS.roster]: { ok: true, service: 'roster', time: '2026-10-22T15:19:50Z', receipts: { enabled: true, persistFailures: 0 }, commit: SHA,
-      frq: { mode: 'authoritative', storage: { degraded: false }, worker: { mode: 'authoritative' } } },
+      frq: { mode: 'authoritative', storage: { degraded: false }, worker: { mode: 'authoritative' } },
+      jobs: freshJobs() },
     [URLS.cr]: { status: 'healthy', connections: 10, cache: 'cold', aiGradeAuth: 'log', timestamp: '2026-10-22T15:19:51Z' },
     [URLS.a2]: { ok: true, service: 'roster', time: '2026-10-22T15:19:52Z', receipts: { persistFailures: 0 }, commit: '742ed62',
       frq: { mode: 'off', storage: { degraded: false }, worker: { mode: 'off' } } },
@@ -101,7 +112,7 @@ describe('status.html render (stubbed fetch)', () => {
 
   it('paints every tile green with value + age + rule when all sources are healthy', async () => {
     const { doc, tiles } = await boot(healthy());
-    expect(tiles.map((t) => t.state)).toEqual(['green', 'green', 'green', 'green', 'green', 'green']);
+    expect(tiles.map((t) => t.state)).toEqual(['green', 'green', 'green', 'green', 'green', 'green', 'green', 'green']);
     const roster = doc.getElementById('tile-roster');
     expect(roster.getAttribute('data-state')).toBe('green');
     expect(roster.querySelector('.value').textContent).toBe('commit c935058');
@@ -112,7 +123,9 @@ describe('status.html render (stubbed fetch)', () => {
     expect(doc.getElementById('tile-cr').querySelector('.detail').textContent).toContain('connections: 10');
     expect(doc.getElementById('tile-ci').querySelector('.value').textContent).toBe('success');
     expect(doc.getElementById('summary').textContent).toBe('Everything is up.');
-    expect(doc.querySelectorAll('.tile').length).toBe(6);
+    expect(doc.querySelectorAll('.tile').length).toBe(8);
+    expect(doc.getElementById('tile-snapshot').querySelector('.value').textContent).toBe('verified');
+    expect(doc.getElementById('tile-pcreconcile').querySelector('.detail').textContent).toBe('B: ok; E: ok');
   });
 
   it('paints a failing endpoint red and keeps the others green', async () => {
@@ -123,7 +136,7 @@ describe('status.html render (stubbed fetch)', () => {
     expect(cr.getAttribute('data-state')).toBe('red');
     expect(cr.querySelector('.value').textContent).toBe('no answer');
     expect(cr.querySelector('.detail').textContent).toBe('Failed to fetch');
-    expect(tiles.filter((t) => t.state === 'green').length).toBe(5);
+    expect(tiles.filter((t) => t.state === 'green').length).toBe(7);
     expect(doc.getElementById('summary').textContent).toContain('1 down');
   });
 
@@ -169,5 +182,76 @@ describe('status.html render (stubbed fetch)', () => {
     bodies[URLS.ci].workflow_runs[0].conclusion = 'failure';
     const { tiles } = await boot(bodies);
     expect(tiles.find((t) => t.id === 'ci').state).toBe('red');
+  });
+});
+
+describe('status.html nightly-job tiles (roster /health jobs)', () => {
+  const byId = (tiles) => Object.fromEntries(tiles.map((t) => [t.id, t]));
+
+  it('reads both tiles from the roster /health answer, no extra fetch', async () => {
+    const { calls } = await boot(healthy());
+    expect(calls.length).toBe(Object.keys(URLS).length);
+  });
+
+  it('every job tile light carries its Green/Amber/Red rule', async () => {
+    const { doc } = await boot(healthy());
+    for (const id of ['tile-snapshot', 'tile-pcreconcile']) {
+      expect(doc.getElementById(id).querySelector('.light').getAttribute('title')).toMatch(/^Green: .*Amber: .*Red: /);
+    }
+  });
+
+  it('snapshot: amber when never reported (deploy reset) or older than 36 h; red on breaks or a failed verify', async () => {
+    const none = healthy();
+    delete none[URLS.roster].jobs;
+    expect(byId((await boot(none)).tiles).snapshot).toMatchObject({ state: 'amber', value: 'unknown' });
+
+    const stale = healthy();
+    stale[URLS.roster].jobs.snapshot.at = HOURS_AGO(40);
+    expect(byId((await boot(stale)).tiles).snapshot).toMatchObject({ state: 'amber', value: 'stale' });
+
+    const broken = healthy();
+    broken[URLS.roster].jobs.snapshot = { ok: false, code: 'breaks', message: 'verification found breaks', breaks: 3, at: HOURS_AGO(2) };
+    expect(byId((await boot(broken)).tiles).snapshot).toMatchObject({ state: 'red', value: '3 break(s)' });
+
+    const failed = healthy();
+    failed[URLS.roster].jobs.snapshot = { ok: false, code: 'pull-failed', message: 'snapshot pull failed', breaks: null, at: HOURS_AGO(2) };
+    expect(byId((await boot(failed)).tiles).snapshot).toMatchObject({ state: 'red', value: 'failed' });
+  });
+
+  it('PC reconcile: red when a section exited 2 (SIGN IN NEEDED), amber when a section never reported', async () => {
+    const signIn = healthy();
+    signIn[URLS.roster].jobs.pcReconcileE = { ok: false, code: 'sign-in-needed', message: 'SIGN IN NEEDED', breaks: null, at: HOURS_AGO(20) };
+    const { doc, tiles } = await boot(signIn);
+    expect(byId(tiles).pcreconcile.state).toBe('red');
+    expect(doc.getElementById('tile-pcreconcile').querySelector('.detail').textContent).toBe('B: ok; E: SIGN IN NEEDED');
+
+    const missing = healthy();
+    missing[URLS.roster].jobs.pcReconcileB = null;
+    expect(byId((await boot(missing)).tiles).pcreconcile).toMatchObject({ state: 'amber', value: 'unknown' });
+  });
+
+  it('both job tiles read amber "unknown" when the roster server does not answer', async () => {
+    const down = healthy();
+    down[URLS.roster] = new Error('Failed to fetch');
+    const by = byId((await boot(down)).tiles);
+    expect(by.roster.state).toBe('red');
+    expect(by.snapshot).toMatchObject({ state: 'amber', value: 'unknown' });
+    expect(by.pcreconcile).toMatchObject({ state: 'amber', value: 'unknown' });
+  });
+
+  it('renders the server message, never a reporter detail field', async () => {
+    const bodies = healthy();
+    bodies[URLS.roster].jobs.snapshot = { ok: true, code: 'verified', message: 'verified', detail: 'Alice Smith', breaks: 0, at: HOURS_AGO(1) };
+    const { doc } = await boot(bodies);
+    expect(doc.getElementById('tile-snapshot').textContent).not.toContain('Alice Smith');
+    expect(doc.getElementById('tile-snapshot').querySelector('.detail').textContent).toBe('verified; breaks: 0');
+  });
+
+  it('renders a hostile job message as text', async () => {
+    const bodies = healthy();
+    bodies[URLS.roster].jobs.pcReconcileB = { ok: false, message: '<img src=x onerror="window.__pwned=1">', at: HOURS_AGO(1) };
+    const { doc, dom } = await boot(bodies);
+    expect(doc.querySelector('img')).toBeNull();
+    expect(dom.window.__pwned).toBeUndefined();
   });
 });

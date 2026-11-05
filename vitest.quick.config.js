@@ -20,8 +20,10 @@ export default defineConfig({
       // grade engine
       'roster-server/tests/golden-master*.test.js',
       'roster-server/tests/lesson-grade*.test.js',
-      // Desk contract tests
+      // Desk contract tests (includes tests/desk-video-alt-urls.test.js)
       'tests/desk-*.test.js',
+      // worksheet item-id stamps vs data/lesson-schedule.json (silent zero guard)
+      'tests/worksheet-unit-id-matches-schedule.test.js',
       // CI-pinning tests
       'tests/remaining-feature-contracts.test.js',
       'tests/grade-engine-bundle-parity.test.js',

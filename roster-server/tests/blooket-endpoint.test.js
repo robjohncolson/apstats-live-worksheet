@@ -8,11 +8,17 @@
 //
 // @vitest-environment node
 
-import { describe, it, expect, beforeAll, afterEach } from 'vitest';
+import { describe, it, expect, beforeAll, afterEach, vi } from 'vitest';
 import http from 'http';
 import { randomBytes } from 'crypto';
 import { createApp } from '../server.js';
 import { blooketScore } from '../scoring.js';
+import { initReceipts } from '../receipts.js';
+
+function receiptPayload(compact) {
+  return JSON.parse(Buffer.from(compact.split('.')[0], 'base64url').toString('utf8'));
+}
+
 
 let realBkt;
 beforeAll(async () => {
@@ -111,6 +117,40 @@ describe('POST /class/blooket -- auth', () => {
     srv = ctx.server;
     const r = await srv.post('/class/blooket', { lessonKey: '1.2', total: 30, entries: [] }, { 'x-teacher-secret': 'bogus' });
     expect(r.status).toBe(401);
+  });
+});
+
+// 2026-11-05: the receipt is signed BEFORE the write and rides in the same insertLedgerRow
+// call (the fake has no updateLedgerReceipt, so a second receipt write would be lost).
+describe('POST /class/blooket -- receipts ride in the row write', () => {
+  afterEach(() => { vi.unstubAllEnvs(); initReceipts(); });
+
+  it('each row carries its own receipt, matching the one in the response', async () => {
+    vi.stubEnv('RECEIPT_ISSUER_PRIVATE_KEY', 'MC4CAQAwBQYDK2VwBCIEIEtFFgiPZyvBY+Udt3F77ZOHGypDcMHVJV9ck+a6kToO');
+    initReceipts();
+    const ledgerDb = createCapturingLedgerDb();
+    const ctx = await startServer({ ledgerDb });
+    srv = ctx.server;
+
+    const r = await srv.post('/class/blooket', {
+      lessonKey: '1.2', total: 30,
+      entries: [{ studentId: 's1', correct: 30, attempted: 30 }],
+    }, { 'x-teacher-secret': TEACHER });
+
+    expect(r.status).toBe(200);
+    const [row] = ledgerDb._inserts;
+    expect(row.receiptId).toBe(r.body.receipts['BLOOKET-U1L2:s1'].receiptId);
+    expect(row.receiptCompact).toBe(r.body.receipts['BLOOKET-U1L2:s1'].compact);
+    expect(receiptPayload(row.receiptCompact)).toMatchObject({ sid: 's1', src: 'blooket', i: 'BLOOKET-U1L2', sc: 1, a: 1 });
+  });
+
+  it('issuer off: no receipt fields in the write', async () => {
+    const ledgerDb = createCapturingLedgerDb();
+    const ctx = await startServer({ ledgerDb });
+    srv = ctx.server;
+    await srv.post('/class/blooket', { lessonKey: '1.2', total: 30,
+      entries: [{ studentId: 's1', correct: 3, attempted: 30 }] }, { 'x-teacher-secret': TEACHER });
+    expect(ledgerDb._inserts[0].receiptCompact).toBeUndefined();
   });
 });
 

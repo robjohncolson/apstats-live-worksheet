@@ -110,8 +110,10 @@ describe('POST /admin/restore (faithful)', () => {
     expect(ledgerDb.inserted[0].score).toBe(100);
     // original timestamp preserved (so recomputed commit heads match)
     expect(ledgerDb.inserted[0].recordedAt).toBe(r.recorded_at);
-    // ORIGINAL receipt preserved, not re-issued
-    expect(ledgerDb.receipts.L1.receiptCompact).toBe(r.receipt_compact);
+    // ORIGINAL receipt preserved, not re-issued, written in the SAME upsert as the row
+    expect(ledgerDb.inserted[0].receiptCompact).toBe(r.receipt_compact);
+    expect(ledgerDb.inserted[0].receiptId).toBe(r.receipt_id);
+    expect(ledgerDb.receipts).toEqual({});
   });
 
   it('preserves evidence_tier from the SIGNED payload (proctored stays proctored)', async () => {

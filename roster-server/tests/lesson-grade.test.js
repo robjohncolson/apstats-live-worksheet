@@ -19,6 +19,7 @@ import {
   sectionToPeriod,
 } from '../lesson-grade.js';
 import { PHASE3_CONFIG } from '../grade-config.js';
+import { summarizeOrphanRows } from '../grade.js';
 
 // ── parseItemLesson ────────────────────────────────────────────────────────────
 
@@ -1216,5 +1217,44 @@ describe('computeLessonGrades — production frqBand targets (2026-10-22)', () =
       worksheetBlankCounts: COUNTS, weights: WEIGHTS, frqFloorSince: SINCE,
     }).get('1.1');
     expect(l.lessonGrade).toBe(73.3);
+  });
+});
+
+describe('computeLessonGrades - orphan rows (id names an unscheduled lesson)', () => {
+  const real = () => [
+    makeRow('WS-U1L1-r1', { source: 'frq', score: 1 }),
+    makeRow('WS-U1L2-r1', { source: 'frq', score: 0 }),
+  ];
+  const orphan = makeRow('WS-U1L77-Q1', { source: 'worksheet', score: 1 });
+
+  it('an orphan row is counted on map.orphans, not silently dropped', () => {
+    const map = computeLessonGrades([...real(), orphan], FRQ_BAND, {}, SAMPLE_SCHEDULE);
+    expect(map.orphans).toEqual([
+      { itemId: 'WS-U1L77-Q1', source: 'worksheet', unit: 1, lessonKey: '77' },
+    ]);
+  });
+
+  it('the orphan does not change any lesson grade or the Map shape', () => {
+    const without = computeLessonGrades(real(), FRQ_BAND, {}, SAMPLE_SCHEDULE);
+    const withOrphan = computeLessonGrades([...real(), orphan], FRQ_BAND, {}, SAMPLE_SCHEDULE);
+    expect([...withOrphan.keys()]).toEqual([...without.keys()]);
+    expect([...withOrphan.entries()]).toEqual([...without.entries()]);
+    expect(Object.keys(withOrphan)).toEqual([]);   // non-enumerable: invisible to spreads/JSON
+    expect(without.orphans).toEqual([]);
+  });
+
+  it('PC items (unit-scoped) and unparseable ids are not orphans', () => {
+    const rows = [makeRow('U1-PC-Q1', { source: 'pc', score: 1 }), makeRow('POSTER-U1', { source: 'frq', score: 1 })];
+    expect(computeLessonGrades(rows, FRQ_BAND, {}, SAMPLE_SCHEDULE).orphans).toEqual([]);
+  });
+
+  it('summarizeOrphanRows: null when none, else count + first 5 item ids', () => {
+    expect(summarizeOrphanRows([])).toBe(null);
+    expect(summarizeOrphanRows(undefined)).toBe(null);
+    const many = Array.from({ length: 7 }, (_, i) => ({ itemId: `WS-U1L77-Q${i + 1}` }));
+    expect(summarizeOrphanRows(many)).toEqual({
+      count: 7,
+      samples: ['WS-U1L77-Q1', 'WS-U1L77-Q2', 'WS-U1L77-Q3', 'WS-U1L77-Q4', 'WS-U1L77-Q5'],
+    });
   });
 });

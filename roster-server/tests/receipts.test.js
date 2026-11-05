@@ -41,21 +41,28 @@ function createFakeRosterDb({ usernameByStudentId = {} } = {}) {
 function createFakeLedgerDb() {
   const store = [];
   let updateMode = 'store';
+  const receiptUpdates = [];
   return {
     store,
+    receiptUpdates,
     setUpdateMode(mode) {
       updateMode = mode;
     },
+    // Mirrors ledger-db.js: the receipt fields land as columns of the SAME upsert row.
     async insertLedgerRow(args) {
+      const { receiptId, receiptCompact, ...rest } = args;
       const row = {
         ledger_id: `ledger-${store.length + 1}`,
         evidence_tier: args.evidenceTier,
-        ...args
+        ...rest,
+        receipt_id: receiptId || null,
+        receipt_compact: receiptCompact || null
       };
       store.push(row);
       return { data: { ledger_id: row.ledger_id, evidence_tier: row.evidence_tier }, error: null };
     },
     async updateLedgerReceipt(ledgerId, { receiptId, receiptCompact }) {
+      receiptUpdates.push(ledgerId);
       if (updateMode === '42703') return { error: { code: '42703' } };
       if (updateMode === 'throw') throw new Error('receipt write failed');
       const row = store.find(r => r.ledger_id === ledgerId);
@@ -230,7 +237,7 @@ describe('roster-server receipt integration', () => {
       evidenceTier: 'practice'
     });
     expect(getReceiptIssuer()).toEqual({ enabled: false });
-    expect(ledgerDb.store[0].receipt_compact).toBeUndefined();
+    expect(ledgerDb.store[0].receipt_compact).toBeNull();   // issuer off: the row is written unsigned
   });
 
   it('exposes issuer metadata when enabled', async () => {
@@ -356,19 +363,18 @@ describe('roster-server receipt integration', () => {
     });
   });
 
-  it('counts non-42703 receipt persistence errors but not pre-migration 42703', async () => {
+  it('writes the receipt in the row upsert itself: no second receipt update, nothing to fail', async () => {
     await start({ receiptKey: V11_TEST_PRIVATE_KEY });
-    ledgerDb.setUpdateMode('42703');
-    await record();
-
-    let health = await srv.request('GET', '/health');
-    expect(health.body.receipts.persistFailures).toBe(0);
-
     ledgerDb.setUpdateMode('throw');
+
+    const { body } = await record();
     await record();
 
-    health = await srv.request('GET', '/health');
-    expect(health.body.receipts.persistFailures).toBe(1);
+    expect(ledgerDb.receiptUpdates).toEqual([]);
+    expect(ledgerDb.store[0].receipt_id).toBe(body.receipt.receiptId);
+    expect(ledgerDb.store[0].receipt_compact).toBe(body.receipt.compact);
+    const health = await srv.request('GET', '/health');
+    expect(health.body.receipts.persistFailures).toBe(0);
   });
 
   it('never lets signing failures break the parent request', async () => {

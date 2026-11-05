@@ -1,10 +1,11 @@
 // ledger-import.test.js — POST /ledger/import (offline work batch import).
 // Pure-helper unit tests + a fake-db integration test. No network, no Supabase.
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import http from 'http';
 import { createApp } from '../server.js';
 import { normalizeImportBody, validateImportRecord } from '../ledger-import.js';
+import { initReceipts } from '../receipts.js';
 
 // ── Pure helpers ──────────────────────────────────────────────────────────────
 
@@ -90,17 +91,19 @@ function createFakeLedgerDb() {
   const store = new Map(); // key: studentId|source|itemId|attempt
   return {
     store,
-    async insertLedgerRow({ studentId, source, itemId, response, score, evidenceTier, attempt }) {
+    receiptUpdates: [],
+    async insertLedgerRow({ studentId, source, itemId, response, score, evidenceTier, attempt, receiptId, receiptCompact }) {
       const key = `${studentId}|${source}|${itemId}|${attempt}`;
       const row = {
         ledger_id: `ledger-${store.size}-${key}`,
         student_id: studentId, source, item_id: itemId,
         response, score: score ?? null, evidence_tier: evidenceTier, attempt,
+        receipt_id: receiptId || null, receipt_compact: receiptCompact || null,
       };
       store.set(key, row);
       return { data: { ledger_id: row.ledger_id, evidence_tier: row.evidence_tier }, error: null };
     },
-    async updateLedgerReceipt() { return { error: null }; },
+    async updateLedgerReceipt(ledgerId) { this.receiptUpdates.push(ledgerId); return { error: null }; },
     async getLedgerByStudent() { return { data: [], error: null }; },
     async getLedgerByItem() { return { data: [], error: null }; },
   };
@@ -153,6 +156,24 @@ describe('POST /ledger/import', () => {
     expect(rows).toHaveLength(2);
     expect(rows.every((r) => r.evidence_tier === 'practice')).toBe(true);
     expect(rows.every((r) => r.student_id === 'stu-1')).toBe(true);
+  });
+
+  // 2026-11-05: imported rows are signed BEFORE the write, in the same insertLedgerRow call.
+  it('signs each imported row in the row write itself (no separate receipt update)', async () => {
+    vi.stubEnv('RECEIPT_ISSUER_PRIVATE_KEY', 'MC4CAQAwBQYDK2VwBCIEIEtFFgiPZyvBY+Udt3F77ZOHGypDcMHVJV9ck+a6kToO');
+    initReceipts();
+    try {
+      const { status } = await srv.post('/ledger/import', bundle(), TEACHER);
+      expect(status).toBe(200);
+      const rows = [...ledgerDb.store.values()];
+      expect(rows.every((r) => typeof r.receipt_compact === 'string' && r.receipt_id)).toBe(true);
+      const payload = JSON.parse(Buffer.from(rows[0].receipt_compact.split('.')[0], 'base64url').toString('utf8'));
+      expect(payload).toMatchObject({ sid: 'stu-1', src: 'worksheet', i: 'WS-U1L1-Q1', sc: 1, e: 'practice', g: 'offline-import' });
+      expect(ledgerDb.receiptUpdates).toEqual([]);
+    } finally {
+      vi.unstubAllEnvs();
+      initReceipts();
+    }
   });
 
   it('is idempotent: re-importing the same bundle does not duplicate rows', async () => {
