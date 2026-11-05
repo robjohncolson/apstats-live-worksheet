@@ -14,11 +14,13 @@
 # Usage:
 #   powershell -NoProfile -File tools/register_pc_reconcile_task.ps1 -PrintOnly
 #   powershell -NoProfile -File tools/register_pc_reconcile_task.ps1 -Apply
+#   powershell -NoProfile -File tools/register_pc_reconcile_task.ps1 -Apply -Pages server   # read Grok Bot's page dumps
 
 param(
   [string]$TimeB = '16:00',
   [string]$TimeE = '16:10',
   [switch]$Apply,
+  [ValidateSet('rig','server')][string]$Pages = 'rig',
   [switch]$PrintOnly
 )
 
@@ -39,6 +41,7 @@ $tasks = @(
 foreach ($t in $tasks) {
   $inner = "-NoProfile -ExecutionPolicy Bypass -File `"$batch`" -Section $($t.Section)"
   if ($Apply) { $inner += ' -Apply' }
+  if ($Pages -ne 'rig') { $inner += " -Pages $Pages" }
   $action = "`"$ps`" $inner"
   Write-Output "schtasks /Create /SC DAILY /TN $($t.Name) /TR $action /ST $($t.Time) /F"
   if ($PrintOnly) { continue }
