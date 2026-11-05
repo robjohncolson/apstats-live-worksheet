@@ -5,7 +5,8 @@ Covers: the page parsers on the sanitized fixtures (fake names, real layout),
 paper_blend parity with the JS engine numbers (roster-server/tests/pc-paper-blend.test.js),
 never-lower, deadline zeroing, exclude + map precedence, the login-needed exit code,
 that dry runs post nothing, and (Unit 2 on) an online Part A, the points total read
-from the page, closeDate null and the registry's reconcilable entries. HTTP is a fake
+from the page, closeDate null, the registry's reconcilable entries and the
+`--pages server` source (missing/stale pages skip their entry, never SIGN IN NEEDED). HTTP is a fake
 object; nothing touches the network.
 
 ASCII only. LF line endings.
@@ -20,6 +21,7 @@ import sys
 import tempfile
 import unittest
 from contextlib import redirect_stdout
+from datetime import datetime, timedelta, timezone
 
 TESTS_DIR = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.dirname(TESTS_DIR)
@@ -747,6 +749,169 @@ class MainTests(unittest.TestCase):
             self.assertEqual(set(entry), {"unit", "section", "parts", "dueDate", "closeDate"})
             for name, cfg in entry["parts"].items():
                 self.assertLessEqual(set(cfg), {"id", "of", "origin"}, name)   # ids + totals, nothing else
+
+
+def iso_hours_ago(hours):
+    when = datetime.now(timezone.utc) - timedelta(hours=hours)
+    return when.strftime("%Y-%m-%dT%H:%M:%S.000Z")
+
+
+class PagesApi(FakeApi):
+    """FakeApi plus GET /admin/apclassroom-pages serving the given {id: page}."""
+
+    def __init__(self, server_pages, **kwargs):
+        super().__init__(**kwargs)
+        self.server_pages = server_pages
+        self.page_gets = []
+
+    def get(self, path):
+        if not path.startswith("/admin/apclassroom-pages"):
+            return super().get(path)
+        self.page_gets.append(path)
+        ids = path.split("ids=", 1)[1].split(",")
+        return {"pages": {i: self.server_pages[i] for i in ids if i in self.server_pages}}
+
+
+def served(text, hours_old=1.0):
+    return {"text": text, "receivedAt": iso_hours_ago(hours_old), "bytes": len(text.encode("utf-8"))}
+
+
+def u1_served(hours_old=1.0):
+    return {ENTRY["parts"][name]["id"]: served(read_fixture(name), hours_old) for name in ("B", "C", "FRQ")}
+
+
+class NoRig:
+    """Context manager: any use of the Edge rig fails the test."""
+
+    def __enter__(self):
+        self.saved = sys.modules.get("schoology_ops")
+        sys.modules["schoology_ops"] = None   # import schoology_ops -> ImportError
+        return self
+
+    def __exit__(self, *exc):
+        if self.saved is None:
+            sys.modules.pop("schoology_ops", None)
+        else:
+            sys.modules["schoology_ops"] = self.saved
+        return False
+
+
+class ServerPagesTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp(prefix="pc-reconcile-server-test-")
+        self.registry = os.path.join(self.tmp, "registry.json")
+        self.roster_map = os.path.join(self.tmp, "roster-map.json")
+        with open(self.roster_map, "w", encoding="utf-8") as f:
+            json.dump(ROSTER_MAP, f)
+        self.log = os.path.join(self.tmp, "run.log")
+
+    def write_registry(self, *entries):
+        with open(self.registry, "w", encoding="utf-8") as f:
+            json.dump({"classId": "33", "progressChecks": list(entries)}, f)
+
+    def u2_entry(self):
+        parts = {name: dict(cfg, id=cfg["id"][::-1]) if cfg.get("id") else dict(cfg)
+                 for name, cfg in ENTRY["parts"].items()}
+        return dict(ENTRY, unit=2, parts=parts)
+
+    def run_main(self, extra, api, unit=None):
+        argv = ["--section", "PeriodE", "--registry", self.registry, "--roster-map", self.roster_map,
+                "--today", "2026-10-24", "--log", self.log, "--pages", "server"] + \
+               (["--unit", unit] if unit else []) + extra
+        buf = io.StringIO()
+        with NoRig(), redirect_stdout(buf):
+            code = rec.main(argv, api=api)
+        return code, buf.getvalue()
+
+    def test_a_missing_page_skips_only_its_entry(self):
+        u2 = self.u2_entry()
+        self.write_registry(u2, ENTRY)
+        pages = u1_served()
+        pages[u2["parts"]["B"]["id"]] = served(read_fixture("B"))
+        pages[u2["parts"]["C"]["id"]] = served(read_fixture("C"))    # U2 FRQ never posted
+        api = PagesApi(pages)
+        code, out = self.run_main(["--apply"], api)
+        self.assertEqual(code, 1)
+        self.assertEqual(len(api.page_gets), 1)                      # one GET for every id
+        self.assertIn("PAGE NOT READY: U2 FRQ page %s is not on the server" % u2["parts"]["FRQ"]["id"], out)
+        self.assertNotIn(rec.SIGN_IN_LINE, out)
+        grades = [b for p, b in api.posts if p == "/pc/grade"]
+        self.assertTrue(grades)
+        self.assertEqual({b["unit"] for b in grades}, {1})
+        self.assertIn("PAGE U1 B id %s age 1.0 h (server)" % ENTRY["parts"]["B"]["id"], out)
+        page_lines = [line for line in out.splitlines() if line.startswith("PAGE U")]
+        self.assertEqual(len(page_lines), 5)                          # U2 B, C then U1 B, C, FRQ
+        for line in page_lines:
+            self.assertNotRegex(line, r"Pear|Plum|Fig|Kiwi|Elk")
+
+    def test_server_pages_match_the_fixture_run(self):
+        self.write_registry(ENTRY)
+        server_api = PagesApi(u1_served())
+        code, _out = self.run_main([], server_api, unit="1")
+        self.assertEqual(code, 0)
+        self.assertEqual(server_api.posts, [])                        # dry run by default
+
+        fixture_api, server_api = FakeApi(), PagesApi(u1_served())
+        argv = ["--section", "PeriodE", "--registry", self.registry, "--roster-map", self.roster_map,
+                "--today", "2026-10-24", "--unit", "1", "--apply"]
+        with redirect_stdout(io.StringIO()):
+            rec.main(argv + ["--fixture", FIXTURE_DIR], api=fixture_api)
+        self.run_main(["--apply"], server_api, unit="1")
+        grades = lambda api: [b for p, b in api.posts if p == "/pc/grade"]
+        self.assertTrue(grades(fixture_api))
+        self.assertEqual(grades(server_api), grades(fixture_api))
+
+    def test_a_stale_page_is_not_ready(self):
+        self.write_registry(ENTRY)
+        pages = u1_served()
+        pages[ENTRY["parts"]["C"]["id"]] = served(read_fixture("C"), hours_old=31)
+        api = PagesApi(pages)
+        code, out = self.run_main(["--apply"], api)
+        self.assertEqual(code, 1)
+        self.assertEqual(api.posts, [])
+        self.assertIn("PAGE NOT READY: U1 C page %s is 31.0 h old (max 30 h)" % ENTRY["parts"]["C"]["id"], out)
+
+        api = PagesApi(pages)
+        code, _out = self.run_main(["--apply", "--max-page-age-hours", "48"], api)
+        self.assertEqual(code, 0)
+        self.assertTrue([b for p, b in api.posts if p == "/pc/grade"])
+
+    def test_server_mode_never_raises_sign_in_needed(self):
+        self.write_registry(ENTRY)
+        pages = u1_served()
+        pages[ENTRY["parts"]["B"]["id"]] = served("College Board\nSign In\n")
+        api = PagesApi(pages)
+        code, out = self.run_main(["--apply"], api)
+        self.assertEqual(code, 1)
+        self.assertEqual(api.posts, [])
+        self.assertNotIn(rec.SIGN_IN_LINE, out)
+        self.assertIn("B page %s has no table header" % ENTRY["parts"]["B"]["id"], out)
+
+        early = read_fixture("FRQ") + "\nScored\n0/0\n"                 # an early paint
+        pages = u1_served()
+        pages[ENTRY["parts"]["FRQ"]["id"]] = served(early)
+        code, out = self.run_main([], PagesApi(pages))
+        self.assertEqual(code, 1)
+        self.assertIn("posted before its scores finished loading", out)
+
+    def test_a_failed_page_read_exits_1_and_fixture_is_exclusive(self):
+        self.write_registry(ENTRY)
+
+        class DownApi(FakeApi):
+            def get(self, path):
+                if path.startswith("/admin/apclassroom-pages"):
+                    raise RuntimeError("GET /admin/apclassroom-pages -> HTTP 401")
+                return super().get(path)
+
+        api = DownApi()
+        code, out = self.run_main(["--apply"], api)
+        self.assertEqual(code, 1)
+        self.assertEqual(api.posts, [])
+        self.assertIn("could not read the posted pages", out)
+
+        code, out = self.run_main(["--fixture", FIXTURE_DIR], PagesApi({}), unit="1")
+        self.assertEqual(code, 2)
+        self.assertIn("pick one", out)
 
 
 if __name__ == "__main__":

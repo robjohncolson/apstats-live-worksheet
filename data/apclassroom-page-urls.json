@@ -1,0 +1,202 @@
+{
+  "source": "data/apclassroom-assignments.json",
+  "classId": "33",
+  "pages": [
+    {
+      "assignmentId": "81595010",
+      "section": "PeriodB",
+      "unit": 1,
+      "part": "B",
+      "url": "https://apclassroom.collegeboard.org/33/assignments/progress/81595010?tab=RESULTS_STUDENTS"
+    },
+    {
+      "assignmentId": "81595024",
+      "section": "PeriodB",
+      "unit": 1,
+      "part": "C",
+      "url": "https://apclassroom.collegeboard.org/33/assignments/progress/81595024?tab=RESULTS_STUDENTS"
+    },
+    {
+      "assignmentId": "81595036",
+      "section": "PeriodB",
+      "unit": 1,
+      "part": "FRQ",
+      "url": "https://apclassroom.collegeboard.org/33/assignments/progress/81595036?tab=PROGRESS"
+    },
+    {
+      "assignmentId": "81743327",
+      "section": "PeriodE",
+      "unit": 1,
+      "part": "B",
+      "url": "https://apclassroom.collegeboard.org/33/assignments/progress/81743327?tab=RESULTS_STUDENTS"
+    },
+    {
+      "assignmentId": "81743453",
+      "section": "PeriodE",
+      "unit": 1,
+      "part": "C",
+      "url": "https://apclassroom.collegeboard.org/33/assignments/progress/81743453?tab=RESULTS_STUDENTS"
+    },
+    {
+      "assignmentId": "81743492",
+      "section": "PeriodE",
+      "unit": 1,
+      "part": "FRQ",
+      "url": "https://apclassroom.collegeboard.org/33/assignments/progress/81743492?tab=PROGRESS"
+    },
+    {
+      "assignmentId": "82255720",
+      "section": "PeriodB",
+      "unit": 2,
+      "part": "A",
+      "url": "https://apclassroom.collegeboard.org/33/assignments/progress/82255720?tab=RESULTS_STUDENTS"
+    },
+    {
+      "assignmentId": "82259948",
+      "section": "PeriodB",
+      "unit": 2,
+      "part": "B",
+      "url": "https://apclassroom.collegeboard.org/33/assignments/progress/82259948?tab=RESULTS_STUDENTS"
+    },
+    {
+      "assignmentId": "82260072",
+      "section": "PeriodB",
+      "unit": 2,
+      "part": "C",
+      "url": "https://apclassroom.collegeboard.org/33/assignments/progress/82260072?tab=RESULTS_STUDENTS"
+    },
+    {
+      "assignmentId": "82260319",
+      "section": "PeriodB",
+      "unit": 2,
+      "part": "FRQ",
+      "url": "https://apclassroom.collegeboard.org/33/assignments/progress/82260319?tab=PROGRESS"
+    },
+    {
+      "assignmentId": "82259752",
+      "section": "PeriodE",
+      "unit": 2,
+      "part": "A",
+      "url": "https://apclassroom.collegeboard.org/33/assignments/progress/82259752?tab=RESULTS_STUDENTS"
+    },
+    {
+      "assignmentId": "82259947",
+      "section": "PeriodE",
+      "unit": 2,
+      "part": "B",
+      "url": "https://apclassroom.collegeboard.org/33/assignments/progress/82259947?tab=RESULTS_STUDENTS"
+    },
+    {
+      "assignmentId": "82260070",
+      "section": "PeriodE",
+      "unit": 2,
+      "part": "C",
+      "url": "https://apclassroom.collegeboard.org/33/assignments/progress/82260070?tab=RESULTS_STUDENTS"
+    },
+    {
+      "assignmentId": "82260482",
+      "section": "PeriodE",
+      "unit": 2,
+      "part": "FRQ",
+      "url": "https://apclassroom.collegeboard.org/33/assignments/progress/82260482?tab=PROGRESS"
+    },
+    {
+      "assignmentId": "82260921",
+      "section": "PeriodB",
+      "unit": 3,
+      "part": "C",
+      "url": "https://apclassroom.collegeboard.org/33/assignments/progress/82260921?tab=RESULTS_STUDENTS"
+    },
+    {
+      "assignmentId": "82261065",
+      "section": "PeriodB",
+      "unit": 3,
+      "part": "D",
+      "url": "https://apclassroom.collegeboard.org/33/assignments/progress/82261065?tab=RESULTS_STUDENTS"
+    },
+    {
+      "assignmentId": "82261155",
+      "section": "PeriodB",
+      "unit": 3,
+      "part": "FRQ",
+      "url": "https://apclassroom.collegeboard.org/33/assignments/progress/82261155?tab=PROGRESS"
+    },
+    {
+      "assignmentId": "82260920",
+      "section": "PeriodE",
+      "unit": 3,
+      "part": "C",
+      "url": "https://apclassroom.collegeboard.org/33/assignments/progress/82260920?tab=RESULTS_STUDENTS"
+    },
+    {
+      "assignmentId": "82261064",
+      "section": "PeriodE",
+      "unit": 3,
+      "part": "D",
+      "url": "https://apclassroom.collegeboard.org/33/assignments/progress/82261064?tab=RESULTS_STUDENTS"
+    },
+    {
+      "assignmentId": "82261154",
+      "section": "PeriodE",
+      "unit": 3,
+      "part": "FRQ",
+      "url": "https://apclassroom.collegeboard.org/33/assignments/progress/82261154?tab=PROGRESS"
+    },
+    {
+      "assignmentId": "82261388",
+      "section": "PeriodB",
+      "unit": 4,
+      "part": "C",
+      "url": "https://apclassroom.collegeboard.org/33/assignments/progress/82261388?tab=RESULTS_STUDENTS"
+    },
+    {
+      "assignmentId": "82261590",
+      "section": "PeriodB",
+      "unit": 4,
+      "part": "FRQ",
+      "url": "https://apclassroom.collegeboard.org/33/assignments/progress/82261590?tab=PROGRESS"
+    },
+    {
+      "assignmentId": "82261387",
+      "section": "PeriodE",
+      "unit": 4,
+      "part": "C",
+      "url": "https://apclassroom.collegeboard.org/33/assignments/progress/82261387?tab=RESULTS_STUDENTS"
+    },
+    {
+      "assignmentId": "82261589",
+      "section": "PeriodE",
+      "unit": 4,
+      "part": "FRQ",
+      "url": "https://apclassroom.collegeboard.org/33/assignments/progress/82261589?tab=PROGRESS"
+    },
+    {
+      "assignmentId": "82262123",
+      "section": "PeriodB",
+      "unit": 5,
+      "part": "A",
+      "url": "https://apclassroom.collegeboard.org/33/assignments/progress/82262123?tab=RESULTS_STUDENTS"
+    },
+    {
+      "assignmentId": "82262256",
+      "section": "PeriodB",
+      "unit": 5,
+      "part": "FRQ",
+      "url": "https://apclassroom.collegeboard.org/33/assignments/progress/82262256?tab=PROGRESS"
+    },
+    {
+      "assignmentId": "82262122",
+      "section": "PeriodE",
+      "unit": 5,
+      "part": "A",
+      "url": "https://apclassroom.collegeboard.org/33/assignments/progress/82262122?tab=RESULTS_STUDENTS"
+    },
+    {
+      "assignmentId": "82262255",
+      "section": "PeriodE",
+      "unit": 5,
+      "part": "FRQ",
+      "url": "https://apclassroom.collegeboard.org/33/assignments/progress/82262255?tab=PROGRESS"
+    }
+  ]
+}

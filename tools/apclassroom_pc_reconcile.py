@@ -25,6 +25,18 @@ Parts:
     python tools/apclassroom_pc_reconcile.py --section PeriodE --unit 1 --fixture tools/fixtures/apclassroom/periodE-u1/
     python tools/apclassroom_pc_reconcile.py --section PeriodE --unit 1 --dump tools/.pc-reconcile-logs/periodE-u1/
     python tools/apclassroom_pc_reconcile.py --section PeriodE --remind     # write reminder drafts now
+    python tools/apclassroom_pc_reconcile.py --section PeriodE --pages server   # read the posted pages
+
+Page sources (--pages): `rig` (the default) reads AP Classroom through the local
+Edge CDP rig. `server` reads the page texts an outside sender posted to the roster
+server (POST /admin/apclassroom-page/<id>, read back with GET
+/admin/apclassroom-pages?ids=...; the sender's list is data/apclassroom-page-urls.json).
+The texts are the same innerText the rig reads, so they go through the same
+parsers. In server mode a part whose page is missing, older than
+--max-page-age-hours (default 30) or not fully painted is PAGE NOT READY (its
+entry is skipped, exit 1), and SIGN IN NEEDED never happens. Each page used is
+logged by id and age (no names). --fixture is a third source and cannot be
+combined with --pages server.
 
 A fixture or dump directory holds A.txt, B.txt, C.txt and FRQ.txt (the page
 innerText); a missing file is a part that is not read. One directory is ONE unit:
@@ -52,7 +64,8 @@ Privacy: the repo is public. Real names live only in the private roster map
 (the log dir is gitignored). stdout shows usernames only unless --names.
 
 Secrets: ROSTER_TEACHER_SECRET from the environment only. Never printed.
-Exit codes: 0 ok, 1 an HTTP/post failure or a table that never loaded, 2 SIGN IN NEEDED.
+Exit codes: 0 ok, 1 an HTTP/post failure or a table that never loaded (or, with
+--pages server, a page missing/stale), 2 SIGN IN NEEDED (rig and fixture only).
 A table that never loads (no header, never settles) skips ITS entry only (nothing
 of that entry is posted); the other entries still run, and the exit code is 1.
 SIGN IN NEEDED (exit 2, nothing posted) needs affirmative evidence: a sign-in page
@@ -92,6 +105,8 @@ SIGN_IN_TITLE = "PC reconcile: sign-in needed"
 SIGN_IN_LINE = "SIGN IN NEEDED: open AP Classroom in the Edge rig profile"
 SIGN_IN_GRACE_S = 8  # a sign-in page must persist this long before it counts (IdP bounce)
 PAGE_TIMEOUT_S = 45  # a table that is not ready by then skips its entry
+DEFAULT_MAX_PAGE_AGE_H = 30.0  # --pages server: an older posted page is not ready
+SERVER_IDS_PER_GET = 50        # ids per GET /admin/apclassroom-pages (the server caps at 100)
 
 ONLINE_PARTS = ("B", "C", "FRQ")   # the per-part rows of the blend (mirror of scoring.js)
 MCQ_PARTS = ("A", "B", "C")
@@ -762,6 +777,62 @@ def fetch_live_pages(class_id: str, entry: dict, dump_dir=None) -> dict:
     return pages
 
 
+def fetch_server_texts(api, entries: list) -> dict:
+    """GET /admin/apclassroom-pages for every online part id: {id: {text, receivedAt, bytes}}."""
+    ids = sorted({entry["parts"][part]["id"] for entry in entries for part in online_parts(entry)})
+    found = {}
+    for start in range(0, len(ids), SERVER_IDS_PER_GET):
+        chunk = ids[start:start + SERVER_IDS_PER_GET]
+        data = api.get("/admin/apclassroom-pages?ids=" + ",".join(chunk))
+        found.update((data or {}).get("pages") or {})
+    return found
+
+
+def page_age_hours(received_at, now: datetime):
+    """Hours since an ISO receivedAt ('...Z' accepted), or None when it does not parse."""
+    if not isinstance(received_at, str):
+        return None
+    try:
+        when = datetime.fromisoformat(received_at.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if when.tzinfo is None:
+        when = when.replace(tzinfo=timezone.utc)
+    return (now - when).total_seconds() / 3600.0
+
+
+def server_entry_pages(entry: dict, server_pages: dict, now: datetime, max_age_hours: float,
+                       rep, dump_dir=None) -> dict:
+    """The entry's page texts from the posted pages. Never raises SignInNeeded.
+
+    A part whose page is missing, too old, or not fully painted raises PageNotReady,
+    which skips this entry only (the same path as a rig table that never loads)."""
+    pages = {}
+    for part in online_parts(entry):
+        assignment = entry["parts"][part]["id"]
+        page = server_pages.get(assignment)
+        if not page:
+            raise PageNotReady("%s page %s is not on the server" % (part, assignment))
+        age = page_age_hours(page.get("receivedAt"), now)
+        if age is None:
+            raise PageNotReady("%s page %s has no readable receive time" % (part, assignment))
+        if age > max_age_hours:
+            raise PageNotReady("%s page %s is %.1f h old (max %g h)" % (part, assignment, age, max_age_hours))
+        text = page.get("text") or ""
+        header = "Date Submitted" if part == "FRQ" else "Points Earned"
+        if header not in text:
+            raise PageNotReady("%s page %s has no table header" % (part, assignment))
+        if not page_ready(part, text, header):
+            raise PageNotReady("%s page %s was posted before its scores finished loading" % (part, assignment))
+        rep.out("PAGE U%s %s id %s age %.1f h (server)" % (entry["unit"], part, assignment, age))
+        pages[part] = text
+        if dump_dir:
+            os.makedirs(dump_dir, exist_ok=True)
+            with open(os.path.join(dump_dir, part + ".txt"), "w", encoding="utf-8", newline="\n") as f:
+                f.write(text)
+    return pages
+
+
 def open_sign_in_issue() -> None:
     """Open (or comment on) the GitHub issue, deduped by title. Never fails the run."""
     if not shutil.which("gh"):
@@ -912,6 +983,10 @@ def main(argv=None, api=None) -> int:
     ap.add_argument("--log", default=None)
     ap.add_argument("--names", action="store_true", help="also print unmatched real names to stdout")
     ap.add_argument("--remind", action="store_true", help="write the reminder drafts now (default: the day before the due date)")
+    ap.add_argument("--pages", choices=("rig", "server"), default="rig",
+                    help="where the page texts come from: the Edge rig (default) or the roster server")
+    ap.add_argument("--max-page-age-hours", type=float, default=DEFAULT_MAX_PAGE_AGE_H,
+                    help="--pages server: an older posted page is PAGE NOT READY (default 30)")
     args = ap.parse_args(argv)
 
     rep = Reporter(args.log, args.names)
@@ -921,6 +996,10 @@ def main(argv=None, api=None) -> int:
             rep.out("ERROR: ROSTER_TEACHER_SECRET is not set in the environment.")
             return 1
         api = RosterApi(args.base, secret)
+
+    if args.fixture and args.pages == "server":
+        rep.out("ERROR: --fixture and --pages server are two page sources; pick one.")
+        return 2
 
     registry = load_registry(args.registry)
     entries = active_entries(registry, args.section, args.unit)
@@ -939,11 +1018,22 @@ def main(argv=None, api=None) -> int:
     # A table that never loads skips its own entry (nothing of it is posted); the
     # other entries still run and the exit code is 1.
     ok = True
+    server_pages = None
+    if args.pages == "server":
+        try:
+            server_pages = fetch_server_texts(api, entries)
+        except RuntimeError as err:
+            rep.out("ERROR: could not read the posted pages: %s" % err)
+            return 1
+    now = datetime.now(timezone.utc)
     pages_by_entry = []
     for entry in entries:
         try:
             if args.fixture:
                 pages_by_entry.append(read_fixture_pages(args.fixture))
+            elif server_pages is not None:
+                pages_by_entry.append(server_entry_pages(entry, server_pages, now, args.max_page_age_hours,
+                                                         rep, args.dump))
             else:
                 pages_by_entry.append(fetch_live_pages(registry.get("classId", ""), entry, args.dump))
         except SignInNeeded:

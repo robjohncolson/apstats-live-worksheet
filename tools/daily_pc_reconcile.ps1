@@ -12,12 +12,19 @@
 # Edge rig profile signed into AP Classroom once. Exit 2 = SIGN IN NEEDED (a GitHub issue is opened
 # when gh is installed and -Apply is set). Logs: tools/.pc-reconcile-logs/ (gitignored: the log may
 # hold unmatched AP Classroom names).
+#
+# -Pages server reads the AP Classroom page texts the outside sender posted to the roster server
+# (POST /admin/apclassroom-page/<id>) instead of the Edge rig: no sign-in, and a missing or stale
+# page skips its entry (exit 1). The default stays the rig until the sender's routine is proven;
+# then add "-Pages server" to the two scheduled task lines above.
 
 param(
   [string]$Section = 'PeriodB',
   [switch]$Apply,
   [string]$Base = '',
-  [string]$LogDir = ''
+  [string]$LogDir = '',
+  [ValidateSet('rig', 'server')]
+  [string]$Pages = 'rig'
 )
 
 $ErrorActionPreference = 'Continue'
@@ -30,7 +37,7 @@ $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
 $log   = Join-Path $LogDir "reconcile-$Section-$stamp.log"
 
 $mode = if ($Apply) { 'APPLY' } else { 'DRY-RUN' }
-Add-Content -Path $log -Value ("[" + (Get-Date -Format 'HH:mm:ss') + "] === daily_pc_reconcile started ($mode) section=$Section ===")
+Add-Content -Path $log -Value ("[" + (Get-Date -Format 'HH:mm:ss') + "] === daily_pc_reconcile started ($mode) section=$Section pages=$Pages ===")
 
 if (-not $env:ROSTER_TEACHER_SECRET) {
   $msg = 'ERROR: ROSTER_TEACHER_SECRET is not set in the environment (setx ROSTER_TEACHER_SECRET <secret>).'
@@ -42,6 +49,7 @@ if (-not $env:ROSTER_TEACHER_SECRET) {
 $pyArgs = @((Join-Path $toolsDir 'apclassroom_pc_reconcile.py'), '--section', $Section, '--log', $log)
 if ($Apply) { $pyArgs += '--apply' }
 if ($Base) { $pyArgs += @('--base', $Base) }
+if ($Pages -eq 'server') { $pyArgs += @('--pages', 'server') }
 
 # The Python script writes its own log (usernames only on stdout).
 & python @pyArgs

@@ -18,6 +18,7 @@ import { mountLedger } from './ledger.js';
 import { mountLedgerImport } from './ledger-import.js';
 import { mountAdminSnapshot } from './admin-snapshot.js';
 import { createJobResults, mountJobResults } from './job-results.js';
+import { createApclassroomPages, mountApclassroomPages } from './apclassroom-pages.js';
 import { mountAdminRestore } from './admin-restore.js';
 import { mountDonow } from './donow.js';
 import { mountRollup } from './rollup.js';
@@ -240,6 +241,10 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
   // (job-results.js; in-memory, null until the job reports after a deploy).
   const _jobResults = createJobResults();
   mountJobResults(app, { db, jobResults: _jobResults });
+  // `apclassroomPages`: AP Classroom results pages posted by the outside sender
+  // (apclassroom-pages.js; in-memory, teacher-gated). /health shows a count and a time only.
+  const _apclassroomPages = createApclassroomPages();
+  mountApclassroomPages(app, { db, pages: _apclassroomPages });
   app.get('/health', (_req, res) => {
     res.json({
       ok: true, service: 'roster', time: new Date().toISOString(), receipts: getReceiptHealth(),
@@ -254,6 +259,7 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
         worker: { ..._frqWorker.counters },
       },
       jobs: _jobResults.snapshot(),
+      apclassroomPages: _apclassroomPages.health(),
     });
   });
 
