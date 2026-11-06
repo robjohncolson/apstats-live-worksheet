@@ -299,6 +299,84 @@ class TestComponentGradesFromClassDoc(unittest.TestCase):
         finally:
             sc.QUIZ_ZEROS_FROM = saved
 
+    def test_never_zero_lesson_is_never_zeroed_even_when_due_has_passed(self):
+        # QUARTER_ZERO_FREEZE_SPEC.md (teacher 2026-11-06): a lesson whose zero date fell
+        # after its quarter's last day comes from /class/grades with zeroDate null for the
+        # period (and neverZero true). Schoology never gets a 0 for it, even long after
+        # its class day, and the cells stay blank until the student does the work.
+        lesson = {"lessonKey": "4.5", "unit": 4, "worksheetKey": "5", "lessonGradeNoQuiz": None, "Cws": None,
+                  "Q": None, "quizTotal": 3, "blooket": None, "hasBlooket": True,
+                  "due": {"B": "2026-10-30", "E": "2026-11-02"},
+                  "zeroDate": {"B": None, "E": None}, "neverZero": {"B": True, "E": True}}
+        today = "2026-11-20"
+        for period in ("B", "E"):
+            self.assertFalse(sc.zero_due(lesson, period, today))
+            self.assertFalse(sc.quiz_zero_due(lesson, period, today))
+        for section in ("PeriodB", "PeriodE"):
+            doc = {"students": [{"studentId": "s9", "schoologyUid": "u9", "section": section,
+                                 "lessons": [lesson], "units": {}}]}
+            self.assertEqual(sc.component_grades_from_class_doc(doc, today=today), {})
+            self.assertEqual(sc.component_comments_from_class_doc(doc, today=today), {})
+        # Late work still counts once it is finished: the real score goes through.
+        done = dict(lesson, lessonGradeNoQuiz=88, Q=70, blooket=90)
+        doc = {"students": [{"studentId": "s9", "schoologyUid": "u9", "section": "PeriodB",
+                             "lessons": [done], "units": {}}]}
+        g = sc.group_label(4, "5")
+        self.assertEqual(sc.component_grades_from_class_doc(doc, today=today), {
+            f"u9/{sc.fa_key(g)}": 88, f"u9/{sc.quiz_key('4.5')}": 70, f"u9/{sc.bl_key(g)}": 90})
+
+    def _group_doc(self, section, first_zero, first_never):
+        # 4.7 (11/06) and 4.8 (11/09) share the 4.7-8 worksheet and deck; the group's columns
+        # are dated 11/06 (the earliest lesson), so Schoology files them in MP1.
+        p = section[-1]
+        first = {"lessonKey": "4.7", "unit": 4, "worksheetKey": "7-8", "lessonGradeNoQuiz": None, "Cws": None,
+                 "Q": None, "quizTotal": 0, "blooket": None, "hasBlooket": True,
+                 "due": {p: "2026-11-06"}, "zeroDate": {p: first_zero}}
+        if first_never is not None:
+            first["neverZero"] = {p: first_never}
+        second = {"lessonKey": "4.8", "unit": 4, "worksheetKey": "7-8", "lessonGradeNoQuiz": None, "Cws": None,
+                  "Q": None, "quizTotal": 3, "blooket": None, "hasBlooket": True,
+                  "due": {p: "2026-11-09"}, "zeroDate": {p: "2026-11-22"}, "neverZero": {p: False}}
+        return {"students": [{"studentId": "s9", "schoologyUid": "u9", "section": section,
+                              "lessons": [first, second], "units": {}}]}
+
+    def test_group_column_zero_is_decided_by_the_lesson_that_dates_it(self):
+        # QUARTER_ZERO_FREEZE_SPEC.md: 4.7 is never-zero (Q1 closed before its zero date) while
+        # 4.8 is a Q2 lesson that zeroes after 11/22. The shared FA/BL columns live in MP1, so
+        # 4.8 must never write a 0 there; its own quiz column (MP2) still zeroes.
+        g = sc.group_label(4, "7-8")
+        fa, bl, quiz = f"u9/{sc.fa_key(g)}", f"u9/{sc.bl_key(g)}", f"u9/{sc.quiz_key('4.8')}"
+        for section in ("PeriodB", "PeriodE"):
+            doc = self._group_doc(section, None, True)
+            for today in ("2026-11-06", "2026-11-12", "2026-11-23", "2027-02-01"):
+                out = sc.component_grades_from_class_doc(doc, today=today)
+                self.assertNotIn(fa, out, section + " " + today)
+                self.assertNotIn(bl, out, section + " " + today)
+            out = sc.component_grades_from_class_doc(doc, today="2026-11-23")
+            self.assertEqual(out, {quiz: 0})
+            comments = sc.component_comments_from_class_doc(doc, today="2026-11-23")
+            self.assertEqual(sorted(comments), [quiz])
+            self.assertIn("Missing: 4.8 quiz", comments[quiz])
+            # Real work still goes through to the shared columns.
+            for lesson in doc["students"][0]["lessons"]:
+                lesson.update(lessonGradeNoQuiz=91, blooket=77)
+            out = sc.component_grades_from_class_doc(doc, today="2026-11-23")
+            self.assertEqual((out[fa], out[bl]), (91, 77))
+
+    def test_group_column_zero_without_the_freeze_is_unchanged(self):
+        # No freeze: 4.7's own zero date (11/19) zeroes the group first, exactly as before.
+        g = sc.group_label(4, "7-8")
+        fa, bl = f"u9/{sc.fa_key(g)}", f"u9/{sc.bl_key(g)}"
+        doc = self._group_doc("PeriodB", "2026-11-19", None)
+        self.assertEqual(sc.component_grades_from_class_doc(doc, today="2026-11-19"), {})
+        self.assertEqual(sc.component_grades_from_class_doc(doc, today="2026-11-20"), {fa: 0, bl: 0})
+        comments = sc.component_comments_from_class_doc(doc, today="2026-11-20")
+        self.assertIn("Missing: 4.7 worksheet", comments[fa])
+        # A group with no due dates (an older caller): its first lesson decides, as before.
+        for lesson in doc["students"][0]["lessons"]:
+            lesson.pop("due")
+        self.assertEqual(sc.component_grades_from_class_doc(doc, today="2026-11-20"), {fa: 0, bl: 0})
+
     def test_emits_pc_from_units_and_skips_poster_without_ledger_letter(self):
         # PC <- units[U#].pcRawPct (the unit mastery track). Poster has no
         # units[] source: without a poster_grades entry it is never emitted.

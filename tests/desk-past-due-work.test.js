@@ -58,7 +58,7 @@ for (const L of LESSONS) if (L.lessonKey.startsWith('3.')) { L.unit = 3; L.works
 
 const CARD_FNS = ['_zeroWarnings', '_zeroTodayIso', '_zeroCurrentWarnings', '_pastDueWork', '_pastDueCurrentWork',
   '_zeroSchoologyTitle', '_zeroLessonByKey', '_zeroSchoologyTag', '_pastDueWhenText', '_pastDueCardRow', '_zeroCardActionButton',
-  '_zeroDayText', '_zeroWhenText', '_zeroLatestSoonDay', '_zeroStatusText', '_zeroCardStatus', '_zeroCardRow',
+  '_zeroDayText', '_zeroWhenText', '_zeroLatestSoonDay', '_zeroStatusText', '_zeroCardStatus', '_zeroLateStatusText', '_zeroCardRow',
   '_walletPrependZeroCard', '_zeroPillText', '_donowApplyZeroState', '_updateDoNowMissingPill'];
 
 function sandbox({ lessons = LESSONS, period = 'E', today = TODAY, grade = { pct: 81, q: 'Q1' } } = {}) {
@@ -322,6 +322,161 @@ describe('Schoology tag = the Schoology column title (Codex review 2026-09-30)',
       expect(t.s._zeroSchoologyTitle({ lessonKey: '8.8', kind: 'worksheet' })).toBeNull();
       t.s._gradeLessonsCache = null;
       expect(t.s._zeroSchoologyTitle({ lessonKey: '3.6', kind: 'worksheet' })).toBeNull();
+    } finally { t.close(); }
+  });
+});
+
+describe('never-zero lessons (QUARTER_ZERO_FREEZE_SPEC, teacher 2026-11-06)', () => {
+  // The lesson's quarter closed before its zero date: /grade sends zeroDate null + neverZero true.
+  const LATE_TEXT = 'late · no 0 · counts when you finish it';
+  const nz = (due) => ({ due: { B: null, E: due }, zeroDate: { B: null, E: null }, neverZero: { B: false, E: true } });
+  const LATE = [
+    // Everything missing, due 9/22 → three late rows.
+    { lessonKey: '4.5', unit: 4, worksheetKey: '5', ...nz('2026-09-22'), lessonGradeNoQuiz: null, Cws: null, quizTotal: 3, Q: null, hasBlooket: true, blooket: null },
+    // Worksheet done, quiz missing, due 9/18 → one late row, listed first (older).
+    { lessonKey: '4.2', unit: 4, worksheetKey: '2', ...nz('2026-09-18'), lessonGradeNoQuiz: 90, Cws: 100, quizTotal: 3, Q: null },
+    // Due TODAY → not late yet.
+    { lessonKey: '4.6', unit: 4, worksheetKey: '6', ...nz('2026-09-30'), lessonGradeNoQuiz: null, Cws: null },
+    // All done (a bonus deck never counts) → nowhere.
+    { lessonKey: '4.7', unit: 4, worksheetKey: '7', ...nz('2026-09-25'), lessonGradeNoQuiz: 80, Cws: 90, hasBlooket: true, blooketBonus: true, blooket: null },
+  ];
+  const lateRow = (lessonKey, kind, dueDate) => ({ lessonKey, kind, dueDate, zeroDate: null, unit: 4, worksheetKey: lessonKey.slice(2), late: true });
+
+  it('never warns: no 0 is coming', () => {
+    const t = sandbox({ lessons: LATE });
+    try {
+      expect(plain(t.s._zeroWarnings(LATE, 'E', TODAY))).toEqual([]);
+      expect(plain(t.s._zeroWarnings(LESSONS.concat(LATE), 'E', TODAY))).toEqual(plain(t.s._zeroWarnings(LESSONS, 'E', TODAY)));
+    } finally { t.close(); }
+  });
+
+  it('lists past-due never-zero work as late rows after the dated rows, oldest due first, same three rules', () => {
+    const t = sandbox({ lessons: LATE });
+    try {
+      const ordinary = plain(t.s._pastDueWork(LESSONS, 'E', TODAY));
+      const rows = plain(t.s._pastDueWork(LESSONS.concat(LATE), 'E', TODAY));
+      expect(rows.slice(0, ordinary.length)).toEqual(ordinary);   // dated rows unchanged, and first
+      for (const row of ordinary) expect('late' in row).toBe(false);
+      expect(rows.slice(ordinary.length)).toEqual([
+        lateRow('4.2', 'quiz', '2026-09-18'),
+        lateRow('4.5', 'worksheet', '2026-09-22'),
+        lateRow('4.5', 'quiz', '2026-09-22'),
+        lateRow('4.5', 'blooket', '2026-09-22'),
+      ]);
+    } finally { t.close(); }
+  });
+
+  it('reads only its own period: never-zero for E, an ordinary dated row for B', () => {
+    const mixed = [{ lessonKey: '4.3', unit: 4, worksheetKey: '3', due: { B: '2026-09-21', E: '2026-09-23' },
+      zeroDate: { B: '2026-10-04', E: null }, neverZero: { B: false, E: true }, lessonGradeNoQuiz: null, Cws: null }];
+    const t = sandbox({ lessons: mixed });
+    try {
+      expect(plain(t.s._pastDueWork(mixed, 'B', TODAY))).toEqual([
+        { lessonKey: '4.3', kind: 'worksheet', dueDate: '2026-09-21', zeroDate: '2026-10-04', unit: 4, worksheetKey: '3' },
+      ]);
+      expect(plain(t.s._pastDueWork(mixed, 'E', TODAY))).toEqual([lateRow('4.3', 'worksheet', '2026-09-23')]);
+    } finally { t.close(); }
+  });
+
+  it('the late rows read "late · no 0 · counts when you finish it"; the card stays calm', () => {
+    const t = sandbox({ lessons: [LATE[0]] });
+    try {
+      t.s._walletPrependZeroCard(t.host());
+      const card = t.card();
+      expect(card.classList.contains('wz-calm')).toBe(true);
+      const grey = [...card.querySelectorAll('.wz-later')];
+      expect(grey.map(g => g.querySelector('.wz-when').textContent)).toEqual([LATE_TEXT, LATE_TEXT, LATE_TEXT]);
+      expect(grey.map(g => g.querySelector('button').textContent)).toEqual(['Open', 'Quiz', 'Flashcards']);
+      expect(grey.map(g => g.querySelector('.wz-sgy').textContent)).toEqual([
+        'Schoology: 4.5 Follow-Along', 'Schoology: 4.5 Quiz', 'Schoology: 4.5 Blooket']);
+      expect(card.querySelector('.wz-status').textContent).not.toMatch(/becomes? a 0|count as 0|0s now|is a 0/);
+      expect(card.textContent).not.toMatch(/NaN|undefined/);
+    } finally { t.close(); }
+  });
+
+  it('a late row next to a real warning: the warning keeps the red/yellow frame, the late row stays grey', () => {
+    const t = sandbox({ lessons: [LESSONS[2], LATE[1]] });   // 3.2 is a 0 now; 4.2 quiz is late
+    try {
+      t.s._walletPrependZeroCard(t.host());
+      const kids = [...t.card().children].map(c => c.className);
+      expect(kids).toEqual(['wz-status geneva', 'wz-row wz-past', 'wz-later-head wz-late-head geneva', 'wz-row wz-later']);
+      expect(t.card().querySelector('.wz-late-head').textContent).toBe('Late — never a 0');
+      expect(t.card().querySelector('.wz-later .wz-when').textContent).toBe(LATE_TEXT);
+    } finally { t.close(); }
+  });
+
+  it('a late-only card: its own heading, and a status that never says a 0 is coming', () => {
+    const t = sandbox({ lessons: [LATE[0]] });
+    try {
+      t.s._walletPrependZeroCard(t.host());
+      const card = t.card();
+      expect([...card.querySelectorAll('.wz-later-head')].map(h => h.textContent)).toEqual(['Late — never a 0']);
+      expect(card.querySelector('.wz-status').textContent).toBe('Q1 so far: 81%. 3 items below are late: never a 0, and finishing them still counts.');
+    } finally { t.close(); }
+    const one = sandbox({ lessons: [LATE[1]] });
+    try {
+      one.s._walletPrependZeroCard(one.host());
+      expect(one.card().querySelector('.wz-status').textContent).toBe('Q1 so far: 81%. 1 item below is late: never a 0, and finishing it still counts.');
+    } finally { one.close(); }
+  });
+
+  it('past-due rows and late rows together: two headings, and the status names each kind', () => {
+    const t = sandbox({ lessons: [LESSONS[1], LATE[0]] });   // 3.0: a 0 after 10/6; 4.5: late
+    try {
+      t.s._walletPrependZeroCard(t.host());
+      const card = t.card();
+      expect([...card.children].map(c => c.className)).toEqual(['wz-status geneva',
+        'wz-later-head geneva', 'wz-row wz-later',
+        'wz-later-head wz-late-head geneva', 'wz-row wz-later', 'wz-row wz-later', 'wz-row wz-later']);
+      expect([...card.querySelectorAll('.wz-later-head')].map(h => h.textContent)).toEqual(['Past due — not counting yet', 'Late — never a 0']);
+      expect([...card.querySelectorAll('.wz-later .wz-when')].map(w => w.textContent)).toEqual([
+        'due Wed 9/23 · not a 0 until after Tue 10/6', LATE_TEXT, LATE_TEXT, LATE_TEXT]);
+      expect(card.querySelector('.wz-status').textContent).toBe('Q1 so far: 81%. 1 item below is past due. It is not counting yet — finishing it now keeps it that way. 3 more are late: never a 0, and finishing them still counts.');
+    } finally { t.close(); }
+  });
+
+  it('only past-due rows: the status is unchanged (no late sentence)', () => {
+    const t = sandbox({ lessons: [LESSONS[1]] });
+    try {
+      t.s._walletPrependZeroCard(t.host());
+      expect(t.card().querySelector('.wz-status').textContent).toBe('Q1 so far: 81%. 1 item below is past due. It is not counting yet — finishing it now keeps it that way.');
+      expect(t.card().querySelector('.wz-late-head')).toBeNull();
+    } finally { t.close(); }
+  });
+
+  it('a row that turns late with the same keys rebuilds the card (the signature carries the late flag)', () => {
+    // An older /grade (no neverZero) and then the freeze: same lesson, kind and order.
+    const dated = { lessonKey: '4.4', unit: 4, worksheetKey: '4', due: { B: null, E: '2026-09-22' }, zeroDate: { B: null, E: '2026-10-05' },
+      lessonGradeNoQuiz: null, Cws: null };
+    const t = sandbox({ lessons: [dated] });
+    try {
+      t.s._walletPrependZeroCard(t.host());
+      expect(t.card().querySelector('.wz-later .wz-when').textContent).toBe('due Tue 9/22 · not a 0 until after Mon 10/5');
+      t.s._gradeLessonsCache = [{ ...dated, zeroDate: { B: null, E: null }, neverZero: { B: false, E: true } }];
+      t.s._walletPrependZeroCard(t.host());
+      expect(t.host().querySelectorAll('.wallet-zero-card')).toHaveLength(1);
+      expect(t.card().querySelector('.wz-later .wz-when').textContent).toBe(LATE_TEXT);
+      expect(t.card().querySelector('.wz-late-head').textContent).toBe('Late — never a 0');
+    } finally { t.close(); }
+  });
+
+  it('Do Now ignores late rows: no tint and no missing pill', () => {
+    const t = sandbox({ lessons: LATE });
+    try {
+      t.s._updateDoNowMissingPill();
+      const card = t.doc.getElementById('donow-card');
+      expect(card.classList.contains('donow-zeros-soon')).toBe(false);
+      expect(card.classList.contains('donow-zeros-now')).toBe(false);
+      expect(t.doc.querySelector('.qpill-missing')).toBeNull();
+    } finally { t.close(); }
+  });
+
+  it('both date-cell helpers give a late row the late words, never a "0 after" date', () => {
+    const t = sandbox();
+    try {
+      expect(t.s._pastDueWhenText({ late: true, dueDate: '2026-09-22', zeroDate: null })).toBe(LATE_TEXT);
+      expect(t.s._zeroWhenText({ late: true, zeroDate: null })).toBe(LATE_TEXT);
+      expect(t.s._zeroWhenText({ past: false, zeroDate: '2026-10-08' })).toBe('0 after Thu 10/8');
     } finally { t.close(); }
   });
 });

@@ -213,6 +213,15 @@ export const PHASE3_CONFIG = {
   // keep the class date. Schoology gets an explicit 0 once this date has ended.
   dueLagDays: 13,
 
+  // SY2627 (teacher 2026-11-06): a lesson can only turn into a 0 while its quarter
+  // is open. "Whatever is a zero on the quarter's last day counts as a zero;
+  // anything that is merely late does not turn into a zero afterwards." Each
+  // quarter judges lesson due-ness as of min(today, quarter end), and /grade sends
+  // such a lesson with zeroDate null + neverZero true for that period. Late work
+  // still counts when it is finished. Absent in the frozen SY2526 config, so
+  // history does not move (QUARTER_ZERO_FREEZE_SPEC.md).
+  zeroFreezeAtQuarterEnd: true,
+
   // SY2627 (teacher 2026-09-03): early-completion bonus — +perLesson points on
   // the quarter grade for each scheduled-due lesson whose worksheet work was all
   // submitted by 11:59 PM on its due date, capped at `cap` per quarter (0 = off,

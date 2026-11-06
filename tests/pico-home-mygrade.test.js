@@ -548,6 +548,43 @@ describe('Pico My Grade v2: buckets, hero, folds', { timeout: 180_000 }, () => {
     }
   });
 
+  it('late rows (QUARTER_ZERO_FREEZE_SPEC): their own heading in NOT YET, the same words as the System 7 card', async () => {
+    // 1.9: its quarter closed before its zero date (/grade: zeroDate null, neverZero true), worksheet missing.
+    const never = { B: true, E: true, X: true };
+    const late = { lessonKey: '1.9', unit: 1, worksheetKey: '9', due: PERIODS('2026-09-30'), zeroDate: { B: null, E: null, X: null }, neverZero: never };
+    const lessons = [...LESSONS, late];
+    const headsOf = (doc, selector) => [...doc.querySelectorAll(selector)].map((h) => norm(h.textContent));
+    const off = await bootLessons(false, lessons);
+    let classic, classicHeads;
+    try {
+      await openLedger(off);
+      classic = system7(off.document);
+      classicHeads = headsOf(off.document, '#wallet-content .wz-later-head');
+    } finally {
+      off.teardown();
+    }
+    const on = await bootLessons(true, lessons);
+    try {
+      await openLedger(on);
+      const doc = on.document;
+      const LATE_TEXT = 'late · no 0 · counts when you finish it';
+      expect(classicHeads).toEqual(['Past due — not counting yet', 'Late — never a 0']);
+      expect(headsOf(doc, '#pico-ledger-zero .pl-later-head')).toEqual(classicHeads);
+      expect([...doc.querySelectorAll('#pico-ledger-zero .pl-later-head')].map((h) => h.getAttribute('data-bucket'))).toEqual(['notyet', 'notyet']);
+      expect(tilesIn(doc, 'notyet').map((t) => t.getAttribute('data-key'))).toEqual(['1.3:worksheet:later', '1.9:worksheet:later']);
+      expect(norm(tilesIn(doc, 'notyet')[1].querySelector('.wz-when').textContent)).toBe(LATE_TEXT);
+      expect(navButton(doc, 'notyet').textContent).toBe('NOT YET (2)');
+      expect(pico(doc).rows).toEqual(classic.rows);
+      expect(pico(doc).status).toBe(classic.status);
+      // A row that turns late with the same keys gets a new signature (the tiles are rebuilt).
+      const row = { lessonKey: '1.3', kind: 'worksheet' };
+      expect(on.window.PicoHome.zeroSignature([], [{ ...row, late: true }], []))
+        .not.toBe(on.window.PicoHome.zeroSignature([], [row], []));
+    } finally {
+      on.teardown();
+    }
+  });
+
   it('done-only: opens on DONE; nothing at all: opens on ZEROED with its empty line', async () => {
     const doneOnly = await bootLessons(true, [LESSONS[3]]);
     try {

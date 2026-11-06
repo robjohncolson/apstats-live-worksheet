@@ -727,6 +727,64 @@ export function isLessonDue(dateStr, todayDateStr, config) {
   return isDateDue(lessonZeroDate(dateStr, config), todayDateStr, config);
 }
 
+// ── Quarter-end zero freeze (SY2627, teacher 2026-11-06) ────────────────────
+//
+// "Whatever is a zero on the quarter's last day counts as a zero; anything that
+// is merely late does not turn into a zero afterwards. Late work still counts
+// when it is finished." With config.zeroFreezeAtQuarterEnd, quarter Q judges
+// lesson due-ness as of min(today, Q.end): a Q lesson whose zero date has not
+// passed by the end of Q's last day is never due in Q, so it is never a 0.
+// Once Q has ended, such a lesson is "late": its scores join each Work track
+// only where they help (addLateScoresThatHelp), so doing late work can never
+// lower a grade. PC dates, posters and the early bonus keep the real today.
+// QUARTER_ZERO_FREEZE_SPEC.md.
+
+// The last day of quarterKey while the freeze is on, else null (flag absent in
+// the frozen SY2526 config, an unknown quarter, or a quarter with no end date).
+function zeroFreezeEnd(quarterKey, config) {
+  if (!config || !config.zeroFreezeAtQuarterEnd) return null;
+  const quarter = config.quarters && config.quarters[quarterKey];
+  return (quarter && quarter.end) || null;
+}
+
+// The "today" that lesson due-ness uses for quarterKey: min(today, quarter end).
+// Unchanged while the quarter is open or when the freeze is off.
+export function dueTodayForQuarter(todayDateStr, quarterKey, config) {
+  const end = zeroFreezeEnd(quarterKey, config);
+  if (!end || !todayDateStr) return todayDateStr;
+  return end < todayDateStr ? end : todayDateStr;
+}
+
+// True when a quarterKey lesson with this zero date can never become a 0: the
+// date has not passed by the end of the quarter's last day. It is the same
+// isDateDue test the engine runs on dueTodayForQuarter, so the two always agree
+// (under dueAfterLessonDay a zero date ON the last day is never a 0 either).
+export function lessonNeverZero(zeroDate, quarterKey, config) {
+  const end = zeroFreezeEnd(quarterKey, config);
+  if (!end || !zeroDate) return false;
+  return !isDateDue(zeroDate, end, config);
+}
+
+// Late work only helps. Start from a track's sum and count (due zeros included)
+// and add the late scores best first, each one only while it is at least the
+// running average. The result is the best average any choice of late scores can
+// give, so adding or raising a late score never lowers the track, and raising a
+// due score never does either. With nothing else in the track, the best late
+// score starts it.
+//   late -- [{ key, score }]: the late lessons' scores for this track
+// Returns { sum, count, keptKeys }: the track with the late scores that count.
+export function addLateScoresThatHelp(sum, count, late) {
+  const bestFirst = [...late].sort((a, b) => b.score - a.score);
+  const keptKeys = [];
+  for (const { key, score } of bestFirst) {
+    if (count > 0 && score < sum / count) break;
+    sum += score;
+    count += 1;
+    keptKeys.push(key);
+  }
+  return { sum, count, keptKeys };
+}
+
 // Epoch ms of 23:59:59 on a YYYY-MM-DD date in an IANA timezone (the deadline
 // instant used by the early-completion bonus). Falls back to UTC.
 export function endOfDayEpochInTz(dateStr, tz) {
@@ -1025,6 +1083,9 @@ export function computeQuarterFromLessons({
   // Determine which lessons are "due" by today.
   // A lesson is due if its period's date <= todayDateStr.
   // If section unknown, use the union (due if EITHER period's date <= today).
+  // Quarter-end zero freeze (teacher 2026-11-06): "today" is at most this
+  // quarter's last day, so a lesson merely late when it closed is never a 0.
+  const dueToday = dueTodayForQuarter(todayDateStr, quarterKey, config);
   function isDue(topicKey) {
     const entry = schedule[topicKey];
     if (!entry || typeof entry !== 'object') return false;
@@ -1035,11 +1096,11 @@ export function computeQuarterFromLessons({
         // No date for this period — treat as not-yet-due (future).
         return false;
       }
-      return isLessonDue(dueDate, todayDateStr, config);
+      return isLessonDue(dueDate, dueToday, config);
     }
     // Unknown section: due if EITHER B or E is due.
-    const bDue = isLessonDue(periods.B, todayDateStr, config);
-    const eDue = isLessonDue(periods.E, todayDateStr, config);
+    const bDue = isLessonDue(periods.B, dueToday, config);
+    const eDue = isLessonDue(periods.E, dueToday, config);
     return !!(bDue || eDue);
   }
 
@@ -1355,26 +1416,53 @@ export function computeQuarterV3({
   }
   const lessonsTotal = bandLessons.length;
 
-  function isDue(topicKey) {
+  // Quarter-end zero freeze (teacher 2026-11-06): lesson due-ness for THIS quarter
+  // is judged as of min(today, quarter end), so a lesson merely late on the
+  // quarter's last day never turns into a 0. The PC track, posters and the early
+  // bonus below keep the real todayDateStr.
+  const dueToday = dueTodayForQuarter(todayDateStr, quarterKey, config);
+  const quarterEnded = dueToday !== todayDateStr;
+
+  // The class dates that decide a lesson for this student: their period's date,
+  // or either period's when the section is unknown.
+  function lessonDates(topicKey) {
     const entry = schedule[topicKey];
-    if (!entry || typeof entry !== 'object') return false;
+    if (!entry || typeof entry !== 'object') return [];
     const periods = entry.periods && typeof entry.periods === 'object' ? entry.periods : {};
-    if (period) {
-      const d = periods[period];
-      return isLessonDue(d, todayDateStr, config);
+    return period ? [periods[period]] : [periods.B, periods.E];
+  }
+  function isDue(topicKey) {
+    return lessonDates(topicKey).some((d) => isLessonDue(d, dueToday, config));
+  }
+  // Late = frozen out by the quarter end: taught (its class day has passed) but
+  // not due by the end of the quarter's last day. A late lesson is never a 0 in
+  // any track, and from the day after the quarter ends its scores join each track
+  // only where they help (addLateScoresThatHelp). Never true while it is open.
+  function isLate(topicKey) {
+    if (!quarterEnded || isDue(topicKey)) return false;
+    return lessonDates(topicKey).some((d) => isDateDue(d, todayDateStr, config));
+  }
+  const lateLessons = new Set(bandLessons.filter(isLate));
+
+  // The late lessons' scores for one track, as [{ key, score }]. scoreOf(r, key)
+  // returns null for a lesson that has no score in the track.
+  function lateScores(scoreOf) {
+    const out = [];
+    for (const key of lateLessons) {
+      const score = scoreOf(lessonMap.get(key), key);
+      if (score != null) out.push({ key, score });
     }
-    const bDue = isLessonDue(periods.B, todayDateStr, config);
-    const eDue = isLessonDue(periods.E, todayDateStr, config);
-    return !!(bDue || eDue);
+    return out;
   }
 
-  // Due = scheduled-due OR has recorded work (same convention as Phase 6).
+  // Due = scheduled-due OR has recorded work (same convention as Phase 6). A late
+  // lesson is neither: each track adds its late scores after its own count.
   const dueLessons = bandLessons.filter((topicKey) => {
     if (isDue(topicKey)) return true;
+    if (lateLessons.has(topicKey)) return false;
     const r = lessonMap.get(topicKey);
     return !!(r && r.lessonGrade != null);
   });
-  const lessonsDue = dueLessons.length;
 
   // ── Lessons track (worksheet blanks + FRQ; quiz excluded by default) ──
   // Denominator = ALL due lessons: every lesson has a worksheet, so a null is
@@ -1417,7 +1505,14 @@ export function computeQuarterV3({
     const lv = lessonTrackValue(r);
     if (lv != null) { lessonSum += lv; lessonGradedCount += 1; }
   }
-  const lessonsAvg = lessonTrackKeys.length > 0 ? (lessonSum / lessonTrackKeys.length) / 100 : null;
+  // Late worksheets (quarter-end zero freeze): never a 0; one with work joins
+  // only where it lifts the track.
+  const lateLessonTrack = addLateScoresThatHelp(lessonSum, lessonTrackKeys.length, lateScores(lessonTrackValue));
+  lessonSum = lateLessonTrack.sum;
+  lessonGradedCount += lateLessonTrack.keptKeys.length;
+  const lessonsAvg = lateLessonTrack.count > 0 ? (lessonSum / lateLessonTrack.count) / 100 : null;
+  // A late lesson whose worksheet counts is reported as due, like any counted one.
+  const lessonsDue = dueLessons.length + lateLessonTrack.keptKeys.length;
 
   // ── Quizzes track (curriculum-quiz correctness) ──
   // Denominator = due lessons that HAVE a quiz (quizLessons), NOT all due lessons.
@@ -1437,6 +1532,7 @@ export function computeQuarterV3({
   const quizCandidates = fixQuizZero ? bandLessons : dueLessons;
   for (const topicKey of quizCandidates) {
     if (quizSet != null && !quizSet.has(topicKey)) continue; // quiz-less lesson excluded
+    if (lateLessons.has(topicKey)) continue;                  // late: added below, never a 0
     const r = lessonMap.get(topicKey);
     const q = r && r.Q != null ? r.Q : null;
     if (fixQuizZero && !(isDue(topicKey) || q != null)) continue; // early + un-attempted → not a 0
@@ -1444,6 +1540,15 @@ export function computeQuarterV3({
     if (q != null) { quizSum += q; quizDone += 1; }
     else { quizTodo.push(topicKey); } // due quiz-bearing lesson, not taken -> 0
   }
+  // Late quizzes (quarter-end zero freeze): never a 0; a taken one joins only
+  // where it lifts the track.
+  const lateQuizTrack = addLateScoresThatHelp(quizSum, quizDue, lateScores((r, key) => {
+    if (quizSet != null && !quizSet.has(key)) return null;
+    return r && r.Q != null ? r.Q : null;
+  }));
+  quizSum = lateQuizTrack.sum;
+  quizDue = lateQuizTrack.count;
+  quizDone += lateQuizTrack.keptKeys.length;
   const quizzesAvg = quizDue > 0 ? (quizSum / quizDue) / 100 : null;
 
   // -- Blooket track (BLOOKET_MAKEUP_BUILD.md) -- now a real per-lesson grade:
@@ -1466,29 +1571,47 @@ export function computeQuarterV3({
   // surfaced as missing). Drawing from bandLessons (not dueLessons) also keeps a
   // phantom 0 out of the lessons/quizzes tracks for that ahead-of-schedule lesson.
   const blooketSet = new Set(Array.isArray(blooketLessons) ? blooketLessons : []);
+  // Collapse combined-worksheet constituents into ONE slot. A single combined
+  // Blooket (e.g. BLOOKET-U4L1-2) attaches the SAME score to every constituent
+  // topic (4.1 AND 4.2), so counting each separately would over-weight it vs a
+  // solo Blooket. Group by unit|worksheetKey; fall back to the topicKey for
+  // solo lessons (and test schedules with no worksheetKey) so solos are never
+  // collapsed. No-op for today's all-solo Blooket set — guards a future rebake.
+  function blooketGroupKey(topicKey) {
+    const entry = schedule[topicKey];
+    return (entry && entry.worksheetKey != null)
+      ? `${entry.unit}|${entry.worksheetKey}`
+      : topicKey;
+  }
   const seenBlooketGroups = new Set();
   let blooketSum = 0, blooketDue = 0, blooketDone = 0;
   const blooketTodo = /** @type {string[]} */ ([]);
   for (const topicKey of bandLessons) {
     if (!blooketSet.has(topicKey)) continue;
+    if (lateLessons.has(topicKey)) continue;   // late: added below, never a 0
     const r = lessonMap.get(topicKey);
     if (!(isDue(topicKey) || (r && r.blooket != null))) continue;
-    // Collapse combined-worksheet constituents into ONE slot. A single combined
-    // Blooket (e.g. BLOOKET-U4L1-2) attaches the SAME score to every constituent
-    // topic (4.1 AND 4.2), so counting each separately would over-weight it vs a
-    // solo Blooket. Group by unit|worksheetKey; fall back to the topicKey for
-    // solo lessons (and test schedules with no worksheetKey) so solos are never
-    // collapsed. No-op for today's all-solo Blooket set — guards a future rebake.
-    const entry = schedule[topicKey];
-    const groupKey = (entry && entry.worksheetKey != null)
-      ? `${entry.unit}|${entry.worksheetKey}`
-      : topicKey;
+    const groupKey = blooketGroupKey(topicKey);
     if (seenBlooketGroups.has(groupKey)) continue;
     seenBlooketGroups.add(groupKey);
     blooketDue += 1;
     if (r && r.blooket != null) { blooketSum += r.blooket; blooketDone += 1; }
     else { blooketTodo.push(topicKey); }   // due but no score → 0, a make-up opportunity
   }
+  // Late decks (quarter-end zero freeze): never a 0; a played one joins only
+  // where it lifts the track, one slot per worksheet group as above (a group a
+  // due sibling already counted is not counted again).
+  const lateDecks = [];
+  for (const deck of lateScores((r, key) => (blooketSet.has(key) && r && r.blooket != null ? r.blooket : null))) {
+    const groupKey = blooketGroupKey(deck.key);
+    if (seenBlooketGroups.has(groupKey)) continue;
+    seenBlooketGroups.add(groupKey);
+    lateDecks.push(deck);
+  }
+  const lateBlooketTrack = addLateScoresThatHelp(blooketSum, blooketDue, lateDecks);
+  blooketSum = lateBlooketTrack.sum;
+  blooketDue = lateBlooketTrack.count;
+  blooketDone += lateBlooketTrack.keptKeys.length;
   const blooketAvg = blooketDue > 0 ? (blooketSum / blooketDue) / 100 : null;
 
   // ── TI-84 trainer track (TI84_GRADE_INTEGRATION_SPEC.md §C) ──
@@ -1504,12 +1627,19 @@ export function computeQuarterV3({
   const trainerTodo = /** @type {string[]} */ ([]);
   for (const topicKey of bandLessons) {
     if (!trainerSet.has(topicKey)) continue;
+    if (lateLessons.has(topicKey)) continue;   // late: added below, never a 0
     const r = lessonMap.get(topicKey);
     if (!(isDue(topicKey) || (r && r.trainer != null))) continue;
     trainerDue += 1;
     if (r && r.trainer != null) { trainerSum += r.trainer; trainerDone += 1; }
     else { trainerTodo.push(topicKey); }
   }
+  // Late trainer scores (quarter-end zero freeze): never a 0; only where they help.
+  const lateTrainerTrack = addLateScoresThatHelp(trainerSum, trainerDue,
+    lateScores((r, key) => (trainerSet.has(key) && r && r.trainer != null ? r.trainer : null)));
+  trainerSum = lateTrainerTrack.sum;
+  trainerDue = lateTrainerTrack.count;
+  trainerDone += lateTrainerTrack.keptKeys.length;
   const trainerAvg = trainerDue > 0 ? (trainerSum / trainerDue) / 100 : null;
   const trainerWeight = (config && config.trainer && Number(config.trainer.weight)) || 0;
 
@@ -1786,6 +1916,20 @@ export function buildLessonsArray(lessonMap, schedule, topicNames, gradingWindow
   const trainerSet = new Set(Array.isArray(trainerLessons) ? trainerLessons : []);
   const bonusSet = new Set(Array.isArray(blooketBonusTopics) ? blooketBonusTopics : []);
 
+  // Quarter-end zero freeze (QUARTER_ZERO_FREEZE_SPEC.md, teacher 2026-11-06): a
+  // lesson whose zero date has not passed by the end of its quarter's last day can
+  // never become a 0, so that period reports zeroDate null + neverZero true. The
+  // quarter is the one the v3 band loop files the lesson under for that period.
+  // Flag off (the frozen SY2526 config): no neverZero field, rows byte-identical.
+  const freezeConfig = config && config.zeroFreezeAtQuarterEnd && config.quarters ? config : null;
+  function neverZeroFor(entry, period, zeroDate) {
+    if (!freezeConfig || !zeroDate) return false;
+    const quarterKey = freezeConfig.v3LessonsByDate
+      ? quarterOfLesson(entry, period, freezeConfig)
+      : quarterOfUnit(entry.unit, /** @type {any} */ (freezeConfig));
+    return lessonNeverZero(zeroDate, quarterKey, freezeConfig);
+  }
+
   // Include every lesson from the schedule (not just those with data).
   const sortedKeys = Object.keys(schedule).sort((a, b) => {
     const [ua, la] = a.split('.');
@@ -1813,6 +1957,10 @@ export function buildLessonsArray(lessonMap, schedule, topicNames, gradingWindow
     if (!entry || typeof entry !== 'object' || typeof entry.unit !== 'number') continue;
     const periods = entry.periods && typeof entry.periods === 'object' ? entry.periods : {};
     const lessonResult = lessonMap.get(topicKey);
+    const zeroB = lessonZeroDate(periods.B, config) || null;
+    const zeroE = lessonZeroDate(periods.E, config) || null;
+    const neverB = neverZeroFor(entry, 'B', zeroB);
+    const neverE = neverZeroFor(entry, 'E', zeroE);
 
     result.push({
       lessonKey: topicKey,
@@ -1820,8 +1968,10 @@ export function buildLessonsArray(lessonMap, schedule, topicNames, gradingWindow
       worksheetKey: entry.worksheetKey,
       topicName: (topicNames && topicNames[topicKey]) || null,
       due: { B: periods.B || null, E: periods.E || null },
-      // SY2627: the date after which a missing worksheet is a 0 (due + config.dueLagDays).
-      zeroDate: { B: lessonZeroDate(periods.B, config) || null, E: lessonZeroDate(periods.E, config) || null },
+      // SY2627: the date after which a missing worksheet is a 0 (due + config.dueLagDays);
+      // null for a period whose quarter closed before that date (it can never be a 0).
+      zeroDate: { B: neverB ? null : zeroB, E: neverE ? null : zeroE },
+      ...(freezeConfig ? { neverZero: { B: neverB, E: neverE } } : {}),
       lessonGrade: lessonResult ? lessonResult.lessonGrade : null,
       // v3 Lessons-track value ({Cws, W} blend, quiz excluded) — the apples-to-apples
       // "Follow-Along" cell for the in-app/Schoology gradebook (worksheet blanks +

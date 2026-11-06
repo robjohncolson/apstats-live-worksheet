@@ -362,3 +362,26 @@ describe('Open goes straight to the worksheet (teacher 2026-09-26: "one step cli
     expect(src.indexOf('e.urls.worksheet')).toBeLessThan(src.indexOf('showResourcePanel'));
   });
 });
+
+describe('ZERO_WARNING — never-zero lessons (QUARTER_ZERO_FREEZE_SPEC, teacher 2026-11-06)', () => {
+  // The lesson's quarter closed before its zero date: /grade sends zeroDate null + neverZero true.
+  const NEVER = [
+    { lessonKey: '4.5', due: { B: '2026-09-01', E: '2026-09-02' }, zeroDate: { B: null, E: null }, neverZero: { B: true, E: true },
+      lessonGradeNoQuiz: null, Cws: null, quizTotal: 3, Q: null, hasBlooket: true, blooket: null },
+  ];
+  it('never warns, in either period, even long past its due date', () => {
+    const { s, close } = sandbox({ lessons: NEVER });
+    try {
+      expect(s._zeroWarnings(NEVER, 'B', '2026-09-21')).toEqual([]);
+      expect(s._zeroWarnings(NEVER, 'E', '2026-12-01')).toEqual([]);
+      expect(s._zeroWarnings(LESSONS.concat(NEVER), 'B', '2026-09-21')).toEqual(s._zeroWarnings(LESSONS, 'B', '2026-09-21'));
+    } finally { close(); }
+  });
+  it('adds nothing to the My Ledger badge', () => {
+    const { s, dom, close } = sandbox({ lessons: NEVER });
+    try {
+      s._updateZeroWarningBadge();
+      expect(dom.window.document.querySelector('.wallet-zero-badge')).toBeNull();
+    } finally { close(); }
+  });
+});

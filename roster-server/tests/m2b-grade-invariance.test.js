@@ -8,6 +8,7 @@
  *   - transcript artifactHash via the REAL transcript.js export
  *   - full frozen config including useV3
  *   - hasBlooketSample via lessonKey (buildLessonsArray field)
+ *   - SY2627 live-config keys added after the goldens were written (SY2627_CONFIG_ADDED)
  *
  * Expected outputs: tests/fixtures/m2b-invariance/*.json
  * Regenerate: UPDATE_M2B_GOLDEN=1 npx vitest run tests/m2b-grade-invariance.test.js
@@ -23,6 +24,19 @@ import { artifactHash } from '../transcript.js';
 const here = dirname(fileURLToPath(import.meta.url));
 const FIX_DIR = resolve(here, 'fixtures/m2b-invariance');
 const UPDATE = process.env.UPDATE_M2B_GOLDEN === '1';
+
+// Keys the LIVE SY2627 config gained on purpose after these goldens were written.
+// The fixtures stay as they are: an SY2627 run must equal its golden plus exactly
+// these keys and values, so any other config drift (or losing one of these keys)
+// still fails. Once UPDATE_M2B_GOLDEN=1 writes them into the fixtures, the golden
+// wins and this is a no-op.
+//   zeroFreezeAtQuarterEnd: QUARTER_ZERO_FREEZE_SPEC.md (teacher 2026-11-06). The
+//   goldens are as of 2026-10-20, inside Q1, so none of their grades may move.
+const SY2627_CONFIG_ADDED = { zeroFreezeAtQuarterEnd: true };
+
+function withSy2627ConfigAdded(golden) {
+  return { ...golden, frozenConfig: { ...SY2627_CONFIG_ADDED, ...golden.frozenConfig } };
+}
 
 function loadAnswerKey() {
   const p = resolve(here, '../data/answer-key.json');
@@ -138,14 +152,14 @@ function writeGolden(name, obj) {
   writeFileSync(resolve(FIX_DIR, name), JSON.stringify(obj, null, 2) + '\n', 'utf8');
 }
 
-function assertOrUpdate(name, actual) {
+function assertOrUpdate(name, actual, expectedFromGolden = (golden) => golden) {
   if (UPDATE) {
     writeGolden(name, actual);
     return;
   }
   const expected = readGolden(name);
   expect(expected, `missing golden ${name} — run with UPDATE_M2B_GOLDEN=1`).toBeTruthy();
-  expect(actual).toEqual(expected);
+  expect(actual).toEqual(expectedFromGolden(expected));
 }
 
 describe('M2b auditable invariance (resolver path)', () => {
@@ -166,7 +180,7 @@ describe('M2b auditable invariance (resolver path)', () => {
       if (actual.grade.lessonsCount > 0) {
         expect(actual.grade.hasBlooketSample.length).toBeGreaterThan(0);
       }
-      assertOrUpdate(`sy2627-${name}.json`, actual);
+      assertOrUpdate(`sy2627-${name}.json`, actual, withSy2627ConfigAdded);
     }
   });
 
@@ -213,7 +227,7 @@ describe('M2b auditable invariance (resolver path)', () => {
       // No schedule override injection — resolver must honor env itself.
       const actual = gradeViaResolver('SY2627', scenarios().mixed);
       expect(actual.schedule_1_1_B).toBe('2099-06-01');
-      assertOrUpdate('sy2627-env-schedule-override.json', actual);
+      assertOrUpdate('sy2627-env-schedule-override.json', actual, withSy2627ConfigAdded);
     } finally {
       try { unlinkSync(tmp); } catch (_) { /* ignore */ }
     }

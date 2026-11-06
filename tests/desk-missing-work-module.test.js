@@ -14,6 +14,9 @@ const rows = [
   { lessonKey: '1.1', zeroDate: { B: '2026-09-29', E: '2026-10-02' }, Cws: 90, quizTotal: 2, Q: null },
   { lessonKey: '1.2', due: { B: '2026-09-25', E: '2026-09-25' }, zeroDate: { B: '2026-10-08', E: '2026-10-08' } },
 ];
+// QUARTER_ZERO_FREEZE_SPEC (teacher 2026-11-06): its quarter closed before its zero date.
+const NEVER_ZERO = { lessonKey: '4.5', unit: 4, worksheetKey: '5', due: { B: '2026-09-20', E: '2026-09-21' },
+  zeroDate: { B: null, E: null }, neverZero: { B: true, E: true } };
 
 describe('missing-work module integration', () => {
   it.each(['classic', 'park'])('loads the real module and renders its results in the %s Desk', async (home) => {
@@ -53,6 +56,20 @@ describe('missing-work module integration', () => {
       expect(window._zeroCurrentWarnings()[0]).toMatchObject({ daysLeft: 2, past: false });
       window._walletPrependZeroCard(host);
       expect(host.querySelector('.wz-past')).toBeNull();
+
+      // A never-zero lesson never warns (the badge stays 1) but lists last as a late grey row.
+      window.eval("cP = 'B'");
+      window._gradeLessonsCache = rows.concat([NEVER_ZERO]);
+      expect(window._zeroCurrentWarnings().map((row) => row.lessonKey)).toEqual(['1.1']);
+      expect(window._pastDueCurrentWork().map((row) => [row.lessonKey, row.kind, row.zeroDate, row.late === true])).toEqual([
+        ['1.2', 'worksheet', '2026-10-08', false],
+        ['4.5', 'worksheet', null, true],
+      ]);
+      window._updateZeroWarningBadge();
+      expect(document.querySelector('.wallet-zero-badge')?.textContent).toBe('1');
+      window._walletPrependZeroCard(host);
+      expect(host.querySelector('.wz-later[data-key="4.5:worksheet:later"] .wz-when')?.textContent)
+        .toBe('late · no 0 · counts when you finish it');
 
       window._gradeLessonsCache = [];
       window._updateZeroWarningBadge();

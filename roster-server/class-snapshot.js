@@ -44,14 +44,19 @@ export const COURSE_SECTIONS = ['PeriodB', 'PeriodE'];
 // A section past its zero date contributes everyone (missing = 0); a section that has taught
 // the lesson but is not yet past its date contributes recorded scores only. An item that is
 // pending everywhere stays in the pool as `pending: true` (its zero date is the soonest).
+// A section whose quarter closed before the zero date (`neverZero`, QUARTER_ZERO_FREEZE_SPEC.md)
+// adds its recorded scores only: its zeroDates entry is null, neverZero[section] is true, and it
+// never sets the pooled zero date. A lesson that no section can ever count stays out.
 export function mergeSnapshots(snapshots, sections) {
   const values = snapshots.flatMap(s => s.values || []).sort((a, b) => a - b);
   const first = snapshots[0] || {};
   const merged = { ok: true, section: 'all', sections, quarter: first.quarter, asOf: first.asOf, ...summarizeValues(values) };
   if (!snapshots.some(s => Array.isArray(s.assignments))) return merged;
   const byKey = new Map();
+  const neverZeroItems = [];
   for (const snapshot of snapshots) {
     for (const item of snapshot.assignments || []) {
+      if (item.neverZero) { neverZeroItems.push({ section: snapshot.section, item }); continue; }
       const have = byKey.get(item.key);
       // Per-section zero dates let a viewer keep only what their own section has been taught.
       if (!have) { byKey.set(item.key, { ...item, values: item.values.slice(), zeros: item.zeros, tentativeZeros: item.tentativeZeros || 0, zeroDates: { [snapshot.section]: item.zeroDate } }); continue; }
@@ -63,6 +68,13 @@ export function mergeSnapshots(snapshots, sections) {
       have.pending = Boolean(have.pending && item.pending);
       have.zeros = have.zeros == null || item.zeros == null ? null : have.zeros + item.zeros;
     }
+  }
+  for (const { section, item } of neverZeroItems) {
+    const have = byKey.get(item.key);
+    if (!have) continue;
+    have.values = have.values.concat(item.values);
+    have.zeroDates[section] = null;
+    have.neverZero = { ...(have.neverZero || {}), [section]: true };
   }
   merged.assignments = [...byKey.values()].map(item => {
     const pooled = item.values.slice().sort((a, b) => a - b);
@@ -106,13 +118,20 @@ export function mountClassSnapshot(app, { db, verifyToken, computeClassGrades, c
     // Each student's lessons include the full schedule, even untouched lessons.
     const lessons = grades.students[0]?.lessons || [];
     const seenTracks = new Set();
+    // Never-zero items dedupe among themselves, so a never-zero first lesson of a
+    // combined worksheet (4.7 of 4.7-8) never hides a later sibling that counts (4.8).
+    const seenNeverZeroTracks = new Set();
     for (const lesson of lessons) {
       const zeroDate = lesson.zeroDate?.[period];
-      if (!zeroDate) continue;
-      const pending = zeroDate >= asOf;
       // Pooled call: a lesson already TAUGHT in this section (class day passed) but not yet
       // counting still appears — that is exactly the "becomes a 0 soon" list on the Desk.
       const taught = lesson.due?.[period] != null && lesson.due[period] <= asOf;
+      // Its quarter closed before its zero date (QUARTER_ZERO_FREEZE_SPEC.md): never a 0 in
+      // this section. Only the pooled call lends its recorded scores (mergeSnapshots).
+      const neverZero = !zeroDate && lesson.neverZero?.[period] === true;
+      if (neverZero && !(pendingScores && taught)) continue;
+      if (!zeroDate && !neverZero) continue;
+      const pending = !neverZero && zeroDate >= asOf;
       if (pending && !(pendingScores && taught)) continue;
 
       const tracks = [];
@@ -123,8 +142,9 @@ export function mountClassSnapshot(app, { db, verifyToken, computeClassGrades, c
         const groupKey = track !== 'quiz' && lesson.worksheetKey
           ? `${lesson.unit}|${lesson.worksheetKey}:${track}`
           : `${lesson.lessonKey}:${track}`;
-        if (seenTracks.has(groupKey)) continue;
-        seenTracks.add(groupKey);
+        const seen = neverZero ? seenNeverZeroTracks : seenTracks;
+        if (seen.has(groupKey)) continue;
+        seen.add(groupKey);
         // Assignment n counts every non-staff roster row, including missing scores;
         // top-level n counts only finite quarter grades. Due lessons span quarters.
         const scores = grades.students.map(student => {
@@ -135,14 +155,16 @@ export function mountClassSnapshot(app, { db, verifyToken, computeClassGrades, c
         });
         const missing = scores.filter(value => value === null).length;
         // Before the zero date, missing work is not a 0 yet: it is left out (a tentative 0).
+        // A never-zero lesson leaves it out for good.
         const values = scores
-          .map(value => (value === null && !pending ? 0 : value))
+          .map(value => (value === null && !pending && !neverZero ? 0 : value))
           .filter(value => value !== null)
           .sort((a, b) => a - b);
         const summary = summarizeValues(values);
         snapshot.assignments.push({
           key: `${lesson.lessonKey}:${track}`, lessonKey: lesson.lessonKey, track,
-          title: cedAssignmentTitle(lesson, track), zeroDate, ...summary,
+          title: cedAssignmentTitle(lesson, track), zeroDate: zeroDate || null, ...summary,
+          ...(neverZero ? { neverZero: true } : {}),
           // Internal pooled call: keep the raw values so the n<5 floor applies to the POOL,
           // not to each section's slice (mergeSnapshots re-summarizes and re-applies it).
           // Tentative zeros: taught here, not yet past the zero date, no score yet.

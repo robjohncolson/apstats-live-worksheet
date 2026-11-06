@@ -235,7 +235,7 @@ describe('slips v2 (SLIPS_V2_SPEC §1)', () => {
       zeroDate: '2026-09-20', zeroDates: { PeriodB: '2026-09-20', PeriodE: '2026-09-28' } }];
     pool.sections = ['PeriodB', 'PeriodE'];   // fetchPool carries the payload's sections on the array
     const tex = renderTex([kid, ...others], [kid], 'PeriodB', '2026-09-26', 'Q1', pool);
-    expect(COLOR_DEFS).toHaveLength(7);   // + deskgreen (EFFORT_VISIBILITY_SPEC §2)
+    expect(COLOR_DEFS).toHaveLength(9);   // + deskgreen (EFFORT_VISIBILITY_SPEC §2), + the late-row greys (QUARTER_ZERO_FREEZE_SPEC)
     for (const line of COLOR_DEFS) expect(tex).toContain(line);
     expect(tex).toContain('\\definecolor{deskred}{HTML}{CC0000}');
     expect(tex).toContain('\\definecolor{desktentative}{HTML}{FFF3B0}');
@@ -448,5 +448,87 @@ describe('officialPcSentence (teacher rule: work + bonuses >= 40 lets the PC cou
   it('one bonus point is singular; no breakdown gives no sentence', () => {
     expect(officialPcSentence({ work: 73.58, pc: 94.4, line: 74.58, rule: 'PC' })).toContain('plus 1 bonus point reached');
     expect(officialPcSentence({})).toBe('');
+  });
+});
+
+describe('never-zero lessons on the slip (QUARTER_ZERO_FREEZE_SPEC, teacher 2026-11-06)', () => {
+  // The lesson's quarter closed before its zero date: /class/grades sends zeroDate null + neverZero true.
+  const BS = String.fromCharCode(92);
+  const nz = (lessonKey, due, extra = {}) => ({ lessonKey, due: { B: due }, zeroDate: { B: null, E: null },
+    neverZero: { B: true, E: true }, lessonGradeNoQuiz: null, Cws: null, ...extra });
+  const LATE = [
+    nz('4.5', '2026-10-30', { quizTotal: 3, hasBlooket: true }),
+    nz('4.3', '2026-10-27', { lessonGradeNoQuiz: 90, quizTotal: 3 }),   // only the quiz is missing
+    nz('4.7', '2026-11-12'),                                             // not due yet on 11-10
+    nz('4.6', '2026-11-05', { lessonGradeNoQuiz: 80, hasBlooket: true, blooketBonus: true }),   // done
+  ];
+  const DATED = { lessonKey: '5.1', zeroDate: { B: '2026-11-11' }, Cws: null };   // a 0 in 1 day
+  const late = (lessonKey, kind, dueDate) => ({ lessonKey, zeroDate: null, daysLeft: null, past: false, late: true, dueDate, kind });
+
+  it('missingWork lists past-due never-zero work as late rows, after every dated row, oldest due first', () => {
+    expect(missingWork([DATED, ...LATE], 'B', '2026-11-10')).toEqual([
+      { lessonKey: '5.1', zeroDate: '2026-11-11', daysLeft: 1, past: false, kind: 'worksheet' },
+      late('4.3', 'quiz', '2026-10-27'),
+      late('4.5', 'worksheet', '2026-10-30'),
+      late('4.5', 'quiz', '2026-10-30'),
+      late('4.5', 'blooket', '2026-10-30'),
+    ]);
+    expect(missingWork(LATE, 'E', '2026-11-10')).toEqual([]);   // no E due date in this fixture
+  });
+
+  it('a late row says it still counts, never a zero date; it never makes a student a candidate', async () => {
+    const { whenText, isCandidate: candidate } = await import('../scripts/weekly-slips.mjs');
+    const rows = missingWork(LATE, 'B', '2026-11-10');
+    expect(rows.map(whenText)).toEqual(Array(4).fill('late · counts when you finish it'));
+    expect(candidate(95, rows)).toBe(false);
+  });
+
+  it('every sort tolerates a null zero date: doFirst, firstItem and orderMissing put late rows last', async () => {
+    const { firstItem, orderMissing } = await import('../scripts/weekly-slips.mjs');
+    const keys = list => list.map(row => `${row.lessonKey}:${row.kind}`);
+    const done = { lessonKey: '3.9', zeroDate: { B: '2026-10-01' }, Cws: 90, Q: 90, blooket: 90 };   // no track is empty
+    const lessons = [done, DATED, ...LATE];
+    const rows = missingWork(lessons, 'B', '2026-11-10');
+    expect(keys(doFirst(lessons, rows))).toEqual(['5.1:worksheet', '4.5:worksheet', '4.5:quiz']);
+    // Counting work first, even when a late row is in an empty track; the empty-track rule
+    // still orders the late rows among themselves.
+    const noScores = [DATED, ...LATE];
+    expect(keys(doFirst(noScores, missingWork(noScores, 'B', '2026-11-10')))).toEqual(['5.1:worksheet', '4.5:quiz', '4.5:blooket']);
+    expect(keys(doFirst(noScores, missingWork(noScores, 'B', '2026-11-10').filter(row => row.late))))
+      .toEqual(['4.5:quiz', '4.5:blooket', '4.3:quiz']);
+    expect(firstItem(rows)).toEqual(rows[0]);                             // the dated 5.1 row
+    expect(firstItem(rows.filter(row => row.late))).toBeNull();           // a late row is never the first item
+    expect(orderMissing(rows).at(-1).late).toBe(true);
+  });
+
+  it('lowestDueScores counts a never-zero lesson once its class day has passed (its scores count)', async () => {
+    const { lowestDueScores, planFor } = await import('../scripts/weekly-slips.mjs');
+    const low = nz('4.2', '2026-10-26', { lessonGradeNoQuiz: 45, Cws: 50, quizTotal: 3, Q: 60 });
+    const notYet = nz('4.8', '2026-11-12', { lessonGradeNoQuiz: 30, Cws: 30 });   // class day still ahead
+    expect(lowestDueScores([low, notYet], 'B', '2026-11-09')).toEqual([
+      { lessonKey: '4.2', kind: 'worksheet', score: 45 }, { lessonKey: '4.2', kind: 'quiz', score: 60 }]);
+    expect(planFor([low, notYet], [], 'B', '2026-11-09')).toEqual([
+      'Raise your 4.2 worksheet (now 45) - it is revisable.', 'Raise your 4.2 quiz (now 60) - it is revisable.']);
+    // Without the flag a lesson with no zero date for the period stays out (as before).
+    const { neverZero, ...noFlag } = low;
+    expect(lowestDueScores([noFlag], 'B', '2026-11-09')).toEqual([]);
+    // Dated lessons are unchanged: they count once their zero date has passed.
+    const dated = { lessonKey: '3.1', zeroDate: { B: '2026-11-08' }, lessonGradeNoQuiz: 70 };
+    expect(lowestDueScores([dated], 'B', '2026-11-08')).toEqual([]);
+    expect(lowestDueScores([dated], 'B', '2026-11-09')).toEqual([{ lessonKey: '3.1', kind: 'worksheet', score: 70 }]);
+  });
+
+  it('renders late rows in the Desk grey with their words, and a late-only slip prints no score strip', async () => {
+    const { renderTex, COLOR_DEFS, missingRowsTex } = await import('../scripts/weekly-slips.mjs');
+    expect(COLOR_DEFS).toContain(BS + 'definecolor{desklater}{HTML}{AAAAAA}');
+    expect(COLOR_DEFS).toContain(BS + 'definecolor{desklaterbg}{HTML}{EEEEEE}');
+    const kid = { realName: 'X', quarters: { Q1: { quarterGrade: 31, lessonsDue: 3 } }, lessons: LATE };
+    const tex = renderTex([kid], [kid], 'PeriodB', '2026-11-10', 'Q1', []);
+    expect(tex.split(BS + 'MissRow{desklater}{desklaterbg}{').length - 1).toBe(4);
+    expect(tex).toContain('{late $' + BS + 'cdot$ counts when you finish it}');
+    expect(tex).not.toContain('{deskyellow}{deskyellowbg}');
+    expect(tex).not.toContain("Class scores for this one aren't available yet.");   // no first item, no strip
+    expect(tex).not.toMatch(/NaN|undefined/);
+    expect(missingRowsTex(missingWork(LATE, 'B', '2026-11-10'))).not.toMatch(/NaN|undefined|null/);
   });
 });

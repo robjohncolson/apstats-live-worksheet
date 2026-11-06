@@ -396,6 +396,90 @@ describe('GET /class/snapshot?by=assignment', () => {
     expect(r.body.assignments[3].values).toEqual([105, 105, 105, 105, 105, 105]);
   });
 
+  it('skips a never-zero lesson: no zero date, so it can never be a counted 0 (QUARTER_ZERO_FREEZE_SPEC)', async () => {
+    // Its quarter closed before its zero date: /class/grades sends zeroDate null + neverZero true,
+    // even though its class day (due) has long passed and nobody has a score.
+    await startSnapshotFixture([{
+      lessonKey: '4.5', unit: 4, worksheetKey: '5', hasBlooket: true, quizTotal: 1,
+      due: { B: '2026-09-10', E: '2026-09-11' }, zeroDate: { B: null, E: null }, neverZero: { B: true, E: true },
+    }, {
+      lessonKey: '4.1', unit: 4, worksheetKey: '1', due: { B: '2026-09-10' }, zeroDate: { B: '2026-09-23' },
+    }]);
+    const r = await srv.get('/class/snapshot?section=PeriodB&by=assignment', teacher);
+    expect(r.body.assignments.map(item => item.key)).toEqual(['4.1:worksheet']);
+    const pooled = await srv.get('/class/snapshot?section=all&by=assignment', teacher);
+    expect(pooled.body.assignments.map(item => item.key)).toEqual(['4.1:worksheet']);
+  });
+
+  // Per-section lessons: B students and E students see different zero dates for one lesson.
+  async function startPooledFixture(bySection) {
+    process.env.ROSTER_TEACHER_SECRET = TEACHER;
+    const app = express();
+    mountClassSnapshot(app, {
+      db: createFakeRosterDb(roster), verifyToken: () => null,
+      config: { quarters: { Q1: { start: '2026-08-01', end: '2026-10-31' } } },
+      computeClassGrades: async ({ section }) => ({ ok: true, students: bySection[section] || [] }),
+    });
+    srv = new TestServer(app);
+    await srv.start();
+  }
+  const student = (lessons) => ({ quarters: { Q1: { quarterGrade: 80 } }, lessons });
+
+  it('pools a lesson B counts and E can never zero: E adds its real scores, never a 0 or the date', async () => {
+    // QUARTER_ZERO_FREEZE_SPEC.md: E's quarter closed before E's zero date (zeroDate.E null,
+    // neverZero.E true), while B's zero date fell inside the quarter.
+    const lesson = (score) => ({
+      lessonKey: '2.3', unit: 2, worksheetKey: '3', lessonGradeNoQuiz: score,
+      due: { B: '2026-09-10', E: '2026-09-12' }, zeroDate: { B: '2026-09-23', E: null }, neverZero: { B: false, E: true },
+    });
+    await startPooledFixture({
+      PeriodB: [95, 95, 95, null, null, null].map(score => student([lesson(score)])),
+      PeriodE: [88, 77, 66, null, null, null].map(score => student([lesson(score)])),
+    });
+    const pooled = await srv.get('/class/snapshot?section=all&by=assignment', teacher);
+    expect(pooled.body.assignments).toHaveLength(1);
+    expect(pooled.body.assignments[0]).toMatchObject({
+      key: '2.3:worksheet', zeroDate: '2026-09-23', pending: false, tentativeZeros: 0,
+      zeroDates: { PeriodB: '2026-09-23', PeriodE: null }, neverZero: { PeriodE: true },
+      values: [0, 0, 0, 66, 77, 88, 95, 95, 95], zeros: 3,
+    });
+    // Each section on its own: B counts its missing work as 0s, E lists nothing for 2.3.
+    const b = await srv.get('/class/snapshot?section=PeriodB&by=assignment', teacher);
+    expect(b.body.assignments.map(item => [item.key, item.values])).toEqual([['2.3:worksheet', [0, 0, 0, 95, 95, 95]]]);
+    const e = await srv.get('/class/snapshot?section=PeriodE&by=assignment', teacher);
+    expect(e.body.assignments).toEqual([]);
+  });
+
+  it('a never-zero first lesson of a combined worksheet never hides the sibling that counts', async () => {
+    // 4.7 (never-zero) and 4.8 (a 0 after its own zero date) share the 4.7-8 worksheet.
+    const lessons = [{
+      lessonKey: '4.7', unit: 4, worksheetKey: '7-8', lessonGradeNoQuiz: null,
+      due: { B: '2026-09-10', E: '2026-09-10' }, zeroDate: { B: null, E: null }, neverZero: { B: true, E: true },
+    }, {
+      lessonKey: '4.8', unit: 4, worksheetKey: '7-8', lessonGradeNoQuiz: null,
+      due: { B: '2026-09-11', E: '2026-09-11' }, zeroDate: { B: '2026-09-24', E: '2026-09-24' }, neverZero: { B: false, E: false },
+    }];
+    await startPooledFixture({ PeriodB: Array(3).fill(student(lessons)), PeriodE: Array(3).fill(student(lessons)) });
+    const pooled = await srv.get('/class/snapshot?section=all&by=assignment', teacher);
+    expect(pooled.body.assignments.map(item => [item.key, item.values])).toEqual([['4.8:worksheet', [0, 0, 0, 0, 0, 0]]]);
+    expect(pooled.body.assignments[0].neverZero).toBeUndefined();
+  });
+
+  it('mergeSnapshots: a never-zero section adds real scores only and never sets the pooled date', () => {
+    const counting = { key: '4.1:worksheet', lessonKey: '4.1', track: 'worksheet', zeroDate: '2026-11-05',
+      pending: false, values: [0, 0, 90, 90], tentativeZeros: 0, zeros: null };
+    const never = { ...counting, zeroDate: null, neverZero: true, values: [70, 80] };
+    for (const order of [[['PeriodE', never], ['PeriodB', counting]], [['PeriodB', counting], ['PeriodE', never]]]) {
+      const merged = mergeSnapshots(order.map(([section, item]) => ({ section, assignments: [item] })), ['PeriodB', 'PeriodE']);
+      expect(merged.assignments).toHaveLength(1);
+      expect(merged.assignments[0]).toMatchObject({ zeroDate: '2026-11-05', pending: false, values: [0, 0, 70, 80, 90, 90],
+        zeroDates: { PeriodB: '2026-11-05', PeriodE: null }, neverZero: { PeriodE: true } });
+    }
+    // Never-zero everywhere: the item stays out of the pool.
+    const alone = mergeSnapshots([{ section: 'PeriodB', assignments: [never] }, { section: 'PeriodE', assignments: [never] }], ['PeriodB', 'PeriodE']);
+    expect(alone.assignments).toEqual([]);
+  });
+
   it('returns only due lesson tracks in schedule order and counts missing scores as zeros', async () => {
     const ctx = await startServer({
       roster: [...roster.slice().reverse(), { student_id: 't', role: 'teacher', section: 'PeriodB' }],

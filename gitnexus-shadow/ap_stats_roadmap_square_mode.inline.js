@@ -16263,6 +16263,9 @@ function _zeroCurrentWarnings() {
 // Missing-work card — no tint, pill, badge or coach line reads it.
 // The three "missing" rules MUST match _zeroWarnings (a test pins them).
 // Rows: { lessonKey, kind, dueDate, zeroDate }. Pure; never throws.
+// QUARTER_ZERO_FREEZE_SPEC (teacher 2026-11-06): a lesson its quarter closed on before
+// its zero date is never a 0 (/grade: zeroDate null, neverZero true). It still lists
+// here once past due, last, as a late row { ..., zeroDate: null, late: true }.
 function _pastDueWork(lessons, period, todayIso) {
     return DeskMissingWork.pastDueWork(lessons, period, todayIso, ZERO_WARN_DAYS);
 }
@@ -16336,6 +16339,7 @@ function _zeroDayText(iso) {
 }
 // The date cell of a Missing-work row (LEDGER_CALM_SPEC \u00a72.3).
 function _zeroWhenText(w) {
+    if (w.late) return 'late · no 0 · counts when you finish it';   // QUARTER_ZERO_FREEZE_SPEC
     if (w.past) return '0 since ' + _zeroDayText(w.zeroDate);
     return '0 after ' + _zeroDayText(w.zeroDate);
 }
@@ -16733,9 +16737,20 @@ function _snapZeroDateText(a) {
         return a.zeroDate < today ? 'counted since ' + when : 'counts from ' + when;
     } catch (_) { return ''; }
 }
+// QUARTER_ZERO_FREEZE_SPEC: is this assignment never a 0 for the viewer's section (its quarter
+// closed before the zero date there)? The pooled item says so (neverZero[section]), and so does
+// the viewer's own /grade lesson (neverZero[period]).
+function _snapNeverZeroFor(a, viewerSection, lessons) {
+    if (!a || !viewerSection) return false;
+    if (a.neverZero && a.neverZero[viewerSection]) return true;
+    var period = String(viewerSection).slice(-1);
+    var L = (lessons || []).find(function (l) { return l && l.lessonKey === a.lessonKey; });
+    return Boolean(L && L.neverZero && L.neverZero[period] === true);
+}
 // What to do about this assignment, in one or two sentences, plus an optional action.
 // label: undefined = the viewer's own score; a name = a picked student; null = nobody placed.
-function _snapAdvice(a, own, label) {
+// neverZero: late for this student, never a 0 (_snapNeverZeroFor).
+function _snapAdvice(a, own, label, neverZero) {
     var values = Array.isArray(a.values) ? a.values : [];
     var fn = ClassSnapshot.fiveNumber(values);
     var n = values.length, zeros = typeof a.zeros === 'number' ? a.zeros : values.filter(function (v) { return v === 0; }).length;
@@ -16746,6 +16761,10 @@ function _snapAdvice(a, own, label) {
     var who = label ? label + ' has' : 'You have';
     var track = a.track === 'quiz' ? 'quiz' : a.track === 'blooket' ? 'flashcards' : 'worksheet';
     var action = a.track === 'quiz' ? 'Take the quiz' : a.track === 'blooket' ? 'Run the flashcards' : 'Open the worksheet';
+    if (neverZero && own == null) {
+        if (label) return { text: label + ' has nothing here yet \u2014 it is late, never a 0. Finishing it still counts.' };
+        return { text: 'Late \u2014 this one is never a 0 for you. Finishing it still counts.', action: action, kind: a.track };
+    }
     if (a.pending && own == null) {
         var when = _snapZeroDateText(a).replace('counts from ', '');
         if (label) return { text: label + ' has nothing here yet \u2014 it becomes a 0 after ' + when + '.' };
@@ -16768,25 +16787,30 @@ function _snapAdvice(a, own, label) {
 // Which assignment deserves the screen (rows are ordered oldest first):
 //   1. the viewer's 0 that has been counting longest;
 //   2. else the viewer's score furthest below the class median among those below Q1;
-//   3. else nothing needs fixing: the newest assignment, flagged `clear`.
+//   3. else a late assignment with nothing turned in (never a 0, nevers[i], but still to do);
+//   4. else nothing needs fixing: the newest assignment, flagged `clear`.
 // Nobody placed (label null): the most overdue assignment.
-function _snapFocus(rows, owns, label) {
+function _snapFocus(rows, owns, label, nevers) {
     if (label === null) return { index: 0, clear: false };
+    var late = function (i) { return owns[i] == null && Boolean(nevers && nevers[i]); };
     var best = -1, bestDate = null;
     rows.forEach(function (a, i) {
         var own = owns[i];
         if (own != null && own !== 0) return;
+        if (late(i)) return;   // not a 0
         if (bestDate == null || a.zeroDate < bestDate) { best = i; bestDate = a.zeroDate; }
     });
     if (best >= 0) return { index: best, clear: false };
     var worst = -1, gap = 0;
     rows.forEach(function (a, i) {
+        if (owns[i] == null) return;
         var fn = ClassSnapshot.fiveNumber(a.values || []);
         if (fn.q1 == null || owns[i] >= fn.q1) return;
         var g = fn.median - owns[i];
         if (g > gap) { gap = g; worst = i; }
     });
     if (worst >= 0) return { index: worst, clear: false };
+    for (var i = 0; i < rows.length; i++) if (late(i)) return { index: i, clear: false };
     return { index: rows.length - 1, clear: true };
 }
 function _snapFocusIndex(rows, owns, label) { return _snapFocus(rows, owns, label).index; }
@@ -16855,7 +16879,7 @@ function _snapAssignmentPlot(row, a, ownForPlot, label, amode, tentative, ownTen
     row.appendChild(canvas);
     ClassSnapshot.drawMini(canvas, { values: a.values, own: ownForPlot, mode: amode, tentativeZeros: tentative, ownTentative: ownTentative });
     var cap = document.createElement('div'); cap.className = 'snap-caption geneva';
-    var text = ClassSnapshot.assignmentCaption(a, label === null ? undefined : ownForPlot, {
+    var text = ClassSnapshot.assignmentCaption(a, label === null || ownForPlot == null ? undefined : ownForPlot, {
         tentativeLabel: tentative ? 'real after ' + tentDay : undefined,
         ownTentative: ownTentative,
     });
@@ -16865,22 +16889,26 @@ function _snapAssignmentPlot(row, a, ownForPlot, label, amode, tentative, ownTen
     if (tentative) row.appendChild(_snapTentativeLegend(tentDay));
 }
 // opts.dataOnly (student "My work" tab): no plot, caption or legend; the score list is always open.
+// opts.neverZero: late for this student, never a 0 (_snapNeverZeroFor): their missing work is no 0 here.
 function _snapAssignmentRow(a, own, label, viewerSection, opts) {
     var dataOnly = Boolean(opts && opts.dataOnly);
+    var neverZero = Boolean(opts && opts.neverZero) && label !== null;
     var row = document.createElement('div'); row.className = 'snap-arow'; row.dataset.key = a.key;
     var head = document.createElement('div'); head.className = 'snap-arow-head';
     var t = document.createElement('span'); t.className = 'snap-arow-title'; t.textContent = a.title; head.appendChild(t);
-    var w = document.createElement('span'); w.className = 'snap-arow-when'; w.textContent = _snapZeroDateText(a); head.appendChild(w);
+    var w = document.createElement('span'); w.className = 'snap-arow-when';
+    w.textContent = neverZero ? 'late \u00b7 never a 0 for ' + (label || 'you') : _snapZeroDateText(a);
+    head.appendChild(w);
     row.appendChild(head);
     var amode = _snapApp.amode || 'box';
     // The viewer's (or picked student's) score for the plot: missing work counts as 0; nobody placed = null.
-    var ownForPlot = label === null ? null : (own == null ? 0 : own);
+    var ownForPlot = label === null ? null : (own == null ? (neverZero ? null : 0) : own);
     var tentative = Number(a.tentativeZeros) || 0;
     // Nothing turned in and the viewer's section is not yet past its zero date: a tentative 0.
-    var ownTentative = own == null && label !== null && _snapOwnSectionNotCounting(a, viewerSection);
+    var ownTentative = own == null && label !== null && !neverZero && _snapOwnSectionNotCounting(a, viewerSection);
     var tentDay = tentative ? _snapTentativeDay(a, viewerSection) : '';
     if (!dataOnly) _snapAssignmentPlot(row, a, ownForPlot, label, amode, tentative, ownTentative, tentDay);
-    var advice = _snapAdvice(a, own, label);
+    var advice = _snapAdvice(a, own, label, neverZero);
     var adv = document.createElement('div'); adv.className = 'snap-advice geneva' + (advice.action ? ' snap-advice-act' : '');
     var advText = document.createElement('span'); advText.textContent = advice.text; adv.appendChild(advText);
     if (advice.action) {
@@ -16890,7 +16918,7 @@ function _snapAssignmentRow(a, own, label, viewerSection, opts) {
         adv.appendChild(go);
     }
     row.appendChild(adv);
-    var isZero = label !== null && (own == null || own === 0);
+    var isZero = label !== null && (own === 0 || (own == null && !neverZero));
     var built = _snapScoreList(a, ownForPlot, label, { tentative: tentative, ownTentative: ownTentative, tentDay: tentDay, isZero: isZero, sections: opts && opts.sections });
     var list = built.list, showList = built.shown;
     list.hidden = !isZero && !dataOnly;
@@ -17028,8 +17056,10 @@ function _renderAssignmentsView(host, teacher) {
             var lessons = pickedName ? _snapTeacherPickedLessons(pickSection) : ownCache;
             var label = pickedName || undefined;
             var owns = rows.map(function (a) { return lessons ? _snapOwnAssignmentScore(a, lessons) : null; });
+            // Late for this student (their quarter closed before the zero date): never a 0 here.
+            var nevers = rows.map(function (a) { return _snapNeverZeroFor(a, viewerSection, lessons); });
             if (_snapApp.aall) {
-                rows.forEach(function (a, i) { body.appendChild(_snapAssignmentRow(a, owns[i], label, viewerSection, { dataOnly: dataOnly, sections: data.sections })); });
+                rows.forEach(function (a, i) { body.appendChild(_snapAssignmentRow(a, owns[i], label, viewerSection, { dataOnly: dataOnly, sections: data.sections, neverZero: nevers[i] })); });
                 var all = document.createElement('button'); all.type = 'button'; all.className = 's7btn snap-pager-all'; all.style.cssText = 'font-size:10px;padding:1px 6px;margin-top:6px';
                 all.textContent = 'Focus on one';
                 all.onclick = function () { _snapApp.aall = false; _renderSnapshotApp(); };
@@ -17041,7 +17071,7 @@ function _renderAssignmentsView(host, teacher) {
                 var fk = rows.findIndex(function (a) { return a.key === _snapApp.focusKey; });
                 if (fk >= 0) idx = fk;
             }
-            var focus = _snapFocus(rows, owns, label);
+            var focus = _snapFocus(rows, owns, label, nevers);
             if (typeof idx !== 'number' || idx < 0 || idx >= rows.length) idx = focus.index;
             _snapApp.aidx[section] = idx;
             if (focus.clear) {
@@ -17064,7 +17094,7 @@ function _renderAssignmentsView(host, teacher) {
             showAll.onclick = function () { _snapApp.aall = true; _renderSnapshotApp(); };
             pager.appendChild(prev); pager.appendChild(pos); pager.appendChild(next); pager.appendChild(showAll);
             body.appendChild(pager);
-            var focused = _snapAssignmentRow(rows[idx], owns[idx], label, viewerSection, { dataOnly: dataOnly, sections: data.sections });
+            var focused = _snapAssignmentRow(rows[idx], owns[idx], label, viewerSection, { dataOnly: dataOnly, sections: data.sections, neverZero: nevers[idx] });
             if (_snapApp.focusKey === rows[idx].key) focused.classList.add('snap-arow-focus');
             body.appendChild(focused);
             _snapApp.focusKey = null;
@@ -17099,11 +17129,14 @@ function _walletPrependZeroCard(host) {
         var old = host.querySelector('.wallet-zero-card');
         var warns = _zeroCurrentWarnings();
         // Past due in Schoology, but the 0 is still far off: quiet grey rows below (PAST_DUE_WORK).
+        // Late rows (QUARTER_ZERO_FREEZE_SPEC) are never a 0: grey too, under their own heading.
         var later = (typeof _pastDueCurrentWork === 'function') ? _pastDueCurrentWork() : [];
+        var notYet = later.filter(function (w) { return !w.late; });
+        var late = later.filter(function (w) { return w.late; });
         // Same list as last paint → keep the card (a grade poll must not steal
-        // focus from an Open button the student is tabbing through).
+        // focus from an Open button the student is tabbing through). A row turning late rebuilds it.
         var sig = warns.map(function (w) { return w.lessonKey + ':' + w.kind + ':' + (w.past ? 1 : 0); }).join('|');
-        if (later.length) sig += '#later:' + later.map(function (w) { return w.lessonKey + ':' + w.kind; }).join('|');
+        if (later.length) sig += '#later:' + later.map(function (w) { return w.lessonKey + ':' + w.kind + (w.late ? ':late' : ''); }).join('|');
         if (old && old.dataset.sig === sig) {
             // Same rows, but the grade in the status line may have moved: refresh the text only.
             var oldStatus = old.querySelector('.wz-status');
@@ -17127,25 +17160,43 @@ function _walletPrependZeroCard(host) {
         // Past first, then by date (warns are already date-ordered). Colour carries the meaning.
         var ordered = warns.filter(function (w) { return w.past; }).concat(warns.filter(function (w) { return !w.past; }));
         ordered.forEach(function (w) { card.appendChild(_zeroCardRow(w)); });
-        if (later.length) {
+        if (notYet.length) {
             var head = document.createElement('div');
             head.className = 'wz-later-head geneva';
             head.textContent = 'Past due — not counting yet';
             card.appendChild(head);
-            later.forEach(function (w) { card.appendChild(_pastDueCardRow(w)); });
+            notYet.forEach(function (w) { card.appendChild(_pastDueCardRow(w)); });
+        }
+        if (late.length) {
+            var lateHead = document.createElement('div');
+            lateHead.className = 'wz-later-head wz-late-head geneva';
+            lateHead.textContent = 'Late — never a 0';
+            card.appendChild(lateHead);
+            late.forEach(function (w) { card.appendChild(_pastDueCardRow(w)); });
         }
         host.insertBefore(card, host.firstChild);
         _zeroCardAttachScores(card, ordered);
     } catch (_) {}
 }
 // The status line: the zero wording when anything is close to a 0; calm wording
-// when the card holds only past-due rows (nothing is becoming a 0 soon).
+// when the card holds only past-due rows (nothing is becoming a 0 soon). Late rows
+// (QUARTER_ZERO_FREEZE_SPEC) never become a 0, so they get their own sentence.
 function _zeroCardStatus(warns, later) {
     if (warns.length) return _zeroStatusText(warns);
     var grade = (typeof _walletCurrentGrade === 'function') ? _walletCurrentGrade() : null;
     var lead = (grade && grade.pct != null && grade.q) ? grade.q + ' so far: ' + grade.pct + '%. ' : '';
-    if (later.length === 1) return lead + '1 item below is past due. It is not counting yet — finishing it now keeps it that way.';
-    return lead + later.length + ' items below are past due. They are not counting yet — finishing them now keeps it that way.';
+    var notYet = later.filter(function (w) { return !w.late; }).length;
+    var late = later.length - notYet;
+    var text = lead;
+    if (notYet === 1) text += '1 item below is past due. It is not counting yet — finishing it now keeps it that way.';
+    else if (notYet) text += notYet + ' items below are past due. They are not counting yet — finishing them now keeps it that way.';
+    if (late) text += (notYet ? ' ' : '') + _zeroLateStatusText(late, notYet > 0);
+    return text;
+}
+// "2 items below are late: never a 0, and finishing them still counts." (more: after past-due rows.)
+function _zeroLateStatusText(n, more) {
+    if (n === 1) return (more ? '1 more is' : '1 item below is') + ' late: never a 0, and finishing it still counts.';
+    return (more ? n + ' more are' : n + ' items below are') + ' late: never a 0, and finishing them still counts.';
 }
 // The "graph" link under a Missing-work row: the class's graphs for THIS assignment only, in the
 // forms the class has learned, drawn inline under the score list. Toggles open / closed.
@@ -17280,7 +17331,9 @@ function _zeroSchoologyTag(w) {
     return tag;
 }
 // "due Fri 9/25 · not a 0 until after Thu 10/8" (a 0 starts the day AFTER zeroDate, like _zeroWhenText).
+// A late row (its quarter closed before its zero date, QUARTER_ZERO_FREEZE_SPEC) never becomes a 0.
 function _pastDueWhenText(w) {
+    if (w.late) return 'late · no 0 · counts when you finish it';
     return 'due ' + _zeroDayText(w.dueDate) + ' · not a 0 until after ' + _zeroDayText(w.zeroDate);
 }
 // One quiet grey past-due row: [verb button] [lesson label] [Schoology tag] ... [dates].
@@ -23298,7 +23351,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-11-05-h5d6';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-11-06-y1uo';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

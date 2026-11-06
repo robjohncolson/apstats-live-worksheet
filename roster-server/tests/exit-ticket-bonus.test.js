@@ -81,10 +81,39 @@ describe('exit-ticket bonus', () => {
     const golden = JSON.parse(readFileSync(new URL('./fixtures/exit-ticket-without-golden.json', import.meta.url), 'utf8'));
     const prod = resolveProductionGradeInputs('SY2627');
     const keyDoc = JSON.parse(readFileSync(new URL('../data/answer-key.json', import.meta.url), 'utf8'));
+    // This golden predates the quarter-end zero freeze (2026-11-06), which rewrites the
+    // lessons' zero-date fields by design; the next test pins exactly that difference.
+    const config = { ...prod.config, zeroFreezeAtQuarterEnd: false };
     for (const sample of golden.cases) {
       const rows = [...sample.rows, row('exitTicket', 1)].filter(r => !/-exitTicket$/.test(r.item_id));
-      const actual = computeGrade(rows, keyDoc.answerKey || keyDoc, prod.config, golden.opts);
+      const actual = computeGrade(rows, keyDoc.answerKey || keyDoc, config, golden.opts);
       expect(JSON.stringify(actual), sample.name).toBe(JSON.stringify(sample.grade));
+    }
+  });
+
+  it('the live config (quarter-end zero freeze) changes only the frozen-out zero dates of these fixtures', () => {
+    // QUARTER_ZERO_FREEZE_SPEC.md: the golden is as of 2026-10-20, inside Q1, so no grade
+    // may move. Rows only gain neverZero, and a zero date its quarter closed on reads null.
+    const golden = JSON.parse(readFileSync(new URL('./fixtures/exit-ticket-without-golden.json', import.meta.url), 'utf8'));
+    const prod = resolveProductionGradeInputs('SY2627');
+    const keyDoc = JSON.parse(readFileSync(new URL('../data/answer-key.json', import.meta.url), 'utf8'));
+    for (const sample of golden.cases) {
+      const rows = sample.rows.filter(r => !/-exitTicket$/.test(r.item_id));
+      const live = computeGrade(rows, keyDoc.answerKey || keyDoc, prod.config, golden.opts);
+      const { lessons, ...grades } = live;
+      const { lessons: goldenLessons, ...goldenGrades } = sample.grade;
+      expect(JSON.stringify(grades), sample.name).toBe(JSON.stringify(goldenGrades));
+      expect(lessons.length).toBe(goldenLessons.length);
+      lessons.forEach((lesson, i) => {
+        const { neverZero, ...rest } = lesson;
+        const was = goldenLessons[i];
+        for (const p of ['B', 'E']) {
+          if (!neverZero[p]) continue;
+          expect(rest.zeroDate[p], lesson.lessonKey + ' ' + p).toBeNull();
+          rest.zeroDate = { ...rest.zeroDate, [p]: was.zeroDate[p] };
+        }
+        expect(JSON.stringify(rest), sample.name + ' ' + lesson.lessonKey).toBe(JSON.stringify(was));
+      });
     }
   });
 });

@@ -33,16 +33,42 @@ var DeskMissingWork = (function () {
         } catch (_) { return []; }
     }
 
+    // QUARTER_ZERO_FREEZE_SPEC.md (teacher 2026-11-06): a lesson whose zero date fell
+    // after its quarter's last day never becomes a 0, so /grade sends zeroDate null and
+    // neverZero true for that period. zeroWarnings skips it (no zero date). Past its due
+    // date it is still late work: pastDueWork lists it with the same three missing
+    // rules, as rows with late: true and zeroDate: null.
+    function isNeverZero(L, period) {
+        return !!(L.neverZero && L.neverZero[period] === true);
+    }
+
+    function lateRows(L, dueDate) {
+        var row = function (kind) {
+            return { lessonKey: L.lessonKey, kind: kind, dueDate: dueDate, zeroDate: null, unit: L.unit, worksheetKey: L.worksheetKey, late: true };
+        };
+        var rows = [];
+        var hasWork = L.lessonGradeNoQuiz != null || L.Cws != null;
+        if (!hasWork) rows.push(row('worksheet'));
+        if ((L.quizTotal || 0) > 0 && L.Q == null) rows.push(row('quiz'));
+        if (L.hasBlooket && !L.blooketBonus && L.blooket == null) rows.push(row('blooket'));
+        return rows;
+    }
+
     function pastDueWork(lessons, period, todayIso, warningDays) {
         try {
             if (!Array.isArray(lessons) || !period || !todayIso) return [];
             var today = new Date(todayIso + 'T00:00:00');
             var out = [];
+            var late = [];
             for (var i = 0; i < lessons.length; i++) {
                 var L = lessons[i];
                 if (!L || !L.lessonKey || !L.zeroDate || !L.due) continue;
                 var zd = L.zeroDate[period];
                 var dd = L.due[period];
+                if (isNeverZero(L, period)) {
+                    if (dd && dd < todayIso) late = late.concat(lateRows(L, dd));
+                    continue;
+                }
                 if (!zd || !dd) continue;
                 if (!(dd < todayIso)) continue;
                 var days = Math.round((new Date(zd + 'T00:00:00') - today) / 86400000);
@@ -57,7 +83,12 @@ var DeskMissingWork = (function () {
                 if (a.zeroDate !== b.zeroDate) return a.zeroDate < b.zeroDate ? -1 : 1;
                 return (KIND_ORDER[a.kind] || 0) - (KIND_ORDER[b.kind] || 0);
             });
-            return out;
+            // Late rows have no zero date: they follow the dated rows, oldest due date first.
+            late.sort(function (a, b) {
+                if (a.dueDate !== b.dueDate) return a.dueDate < b.dueDate ? -1 : 1;
+                return (KIND_ORDER[a.kind] || 0) - (KIND_ORDER[b.kind] || 0);
+            });
+            return out.concat(late);
         } catch (_) { return []; }
     }
 

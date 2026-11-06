@@ -90,6 +90,8 @@ describe('ap_stats_roadmap_square_mode.html — Desk "how grades work" modal', (
     expect(text).toContain('Your unit poster is scored 90 to 115, so it can only help you unless the rest of your Work is above 90.');
     expect(text).not.toMatch(/unit posters\)/);                              // posters are not banked bonus
     expect(text).toContain('13 days after its class day');                   // grade-config dueLagDays
+    // grade-config zeroFreezeAtQuarterEnd (QUARTER_ZERO_FREEZE_SPEC.md, teacher 2026-11-06)
+    expect(text).toContain('Unless its quarter ends first: then it is late, never a 0, and finishing it still counts.');
     expect(text).toContain('3 days before');                                 // Desk ZERO_WARN_DAYS
     expect(text).toContain('+5 / +3 / +1');                                  // exit-ticket bonus
     expect(text).toContain('+7.5 / +4.5 / +1.5');                            // 5/3/1 x BONUS_MULTIPLIER 1.5
@@ -128,6 +130,7 @@ describe('start-here.html — the full explanation carries the same numbers', ()
     expect(text).not.toMatch(/100\/85\/60/);
     expect(text).toContain('never lowers');
     expect(text).toContain('13 days after its class day');
+    expect(text).toContain('Unless its quarter ends first: work still missing when its quarter ends, before its 13 days are up, is late, never a 0 (in the Desk and in Schoology), and finishing it still counts.');
     expect(text).toContain('3 days before');
     expect(text).toContain('+5 (E), +3 (P), or +1 (I)');
     expect(text).toContain('+7.5 / +4.5 / +1.5');

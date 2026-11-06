@@ -41,6 +41,12 @@ const W16 = { key: '1.6:worksheet', lessonKey: '1.6', track: 'worksheet', title:
 const W17 = { key: '1.7:worksheet', lessonKey: '1.7', track: 'worksheet', title: '1.7 Follow-Along', zeroDate: '2026-10-01', pending: true, n: 6,
   values: [90, 95, 100, 100, 100, 100], zeros: 0, zeroDates: { PeriodB: '2026-10-01', PeriodE: '2026-10-02' } };
 
+// QUARTER_ZERO_FREEZE_SPEC (teacher 2026-11-06): Period B counts 2.3 (its zero date fell inside the
+// quarter), Period E can never zero it (E's quarter closed first). The pooled item carries B's date
+// only, plus neverZero.PeriodE.
+const M23 = { key: '2.3:worksheet', lessonKey: '2.3', track: 'worksheet', title: '2.3 Follow-Along', zeroDate: '2026-09-22', pending: false, n: 9,
+  values: [0, 0, 0, 66, 77, 88, 95, 95, 95], zeros: 3, tentativeZeros: 0, zeroDates: { PeriodB: '2026-09-22', PeriodE: null }, neverZero: { PeriodE: true } };
+
 describe('lib — assignment caption + mini box plot', () => {
   it('captions a zero as below Q1 and an outlier, and omits the "You" sentence for the teacher view', () => {
     expect(C.assignmentCaption(A12, 0)).toBe('Median 97 · IQR 15 · 3 zeros. You: 0 — below Q1 — an outlier by the 1.5×IQR rule.');
@@ -81,14 +87,14 @@ function sandbox({ teacher = false, lessons, pick = null, roster = null, status 
     _zeroTodayIso: () => '2026-09-26',
     cP: period,
     _renderSnapshotApp() { s.rerenders = (s.rerenders || 0) + 1; },
-    fetch: async (url) => { calls.push(url); return { status, json: async () => ({ ok: true, section: 'all', sections: ['PeriodB', 'PeriodE'], assignments: [A12, Q13, B11, ...(s.withPending ? [W14, W16, W17] : [])] }) }; },
+    fetch: async (url) => { calls.push(url); return { status, json: async () => ({ ok: true, section: 'all', sections: ['PeriodB', 'PeriodE'], assignments: [A12, Q13, B11, ...(s.withPending ? [W14, W16, W17] : []), ...(s.extra || [])] }) }; },
     openSnapshot() { s.opened = (s.opened || 0) + 1; },
     _zeroOpenLesson(k) { s.openedWork = ['worksheet', k]; }, _zeroOpenQuiz(k) { s.openedWork = ['quiz', k]; }, _zeroOpenFlashcards(_b, k) { s.openedWork = ['blooket', k]; },
   };
   createContext(s);
   runInContext(
     "var SNAPSHOT_TTL_MS = 300000;\nvar ZERO_WARN_DAYS = 3;\nvar _snapApp = { mode: null, sections: {}, roster: " + JSON.stringify(roster) + ", pick: " + JSON.stringify(pick ? { PeriodB: pick } : {}) + ", request: 0, view: 'assignments', assign: {}, focusKey: null, amode: null, aidx: {}, aall: false };\nvar SNAP_TRACK_LABEL = { worksheet: 'worksheet', quiz: 'quiz', blooket: 'flashcards' };\n" +
-    ['_snapSection', '_snapModes', '_snapAdvice', '_snapFocus', '_snapFocusIndex', '_snapDaysUntil', '_snapPickedSection', '_snapOpenWork', '_snapOwnAssignmentScore', '_snapFetchAssignments', '_snapZeroDateText', '_snapDayText', '_snapOwnSectionNotCounting', '_snapTentativeDay', '_snapTentativeLegend', '_snapAssignmentPlot', '_snapScoreList', '_snapListKey', '_snapAssignmentRow', '_renderAssignmentsView', '_snapTeacherPickedName', '_snapTeacherPickedLessons', '_snapOpenAssignment']
+    ['_snapSection', '_snapModes', '_snapNeverZeroFor', '_snapAdvice', '_snapFocus', '_snapFocusIndex', '_snapDaysUntil', '_snapPickedSection', '_snapOpenWork', '_snapOwnAssignmentScore', '_snapFetchAssignments', '_snapZeroDateText', '_snapDayText', '_snapOwnSectionNotCounting', '_snapTentativeDay', '_snapTentativeLegend', '_snapAssignmentPlot', '_snapScoreList', '_snapListKey', '_snapAssignmentRow', '_renderAssignmentsView', '_snapTeacherPickedName', '_snapTeacherPickedLessons', '_snapOpenAssignment']
       .map(fnSrc).join('\n'), s);
   return { s, host: () => dom.window.document.getElementById('snapshot-content'), close: () => dom.window.close() };
 }
@@ -630,6 +636,76 @@ describe('student "My work" tab — data first, graphs behind a tab (LEDGER_CALM
       expect(g.canvas).toBe(1);
       expect(g.caption).toBe(1);
       expect(g.amodes).toBe(1);
+    } finally { close(); }
+  });
+});
+
+describe('never-zero for the viewer (QUARTER_ZERO_FREEZE_SPEC, teacher 2026-11-06)', () => {
+  const E_LESSONS = [
+    { lessonKey: '1.1', hasBlooket: true, blooket: 100, lessonGradeNoQuiz: 100, Cws: 100, quizTotal: 0, Q: null },
+    { lessonKey: '1.2', hasBlooket: true, blooket: 100, lessonGradeNoQuiz: 100, Cws: 100, quizTotal: 3, Q: 100 },
+    { lessonKey: '1.3', hasBlooket: true, blooket: 100, lessonGradeNoQuiz: 100, Cws: 100, quizTotal: 3, Q: 100 },
+    { lessonKey: '2.3', lessonGradeNoQuiz: null, Cws: null, quizTotal: 0, Q: null, zeroDate: { B: '2026-09-22', E: null }, neverZero: { B: false, E: true } },
+  ];
+
+  it('knows the item is never a 0 for E, from the pooled item or from the viewer’s own /grade lesson', () => {
+    const { s, close } = sandbox({ period: 'E', lessons: E_LESSONS });
+    try {
+      expect(s._snapNeverZeroFor(M23, 'PeriodE', [])).toBe(true);
+      expect(s._snapNeverZeroFor(M23, 'PeriodB', E_LESSONS)).toBe(false);
+      const { neverZero, ...older } = M23;   // a payload without the pooled flag
+      expect(s._snapNeverZeroFor(older, 'PeriodE', E_LESSONS)).toBe(true);
+      expect(s._snapNeverZeroFor(older, 'PeriodE', [])).toBe(false);
+      expect(s._snapNeverZeroFor(M23, null, E_LESSONS)).toBe(false);
+    } finally { close(); }
+  });
+
+  it('advice: late, never a 0, still counts; a counting 0 and a weak score both outrank it', () => {
+    const { s, close } = sandbox({ period: 'E', lessons: E_LESSONS });
+    try {
+      expect(s._snapAdvice(M23, null, undefined, true)).toEqual({ text: 'Late — this one is never a 0 for you. Finishing it still counts.', action: 'Open the worksheet', kind: 'worksheet' });
+      expect(s._snapAdvice(M23, null, 'Allison R', true)).toEqual({ text: 'Allison R has nothing here yet — it is late, never a 0. Finishing it still counts.' });
+      // Not never-zero (a B viewer): the same gap is a counting 0, as before.
+      expect(s._snapAdvice(M23, null, undefined, false).text).toBe('Do this next. Right now this counts as a 0, the biggest thing pulling your grade down. Any score replaces the 0.');
+      expect(s._snapAdvice(M23, 95, undefined, true).text).toBe('You have 95, inside the box \u2014 with the middle half of the class. Nothing to fix here.');
+      expect(s._snapFocus([B11, M23], [null, null], undefined, [false, true])).toEqual({ index: 0, clear: false });   // the real 0 first
+      expect(s._snapFocus([A12, M23], [50, null], undefined, [false, true])).toEqual({ index: 0, clear: false });     // below Q1 next
+      expect(s._snapFocus([B11, M23], [100, null], undefined, [false, true])).toEqual({ index: 1, clear: false });    // then the late gap
+      expect(s._snapFocus([B11, M23], [100, 95], undefined, [false, true])).toEqual({ index: 1, clear: true });       // nothing to do
+      expect(s._snapFocus([B11, M23], [100, null], undefined)).toEqual({ index: 1, clear: false });                   // no flags: a 0, as before
+    } finally { close(); }
+  });
+
+  it('the row: no "counted since", no red 0 chip, no "You: 0"; the list stays closed', () => {
+    const { s, close } = sandbox({ period: 'E', lessons: E_LESSONS });
+    try {
+      const row = s._snapAssignmentRow(M23, null, undefined, 'PeriodE', { neverZero: true });
+      expect(row.querySelector('.snap-arow-when').textContent).toBe('late · never a 0 for you');
+      expect(row.querySelector('.snap-caption').textContent).not.toContain('You:');
+      expect(row.querySelector('.snap-alist-you')).toBeNull();
+      expect(row.querySelector('.snap-alist').hidden).toBe(true);
+      expect(row.querySelector('.snap-alist-foot').textContent).not.toContain('can still be replaced');
+      expect(row.querySelector('.snap-advice').textContent).toBe('Late — this one is never a 0 for you. Finishing it still counts.Open the worksheet');
+      // The same row for a Period B viewer still shows B's counting 0.
+      const b = s._snapAssignmentRow(M23, null, undefined, 'PeriodB', {});
+      expect(b.querySelector('.snap-arow-when').textContent).toMatch(/^counted since /);
+      expect(b.querySelector('.snap-caption').textContent).toContain('You: 0');
+      expect(b.querySelector('.snap-alist-you').textContent).toBe('0');
+    } finally { close(); }
+  });
+
+  it('an E student with only the late gap left: "My work" focuses it as late, never as a counting 0', async () => {
+    const { s, host, close } = sandbox({ period: 'E', lessons: E_LESSONS });
+    s.extra = [M23];
+    try {
+      s._snapApp.view = 'work';
+      s._renderAssignmentsView(host(), false);
+      await tick(); await tick();
+      expect([...host().querySelectorAll('.snap-arow')].map(r => r.dataset.key)).toEqual(['2.3:worksheet']);
+      expect(host().querySelector('.snap-clear')).toBeNull();
+      expect(host().querySelector('.snap-arow-when').textContent).toBe('late · never a 0 for you');
+      expect(host().querySelector('.snap-advice').textContent).toContain('never a 0 for you');
+      expect(host().querySelector('.snap-arow').textContent).not.toMatch(/counted since|counts as a 0/);
     } finally { close(); }
   });
 });

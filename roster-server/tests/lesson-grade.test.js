@@ -6,19 +6,26 @@
 // @vitest-environment node
 
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
 import {
   parseItemLesson,
   expandLessonKey,
   buildWorksheetBlankCounts,
   computeLessonGrades,
   computeQuarterFromLessons,
+  computeQuarterV3,
   quarterOfLesson,
   buildLessonsArray,
   computeQuizTotals,
   todayInTz,
   sectionToPeriod,
+  dueTodayForQuarter,
+  lessonNeverZero,
+  addLateScoresThatHelp,
+  isDateDue,
 } from '../lesson-grade.js';
 import { PHASE3_CONFIG } from '../grade-config.js';
+import { resolveProductionGradeInputs } from '../grade-contexts.js';
 import { summarizeOrphanRows } from '../grade.js';
 
 // ── parseItemLesson ────────────────────────────────────────────────────────────
@@ -1294,5 +1301,342 @@ describe('combined-worksheet lessons share one flashcard deck', () => {
   it('a solo worksheet never borrows another lesson\'s deck', () => {
     const map = computeLessonGrades([row('BL-U4-L1-DESK_DONE', 96.6)], FRQ_BAND, {}, SCHED, {});
     expect(map.get('4.6')).toBeUndefined();
+  });
+});
+
+// ── Quarter-end zero freeze (QUARTER_ZERO_FREEZE_SPEC.md, teacher 2026-11-06) ──
+// "Whatever is a zero on the quarter's last day counts as a zero; anything that is merely
+// late does not turn into a zero afterwards. Late work still counts when it is finished."
+// Q1 ends Fri 2026-11-06. 4.1 (zero date 11-02/11-03) is a 0 inside Q1; 4.5 (zero date
+// 11-12/11-15) was merely late when Q1 closed; 5.1 is a Q2 lesson. From 11-07 on, 4.5 is
+// "late" in Q1: never a 0, and its scores join each track only where they help.
+
+describe('quarter-end zero freeze', () => {
+  const LIVE = { ...PHASE3_CONFIG, pcTrack: { enabled: false } };   // PC off: isolate the Work tracks
+  const { zeroFreezeAtQuarterEnd: _flag, ...LEGACY } = LIVE;          // the same config without the freeze
+  const SCHEDULE = {
+    '4.1': { unit: 4, worksheetKey: '1', periods: { B: '2026-10-20', E: '2026-10-21' } },
+    '4.5': { unit: 4, worksheetKey: '5', periods: { B: '2026-10-30', E: '2026-11-02' } },
+    '5.1': { unit: 5, worksheetKey: '1', periods: { B: '2026-11-10', E: '2026-11-11' } },
+  };
+  const DONE_41 = { Cws: 80, W: 80, Q: 80, lessonGrade: 80, blooket: 80 };
+  const DONE_45 = { Cws: 90, W: 90, Q: 70, lessonGrade: 80, blooket: 60, trainer: 50 };
+  const STRONG_45 = { Cws: 95, W: 95, Q: 90, lessonGrade: 92, blooket: 100 };
+  const mapOf = (entries) => new Map(Object.entries(entries));
+  function v3(config, lessonMap, todayDateStr, { quarterKey = 'Q1', section = 'PeriodB' } = {}) {
+    return computeQuarterV3({
+      quarterKey, config, lessonMap, schedule: SCHEDULE, todayDateStr, section, unitPcData: {},
+      quizLessons: ['4.1', '4.5', '5.1'], blooketLessons: ['4.1', '4.5', '5.1'], trainerLessons: ['4.5'],
+    });
+  }
+  function phase6(config, lessonMap, todayDateStr) {
+    return computeQuarterFromLessons({
+      quarterKey: 'Q1', config, lessonMap, schedule: SCHEDULE, todayDateStr,
+      section: 'PeriodB', pcBandData: { P_quarter: 0 }, C: 85,
+    });
+  }
+
+  it('the live SY2627 config turns the freeze on; the frozen SY2526 config does not have it', () => {
+    expect(PHASE3_CONFIG.zeroFreezeAtQuarterEnd).toBe(true);
+    const sy2526 = JSON.parse(readFileSync(new URL('../data/grade-config.sy2526-freeze.json', import.meta.url), 'utf8'));
+    expect('zeroFreezeAtQuarterEnd' in sy2526).toBe(false);
+  });
+
+  describe('dueTodayForQuarter (the one clamp both quarter engines use)', () => {
+    it('clamps today to the quarter end once the quarter is over', () => {
+      expect(dueTodayForQuarter('2026-11-20', 'Q1', LIVE)).toBe('2026-11-06');
+      expect(dueTodayForQuarter('2027-03-01', 'Q2', LIVE)).toBe('2027-01-22');
+    });
+    it('is a no-op while the quarter is open, on its last day, and for later quarters', () => {
+      expect(dueTodayForQuarter('2026-11-05', 'Q1', LIVE)).toBe('2026-11-05');
+      expect(dueTodayForQuarter('2026-11-06', 'Q1', LIVE)).toBe('2026-11-06');
+      expect(dueTodayForQuarter('2026-11-20', 'Q2', LIVE)).toBe('2026-11-20');
+    });
+    it('without the flag, an unknown quarter, no quarters or no today: today unchanged', () => {
+      expect(dueTodayForQuarter('2026-11-20', 'Q1', LEGACY)).toBe('2026-11-20');
+      expect(dueTodayForQuarter('2026-11-20', 'Q9', LIVE)).toBe('2026-11-20');
+      expect(dueTodayForQuarter('2026-11-20', 'Q1', { zeroFreezeAtQuarterEnd: true })).toBe('2026-11-20');
+      expect(dueTodayForQuarter('2026-11-20', 'Q1', null)).toBe('2026-11-20');
+      expect(dueTodayForQuarter(null, 'Q1', LIVE)).toBeNull();
+    });
+  });
+
+  describe('lessonNeverZero (the /grade neverZero flag)', () => {
+    it('a zero date after the quarter end can never be a 0; one before it can', () => {
+      expect(lessonNeverZero('2026-11-12', 'Q1', LIVE)).toBe(true);
+      expect(lessonNeverZero('2026-11-05', 'Q1', LIVE)).toBe(false);
+    });
+    it('boundary: a zero date ON the last day is never a 0 under dueAfterLessonDay (that day has not ended)', () => {
+      expect(lessonNeverZero('2026-11-06', 'Q1', LIVE)).toBe(true);
+      // The engine agrees: due-ness is judged at the quarter end, and 11-06 < 11-06 is false.
+      expect(isDateDue('2026-11-06', dueTodayForQuarter('2027-06-30', 'Q1', LIVE), LIVE)).toBe(false);
+      // The old due-at-start-of-day rule would have zeroed it on the last day itself.
+      expect(lessonNeverZero('2026-11-06', 'Q1', { ...LIVE, dueAfterLessonDay: false })).toBe(false);
+    });
+    it('always agrees with the clamped due test, around every quarter end', () => {
+      const around = {
+        Q1: ['2026-11-04', '2026-11-05', '2026-11-06', '2026-11-07', '2026-11-08'],
+        Q2: ['2027-01-21', '2027-01-22', '2027-01-23'],
+      };
+      for (const [quarterKey, zeroDates] of Object.entries(around)) {
+        for (const zeroDate of zeroDates) {
+          const everDue = isDateDue(zeroDate, dueTodayForQuarter('2027-12-31', quarterKey, LIVE), LIVE);
+          expect(lessonNeverZero(zeroDate, quarterKey, LIVE), quarterKey + ' ' + zeroDate).toBe(!everDue);
+        }
+      }
+    });
+    it('off without the flag, or without a zero date', () => {
+      expect(lessonNeverZero('2026-11-12', 'Q1', LEGACY)).toBe(false);
+      expect(lessonNeverZero(null, 'Q1', LIVE)).toBe(false);
+    });
+  });
+
+  describe('computeQuarterV3', () => {
+    it('(a) a Q1 lesson merely late when Q1 closed, with no work: not due, and a 0 in no track', () => {
+      const r = v3(LIVE, mapOf({ '4.1': DONE_41 }), '2026-11-20');
+      expect(r.lessonsTotal).toBe(2);
+      expect(r.lessonsDue).toBe(1);                // 4.1 only
+      expect(r.workTracks.lessons).toBe(80);       // 4.5 does not drag the Lessons track
+      expect(r.quizTodo).toEqual([]);
+      expect(r.blooketTodo).toEqual([]);
+      expect(r.trainerDue).toBe(0);
+      expect(r.trainerTodo).toEqual([]);
+    });
+
+    it('(e) without the flag the same lesson DOES zero after its zero date (legacy)', () => {
+      const r = v3(LEGACY, mapOf({ '4.1': DONE_41 }), '2026-11-20');
+      expect(r.lessonsDue).toBe(2);
+      expect(r.workTracks.lessons).toBe(40);       // (80 + 0) / 2
+      expect(r.quizTodo).toEqual(['4.5']);
+      expect(r.blooketTodo).toEqual(['4.5']);
+      expect(r.trainerTodo).toEqual(['4.5']);
+      expect(v3(LIVE, mapOf({ '4.1': DONE_41 }), '2026-11-20').quarterGrade).toBeGreaterThan(r.quarterGrade);
+    });
+
+    it('(b) the same lesson WITH work counts in every track it lifts, and is a 0 in none', () => {
+      const r = v3(LIVE, mapOf({ '4.1': DONE_41, '4.5': DONE_45 }), '2026-11-20');
+      expect(r.workTracks.lessons).toBe(85);       // (80 + 90) / 2: the late worksheet lifts the track
+      expect(r.lessonsDue).toBe(2);
+      expect(r.lessonsGraded).toBe(2);
+      expect(r.workTracks.quizzes).toBe(80);       // the late 70 would pull the 80 down: left out
+      expect([r.quizDue, r.quizDone, r.quizTodo]).toEqual([1, 1, []]);
+      expect(r.workTracks.blooket).toBe(80);       // same for the deck played at 60
+      expect([r.blooketDue, r.blooketDone, r.blooketTodo]).toEqual([1, 1, []]);
+      expect([r.trainerDue, r.trainerDone]).toEqual([1, 1]);   // nothing else in that track: it starts it
+      const strong = v3(LIVE, mapOf({ '4.1': DONE_41, '4.5': STRONG_45 }), '2026-11-20');
+      expect(strong.workTracks).toMatchObject({ lessons: 87.5, quizzes: 85, blooket: 90 });
+      expect([strong.quizDue, strong.quizDone, strong.blooketDue, strong.blooketDone]).toEqual([2, 2, 2, 2]);
+    });
+
+    it('(b) finished late work counts from the day after the quarter ends, not from its zero date', () => {
+      // 4.5's B zero date is Thu 11-12 (the Q1 close day): its work already counts on 11-07.
+      const lessonMap = mapOf({ '4.1': DONE_41, '4.5': STRONG_45 });
+      for (const today of ['2026-11-07', '2026-11-09', '2026-11-12', '2026-11-13', '2027-02-01']) {
+        expect(v3(LIVE, lessonMap, today).workTracks, today).toMatchObject({ lessons: 87.5, quizzes: 85, blooket: 90 });
+      }
+      // On the quarter's last day it is not late yet, so nothing changes until the next day.
+      expect(v3(LIVE, lessonMap, '2026-11-06')).toEqual(v3(LEGACY, lessonMap, '2026-11-06'));
+    });
+
+    it('(b) starting late work never lowers the grade: partial work joins once it helps', () => {
+      const untouched = v3(LIVE, mapOf({ '4.1': DONE_41 }), '2026-11-12');
+      const partials = [
+        { Cws: 2, frqFloor: 70 },   // one blank saved, the reflection not graded yet
+        { Q: 20 },                  // one quiz question answered
+        { blooket: 30 },            // the deck played once, at 30%
+      ];
+      for (const partial of partials) {
+        const r = v3(LIVE, mapOf({ '4.1': DONE_41, '4.5': partial }), '2026-11-12');
+        expect(r.quarterGrade, JSON.stringify(partial)).toBe(untouched.quarterGrade);
+        expect(r.workTracks, JSON.stringify(partial)).toEqual(untouched.workTracks);
+      }
+      // Finishing it well then raises the grade.
+      expect(v3(LIVE, mapOf({ '4.1': DONE_41, '4.5': STRONG_45 }), '2026-11-12').quarterGrade)
+        .toBeGreaterThan(untouched.quarterGrade);
+      // The legacy rule counted the same one blank as a drag once 4.5 was due.
+      const legacyBlank = v3(LEGACY, mapOf({ '4.1': DONE_41, '4.5': partials[0] }), '2026-11-20');
+      expect(legacyBlank.workTracks.lessons).toBeLessThan(80);
+    });
+
+    it('(b) each kind of late work counts on its own, while the missing kinds are never a 0', () => {
+      const worksheetOnly = v3(LIVE, mapOf({ '4.1': DONE_41, '4.5': { Cws: 90, W: 90, lessonGrade: 90 } }), '2026-11-20');
+      expect(worksheetOnly.workTracks.lessons).toBe(85);
+      expect(worksheetOnly.quizTodo).toEqual([]);
+      expect(worksheetOnly.blooketTodo).toEqual([]);
+      const quizOnly = v3(LIVE, mapOf({ '4.1': DONE_41, '4.5': { Q: 90, lessonGrade: 90 } }), '2026-11-20');
+      expect(quizOnly.quizDue).toBe(2);
+      expect(quizOnly.workTracks.quizzes).toBe(85);
+      expect(quizOnly.workTracks.lessons).toBe(80);   // no worksheet work: not a Lessons-track 0
+      const deckOnly = v3(LIVE, mapOf({ '4.1': DONE_41, '4.5': { blooket: 100 } }), '2026-11-20');
+      expect(deckOnly.blooketDue).toBe(2);
+      expect(deckOnly.workTracks.blooket).toBe(90);
+      expect(deckOnly.lessonsDue).toBe(1);
+    });
+
+    it('(c) a lesson whose zero date fell inside Q1 is still a 0 (unchanged)', () => {
+      const live = v3(LIVE, mapOf({}), '2026-11-20');
+      expect(live.lessonsDue).toBe(1);
+      expect(live.workTracks.lessons).toBe(0);
+      expect(live.quizTodo).toEqual(['4.1']);
+      expect(live.blooketTodo).toEqual(['4.1']);
+      expect(v3(LEGACY, mapOf({}), '2026-11-20').quizTodo).toEqual(['4.1', '4.5']);
+    });
+
+    it('(d) on or before the quarter end the clamp is a no-op: identical with and without the flag', () => {
+      for (const lessonMap of [mapOf({}), mapOf({ '4.1': DONE_41 }), mapOf({ '4.5': DONE_45 })]) {
+        for (const today of ['2026-10-28', '2026-11-05', '2026-11-06']) {
+          for (const section of ['PeriodB', 'PeriodE', null]) {
+            expect(v3(LIVE, lessonMap, today, { section }), today).toEqual(v3(LEGACY, lessonMap, today, { section }));
+          }
+        }
+      }
+    });
+
+    it('(g) a Q2 lesson while Q2 is open is unaffected (it still zeroes after its zero date)', () => {
+      const live = v3(LIVE, mapOf({}), '2026-11-30', { quarterKey: 'Q2' });
+      expect(live).toEqual(v3(LEGACY, mapOf({}), '2026-11-30', { quarterKey: 'Q2' }));
+      expect(live.quizTodo).toEqual(['5.1']);
+    });
+
+    it('Period E has its own dates: 4.5 (E zero date 11-15) is frozen out for E too', () => {
+      expect(v3(LIVE, mapOf({}), '2026-11-20', { section: 'PeriodE' }).quizTodo).toEqual(['4.1']);
+      expect(v3(LEGACY, mapOf({}), '2026-11-20', { section: 'PeriodE' }).quizTodo).toEqual(['4.1', '4.5']);
+    });
+  });
+
+  describe('addLateScoresThatHelp (late work only helps)', () => {
+    const late = (...scores) => scores.map((score, i) => ({ key: 'L' + i, score }));
+
+    it('adds late scores best first while each one is at least the running average', () => {
+      // 160 / 2 = 80; 100 lifts it to 86.7, 90 to 87.5, and 70 would pull it down.
+      expect(addLateScoresThatHelp(160, 2, late(70, 100, 90))).toEqual({ sum: 350, count: 4, keptKeys: ['L1', 'L2'] });
+    });
+    it('a score equal to the average joins (it cannot lower it); a lower one does not', () => {
+      expect(addLateScoresThatHelp(160, 2, late(80)).keptKeys).toEqual(['L0']);
+      expect(addLateScoresThatHelp(160, 2, late(79.9)).keptKeys).toEqual([]);
+    });
+    it('no late scores leaves the track alone; an empty track starts from the best late score', () => {
+      expect(addLateScoresThatHelp(160, 2, [])).toEqual({ sum: 160, count: 2, keptKeys: [] });
+      expect(addLateScoresThatHelp(0, 0, late(60, 90))).toEqual({ sum: 90, count: 1, keptKeys: ['L1'] });
+    });
+    it('gives the best average of every possible choice of late scores', () => {
+      let seed = 20261106;
+      const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
+      for (let t = 0; t < 400; t++) {
+        const count = Math.floor(rnd() * 4);
+        let sum = 0;
+        for (let i = 0; i < count; i++) sum += Math.round(rnd() * 105);
+        const scores = Array.from({ length: 1 + Math.floor(rnd() * 5) }, () => Math.round(rnd() * 105));
+        let best = -Infinity;
+        for (let mask = 0; mask < (1 << scores.length); mask++) {
+          let s = sum, c = count;
+          scores.forEach((v, i) => { if (mask & (1 << i)) { s += v; c += 1; } });
+          if (c > 0) best = Math.max(best, s / c);
+        }
+        const got = addLateScoresThatHelp(sum, count, late(...scores));
+        expect(got.sum / got.count).toBeCloseTo(best, 9);
+      }
+    });
+  });
+
+  describe('the real SY2627 schedule around the Q1 close (Thu 2026-11-12)', () => {
+    const prod = resolveProductionGradeInputs('SY2627');
+    const config = { ...prod.config, pcTrack: { enabled: false } };
+    const schedule = prod.lessonSchedule.lessons || prod.lessonSchedule;
+    const rows = buildLessonsArray(new Map(), schedule, undefined, null, {}, prod.blooketPresence, [], prod.blooketBonusTopics, config);
+    const taughtInQ1 = (row, p) => Boolean(row.due[p]) && row.due[p] <= '2026-11-06';
+    // A student at 80 on every feeder of every Q1 lesson that zeroed inside Q1; nothing on the late ones.
+    function q1(period, today, extra = {}) {
+      const lessonMap = new Map();
+      for (const row of rows) {
+        if (!taughtInQ1(row, period) || row.neverZero[period]) continue;
+        lessonMap.set(row.lessonKey, { Cws: 80, W: 80, Q: 80, lessonGrade: 80, blooket: 80 });
+      }
+      for (const [key, value] of Object.entries(extra)) lessonMap.set(key, value);
+      return computeQuarterV3({
+        quarterKey: 'Q1', config, lessonMap, schedule, todayDateStr: today, section: 'Period' + period,
+        unitPcData: {}, quizLessons: Object.keys(schedule), blooketLessons: prod.blooketPresence, trainerLessons: [],
+      });
+    }
+    const FINISHED = { Cws: 100, W: 100, Q: 100, lessonGrade: 100, blooket: 100 };
+
+    it('the never-zero set is exactly B 4.2-4.7 and E 2.3, 4.1-4.7 (old storage keys)', () => {
+      const late = (p) => rows.filter((row) => taughtInQ1(row, p) && row.neverZero[p]).map((row) => row.lessonKey);
+      expect(late('B')).toEqual(['4.2', '4.3', '4.4', '4.5', '4.6', '4.7']);
+      expect(late('E')).toEqual(['2.3', '4.1', '4.2', '4.3', '4.4', '4.5', '4.6', '4.7']);
+    });
+
+    it('a late lesson finished before the close counts in Q1 on the close day, in both sections', () => {
+      // B 4.6 (zero date 11-18) and E 4.4 (zero date 11-12) would zero only after the close:
+      // their work still counts on Thu 11-12, as it does for B 4.3 (zero date 11-09) and E 2.3.
+      // (B 4.2 shares the 4.1-2 deck with 4.1, which Q1 already counts: one slot per worksheet.)
+      for (const [period, key] of [['B', '4.6'], ['B', '4.3'], ['E', '4.4'], ['E', '2.3']]) {
+        const before = q1(period, '2026-11-12');
+        const after = q1(period, '2026-11-12', { [key]: FINISHED });
+        expect(after.workTracks.lessons, period + ' ' + key).toBeGreaterThan(before.workTracks.lessons);
+        expect(after.workTracks.quizzes, period + ' ' + key).toBeGreaterThan(before.workTracks.quizzes);
+        expect(after.workTracks.blooket, period + ' ' + key).toBeGreaterThan(before.workTracks.blooket);
+        expect(after.quarterGrade, period + ' ' + key).toBeGreaterThan(before.quarterGrade);
+      }
+    });
+
+    it('one blank on the late 3-4-5 worksheet, one quiz answer or a weak deck never lowers Q1', () => {
+      const blank = { Cws: 1.7, frqFloor: 70 };   // one blank of 59: lesson value about 47
+      for (const period of ['B', 'E']) {
+        for (const today of ['2026-11-10', '2026-11-12', '2026-11-13']) {
+          const untouched = q1(period, today).quarterGrade;
+          expect(untouched, period + ' ' + today).toBe(80);
+          expect(q1(period, today, { '4.3': blank, '4.4': blank, '4.5': blank }).quarterGrade).toBe(untouched);
+          expect(q1(period, today, { '4.5': { Q: 20 } }).quarterGrade).toBe(untouched);
+          expect(q1(period, today, { '4.5': { blooket: 30 } }).quarterGrade).toBe(untouched);
+        }
+      }
+    });
+  });
+
+  describe('computeQuarterFromLessons (Phase 6)', () => {
+    it('uses the same clamp: the late lesson is not due, a lesson with work still counts', () => {
+      const lessonMap = mapOf({ '4.1': { lessonGrade: 80 } });
+      expect(phase6(LIVE, lessonMap, '2026-11-20')).toMatchObject({ lessonsDue: 1, quarterGrade: 80 });
+      expect(phase6(LEGACY, lessonMap, '2026-11-20')).toMatchObject({ lessonsDue: 2, quarterGrade: 40 });
+      const withLate = mapOf({ '4.1': { lessonGrade: 80 }, '4.5': { lessonGrade: 60 } });
+      expect(phase6(LIVE, withLate, '2026-11-20')).toEqual(phase6(LEGACY, withLate, '2026-11-20'));
+      expect(phase6(LIVE, lessonMap, '2026-11-05')).toEqual(phase6(LEGACY, lessonMap, '2026-11-05'));
+    });
+  });
+
+  describe('buildLessonsArray', () => {
+    const lessonsFor = (config, schedule = SCHEDULE) => buildLessonsArray(
+      new Map(), schedule, undefined, null, {}, [], [], [], config);
+    const byKey = (rows) => Object.fromEntries(rows.map((row) => [row.lessonKey, row]));
+
+    it('(f) reports zeroDate null + neverZero true only for a period its quarter closed on', () => {
+      const rows = byKey(lessonsFor(LIVE));
+      expect(rows['4.5'].zeroDate).toEqual({ B: null, E: null });
+      expect(rows['4.5'].neverZero).toEqual({ B: true, E: true });
+      expect(rows['4.5'].due).toEqual({ B: '2026-10-30', E: '2026-11-02' });   // due dates stay
+      expect(rows['4.1'].zeroDate).toEqual({ B: '2026-11-02', E: '2026-11-03' });
+      expect(rows['4.1'].neverZero).toEqual({ B: false, E: false });
+      expect(rows['5.1'].zeroDate).toEqual({ B: '2026-11-23', E: '2026-11-24' });
+      expect(rows['5.1'].neverZero).toEqual({ B: false, E: false });
+    });
+
+    it('(f) each period uses its own quarter: E taught in Q1, B taught in Q2', () => {
+      const rows = byKey(lessonsFor(LIVE, {
+        '4.6': { unit: 4, worksheetKey: '6', periods: { B: '2026-11-09', E: '2026-11-05' } },
+        '4.9': { unit: 4, worksheetKey: '9', periods: { B: null, E: '2026-11-06' } },
+      }));
+      expect(rows['4.6'].zeroDate).toEqual({ B: '2026-11-22', E: null });
+      expect(rows['4.6'].neverZero).toEqual({ B: false, E: true });
+      expect(rows['4.9'].zeroDate).toEqual({ B: null, E: null });
+      expect(rows['4.9'].neverZero).toEqual({ B: false, E: true });
+    });
+
+    it('(f) without the flag there is no neverZero field and every zero date stays', () => {
+      const rows = lessonsFor(LEGACY);
+      expect(JSON.stringify(rows)).not.toContain('neverZero');
+      expect(byKey(rows)['4.5'].zeroDate).toEqual({ B: '2026-11-12', E: '2026-11-15' });
+      expect(JSON.stringify(lessonsFor(null))).not.toContain('neverZero');
+    });
   });
 });

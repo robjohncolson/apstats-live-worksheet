@@ -396,6 +396,31 @@ def zero_due(lesson: dict, period, today: str | None) -> bool:
     return bool(zd) and zd < today
 
 
+def group_zero_due(lessons: list | None, period, today: str | None) -> dict:
+    """{group label: zero_due} for each worksheet group's Follow-Along and Blooket columns.
+
+    component_columns dates a group's column by its EARLIEST lesson for the period, and
+    that date files the column in a Schoology marking period. So that lesson's zero date
+    decides the whole group: a later sibling must never write a 0 into a column filed
+    in an earlier marking period. This matters only under the quarter-end zero freeze
+    (QUARTER_ZERO_FREEZE_SPEC.md): B and E 4.7 (11/06, never-zero in Q1) and 4.8 (11/09,
+    a Q2 lesson) share the 4.7-8 worksheet, whose columns sit in MP1. Without the freeze
+    nothing changes: the earliest lesson always reaches its zero date first.
+    A lesson with no due date for the period sorts after every dated one."""
+    deciding = {}
+    for lesson in lessons or []:
+        unit, wk = lesson.get("unit"), lesson.get("worksheetKey")
+        if unit is None or wk is None:
+            continue
+        label = group_label(unit, wk)
+        due = (lesson.get("due") or {}).get(period)
+        held = deciding.get(label)
+        held_due = ((held or {}).get("due") or {}).get(period)
+        if held is None or (due and (not held_due or due < held_due)):
+            deciding[label] = lesson
+    return {label: zero_due(lesson, period, today) for label, lesson in deciding.items()}
+
+
 # Quiz columns get the same lagged zero as Follow-Along and Blooket, starting with the
 # sync run on this date (teacher 2026-09-29: "the quizzes were just an oversight";
 # announced in class first). The in-app grade already counts an untaken due quiz as 0
@@ -446,6 +471,7 @@ def component_comments_from_class_doc(doc: dict, uid_map: dict | None = None,
         surfaced = student.get("schoologyUid")
         uid = str(surfaced) if surfaced not in (None, "") else uid_map.get(rid, rid)
         emitted = set()
+        group_zero = group_zero_due(student.get("lessons"), period_of(student), today)
         for lesson in student.get("lessons") or []:
             unit, wk = lesson.get("unit"), lesson.get("worksheetKey")
             if unit is None or wk is None:
@@ -457,7 +483,7 @@ def component_comments_from_class_doc(doc: dict, uid_map: dict | None = None,
             valid_label = re.fullmatch(r"\d+\.\d+(?:-(?:\d+\.)?\d+)?", label)
             # `label` stays the storage key (column lookups); `shown` is what the student reads.
             shown = comment_label(label, ced) if valid_label else label
-            due = zero_due(lesson, period_of(student), today)
+            due = group_zero.get(group, False)
             worksheet = lesson.get("lessonGradeNoQuiz")
             if worksheet is None:
                 worksheet = lesson.get("Cws")
@@ -532,6 +558,7 @@ def component_grades_from_class_doc(doc: dict, uid_map: dict | None = None,
         emitted_fa = set()
         emitted_bl = set()
         period = period_of(s)
+        group_zero = group_zero_due(s.get("lessons"), period, today)
         for lesson in (s.get("lessons") or []):
             unit = lesson.get("unit")
             wk = lesson.get("worksheetKey")
@@ -553,8 +580,9 @@ def component_grades_from_class_doc(doc: dict, uid_map: dict | None = None,
             # the engine's blooketTodo). Quiz: same rule from QUIZ_ZEROS_FROM on
             # (quiz_zero_due). Best-wins on
             # the sync side means later work replaces the 0 and a higher hand
-            # entry is kept.
-            due_zero = zero_due(lesson, period, today)
+            # entry is kept. The group's earliest lesson decides the Follow-Along
+            # and Blooket zero (group_zero_due); the quiz stays per lesson.
+            due_zero = group_zero.get(label, False)
             if fa_val is None and due_zero:
                 fa_val = 0
             if fa_val is not None and label not in emitted_fa:

@@ -21,6 +21,9 @@ export const COLOR_DEFS = [
   '\\definecolor{desktentativeink}{HTML}{8A6D00}',
   // The Desk's all-clear green: the "ahead of the calendar" praise line (EFFORT_VISIBILITY_SPEC §2).
   '\\definecolor{deskgreen}{HTML}{2A8A2A}',
+  // The Desk's grey past-due row: a late item that never becomes a 0 (QUARTER_ZERO_FREEZE_SPEC).
+  '\\definecolor{desklater}{HTML}{AAAAAA}',
+  '\\definecolor{desklaterbg}{HTML}{EEEEEE}',
 ];
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -86,11 +89,36 @@ export function quarterGrade(student, serverKey) {
   return Number.isFinite(grade) ? grade : null;
 }
 
+// QUARTER_ZERO_FREEZE_SPEC.md (teacher 2026-11-06): a lesson whose zero date fell after its
+// quarter's last day never becomes a 0 (/class/grades sends zeroDate null and neverZero true).
+// Past its due date it is still late work, listed with the same three missing rules.
+function lateRows(lesson, dueDate) {
+  const row = { lessonKey: lesson.lessonKey, zeroDate: null, daysLeft: null, past: false, late: true, dueDate };
+  const rows = [];
+  if (lesson.lessonGradeNoQuiz == null && lesson.Cws == null) rows.push({ ...row, kind: 'worksheet' });
+  if ((lesson.quizTotal || 0) > 0 && lesson.Q == null) rows.push({ ...row, kind: 'quiz' });
+  if (lesson.hasBlooket && !lesson.blooketBonus && lesson.blooket == null) rows.push({ ...row, kind: 'blooket' });
+  return rows;
+}
+
+// Dated rows by zero date; a late row (no zero date) after every dated row.
+function byZeroDate(a, b) {
+  if (!a.zeroDate || !b.zeroDate) return Number(!a.zeroDate) - Number(!b.zeroDate);
+  return a.zeroDate.localeCompare(b.zeroDate);
+}
+
 export function missingWork(lessons, period, date) {
   if (!Array.isArray(lessons) || !period || !date) return [];
   const result = [];
+  const late = [];
   for (const lesson of lessons) {
-    if (!lesson?.lessonKey || !lesson.zeroDate?.[period]) continue;
+    if (!lesson?.lessonKey) continue;
+    if (lesson.neverZero?.[period] === true) {
+      const dueDate = lesson.due?.[period];
+      if (dueDate && dueDate < date) late.push(...lateRows(lesson, dueDate));
+      continue;
+    }
+    if (!lesson.zeroDate?.[period]) continue;
     const zeroDate = lesson.zeroDate[period];
     const daysLeft = Math.round((new Date(zeroDate + 'T00:00:00') - new Date(date + 'T00:00:00')) / 86400000);
     if (daysLeft > 3) continue;
@@ -101,19 +129,29 @@ export function missingWork(lessons, period, date) {
     if (lesson.hasBlooket && !lesson.blooketBonus && lesson.blooket == null) result.push({ ...row, kind: 'blooket' });
   }
   const order = { worksheet: 0, quiz: 1, blooket: 2 };
-  return result.sort((a, b) => a.zeroDate.localeCompare(b.zeroDate) || order[a.kind] - order[b.kind]);
+  result.sort((a, b) => a.zeroDate.localeCompare(b.zeroDate) || order[a.kind] - order[b.kind]);
+  late.sort((a, b) => a.dueDate.localeCompare(b.dueDate) || order[a.kind] - order[b.kind]);
+  return result.concat(late);
 }
 
 export function isCandidate(grade, missing, { all = false, min = 70 } = {}) {
   return all || (grade != null && grade < min) || missing.some(item => item.past);
 }
 
+// A lesson whose scores already count: its zero date has passed, or it is never-zero
+// (QUARTER_ZERO_FREEZE_SPEC: late, never a 0) and its class day has passed.
+function scoresCount(lesson, period, date) {
+  const zeroDate = lesson?.zeroDate?.[period];
+  if (zeroDate) return zeroDate < date;
+  const dueDate = lesson?.due?.[period];
+  return lesson?.neverZero?.[period] === true && Boolean(dueDate) && dueDate < date;
+}
+
 // Lowest-scoring items that are already due: the plan when nothing is missing (every one is revisable).
 export function lowestDueScores(lessons, period, date) {
   const scored = [];
   for (const lesson of lessons || []) {
-    const zeroDate = lesson && lesson.zeroDate && lesson.zeroDate[period];
-    if (!zeroDate || zeroDate >= date) continue;
+    if (!scoresCount(lesson, period, date)) continue;
     if (lesson.lessonGradeNoQuiz != null && lesson.lessonGradeNoQuiz < 90) scored.push({ lessonKey: lesson.lessonKey, kind: 'worksheet', score: lesson.lessonGradeNoQuiz });
     if ((lesson.quizTotal || 0) > 0 && lesson.Q != null && lesson.Q < 90) scored.push({ lessonKey: lesson.lessonKey, kind: 'quiz', score: lesson.Q });
     if (lesson.hasBlooket && lesson.blooket != null && lesson.blooket < 90) scored.push({ lessonKey: lesson.lessonKey, kind: 'flashcard deck', score: lesson.blooket });
@@ -141,6 +179,9 @@ export function retakeStep(student) {
   return `Retake the Unit 1 Progress Check, MCQ Part A, on paper in class (you have ${Math.round(pct)}%). Your best score counts.`;
 }
 
+// Counting now first (a 0 now or soon), then late work (never a 0); inside each: empty tracks
+// first, then past, zero date and the lessons' own order (teacher 2026-11-06: split "counting
+// now (fix it)" from "late, no zero").
 export function doFirst(lessons, missing) {
   const empty = {
     worksheet: !lessons.some(lesson => lesson.lessonGradeNoQuiz != null || lesson.Cws != null),
@@ -148,8 +189,9 @@ export function doFirst(lessons, missing) {
     blooket: !lessons.some(lesson => lesson.blooket != null),
   };
   const order = new Map(lessons.map((lesson, index) => [lesson.lessonKey, index]));
-  return [...missing].sort((a, b) => Number(empty[b.kind]) - Number(empty[a.kind])
-    || Number(b.past) - Number(a.past) || a.zeroDate.localeCompare(b.zeroDate)
+  return [...missing].sort((a, b) => Number(Boolean(a.late)) - Number(Boolean(b.late))
+    || Number(empty[b.kind]) - Number(empty[a.kind])
+    || Number(b.past) - Number(a.past) || byZeroDate(a, b)
     || order.get(a.lessonKey) - order.get(b.lessonKey)).slice(0, 3);
 }
 
@@ -193,6 +235,7 @@ export function dayText(iso) {
 
 // The date cell of a Missing-work row (the Desk's _zeroWhenText).
 export function whenText(item) {
+  if (item.late) return 'late · counts when you finish it';
   return item.past ? `0 since ${dayText(item.zeroDate)}` : `0 after ${dayText(item.zeroDate)}`;
 }
 
@@ -203,9 +246,9 @@ export function orderMissing(missing) {
 }
 
 // The slip's "First" item (the Desk's _snapFocus rule): the 0 counting longest, else the item
-// that becomes a 0 soonest.
+// that becomes a 0 soonest. A late row never becomes a 0, so it is never the first item.
 export function firstItem(missing) {
-  const list = (Array.isArray(missing) ? missing : []).slice()
+  const list = (Array.isArray(missing) ? missing : []).filter(item => item.zeroDate)
     .sort((a, b) => a.zeroDate.localeCompare(b.zeroDate));
   return list.find(item => item.past) || list[0] || null;
 }
@@ -341,8 +384,8 @@ export function classStripTex(missing, pool, section, date) {
 // §1.2: one coloured row per missing item, verb first, in the Desk's order.
 export function missingRowsTex(missing) {
   const rows = orderMissing(missing).map(item => {
-    const bar = item.past ? 'deskred' : 'deskyellow';
-    const background = item.past ? 'deskredbg' : 'deskyellowbg';
+    const bar = item.late ? 'desklater' : item.past ? 'deskred' : 'deskyellow';
+    const background = item.late ? 'desklaterbg' : item.past ? 'deskredbg' : 'deskyellowbg';
     const label = `${VERB[item.kind]} ${lessonLabel(item.lessonKey)}`;
     return `\\MissRow{${bar}}{${background}}{${latexText(label)}}{${latexText(whenText(item))}}`;
   });

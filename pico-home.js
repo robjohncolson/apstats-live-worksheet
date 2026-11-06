@@ -2582,10 +2582,11 @@
   }
 
   // The Desk card's data-sig: the same rows keep the tiles (and focus on a tile's button)
-  // across a grade poll; only the status line is refreshed (as the Desk does).
+  // across a grade poll; only the status line is refreshed (as the Desk does). A row turning
+  // late (QUARTER_ZERO_FREEZE_SPEC) changes its words, so it rebuilds the tiles.
   function zeroSignature(warns, later, done) {
     var sig = warns.map(function (w) { return w.lessonKey + ':' + w.kind + ':' + (w.past ? 1 : 0); }).join('|');
-    if (later.length) sig += '#later:' + later.map(function (w) { return w.lessonKey + ':' + w.kind; }).join('|');
+    if (later.length) sig += '#later:' + later.map(function (w) { return w.lessonKey + ':' + w.kind + (w.late ? ':late' : ''); }).join('|');
     if (done.length) sig += '#done:' + done.map(function (w) { return w.lessonKey + ':' + w.kind; }).join('|');
     return sig;
   }
@@ -2594,7 +2595,8 @@
   //   ZEROED   = _zeroCurrentWarnings() rows with past: true      (the ledger's red rows; a 0 now)
   //   DUE SOON = _zeroCurrentWarnings() rows with past: false     (yellow; inside ZERO_WARN_DAYS)
   //   NOT YET  = _pastDueCurrentWork() rows                       (grey; past due, the 0 is further
-  //                                                                than ZERO_WARN_DAYS away)
+  //                                                                than ZERO_WARN_DAYS away, or late:
+  //                                                                never a 0, under its own heading)
   //   DONE     = the /grade lesson tracks that HAVE work, by the exact fields the two Desk lists
   //              test for "missing" (worksheet: lessonGradeNoQuiz or Cws; quiz: Q when quizTotal > 0;
   //              Blooket: blooket when the deck counts) — so no track can be both missing and done.
@@ -2731,11 +2733,20 @@
       // Past first, then by date (the warnings are already date-ordered), as the Desk orders them.
       var ordered = b.zeroed.concat(b.soon);
       ordered.forEach(function (w) { box.appendChild(zeroTile(w, w.past ? 'now' : 'soon')); });
-      if (later.length) {
+      // The Desk's two grey headings: past due (a 0 still to come) and late (never a 0).
+      var notYet = later.filter(function (w) { return !w.late; });
+      var late = later.filter(function (w) { return w.late; });
+      if (notYet.length) {
         var head = el('p', 'pl-later-head', 'Past due — not counting yet');
         head.setAttribute('data-bucket', 'notyet');
         box.appendChild(head);
-        later.forEach(function (w) { box.appendChild(zeroTile(w, 'later')); });
+        notYet.forEach(function (w) { box.appendChild(zeroTile(w, 'later')); });
+      }
+      if (late.length) {
+        var lateHead = el('p', 'pl-later-head pl-late-head', 'Late — never a 0');
+        lateHead.setAttribute('data-bucket', 'notyet');
+        box.appendChild(lateHead);
+        late.forEach(function (w) { box.appendChild(zeroTile(w, 'later')); });
       }
       b.done.forEach(function (w) { box.appendChild(zeroTile(w, 'done')); });
       LEDGER_BUCKETS.forEach(function (bucket) {
@@ -4305,6 +4316,7 @@
     days: function () { return view.days; },
     syncDeck: syncDeck,
     studyBreakOwnsKey: studyBreakOwnsKey,
+    zeroSignature: zeroSignature,
   };
 
   // The Desk's own functions are defined by later scripts on the page, so start once the
