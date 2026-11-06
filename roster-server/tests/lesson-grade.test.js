@@ -1258,3 +1258,41 @@ describe('computeLessonGrades - orphan rows (id names an unscheduled lesson)', (
     });
   });
 });
+
+describe('combined-worksheet lessons share one flashcard deck', () => {
+  const FRQ_BAND = { E: 107.5, P: 92.5, I: 81.25, ungraded: 70 };
+  const SCHED = {
+    '4.1': { unit: 4, topicKey: '4.1', worksheetKey: '1-2', periods: { B: null, E: null }, combinedWith: ['4.2'] },
+    '4.2': { unit: 4, topicKey: '4.2', worksheetKey: '1-2', periods: { B: null, E: null }, combinedWith: ['4.1'] },
+    '4.6': { unit: 4, topicKey: '4.6', worksheetKey: '6', periods: { B: null, E: null } },
+  };
+  const row = (itemId, score, source = 'worksheet') => ({ item_id: itemId, source, score, response: null, unit: null, recorded_at: null });
+
+  it('a deck played from Day 1 counts for Day 2 too', () => {
+    const map = computeLessonGrades([row('BL-U4-L1-DESK_DONE', 96.6)], FRQ_BAND, {}, SCHED, {});
+    expect(map.get('4.1').blooket).toBe(96.6);
+    expect(map.get('4.2').blooket).toBe(96.6);
+  });
+
+  it('a deck played from Day 2 only counts for Day 1 (the Blooket track keys the group by its first topic)', () => {
+    const map = computeLessonGrades([row('BL-U4-L2-DESK_DONE', 70)], FRQ_BAND, {}, SCHED, {});
+    expect(map.get('4.1').blooket).toBe(70);
+    expect(map.get('4.2').blooket).toBe(70);
+    expect(map.get('4.1').lessonGrade).toBeNull();
+  });
+
+  it('the HIGHEST of the two days wins for both, game and flashcard alike', () => {
+    const map = computeLessonGrades([
+      row('BL-U4-L1-DESK_DONE', 60),
+      row('BL-U4-L2-DESK_DONE', 85),
+      row('BLOOKET-U4L1', 0.9, 'blooket'),
+    ], FRQ_BAND, {}, SCHED, {});
+    expect(map.get('4.1').blooket).toBe(90);
+    expect(map.get('4.2').blooket).toBe(90);
+  });
+
+  it('a solo worksheet never borrows another lesson\'s deck', () => {
+    const map = computeLessonGrades([row('BL-U4-L1-DESK_DONE', 96.6)], FRQ_BAND, {}, SCHED, {});
+    expect(map.get('4.6')).toBeUndefined();
+  });
+});

@@ -294,6 +294,44 @@ const LESSON_MAX = 105;
 //
 // Note: this function intentionally does NOT filter by "due date" —
 // that is applied at the quarter level in computeQuarterFromLessons.
+// unit|worksheetKey of a topic, or null when the schedule has no worksheet for it.
+function worksheetGroupKey(topicKey, schedule) {
+  const entry = schedule && schedule[topicKey];
+  if (!entry || entry.worksheetKey == null) return null;
+  return `${entry.unit}|${entry.worksheetKey}`;
+}
+
+function maxNullable(a, b) {
+  if (a == null) return b == null ? null : b;
+  if (b == null) return a;
+  return Math.max(a, b);
+}
+
+// Topics that share a worksheet share its flashcard deck: copy the group's best
+// blooketGame / blooketFlashcard onto every topic in the group (creating the
+// sibling accumulator when the student only played the deck from one day).
+function shareBlooketAcrossWorksheetGroups(byTopic, schedule, ensure) {
+  if (!schedule) return;
+  const best = new Map();
+  for (const acc of byTopic.values()) {
+    const group = worksheetGroupKey(acc.topicKey, schedule);
+    if (!group) continue;
+    const b = best.get(group) || { game: null, flashcard: null };
+    b.game = maxNullable(b.game, acc.blooketGame);
+    b.flashcard = maxNullable(b.flashcard, acc.blooketFlashcard);
+    best.set(group, b);
+  }
+  for (const [group, b] of best) {
+    if (b.game == null && b.flashcard == null) continue;
+    for (const topicKey of Object.keys(schedule)) {
+      if (worksheetGroupKey(topicKey, schedule) !== group) continue;
+      const acc = ensure(topicKey);
+      acc.blooketGame = b.game;
+      acc.blooketFlashcard = b.flashcard;
+    }
+  }
+}
+
 export function computeLessonGrades(rows, frqBand, answerKey, schedule, opts) {
   // banked bonus — applied only at quarter close (BONUS_BANK_SPEC.md); posters
   // are unit-level rows read by computeGrade, never lesson feeders.
@@ -484,6 +522,13 @@ export function computeLessonGrades(rows, frqBand, answerKey, schedule, opts) {
   // correct / WHOLE-quiz (unanswered = wrong), mirroring how Cws uses the full
   // blank count. Computed once from the answer key.
   const quizTotals = computeQuizTotals(answerKey, schedule);
+
+  // A combined worksheet (4.1 + 4.2 share u4_lesson1-2) has ONE flashcard deck,
+  // so the deck played from either day's tile is the same deck. Share the best
+  // deck / game score across every topic of the worksheet group, so Day 2 never
+  // reads "not played" when Day 1 was, and the Blooket track (which keys the
+  // group by its first topic) never loses a score recorded under Day 2.
+  shareBlooketAcrossWorksheetGroups(byTopic, schedule, ensure);
 
   for (const [, acc] of byTopic) {
     // Cws = clamp((sum of blank scores) / blankCount, 0, 1) * 100
