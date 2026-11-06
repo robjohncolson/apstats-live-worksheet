@@ -1,0 +1,463 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Desk missing-work extraction preserves original behavior > 'day after due is quiet past due' 1`] = `
+{
+  "pastDue": [
+    {
+      "dueDate": "2026-09-17",
+      "kind": "worksheet",
+      "lessonKey": "1.1",
+      "unit": 1,
+      "worksheetKey": "1",
+      "zeroDate": "2026-09-30",
+    },
+  ],
+  "warnings": [],
+}
+`;
+
+exports[`Desk missing-work extraction preserves original behavior > 'day after zero remains a past warning' 1`] = `
+{
+  "pastDue": [],
+  "warnings": [
+    {
+      "daysLeft": -1,
+      "kind": "worksheet",
+      "lessonKey": "1.1",
+      "past": true,
+      "zeroDate": "2026-09-30",
+    },
+  ],
+}
+`;
+
+exports[`Desk missing-work extraction preserves original behavior > 'due today is not past due' 1`] = `
+{
+  "pastDue": [],
+  "warnings": [],
+}
+`;
+
+exports[`Desk missing-work extraction preserves original behavior > 'explicit five-day window includes fou…' 1`] = `
+{
+  "pastDue": [],
+  "warnings": [
+    {
+      "daysLeft": 4,
+      "kind": "worksheet",
+      "lessonKey": "1.1",
+      "past": false,
+      "zeroDate": "2026-09-30",
+    },
+  ],
+}
+`;
+
+exports[`Desk missing-work extraction preserves original behavior > 'explicit one-day window leaves two da…' 1`] = `
+{
+  "pastDue": [
+    {
+      "dueDate": "2026-09-17",
+      "kind": "worksheet",
+      "lessonKey": "1.1",
+      "unit": 1,
+      "worksheetKey": "1",
+      "zeroDate": "2026-09-30",
+    },
+  ],
+  "warnings": [],
+}
+`;
+
+exports[`Desk missing-work extraction preserves original behavior > 'fall DST four calendar days remains q…' 1`] = `
+{
+  "pastDue": [
+    {
+      "dueDate": "2026-10-22",
+      "kind": "worksheet",
+      "lessonKey": "1.1",
+      "unit": 1,
+      "worksheetKey": "1",
+      "zeroDate": "2026-11-04",
+    },
+  ],
+  "warnings": [],
+}
+`;
+
+exports[`Desk missing-work extraction preserves original behavior > 'fall DST rounds 73 elapsed hours to t…' 1`] = `
+{
+  "pastDue": [],
+  "warnings": [
+    {
+      "daysLeft": 3,
+      "kind": "worksheet",
+      "lessonKey": "1.1",
+      "past": false,
+      "zeroDate": "2026-11-03",
+    },
+  ],
+}
+`;
+
+exports[`Desk missing-work extraction preserves original behavior > 'four days before zero is quiet past d…' 1`] = `
+{
+  "pastDue": [
+    {
+      "dueDate": "2026-09-17",
+      "kind": "worksheet",
+      "lessonKey": "1.1",
+      "unit": 1,
+      "worksheetKey": "1",
+      "zeroDate": "2026-09-30",
+    },
+  ],
+  "warnings": [],
+}
+`;
+
+exports[`Desk missing-work extraction preserves original behavior > 'malformed date preserves existing NaN…' 1`] = `
+{
+  "pastDue": [
+    {
+      "dueDate": "2026-09-17",
+      "kind": "worksheet",
+      "lessonKey": "bad-date",
+      "unit": undefined,
+      "worksheetKey": undefined,
+      "zeroDate": "not-a-date",
+    },
+  ],
+  "warnings": [
+    {
+      "daysLeft": NaN,
+      "kind": "worksheet",
+      "lessonKey": "bad-date",
+      "past": false,
+      "zeroDate": "not-a-date",
+    },
+  ],
+}
+`;
+
+exports[`Desk missing-work extraction preserves original behavior > 'malformed entries and absent dates ar…' 1`] = `
+{
+  "pastDue": [],
+  "warnings": [
+    {
+      "daysLeft": 2,
+      "kind": "worksheet",
+      "lessonKey": "no-due",
+      "past": false,
+      "zeroDate": "2026-09-30",
+    },
+  ],
+}
+`;
+
+exports[`Desk missing-work extraction preserves original behavior > 'missing lessons' 1`] = `
+{
+  "pastDue": [],
+  "warnings": [],
+}
+`;
+
+exports[`Desk missing-work extraction preserves original behavior > 'missing period' 1`] = `
+{
+  "pastDue": [],
+  "warnings": [],
+}
+`;
+
+exports[`Desk missing-work extraction preserves original behavior > 'missing today' 1`] = `
+{
+  "pastDue": [],
+  "warnings": [],
+}
+`;
+
+exports[`Desk missing-work extraction preserves original behavior > 'non-array lessons' 1`] = `
+{
+  "pastDue": [],
+  "warnings": [],
+}
+`;
+
+exports[`Desk missing-work extraction preserves original behavior > 'period E uses its later dates' 1`] = `
+{
+  "pastDue": [
+    {
+      "dueDate": "2026-09-19",
+      "kind": "worksheet",
+      "lessonKey": "1.1",
+      "unit": 1,
+      "worksheetKey": "1",
+      "zeroDate": "2026-10-02",
+    },
+  ],
+  "warnings": [],
+}
+`;
+
+exports[`Desk missing-work extraction preserves original behavior > 'same missing tracks in quiet past-due…' 1`] = `
+{
+  "pastDue": [
+    {
+      "dueDate": "2026-09-17",
+      "kind": "worksheet",
+      "lessonKey": "all-missing",
+      "unit": 1,
+      "worksheetKey": "1",
+      "zeroDate": "2026-09-30",
+    },
+    {
+      "dueDate": "2026-09-17",
+      "kind": "worksheet",
+      "lessonKey": "quiz-does-not-complete-worksheet",
+      "unit": 1,
+      "worksheetKey": "1",
+      "zeroDate": "2026-09-30",
+    },
+    {
+      "dueDate": "2026-09-17",
+      "kind": "quiz",
+      "lessonKey": "all-missing",
+      "unit": 1,
+      "worksheetKey": "1",
+      "zeroDate": "2026-09-30",
+    },
+    {
+      "dueDate": "2026-09-17",
+      "kind": "blooket",
+      "lessonKey": "all-missing",
+      "unit": 1,
+      "worksheetKey": "1",
+      "zeroDate": "2026-09-30",
+    },
+  ],
+  "warnings": [],
+}
+`;
+
+exports[`Desk missing-work extraction preserves original behavior > 'spring DST rounds 71 elapsed hours to…' 1`] = `
+{
+  "pastDue": [],
+  "warnings": [
+    {
+      "daysLeft": 3,
+      "kind": "worksheet",
+      "lessonKey": "1.1",
+      "past": false,
+      "zeroDate": "2026-03-10",
+    },
+  ],
+}
+`;
+
+exports[`Desk missing-work extraction preserves original behavior > 'stable ties retain input order and gr…' 1`] = `
+{
+  "pastDue": [
+    {
+      "dueDate": "2026-09-17",
+      "kind": "worksheet",
+      "lessonKey": "3.9",
+      "unit": 3,
+      "worksheetKey": "9",
+      "zeroDate": "2026-09-29",
+    },
+    {
+      "dueDate": "2026-09-17",
+      "kind": "worksheet",
+      "lessonKey": "4.2",
+      "unit": 4,
+      "worksheetKey": "1-2",
+      "zeroDate": "2026-09-30",
+    },
+    {
+      "dueDate": "2026-09-17",
+      "kind": "worksheet",
+      "lessonKey": "4.1",
+      "unit": 4,
+      "worksheetKey": "1-2",
+      "zeroDate": "2026-09-30",
+    },
+    {
+      "dueDate": "2026-09-17",
+      "kind": "quiz",
+      "lessonKey": "4.2",
+      "unit": 4,
+      "worksheetKey": "1-2",
+      "zeroDate": "2026-09-30",
+    },
+    {
+      "dueDate": "2026-09-17",
+      "kind": "quiz",
+      "lessonKey": "4.1",
+      "unit": 4,
+      "worksheetKey": "1-2",
+      "zeroDate": "2026-09-30",
+    },
+    {
+      "dueDate": "2026-09-17",
+      "kind": "blooket",
+      "lessonKey": "4.2",
+      "unit": 4,
+      "worksheetKey": "1-2",
+      "zeroDate": "2026-09-30",
+    },
+    {
+      "dueDate": "2026-09-17",
+      "kind": "blooket",
+      "lessonKey": "4.1",
+      "unit": 4,
+      "worksheetKey": "1-2",
+      "zeroDate": "2026-09-30",
+    },
+  ],
+  "warnings": [],
+}
+`;
+
+exports[`Desk missing-work extraction preserves original behavior > 'stable warning ties sort by date then…' 1`] = `
+{
+  "pastDue": [],
+  "warnings": [
+    {
+      "daysLeft": 1,
+      "kind": "worksheet",
+      "lessonKey": "3.9",
+      "past": false,
+      "zeroDate": "2026-09-29",
+    },
+    {
+      "daysLeft": 2,
+      "kind": "worksheet",
+      "lessonKey": "4.2",
+      "past": false,
+      "zeroDate": "2026-09-30",
+    },
+    {
+      "daysLeft": 2,
+      "kind": "worksheet",
+      "lessonKey": "4.1",
+      "past": false,
+      "zeroDate": "2026-09-30",
+    },
+    {
+      "daysLeft": 2,
+      "kind": "quiz",
+      "lessonKey": "4.2",
+      "past": false,
+      "zeroDate": "2026-09-30",
+    },
+    {
+      "daysLeft": 2,
+      "kind": "quiz",
+      "lessonKey": "4.1",
+      "past": false,
+      "zeroDate": "2026-09-30",
+    },
+    {
+      "daysLeft": 2,
+      "kind": "blooket",
+      "lessonKey": "4.2",
+      "past": false,
+      "zeroDate": "2026-09-30",
+    },
+    {
+      "daysLeft": 2,
+      "kind": "blooket",
+      "lessonKey": "4.1",
+      "past": false,
+      "zeroDate": "2026-09-30",
+    },
+  ],
+}
+`;
+
+exports[`Desk missing-work extraction preserves original behavior > 'three days before zero enters warnings' 1`] = `
+{
+  "pastDue": [],
+  "warnings": [
+    {
+      "daysLeft": 3,
+      "kind": "worksheet",
+      "lessonKey": "1.1",
+      "past": false,
+      "zeroDate": "2026-09-30",
+    },
+  ],
+}
+`;
+
+exports[`Desk missing-work extraction preserves original behavior > 'track presence including zero, quiz-o…' 1`] = `
+{
+  "pastDue": [],
+  "warnings": [
+    {
+      "daysLeft": 2,
+      "kind": "worksheet",
+      "lessonKey": "all-missing",
+      "past": false,
+      "zeroDate": "2026-09-30",
+    },
+    {
+      "daysLeft": 2,
+      "kind": "worksheet",
+      "lessonKey": "quiz-does-not-complete-worksheet",
+      "past": false,
+      "zeroDate": "2026-09-30",
+    },
+    {
+      "daysLeft": 2,
+      "kind": "quiz",
+      "lessonKey": "all-missing",
+      "past": false,
+      "zeroDate": "2026-09-30",
+    },
+    {
+      "daysLeft": 2,
+      "kind": "quiz",
+      "lessonKey": "quiz-and-deck-missing",
+      "past": false,
+      "zeroDate": "2026-09-30",
+    },
+    {
+      "daysLeft": 2,
+      "kind": "blooket",
+      "lessonKey": "all-missing",
+      "past": false,
+      "zeroDate": "2026-09-30",
+    },
+    {
+      "daysLeft": 2,
+      "kind": "blooket",
+      "lessonKey": "quiz-and-deck-missing",
+      "past": false,
+      "zeroDate": "2026-09-30",
+    },
+  ],
+}
+`;
+
+exports[`Desk missing-work extraction preserves original behavior > 'unknown period does not borrow dates' 1`] = `
+{
+  "pastDue": [],
+  "warnings": [],
+}
+`;
+
+exports[`Desk missing-work extraction preserves original behavior > 'zero date is a warning but not past' 1`] = `
+{
+  "pastDue": [],
+  "warnings": [
+    {
+      "daysLeft": 0,
+      "kind": "worksheet",
+      "lessonKey": "1.1",
+      "past": false,
+      "zeroDate": "2026-09-30",
+    },
+  ],
+}
+`;

@@ -14,6 +14,7 @@ import { deskSource, deskHtml } from './helpers/desk-source.js';
 
 const html = deskHtml();
 const html_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
+const missingWorkSource = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), '../js/desk-missing-work.js'), 'utf8');
 function fnSrc(name) {
   const m = new RegExp('(?:async\\s+)?function\\s+' + name + '\\s*\\(').exec(html_SRC);
   if (!m) throw new Error('missing ' + name);
@@ -77,6 +78,7 @@ function sandbox({ lessons = LESSONS, period = 'E', today = TODAY, grade = { pct
     openWallet() {},
   };
   createContext(s);
+  runInContext(missingWorkSource, s);
   runInContext('var ZERO_WARN_DAYS = 3;\n' + CARD_FNS.map(fnSrc).join('\n'), s);
   const doc = dom.window.document;
   const host = () => doc.getElementById('wallet-content');
@@ -125,17 +127,20 @@ describe('_pastDueWork — pure selection', () => {
       expect(plain(t.s._pastDueWork([null, { lessonKey: 'x', due: 5, zeroDate: 7 }], 'E', TODAY))).toEqual([]);
     } finally { t.close(); }
   });
-  it('mirrors the three "missing" rules of _zeroWarnings verbatim (drift guard)', () => {
-    const warn = fnSrc('_zeroWarnings');
-    const grey = fnSrc('_pastDueWork');
-    for (const rule of [
-      'var hasWork = L.lessonGradeNoQuiz != null || L.Cws != null;',
-      'if ((L.quizTotal || 0) > 0 && L.Q == null)',
-      'if (L.hasBlooket && !L.blooketBonus && L.blooket == null)',
-    ]) {
-      expect(warn).toContain(rule);
-      expect(grey).toContain(rule);
-    }
+  it('uses the same missing-track rules before and inside the warning window', () => {
+    const t = sandbox();
+    try {
+      const lessons = [
+        { lessonKey: 'missing', ...d('2026-09-20', '2026-10-08'), quizTotal: 5, hasBlooket: true },
+        { lessonKey: 'zero-counts', ...d('2026-09-20', '2026-10-08'), Cws: 0, quizTotal: 5, Q: 0, hasBlooket: true, blooket: 0 },
+        { lessonKey: 'quiz-only', ...d('2026-09-20', '2026-10-08'), lessonGrade: 100, quizTotal: 5, Q: 100 },
+        { lessonKey: 'bonus', ...d('2026-09-20', '2026-10-08'), Cws: 80, hasBlooket: true, blooketBonus: true },
+      ];
+      const kinds = rows => Array.from(rows, row => row.lessonKey + ':' + row.kind);
+      const expected = ['missing:worksheet', 'quiz-only:worksheet', 'missing:quiz', 'missing:blooket'];
+      expect(kinds(t.s._pastDueWork(lessons, 'E', '2026-09-30'))).toEqual(expected);
+      expect(kinds(t.s._zeroWarnings(lessons, 'E', '2026-10-05'))).toEqual(expected);
+    } finally { t.close(); }
   });
 });
 

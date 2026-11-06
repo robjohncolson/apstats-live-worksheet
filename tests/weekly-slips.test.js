@@ -23,7 +23,8 @@ const LESSONS = [
 const html = deskSource();
 const start = html.indexOf('function _zeroWarnings(');
 const end = html.indexOf('function _zeroTodayIso(', start);
-const deskMissing = runInNewContext(`var ZERO_WARN_DAYS = 3; ${html.slice(start, end)}; _zeroWarnings`);
+const missingWorkSource = readFileSync(new URL('../js/desk-missing-work.js', import.meta.url), 'utf8');
+const deskMissing = runInNewContext(`${missingWorkSource}\nvar ZERO_WARN_DAYS = 3; ${html.slice(start, end)}; _zeroWarnings`);
 const student = (grade, name = 'X') => ({ realName: name, quarters: { Q1: { quarterGrade: grade } }, lessons: LESSONS });
 
 describe('weekly slips', () => {

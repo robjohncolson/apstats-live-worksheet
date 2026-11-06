@@ -15,6 +15,7 @@ import { deskSource, deskHtml } from './helpers/desk-source.js';
 
 const html = deskHtml();
 const html_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
+const missingWorkSource = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), '../js/desk-missing-work.js'), 'utf8');
 
 function fnSrc(name) {
   const m = new RegExp('(?:async\\s+)?function\\s+' + name + '\\s*\\(').exec(html_SRC);
@@ -52,6 +53,7 @@ function sandbox({ lessons = LESSONS, period = 'B', today = '2026-09-21' } = {})
   };
   s.window.open = (url) => { s.urls.push(url); };
   createContext(s);
+  runInContext(missingWorkSource, s);
   runInContext('var ZERO_WARN_DAYS = 3;\n' + ['_zeroWarnings', '_zeroTodayIso', '_zeroCurrentWarnings', '_zeroWhenText', '_zeroCountText', '_updateZeroWarningBadge', '_zeroOpenFlashcards', '_zeroOpenLesson', '_zeroOpenQuiz', '_walletPrependZeroCard',
     '_zeroDayText', '_zeroLatestSoonDay', '_zeroPillText', '_zeroStatusText', '_zeroCardStatus', '_zeroCardActionButton', '_zeroCardRow', '_donowApplyZeroState']
     .map(fnSrc).join('\n'), s);

@@ -2978,6 +2978,7 @@ try{var _ph=/[?&]home=(park|classic)(?:&|$)/.exec(location.search),_ps=null;try{
 
 
 
+
 /* ═══ BAKED REGISTRY (injected by build-roadmap-data.mjs) ═══ */
 const BAKED_REGISTRY = {
   "generatedAt": "2026-06-01T20:06:27.691Z",
@@ -16243,33 +16244,7 @@ function _walletGradeDropText(warns) {
 // flashcards. Each warning carries kind: 'worksheet' | 'blooket'.
 var ZERO_WARN_DAYS = 3;
 function _zeroWarnings(lessons, period, todayIso) {
-    try {
-        if (!Array.isArray(lessons) || !period || !todayIso) return [];
-        var today = new Date(todayIso + 'T00:00:00');
-        var out = [];
-        for (var i = 0; i < lessons.length; i++) {
-            var L = lessons[i];
-            if (!L || !L.lessonKey || !L.zeroDate) continue;
-            var zd = L.zeroDate[period];
-            if (!zd) continue;
-            var days = Math.round((new Date(zd + 'T00:00:00') - today) / 86400000);
-            if (days > ZERO_WARN_DAYS) continue;
-            var hasWork = L.lessonGradeNoQuiz != null || L.Cws != null;
-            if (!hasWork) out.push({ lessonKey: L.lessonKey, kind: 'worksheet', zeroDate: zd, daysLeft: days, past: days < 0 });
-            // 2026-09-26 (teacher): the quiz track zeroes on the same date in the Desk grade, and the
-            // card must list EVERYTHING that is dragging the number down. A lesson has a quiz when
-            // the engine reports quizTotal > 0; Q == null means it was never taken.
-            if ((L.quizTotal || 0) > 0 && L.Q == null) out.push({ lessonKey: L.lessonKey, kind: 'quiz', zeroDate: zd, daysLeft: days, past: days < 0 });
-            // 2026-09-26 review: bonus decks (blooketBonus) never zero in the grade, so they are never missing.
-            if (L.hasBlooket && !L.blooketBonus && L.blooket == null) out.push({ lessonKey: L.lessonKey, kind: 'blooket', zeroDate: zd, daysLeft: days, past: days < 0 });
-        }
-        var KIND_ORDER = { worksheet: 0, quiz: 1, blooket: 2 };
-        out.sort(function (a, b) {
-            if (a.zeroDate !== b.zeroDate) return a.zeroDate < b.zeroDate ? -1 : 1;
-            return (KIND_ORDER[a.kind] || 0) - (KIND_ORDER[b.kind] || 0);
-        });
-        return out;
-    } catch (_) { return []; }
+    return DeskMissingWork.zeroWarnings(lessons, period, todayIso, ZERO_WARN_DAYS);
 }
 function _zeroTodayIso() {
     try { var d = (typeof tdy === 'function') ? tdy() : new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
@@ -16289,31 +16264,7 @@ function _zeroCurrentWarnings() {
 // The three "missing" rules MUST match _zeroWarnings (a test pins them).
 // Rows: { lessonKey, kind, dueDate, zeroDate }. Pure; never throws.
 function _pastDueWork(lessons, period, todayIso) {
-    try {
-        if (!Array.isArray(lessons) || !period || !todayIso) return [];
-        var today = new Date(todayIso + 'T00:00:00');
-        var out = [];
-        for (var i = 0; i < lessons.length; i++) {
-            var L = lessons[i];
-            if (!L || !L.lessonKey || !L.zeroDate || !L.due) continue;
-            var zd = L.zeroDate[period];
-            var dd = L.due[period];
-            if (!zd || !dd) continue;
-            if (!(dd < todayIso)) continue;
-            var days = Math.round((new Date(zd + 'T00:00:00') - today) / 86400000);
-            if (days <= ZERO_WARN_DAYS) continue;   // _zeroWarnings owns it
-            var hasWork = L.lessonGradeNoQuiz != null || L.Cws != null;
-            if (!hasWork) out.push({ lessonKey: L.lessonKey, kind: 'worksheet', dueDate: dd, zeroDate: zd, unit: L.unit, worksheetKey: L.worksheetKey });
-            if ((L.quizTotal || 0) > 0 && L.Q == null) out.push({ lessonKey: L.lessonKey, kind: 'quiz', dueDate: dd, zeroDate: zd, unit: L.unit, worksheetKey: L.worksheetKey });
-            if (L.hasBlooket && !L.blooketBonus && L.blooket == null) out.push({ lessonKey: L.lessonKey, kind: 'blooket', dueDate: dd, zeroDate: zd, unit: L.unit, worksheetKey: L.worksheetKey });
-        }
-        var KIND_ORDER = { worksheet: 0, quiz: 1, blooket: 2 };
-        out.sort(function (a, b) {
-            if (a.zeroDate !== b.zeroDate) return a.zeroDate < b.zeroDate ? -1 : 1;
-            return (KIND_ORDER[a.kind] || 0) - (KIND_ORDER[b.kind] || 0);
-        });
-        return out;
-    } catch (_) { return []; }
+    return DeskMissingWork.pastDueWork(lessons, period, todayIso, ZERO_WARN_DAYS);
 }
 function _pastDueCurrentWork() {
     var lessons = (typeof _gradeLessonsCache !== 'undefined') ? _gradeLessonsCache : null;
@@ -23347,7 +23298,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-11-05-frcs';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-11-05-h5d6';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

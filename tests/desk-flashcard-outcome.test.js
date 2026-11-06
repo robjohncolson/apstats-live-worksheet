@@ -15,6 +15,7 @@ import { createContext, runInContext } from 'node:vm';
 import { deskSource } from './helpers/desk-source.js';
 
 const html = deskSource();
+const missingWorkSource = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), '../js/desk-missing-work.js'), 'utf8');
 
 function fnSrc(name) {
   const m = new RegExp('(?:async\\s+)?function\\s+' + name + '\\s*\\(').exec(html);
@@ -46,6 +47,7 @@ function sandbox({ walletOpen = true } = {}) {
     ],
   };
   createContext(s);
+  runInContext(missingWorkSource, s);
   runInContext('var ZERO_WARN_DAYS = 3;\n' + ['_zeroWarnings', '_zeroTodayIso', '_zeroCurrentWarnings', '_zeroWhenText', '_zeroCountText',
     '_updateZeroWarningBadge', '_zeroOpenFlashcards', '_zeroOpenLesson', '_walletPrependZeroCard',
     '_zeroDayText', '_zeroLatestSoonDay', '_zeroStatusText', '_zeroCardStatus', '_zeroCardActionButton', '_zeroCardRow',

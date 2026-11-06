@@ -10,6 +10,8 @@ import { createContext, runInContext } from 'node:vm';
 import { deskSource } from './helpers/desk-source.js';
 
 const html = deskSource();
+const missingWorkContext = createContext({});
+runInContext(readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), '../js/desk-missing-work.js'), 'utf8'), missingWorkContext);
 function fnSrc(name) {
   const m = new RegExp('(?:async\\s+)?function\\s+' + name + '\\s*\\(').exec(html);
   if (!m) throw new Error('missing ' + name);
@@ -202,7 +204,9 @@ describe('wiring', () => {
     expect(fnSrc('_renderSnapshotApp')).toContain("[['class', 'Class'], ['assignments', 'Assignments']]");
     expect(fnSrc('_renderSnapshotStudent')).toContain("[['work', 'My work'], ['graphs', 'Graphs']]");
     // bonus decks never appear in the missing list (review 2026-09-26)
-    expect(fnSrc('_zeroWarnings')).toContain('!L.blooketBonus');
+    expect(missingWorkContext.DeskMissingWork.zeroWarnings([
+      { lessonKey: '1.1', zeroDate: { B: '2026-09-20' }, Cws: 100, hasBlooket: true, blooketBonus: true },
+    ], 'B', '2026-09-26', 3)).toEqual([]);
   });
 });
 
