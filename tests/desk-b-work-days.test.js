@@ -20,7 +20,7 @@ function load(names,globals={}){
 }
 function generated(){
  const s=load(['dateFromArr','buildOffSet','enumWeekdays','injectPcPosterEvents','generateSchedule']);
- for(const name of ['SY2627_PACING_B','SY2627_PACING_E','VIDEO_MINUTES','SCHEDULE_DEFS']){
+ for(const name of ['SY2627_PACING_B','SY2627_PACING_E','VIDEO_MINUTES','RESOURCES','SCHEDULE_DEFS']){
   const n=ast.body.filter(n=>n.type==='VariableDeclaration').flatMap(n=>n.declarations).find(n=>n.id.name===name).init;
   runInContext('var '+name+'='+source.slice(n.start,n.end),s);
  }
@@ -82,7 +82,7 @@ describe('B Work Day generator',()=>{
   }
  });
  it('emits corrected unit ends, review ends and additive JSON workDays with no lesson entry',()=>{
-  const ends={B:['2026-10-15','2026-11-24','2027-01-19','2027-02-22','2027-03-09'],E:['2026-10-19','2026-11-25','2027-01-22','2027-02-26','2027-03-12']};
+  const ends={B:['2026-10-15','2026-11-24','2027-01-19','2027-02-22','2027-03-09'],E:['2026-10-19','2026-11-25','2027-01-22','2027-02-26','2027-03-15']};   // E 03-15: the 3-video pair cap un-pairs 2.4+2.5 (2026-11-06)
   for(const path of ['data/lesson-schedule.json','roster-server/data/lesson-schedule.json']){
    const json=JSON.parse(readFileSync(path,'utf8'));
    expect(json.schemaVersion).toBe(2);expect(json.calendar.workDays).toEqual({B:fixture.map(r=>r[0]),E:[]});
@@ -93,7 +93,7 @@ describe('B Work Day generator',()=>{
    for(const [p,col] of [['B',3],['E',4]]){
     expect(S.filter(r=>r[col]?.kind==='pc'&&r[col].admin===2).map(iso)).toEqual(ends[p]);
     expect(Object.values(json.progressChecks).map(pc=>pc.adminDay2[p])).toEqual(ends[p]);
-    expect(S.filter(r=>r[col]?.t==='review').map(iso).at(-1)).toBe(p==='B'?'2027-03-16':'2027-03-19');
+    expect(S.filter(r=>r[col]?.t==='review').map(iso).at(-1)).toBe(p==='B'?'2027-03-16':'2027-03-22');
    }
   }
  });
@@ -152,7 +152,9 @@ describe('B Break Day (section-only, 2026-09-18)',()=>{
   expect(S.find(r=>iso(r)==='2026-09-18')[4].t).toBe('1.6'); // E unaffected that day
  });
  it('leaves the OTHER section byte-identical to a run with no break at all',()=>{
-  const only=keep=>{const periods={};for(const pid in actual.def.periods){periods[pid]={...actual.def.periods[pid]};if(pid!==keep)delete periods[pid].breakDays;}return actual.generateSchedule({...actual.def,periods});};
+  // A section keeps its breaks AND its own pacing adjustments (E's 3-video pair cap, 2026-11-06) only when it is
+  // the kept section: the other section's column comes from a run without them, as generateSchedule's without() does.
+  const only=keep=>{const periods={};for(const pid in actual.def.periods){periods[pid]={...actual.def.periods[pid]};if(pid!==keep){delete periods[pid].breakDays;delete periods[pid].maxVideosPerDay;delete periods[pid].maxVideosFrom;}}return actual.generateSchedule({...actual.def,periods});};
   const noBreak=only(null),onlyB=only('B'),onlyE=only('E');
   expect(noBreak.some(r=>r[3]?.kind==='break'||r[4]?.kind==='break')).toBe(false);
   expect(onlyB.map(r=>[iso(r),r[4]])).toEqual(noBreak.map(r=>[iso(r),r[4]]));   // B break: E every cell, every day

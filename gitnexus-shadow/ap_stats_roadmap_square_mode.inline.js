@@ -10865,6 +10865,10 @@ const SCHEDULE_DEFS = {
            // Section-only breaks: nothing placed, pacing shifts one meeting later. 2026-09-18 = AP Classroom down (teacher).
            breakDays:[[2026,8,18]] },
       E: { label:"Period E", meetsDays:[1,3,5], doubleDay:3, doubleFrom:[2026,8,16], maxPairsPerWeek:2, videoCapMin:30, videoCapEarlyReleaseMin:20, schoologyCourse:null,
+           // A pair day lists at most 3 videos (teacher 2026-11-06: 2.7 + 2.8 put 5 videos on one Friday,
+           // "not enough time, or attention span"). Counted from the Desk's RESOURCES list, from this
+           // date on, so every earlier pair keeps its date (E_PAIRING_V2_SPEC.md §4).
+           maxVideosPerDay:3, maxVideosFrom:[2026,10,6],
            // SAT Day Wed 2026-10-21 (teacher 2026-09-22): E does not meet for a lesson; pacing shifts one meeting later.
            breakDays:[[2026,9,21]] }
     },
@@ -10960,14 +10964,18 @@ function generateSchedule(def){
   // react to E's shifted pacing). Each sub-run has one break list → the
   // single-break path below, so the B column is byte-identical to before.
   if(hasBreak('B')&&hasBreak('E')){
-    const without=drop=>{const periods={};for(const pid in def.periods){periods[pid]={...def.periods[pid]};if(pid===drop)delete periods[pid].breakDays}return {...def,periods}};
+    // A section-only pacing adjustment (its breaks, E's video-count cap) exists only in its own
+    // run, so B's Work-Day rule never reacts to it (E_PAIRING_V2_SPEC.md §4).
+    const without=drop=>{const periods={};for(const pid in def.periods){periods[pid]={...def.periods[pid]};if(pid===drop){delete periods[pid].breakDays;delete periods[pid].maxVideosPerDay;delete periods[pid].maxVideosFrom}}return {...def,periods}};
     const runB=generateSchedule(without('E')),runE=generateSchedule(without('B'));
     return runB.map((row,i)=>[row[0],row[1],row[2],row[3],runE[i][4]]);
   }
   let ref=null;
   if(['B','E'].some(hasBreak)){
+    // The reference run has no section-only adjustment at all (no breaks, no E video-count cap):
+    // the non-break section's cells come from it, and the break section's placements react to it.
     const periods={};
-    for(const pid in def.periods){periods[pid]={...def.periods[pid]};delete periods[pid].breakDays}
+    for(const pid in def.periods){periods[pid]={...def.periods[pid]};delete periods[pid].breakDays;delete periods[pid].maxVideosPerDay;delete periods[pid].maxVideosFrom}
     ref=generateSchedule({...def,periods});
   }
   const offSet=buildOffSet(def.daysOff);
@@ -11024,8 +11032,14 @@ function generateSchedule(def){
         const cap=earlyRelease.has(dk)&&dow===3?pDef.videoCapEarlyReleaseMin:pDef.videoCapMin;
         const pairDay=pid==='E'&&pDef.doubleFrom&&dt>=dateFromArr(pDef.doubleFrom)
           &&placedE+1<placedB&&pairsThisWeek<pDef.maxPairsPerWeek;
+        // Video-count cap (teacher 2026-11-06, E_PAIRING_V2_SPEC.md §4): from maxVideosFrom on, the
+        // two topics may list at most maxVideosPerDay videos in the Desk's RESOURCES panel. A topic
+        // with no RESOURCES entry never pairs, like one with no VIDEO_MINUTES entry.
+        const countCapOn=!!(pDef.maxVideosPerDay&&pDef.maxVideosFrom&&dt>=dateFromArr(pDef.maxVideosFrom));
+        const videoCount=t=>{const r=typeof RESOURCES!=='undefined'&&RESOURCES[String(t).replace('.','-')];return r&&Array.isArray(r.videos)?r.videos.length:Infinity};
         if(pairDay&&!tp.kind&&tp.u>0&&next&&!next.kind&&next.u===tp.u
-          &&(VIDEO_MINUTES[tp.t]??Infinity)+(VIDEO_MINUTES[next.t]??Infinity)<=cap){
+          &&(VIDEO_MINUTES[tp.t]??Infinity)+(VIDEO_MINUTES[next.t]??Infinity)<=cap
+          &&(!countCapOn||videoCount(tp.t)+videoCount(next.t)<=pDef.maxVideosPerDay)){
           queues[pid].shift();
           const second=d(next.t,next.n,next.u,next.due||"",next.as||"",next.db||false);
           const group=d(cell.t+'+'+second.t,cell.n+' + '+second.n,cell.u,'','',true);
@@ -23351,7 +23365,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-11-06-y1uo';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-11-06-akmz';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

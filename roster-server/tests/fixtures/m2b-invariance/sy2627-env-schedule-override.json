@@ -96,6 +96,7 @@
     "v3LessonsByDate": true,
     "dueAfterLessonDay": true,
     "dueLagDays": 13,
+    "zeroFreezeAtQuarterEnd": true,
     "v3EarlyBonus": {
       "perLesson": 1,
       "cap": 5,

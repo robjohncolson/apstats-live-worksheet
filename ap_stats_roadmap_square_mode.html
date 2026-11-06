@@ -2957,8 +2957,8 @@
 <!-- Teacher-only Class Log "Recording" fold on the day panel (track L): the summary
      lib copied from a2 + the Desk glue (a2 sign-in token, mount). Both fail soft. -->
 <script src="lib/class-log-summary.js" onerror=""></script>
-<script src="js/desk-class-log.js?v=2026-11-06-y1uo" onerror=""></script>
-<script src="js/desk-missing-work.js?v=2026-11-06-y1uo"></script>
+<script src="js/desk-class-log.js?v=2026-11-06-akmz" onerror=""></script>
+<script src="js/desk-missing-work.js?v=2026-11-06-akmz"></script>
 <script src="pwa-register.js"></script>
 <script src="js/wallet_logic.js"></script>
 <script type="module" src="js/student-wallet.js"></script>
@@ -2968,10 +2968,10 @@
 <script src="js/ced2026-crosswalk.js"></script>
 <script src="js/ced2026-labels.js"></script>
 <script src="lib/qrcode.min.js"></script>
-<script src="canvas_engine.js?v=2026-11-06-y1uo"></script>
-<script src="sprite_sheet.js?v=2026-11-06-y1uo"></script>
-<script src="classroom-board.js?v=2026-11-06-y1uo"></script>
-<script src="pico-home.js?v=2026-11-06-y1uo"></script>
+<script src="canvas_engine.js?v=2026-11-06-akmz"></script>
+<script src="sprite_sheet.js?v=2026-11-06-akmz"></script>
+<script src="classroom-board.js?v=2026-11-06-akmz"></script>
+<script src="pico-home.js?v=2026-11-06-akmz"></script>
 <script src="ti84-plot.js"></script>
 <script src="activity-bridge.js"></script>
 <script src="activity-colorbox.js"></script>
@@ -10865,6 +10865,10 @@ const SCHEDULE_DEFS = {
            // Section-only breaks: nothing placed, pacing shifts one meeting later. 2026-09-18 = AP Classroom down (teacher).
            breakDays:[[2026,8,18]] },
       E: { label:"Period E", meetsDays:[1,3,5], doubleDay:3, doubleFrom:[2026,8,16], maxPairsPerWeek:2, videoCapMin:30, videoCapEarlyReleaseMin:20, schoologyCourse:null,
+           // A pair day lists at most 3 videos (teacher 2026-11-06: 2.7 + 2.8 put 5 videos on one Friday,
+           // "not enough time, or attention span"). Counted from the Desk's RESOURCES list, from this
+           // date on, so every earlier pair keeps its date (E_PAIRING_V2_SPEC.md §4).
+           maxVideosPerDay:3, maxVideosFrom:[2026,10,6],
            // SAT Day Wed 2026-10-21 (teacher 2026-09-22): E does not meet for a lesson; pacing shifts one meeting later.
            breakDays:[[2026,9,21]] }
     },
@@ -10960,14 +10964,18 @@ function generateSchedule(def){
   // react to E's shifted pacing). Each sub-run has one break list → the
   // single-break path below, so the B column is byte-identical to before.
   if(hasBreak('B')&&hasBreak('E')){
-    const without=drop=>{const periods={};for(const pid in def.periods){periods[pid]={...def.periods[pid]};if(pid===drop)delete periods[pid].breakDays}return {...def,periods}};
+    // A section-only pacing adjustment (its breaks, E's video-count cap) exists only in its own
+    // run, so B's Work-Day rule never reacts to it (E_PAIRING_V2_SPEC.md §4).
+    const without=drop=>{const periods={};for(const pid in def.periods){periods[pid]={...def.periods[pid]};if(pid===drop){delete periods[pid].breakDays;delete periods[pid].maxVideosPerDay;delete periods[pid].maxVideosFrom}}return {...def,periods}};
     const runB=generateSchedule(without('E')),runE=generateSchedule(without('B'));
     return runB.map((row,i)=>[row[0],row[1],row[2],row[3],runE[i][4]]);
   }
   let ref=null;
   if(['B','E'].some(hasBreak)){
+    // The reference run has no section-only adjustment at all (no breaks, no E video-count cap):
+    // the non-break section's cells come from it, and the break section's placements react to it.
     const periods={};
-    for(const pid in def.periods){periods[pid]={...def.periods[pid]};delete periods[pid].breakDays}
+    for(const pid in def.periods){periods[pid]={...def.periods[pid]};delete periods[pid].breakDays;delete periods[pid].maxVideosPerDay;delete periods[pid].maxVideosFrom}
     ref=generateSchedule({...def,periods});
   }
   const offSet=buildOffSet(def.daysOff);
@@ -11024,8 +11032,14 @@ function generateSchedule(def){
         const cap=earlyRelease.has(dk)&&dow===3?pDef.videoCapEarlyReleaseMin:pDef.videoCapMin;
         const pairDay=pid==='E'&&pDef.doubleFrom&&dt>=dateFromArr(pDef.doubleFrom)
           &&placedE+1<placedB&&pairsThisWeek<pDef.maxPairsPerWeek;
+        // Video-count cap (teacher 2026-11-06, E_PAIRING_V2_SPEC.md §4): from maxVideosFrom on, the
+        // two topics may list at most maxVideosPerDay videos in the Desk's RESOURCES panel. A topic
+        // with no RESOURCES entry never pairs, like one with no VIDEO_MINUTES entry.
+        const countCapOn=!!(pDef.maxVideosPerDay&&pDef.maxVideosFrom&&dt>=dateFromArr(pDef.maxVideosFrom));
+        const videoCount=t=>{const r=typeof RESOURCES!=='undefined'&&RESOURCES[String(t).replace('.','-')];return r&&Array.isArray(r.videos)?r.videos.length:Infinity};
         if(pairDay&&!tp.kind&&tp.u>0&&next&&!next.kind&&next.u===tp.u
-          &&(VIDEO_MINUTES[tp.t]??Infinity)+(VIDEO_MINUTES[next.t]??Infinity)<=cap){
+          &&(VIDEO_MINUTES[tp.t]??Infinity)+(VIDEO_MINUTES[next.t]??Infinity)<=cap
+          &&(!countCapOn||videoCount(tp.t)+videoCount(next.t)<=pDef.maxVideosPerDay)){
           queues[pid].shift();
           const second=d(next.t,next.n,next.u,next.due||"",next.as||"",next.db||false);
           const group=d(cell.t+'+'+second.t,cell.n+' + '+second.n,cell.u,'','',true);
@@ -20906,7 +20920,7 @@ function _paintReviewByItem(host, data) {
 <!-- My Gradebook grid (openMyGradebook, renderMyGradebook, the teacher Class Gradebook picker, date-gating + colour helpers):
      Moved byte for byte to js/desk-gradebook-grid.js (FABLE_SPRINT_2026_10_22C_SPEC.md track C3). Same globals,
      same load position, versioned by scripts/bump-build.mjs like the other entry scripts. -->
-<script src="js/desk-gradebook-grid.js?v=2026-11-06-y1uo"></script>
+<script src="js/desk-gradebook-grid.js?v=2026-11-06-akmz"></script>
 <script>
 
 // openDayGrade(dateStr) — opens the Day Grade modal for a calendar date.
@@ -21303,11 +21317,11 @@ function _pwaInstallHelp() {
 <!-- Study Break Tetris (studyBreak, openGame, closeGame):
      Moved byte for byte to js/desk-study-break.js (FABLE_SPRINT_2026_10_22C_SPEC.md track C3). Same globals,
      same load position, versioned by scripts/bump-build.mjs like the other entry scripts. -->
-<script src="js/desk-study-break.js?v=2026-11-06-y1uo"></script>
+<script src="js/desk-study-break.js?v=2026-11-06-akmz"></script>
 <!-- My Progress app window (ProgressApp, openProgress, destroyProgress): moved byte for byte to
      js/desk-progress-app.js (FABLE_SPRINT_2026_10_22B_SPEC.md track H). Same globals, same load
      position, versioned by scripts/bump-build.mjs like the other entry scripts. -->
-<script src="js/desk-progress-app.js?v=2026-11-06-y1uo"></script>
+<script src="js/desk-progress-app.js?v=2026-11-06-akmz"></script>
 <script>
 
 
@@ -21340,7 +21354,7 @@ function bumpUsage(id) {
 <!-- Desk <-> APStat Park calculator bridge (TI-84 skill button, calc-due chip, _openParkSolo, Calculator Skills progress modal):
      Moved byte for byte to js/desk-park-bridge.js (FABLE_SPRINT_2026_10_22C_SPEC.md track C3). Same globals,
      same load position, versioned by scripts/bump-build.mjs like the other entry scripts. -->
-<script src="js/desk-park-bridge.js?v=2026-11-06-y1uo"></script>
+<script src="js/desk-park-bridge.js?v=2026-11-06-akmz"></script>
 <script>
 
 // The URL an app window opens (SOLO_DOOR_SPEC §5: the calculator is no longer an app window).
@@ -22784,7 +22798,7 @@ window.DogePresence = DogePresence;
 <!-- Completion calendar (cP/setP, cell helpers, paging, summer-prep weeks, rCal, rCD, rProg, uClock):
      Moved byte for byte to js/desk-calendar.js (FABLE_SPRINT_2026_10_22C_SPEC.md track C3). Same globals,
      same load position, versioned by scripts/bump-build.mjs like the other entry scripts. -->
-<script src="js/desk-calendar.js?v=2026-11-06-y1uo"></script>
+<script src="js/desk-calendar.js?v=2026-11-06-akmz"></script>
 <script>
 
 /* ═══ TOOLTIP ═══ */
@@ -23351,7 +23365,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-11-06-y1uo';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-11-06-akmz';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

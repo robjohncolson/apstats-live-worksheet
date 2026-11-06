@@ -78,6 +78,7 @@ const GEN_SRC =
   + constArray('SY2627_PACING_B') + ';\n'
   + constArray('SY2627_PACING_E') + ';\n'
   + 'const VIDEO_MINUTES = ' + objBlock('const VIDEO_MINUTES = {') + ';\n'
+  + 'const RESOURCES = ' + objBlock('const RESOURCES = {') + ';\n'
   + 'const def={range:CFG.range,examDate:CFG.examDate,daysOff:CFG.daysOff,earlyRelease:CFG.earlyRelease,periods:CFG.periods,'
   + 'pacing:{B:injectPcPosterEvents(SY2627_PACING_B),E:injectPcPosterEvents(SY2627_PACING_E)}};\n'
   + 'return generateSchedule(def);';
@@ -185,8 +186,9 @@ describe('Grade Check-in — periods derived from the real SY26-27 calendar', ()
 
   it('the final period stops before the AP Exam (May 11, 2027) — no exam/post rows leak in', () => {
     const last = realPeriods[realPeriods.length - 1];
-    // Lag-targeted pairs + only Unit 1 keeping a poster (POSTER_UNITS, 2026-10-10) bring E's final review day to March 19.
-    expect(last.dueISO).toBe('2027-03-19');
+    // Lag-targeted pairs + only Unit 1 keeping a poster (POSTER_UNITS, 2026-10-10) brought E's final review day to March 19;
+    // the 3-video pair cap (2026-11-06) un-pairs 2.4+2.5 in March, so it is March 22.
+    expect(last.dueISO).toBe('2027-03-22');
     expect(last.dueISO < '2027-05-11').toBe(true);
     for (const p of realPeriods) {
       expect(p.dueISO < '2027-05-11').toBe(true); // nothing on/after exam day

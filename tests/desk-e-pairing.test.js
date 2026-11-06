@@ -32,7 +32,7 @@ function load(names,globals={}){
 }
 function generated(){
   const s=load(['dateFromArr','buildOffSet','enumWeekdays','injectPcPosterEvents','generateSchedule']);
-  for(const name of ['SY2627_PACING_B','SY2627_PACING_E','VIDEO_MINUTES']){const n=constant(name);runInContext('var '+name+'='+source.slice(n.start,n.end),s);}
+  for(const name of ['SY2627_PACING_B','SY2627_PACING_E','VIDEO_MINUTES','RESOURCES']){const n=constant(name);runInContext('var '+name+'='+source.slice(n.start,n.end),s);}
   const n=constant('SCHEDULE_DEFS').properties.find(p=>p.key.value==='SY26-27').value;
   runInContext('var def='+source.slice(n.start,n.end)+';var S=generateSchedule(def);',s);
   return s;
@@ -40,9 +40,11 @@ function generated(){
 const actual=generated();
 const S=actual.S;
 const first=S.find(row=>row[4]?.group)[4];
-const pairs=[["2026-09-16","1.4+1.5",27],["2026-09-23","1.7+1.8",27],["2026-09-25","1.9+3.1",14],["2026-10-23","2.1+2.2",16],["2026-10-26","2.3+4.1",15],["2026-10-28","4.2+4.3",24],["2026-11-06","4.6+4.7",28],["2026-11-13","4.10+4.11",17],["2026-11-20","5.1+5.3",20],["2027-01-11","8.1+8.4",16],["2027-01-25","5.7+7.1",23],["2027-03-01","2.4+2.5",23]];
+const pairs=[["2026-09-16","1.4+1.5",27],["2026-09-23","1.7+1.8",27],["2026-09-25","1.9+3.1",14],["2026-10-23","2.1+2.2",16],["2026-10-26","2.3+4.1",15],["2026-10-28","4.2+4.3",24],["2026-11-09","4.7+4.8",20],["2026-11-13","4.10+4.11",17],["2026-11-20","5.1+5.3",20],["2027-01-11","8.1+8.4",16],["2027-01-25","5.7+7.1",23]];
 // Sim output after the two-day Unit 1 Poster (2026-10-07): E's PC moved 10/14,16 -> 10/16,19, so the catch-up pairs re-settled (14 pairs).
 // 2026-10-10: only Unit 1 keeps a poster (POSTER_UNITS); E regains four poster days, so 5.5+6.1 and 2.6+2.7 no longer pair (12 pairs).
+// 2026-11-06: a pair day lists at most 3 RESOURCES videos (maxVideosPerDay, E_PAIRING_V2_SPEC §4): 4.6+4.7 (5 videos) splits,
+// 4.7+4.8 (3 videos) pairs the next Monday so nothing after it moves; 2.4+2.5 (4 videos) no longer pairs in March (11 pairs).
 const iso=row=>row[0]+'-'+String(row[1]+1).padStart(2,'0')+'-'+String(row[2]).padStart(2,'0');
 describe('real extracted pairing generator',()=>{
  it('reproduces the entire acceptance table',()=>expect(S.filter(r=>r[4]?.group).map(r=>[iso(r),r[4].t,Math.round(r[4].group.reduce((sum,m)=>sum+actual.VIDEO_MINUTES[m.t],0))])).toEqual(pairs));
@@ -78,8 +80,15 @@ describe('real extracted pairing generator',()=>{
    }
  });
  it('reproduces five PC Day 2 dates and the review end',()=>{
-   expect(S.filter(r=>r[4]?.kind==='pc'&&r[4].admin===2).map(iso)).toEqual(['2026-10-19','2026-11-25','2027-01-22','2027-02-26','2027-03-12']);
-   expect(S.filter(r=>r[4]?.t==='review').map(iso).at(-1)).toBe('2027-03-19');
+   expect(S.filter(r=>r[4]?.kind==='pc'&&r[4].admin===2).map(iso)).toEqual(['2026-10-19','2026-11-25','2027-01-22','2027-02-26','2027-03-15']);
+   expect(S.filter(r=>r[4]?.t==='review').map(iso).at(-1)).toBe('2027-03-22');
+ });
+ it('from 2026-11-06 a pair day lists at most 3 RESOURCES videos; 4.6 stands alone that Friday (teacher 2026-11-06)',()=>{
+   const count=t=>actual.RESOURCES[t.replace('.','-')].videos.length;
+   for(const r of S.filter(r=>iso(r)>='2026-11-06'&&r[4]?.group))expect(r[4].group.reduce((n,m)=>n+count(m.t),0),iso(r)).toBeLessThanOrEqual(3);
+   expect(S.find(r=>iso(r)==='2026-11-06')[4].t).toBe('4.6');
+   expect(S.find(r=>iso(r)==='2026-11-09')[4].t).toBe('4.7+4.8');
+   expect(count('4.6')+count('4.7')).toBe(5);
  });
 });
 describe('pairing guard regressions',()=>{

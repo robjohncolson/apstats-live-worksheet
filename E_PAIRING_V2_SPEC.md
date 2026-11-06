@@ -77,3 +77,21 @@ const VIDEO_MINUTES = {"1.1":6.7,"1.2":9.3, …};
   (expected dates only, never the engine); Schoology shared-date regression still green.
 - `dok/PENDING.md`, `dok/index.html`, coverage test: pairs 3–13 pending; per-topic sheets untouched.
 - Do NOT touch B, pacing lists, `injectPcPosterEvents`, unit boundaries, the fixture, or the grade engine.
+
+## 4. Video-count cap on a pair day (teacher 2026-11-06)
+
+`periods.E.maxVideosPerDay: 3`, `maxVideosFrom: [2026,10,6]` (Fri 2026-11-06, 0-based month).
+From that date on, two topics pair only when the minute cap (section 1) holds AND the Desk's
+`RESOURCES` panel lists at most `maxVideosPerDay` videos for the two together. The count is
+`RESOURCES[old key with '-'].videos.length`; a topic with no entry never pairs. The from-date
+keeps every earlier pair on its date, so the schedule before 2026-11-06 is byte-identical.
+
+Why: 2.7 (3 videos) + 2.8 (2 videos) landed on Fri 2026-11-06 under the minute cap alone
+(28 of 30 minutes): "5 videos ... insane! (not enough time, or attention span). max 3!!!".
+
+The B column never reacts: it comes from the B-only run, where E carries neither its breaks nor
+its video-count cap, and the reference run (the no-break run a break section's placements react to)
+carries no cap either. A section-only pacing adjustment exists only in its own run; with the cap
+left in, B gained Work Days from 2026-11-20 on (checked 2026-11-06).
+`scripts/build-lesson-schedule-sy2627.mjs` and the test harnesses that run the real generator
+inject `RESOURCES` next to `VIDEO_MINUTES`.

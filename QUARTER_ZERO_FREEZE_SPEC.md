@@ -61,7 +61,7 @@ so this is documentation only.
 | Consumer | Behavior for a never-zero lesson |
 |---|---|
 | `tools/schoology_components.py` `zero_due` / `quiz_zero_due` | null zero date: never written as a 0 to Schoology; a real score still goes through. |
-| `tools/schoology_components.py` Follow-Along / Blooket **group** columns (`group_zero_due`) | a combined worksheet's FA and BL columns are dated, and so filed in a marking period, by the group's EARLIEST lesson for the period, so that lesson's zero date alone decides the group's 0 (grades and comments). B and E 4.7 (never-zero, Q1) + 4.8 (Q2, zero date 11/22) share the MP1 columns FA:4.7-8 and BL:4.7-8: they are never zeroed. QUIZ:4.8 (MP2) still zeroes per lesson. Without the freeze nothing changes (the earliest lesson always zeroes first). Side effect for the teacher: 4.8's in-app Q2 worksheet/deck 0 has no Schoology cell, because Schoology keeps that worksheet in MP1. |
+| `tools/schoology_components.py` Follow-Along / Blooket **group** columns (`group_zero_due`) | a combined worksheet's FA and BL columns are dated, and so filed in a marking period, by the group's EARLIEST lesson for the period, so that lesson's zero date alone decides the group's 0 (grades and comments). PeriodB 4.7 (Fri 11/06, never-zero in Q1) + 4.8 (Q2, zero date 11/22) share the MP1 columns FA:4.7-8 and BL:4.7-8: they are never zeroed. QUIZ:4.8 (MP2) still zeroes per lesson. (PeriodE's 4.7 moved to Mon 11/09 on 2026-11-06, so for E the whole group is Q2 and its columns are MP2.) Without the freeze nothing changes (the earliest lesson always zeroes first). Side effect for the teacher: B's 4.8 in-app Q2 worksheet/deck 0 has no Schoology cell, because Schoology keeps that worksheet in MP1. |
 | `schoology-sync.py`, `schoology_sync_section.py` | do not compute zero dates (the schedule only names columns and due dates). `build_schoology_fixture.build_fixture` (legacy per-lesson keys) reads the row's own null zero date: no 0. |
 | Desk `js/desk-missing-work.js` `zeroWarnings` | not listed: no 0 is coming, so no yellow/red warning, badge, Do Now tint, pill, calendar cell or coach line. |
 | Desk `pastDueWork` (grey My Ledger rows, also Pico Desk "NOT YET") | listed once past its due date when the work, quiz or deck is missing (same three rules), after the dated rows, as `{ ..., zeroDate: null, late: true }`. The date cell (`_pastDueWhenText`, `_zeroWhenText`) reads `late · no 0 · counts when you finish it`. |
@@ -78,7 +78,7 @@ Q1 ends Fri 2026-11-06; the teacher closes it Thu 2026-11-12 (`POST /class/quart
 Old storage keys, from the live schedule (pinned by `lesson-grade.test.js`):
 
 - PeriodB: 4.2 4.3 4.4 4.5 4.6 4.7
-- PeriodE: 2.3 4.1 4.2 4.3 4.4 4.5 4.6 4.7
+- PeriodE: 2.3 4.1 4.2 4.3 4.4 4.5 4.6 (4.7 moved to Mon 11/09 on 2026-11-06: a Q2 lesson for E)
 
 The field is structural, so the lessons array already marks the last two weeks of Q2 too
 (B 5.7 8.4 8.5 8.6, E 8.1 8.4 8.5 8.6, zero dates after 2027-01-22). Their class days are in

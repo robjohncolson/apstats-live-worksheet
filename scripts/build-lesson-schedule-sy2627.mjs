@@ -118,6 +118,7 @@ const GEN_SRC =
   + constArray('SY2627_PACING_B') + ';\n'
   + constArray('SY2627_PACING_E') + ';\n'
   + 'const VIDEO_MINUTES = ' + objBlock('const VIDEO_MINUTES = {') + ';\n'
+  + 'const RESOURCES = ' + objBlock('const RESOURCES = {') + ';\n'   // the pair day's video-count cap reads it (E_PAIRING_V2_SPEC.md §4)
   + 'const pacing={B:injectPcPosterEvents(SY2627_PACING_B),E:injectPcPosterEvents(SY2627_PACING_E)};\n'
   + 'const def={range:CFG.range,examDate:CFG.examDate,daysOff:CFG.daysOff,earlyRelease:CFG.earlyRelease,periods:CFG.periods,pacing};\n'
   + 'return {S:generateSchedule(def),pacing,offSet:buildOffSet(def.daysOff)};';

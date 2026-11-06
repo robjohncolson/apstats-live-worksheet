@@ -1560,10 +1560,11 @@ describe('quarter-end zero freeze', () => {
     }
     const FINISHED = { Cws: 100, W: 100, Q: 100, lessonGrade: 100, blooket: 100 };
 
-    it('the never-zero set is exactly B 4.2-4.7 and E 2.3, 4.1-4.7 (old storage keys)', () => {
+    it('the never-zero set is exactly B 4.2-4.7 and E 2.3, 4.1-4.6 (old storage keys)', () => {
+      // E 4.7 moved from Fri 11/06 to Mon 11/09 (the 3-video pair cap, 2026-11-06): a Q2 lesson for E.
       const late = (p) => rows.filter((row) => taughtInQ1(row, p) && row.neverZero[p]).map((row) => row.lessonKey);
       expect(late('B')).toEqual(['4.2', '4.3', '4.4', '4.5', '4.6', '4.7']);
-      expect(late('E')).toEqual(['2.3', '4.1', '4.2', '4.3', '4.4', '4.5', '4.6', '4.7']);
+      expect(late('E')).toEqual(['2.3', '4.1', '4.2', '4.3', '4.4', '4.5', '4.6']);
     });
 
     it('a late lesson finished before the close counts in Q1 on the close day, in both sections', () => {
