@@ -334,6 +334,36 @@ describe('Item 3 -- aria-label + screen-reader live region', () => {
     expect(a({ t: 'review', n: 'Unit 1 review', u: 0 }, 'Oct 1')).toContain('Review: Unit 1 review');
     expect(a({ t: '1.2', n: 'X', u: 1, db: true }, 'Sep 9')).toContain('double topic day');
   });
+  it('cellAria -- a section-only poster (posterDays) reads day N of its days and the step', () => {
+    const a = loadCellAria();
+    const day3 = a({ kind: 'poster', u: 2, admin: 3, days: 3 }, 'Nov 13');
+    expect(day3).toContain('Unit 2 Poster day 3 of 3');
+    expect(day3).toContain('gallery walk');
+    expect(day3).toBe('Nov 13, Unit 2 Poster day 3 of 3, gallery walk');
+    expect(a({ kind: 'poster', u: 2, admin: 1, days: 3 }, 'Nov 10')).toBe('Nov 10, Unit 2 Poster day 1 of 3, build');
+    expect(a({ kind: 'poster', u: 2, admin: 2, days: 3 }, 'Nov 12')).toBe('Nov 12, Unit 2 Poster day 2 of 3, defend and finish');
+    // Without `days` (the Unit 1 pacing poster) the text is what it always was.
+    expect(a({ kind: 'poster', u: 1, admin: 2 }, 'Oct 9')).toBe('Oct 9, Unit 1 Poster day 2 of 2 gallery walk');
+  });
+  function loadHtm() {
+    const sandbox = {};
+    createContext(sandbox);
+    runInContext(
+      "const R='review',OFF='off',EX='exam',PO='post',NC='noclass';\n" +
+      fnBody(html_SRC, 'htm') + '\nthis.__h = htm;', sandbox);
+    return sandbox.__h;
+  }
+  it('htm -- a section-only poster tile shows day N of its days: Build / Defend + finish / Gallery walk', () => {
+    const h = loadHtm();
+    expect(h({ kind: 'poster', u: 2, admin: 1, days: 3 }, 'Nov 10')).toBe('<div class="dn">Nov 10</div><div class="tl">U2 Poster 1/3</div><div class="tt">Build</div>');
+    expect(h({ kind: 'poster', u: 2, admin: 2, days: 3 }, 'Nov 12')).toBe('<div class="dn">Nov 12</div><div class="tl">U2 Poster 2/3</div><div class="tt">Defend + finish</div>');
+    expect(h({ kind: 'poster', u: 2, admin: 3, days: 3 }, 'Nov 13')).toBe('<div class="dn">Nov 13</div><div class="tl">U2 Poster 3/3</div><div class="tt">Gallery walk</div>');
+  });
+  it('htm -- Unit 1 poster tiles (no `days`) render byte-for-byte as before', () => {
+    const h = loadHtm();
+    expect(h({ t: 'U1-Poster', n: 'Unit 1 Poster', u: 1, kind: 'poster' }, 'Oct 8')).toBe('<div class="dn">Oct 8</div><div class="tl">U1 Poster</div><div class="tt">Gallery walk</div>');
+    expect(h({ t: 'U1-Poster2', n: 'Unit 1 Poster (Day 2)', u: 1, kind: 'poster', admin: 2 }, 'Oct 9')).toBe('<div class="dn">Oct 9</div><div class="tl">U1 Poster 2/2</div><div class="tt">Finish + gallery walk</div>');
+  });
 });
 
 // --- Item 4: stepped hover/press tactility ---------------------------------

@@ -14,8 +14,9 @@ const schedulePaths = [
   'data/lesson-schedule.json',
   'roster-server/data/lesson-schedule.json'
 ];
-// Date-column fixture after B_WORK_DAYS_SPEC.md + the 2026-09-18 B Break Day + the two-day Unit 1 Poster (2026-10-07, POSTER_DAYS) + only Unit 1 keeps a poster (2026-10-10, POSTER_UNITS); CED labels keep grade identities.
-const scheduleSha256 = '5b360bb0537b626f1af704f0bff62bfd5000ed39382d7ad84d0024de910c850f';
+// Date-column fixture after B_WORK_DAYS_SPEC.md + the 2026-09-18 B Break Day + the two-day Unit 1 Poster (2026-10-07, POSTER_DAYS) + only Unit 1 keeps a poster (2026-10-10, POSTER_UNITS)
+// + B's three section-only Unit 2 poster days 11/10, 11/12, 11/13 (2026-11-06, posterDays, U2_CLAIM_POSTER_SPEC.md); CED labels keep grade identities.
+const scheduleSha256 = '002726792b43b5689a170ffe119a6dfc672e298f73d78c8e6cdb614f0ba52578';
 function bColumn(bytes) {
   return bytes.toString('utf8').split(/\r?\n/).filter(line => /^\s*"B":/.test(line) && !/^\s*"B": \[\]/.test(line)).join('\n');
 }
@@ -299,13 +300,27 @@ describe('student calendar CED labels', () => {
       for (let unit = 1; unit <= 5; unit += 1) {
         expect(visible.get('U' + unit + '-PC1').text).toContain('U' + unit + ' PC 1/2');
       }
-      // One poster per quarter (POSTER_UNITS): only Unit 1 is scheduled today.
+      // One poster per quarter (POSTER_UNITS): Unit 1 is the only pacing poster. Unit 2's claim poster is
+      // Period B only (posterDays, U2_CLAIM_POSTER_SPEC.md): three tiles, day N of 3.
       expect(visible.get('U1-Poster').text).toContain('U1 Poster');
-      for (let unit = 2; unit <= 5; unit += 1) expect(visible.has('U' + unit + '-Poster')).toBe(false);
+      expect(visible.get('U2-Poster').text).toContain('U2 Poster 1/3');
+      expect(visible.get('U2-Poster2').text).toContain('U2 Poster 2/3');
+      expect(visible.get('U2-Poster3').text).toContain('U2 Poster 3/3');
+      for (let unit = 3; unit <= 5; unit += 1) expect(visible.has('U' + unit + '-Poster')).toBe(false);
       expect([...visible.values()].some(cell => /Unit [6-9]|U[6-9]\b/.test(cell.text))).toBe(false);
       const baked = declarationSource('BAKED_REGISTRY', '{', '}');
       expect(baked).not.toMatch(/"progressChecks"\s*:|"posters"\s*:/);
     } finally { win.close(); }
+  });
+
+  it('Period E has no Unit 2 poster tile (the claim poster is Period B only)', () => {
+    const dom = createDesk({ period: 'E' });
+    try {
+      const visible = collectCalendar(dom.window);
+      expect(visible.get('U1-Poster').text).toContain('U1 Poster');
+      for (let unit = 2; unit <= 5; unit += 1) expect(visible.has('U' + unit + '-Poster')).toBe(false);
+      expect([...visible.keys()].some(topic => /^U2-Poster/.test(topic))).toBe(false);
+    } finally { dom.window.close(); }
   });
 
   it('keeps click routing on the OLD key while displaying its NEW topic', () => {

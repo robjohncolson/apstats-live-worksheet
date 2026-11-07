@@ -10,6 +10,9 @@ import { mountLedger } from '../ledger.js';
 import { computeGrade, posterScoresByUnit } from '../grade.js';
 import { buildGradebook } from '../gradebook-grid.js';
 import { initReceipts } from '../receipts.js';
+import { posterDatesFor, posterUnitsInQuarter } from '../lesson-grade.js';
+import { loadEventScheduleWithPriority, resolveProductionGradeInputs } from '../grade-contexts.js';
+import { PHASE3_CONFIG } from '../grade-config.js';
 import { CONFIG, GRADE_OPTS, ANSWER_KEY, SCHEDULE } from './fixtures/sim-world.js';
 
 const TEACHER = 'poster-test-secret';
@@ -215,5 +218,41 @@ describe('computeGrade reads POSTER-U{n} rows as the posters track', () => {
     expect(base.quarters[q].workAvg).toBe(0);
     expect(base.quarters[q].workTracks ? base.quarters[q].workTracks.posters : null).toBe(null);
     expect(buildGradebook(withPoster).quarters[q].cells['POSTER:U1']).toBe(115);
+  });
+});
+
+// U2_CLAIM_POSTER_SPEC.md B4: Period B's section-only Unit 2 poster (Desk posterDays) is B's Q2 poster;
+// Period E has no Unit 2 poster, so its Q2 posters track stays absent, never 0. Read from the bundled
+// data/lesson-schedule.json, exactly as production does.
+describe('the live SY2627 schedule files the Unit 2 poster in Q2 for Period B only', () => {
+  const live = loadEventScheduleWithPriority();
+
+  it('posterDatesFor: Unit 2 is dated for B (2026-11-10) and null for E', () => {
+    expect(posterDatesFor(live, 'B')).toEqual({ 1: '2026-10-08', 2: '2026-11-10' });
+    expect(posterDatesFor(live, 'E')).toEqual({ 1: '2026-10-09', 2: null });
+  });
+
+  it('posterUnitsInQuarter: B Q2 = [2], E Q2 = [], Q1 = [1] for both', () => {
+    expect(posterUnitsInQuarter(live, 'B', PHASE3_CONFIG, 'Q2')).toEqual([2]);
+    expect(posterUnitsInQuarter(live, 'E', PHASE3_CONFIG, 'Q2')).toEqual([]);
+    expect(posterUnitsInQuarter(live, 'B', PHASE3_CONFIG, 'Q1')).toEqual([1]);
+    expect(posterUnitsInQuarter(live, 'E', PHASE3_CONFIG, 'Q1')).toEqual([1]);
+  });
+
+  it('a POSTER-U2 row is the B Q2 posters track; the same row never counts for E', () => {
+    const prod = resolveProductionGradeInputs('SY2627');
+    const row = { student_id: 's1', source: 'poster', item_id: 'POSTER-U2', score: 115, attempt: 1,
+      recorded_at: '2026-11-13T15:00:00Z', response: JSON.stringify({ grade: 'E', quarter: 'Q2', unit: 2 }) };
+    const config = { ...prod.config, useV3: true };   // production sets USE_V3_GRADING=true
+    const q2 = (section) => computeGrade([row], prod.answerKey.answerKey, config, {
+      lessonSchedule: prod.lessonSchedule, eventSchedule: prod.eventSchedule, section,
+      asOf: new Date('2026-11-20T16:00:00.000Z').getTime(),
+      blooketPresence: prod.blooketPresence, blooketRequired: prod.blooketRequired,
+    }).quarters.Q2;
+    const b = q2('PeriodB'), e = q2('PeriodE');
+    expect(b.posterUnits).toEqual([2]);
+    expect(b.workTracks.posters).toBe(115);
+    expect(e.posterUnits).toEqual([]);
+    expect(e.workTracks ? e.workTracks.posters : null).toBe(null);
   });
 });

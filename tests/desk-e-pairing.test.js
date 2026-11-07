@@ -7,7 +7,8 @@ describe('E lag-targeted pairing',()=>{
   it('matches the corrected Work Day B date fixture in both JSON copies',()=>{
     for(const path of ['data/lesson-schedule.json','roster-server/data/lesson-schedule.json']){
       const column=readFileSync(path,'utf8').split(/\r?\n/).filter(line=>/^\s*"B":/.test(line)&&!/^\s*"B": \[\]/.test(line)).join('\n');
-      expect(createHash('sha256').update(column).digest('hex')).toBe('5b360bb0537b626f1af704f0bff62bfd5000ed39382d7ad84d0024de910c850f');
+      // 2026-11-06: B's three section-only Unit 2 poster days (posterDays) move B dates only; E is unchanged.
+      expect(createHash('sha256').update(column).digest('hex')).toBe('002726792b43b5689a170ffe119a6dfc672e298f73d78c8e6cdb614f0ba52578');
     }
   });
 });

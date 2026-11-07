@@ -24,6 +24,9 @@
 //                            mcqPartA:{B,E}|null }
 //   posters[newUnit]      = { unit(NEW CED), title, kind:'poster', periods:{B,E} }
 //                            SPARSE: only units with poster tiles (Desk POSTER_UNITS)
+//                            A section-only poster (Desk posterDays) also carries
+//                            days:{B,E} and sectionOnly:true; the period without
+//                            it is null in periods and days.
 //   calendar              = { schoolYear, firstDay, examDate, breaks[],
 //                            meetingDays, quarters, events }
 //
@@ -153,10 +156,11 @@ function fail(msg) {
   process.exit(1);
 }
 
-// Invariant: everything in pacing landed, in order.
+// Invariant: everything in pacing landed, in order. Work, break and section-only
+// (Desk posterDays) cells are not pacing items.
 for (const period of ['B', 'E']) {
   const want = pacing[period];
-  const got = placed[period].filter(item => item.kind !== 'work' && item.kind !== 'break');
+  const got = placed[period].filter(item => item.kind !== 'work' && item.kind !== 'break' && !item.sectionOnly);
   if (got.length !== want.length) fail(`${period}: ${got.length} placed vs ${want.length} pacing items (exam too early?)`);
   for (let i = 0; i < want.length; i++) {
     if (want[i].t !== got[i].t) fail(`${period}[${i}]: pacing ${want[i].t} vs placed ${got[i].t}`);
@@ -241,17 +245,32 @@ function eventDates(match) {
 const progressChecks = {};
 const posters = {};
 const newUnits = [...new Set(pacing.B.filter((x) => x.kind === 'pc' && x.admin === 1).map((x) => x.u))].sort((a, b) => a - b);
+
+// Invariant: every configured section-only poster day (Desk posterDays) became a
+// tile. A date on a closure or a non-meeting day places nothing, and a unit whose
+// dates all miss would otherwise vanish silently; this checks the config itself.
+for (const period of ['B', 'E']) {
+  const configured = (CFG.periods[period] && CFG.periods[period].posterDays) || {};
+  for (const [u, dates] of Object.entries(configured)) {
+    const got = placed[period].filter((x) => x.kind === 'poster' && x.sectionOnly && x.u === Number(u)).length;
+    if (got !== dates.length) fail(`U${u} section-only poster: ${period} has ${got} of ${dates.length} configured posterDays on the calendar (a closure or non-meeting day?)`);
+  }
+}
 for (const u of newUnits) {
   const day1 = eventDates((x) => x.t === `U${u}-PC1` && x.kind === 'pc' && x.admin === 1);
   const day2 = eventDates((x) => x.t === `U${u}-PC2` && x.kind === 'pc' && x.admin === 2);
   const partA = eventDates((x) => x.t === `U${u}-PCA` && x.part === 'A');
   const poster = eventDates((x) => x.t === `U${u}-Poster` && x.kind === 'poster');
+  // A section-only poster (Desk posterDays): every poster day of the unit, per period.
+  const sectionOnlyCells = (period) => placed[period].filter((x) => x.kind === 'poster' && x.u === u && x.sectionOnly);
+  const sectionOnly = sectionOnlyCells('B').length > 0 || sectionOnlyCells('E').length > 0;
   for (const [label, ev] of [['PC day 1', day1], ['PC day 2', day2]]) {
     if (!ev.B || !ev.E) fail(`U${u} ${label} missing for a period (B=${ev.B} E=${ev.E})`);
   }
   // Posters are sparse (one per quarter, POSTER_UNITS in the Desk): a unit with no
-  // poster tile in EITHER period is simply left out. One period only is a bug.
-  if ((poster.B == null) !== (poster.E == null)) fail(`U${u} poster present for only one period (B=${poster.B} E=${poster.E})`);
+  // poster tile in EITHER period is simply left out. One period only is a bug,
+  // unless the poster is section-only (Desk posterDays).
+  if (!sectionOnly && (poster.B == null) !== (poster.E == null)) fail(`U${u} poster present for only one period (B=${poster.B} E=${poster.E})`);
   if ((partA.B == null) !== (partA.E == null)) fail(`U${u} MCQ Part A present for only one period`);
   progressChecks[String(u)] = {
     unit: u,
@@ -262,6 +281,29 @@ for (const u of newUnits) {
     adminDay2: day2,
     mcqPartA: (partA.B || partA.E) ? partA : null,
   };
+  if (sectionOnly) {
+    const pacingPoster = ['B', 'E'].some((period) => placed[period].some((x) => x.kind === 'poster' && x.u === u && !x.sectionOnly));
+    if (pacingPoster) fail(`U${u} poster is both a pacing poster (POSTER_UNITS) and a section-only poster (posterDays)`);
+    const length = [...sectionOnlyCells('B'), ...sectionOnlyCells('E')][0].days;
+    const days = { B: null, E: null };
+    for (const period of ['B', 'E']) {
+      const cells = sectionOnlyCells(period);
+      if (!cells.length) continue;
+      // A posterDays date that is a closure or not a meeting day never becomes a tile.
+      if (cells.length !== length) fail(`U${u} section-only poster: ${period} has ${cells.length} of ${length} poster days on the calendar`);
+      days[period] = cells.map((x) => x.date);
+    }
+    posters[String(u)] = {
+      unit: u,
+      title: `Unit ${u} Poster`,
+      kind: 'poster',
+      duration: { days: length },
+      periods: poster,
+      days,
+      sectionOnly: true,
+    };
+    continue;
+  }
   if (!poster.B) continue;
   posters[String(u)] = {
     unit: u,
@@ -340,7 +382,8 @@ for (const period of ['B', 'E']) {
 for (const u of newUnits) {
   const pc = progressChecks[String(u)];
   const poster = posters[String(u)];
-  const posterText = poster ? `poster B ${poster.periods.B} E ${poster.periods.E}` : 'no poster';
+  const posterText = !poster ? 'no poster'
+    : `poster B ${poster.periods.B} E ${poster.periods.E}` + (poster.sectionOnly ? ` (section-only: B ${poster.days.B} E ${poster.days.E})` : '');
   console.log(`  U${u}: ${posterText} · PC B ${pc.periods.B}/${pc.adminDay2.B} E ${pc.periods.E}/${pc.adminDay2.E}` + (pc.mcqPartA ? ` · MCQ-A B ${pc.mcqPartA.B} E ${pc.mcqPartA.E}` : ''));
 }
 

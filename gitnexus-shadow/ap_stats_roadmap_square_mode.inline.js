@@ -10595,10 +10595,11 @@ function pcLinksFor(tileId, period) {
     return both;
 }
 // Poster-day materials, keyed by the unit's poster tile id (U{u}-Poster; the
-// day-2 tile U{u}-Poster2 shares the entry via posterLinksFor). `student`
+// later day tiles U{u}-Poster2, U{u}-Poster3 share the entry via posterLinksFor). `student`
 // links render for everyone; `teacher` links render only for a signed-in
 // teacher outside student preview (cedTeacherBridgeAllowed). URLs are
 // repo-relative so they work on GH Pages and the Vercel mirror alike.
+// `blurb` (optional) is the poster panel's sentence for that unit.
 var POSTER_LINKS = {
     'U1-Poster': {
         student: [
@@ -10608,11 +10609,24 @@ var POSTER_LINKS = {
         teacher: [
             { label: 'Teacher key — answers, finished graphs, scoring grid', url: 'u1_poster/pdf/u1_poster_teacher_key.pdf' }
         ]
+    },
+    // Period B only (posterDays in SCHEDULE_DEFS; U2_CLAIM_POSTER_SPEC.md B2).
+    'U2-Poster': {
+        student: [
+            { label: 'Group sheets — one per group, two pages each', url: 'u2_poster/pdf/u2_poster_group_sheets_student.pdf' },
+            { label: 'Example poster — the board demo (Claim, Proof, Repair)', url: 'u2_poster/pdf/u2_poster_example_board_demo.pdf' },
+            { label: 'Gallery walk sheet — one per student, Friday', url: 'u2_poster/pdf/u2_poster_walk_sheet.pdf' }
+        ],
+        teacher: [
+            { label: 'Teacher key — answers, run of show, scoring grid, exit tickets', url: 'u2_poster/pdf/u2_poster_teacher_key.pdf' }
+        ],
+        blurb: 'Groups of three. Judge your claim together first: verdict, proof, repair. Then build the poster.'
     }
 };
 function posterLinksFor(t) {
     if (typeof POSTER_LINKS === 'undefined' || !t) return null;
-    return POSTER_LINKS[String(t).replace(/2$/, '')] || null;
+    // Every later day tile (U{u}-Poster2, U{u}-Poster3, ...) shares its unit's day-1 entry.
+    return POSTER_LINKS[String(t).replace(/^(U\d+-Poster)\d+$/, '$1')] || null;
 }
 // Grading Model v3 (s121): inject Poster + PC Day 1 + PC Day 2 pseudo-lessons
 // at every unit transition (and at the array end). generateSchedule treats
@@ -10863,7 +10877,11 @@ const SCHEDULE_DEFS = {
     periods: {
       B: { label:"Period B", meetsDays:[1,2,4,5], doubleDay:null, workDayFrom:[2026,8,14], workDayGap:2, maxWorkDaysPerWeek:1, schoologyCourse:null,
            // Section-only breaks: nothing placed, pacing shifts one meeting later. 2026-09-18 = AP Classroom down (teacher).
-           breakDays:[[2026,8,18]] },
+           breakDays:[[2026,8,18]],
+           // Section-only poster days, keyed by unit: the same rule as breakDays under a poster tile (nothing placed
+           // from pacing, pacing shifts later, E untouched; U2_CLAIM_POSTER_SPEC.md B1). Teacher 2026-11-06, the Unit 2
+           // claim posters: "Tuesday, Thursday & then gallery walk on Friday" (BPE walkthrough Thu 11/12).
+           posterDays:{2:[[2026,10,10],[2026,10,12],[2026,10,13]]} },
       E: { label:"Period E", meetsDays:[1,3,5], doubleDay:3, doubleFrom:[2026,8,16], maxPairsPerWeek:2, videoCapMin:30, videoCapEarlyReleaseMin:20, schoologyCourse:null,
            // A pair day lists at most 3 videos (teacher 2026-11-06: 2.7 + 2.8 put 5 videos on one Friday,
            // "not enough time, or attention span"). Counted from the Desk's RESOURCES list, from this
@@ -10957,25 +10975,27 @@ function generateSchedule(def){
   // A section-only break must not move the OTHER section by a single day: that
   // section's cells come from a reference run with every breakDays list removed,
   // and its placements feed the lead exactly as they did without the break.
-  const hasBreak=pid=>!!(def.periods[pid]&&def.periods[pid].breakDays&&def.periods[pid].breakDays.length);
+  // Section-only poster days (posterDays, U2_CLAIM_POSTER_SPEC.md B1) count as breaks here.
+  const hasPosterDays=p=>!!(p.posterDays&&Object.values(p.posterDays).some(days=>days&&days.length));
+  const hasBreak=pid=>{const p=def.periods[pid];return !!(p&&((p.breakDays&&p.breakDays.length)||hasPosterDays(p)))};
   // Both sections have breaks (first time: B 2026-09-18 + E SAT Day 2026-10-21):
   // each section's column comes from a run where ONLY its own breaks exist, so
   // neither section's break can move the other (B's Work-Day rule would otherwise
   // react to E's shifted pacing). Each sub-run has one break list → the
   // single-break path below, so the B column is byte-identical to before.
   if(hasBreak('B')&&hasBreak('E')){
-    // A section-only pacing adjustment (its breaks, E's video-count cap) exists only in its own
+    // A section-only pacing adjustment (its breaks and poster days, E's video-count cap) exists only in its own
     // run, so B's Work-Day rule never reacts to it (E_PAIRING_V2_SPEC.md §4).
-    const without=drop=>{const periods={};for(const pid in def.periods){periods[pid]={...def.periods[pid]};if(pid===drop){delete periods[pid].breakDays;delete periods[pid].maxVideosPerDay;delete periods[pid].maxVideosFrom}}return {...def,periods}};
+    const without=drop=>{const periods={};for(const pid in def.periods){periods[pid]={...def.periods[pid]};if(pid===drop){delete periods[pid].breakDays;delete periods[pid].posterDays;delete periods[pid].maxVideosPerDay;delete periods[pid].maxVideosFrom}}return {...def,periods}};
     const runB=generateSchedule(without('E')),runE=generateSchedule(without('B'));
     return runB.map((row,i)=>[row[0],row[1],row[2],row[3],runE[i][4]]);
   }
   let ref=null;
   if(['B','E'].some(hasBreak)){
-    // The reference run has no section-only adjustment at all (no breaks, no E video-count cap):
+    // The reference run has no section-only adjustment at all (no breaks, no poster days, no E video-count cap):
     // the non-break section's cells come from it, and the break section's placements react to it.
     const periods={};
-    for(const pid in def.periods){periods[pid]={...def.periods[pid]};delete periods[pid].breakDays;delete periods[pid].maxVideosPerDay;delete periods[pid].maxVideosFrom}
+    for(const pid in def.periods){periods[pid]={...def.periods[pid]};delete periods[pid].breakDays;delete periods[pid].posterDays;delete periods[pid].maxVideosPerDay;delete periods[pid].maxVideosFrom}
     ref=generateSchedule({...def,periods});
   }
   const offSet=buildOffSet(def.daysOff);
@@ -11014,6 +11034,16 @@ function generateSchedule(def){
         // A section-only break: nothing placed, nothing consumed, the lead is unchanged.
         if(pDef.breakDays&&pDef.breakDays.some(day=>day.join('-')===dk)){
           cells[pid]={t:pid+'-Break',n:'Break Day',u:0,kind:'break',due:'',as:''};
+          continue;
+        }
+        // A section-only poster day: the same rule as a break, under a poster tile (U{u}-Poster,
+        // U{u}-Poster2, ...). Checked before the Work-Day rule, so a poster day is never a Work Day.
+        const posterUnit=Object.keys(pDef.posterDays||{}).find(u=>pDef.posterDays[u].some(day=>day.join('-')===dk));
+        if(posterUnit){
+          const days=pDef.posterDays[posterUnit];
+          const admin=days.findIndex(day=>day.join('-')===dk)+1;
+          cells[pid]={t:'U'+posterUnit+'-Poster'+(admin>1?admin:''),n:'Unit '+posterUnit+' Poster'+(admin>1?' (Day '+admin+')':''),
+            u:Number(posterUnit),kind:'poster',admin,days:days.length,sectionOnly:true,due:'',as:''};
           continue;
         }
         // Count the lead before B places anything today; work does not consume pacing.
@@ -12192,7 +12222,7 @@ function _showProgressCheckPanel(inf, dateStr) {
 }
 
 // Poster day: the group sheets + example poster for everyone, the key for a
-// signed-in teacher only. Both poster tiles (day 1 / day 2) open the same panel.
+// signed-in teacher only. Every poster tile of a unit (day 1, 2, 3) opens the same panel.
 function _showPosterPanel(inf, dateStr) {
     _lastResourcePanel = { inf: inf, dateStr: dateStr };
     var links = (typeof posterLinksFor === 'function') ? posterLinksFor(inf.t) : null;
@@ -12204,7 +12234,7 @@ function _showPosterPanel(inf, dateStr) {
     body.innerHTML = '';
     var p = document.createElement('p');
     p.textContent = links
-        ? 'Groups of three. Solve your sheet together first, then build the poster: Data, Graph, Sentence.'
+        ? (links.blurb || 'Groups of three. Solve your sheet together first, then build the poster: Data, Graph, Sentence.')
         : 'Poster day. Your teacher hands out the group sheets in class.';
     body.appendChild(p);
     function addLink(item) {
@@ -23365,7 +23395,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-11-06-akmz';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-11-07-uak8';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

@@ -192,6 +192,35 @@ class TestComponentColumns(unittest.TestCase):
         self.assertEqual(l12, ["FA:1.2", "QUIZ:1.2", "BL:1.2"])
 
 
+class TestLiveScheduleUnit2Poster(unittest.TestCase):
+    """U2_CLAIM_POSTER_SPEC.md B4, read from the live data/lesson-schedule.json.
+
+    Period B's section-only Unit 2 poster dates its POSTER:U2 column on poster
+    day 1 (MP2). Period E has no Unit 2 poster (posters['2'].periods.E is null),
+    so its POSTER:U2 column keeps the PC Day 1 fallback.
+    """
+
+    def _by_key(self, period):
+        with open(os.path.join(REPO_ROOT, "data", "lesson-schedule.json"), encoding="utf-8") as f:
+            schedule = json.load(f)
+        cols = sc.component_columns(
+            schedule["lessons"], period,
+            quiz_topics=set(), blooket_topics=set(),
+            progress_checks=schedule["progressChecks"], posters=schedule["posters"],
+        )
+        return {c["key"]: c for c in cols}
+
+    def test_period_b_poster_u2_is_due_on_poster_day_1(self):
+        self.assertEqual(self._by_key("B")["POSTER:U2"]["due_date"], "2026-11-10")
+
+    def test_period_e_poster_u2_keeps_the_pc_day_1_date(self):
+        self.assertEqual(self._by_key("E")["POSTER:U2"]["due_date"], "2026-11-23")
+
+    def test_unit_1_poster_dates_are_unchanged(self):
+        self.assertEqual(self._by_key("B")["POSTER:U1"]["due_date"], "2026-10-08")
+        self.assertEqual(self._by_key("E")["POSTER:U1"]["due_date"], "2026-10-09")
+
+
 class TestComponentGradesFromClassDoc(unittest.TestCase):
     def _doc(self):
         # Follow-Along uses lessonGradeNoQuiz (v3 Lessons-track value), distinct

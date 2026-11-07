@@ -203,7 +203,11 @@
       }
     }
     for (const poster of Object.values(schedule.posters || {})) {
-      for (const p of PERIODS) push(p, poster.periods && poster.periods[p], { kind: 'poster', title: poster.title });
+      // A section-only poster (U2_CLAIM_POSTER_SPEC.md) lists every day in days[p]; others have one date.
+      for (const p of PERIODS) {
+        const days = (poster.days && poster.days[p]) || [poster.periods && poster.periods[p]];
+        days.forEach((iso, i) => push(p, iso, { kind: 'poster', title: days.length > 1 ? `${poster.title} — day ${i + 1} of ${days.length}` : poster.title }));
+      }
     }
     const cal = schedule.calendar;
     for (const p of PERIODS) {

@@ -16,6 +16,11 @@ function decl(name){const n=ast.body.filter(n=>n.type==='VariableDeclaration').f
 const day1={t:'U1-Poster',n:'Unit 1 Poster',u:1,kind:'poster'};
 const day2={t:'U1-Poster2',n:'Unit 1 Poster (Day 2)',u:1,kind:'poster',admin:2};
 const unlinked={t:'U5-Poster',n:'Unit 5 Poster',u:5,kind:'poster'};
+// Period B's section-only Unit 2 claim poster (posterDays, U2_CLAIM_POSTER_SPEC.md B1): the generator's cell shape.
+const u2Day=(admin)=>({t:'U2-Poster'+(admin>1?admin:''),n:'Unit 2 Poster'+(admin>1?' (Day '+admin+')':''),u:2,kind:'poster',admin,days:3,sectionOnly:true,due:'',as:''});
+const U2_STUDENT=['u2_poster/pdf/u2_poster_group_sheets_student.pdf','u2_poster/pdf/u2_poster_example_board_demo.pdf','u2_poster/pdf/u2_poster_walk_sheet.pdf'];
+const U2_KEY='u2_poster/pdf/u2_poster_teacher_key.pdf';
+const U2_BLURB='Groups of three. Judge your claim together first: verdict, proof, repair. Then build the poster.';
 function page(today,teacher){
  const dom=new JSDOM('<div id="resource-header"></div><div id="resource-body"></div><div id="resource-overlay" style="display:none"></div><div id="tip"></div><div id="donow-card"><div class="donow-body"><div id="donow-msg"></div></div></div>',{url:'https://desk.example/'});
  const globals={R:'review',OFF:'off',EX:'exam',PO:'post',NC:'noclass',cYear:'SY26-27',cP:'B',window:dom.window,document:dom.window.document,
@@ -55,6 +60,40 @@ describe('Poster-day links',()=>{
    const hrefs=[...d.querySelectorAll('#resource-body a')].map(a=>a.getAttribute('href'));
    expect(hrefs).toEqual(['u1_poster/pdf/u1_poster_group_sheets_student.pdf','u1_poster/pdf/u1_poster_example_board_demo.pdf','u1_poster/pdf/u1_poster_teacher_key.pdf']);
    expect(d.querySelector('.poster-teacher-only').textContent).toBe('Teacher only');
+  }finally{dom.window.close();}
+ });
+ it('U2 has three student PDFs, one teacher PDF and its own blurb; days 2 and 3 share the entry',()=>{
+  const {s}=page(u2Day(1));
+  const links=s.POSTER_LINKS['U2-Poster'];
+  expect(links.student.map(l=>l.url)).toEqual(U2_STUDENT);
+  expect(links.student.map(l=>l.label)).toEqual(['Group sheets — one per group, two pages each','Example poster — the board demo (Claim, Proof, Repair)','Gallery walk sheet — one per student, Friday']);
+  expect(links.teacher.map(l=>l.url)).toEqual([U2_KEY]);
+  expect(links.teacher.map(l=>l.label)).toEqual(['Teacher key — answers, run of show, scoring grid, exit tickets']);
+  expect(links.blurb).toBe(U2_BLURB);
+  expect(s.posterLinksFor('U2-Poster2')).toBe(links);
+  expect(s.posterLinksFor('U2-Poster3')).toBe(links);
+  expect(s.posterLinksFor('U1-Poster2')).toBe(s.POSTER_LINKS['U1-Poster']);   // the Unit 1 day-2 tile still maps to Unit 1
+  expect(s.POSTER_LINKS['U1-Poster'].blurb).toBeUndefined();
+ });
+ it('the U2 panel (day 3) shows the blurb and the student PDFs, never the key, to a student',()=>{
+  const {dom,s}=page(u2Day(3));try{
+   s.showResourcePanel(u2Day(3),'Nov 13');const d=dom.window.document;
+   expect(d.getElementById('resource-overlay').style.display).toBe('block');
+   expect(d.getElementById('resource-header').textContent).toBe('Unit 2 Poster (Day 3)');
+   expect(d.querySelector('#resource-body p').textContent).toBe(U2_BLURB);
+   expect([...d.querySelectorAll('#resource-body a')].map(a=>a.getAttribute('href'))).toEqual(U2_STUDENT);
+   expect(d.getElementById('resource-body').textContent).not.toContain('Teacher');
+   expect(d.querySelector('.poster-teacher-only')).toBeNull();
+  }finally{dom.window.close();}
+ });
+ it('a signed-in teacher also gets the U2 key under "Teacher only"; Unit 1 keeps its own sentence',()=>{
+  const {dom,s}=page(u2Day(2),true);try{
+   s.showResourcePanel(u2Day(2),'Nov 12');const d=dom.window.document;
+   expect(d.getElementById('resource-header').textContent).toBe('Unit 2 Poster (Day 2)');
+   expect([...d.querySelectorAll('#resource-body a')].map(a=>a.getAttribute('href'))).toEqual([...U2_STUDENT,U2_KEY]);
+   expect(d.querySelector('.poster-teacher-only').textContent).toBe('Teacher only');
+   s.showResourcePanel(day1,'Oct 8');
+   expect(d.querySelector('#resource-body p').textContent).toBe('Groups of three. Solve your sheet together first, then build the poster: Data, Graph, Sentence.');
   }finally{dom.window.close();}
  });
  it('an unlinked poster unit still opens a panel, without links',()=>{

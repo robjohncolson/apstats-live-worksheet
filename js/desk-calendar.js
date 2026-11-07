@@ -66,6 +66,11 @@ function htm(i,ds){
     if(i===NC||!i)return`<div class="dn" style="opacity:.4">${ds}</div>`;
     if(i.kind==='pc'&&i.part==='A')return`<div class="dn">${ds}</div><div class="tl">U${i.u} MCQ A</div><div class="tt">Progress Check · Part A</div>`;
     if(i.kind==='pc')return`<div class="dn">${ds}</div><div class="tl">U${i.u} PC ${i.admin||1}/2</div><div class="tt">Progress Check</div>`;
+    // A section-only poster (posterDays) knows its length: day {admin} of {days}.
+    if(i.kind==='poster'&&i.days){
+        const posterStep=i.admin===i.days?'Gallery walk':(i.admin===1?'Build':'Defend + finish');
+        return`<div class="dn">${ds}</div><div class="tl">U${i.u} Poster ${i.admin}/${i.days}</div><div class="tt">${posterStep}</div>`;
+    }
     if(i.kind==='poster')return`<div class="dn">${ds}</div><div class="tl">U${i.u} Poster${i.admin?' '+i.admin+'/2':''}</div><div class="tt">${i.admin===2?'Finish + gallery walk':'Gallery walk'}</div>`;
     if(i.kind==='orientation')return`<div class="dn">${ds}</div><div class="tl">Start Here</div><div class="tt">How grades &amp; makeups work</div>`;
     if(i.kind==='baseline')return`<div class="dn">${ds}</div><div class="tl">U${i.u} Baseline</div><div class="tt">No stakes — best score kept</div>`;
@@ -90,6 +95,10 @@ function cellAria(i, ds){
     if(i===NC || !i) return ds;
     if(i.kind==='pc'&&i.part==='A') return ds + ', Unit ' + i.u + ' MCQ Part A';
     if(i.kind==='pc') return ds + ', Unit ' + i.u + ' Progress Check ' + (i.admin||1) + ' of 2';
+    if(i.kind==='poster'&&i.days){
+        const posterStep=i.admin===i.days?'gallery walk':(i.admin===1?'build':'defend and finish');
+        return ds + ', Unit ' + i.u + ' Poster day ' + i.admin + ' of ' + i.days + ', ' + posterStep;
+    }
     if(i.kind==='poster') return ds + ', Unit ' + i.u + ' Poster' + (i.admin ? ' day ' + i.admin + ' of 2' : '') + ' gallery walk';
     if(i.kind==='orientation') return ds + ', Start Here — how grades and makeups work';
     if(i.kind==='baseline') return ds + ', Unit ' + i.u + ' Baseline — no stakes, best score kept';

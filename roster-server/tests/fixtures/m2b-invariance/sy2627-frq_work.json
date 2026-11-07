@@ -116,7 +116,7 @@
       "enabled": false
     }
   },
-  "artHash": "c2101a2868c7fe11a98a2a27c383922ca454a9a076d62e5d9f65029587b70152",
+  "artHash": "275e82feb594dc18d59ca493dca3c9b2eea18280ddd8ed617dbf78b40ec942af",
   "grade": {
     "units": {
       "U1": {
@@ -188,7 +188,9 @@
           2,
           3
         ],
-        "posterUnits": [],
+        "posterUnits": [
+          2
+        ],
         "unitGrades": {
           "U5": null,
           "U6": null,
