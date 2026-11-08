@@ -143,6 +143,17 @@ function Get-QuarterPasses {
 }
 
 # One quarter pass: steps 1-3. Records its exit code in $script:passCodes[$Quarter].
+# True when a step's captured output shows it got past its first marking-period check
+# (schoology_sync_section prints "[<pass>] verified: the gradebook shows ..." right after
+# that check and before any create or write). Lines may be strings or ErrorRecords.
+function Test-PassVerified {
+  param($Lines)
+  foreach ($line in @($Lines)) {
+    if ("$line" -match 'verified: the gradebook shows') { return $true }
+  }
+  return $false
+}
+
 function Invoke-QuarterPass {
   param([string]$Quarter, [bool]$NoZeros)
   $fixture = Join-Path $LogDir "fixture-$Section-$Quarter-$stamp.json"
@@ -189,8 +200,22 @@ function Invoke-QuarterPass {
   if ($NoZeros) { $syncArgs += '--no-zeros' }
 
   Write-Log "[$Quarter] STEP 2: schoology_sync_section.py --sync-section $Section --quarter $Quarter --grades-fixture <fixture>$(if ($Live) { ' --apply' } else { ' --dry-run' }) --comments$(if ($NoZeros) { ' --no-zeros' } else { '' })"
-  & python @syncArgs 2>&1 | Tee-Object -FilePath $log -Append | Out-Host
+  & python @syncArgs 2>&1 | Tee-Object -FilePath $log -Append | Tee-Object -Variable syncOut | Out-Host
   $syncCode = $LASTEXITCODE
+  if ($syncCode -eq 3 -and -not (Test-PassVerified $syncOut)) {
+    # Exit 3 WITHOUT the "verified: the gradebook shows" line = the pass aborted BEFORE its
+    # initial view verification passed (the marking-period check itself, or an earlier
+    # startup refusal such as the rename gate): no column was created and no grade written,
+    # so the same step can safely run again. The abort reason stays in the output above.
+    # 2026-11-08: the grid rendered empty once right after the period switch and the Q2
+    # pass was lost for the day. An exit 3 AFTER that line (a view lost mid-pass, possibly
+    # right after a create whose id was not saved yet) is NOT retried: a blind re-run could
+    # create that column twice (Codex review R1). Other exit codes are never retried.
+    Write-Log "[$Quarter] STEP 2 aborted before its initial view verification (exit 3: nothing created or written; reason above) -- one retry in 60 s."
+    Start-Sleep -Seconds 60
+    & python @syncArgs 2>&1 | Tee-Object -FilePath $log -Append | Out-Host
+    $syncCode = $LASTEXITCODE
+  }
   if ($syncCode -ne 0) {
     Write-Log "[$Quarter] STEP 2 FAILED (exit $syncCode) -- step 3 skipped for this pass."
     $script:passCodes[$Quarter] = $syncCode
@@ -205,6 +230,17 @@ function Invoke-QuarterPass {
   Write-Log "[$Quarter] STEP 3: schoology_official.py --section $Section --quarter $Quarter$(if ($Live) { ' --apply' } else { '' })"
   & python @officialArgs 2>&1 | Tee-Object -FilePath $log -Append | Out-Host
   $officialCode = $LASTEXITCODE
+  if ($officialCode -eq 3) {
+    # schoology_official.py returns 3 only when the marking-period view was refused or lost
+    # (before or during its writes). It creates nothing, and a re-run re-reads and
+    # recomputes every row fresh (an ENDED quarter keeps its higher confirmed overrides: the
+    # never-lower rule; the active quarter follows the current grade, the established
+    # policy), so one retry is safe either way.
+    Write-Log "[$Quarter] STEP 3 refused or lost the marking-period view (exit 3) -- one retry in 60 s (a re-run re-reads and recomputes every row fresh)."
+    Start-Sleep -Seconds 60
+    & python @officialArgs 2>&1 | Tee-Object -FilePath $log -Append | Out-Host
+    $officialCode = $LASTEXITCODE
+  }
   if ($officialCode -ne 0) {
     Write-Log "[$Quarter] STEP 3 FAILED (exit $officialCode) -- grades were pushed; official overrides need a rerun."
   }
