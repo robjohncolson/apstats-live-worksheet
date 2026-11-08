@@ -83,6 +83,7 @@ export function mountTranscript(app, {
   blooketLessons = null,
   blooketPresence = null,
   blooketRequired = null,
+  deckSlices = null,   // per-day deck slices (FLASHCARD_DECK_SLICES_SPEC.md); null = none
 }) {
   // Resolve once at mount — same effective lists for computeGrade + artHash.
   const _lists = resolveBlooketLists({ blooketLessons, blooketPresence, blooketRequired });
@@ -125,6 +126,7 @@ export function mountTranscript(app, {
         worksheetBlankCounts,
         blooketPresence: _lists.blooketPresence,
         blooketRequired: _lists.blooketRequired,
+        deckSlices,
       });
 
       const gq = currentQuarter(asOfDateNY, config);

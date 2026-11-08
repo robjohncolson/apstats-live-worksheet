@@ -154,11 +154,16 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
   const _presence = _gradeCtx.blooketPresence || _gradeCtx.blooketTopics;
   const _required = _gradeCtx.blooketRequired;
   const _bonus = _gradeCtx.blooketBonusTopics || [];
+  // Per-day slices of the combined flashcard decks (FLASHCARD_DECK_SLICES_SPEC.md D3).
+  // Like the event schedule, only from an explicitly supplied production bundle, so
+  // tests that inject their own lessonSchedule keep one Blooket score per worksheet.
+  const _deckSlices = productionGradeInputs ? (_gradeCtx.deckSlices || null) : null;
   const _blooketBundle = {
     blooketPresence: _presence,
     blooketRequired: _required,
     blooketBonusTopics: _bonus,
     blooketLessons: _presence, // legacy alias = presence
+    deckSlices: _deckSlices,
   };
   const _frqMode = () => resolveFrqGradeMode();
   const _frqBundle = ledgerDb && Object.hasOwn(ledgerDb, 'frqBundle')

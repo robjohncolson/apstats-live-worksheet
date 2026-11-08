@@ -78,3 +78,12 @@ describe('renderDoNowGrades offline behavior', () => {
     expect(body).toMatch(/if \(typeof rProg === 'function'\) rProg\(\);/);
   });
 });
+
+describe('_phase2ReDeriveGrade offline inputs (FLASHCARD_DECK_SLICES_SPEC.md D3)', () => {
+  it('passes the server-computed per-day deck groups to the offline engine', () => {
+    // /grade/offline-inputs ships perDayGroups; without it the offline Blooket
+    // track would keep one slot per worksheet group once a per-day day is due.
+    const body = fnBody(DESK, '_phase2ReDeriveGrade');
+    expect(body).toMatch(/perDayGroups:\s*inputs\.perDayGroups\s*\|\|\s*null/);
+  });
+});

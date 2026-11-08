@@ -106,7 +106,7 @@ const junk = fc.oneof(
 const optsArb = fc.oneof(
   { weight: 3, arbitrary: fc.record({                       // plausible-to-valid shapes
     source: fc.constantFrom('worksheet', 'curriculum_quiz', '', undefined),
-    itemId: fc.constantFrom('WS-U1L1-Q1', 'BL-U4-L1-2-DESK_DONE', '', undefined),
+    itemId: fc.constantFrom('WS-U1L1-Q1', 'BL-U4-L1-2-DESK_DONE', 'BL-U4-L7-DESK_DAY', '', undefined),
     response: fc.constantFrom('ans', null, undefined, 42),
     score: fc.constantFrom(0, 55, 100, undefined),
     attempt: fc.constantFrom(1, 2, undefined),

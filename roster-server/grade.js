@@ -20,6 +20,7 @@ import {
   pcRawToP,
   pcCurvePct,
   quizRetryCutoff,
+  blooketPerDayFrom,
 } from './grade-config.js';
 import {
   latestPerItem,
@@ -41,6 +42,7 @@ import {
   pcDatesFor,
   pcUnitsInQuarter,
   posterUnitsInQuarter,
+  perDayDeckGroups,
 } from './lesson-grade.js';
 import { buildGradebook } from './gradebook-grid.js';
 import { readFileSync } from 'fs';
@@ -97,6 +99,26 @@ export function resolveBlooketLists(opts = {}) {
     (opts && opts.blooketRequired) ||
     BLOOKET_REQUIRED;
   return { blooketPresence, blooketRequired };
+}
+
+/**
+ * The combined worksheets whose flashcard deck counts one score per day for this
+ * student (FLASHCARD_DECK_SLICES_SPEC.md D3), as a Set of "unit|worksheetKey".
+ * opts.perDayGroups (the list the server computed, as the offline pack ships it)
+ * wins; else the groups come from opts.deckSlices (the vendored slices file) for
+ * this section; neither → none, which is the one-score-per-worksheet rule.
+ * @param {any} opts
+ * @param {Record<string, any>|null} schedule
+ * @param {string|null} section
+ * @param {any} config
+ * @returns {Set<string>}
+ */
+export function resolvePerDayGroups(opts, schedule, section, config) {
+  if (opts && opts.perDayGroups instanceof Set) return opts.perDayGroups;
+  if (opts && Array.isArray(opts.perDayGroups)) return new Set(opts.perDayGroups);
+  const deckSlices = opts && opts.deckSlices;
+  if (!deckSlices || !schedule) return new Set();
+  return perDayDeckGroups({ schedule, deckSlices, section, perDayFrom: blooketPerDayFrom(config), config });
 }
 
 // TI-84 trainer lesson map — topicKey → [procedureId]: buckets `TI84-<proc>`
@@ -163,6 +185,9 @@ function frqScoreToPct(score, frqBand) {
 // opts.section: student's section string (e.g. "PeriodB") for date filter.
 // opts.worksheetBlankCounts: { "<unit>.<lessonKey>": <int> } from buildWorksheetBlankCounts.
 //   If null/missing, Cws is null for every lesson (W/Q renormalize without ws feeder).
+// opts.deckSlices: the parsed data/blooket-deck-slices.json (server callers), or
+// opts.perDayGroups: the per-day deck groups already computed (offline clients).
+//   Neither → every combined worksheet keeps one Blooket score (resolvePerDayGroups).
 // { [unitNum]: score } from POSTER-U{n} rows (source 'poster'); the latest
 // attempt per item wins, a malformed score is skipped.
 export function posterScoresByUnit(posterRows) {
@@ -324,6 +349,10 @@ export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts
   // the baked map. `!== undefined` (not ||) so an explicit null stays null.
   const trainerMap = (opts && opts.trainerMap !== undefined) ? opts.trainerMap : TRAINER_LESSON_MAP;
   const trainerLessons = trainerMap ? Object.keys(trainerMap) : [];
+  // Combined worksheets whose deck is dealt one day at a time count one Blooket
+  // score per day (FLASHCARD_DECK_SLICES_SPEC.md D3). Built once for this
+  // student's section and handed to both engines below.
+  const perDayGroups = resolvePerDayGroups(opts, schedule, section, config);
   const allLatestRows = latestPerItem(rows);
   const lessonMap = computeLessonGrades(allLatestRows, config.frqBand, answerKey, schedule, {
     worksheetBlankCounts,
@@ -332,6 +361,7 @@ export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts
     bonusTopics: bonusTopicSet,
     frqFloorSince: config.frqProvisionalFloorSince || null,
     quizRetryHalfCreditFrom: quizCutoff,
+    perDayGroups,
   });
 
   // Quiz-bearing topics (gradable quizTotal > 0) — the v3 Quiz-track denominator,
@@ -456,6 +486,7 @@ export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts
         quizLessons,
         trainerLessons,
         eventSchedule,
+        perDayGroups,
       });
     } else if (schedule) {
       qResult = computeQuarterFromLessons({
@@ -617,6 +648,8 @@ export function mountGrade(app, {
   // legacy alias for presence when only one list is supplied.
   blooketLessons = null, blooketPresence = null, blooketRequired = null,
   blooketBonusTopics = null,
+  // Per-day slices of the combined decks (FLASHCARD_DECK_SLICES_SPEC.md); null = none.
+  deckSlices = null,
   // CED-2026 column titles (lib/ced-label retitleGradebook), injected by server.js so this
   // bundled module never imports the fs-backed helper. Absent → titles stay as built.
   retitleGradebook = /** @type {((gradebook: any) => any) | null} */ (null),
@@ -696,6 +729,7 @@ export function mountGrade(app, {
         blooketBonusTopics: _bonus || undefined,
         // legacy single-list alias (presence) for older callers
         blooketLessons: _presence || undefined,
+        deckSlices,
       }
     );
 

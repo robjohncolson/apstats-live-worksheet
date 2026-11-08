@@ -272,6 +272,20 @@ export function quizRetryCutoff(config) {
   return QUIZ_RETRY_HALF_CREDIT_FROM;
 }
 
+// Per-day flashcard decks (FLASHCARD_DECK_SLICES_SPEC.md D3, teacher 2026-11-07). A
+// combined worksheet whose deck CSV is cut into day slices (data/blooket-deck-slices.json)
+// scores each day's deck on its own when the worksheet's earliest zero date is on or
+// after this date. Earlier worksheets (2.3 and 2.4-2.6, zero dates 11/05-11/12) keep one
+// score per worksheet, so no Q1 number moves. Kept outside PHASE3_CONFIG like
+// QUIZ_RETRY_HALF_CREDIT_FROM (the m2b fixtures pin that object key for key). A config
+// that names blooketPerDayFrom wins (tests: configOverrides); null turns per-day decks off.
+export const BLOOKET_PER_DAY_FROM = '2026-11-13';
+
+export function blooketPerDayFrom(config) {
+  if (config && config.blooketPerDayFrom !== undefined) return config.blooketPerDayFrom;
+  return BLOOKET_PER_DAY_FROM;
+}
+
 // Quiz retry removed (QUIZ_RETRY_REMOVAL_SPEC.md, teacher 2026-10-26 evening):
 // from this instant POST /ledger/record refuses a quiz retry (attempt 2) with
 // reason 'retries-closed', so the first answer is the grade. Any graded retry is

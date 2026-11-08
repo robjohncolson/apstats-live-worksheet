@@ -671,10 +671,113 @@ describe('POST /ledger/record', () => {
     expect(frqRow().score).toBe(0);
   });
 
-  it('FRQ floor does not apply to worksheet rows (verbatim rescore semantics unchanged)', async () => {
+  it('FRQ floor does not apply to worksheet answer rows (WS-…-Q: verbatim rescore semantics unchanged)', async () => {
     await record({ source: 'worksheet', itemId: 'WS-U4L1-Q9', response: { answer: 'x' }, score: 1 });
     await record({ source: 'worksheet', itemId: 'WS-U4L1-Q9', response: { answer: 'y' }, score: 0 });
     expect(ledgerDb.store.get(`${validStudentId}|worksheet|WS-U4L1-Q9|1`).score).toBe(0);
+  });
+
+  // ── Flashcard deck floor (FLASHCARD_DECK_SLICES_SPEC.md D3, 2026-11-07) ───────────
+  // The timed deck's self-attest rows (source 'worksheet', BL-U{u}-L{key}-DESK_DONE or
+  // -DESK_DAY) keep their best score: the clients may send every finished run, so a lower
+  // re-run, or a run with no score, never replaces a higher stored one. DESK_DONE and
+  // DESK_DAY are different items. Worksheet answer rows (WS-…-Q) still rescore verbatim.
+
+  function deckRow(itemId) {
+    return ledgerDb.store.get(`${validStudentId}|worksheet|${itemId}|1`);
+  }
+
+  // The body the Desk (_studentMarkSave) and the phone (_fcCommit) send for a finished deck.
+  function recordDeck(itemId, score, response = { selfAttest: 'blooket' }) {
+    return record({ source: 'worksheet', itemId, response, score, attempt: 1 });
+  }
+
+  function receiptScore(receipt) {
+    const payload = JSON.parse(Buffer.from(receipt.compact.split('.')[0], 'base64url').toString('utf8'));
+    return payload.sc;
+  }
+
+  it('deck floor: a lower DESK_DAY re-run never replaces a higher one (response updates, receipt signs the kept 100)', async () => {
+    await withIssuer(async () => {
+      let r = await recordDeck('BL-U4-L7-DESK_DAY', 100, { selfAttest: 'blooket', run: 1 });
+      expect(r.status).toBe(200);
+      r = await recordDeck('BL-U4-L7-DESK_DAY', 80, { selfAttest: 'blooket', run: 2 });
+      expect(r.status).toBe(200);
+      const row = deckRow('BL-U4-L7-DESK_DAY');
+      expect(row.score).toBe(100);
+      expect(row.response).toEqual({ selfAttest: 'blooket', run: 2 });
+      expect(receiptScore(r.body.receipt)).toBe(100);
+      expect(row.receipt_compact).toBe(r.body.receipt.compact);
+      expect(verifiesAgainstIssuer(row).ok).toBe(true);
+
+      await recordDeck('BL-U4-L7-DESK_DAY', 95);
+      expect(deckRow('BL-U4-L7-DESK_DAY').score).toBe(100);
+      await recordDeck('BL-U4-L7-DESK_DAY', 100.0);
+      expect(deckRow('BL-U4-L7-DESK_DAY').score).toBe(100);
+    });
+  });
+
+  it('deck floor: a combined-key DESK_DONE keeps its best (72.5, then 60 keeps 72.5, then 90 raises it)', async () => {
+    await recordDeck('BL-U4-L7-8-DESK_DONE', 72.5);
+    await recordDeck('BL-U4-L7-8-DESK_DONE', 60);
+    expect(deckRow('BL-U4-L7-8-DESK_DONE').score).toBe(72.5);
+    await recordDeck('BL-U4-L7-8-DESK_DONE', 90);
+    expect(deckRow('BL-U4-L7-8-DESK_DONE').score).toBe(90);
+  });
+
+  it('deck floor: DESK_DONE and DESK_DAY of one topic are different items and never floor each other', async () => {
+    await recordDeck('BL-U4-L7-DESK_DAY', 100);
+    await recordDeck('BL-U4-L7-DESK_DONE', 60);
+    expect(deckRow('BL-U4-L7-DESK_DONE').score).toBe(60);
+    expect(deckRow('BL-U4-L7-DESK_DAY').score).toBe(100);
+
+    await recordDeck('BL-U4-L8-DESK_DONE', 100);
+    await recordDeck('BL-U4-L8-DESK_DAY', 55);
+    expect(deckRow('BL-U4-L8-DESK_DAY').score).toBe(55);
+    expect(deckRow('BL-U4-L8-DESK_DONE').score).toBe(100);
+  });
+
+  it('deck floor: a WS-…-Q worksheet answer row still rescores verbatim and never pays the floor read', async () => {
+    const reads = vi.spyOn(ledgerDb, 'getLedgerByStudent');
+    await record({ source: 'worksheet', itemId: 'WS-U4-L7-Q3', response: { answer: 'x' }, score: 1 });
+    await record({ source: 'worksheet', itemId: 'WS-U4-L7-Q3', response: { answer: 'y' }, score: 0 });
+    expect(ledgerDb.store.get(`${validStudentId}|worksheet|WS-U4-L7-Q3|1`).score).toBe(0);
+    expect(reads).not.toHaveBeenCalled();
+
+    // A deck row pays exactly one read, scoped to its own item id.
+    await recordDeck('BL-U4-L7-DESK_DAY', 90);
+    expect(reads).toHaveBeenCalledTimes(1);
+    expect(reads).toHaveBeenCalledWith(validStudentId, { prefix: 'BL-U4-L7-DESK_DAY' });
+  });
+
+  it('deck floor: a null or missing score on a deck row keeps the stored number', async () => {
+    await recordDeck('BL-U4-L7-DESK_DAY', 85);
+    await recordDeck('BL-U4-L7-DESK_DAY', null);
+    expect(deckRow('BL-U4-L7-DESK_DAY').score).toBe(85);
+    await record({ source: 'worksheet', itemId: 'BL-U4-L7-DESK_DAY', response: { selfAttest: 'blooket' } });
+    expect(deckRow('BL-U4-L7-DESK_DAY').score).toBe(85);
+  });
+
+  it('deck floor: a deck write whose stored score cannot be read is refused (500); an FRQ draft still saves', async () => {
+    await recordDeck('BL-U4-L7-DESK_DAY', 100);
+
+    ledgerDb.readResult = { data: null, error: { message: 'boom' } };
+    let r = await recordDeck('BL-U4-L7-DESK_DAY', 40);
+    expect(r.status).toBe(500);
+    expect(r.body.ok).toBe(false);
+    expect(deckRow('BL-U4-L7-DESK_DAY').score).toBe(100);
+
+    // FRQ stays best-effort: the draft text is saved even though the floor could not be read.
+    r = await record({ source: 'frq', itemId: 'WS-U4L1-reflect1', response: 'draft while the read fails', score: undefined });
+    ledgerDb.readResult = null;
+    expect(r.status).toBe(200);
+    expect(frqRow().response).toBe('draft while the read fails');
+
+    // A read that throws is refused the same way.
+    vi.spyOn(ledgerDb, 'getLedgerByStudent').mockRejectedValueOnce(new Error('socket hang up'));
+    r = await recordDeck('BL-U4-L7-DESK_DAY', 40);
+    expect(r.status).toBe(500);
+    expect(deckRow('BL-U4-L7-DESK_DAY').score).toBe(100);
   });
 
   // ── POST /ledger/frq-regrade (teacher-gated) ───────────────────────────────

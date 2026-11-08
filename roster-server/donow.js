@@ -79,12 +79,18 @@ export function computeDonow(ledgerRows, manifest) {
   // login). Artifact comes from the itemId prefix (CR- = quiz, WS- = worksheet);
   // topic from row.topic, fallback to parsing the itemId. (DESK_DONE rows live in
   // doneSet but never match a manifest activity, so they're otherwise unused.)
+  // A flashcard deck dealt from one day's slice of a combined deck is recorded as
+  // BL-…-DESK_DAY (FLASHCARD_DECK_SLICES_SPEC.md D3) and marks its day the same way.
   const selfDoneByTopic = new Map();
   for (const row of (Array.isArray(ledgerRows) ? ledgerRows : [])) {
-    if (typeof row?.item_id !== 'string' || !/-DESK_DONE$/.test(row.item_id)) continue;
+    if (typeof row?.item_id !== 'string') continue;
+    const isDoneRow = /-DESK_DONE$/.test(row.item_id);
+    const isDayDeckRow = /^BL-.*-DESK_DAY$/.test(row.item_id);
+    if (!isDoneRow && !isDayDeckRow) continue;
     let topic = (typeof row.topic === 'string' && row.topic) ? row.topic : null;
     if (!topic) {
-      const m = /^(?:WS|CR|BL)-U(\d+)-L([\d-]+)-DESK_DONE$/.exec(row.item_id);
+      const m = /^(?:WS|CR|BL)-U(\d+)-L([\d-]+)-DESK_DONE$/.exec(row.item_id)
+        || /^BL-U(\d+)-L([\d-]+)-DESK_DAY$/.exec(row.item_id);
       if (m) topic = m[1] + '.' + m[2];
     }
     if (!topic) continue;

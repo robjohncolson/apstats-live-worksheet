@@ -8,12 +8,14 @@
 // modal UI + the gradebook write; this owns the deck pipeline, scoring, and the
 // grade-affecting item-id shape.
 //
-// Grade path (unchanged): a finished quiz records score via
+// Grade path: a finished deck records its score via
 //   gradebookClient.record({ source:'worksheet',
-//     itemId: Flashcards.blooketItemId(topic).itemId,   // BL-U{u}-L{key}-DESK_DONE
+//     itemId: Flashcards.blooketItemId(topic, perDay).itemId,   // BL-U{u}-L{key}-DESK_DONE | -DESK_DAY
 //     unit, topic, response:{selfAttest:'blooket'}, score, attempt:1 })
-// The roster server maps BL-U\d+-L[\d-]+-DESK_DONE → the Blooket track (the >=80
-// lesson-unlock gate), regardless of source. A wrong item-id breaks combined lessons.
+// The roster server maps BL-U\d+-L[\d-]+-DESK_(DONE|DAY) → the Blooket grade (the best
+// score, point for point), regardless of source. DESK_DAY = a run dealt from a per-day
+// slice of a combined deck (FLASHCARD_DECK_SLICES_SPEC.md D3). A wrong item-id breaks
+// combined lessons.
 
 (function (root) {
   'use strict';
@@ -21,6 +23,7 @@
   var PASS_THRESHOLD = 0.80;     // quick-check pass + early-stop
   var FULLDECK_SECONDS = 40;     // full timed deck per-card countdown
   var QUICK_TARGET = 10;         // quick check trims to the top 10
+  var DECK_CARDS = 30;           // one timed sitting deals at most this many cards (= Desk BLOOKET_DECK_CARDS)
 
   // ── Deck pipeline ────────────────────────────────────────────────────────────
 
@@ -208,15 +211,86 @@
   }
   function fullScorePct(round) { return Math.round(roundScore(round) * 10) / 10; }
 
-  // ── The grade-affecting item-id (BL-U{u}-L{key}-DESK_DONE) ────────────────────
-  // The server maps this exact shape to the Blooket track. Combined lessons keep the
+  // ── 30-card sittings, per-day slices, save & resume (FLASHCARD_DECK_SLICES_SPEC.md) ──
+  // The same text as the Desk's _ftSliceRanges / _ftCardsInRanges / _ftDealDeck /
+  // _ftResumeRemaining / _ftSavedRoundOk (only the name and the indent differ);
+  // tests/flashcards-engine.test.js pins the two copies line for line.
+
+  // The Q# ranges [[lo, hi], …] of one topic's slice of a combined deck, or null when the
+  // deck is dealt whole. slices = the .slices object of data/blooket-deck-slices.json.
+  // A combined cell "a+b" uses its first key.
+  function sliceRanges(slices, csvName, topicId) {
+    if (!slices || typeof slices !== 'object' || !csvName || topicId == null) return null;
+    var byTopic = slices[csvName];
+    if (!byTopic || typeof byTopic !== 'object') return null;
+    var ranges = byTopic[String(topicId).split('+')[0]];
+    if (!Array.isArray(ranges) || !ranges.length) return null;
+    return ranges;
+  }
+
+  // The cards whose Q# falls inside any of the ranges. No ranges: every card. Ranges
+  // that match no card: every card too (a bad range must never deal an empty deck).
+  function cardsInRanges(cards, ranges) {
+    if (!Array.isArray(cards)) return [];
+    if (!Array.isArray(ranges) || !ranges.length) return cards;
+    var picked = cards.filter(function (card) {
+      if (!card || typeof card.qnum !== 'number') return false;
+      return ranges.some(function (range) {
+        return Array.isArray(range) && card.qnum >= range[0] && card.qnum <= range[1];
+      });
+    });
+    if (!picked.length) return cards;
+    return picked;
+  }
+
+  // One sitting: a fresh uniform sample of at most max cards (shuffle the pool, take max).
+  function dealDeck(cards, max, shuffleFn) {
+    return shuffleFn(cards.slice()).slice(0, max);
+  }
+
+  // Seconds left on a saved card whose clock started at cardStartMs: the clock keeps
+  // running in wall time while the deck is closed. null = the run was saved between
+  // cards, so the next card gets a full clock.
+  function resumeRemaining(cardStartMs, nowMs, perCardSeconds) {
+    if (typeof cardStartMs !== 'number' || !isFinite(cardStartMs)) return null;
+    var elapsedSeconds = Math.floor((nowMs - cardStartMs) / 1000);
+    if (elapsedSeconds < 0) return perCardSeconds;   // the device clock went backwards
+    return Math.max(0, perCardSeconds - elapsedSeconds);
+  }
+
+  // A saved round comes back from localStorage: resume it only when its shape is intact.
+  function savedRoundOk(round) {
+    if (!round || !Array.isArray(round.deck) || !round.deck.length) return false;
+    if (!Array.isArray(round.order) || !Array.isArray(round.status) || !Array.isArray(round.log)) return false;
+    if (round.total !== round.deck.length || round.status.length !== round.deck.length) return false;
+    for (var i = 0; i < round.deck.length; i++) {
+      var card = round.deck[i];
+      var st = round.status[i];
+      if (!card || typeof card.qnum !== 'number' || typeof card.q !== 'string') return false;
+      if (!Array.isArray(card.choices) || card.choices.length < 2 || typeof card.correctIdx !== 'number') return false;
+      if (!st || typeof st.misses !== 'number' || typeof st.earned !== 'number') return false;
+    }
+    for (var j = 0; j < round.order.length; j++) {
+      var idx = round.order[j];
+      if (typeof idx !== 'number' || Math.floor(idx) !== idx || idx < 0 || idx >= round.deck.length) return false;
+    }
+    return true;
+  }
+
+  // ── The grade-affecting item-id (BL-U{u}-L{key}-DESK_DONE | -DESK_DAY) ─────────
+  // The server maps this exact shape to the Blooket grade. Combined lessons keep the
   // full lesson segment (topic "4.1-2" → BL-U4-L1-2-DESK_DONE) so they don't collide
-  // on the upsert key. Returns { unit, itemId } or { unit:null, itemId:null } if the
-  // topic doesn't parse.
-  function blooketItemId(topicId) {
-    var um = /^(\d+)\.([\d-]+)$/.exec(topicId == null ? '' : String(topicId));
+  // on the upsert key. perDay (the run was dealt from a per-day slice) gives -DESK_DAY,
+  // otherwise -DESK_DONE (FLASHCARD_DECK_SLICES_SPEC.md D3). A pair cell "4.7+4.8" records
+  // under its first key (BL-U4-L7-…), the lesson its deck was dealt for (sliceRanges).
+  // Returns { unit, itemId }; a topic that does not parse gives
+  // { unit: null, itemId: 'BL-U?-DESK_DONE' }.
+  function blooketItemId(topicId, perDay) {
+    var lessonKey = (topicId == null ? '' : String(topicId)).split('+')[0];
+    var um = /^(\d+)\.([\d-]+)$/.exec(lessonKey);
     var unit = um ? 'U' + um[1] : null;
-    var itemId = 'BL-' + (unit || 'U?') + (um ? '-L' + um[2] : '') + '-DESK_DONE';
+    var suffix = perDay ? '-DESK_DAY' : '-DESK_DONE';
+    var itemId = 'BL-' + (unit || 'U?') + (um ? '-L' + um[2] : '') + suffix;
     return { unit: unit, itemId: itemId };
   }
 
@@ -224,6 +298,7 @@
     PASS_THRESHOLD: PASS_THRESHOLD,
     FULLDECK_SECONDS: FULLDECK_SECONDS,
     QUICK_TARGET: QUICK_TARGET,
+    DECK_CARDS: DECK_CARDS,
     parseCsv: parseCsv,
     rowsToDeck: rowsToDeck,
     selectTop10: selectTop10,
@@ -241,6 +316,11 @@
     recordOutcome: recordOutcome,
     roundScore: roundScore,
     fullScorePct: fullScorePct,
+    sliceRanges: sliceRanges,
+    cardsInRanges: cardsInRanges,
+    dealDeck: dealDeck,
+    resumeRemaining: resumeRemaining,
+    savedRoundOk: savedRoundOk,
     blooketItemId: blooketItemId
   };
 })(typeof window !== 'undefined' ? window : this);

@@ -12,7 +12,8 @@
 
     function pointsFor(src, itemId) {
         if (src === 'quiz_verdict' || src === 'quiz_answer') return 0;
-        if (itemId && /^BL-.*-DESK_DONE$/i.test(itemId)) return 4;
+        // A finished flashcard deck: DESK_DONE (whole deck) or DESK_DAY (a per-day slice).
+        if (itemId && /^BL-.*-DESK_(DONE|DAY)$/i.test(itemId)) return 4;
         return (WALLET_POINTS[src] != null) ? WALLET_POINTS[src] : 1;
     }
 

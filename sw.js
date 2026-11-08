@@ -13,7 +13,7 @@
 // is just `self.addEventListener('install',()=>self.skipWaiting()); self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.map(x=>caches.delete(x)))).then(()=>self.clients.claim())));`
 // to unregister-by-emptying (clears caches; pages fall back to plain network).
 
-const BUILD = '2026-11-07-uak8'; // scripts/bump-build.mjs replaces this stamp
+const BUILD = '2026-11-08-fljo'; // scripts/bump-build.mjs replaces this stamp
 const CACHE = 'apstats-pwa-' + BUILD;
 
 const CORE = [
@@ -23,7 +23,7 @@ const CORE = [
   'roadmap-data.json', 'manifest.webmanifest', 'icon.svg', 'pwa-register.js',
   'flashcards.js', 'lib/flashcard-srs.js', 'lib/flashcard-store.js', 'lib/class-snapshot.js',
   'lib/effort-facts.js', 'lib/flashcard-flags.js', 'lib/flashcard-sync.js', 'lib/sfx.js', 'mobile-home.html',
-  'data/blooket-difficulty.json', 'data/blooket-topic-csv.json',
+  'data/blooket-difficulty.json', 'data/blooket-deck-slices.json', 'data/blooket-topic-csv.json',
   'data/flashcard-flags.json',
   'js/ced2026-crosswalk.js', 'js/ced2026-labels.js',
   'lib/class-log-summary.js', 'js/desk-class-log.js', 'js/desk-progress-app.js', 'js/desk-study-break.js', 'js/desk-gradebook-grid.js', 'js/desk-park-bridge.js', 'js/desk-calendar.js', 'js/desk-missing-work.js',

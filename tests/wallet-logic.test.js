@@ -48,6 +48,16 @@ describe('wallet_logic.js', () => {
     expect(WalletLogic.pointsFor('worksheet', 'BL-abc-DESK_DONE')).toBe(4);
   });
 
+  it('counts a per-day flashcard deck (BL-…-DESK_DAY) as four points too', () => {
+    // FLASHCARD_DECK_SLICES_SPEC.md D3: a deck dealt from one day's slice records DESK_DAY.
+    expect(WalletLogic.pointsFor('worksheet', 'BL-U4-L7-DESK_DAY')).toBe(4);
+    expect(WalletLogic.pointsFor('worksheet', 'bl-u4-l7-desk_day')).toBe(4);
+    expect(WalletLogic.pointsFor('worksheet', 'WS-U4-L7-DESK_DAY')).toBe(3);   // only flashcard rows get the 4
+    expect(WalletLogic.pointsFor('worksheet', 'BL-U4-L7-DESK_DAYS')).toBe(3);
+    const groups = WalletLogic.groupReceipts([{ src: 'worksheet', i: 'BL-U4-L7-DESK_DAY', ts: 5 }], 'lesson');
+    expect(groups.map((g) => g.key)).toEqual(['U4-L7']);
+  });
+
   it('computes today delta from local midnight', () => {
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);

@@ -173,14 +173,18 @@ describe('DESK_MODAL_POLISH — prong A inline quiz score + removal regression p
     expect(body, 'no inline score swap in studentMark').not.toMatch(/desk-quiz-score-input/);
   });
 
-  it('pin 17: blooket self-attest is grade-INERT — §6 grade exclusion preserved (BL- prefix, source never "blooket")', () => {
-    const body = fnBody(DESK, '_studentMarkSave');
-    // Blooket now writes a CROSS-DEVICE DESK_DONE (CALENDAR_SYNC) so flashcard
-    // completion follows the login — but it stays out of the GRADE: its own BL-
-    // prefix (distinct itemId; classifies to null in lesson-grade) AND its source
-    // is the worksheet/quiz ternary, NEVER 'blooket', so it can't feed the Blooket
-    // grade track (which keys on source==='blooket'). §6 grade-exclusion intact.
-    expect(body).toMatch(/artifact === 'blooket' \? 'BL-'/);
-    expect(body).toMatch(/var source = artifact === 'quiz' \? 'curriculum_quiz' : 'worksheet'/);
+  it('pin 17: the blooket Done row keeps its own BL- prefix and a source that is never "blooket" (built in _deskDoneRow)', () => {
+    // _deskDoneRow builds every Desk Done row (WS-/CR-/BL-); _studentMarkSave sends it after the
+    // local save. The BL- prefix keeps the flashcard row apart from the worksheet and quiz Done
+    // rows on the upsert key and out of Cws (it is not a blank id). Its source is the
+    // worksheet/quiz ternary, NEVER 'blooket', so it never lands on the Blooket GAME track
+    // (source 'blooket' = imported game scores); lesson-grade reads its score as the deck's
+    // Blooket score by item id (BL-…-DESK_DONE / -DESK_DAY), not by source.
+    const row = fnBody(DESK, '_deskDoneRow');
+    expect(row).toMatch(/artifact === 'blooket' \? 'BL-'/);
+    expect(row).toMatch(/var source = artifact === 'quiz' \? 'curriculum_quiz' : 'worksheet'/);
+    const save = fnBody(DESK, '_studentMarkSave');
+    expect(save, '_studentMarkSave sends its Done row through _deskDoneRow')
+      .toMatch(/_deskDoneRow\(\s*topicId\s*,\s*artifact\s*,\s*score\s*,\s*perDay\s*\)/);
   });
 });

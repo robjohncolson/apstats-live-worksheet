@@ -57,7 +57,7 @@ describe('Desk flashcards — scoring guards', () => {
   });
 
   it('localStorage writers guard view-as first and worksheet read-only second', () => {
-    for (const name of ['_bfSaveProgress', '_ftLogToStore']) {
+    for (const name of ['_bfSaveProgress', '_ftLogToStore', '_ftSaveResume', '_ftClearResume']) {
       const body = fnBody(DESK_SRC, name);
       const viewAsIdx = body.indexOf("typeof _viewAsContext === 'function'");
       const readOnlyIdx = body.indexOf("typeof window !== 'undefined'");
@@ -67,6 +67,22 @@ describe('Desk flashcards — scoring guards', () => {
       expect(tryIdx, name + ' guards must precede storage access').toBeGreaterThan(readOnlyIdx);
       expect(body).toMatch(/window\.__WS_READ_ONLY__/);
     }
+  });
+
+  // Codex review 2026-11-07, defect 2: _blooketCommit now sends the ledger row of a run that
+  // is not a new best straight through _deskDoneRow (no recordProgress in between), so the
+  // row writer carries the read-only guards itself, ahead of the gradebook record.
+  it('the ledger row writer guards view-as first and worksheet read-only second', () => {
+    const body = fnBody(DESK_SRC, '_deskDoneRow');
+    const viewAsIdx = body.indexOf("if (typeof _viewAsContext === 'function' && _viewAsContext()) return;");
+    const readOnlyIdx = body.indexOf("if (typeof window !== 'undefined' && window.__WS_READ_ONLY__) return;");
+    const recordIdx = body.indexOf('window.gradebookClient.record(');
+    expect(viewAsIdx, 'view-as guard').toBeGreaterThan(-1);
+    expect(readOnlyIdx, 'read-only guard').toBeGreaterThan(viewAsIdx);
+    expect(recordIdx, 'guards must precede the record').toBeGreaterThan(readOnlyIdx);
+    // The not-a-new-best path reaches it only after _mayScore (the same two guards).
+    const commit = fnBody(DESK_SRC, '_blooketCommit');
+    expect(commit.indexOf('_mayScore()')).toBeLessThan(commit.indexOf('_deskDoneRow('));
   });
 
   it('_mayScore returns false under view-as', () => {
@@ -107,6 +123,34 @@ describe('Desk flashcards — timed keyboard guards and honest picker', () => {
     expect(body).not.toMatch(/80%/);
     expect(body).toMatch(/100%/);
     expect(body).toMatch(/Your best so far/);
+  });
+});
+
+// CLAUDE.md "Blooket credit": the deck's best score IS the Blooket grade, point for point. The
+// score chip on the Blooket (and TI-84) row used to say "passing" / "below the 80% gate" in its
+// tooltip. The 80 still picks the chip's tint; the words never name a pass mark or a gate.
+describe('Desk score chip — the tooltip names no pass mark', () => {
+  function loadScoreChip() {
+    // eslint-disable-next-line no-new-func
+    return new Function(fnBody(DESK_SRC, '_scoreColor') + '\nreturn (' + fnBody(DESK_SRC, '_scoreChip') + ');')();
+  }
+
+  it('a score below 100 is never "passing", never below a gate, and never mentions 80%', () => {
+    const scoreChip = loadScoreChip();
+    for (const score of [85, 70]) {
+      const chip = scoreChip(score, 80);
+      expect(chip, score + ': ' + chip).not.toMatch(/pass/i);
+      expect(chip, score + ': ' + chip).not.toMatch(/gate/i);
+      expect(chip, score + ': ' + chip).not.toMatch(/80%/);
+      expect(chip).toContain('title="Score ' + score + '% — your best so far — redo to raise it"');
+    }
+  });
+
+  it('100 still says perfected, and the source names no pass state', () => {
+    const scoreChip = loadScoreChip();
+    expect(scoreChip(100, 80)).toContain('title="Score 100% — perfected"');
+    const body = fnBody(DESK_SRC, '_scoreChip');
+    expect(body).not.toMatch(/'passing'|% gate/);
   });
 });
 

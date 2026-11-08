@@ -134,6 +134,7 @@
   <div class="fc-bar">
     <h2 class="fc-title" id="fc-title">🃏 Flashcards</h2>
     <span class="fc-prog" id="fc-prog"></span>
+    <button type="button" id="fc-startover" hidden onclick="startOverFlashcards()">Start over</button>
     <button type="button" onclick="closeFlashcards()">✕ Close</button>
   </div>
   <div class="fc-body" id="fc-body"><!-- mode picker / cards / result injected here --></div>
@@ -931,6 +932,7 @@
   // (Desk parity). Flip to true to roll back; _fcResolve reads it typeof-guarded.
   var FC_MOBILE_REVEAL_ON_MISS = false;
   var _fcTags = null, _fcFlags = null, _fc = null, _fcLauncher = null;
+  var _fcLoading = null;   // the token of the _fcStart call still loading its deck, else null
   function fcoEl() { return document.getElementById('fco'); }
   function fcBody() { return document.getElementById('fc-body'); }
   function _fcSetProg(t) { var p = document.getElementById('fc-prog'); if (p) p.textContent = t || ''; }
@@ -1125,6 +1127,116 @@
     } catch (_) {}
   }
 
+  // ── Timed-deck save & resume (FLASHCARD_DECK_SLICES_SPEC.md D4, the Desk's rule) ──
+  // Key 'apstats_mobile_fc_full_' + email → { [topic]: the Desk's record { v: 1, csv,
+  // perDay, roundId, round: { deck, order, status, log, total }, cardStartMs, savedAt } }.
+  // Saved after every card render and every answer; only finishing or Start over clears
+  // it (closeFlashcards keeps it). cardStartMs null = saved between cards. Runs older
+  // than 14 days are dropped. Per device only.
+  var FC_FULL_RESUME_MAX_AGE_MS = 14 * 24 * 60 * 60 * 1000;
+
+  function _fcFullProgressFresh(entry, nowMs) {
+    if (!entry || typeof entry.savedAt !== 'number') return false;
+    return nowMs - entry.savedAt < FC_FULL_RESUME_MAX_AGE_MS;
+  }
+
+  // The saved run for this topic, or null when there is none, it expired, it was dealt
+  // from a different CSV than the lesson now resolves to, or it is no longer intact.
+  function _fcLoadFullProgress(topic, csv) {
+    if (typeof _viewAsContext === 'function' && _viewAsContext()) return null;
+    if (typeof window !== 'undefined' && window.__WS_READ_ONLY__) return null;
+    try {
+      var email = typeof _fcEmail === 'function' ? _fcEmail() : null;
+      if (!email) return null;
+      var all = JSON.parse(localStorage.getItem('apstats_mobile_fc_full_' + email) || '{}');
+      var entry = all ? all[topic] : null;
+      if (!entry || entry.v !== 1) return null;
+      if (entry.csv !== csv) return null;
+      if (!_fcFullProgressFresh(entry, Date.now())) return null;
+      if (!FC.savedRoundOk(entry.round)) return null;
+      return entry;
+    } catch (_) { return null; }
+  }
+
+  function _fcSaveFullProgress() {
+    if (typeof _viewAsContext === 'function' && _viewAsContext()) return;
+    if (typeof window !== 'undefined' && window.__WS_READ_ONLY__) return;
+    if (!_fc || _fc.mode !== 'full' || !_fc.lesson || !_fc.round) return;
+    try {
+      var email = typeof _fcEmail === 'function' ? _fcEmail() : null;
+      if (!email) return;
+      var key = 'apstats_mobile_fc_full_' + email;
+      var all = JSON.parse(localStorage.getItem(key) || '{}');
+      if (!all || typeof all !== 'object' || Array.isArray(all)) all = {};
+      var now = Date.now();
+      Object.keys(all).forEach(function (topic) {
+        if (!_fcFullProgressFresh(all[topic], now)) delete all[topic];   // expired runs go
+      });
+      var round = _fc.round;
+      all[String(_fc.lesson.id)] = {
+        v: 1,
+        csv: _fc.csv,
+        perDay: !!_fc.perDay,
+        roundId: _fc.roundId,
+        round: { deck: round.deck, order: round.order, status: round.status, log: round.log, total: round.total },
+        // An answered card on screen means the run was saved between cards.
+        cardStartMs: (!_fc.answered && typeof _fc.cardStart === 'number') ? _fc.cardStart : null,
+        savedAt: now
+      };
+      localStorage.setItem(key, JSON.stringify(all));
+    } catch (_) {}
+  }
+
+  function _fcClearFullProgress(topic) {
+    if (typeof _viewAsContext === 'function' && _viewAsContext()) return;
+    if (typeof window !== 'undefined' && window.__WS_READ_ONLY__) return;
+    try {
+      var email = typeof _fcEmail === 'function' ? _fcEmail() : null;
+      if (!email) return;
+      var key = 'apstats_mobile_fc_full_' + email;
+      var all = JSON.parse(localStorage.getItem(key) || '{}');
+      if (!all || typeof all !== 'object' || Array.isArray(all)) return;
+      delete all[topic];
+      localStorage.setItem(key, JSON.stringify(all));
+    } catch (_) {}
+  }
+
+  // A resumed run's recap misses, rebuilt from its log in first-miss order (the same list
+  // _fcRememberMiss had built before the close).
+  function _fcMissesFromLog(round) {
+    var cardsByQnum = {};
+    round.deck.forEach(function (card) { cardsByQnum[String(card.qnum)] = card; });
+    var misses = [];
+    var seen = {};
+    round.log.forEach(function (entry) {
+      if (!entry || entry.correct) return;
+      var card = cardsByQnum[String(entry.qnum)];
+      if (!card || seen[String(card.qnum)]) return;
+      seen[String(card.qnum)] = true;
+      misses.push({ qnum: card.qnum, q: card.q, correctAnswer: card.choices[card.correctIdx] });
+    });
+    return misses;
+  }
+
+  // The Start over button in the sheet's bar, shown only while a resumed run is on screen.
+  function _fcShowStartOver(show) {
+    var button = document.getElementById('fc-startover');
+    if (button) button.hidden = !show;
+  }
+
+  // Start over: drop the saved run and deal a fresh deck. Best-wins keeps the grade, so
+  // starting over can never lower it.
+  function _fcStartOver() {
+    if (!_fc || _fc.mode !== 'full' || !_fc.lesson) return;
+    var lesson = _fc.lesson;
+    _fcTimerStop();
+    _fcClearFullProgress(String(lesson.id));
+    _fc = null;
+    _fcShowStartOver(false);
+    _fcStart(lesson, 'full');
+  }
+  window.startOverFlashcards = _fcStartOver;
+
   function _fcRememberMiss(card) {
     if (!_fc || !card) return;
     if (!Array.isArray(_fc.misses)) _fc.misses = [];
@@ -1138,10 +1250,13 @@
     });
   }
 
+  // Closing keeps a half-finished timed run's save: reopening the deck resumes it (D4).
   function closeFlashcards() {
     var launcher = _fcLauncher;
     _fcTimerStop(); _fc = null;
+    _fcLoading = null;   // cancels a start still loading: it must not deal into a closed sheet
     _fcLauncher = null;
+    _fcShowStartOver(false);
     var el = fcoEl(); if (el) el.classList.remove('show', 'timed');
     try { if (launcher && document.documentElement.contains(launcher)) launcher.focus(); } catch (_) {}
   }
@@ -1202,6 +1317,22 @@
       .then(function (j) { _fcTags = (j && j.tags) || {}; return _fcTags; })
       .catch(function () { _fcTags = {}; return _fcTags; });
   }
+  // data/blooket-deck-slices.json → its .slices: the per-day Q# ranges of the combined
+  // decks (FLASHCARD_DECK_SLICES_SPEC.md §2), cached once it has loaded. A failed load gives
+  // {} for this open only (the deck is dealt whole) and is NOT cached, so the next open
+  // tries again: a cached failure dealt every later deck whole, and a whole-deck run records
+  // DESK_DONE, which the server shares across a per-day worksheet group.
+  var _fcSlices = null;
+  function _fcLoadSlices() {
+    if (_fcSlices) return Promise.resolve(_fcSlices);
+    return fetch('data/blooket-deck-slices.json', { cache: 'no-store' })
+      .then(function (r) {
+        if (!r || !r.ok) throw new Error('slices ' + (r && r.status));
+        return r.json();
+      })
+      .then(function (j) { _fcSlices = (j && j.slices) || {}; return _fcSlices; })
+      .catch(function () { return {}; });   // not cached: the next open retries
+  }
   function _fcLoadDeck(csvPath) {
     return fetch(csvPath, { cache: 'no-store' })
       .then(function (r) { if (!r || !r.ok) throw new Error('deck ' + (r && r.status)); return r.text(); })
@@ -1215,6 +1346,7 @@
     if (!FC) { _fcBodyHtml('<div class="fc-result"><h2>Unavailable</h2><p>Flashcards engine not loaded.</p></div>'); fcoEl() && fcoEl().classList.add('show'); return; }
     var el = fcoEl(); if (!el) return;
     _fcTimerStop(); _fc = null; el.classList.remove('timed');
+    _fcShowStartOver(false);
     document.getElementById('fc-title').textContent = '🃏 ' + cedLabel(lesson && lesson.id).text;
     _fcSetProg(''); el.classList.add('show');
     // Ensure topic→csv map is warm before mode pick (ID-only combined-lesson fix).
@@ -1231,7 +1363,12 @@
   }
   window.openFlashcards = openFlashcards;
 
+  // One start at a time. A double tap used to deal twice, and the second deal found the
+  // first one's save and said "(resuming)" over a brand-new deck. While a start is loading
+  // its deck, a second one is ignored; closeFlashcards cancels it, so a cancelled open never
+  // wedges the deck.
   function _fcStart(lesson, mode) {
+    if (_fcLoading) return;
     var csv = _fcCsvPath(lesson);
     if (!csv) { _fcBodyHtml('<div class="fc-result"><h2>No deck</h2><p>This lesson has no flashcard deck.</p></div>'); return; }
     _fcBodyHtml('<div class="fc-result"><h2>Loading deck…</h2></div>');
@@ -1271,10 +1408,19 @@
       else _fcRender();
       return;
     }
+    var loading = {};   // this call's token
+    _fcLoading = loading;
     var tagsP = (mode === 'quick') ? _fcLoadTags() : Promise.resolve({});
-    Promise.all([_fcLoadDeck(csv), tagsP]).then(function (res) {
-      var deck = res[0], tags = res[1] || {};
-      if (!deck || !deck.length) { _fcBodyHtml('<div class="fc-result"><h2>Empty deck</h2><p>Could not read cards for this lesson.</p></div>'); return; }
+    var slicesP = (mode === 'quick') ? Promise.resolve({}) : _fcLoadSlices();
+    Promise.all([_fcLoadDeck(csv), tagsP, slicesP]).then(function (res) {
+      // Closed while the deck loaded: deal nothing (a hidden card's clock would run out).
+      if (_fcLoading !== loading) return;
+      var deck = res[0], tags = res[1] || {}, slices = res[2] || {};
+      if (!deck || !deck.length) {
+        _fcLoading = null;
+        _fcBodyHtml('<div class="fc-result"><h2>Empty deck</h2><p>Could not read cards for this lesson.</p></div>');
+        return;
+      }
       if (mode === 'quick') {
         var top = FC.selectTop10(deck, tags[csv] || {});
         _fc = {
@@ -1285,17 +1431,68 @@
         fcoEl().classList.remove('timed');
         _fcSaveQuickProgress();
       } else {
-        _fc = {
-          mode: 'full', lesson: lesson, round: FC.createRound(FC.shuffle(deck)),
-          answered: false, timer: null, csv: _fcCsvBase(csv),
-          roundId: _fcRoundId(), seq: 0, misses: []
-        };
+        _fc = _fcFullRound(lesson, csv, deck, slices);
         fcoEl().classList.add('timed');
       }
       _fcRender();
+      _fcLoading = null;   // the deck is open
     }).catch(function (e) {
+      if (_fcLoading !== loading) return;   // closed while it loaded: nothing to report
+      _fcLoading = null;
       _fcBodyHtml('<div class="fc-result"><h2>Couldn’t load deck</h2><p>' + esc(String(e && e.message || e)) + '</p></div>');
     });
+  }
+
+  // The full timed deck's state: the saved run when one resumes (D4), else a fresh sample
+  // of at most FC.DECK_CARDS cards from the topic's pool, which is its per-day slice of a
+  // combined deck or else the whole CSV (FLASHCARD_DECK_SLICES_SPEC.md D1, D2).
+  function _fcFullRound(lesson, csvPath, deck, slices) {
+    var topic = String(lesson.id);
+    var csv = _fcCsvBase(csvPath);
+    var title = document.getElementById('fc-title');
+    // The first load after a deploy can pair this page with an older cached flashcards.js
+    // (the service worker serves it cache-first): deal every card exactly as before (no
+    // slice, no cap, no resume of an earlier save). It records DESK_DONE like any
+    // whole-deck run (spec §10).
+    if (!_fcEngineHasSittings()) {
+      return {
+        mode: 'full', lesson: lesson, round: FC.createRound(FC.shuffle(deck)),
+        answered: false, timer: null, csv: csv,
+        roundId: _fcRoundId(), seq: 0, misses: [], perDay: false,
+        resumeRemaining: null, resumeCardStartMs: null
+      };
+    }
+    var saved = _fcLoadFullProgress(topic, csv);
+    if (saved) {
+      if (title) title.textContent = '🃏 ' + cedLabel(topic).text + ' (resuming)';
+      _fcShowStartOver(true);
+      return {
+        mode: 'full', lesson: lesson, round: saved.round, answered: false, timer: null,
+        csv: csv, roundId: saved.roundId, seq: saved.round.log.length,
+        misses: _fcMissesFromLog(saved.round), perDay: !!saved.perDay,
+        // The card that was on screen keeps its wall clock: its seconds left now and the
+        // start its clock keeps, unchanged, so reopening never moves its deadline (null: a
+        // fresh card).
+        resumeRemaining: FC.resumeRemaining(saved.cardStartMs, Date.now(), FC.FULLDECK_SECONDS),
+        resumeCardStartMs: saved.cardStartMs
+      };
+    }
+    var pool = FC.cardsInRanges(deck, FC.sliceRanges(slices, csv, topic));
+    if (title) title.textContent = '🃏 ' + cedLabel(topic).text;
+    _fcShowStartOver(false);
+    return {
+      mode: 'full', lesson: lesson, round: FC.createRound(FC.dealDeck(pool, FC.DECK_CARDS, FC.shuffle)),
+      answered: false, timer: null, csv: csv,
+      roundId: _fcRoundId(), seq: 0, misses: [],
+      perDay: pool.length < deck.length,   // a slice was dealt: the one fact the item id depends on (D3)
+      resumeRemaining: null, resumeCardStartMs: null
+    };
+  }
+
+  function _fcEngineHasSittings() {
+    return typeof FC.sliceRanges === 'function' && typeof FC.cardsInRanges === 'function'
+      && typeof FC.dealDeck === 'function' && typeof FC.resumeRemaining === 'function'
+      && typeof FC.savedRoundOk === 'function';
   }
 
   function _fcCurrentCard() {
@@ -1346,26 +1543,59 @@
     });
     document.getElementById('fc-next').onclick = function () { _fcNext(); };
     _fc.cardStart = Date.now();
-    if (_fc.mode === 'full') _fcStartTimer(card);
+    if (_fc.mode === 'full') {
+      // Only a resumed run's first card keeps its wall clock; every other card gets a full one.
+      var remaining = _fc.resumeRemaining;
+      var startedAt = _fc.resumeCardStartMs;
+      _fc.resumeRemaining = null;
+      _fc.resumeCardStartMs = null;
+      _fcStartTimer(card, remaining, startedAt);
+      // Save after every render: closing mid-card resumes this card, its clock still running (D4).
+      if (typeof _fcSaveFullProgress === 'function') _fcSaveFullProgress();
+    }
     var firstChoice = b.querySelector('.fc-choice');
     try { if (firstChoice) firstChoice.focus(); } catch (_) {}
   }
 
-  function _fcStartTimer(card) {
-    var total = FC.FULLDECK_SECONDS, left = total;
+  // The clock of the card on screen is wall time: the card runs out at _fc.cardStart +
+  // FC.FULLDECK_SECONDS. A resumed card passes its saved cardStartMs, which is kept EXACTLY,
+  // so closing and reopening the sheet any number of times never moves its deadline (D4).
+  // Its remainingSeconds is FC.resumeRemaining at reopening (0: it ran out while the sheet
+  // was closed), the same number _fcSecondsLeft gives. A fresh card passes neither and
+  // starts a full clock now.
+  function _fcStartTimer(card, remainingSeconds, cardStartMs) {
+    var total = FC.FULLDECK_SECONDS;
+    var now = Date.now();
+    var start = (typeof cardStartMs === 'number' && isFinite(cardStartMs)) ? cardStartMs : now;
+    if (start > now) start = now;   // the device clock went backwards: a full clock, as FC.resumeRemaining gives
+    _fc.cardStart = start;
+    var left = (typeof remainingSeconds === 'number') ? remainingSeconds : total;
     var bar = document.getElementById('fc-timer-bar');
-    if (bar) bar.style.width = '100%';
+    if (bar) bar.style.width = Math.max(0, (left / total) * 100) + '%';
+    if (left <= 0) { _fcResolve('timeout', card, -1); return; }   // it ran out while the sheet was closed
     _fc.timer = setInterval(function () {
-      left -= 1;
+      // Read the seconds off the deadline every tick, never count them down: a late tick
+      // (a sleeping phone, a background tab) cannot stretch the card's clock.
+      left = _fcSecondsLeft();
       if (bar) bar.style.width = Math.max(0, (left / total) * 100) + '%';
       if (left <= 0) { _fcTimerStop(); _fcResolve('timeout', card, -1); }
     }, 1000);
+  }
+
+  // Whole seconds left on the timed card on screen, read off its wall-clock deadline
+  // (_fc.cardStart + FC.FULLDECK_SECONDS). 0 = it has run out.
+  function _fcSecondsLeft() {
+    var msLeft = _fc.cardStart + FC.FULLDECK_SECONDS * 1000 - Date.now();
+    return Math.max(0, Math.ceil(msLeft / 1000));
   }
 
   function _fcAnswer(choiceIdx) {
     if (!_fc || _fc.answered) return;
     var card = _fcCurrentCard(); if (!card) return;
     _fcTimerStop();
+    // Past a timed card's deadline the answer is a timeout, and it colours nothing: the card
+    // comes back later and must not have given its answer away.
+    if (_fc.mode === 'full' && _fcSecondsLeft() <= 0) { _fcResolve('timeout', card, -1); return; }
     _fcResolve(choiceIdx === card.correctIdx ? 'correct' : 'wrong', card, choiceIdx);
   }
 
@@ -1374,6 +1604,8 @@
     _fc.answered = true;
     var answeredAt = Date.now();
     var latency = _fc.cardStart ? (answeredAt - _fc.cardStart) : 0;
+    // A timed card's time never runs past its full clock (a timeout found on reopening logs 40 s).
+    if (_fc.mode === 'full') latency = Math.min(latency, FC.FULLDECK_SECONDS * 1000);
     var b = fcBody();
     var correct = (outcome === 'correct');
     // Timed deck: a missed card comes back later at reduced credit (FC credit
@@ -1442,6 +1674,8 @@
         _fcSrsAppend([logged]);
         _fc.seq += 1;
       }
+      // Save the answer at once: closing now resumes on the next card with a full clock (D4).
+      if (typeof _fcSaveFullProgress === 'function') _fcSaveFullProgress();
     }
     var nx = document.getElementById('fc-next'); if (nx) nx.classList.add('show');
   }
@@ -1511,17 +1745,24 @@
         try { localStorage.setItem(FC_BEST_KEY, JSON.stringify(_fcLocalBest)); } catch (_) {}
       }
     }
+    // The synced map belongs to the student whose /grade filled it (_gradeOwner). On a shared
+    // phone another student's run must not raise it, or the owner's floor (and copy) would lie.
+    if (!who || _gradeOwner !== who) return;
     var e = _gradeByTopic[key] || (_gradeByTopic[key] = {});
     var cur = (typeof e.blooket === 'number') ? e.blooket : -1;
     if (score > cur) e.blooket = score;
   }
 
-  // best-wins: never downgrade a recorded score; record the same ledger row the Desk
-  // does (source 'worksheet' + BL-…-DESK_DONE → the server's Blooket track).
-  function _fcCommit(topic, score) {
+  // best-wins: never downgrade a recorded score. Every finished run records the same ledger
+  // row the Desk does (source 'worksheet' + BL-…-DESK_DONE → the server's Blooket track;
+  // perDay: the run was dealt from a per-day slice, so the row is BL-…-DESK_DAY, spec D3).
+  // The server keeps each item's best, and the best shown can belong to another item (a
+  // day deck's 100, then a whole-deck run that also credits the other day), so a lower run
+  // can only add credit. The floor decides only what the sheet says (skipped: "your best
+  // stays") and the local best, which only ever rises (_fcBumpLocalBlooket).
+  function _fcCommit(topic, score, perDay) {
     var floor = _fcBlooketFloor(topic);
-    if (!(score > floor)) return { skipped: true, floor: floor };
-    var built = FC.blooketItemId(topic);
+    var built = FC.blooketItemId(topic, perDay);
     var res = { ok: false, reason: 'no-client' };
     try {
       if (window.gradebookClient && window.gradebookClient.record) {
@@ -1533,7 +1774,10 @@
     } catch (e) { res = { ok: false, reason: 'error' }; }
     _fcBumpLocalBlooket(topic, score);
     try { loadGrade(); } catch (_) {}   // refresh the pill/badges with the new record
-    return res;
+    if (score > floor) return res;
+    // Not a new best: the sheet says the best stays, so nothing waits on this run's row.
+    if (res && typeof res.catch === 'function') res.catch(function () {});
+    return { skipped: true, floor: floor };
   }
 
   function _fcFinish() {
@@ -1541,6 +1785,7 @@
     if (!_fc) return;
     var lesson = _fc.lesson, topic = String(lesson.id);
     var mode = _fc.mode;
+    var perDay = !!_fc.perDay;
     var misses = Array.isArray(_fc.misses) ? _fc.misses.slice() : [];
     var score, passed;
     if (_fc.mode === 'quick') { score = FC.quickScorePct(_fc.correct, _fc.deck.length); passed = FC.quickPassed(_fc.correct, _fc.deck.length); }
@@ -1548,11 +1793,14 @@
     // Quick records only on pass (Desk behavior); the full deck always records its score.
     var doCommit = (_fc.mode === 'quick') ? passed : true;
     if (_fc.mode === 'quick' && passed) _fcClearQuickProgress(topic);
+    // A finished timed run never resumes, and Start over has nothing left to restart (D4).
+    if (_fc.mode === 'full' && typeof _fcClearFullProgress === 'function') _fcClearFullProgress(topic);
+    if (typeof _fcShowStartOver === 'function') _fcShowStartOver(false);
     fcoEl().classList.remove('timed');
     _fc = null;
 
     function finishCommit() {
-      var committed = doCommit ? _fcCommit(topic, score) : { skipped: true };
+      var committed = doCommit ? _fcCommit(topic, score, perDay) : { skipped: true };
       Promise.resolve(committed).then(function (c) {
         _fcRenderResult(lesson, score, passed, c || { ok:false, reason:'error' }, misses, mode);
       }, function () {
@@ -1567,8 +1815,8 @@
   function _fcRenderResult(lesson, score, passed, committed, misses, mode) {
     var note;
     // Teacher 2026-10-12: the deck's best score IS the Blooket grade, point for point — no pass mark in student copy.
-    if (committed && committed.skipped && !passed && score < 80) note = 'Your best score stays — this run was lower. Redo to raise your Blooket grade.';
-    else if (committed && committed.skipped) note = 'Kept your best score — a higher one is already recorded.';
+    if (committed && committed.skipped && !passed && score < 80) note = 'Your best score stays — this run didn’t beat it. Redo to raise your Blooket grade.';
+    else if (committed && committed.skipped) note = 'Kept your best score — this run didn’t beat it.';
     else if (committed && committed.queued) note = 'Saved offline — it’ll sync when you reconnect.';
     else if (committed && committed.ok === false) note = (committed.reason === 'no-identity' || committed.reason === 'no-client') ? 'Sign in to save this to your grade.' : 'Couldn’t save right now — try again when online.';
     else note = '🎯 Recorded — this is your Blooket grade for the lesson, point for point. Redo any time to raise it.';

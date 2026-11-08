@@ -34,6 +34,7 @@ export function mountTeacherStudent(app, {
   worksheetBlankCounts = null, loadManifest = null, pollArchiveDb = null,
   loadSkillMap = null, bkt = null,
   blooketPresence = null, blooketRequired = null, blooketLessons = null,
+  deckSlices = null,   // per-day deck slices (FLASHCARD_DECK_SLICES_SPEC.md); null = none
 }) {
   const _presence = blooketPresence || blooketLessons || null;
   const _required = blooketRequired || null;
@@ -125,6 +126,7 @@ export function mountTeacherStudent(app, {
       blooketPresence: _presence || undefined,
       blooketRequired: _required || undefined,
       blooketLessons: _presence || undefined,
+      deckSlices,
     });
 
     return res.json({

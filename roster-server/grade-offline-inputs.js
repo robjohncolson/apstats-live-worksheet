@@ -6,7 +6,8 @@
 // MUST NOT ship to devices (a student would read every quiz/PC answer).
 //
 // So this endpoint returns a REDACTED, per-student key plus the non-secret engine
-// inputs (schedule / config / worksheetBlankCounts / blooketLessons / section).
+// inputs (schedule / config / worksheetBlankCounts / blooketLessons / section /
+// perDayGroups — the per-day deck groups computed here, never the slices file).
 // The redacted key has the SAME item-id set and the SAME gradability as the real
 // key — so quiz denominators (computeQuizTotals) and completion are byte-identical
 // — but every answer is replaced by a sentinel EXCEPT the items THIS student
@@ -24,6 +25,7 @@ import { readFileSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { latestPerItem, isCorrect, normalizeResponse, answerKeyMapOrNull } from './scoring.js';
+import { resolvePerDayGroups } from './grade.js';
 
 // A value no real student response normalizes to → gradable (non-null) but never
 // matches, so a redacted item scores "wrong" without revealing its answer.
@@ -117,6 +119,7 @@ export function mountOfflineInputs(app, {
   blooketLessons = null, blooketPresence = null, blooketRequired = null,
   blooketBonusTopics = null,
   trainerMap = undefined,
+  deckSlices = null,   // per-day deck slices (FLASHCARD_DECK_SLICES_SPEC.md); null = none
 }) {
   const _presence = blooketPresence || blooketLessons || BLOOKET_PRESENCE_DEFAULT;
   const _required = blooketRequired || BLOOKET_REQUIRED_DEFAULT;
@@ -126,7 +129,7 @@ export function mountOfflineInputs(app, {
   //   only ever re-derives its own grade). Read-only.
   //   → 200 { ok, redactedKey, schedule, config, section, worksheetBlankCounts,
   //           blooketLessons, blooketPresence, blooketRequired, blooketBonusTopics,
-  //           trainerMap, redactPc }
+  //           trainerMap, perDayGroups, redactPc }
   app.get('/grade/offline-inputs', async (req, res) => {
     const rawToken = extractToken(req);
     if (!rawToken) return res.status(401).json({ ok: false, error: 'Token required' });
@@ -163,6 +166,10 @@ export function mountOfflineInputs(app, {
 
     const redactPc = !(req.query && (req.query.includePc === '1' || req.query.includePc === 'true'));
     const redactedKey = buildRedactedKey(answerKey, ledgerRows, { redactPc });
+    // The per-day deck groups for THIS section, as computeGrade on the server builds
+    // them (FLASHCARD_DECK_SLICES_SPEC.md D3). The device passes them back as
+    // opts.perDayGroups, so it never needs the slices file.
+    const perDayGroups = Array.from(resolvePerDayGroups({ deckSlices }, lessonSchedule || null, section, config));
 
     return res.json({
       ok: true,
@@ -181,6 +188,7 @@ export function mountOfflineInputs(app, {
       // (shared "(bonus)" column title for My Gradebook / My Ledger).
       blooketBonusTopics: _bonus,
       trainerMap: (trainerMap !== undefined ? trainerMap : TRAINER_LESSON_MAP) || null,
+      perDayGroups,
       redactPc,
     });
   });

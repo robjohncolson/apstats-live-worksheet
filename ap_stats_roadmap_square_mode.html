@@ -2957,8 +2957,8 @@
 <!-- Teacher-only Class Log "Recording" fold on the day panel (track L): the summary
      lib copied from a2 + the Desk glue (a2 sign-in token, mount). Both fail soft. -->
 <script src="lib/class-log-summary.js" onerror=""></script>
-<script src="js/desk-class-log.js?v=2026-11-07-uak8" onerror=""></script>
-<script src="js/desk-missing-work.js?v=2026-11-07-uak8"></script>
+<script src="js/desk-class-log.js?v=2026-11-08-fljo" onerror=""></script>
+<script src="js/desk-missing-work.js?v=2026-11-08-fljo"></script>
 <script src="pwa-register.js"></script>
 <script src="js/wallet_logic.js"></script>
 <script type="module" src="js/student-wallet.js"></script>
@@ -2968,10 +2968,10 @@
 <script src="js/ced2026-crosswalk.js"></script>
 <script src="js/ced2026-labels.js"></script>
 <script src="lib/qrcode.min.js"></script>
-<script src="canvas_engine.js?v=2026-11-07-uak8"></script>
-<script src="sprite_sheet.js?v=2026-11-07-uak8"></script>
-<script src="classroom-board.js?v=2026-11-07-uak8"></script>
-<script src="pico-home.js?v=2026-11-07-uak8"></script>
+<script src="canvas_engine.js?v=2026-11-08-fljo"></script>
+<script src="sprite_sheet.js?v=2026-11-08-fljo"></script>
+<script src="classroom-board.js?v=2026-11-08-fljo"></script>
+<script src="pico-home.js?v=2026-11-08-fljo"></script>
 <script src="ti84-plot.js"></script>
 <script src="activity-bridge.js"></script>
 <script src="activity-colorbox.js"></script>
@@ -6812,12 +6812,14 @@ function _scoreColor(score, gate) {
 }
 
 // Colored, always-on score chip (HTML string) — used for the Blooket row (the
-// persistent _mkGradeChip block excludes Blooket). '' when no score.
+// persistent _mkGradeChip block excludes Blooket) and the TI-84 skill row. '' when no score.
+// The gate only picks the tint. The tooltip never names a pass mark or a gate: the deck's
+// best score IS the Blooket grade, point for point (CLAUDE.md "Blooket credit").
 function _scoreChip(score, gate) {
   var color = _scoreColor(score, gate);
   if (color == null) return '';
   var n = Math.round(score);
-  var state = n >= 100 ? 'perfected' : (n >= gate ? 'passing' : 'below the ' + gate + '% gate');
+  var state = n >= 100 ? 'perfected' : 'your best so far — redo to raise it';
   return ' <span class="s7chip geneva" style="font-size:9px;font-weight:bold;color:' + color +
          ';margin-left:6px" title="Score ' + n + '% — ' + state + '">' + n + '%</span>';
 }
@@ -8993,6 +8995,11 @@ function _phase2ReDeriveGrade() {
         // Older cached inputs lack it → null → the strand is simply absent
         // (grade numbers unaffected at weight 0).
         trainerMap: inputs.trainerMap || null,
+        // Per-day flashcard deck groups (FLASHCARD_DECK_SLICES_SPEC.md D3): the
+        // server ships the computed list in /grade/offline-inputs so the offline
+        // Blooket track slots match the server's. Older cached inputs lack it ->
+        // null -> one score per worksheet group, the rule before per-day decks.
+        perDayGroups: inputs.perDayGroups || null,
       };
       var g = GradeEngine.computeGrade(rows, inputs.redactedKey, inputs.config, opts);
       if (!g) return null;
@@ -12832,8 +12839,8 @@ if (typeof window !== 'undefined' && window.addEventListener) {
 // Shared save path for both worksheet and quiz Done. Called after the score
 // has been validated (score === null for non-quiz artifacts).
 // Applies optimistic UI mutation before the async write, then re-renders or
-// rolls back depending on the result.
-async function _studentMarkSave(btn, topicId, artifact, score) {
+// rolls back depending on the result. perDay: blooket only (see _blooketCommit).
+async function _studentMarkSave(btn, topicId, artifact, score, perDay) {
     // Optimistic mutation: go straight to "✓ Completed" — no interim state.
     // localStorage write (the source of truth per 540d168) happens inside
     // recordProgress FIRST, so this matches reality immediately.
@@ -12844,41 +12851,10 @@ async function _studentMarkSave(btn, topicId, artifact, score) {
     }
     var ok = await recordProgress(topicId, artifact, score);
 
-    // Phase 4a+ compat: ALSO write a self-attest row to item_ledger via the
-    // gradebook feeder so the teacher-dashboard's completion readouts AND the
-    // CROSS-DEVICE Done/grey-out reflect Done clicks. Now INCLUDES blooket (the
-    // flashcard pass) so it follows the login too — the row is grade-INERT: its
-    // itemId (BL-/WS-/CR-…-DESK_DONE) never matches a manifest blank/quiz, and
-    // its source is NEVER 'blooket', so it can't feed any grade track (Cws keys
-    // on WS-…-Q; the Blooket track keys on source==='blooket'). Fire-and-forget.
-    try {
-        if (ok
-            && window.gradebookClient
-            && typeof window.gradebookClient.record === 'function') {
-            // Accept combined topics ("4.1-2") too — [\d-] not just \d — so each
-            // combined lesson gets a UNIQUE DESK_DONE itemId. Otherwise um=null
-            // and every combined Done collapses to "WS-U?-DESK_DONE", colliding
-            // on the (student_id,source,item_id,attempt) upsert key so only the
-            // last one survives — which broke the cross-device grey-out for
-            // combined lessons (CALENDAR_SYNC_BUILD.md). Mirrors _stuTopicId.
-            var um = /^(\d+)\.([\d-]+)$/.exec(topicId || '');
-            var unit = um ? 'U' + um[1] : null;
-            // Per-artifact prefix keeps the three DESK_DONE rows distinct on the
-            // upsert key (a lesson can have worksheet + quiz + blooket all done).
-            // Blooket uses BL-; its source stays 'worksheet' (NOT 'blooket') so it
-            // is grade-inert. The server maps BL-→'blooket' for selfDoneArtifacts.
-            var idPrefix = artifact === 'quiz' ? 'CR-' : artifact === 'blooket' ? 'BL-' : 'WS-';
-            var source = artifact === 'quiz' ? 'curriculum_quiz' : 'worksheet';
-            var itemId = idPrefix + (unit || 'U?')
-                       + (um ? '-L' + um[2] : '')
-                       + '-DESK_DONE';
-            var rec = window.gradebookClient.record({
-                source: source, itemId: itemId, unit: unit, topic: topicId,
-                response: { selfAttest: artifact }, score: score, attempt: 1
-            });
-            if (rec && typeof rec.catch === 'function') rec.catch(function () {});
-        }
-    } catch (_) {}
+    // Phase 4a+ compat: ALSO write the self-attest ledger row (_deskDoneRow) so the
+    // teacher-dashboard's completion readouts AND the CROSS-DEVICE Done/grey-out
+    // reflect Done clicks. Only once the local save succeeded.
+    if (ok) _deskDoneRow(topicId, artifact, score, perDay);
 
     if (ok && _lastResourcePanel) {
         showResourcePanel(_lastResourcePanel.inf, _lastResourcePanel.dateStr);
@@ -12907,6 +12883,48 @@ async function _studentMarkSave(btn, topicId, artifact, score) {
         btn.disabled = false;
         btn.innerHTML = '&#10003; Done';
     }
+}
+
+// The self-attest ledger row behind a Desk Done, sent fire-and-forget through the gradebook
+// feeder: WS- worksheet, CR- quiz, BL- flashcards (BL-…-DESK_DAY for a run dealt from a
+// per-day slice, spec D3). It makes the teacher dashboard and the CROSS-DEVICE Done/grey-out
+// follow the login. WS-/CR- rows are grade-inert (they match no manifest blank or quiz); a BL-
+// row's score is the lesson's flashcard Blooket score, and the server keeps each BL item's best.
+// Callers: _studentMarkSave after a local save, and _blooketCommit for a finished run that is
+// not a new best. Never from a read-only view: the teacher must not record for the student.
+function _deskDoneRow(topicId, artifact, score, perDay) {
+    if (typeof _viewAsContext === 'function' && _viewAsContext()) return;
+    if (typeof window !== 'undefined' && window.__WS_READ_ONLY__) return;
+    try {
+        if (!window.gradebookClient || typeof window.gradebookClient.record !== 'function') return;
+        // A pair cell "4.7+4.8" records under its first key: the lesson its deck was dealt for.
+        topicId = String(topicId == null ? '' : topicId).split('+')[0];
+        // Accept combined topics ("4.1-2") too — [\d-] not just \d — so each
+        // combined lesson gets a UNIQUE DESK_DONE itemId. Otherwise um=null
+        // and every combined Done collapses to "WS-U?-DESK_DONE", colliding
+        // on the (student_id,source,item_id,attempt) upsert key so only the
+        // last one survives — which broke the cross-device grey-out for
+        // combined lessons (CALENDAR_SYNC_BUILD.md). Mirrors _stuTopicId.
+        var um = /^(\d+)\.([\d-]+)$/.exec(topicId);
+        var unit = um ? 'U' + um[1] : null;
+        // Per-artifact prefix keeps the three DESK_DONE rows distinct on the
+        // upsert key (a lesson can have worksheet + quiz + blooket all done).
+        // Blooket uses BL-; its source stays 'worksheet' (NOT 'blooket'). The
+        // server maps BL-→'blooket' for selfDoneArtifacts.
+        var idPrefix = artifact === 'quiz' ? 'CR-' : artifact === 'blooket' ? 'BL-' : 'WS-';
+        var source = artifact === 'quiz' ? 'curriculum_quiz' : 'worksheet';
+        // A flashcard run dealt from a per-day slice records -DESK_DAY (scored per
+        // topic in a per-day group); every other Done keeps -DESK_DONE (spec D3).
+        var suffix = (artifact === 'blooket' && perDay) ? '-DESK_DAY' : '-DESK_DONE';
+        var itemId = idPrefix + (unit || 'U?')
+                   + (um ? '-L' + um[2] : '')
+                   + suffix;
+        var rec = window.gradebookClient.record({
+            source: source, itemId: itemId, unit: unit, topic: topicId,
+            response: { selfAttest: artifact }, score: score, attempt: 1
+        });
+        if (rec && typeof rec.catch === 'function') rec.catch(function () {});
+    } catch (_) {}
 }
 
 async function studentMark(btn, topicId, artifact) {
@@ -13864,6 +13882,26 @@ async function _bfLoadDifficultyTags() {
     return _bfDifficultyTags;
 }
 
+// data/blooket-deck-slices.json (FLASHCARD_DECK_SLICES_SPEC.md §2): the per-day Q#
+// ranges of the combined-worksheet decks. Returns its .slices, cached for the session once
+// it has loaded. A failed fetch or parse returns {} for this open only (the deck is dealt
+// whole, still capped at 30) and is NOT cached, so the next open tries again: a cached
+// failure dealt every later deck whole, and a whole-deck run records DESK_DONE, which the
+// server shares across a per-day worksheet group.
+var _bfDeckSlices = null;
+async function _bfLoadDeckSlices() {
+    if (_bfDeckSlices !== null) return _bfDeckSlices;
+    try {
+        var res = await fetch('data/blooket-deck-slices.json', { cache: 'no-cache' });
+        if (!res.ok) return {};
+        var data = await res.json();
+        _bfDeckSlices = (data && data.slices) || {};
+        return _bfDeckSlices;
+    } catch (_) {
+        return {};
+    }
+}
+
 // Select the top 10 cards from a parsed deck using the difficulty tags
 // for that CSV. Order: hard, then med, then easy, then untagged.
 // If the CSV has 10 or fewer cards, return them all unchanged.
@@ -14150,8 +14188,10 @@ async function openBlooketFlashcards(btn, topicId) {
 }
 
 // One sentence every student sees before the first card: the deck IS the Blooket credit.
-function _bfCreditNote(topicId) {
+// perDay: the deck is this day's slice of a combined worksheet's deck (spec D5).
+function _bfCreditNote(topicId, perDay) {
     var note = 'This timed deck is your Blooket grade for this lesson. Your best score counts, point for point, up to 100% — there is no pass mark.';
+    if (perDay) note += ' This deck covers ' + cedLabel(topicId).text + ' only — the other days of this worksheet have their own decks.';
     var best = (typeof _blooketScoreFor === 'function') ? _blooketScoreFor(topicId) : null;
     if (typeof best === 'number') note += ' Your best so far: ' + best + '%.';
     return note;
@@ -15252,6 +15292,7 @@ function _bfCloseUI() {
     _ftState.answered = false;
     _ftState.roundId = null;
     _ftState.perm = [];
+    _ftState.loading = null;   // cancels a start still loading: it must not open the deck after this close
     if (typeof _rvState !== 'undefined' && _rvState) {
         _rvState.topic = null;
         _rvState.btn = null;
@@ -15326,16 +15367,26 @@ function closeBlooketFlashcards() {
 })();
 
 // ── Full timed deck (FLASHCARD_TIMED_DECK_BUILD.md) ────────────────────────────
-// A rigorous Blooket substitute: ALL cards, BLOOKET_FULLDECK_SECONDS each, no
-// early-stop, up to 100%. A miss (wrong OR timeout) costs 1/3 credit and re-queues
-// the card (no answer revealed); 3 misses = 0 and the card drops. The credit/queue
-// logic is pure (_ft* fns) so it's unit-testable; the DOM/timer layer is thin.
+// A rigorous Blooket substitute: up to BLOOKET_DECK_CARDS cards, BLOOKET_FULLDECK_SECONDS
+// each, no early-stop, up to 100%. A miss (wrong OR timeout) costs 1/3 credit and
+// re-queues the card (no answer revealed); 3 misses = 0 and the card drops. The
+// credit/queue logic is pure (_ft* fns) so it's unit-testable; the DOM/timer layer is thin.
+// FLASHCARD_DECK_SLICES_SPEC.md: a sitting is a fresh sample of at most 30 cards from the
+// topic's pool (its per-day slice of a combined deck, else the whole CSV), and a
+// half-finished run is saved after every card and resumes when the deck is reopened.
 const BLOOKET_FULLDECK_SECONDS = 40;
+const BLOOKET_DECK_CARDS = 30;                                // = Flashcards.DECK_CARDS
+const BLOOKET_RESUME_MAX_AGE_MS = 14 * 24 * 60 * 60 * 1000;   // a saved run expires after 14 days
+const BLOOKET_START_STALE_MS = 15 * 1000;                     // a deck still loading after this no longer blocks a new start
 
 var _ftState = {
     topic: null, btn: null, round: null,
     answered: false, timerId: null, advanceId: null, remaining: 0, cardStartMs: 0,
-    roundId: null, perm: []
+    roundId: null, perm: [],
+    csv: null,        // the deck CSV this run was dealt from
+    perDay: false,    // dealt from a per-day slice: records BL-…-DESK_DAY (spec D3)
+    resumed: false,   // reopened from a saved run: resume note + Start over
+    loading: null     // the token of the _ftStart call still loading its deck, else null
 };
 
 // ── Pure round logic (no DOM; unit-tested) ──
@@ -15400,6 +15451,72 @@ function _ftDone(round) {
     return !round || round.order.length === 0;
 }
 
+// ── Sittings, per-day slices, resume: pure helpers (FLASHCARD_DECK_SLICES_SPEC.md §3) ──
+// The same text as flashcards.js sliceRanges / cardsInRanges / dealDeck / resumeRemaining
+// / savedRoundOk (only the name and the indent differ); tests/flashcards-engine.test.js
+// pins the two copies line for line.
+
+// The Q# ranges [[lo, hi], …] of one topic's slice of a combined deck, or null when the
+// deck is dealt whole. slices = the .slices object of data/blooket-deck-slices.json.
+// A combined cell "a+b" uses its first key.
+function _ftSliceRanges(slices, csvName, topicId) {
+    if (!slices || typeof slices !== 'object' || !csvName || topicId == null) return null;
+    var byTopic = slices[csvName];
+    if (!byTopic || typeof byTopic !== 'object') return null;
+    var ranges = byTopic[String(topicId).split('+')[0]];
+    if (!Array.isArray(ranges) || !ranges.length) return null;
+    return ranges;
+}
+
+// The cards whose Q# falls inside any of the ranges. No ranges: every card. Ranges
+// that match no card: every card too (a bad range must never deal an empty deck).
+function _ftCardsInRanges(cards, ranges) {
+    if (!Array.isArray(cards)) return [];
+    if (!Array.isArray(ranges) || !ranges.length) return cards;
+    var picked = cards.filter(function (card) {
+        if (!card || typeof card.qnum !== 'number') return false;
+        return ranges.some(function (range) {
+            return Array.isArray(range) && card.qnum >= range[0] && card.qnum <= range[1];
+        });
+    });
+    if (!picked.length) return cards;
+    return picked;
+}
+
+// One sitting: a fresh uniform sample of at most max cards (shuffle the pool, take max).
+function _ftDealDeck(cards, max, shuffleFn) {
+    return shuffleFn(cards.slice()).slice(0, max);
+}
+
+// Seconds left on a saved card whose clock started at cardStartMs: the clock keeps
+// running in wall time while the deck is closed. null = the run was saved between
+// cards, so the next card gets a full clock.
+function _ftResumeRemaining(cardStartMs, nowMs, perCardSeconds) {
+    if (typeof cardStartMs !== 'number' || !isFinite(cardStartMs)) return null;
+    var elapsedSeconds = Math.floor((nowMs - cardStartMs) / 1000);
+    if (elapsedSeconds < 0) return perCardSeconds;   // the device clock went backwards
+    return Math.max(0, perCardSeconds - elapsedSeconds);
+}
+
+// A saved round comes back from localStorage: resume it only when its shape is intact.
+function _ftSavedRoundOk(round) {
+    if (!round || !Array.isArray(round.deck) || !round.deck.length) return false;
+    if (!Array.isArray(round.order) || !Array.isArray(round.status) || !Array.isArray(round.log)) return false;
+    if (round.total !== round.deck.length || round.status.length !== round.deck.length) return false;
+    for (var i = 0; i < round.deck.length; i++) {
+        var card = round.deck[i];
+        var st = round.status[i];
+        if (!card || typeof card.qnum !== 'number' || typeof card.q !== 'string') return false;
+        if (!Array.isArray(card.choices) || card.choices.length < 2 || typeof card.correctIdx !== 'number') return false;
+        if (!st || typeof st.misses !== 'number' || typeof st.earned !== 'number') return false;
+    }
+    for (var j = 0; j < round.order.length; j++) {
+        var idx = round.order[j];
+        if (typeof idx !== 'number' || Math.floor(idx) !== idx || idx < 0 || idx >= round.deck.length) return false;
+    }
+    return true;
+}
+
 // ── Timer ──
 function _ftClearTimer() {
     if (_ftState.timerId) { clearInterval(_ftState.timerId); _ftState.timerId = null; }
@@ -15415,53 +15532,242 @@ function _ftRenderTimer() {
     t.textContent = '⏱ ' + s + 's';
     t.style.color = s <= 10 ? '#B03A2E' : '#333';
 }
-function _ftStartTimer() {
+// The clock of the card on screen is wall time: the card runs out at cardStartMs +
+// BLOOKET_FULLDECK_SECONDS. A resumed card passes its saved cardStartMs, which is kept
+// EXACTLY, so closing and reopening the deck any number of times never moves its deadline
+// (D4). Its remainingSeconds is _ftResumeRemaining at reopening (0: it ran out while the
+// deck was closed), the same number _ftSecondsLeft gives. A fresh card passes neither and
+// starts a full clock now.
+function _ftStartTimer(remainingSeconds, cardStartMs) {
     _ftClearTimer();
-    _ftState.remaining = BLOOKET_FULLDECK_SECONDS;
-    _ftState.cardStartMs = Date.now();
+    var now = Date.now();
+    var start = (typeof cardStartMs === 'number' && isFinite(cardStartMs)) ? cardStartMs : now;
+    if (start > now) start = now;   // the device clock went backwards: a full clock, as _ftResumeRemaining gives
+    _ftState.cardStartMs = start;
+    _ftState.remaining = (typeof remainingSeconds === 'number') ? remainingSeconds : BLOOKET_FULLDECK_SECONDS;
     _ftRenderTimer();
+    if (_ftState.remaining <= 0) { _ftHandle('timeout'); return; }   // it ran out while the deck was closed
     _ftState.timerId = setInterval(function () {
-        _ftState.remaining -= 1;
+        // Read the seconds off the deadline every tick, never count them down: a late tick
+        // (a throttled background tab) cannot stretch the card's clock.
+        _ftState.remaining = _ftSecondsLeft();
         _ftRenderTimer();
-        if (_ftState.remaining <= 0) {
-            _ftClearTimer();
-            _ftHandle('timeout');
-        }
+        if (_ftState.remaining > 0) return;
+        _ftClearTimer();
+        _ftHandle('timeout');
     }, 1000);
+}
+
+// Whole seconds left on the card on screen, read off its wall-clock deadline
+// (cardStartMs + BLOOKET_FULLDECK_SECONDS). 0 = it has run out.
+function _ftSecondsLeft() {
+    var msLeft = _ftState.cardStartMs + BLOOKET_FULLDECK_SECONDS * 1000 - Date.now();
+    return Math.max(0, Math.ceil(msLeft / 1000));
+}
+
+// ── Save & resume (FLASHCARD_DECK_SLICES_SPEC.md D4) ──
+// A half-finished run survives closing the deck: it is saved after every card render and
+// every outcome, per student and per topic, and only finishing or Start over clears it.
+// Key 'apstats_desk_ft_resume_' + email → { [topic]: { v: 1, csv, perDay, roundId,
+// round: { deck, order, status, log, total }, cardStartMs, savedAt } }. cardStartMs null
+// means saved between cards. Runs older than BLOOKET_RESUME_MAX_AGE_MS are dropped.
+// Per device only (the per-card SRS log still syncs at finish). The calls from
+// _ftRenderCard, _ftHandle and _ftFinish are typeof-guarded: tests run those alone.
+function _ftResumeKey() {
+    try {
+        var email = (typeof getStudentEmail === 'function') ? getStudentEmail() : null;
+        if (!email) return null;
+        return 'apstats_desk_ft_resume_' + email;
+    } catch (_) { return null; }
+}
+
+// A saved run can resume for BLOOKET_RESUME_MAX_AGE_MS after its last save.
+function _ftResumeFresh(entry, nowMs) {
+    if (!entry || typeof entry.savedAt !== 'number') return false;
+    return nowMs - entry.savedAt < BLOOKET_RESUME_MAX_AGE_MS;
+}
+
+function _ftSaveResume() {
+    if (typeof _viewAsContext === 'function' && _viewAsContext()) return;
+    if (typeof window !== 'undefined' && window.__WS_READ_ONLY__) return;
+    var key = _ftResumeKey();
+    var round = _ftState.round;
+    if (!key || !_ftState.topic || !_ftState.csv || !round) return;
+    try {
+        var all = JSON.parse(localStorage.getItem(key) || '{}');
+        if (!all || typeof all !== 'object' || Array.isArray(all)) all = {};
+        var now = Date.now();
+        Object.keys(all).forEach(function (topic) {
+            if (!_ftResumeFresh(all[topic], now)) delete all[topic];   // expired runs go
+        });
+        all[_ftState.topic] = {
+            v: 1,
+            csv: _ftState.csv,
+            perDay: !!_ftState.perDay,
+            roundId: _ftState.roundId,
+            round: { deck: round.deck, order: round.order, status: round.status, log: round.log, total: round.total },
+            cardStartMs: (typeof _ftState.cardStartMs === 'number') ? _ftState.cardStartMs : null,
+            savedAt: now
+        };
+        localStorage.setItem(key, JSON.stringify(all));
+    } catch (_) {}
+}
+
+// The saved run for this topic, or null when there is none, it expired, it was dealt from
+// a different CSV than the topic now resolves to, or it is no longer intact.
+function _ftLoadResume(topic, csv) {
+    if (typeof _viewAsContext === 'function' && _viewAsContext()) return null;
+    if (typeof window !== 'undefined' && window.__WS_READ_ONLY__) return null;
+    var key = _ftResumeKey();
+    if (!key || !topic) return null;
+    try {
+        var all = JSON.parse(localStorage.getItem(key) || '{}');
+        var entry = all ? all[topic] : null;
+        if (!entry || entry.v !== 1) return null;
+        if (entry.csv !== csv) return null;
+        if (!_ftResumeFresh(entry, Date.now())) return null;
+        if (!_ftSavedRoundOk(entry.round)) return null;
+        return entry;
+    } catch (_) { return null; }
+}
+
+function _ftClearResume(topic) {
+    if (typeof _viewAsContext === 'function' && _viewAsContext()) return;
+    if (typeof window !== 'undefined' && window.__WS_READ_ONLY__) return;
+    var key = _ftResumeKey();
+    if (!key || !topic) return;
+    try {
+        var all = JSON.parse(localStorage.getItem(key) || '{}');
+        if (!all || typeof all !== 'object' || Array.isArray(all)) return;
+        delete all[topic];
+        localStorage.setItem(key, JSON.stringify(all));
+    } catch (_) {}
+}
+
+// The line a resumed run shows under the credit note.
+function _ftResumeLine(round) {
+    var line = document.createElement('div');
+    line.className = 'bf-resume-note';
+    line.style.cssText = 'margin-top:6px;font-weight:bold';
+    line.textContent = 'Picking up where you left off — ' + round.order.length + ' of ' + round.total + ' cards left.';
+    return line;
+}
+
+// The Start over button, shown only while a resumed run is on screen (before Cancel).
+function _ftShowStartOver(show) {
+    var old = document.getElementById('bf-startover');
+    if (old) old.remove();
+    if (!show) return;
+    var actions = document.getElementById('bf-actions');
+    if (!actions) return;
+    var button = document.createElement('button');
+    button.id = 'bf-startover';
+    button.className = 's7btn';
+    button.textContent = 'Start over';
+    button.title = 'Deal a fresh deck. Your best score is kept.';
+    button.onclick = function () { _ftStartOver(); };
+    actions.insertBefore(button, actions.firstChild);
+}
+
+// Start over: drop the saved run and deal a fresh deck. Best-wins keeps the grade, so
+// starting over can never lower it.
+function _ftStartOver() {
+    var topic = _ftState.topic, btn = _ftState.btn;
+    if (!topic) return;
+    _ftClearTimer();          // stop the old card's clock and any pending auto-advance
+    _ftState.round = null;    // so nothing can save the old run again
+    _ftClearResume(topic);
+    _ftStart(btn, topic);
 }
 
 // ── UI flow ──
 async function _ftStart(btn, topicId) {
+    // One start at a time. The deck window opens only once the CSV has loaded, so a double
+    // click used to deal twice, and the second call found the first one's save and showed a
+    // brand-new deck as "Picking up where you left off". While a start is loading, a second
+    // one is ignored; closing the deck (_bfCloseUI) cancels it, so a cancelled open never
+    // wedges the deck. A fresh open has no window to close yet, so a start still loading after
+    // BLOOKET_START_STALE_MS (a stalled network) stops blocking: the next click takes over and
+    // the stalled start is dropped when its fetch returns.
+    if (_ftState.loading && Date.now() - _ftState.loading.at < BLOOKET_START_STALE_MS) return;
+    var loading = { at: Date.now() };   // this call's token
+    _ftState.loading = loading;
+    // A pair cell "4.7+4.8" runs its first key's deck (the slice _ftSliceRanges deals), so the
+    // header, the note, the saved run, the card log and the ledger row all name that lesson.
+    topicId = String(topicId == null ? '' : topicId).split('+')[0];
     var csvPath = _bfCsvPath(topicId);
-    if (!csvPath) { showDialog('⚠️', 'No flashcard deck available for this lesson yet.', 'OK'); return; }
+    if (!csvPath) {
+        _ftState.loading = null;
+        showDialog('⚠️', 'No flashcard deck available for this lesson yet.', 'OK');
+        return;
+    }
     var text;
     try {
         var res = await fetch(csvPath);
         if (!res.ok) throw new Error('HTTP ' + res.status);
         text = await res.text();
     } catch (e) {
+        if (_ftState.loading !== loading) return;   // closed while it loaded: nothing to report
+        _ftState.loading = null;
         showDialog('⚠️', 'Could not load the flashcard deck. Try again.', 'OK');
         return;
     }
+    if (_ftState.loading !== loading) return;   // closed while the deck loaded
     var allCards = _bfRowsToDeck(_bfParseCsv(text));
-    if (!allCards.length) { showDialog('⚠️', 'The flashcard deck for this lesson is empty.', 'OK'); return; }
+    if (!allCards.length) {
+        _ftState.loading = null;
+        showDialog('⚠️', 'The flashcard deck for this lesson is empty.', 'OK');
+        return;
+    }
+    var slices = await _bfLoadDeckSlices();
+    if (_ftState.loading !== loading) return;   // closed while the slices loaded
+    _ftState.loading = null;                    // the deck opens now
+    // The topic's card pool: its per-day slice of a combined deck, else the whole CSV (D2).
+    var ranges = _ftSliceRanges(slices, csvPath, topicId);
+    var pool = _ftCardsInRanges(allCards, ranges);
+    var perDay = pool.length < allCards.length;   // a slice was dealt: the one fact the item id depends on (D3)
+    var saved = _ftLoadResume(topicId, csvPath);
     _ftState.topic = topicId;
     _ftState.btn = btn;
-    _ftState.roundId = (typeof _srsRoundId === 'function') ? _srsRoundId('desk') : null;
-    _ftState.round = _ftCreateRound(_bfShuffle(allCards));   // FULL deck — no top-10 trim
+    _ftState.csv = csvPath;
     _ftState.answered = false;
+    if (saved) {
+        // Resume (D4): the same dealt cards, queue, credits and roundId as when it was closed.
+        _ftState.roundId = saved.roundId;
+        _ftState.round = saved.round;
+        _ftState.perDay = !!saved.perDay;
+        _ftState.resumed = true;
+    } else {
+        _ftState.roundId = (typeof _srsRoundId === 'function') ? _srsRoundId('desk') : null;
+        // At most BLOOKET_DECK_CARDS, a fresh sample every run (no top-10 trim).
+        _ftState.round = _ftCreateRound(_ftDealDeck(pool, BLOOKET_DECK_CARDS, _bfShuffle));
+        _ftState.perDay = perDay;
+        _ftState.resumed = false;
+    }
+    var total = _ftState.round.total;
     var header = document.getElementById('bf-header');
-    if (header) header.textContent = 'Timed deck — ' + cedLabel(topicId).text + ' · ' + BLOOKET_FULLDECK_SECONDS + 's/card · up to 100%';
+    if (header) header.textContent = 'Timed deck — ' + cedLabel(topicId).text + ' · ' + total + (total === 1 ? ' card' : ' cards') + ' · ' + BLOOKET_FULLDECK_SECONDS + 's/card · up to 100%';
     var note = document.getElementById('bf-note');
-    if (note) { note.textContent = _bfCreditNote(topicId); note.style.display = 'block'; }
+    if (note) {
+        note.textContent = _bfCreditNote(topicId, _ftState.perDay);
+        if (_ftState.resumed) note.appendChild(_ftResumeLine(_ftState.round));
+        note.style.display = 'block';
+    }
+    _ftShowStartOver(_ftState.resumed);
     _bfShowQuizUI(true);   // show the quiz + the timer
     document.getElementById('bf-overlay').style.display = 'block';   // the picker used to open the modal
     document.getElementById('bf-result').style.display = 'none';
     document.addEventListener('keydown', _ftKeydownHandler);
-    _ftRenderCard();
+    if (!saved) { _ftRenderCard(); return; }
+    // The card that was on screen comes back with its clock still running in wall time: its
+    // saved start goes through unchanged, so reopening never moves its deadline.
+    _ftRenderCard(_ftResumeRemaining(saved.cardStartMs, Date.now(), BLOOKET_FULLDECK_SECONDS), saved.cardStartMs);
 }
 
-function _ftRenderCard() {
+// resumeRemaining + resumeCardStartMs: given only for the first card of a resumed run, the
+// seconds its clock had left (_ftResumeRemaining) and the start its clock keeps. Every other
+// card starts a full clock now.
+function _ftRenderCard(resumeRemaining, resumeCardStartMs) {
     _ftClearTimer();
     var round = _ftState.round;
     if (_ftDone(round)) { _ftFinish(); return; }
@@ -15513,7 +15819,9 @@ function _ftRenderCard() {
         var firstChoice = c && c.querySelector('.bf-choice');
         if (firstChoice && typeof firstChoice.focus === 'function') firstChoice.focus();
     } catch (_) {}
-    _ftStartTimer();
+    _ftStartTimer(resumeRemaining, resumeCardStartMs);
+    // Save after every render: closing mid-card resumes this card, its clock still running (D4).
+    if (typeof _ftSaveResume === 'function') _ftSaveResume();
 }
 
 function _ftAnswer(choiceIdx) {
@@ -15521,6 +15829,9 @@ function _ftAnswer(choiceIdx) {
     var round = _ftState.round;
     var idx = _ftCurrentIdx(round);
     if (idx < 0) return;
+    // Past the card's deadline the answer is a timeout. Colour nothing: the card comes back
+    // later and must not have given its answer away.
+    if (_ftSecondsLeft() <= 0) { _ftHandle('timeout'); return; }
     var card = round.deck[idx];
     var c = document.getElementById('bf-choices');
     if (c) {
@@ -15541,7 +15852,10 @@ function _ftHandle(outcome, choiceIdx) {
     if (_ftState.answered) return;
     _ftState.answered = true;
     _ftClearTimer();
-    var latency = Date.now() - _ftState.cardStartMs;
+    // The clock is wall time: whatever lands after the card's deadline is a timeout, and a
+    // card's time never runs past its full clock (a timeout found on reopening logs 40 s).
+    if (_ftSecondsLeft() <= 0) outcome = 'timeout';
+    var latency = Math.min(Date.now() - _ftState.cardStartMs, BLOOKET_FULLDECK_SECONDS * 1000);
     var round = _ftState.round;
     var c = document.getElementById('bf-choices');
     if (c) { var bs = c.querySelectorAll('button'); for (var i = 0; i < bs.length; i++) bs[i].disabled = true; }
@@ -15563,6 +15877,10 @@ function _ftHandle(outcome, choiceIdx) {
     last.displayedPerm = Array.isArray(_ftState.perm)
         ? _ftState.perm.slice()
         : card.choices.map(function (_, choiceIndex) { return choiceIndex; });
+    // Save the outcome at once: closing inside the 800 ms auto-advance keeps it, and the
+    // run resumes on the next card with a full clock (cardStartMs null = between cards, D4).
+    _ftState.cardStartMs = null;
+    if (typeof _ftSaveResume === 'function') _ftSaveResume();
     // Cancellable auto-advance: store the id so _ftClearTimer (close/teardown) can
     // cancel it — a stale fire would render against a null round.
     _ftState.advanceId = setTimeout(function () { _ftState.advanceId = null; _ftRenderCard(); }, 800);
@@ -15602,11 +15920,15 @@ async function _ftFinish() {
     if (!round) return;   // torn down mid auto-advance (modal closed) — nothing to commit
     var score = Math.round(_ftScore(round) * 10) / 10;
     var topic = _ftState.topic, btn = _ftState.btn;
+    var perDay = !!_ftState.perDay;
+    // A finished run never resumes, and Start over has nothing left to restart.
+    if (typeof _ftClearResume === 'function') _ftClearResume(topic);
+    if (typeof _ftShowStartOver === 'function') _ftShowStartOver(false);
     _ftLogToStore(topic, round.log);   // per-card log (SRS/BKT foundation)
     _ftRenderRecap(round, score);      // "review your misses"
     if (typeof _mayScore === 'function' && !_mayScore()) { _ftRenderOutcome(topic, score, null); return; }
     var outcome = null;
-    try { outcome = await _blooketCommit(btn, topic, score); }   // best-wins + grade refresh
+    try { outcome = await _blooketCommit(btn, topic, score, perDay); }   // best-wins + grade refresh
     catch (_) { outcome = { saved: false, best: null, error: true }; }
     _ftRenderOutcome(topic, score, outcome);
 }
@@ -15719,17 +16041,19 @@ function _ftLogToStore(topic, log) {
     } catch (_) {}
 }
 
-// Record a flashcard blooket score with BEST-WINS semantics — re-practicing must
-// never LOWER the grade (latest-row-wins in the ledger would otherwise let a
-// casual re-run downgrade a strong result). Floors at the displayed blooket
-// (game OR prior flashcard, via /grade) + a synchronous local best. Then refreshes
-// /grade and re-renders the panel so the score chip updates immediately.
-async function _blooketCommit(btn, topic, score) {
+// Record a finished flashcard run with BEST-WINS semantics — re-practicing must never
+// LOWER the grade. Every finished run sends its own ledger row: the server keeps each BL
+// item's best, and the best shown on the tile can belong to another item (a DESK_DAY run's
+// 100 on 4.7, then a whole-deck DESK_DONE run that also credits 4.8), so a lower run can
+// only add credit. The floor (the displayed /grade blooket: game OR prior flashcard, + the
+// local mark's best) decides only the local mark (never lowered) and the "new best" copy.
+// Then refreshes /grade and re-renders the panel so the score chip updates immediately.
+// perDay: the run was dealt from a per-day slice, so its row is BL-…-DESK_DAY (spec D3).
+async function _blooketCommit(btn, topic, score, perDay) {
     if (typeof _mayScore === 'function' && !_mayScore()) return;
     // Refresh /grade FIRST so the best-wins floor sees the latest CROSS-DEVICE
-    // score. A stale 2nd-device cache could otherwise let a worse run clobber a
-    // better recorded score (the BL row is upserted in place). Re-practicing must
-    // never LOWER the grade.
+    // score: the local mark and the outcome copy must never claim less than the
+    // best already recorded elsewhere.
     async function _refreshGrade() {
         try {
             if (typeof renderDoNowGrades === 'function'
@@ -15753,7 +16077,12 @@ async function _blooketCommit(btn, topic, score) {
     } catch (_) {}
     var saved = score > floor;
     if (saved) {
-        await _studentMarkSave(btn, topic, 'blooket', score);   // records mark.score = score
+        await _studentMarkSave(btn, topic, 'blooket', score, perDay);   // records mark.score = score
+    } else if (typeof _deskDoneRow === 'function') {
+        // Not a new best: the run still sends its own row (the server floors it per item),
+        // and the local mark is left alone, so it keeps its best. typeof-guarded: tests run
+        // _blooketCommit alone.
+        _deskDoneRow(topic, 'blooket', score, perDay);
     }
     // Make the Desk agree with the ledger NOW: patch the /grade lessons cache with
     // the score we just recorded so the My Ledger "about to become a 0" card and
@@ -16036,8 +16365,9 @@ function renderMyReceipts() {
         var meta = document.createElement('div');
         meta.style.cssText = 'color:#444;word-break:break-word';
         var parts = [];
-        var score = r.sc;
-        if ((score === undefined || score === null || score === '') && payload.sc !== undefined) score = payload.sc;
+        // The signed score is the one the server KEPT (a lower run of a flashcard deck is
+        // floored to that item's best); r.sc is the score this device SENT. Show the kept one.
+        var score = (typeof payload.sc === 'number' && isFinite(payload.sc)) ? payload.sc : r.sc;
         if (score !== undefined && score !== null && score !== '') parts.push('score ' + score);
         var date = _formatReceiptDate(r.ts || payload.ts);
         if (date) parts.push(date);
@@ -19492,7 +19822,9 @@ function _walletReceiptRow(r) {
     var meta = document.createElement('div');
     meta.style.cssText = 'color:#444;word-break:break-word';
     var parts = ['recorded ✓'];
-    var score = (typeof r.sc === 'number') ? r.sc : payload.sc;
+    // The signed score is the one the server KEPT (a lower run of a flashcard deck is floored
+    // to that item's best); r.sc is the score this device SENT. Show the kept one.
+    var score = (typeof payload.sc === 'number' && isFinite(payload.sc)) ? payload.sc : r.sc;
     if (typeof score === 'number') parts.push('score ' + (score <= 1 ? Math.round(score * 100) + '%' : score));
     var date = (typeof _formatReceiptDate === 'function') ? _formatReceiptDate(r.ts || payload.ts) : '';
     if (date) parts.push(date);
@@ -20950,7 +21282,7 @@ function _paintReviewByItem(host, data) {
 <!-- My Gradebook grid (openMyGradebook, renderMyGradebook, the teacher Class Gradebook picker, date-gating + colour helpers):
      Moved byte for byte to js/desk-gradebook-grid.js (FABLE_SPRINT_2026_10_22C_SPEC.md track C3). Same globals,
      same load position, versioned by scripts/bump-build.mjs like the other entry scripts. -->
-<script src="js/desk-gradebook-grid.js?v=2026-11-07-uak8"></script>
+<script src="js/desk-gradebook-grid.js?v=2026-11-08-fljo"></script>
 <script>
 
 // openDayGrade(dateStr) — opens the Day Grade modal for a calendar date.
@@ -21347,11 +21679,11 @@ function _pwaInstallHelp() {
 <!-- Study Break Tetris (studyBreak, openGame, closeGame):
      Moved byte for byte to js/desk-study-break.js (FABLE_SPRINT_2026_10_22C_SPEC.md track C3). Same globals,
      same load position, versioned by scripts/bump-build.mjs like the other entry scripts. -->
-<script src="js/desk-study-break.js?v=2026-11-07-uak8"></script>
+<script src="js/desk-study-break.js?v=2026-11-08-fljo"></script>
 <!-- My Progress app window (ProgressApp, openProgress, destroyProgress): moved byte for byte to
      js/desk-progress-app.js (FABLE_SPRINT_2026_10_22B_SPEC.md track H). Same globals, same load
      position, versioned by scripts/bump-build.mjs like the other entry scripts. -->
-<script src="js/desk-progress-app.js?v=2026-11-07-uak8"></script>
+<script src="js/desk-progress-app.js?v=2026-11-08-fljo"></script>
 <script>
 
 
@@ -21384,7 +21716,7 @@ function bumpUsage(id) {
 <!-- Desk <-> APStat Park calculator bridge (TI-84 skill button, calc-due chip, _openParkSolo, Calculator Skills progress modal):
      Moved byte for byte to js/desk-park-bridge.js (FABLE_SPRINT_2026_10_22C_SPEC.md track C3). Same globals,
      same load position, versioned by scripts/bump-build.mjs like the other entry scripts. -->
-<script src="js/desk-park-bridge.js?v=2026-11-07-uak8"></script>
+<script src="js/desk-park-bridge.js?v=2026-11-08-fljo"></script>
 <script>
 
 // The URL an app window opens (SOLO_DOOR_SPEC §5: the calculator is no longer an app window).
@@ -22828,7 +23160,7 @@ window.DogePresence = DogePresence;
 <!-- Completion calendar (cP/setP, cell helpers, paging, summer-prep weeks, rCal, rCD, rProg, uClock):
      Moved byte for byte to js/desk-calendar.js (FABLE_SPRINT_2026_10_22C_SPEC.md track C3). Same globals,
      same load position, versioned by scripts/bump-build.mjs like the other entry scripts. -->
-<script src="js/desk-calendar.js?v=2026-11-07-uak8"></script>
+<script src="js/desk-calendar.js?v=2026-11-08-fljo"></script>
 <script>
 
 /* ═══ TOOLTIP ═══ */
@@ -23395,7 +23727,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-11-07-uak8';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-11-08-fljo';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

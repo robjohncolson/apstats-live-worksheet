@@ -27,7 +27,7 @@ beforeAll(() => { S = loadStore(); });
 const rowArb = () => fc.record({
   receipt_id: fc.option(fc.constantFrom('r1', 'r2', 'r3'), { nil: undefined }),
   source: fc.constantFrom('worksheet', 'curriculum_quiz'),
-  item_id: fc.constantFrom('WS-U1L1-Q1', 'WS-U1L1-Q2', 'BL-U1-L1-DESK_DONE'),
+  item_id: fc.constantFrom('WS-U1L1-Q1', 'WS-U1L1-Q2', 'BL-U1-L1-DESK_DONE', 'BL-U1-L1-DESK_DAY'),
   attempt: fc.integer({ min: 1, max: 2 }),
   ts: fc.integer({ min: 1, max: 10000 }),
   score: fc.integer({ min: 0, max: 100 }),

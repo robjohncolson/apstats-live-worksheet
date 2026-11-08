@@ -161,8 +161,13 @@ describe('Desk: Blooket flashcard verification', () => {
     // _blooketCommit implements best-wins (re-running can't lower the score).
     expect(DESK).toMatch(/async\s+function\s+_blooketCommit\s*\(/);
     const commit = fnBody(DESK_SRC, '_blooketCommit');
-    expect(commit).toMatch(/score\s*>\s*floor/);              // only save a NEW best
+    expect(commit).toMatch(/score\s*>\s*floor/);              // only a NEW best writes the local mark
     expect(commit).toMatch(/_studentMarkSave\s*\(\s*btn\s*,\s*topic\s*,\s*['"]blooket['"]/);
+    // Re-pinned 2026-11-07 (Codex review, defect 2): a run that is not a new best still sends
+    // its own ledger row (the server keeps each item's best); only the local mark is skipped.
+    expect(commit).toMatch(/\}\s*else if \(typeof _deskDoneRow === 'function'\) \{[\s\S]*?_deskDoneRow\(topic, 'blooket', score, perDay\);/);
+    const save = fnBody(DESK_SRC, '_studentMarkSave');
+    expect(save).toMatch(/if \(ok\) _deskDoneRow\(topicId, artifact, score, perDay\);/);
   });
 
   it('13b: the blooket SCORE shows as a colored chip from _blooketScoreFor (not a bare Done)', () => {
@@ -311,12 +316,34 @@ describe('Desk: Blooket flashcard verification', () => {
     expect(selIdx).toBeLessThan(shufIdx);
   });
 
-  it('30b: the FULL timed deck (_ftStart) does NOT trim to top-10 (uses every card)', () => {
+  // Re-pinned 2026-11-07 (FLASHCARD_DECK_SLICES_SPEC.md D1): the timed deck deals a fresh
+  // sample of at most BLOOKET_DECK_CARDS (30) from the topic's pool, not every card.
+  it('30b: the timed deck (_ftStart) deals with _ftDealDeck, never the top-10 trim', () => {
     expect(DESK).toMatch(/async\s+function\s+_ftStart\s*\(/);
     const body = fnBody(DESK_SRC, '_ftStart');
     expect(body).toMatch(/_bfRowsToDeck\s*\(\s*_bfParseCsv/);
-    expect(body, 'full deck must not call _bfSelectTop10').not.toMatch(/_bfSelectTop10/);
-    expect(body).toMatch(/_ftCreateRound/);
+    expect(body, 'timed deck must not call _bfSelectTop10').not.toMatch(/_bfSelectTop10/);
+    expect(body).toMatch(/_ftCreateRound\(_ftDealDeck\(pool,\s*BLOOKET_DECK_CARDS,\s*_bfShuffle\)\)/);
+  });
+
+  it('30c: header, credit note, resume note and Start over say what the deck is, never 80% / done / credit / pass', () => {
+    const start = fnBody(DESK_SRC, '_ftStart');
+    expect(start).toContain("'Timed deck — ' + cedLabel(topicId).text + ' · ' + total + (total === 1 ? ' card' : ' cards') + ' · ' + BLOOKET_FULLDECK_SECONDS + 's/card · up to 100%'");
+    const note = fnBody(DESK_SRC, '_bfCreditNote');
+    expect(note).toContain("if (perDay) note += ' This deck covers ' + cedLabel(topicId).text + ' only — the other days of this worksheet have their own decks.';");
+    expect(note).not.toMatch(/80%/);
+    expect(fnBody(DESK_SRC, '_ftResumeLine')).toContain("'Picking up where you left off — ' + round.order.length + ' of ' + round.total + ' cards left.'");
+    const startOver = fnBody(DESK_SRC, '_ftShowStartOver');
+    expect(startOver).toContain("button.textContent = 'Start over';");
+    // The new student copy (slice sentence, resume line, Start over label + tooltip).
+    const newCopy = [
+      ' This deck covers X only — the other days of this worksheet have their own decks.',
+      'Picking up where you left off — 3 of 30 cards left.',
+      'Start over',
+      'Deal a fresh deck. Your best score is kept.',
+    ];
+    expect(startOver).toContain(newCopy[3]);
+    for (const line of newCopy) expect(line).not.toMatch(/80%|\bdone\b|\bcredit\b|\bpass\b/i);
   });
 
   it('31: _bfSelectTop10 smoke-test — hard-first ordering on synthetic input', () => {

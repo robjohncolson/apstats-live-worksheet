@@ -7,7 +7,7 @@
  *
  * Regenerate after any engine edit:  node scripts/build-grade-engine.mjs
  * Parity is pinned by tests/grade-engine-bundle-parity.test.js.
- * engine-version: 3e66030ffc4d
+ * engine-version: b0f66d1efc95
  */
 ;(function (root) {
   'use strict';
@@ -300,6 +300,20 @@
       return QUIZ_RETRY_HALF_CREDIT_FROM;
     }
     
+    // Per-day flashcard decks (FLASHCARD_DECK_SLICES_SPEC.md D3, teacher 2026-11-07). A
+    // combined worksheet whose deck CSV is cut into day slices (data/blooket-deck-slices.json)
+    // scores each day's deck on its own when the worksheet's earliest zero date is on or
+    // after this date. Earlier worksheets (2.3 and 2.4-2.6, zero dates 11/05-11/12) keep one
+    // score per worksheet, so no Q1 number moves. Kept outside PHASE3_CONFIG like
+    // QUIZ_RETRY_HALF_CREDIT_FROM (the m2b fixtures pin that object key for key). A config
+    // that names blooketPerDayFrom wins (tests: configOverrides); null turns per-day decks off.
+    const BLOOKET_PER_DAY_FROM = '2026-11-13';
+    
+    function blooketPerDayFrom(config) {
+      if (config && config.blooketPerDayFrom !== undefined) return config.blooketPerDayFrom;
+      return BLOOKET_PER_DAY_FROM;
+    }
+    
     // Quiz retry removed (QUIZ_RETRY_REMOVAL_SPEC.md, teacher 2026-10-26 evening):
     // from this instant POST /ledger/record refuses a quiz retry (attempt 2) with
     // reason 'retries-closed', so the first answer is the grade. Any graded retry is
@@ -354,7 +368,7 @@
       }
       return Math.max(0, Math.min(100, Math.round(p * 10) / 10));
     }
-    return { PHASE3_CONFIG: PHASE3_CONFIG, PC_PART_POINTS: PC_PART_POINTS, unitNumber: unitNumber, quarterOfUnit: quarterOfUnit, quarterOfDate: quarterOfDate, pcRawToP: pcRawToP, PC_CURVE: PC_CURVE, pcCurvePct: pcCurvePct, QUIZ_RETRY_HALF_CREDIT_FROM: QUIZ_RETRY_HALF_CREDIT_FROM, quizRetryCutoff: quizRetryCutoff };
+    return { PHASE3_CONFIG: PHASE3_CONFIG, PC_PART_POINTS: PC_PART_POINTS, unitNumber: unitNumber, quarterOfUnit: quarterOfUnit, quarterOfDate: quarterOfDate, pcRawToP: pcRawToP, PC_CURVE: PC_CURVE, pcCurvePct: pcCurvePct, QUIZ_RETRY_HALF_CREDIT_FROM: QUIZ_RETRY_HALF_CREDIT_FROM, quizRetryCutoff: quizRetryCutoff, blooketPerDayFrom: blooketPerDayFrom };
   })();
 
   // ── scoring.js ──────────────────────────────────────────────────────
@@ -751,6 +765,8 @@
     //   - buildWorksheetBlankCounts(manifestDoc) → { "<unit>.<lessonKey>": <int> }
     //   - computeLessonGrades(rows, frqBand, answerKey, schedule, opts) → Map<topicKey, lessonResult>
     //       (the Map also carries a non-enumerable `orphans` array: rows whose lesson is unscheduled)
+    //   - perDayDeckGroups({ schedule, deckSlices, section, perDayFrom, config }) → Set<"unit|worksheetKey">
+    //       (combined worksheets whose flashcard deck counts one score per day)
     //   - quarterOfLesson(entry, period, config) → 'Q1'..'Q4'
     //   - computeQuarterFromLessons({ quarterKey, config, lessonMap, schedule, ... })
     //   - buildLessonsArray(lessonMap, schedule) → lessons[]
@@ -797,11 +813,13 @@
         return { unit: Number(crDeskMatch[1]), lessonKey: crDeskMatch[2] };
       }
     
-      // BL-U{N}-L{key}-DESK_DONE — Blooket flashcard make-up self-attest. Bucketed
-      // so the flashcard can stand in as the Blooket score when there's no game
-      // score (BLOOKET_MAKEUP_BUILD.md). Still grade-INERT for Cws/quiz (it fails
-      // BLANK_ITEM_PATTERN + isn't a curriculum_quiz). [key] allows combined topics.
-      const blDeskMatch = itemId.match(/^BL-U(\d+)-L([\d-]+)-DESK_DONE/);
+      // BL-U{N}-L{key}-DESK_DONE / -DESK_DAY — a finished timed flashcard deck
+      // (DESK_DAY = a deck dealt from one day's slice of a combined deck,
+      // FLASHCARD_DECK_SLICES_SPEC.md D3). Bucketed so the deck score can stand in
+      // as the Blooket score (BLOOKET_MAKEUP_BUILD.md). Still grade-INERT for
+      // Cws/quiz (it fails BLANK_ITEM_PATTERN + isn't a curriculum_quiz). [key]
+      // allows combined topics.
+      const blDeskMatch = itemId.match(/^BL-U(\d+)-L([\d-]+)-DESK_(DONE|DAY)/);
       if (blDeskMatch) {
         return { unit: Number(blDeskMatch[1]), lessonKey: blDeskMatch[2] };
       }
@@ -1000,6 +1018,27 @@
     // EXCLUDES: WS-U{N}-L{n}-DESK_DONE, WS-U{N}L{key}-reflect{n}, etc.
     const BLANK_ITEM_PATTERN = /^WS-U(\d+)L([\d-]+)-Q\d+$/;
     
+    // ── Timed flashcard deck rows ─────────────────────────────────────────────────
+    //
+    // 'DONE' for BL-U{N}-L{key}-DESK_DONE (a deck dealt from the whole CSV), 'DAY' for
+    // BL-U{N}-L{key}-DESK_DAY (a deck dealt from one day's slice of a combined deck,
+    // FLASHCARD_DECK_SLICES_SPEC.md D3), null for any other item.
+    function flashcardDeckKind(itemId) {
+      const m = /^BL-U\d+-L[\d-]+-DESK_(DONE|DAY)/.exec(itemId);
+      return m ? m[1] : null;
+    }
+    
+    // A deck row's score on 0..100 (the deck %, point for point), or null when the row
+    // carries none. Rejects null/blank/non-numeric BEFORE coercion: Number(null)===0 and
+    // Number('')===0 are finite, so a score-less row would otherwise write a spurious 0.
+    // Mirrors frqScoreToPct.
+    function flashcardDeckScore(raw) {
+      if (raw === null || raw === undefined || raw === '') return null;
+      const n = Number(raw);
+      if (!Number.isFinite(n)) return null;
+      return Math.min(100, Math.max(0, n));
+    }
+    
     // Every per-lesson number (lessonGrade, lessonGradeNoQuiz) is clamped to this
     // ceiling: 100 plus the largest exit-ticket bonus. The frqBand E value may sit
     // above 100 (2026-10-22), so the clamp applies with or without an exit ticket.
@@ -1027,11 +1066,13 @@
     // frqBand: { E, P, I } config.
     // answerKey: map of itemId → { answerKey, ... } (for quiz scoring).
     // schedule: topicKey → entry (to expand combined worksheets).
-    // opts: { worksheetBlankCounts, weights, quizRetryHalfCreditFrom }
+    // opts: { worksheetBlankCounts, weights, quizRetryHalfCreditFrom, perDayGroups }
     //   - worksheetBlankCounts: { "<unit>.<lessonKey>": <int> } or null/undefined
     //   - weights: { ws, W, Q } — lessonFeederWeights; defaults to { ws:1, W:2, Q:3 }
     //   - quizRetryHalfCreditFrom: ISO cutoff for the half-credit retry (null = off;
     //     absent = the production cutoff in grade-config.js)
+    //   - perDayGroups: Set|array of "unit|worksheetKey" groups whose day-slice decks
+    //     (BL-…-DESK_DAY) stay per topic (perDayDeckGroups). Absent = none.
     //
     // Note: this function intentionally does NOT filter by "due date" —
     // that is applied at the quarter level in computeQuarterFromLessons.
@@ -1048,27 +1089,110 @@
       return Math.max(a, b);
     }
     
+    // ── Per-day flashcard decks (FLASHCARD_DECK_SLICES_SPEC.md D3) ─────────────────
+    //
+    // A combined worksheet has ONE Blooket CSV. When data/blooket-deck-slices.json cuts
+    // that CSV into one slice per day, each day's deck counts as its own score, but only
+    // for a worksheet whose earliest zero date (class day + dueLagDays) for the
+    // student's section is on or after perDayFrom. Every earlier worksheet keeps one
+    // score per worksheet, so nothing already counted moves.
+    
+    // opts.perDayGroups as a Set: a Set, an array (the offline pack ships JSON), or none.
+    function perDayGroupSet(perDayGroups) {
+      if (perDayGroups instanceof Set) return perDayGroups;
+      return new Set(Array.isArray(perDayGroups) ? perDayGroups : []);
+    }
+    
+    // The schedule's worksheets: "unit|worksheetKey" → { unit, worksheetKey, topicKeys }.
+    function scheduleWorksheets(schedule) {
+      const worksheets = new Map();
+      for (const [topicKey, entry] of Object.entries(schedule)) {
+        const group = worksheetGroupKey(topicKey, schedule);
+        if (!group) continue;
+        if (!worksheets.has(group)) {
+          worksheets.set(group, { unit: entry.unit, worksheetKey: entry.worksheetKey, topicKeys: [] });
+        }
+        worksheets.get(group).topicKeys.push(topicKey);
+      }
+      return worksheets;
+    }
+    
+    // A worksheet's deck CSV, by the rule flashcards.js csvPathFromWorksheet uses
+    // (u{unit}_l{key}_blooket.csv, '-' → '_l'): 4 + "7-8" → "u4_l7_l8_blooket.csv".
+    function worksheetDeckCsv(unit, worksheetKey) {
+      return 'u' + unit + '_l' + String(worksheetKey).replace(/-/g, '_l') + '_blooket.csv';
+    }
+    
+    // The earliest zero date (class day + dueLagDays) of these topics for one period,
+    // or for either period when period is null. null when no topic is dated.
+    function earliestZeroDate(topicKeys, schedule, period, config) {
+      let earliest = null;
+      for (const topicKey of topicKeys) {
+        const entry = schedule[topicKey];
+        const periods = entry && entry.periods && typeof entry.periods === 'object' ? entry.periods : {};
+        const classDays = period ? [periods[period]] : [periods.B, periods.E];
+        for (const classDay of classDays) {
+          const zeroDate = lessonZeroDate(classDay, config);
+          if (zeroDate && (earliest == null || zeroDate < earliest)) earliest = zeroDate;
+        }
+      }
+      return earliest;
+    }
+    
+    // The combined worksheets whose flashcard deck counts one score per day, for one
+    // student's section. A worksheet qualifies when it has two or more topics, its deck
+    // CSV has a slices entry, and its earliest zero date is on or after perDayFrom.
+    //   schedule   -- topicKey → { unit, worksheetKey, periods: { B, E } }
+    //   deckSlices -- the parsed slices file: { slices: { "<csv>": { "<topic>": [[lo, hi], …] } } }
+    //   section    -- "PeriodB" / "PeriodE" / "B" / "E" / null (null: either period's dates)
+    //   perDayFrom -- 'YYYY-MM-DD' cutoff on zero dates; null turns per-day decks off
+    //   config     -- the grade config (dueLagDays)
+    // Returns a Set of "unit|worksheetKey" group keys.
+    function perDayDeckGroups({ schedule, deckSlices, section, perDayFrom, config }) {
+      const perDay = new Set();
+      if (!perDayFrom || !schedule) return perDay;
+      const slicedCsvs = deckSlices && deckSlices.slices;
+      if (!slicedCsvs || typeof slicedCsvs !== 'object') return perDay;
+    
+      const period = sectionToPeriod(section);
+      for (const [group, worksheet] of scheduleWorksheets(schedule)) {
+        if (worksheet.topicKeys.length < 2) continue;   // a solo worksheet is one deck already
+        if (!slicedCsvs[worksheetDeckCsv(worksheet.unit, worksheet.worksheetKey)]) continue;
+        const firstZeroDate = earliestZeroDate(worksheet.topicKeys, schedule, period, config);
+        if (firstZeroDate == null) continue;
+        if (firstZeroDate < perDayFrom) continue;        // zeroes before the cutoff: one score
+        perDay.add(group);
+      }
+      return perDay;
+    }
+    
     // Topics that share a worksheet share its flashcard deck: copy the group's best
     // blooketGame / blooketFlashcard onto every topic in the group (creating the
     // sibling accumulator when the student only played the deck from one day).
-    function shareBlooketAcrossWorksheetGroups(byTopic, schedule, ensure) {
+    // A day-slice deck (blooketFlashcardDay) is shared the same way, except in a
+    // per-day group, where each day keeps its own (FLASHCARD_DECK_SLICES_SPEC.md D3).
+    function shareBlooketAcrossWorksheetGroups(byTopic, schedule, ensure, perDayGroups) {
       if (!schedule) return;
       const best = new Map();
       for (const acc of byTopic.values()) {
         const group = worksheetGroupKey(acc.topicKey, schedule);
         if (!group) continue;
-        const b = best.get(group) || { game: null, flashcard: null };
+        const b = best.get(group) || { game: null, flashcard: null, flashcardDay: null };
         b.game = maxNullable(b.game, acc.blooketGame);
         b.flashcard = maxNullable(b.flashcard, acc.blooketFlashcard);
+        b.flashcardDay = maxNullable(b.flashcardDay, acc.blooketFlashcardDay);
         best.set(group, b);
       }
       for (const [group, b] of best) {
-        if (b.game == null && b.flashcard == null) continue;
+        const shareDayDeck = !perDayGroups.has(group);
+        const sharedDayDeck = shareDayDeck ? b.flashcardDay : null;
+        if (b.game == null && b.flashcard == null && sharedDayDeck == null) continue;
         for (const topicKey of Object.keys(schedule)) {
           if (worksheetGroupKey(topicKey, schedule) !== group) continue;
           const acc = ensure(topicKey);
           acc.blooketGame = b.game;
           acc.blooketFlashcard = b.flashcard;
+          if (shareDayDeck) acc.blooketFlashcardDay = b.flashcardDay;
         }
       }
     }
@@ -1085,6 +1209,7 @@
       const weights = (opts && opts.weights) || { ws: 1, W: 2, Q: 3 };
       const frqFloorSince = parseFloorSince(opts && opts.frqFloorSince);
       const quizCutoff = quizRetryCutoff(opts);
+      const perDayGroups = perDayGroupSet(opts && opts.perDayGroups);
     
       // lessonMap: topicKey → accumulator
       const byTopic = new Map();
@@ -1098,9 +1223,10 @@
             worksheetItems: [],
             wsCountKey: null,
             blankCount: null,       // manifest blank count for this worksheet (early-bonus coverage)
-            blooket: null,          // 0..100 — RESOLVED: game score, else flashcard make-up, else null
+            blooket: null,          // 0..100 — RESOLVED: the best of game / full deck / day deck, else null
             blooketGame: null,      // 0..100 from a real Blooket game row (source 'blooket')
-            blooketFlashcard: null, // 0..100 from a BL-…-DESK_DONE flashcard pass (make-up)
+            blooketFlashcard: null, // 0..100 from a BL-…-DESK_DONE timed deck (the whole CSV)
+            blooketFlashcardDay: null, // 0..100 from a BL-…-DESK_DAY timed deck (one day's slice)
             trainer: null,          // 0..100 — TI-84 trainer pct (mean over mapped procedures, missing=0)
             trainerProcScores: /** @type {Record<string, number>|null} */ (null), // procId → best 0..1
           });
@@ -1194,20 +1320,16 @@
         for (const topicKey of topicKeys) {
           const acc = ensure(topicKey);
     
-          // Blooket flashcard MAKE-UP (BL-…-DESK_DONE): a passed flashcard quiz that
-          // stands in for the Blooket score when there's no game score. Its score is
-          // 0..100 (the pass %, pinned at 80 by the 8/10 early-stop). Detected by
-          // itemId so it works regardless of source; it never feeds Cws (fails
-          // BLANK_ITEM_PATTERN) or the quiz track. (BLOOKET_MAKEUP_BUILD.md)
-          if (/^BL-U\d+-L[\d-]+-DESK_DONE/.test(row.item_id)) {
-            // Reject null/blank/non-numeric BEFORE coercion: Number(null)===0 and
-            // Number('')===0 are finite, so a score-less row would otherwise write a
-            // spurious 0 instead of leaving the make-up absent. Mirrors frqScoreToPct.
-            const raw = row.score;
-            if (raw !== null && raw !== undefined && raw !== '' && Number.isFinite(Number(raw))) {
-              acc.blooketFlashcard = Math.min(100, Math.max(0, Number(raw)));
-            }
-          }
+          // A finished timed flashcard deck (BL-…-DESK_DONE / BL-…-DESK_DAY): its score
+          // (0..100, the deck %) stands in as the Blooket score. DESK_DONE = a deck dealt
+          // from the whole CSV; DESK_DAY = a deck dealt from one day's slice of a combined
+          // deck (FLASHCARD_DECK_SLICES_SPEC.md D3). Detected by itemId so it works
+          // regardless of source; it never feeds Cws (fails BLANK_ITEM_PATTERN) or the
+          // quiz track. Latest row per item wins. (BLOOKET_MAKEUP_BUILD.md)
+          const deckKind = flashcardDeckKind(row.item_id);
+          const deckScore = deckKind ? flashcardDeckScore(row.score) : null;
+          if (deckScore != null && deckKind === 'DONE') acc.blooketFlashcard = deckScore;
+          if (deckScore != null && deckKind === 'DAY') acc.blooketFlashcardDay = deckScore;
     
           if (src === 'frq') {
             const pct = frqScoreToPct(row.score, frqBand);
@@ -1268,8 +1390,9 @@
       // so the deck played from either day's tile is the same deck. Share the best
       // deck / game score across every topic of the worksheet group, so Day 2 never
       // reads "not played" when Day 1 was, and the Blooket track (which keys the
-      // group by its first topic) never loses a score recorded under Day 2.
-      shareBlooketAcrossWorksheetGroups(byTopic, schedule, ensure);
+      // group by its first topic) never loses a score recorded under Day 2. In a
+      // per-day group each day's slice deck stays with its own day.
+      shareBlooketAcrossWorksheetGroups(byTopic, schedule, ensure, perDayGroups);
     
       for (const [, acc] of byTopic) {
         // Cws = clamp((sum of blank scores) / blankCount, 0, 1) * 100
@@ -1366,22 +1489,16 @@
           const noQuiz = lessonGradeNoQuiz(acc, weights);
           acc.lessonGradeNoQuiz = noQuiz == null ? null : Math.round(noQuiz * 10) / 10;
         }
-        // Blooket (0..100): the BETTER of the two efforts — the real game score OR the
-        // flashcard score (the timed full deck can legitimately reach 100%, so a strong
-        // flashcard run beats a mediocre game, and vice-versa). Either may be null; the
-        // present one wins, both null → null. Learning is rewarded, not penalized
-        // (FLASHCARD_TIMED_DECK_BUILD.md, supersedes the old "game wins"). The quarter
-        // track turns a missing-but-due Blooket into 0; null here = "no evidence yet."
-        if (acc.blooketGame != null && acc.blooketFlashcard != null) {
-          acc.blooket = Math.max(acc.blooketGame, acc.blooketFlashcard);
-        } else if (acc.blooketGame != null) {
-          acc.blooket = acc.blooketGame;
-        } else if (acc.blooketFlashcard != null) {
-          acc.blooket = acc.blooketFlashcard;
-        } else {
-          acc.blooket = null;
-        }
-        acc.blooket = acc.blooket != null ? Math.round(acc.blooket * 10) / 10 : null;
+        // Blooket (0..100): the BEST of the student's efforts — the real game score, the
+        // full-deck flashcard score or the day-slice deck score (a timed deck can
+        // legitimately reach 100%, so a strong flashcard run beats a mediocre game, and
+        // vice-versa). Any may be null; the present ones compete, all null → null.
+        // Learning is rewarded, not penalized (FLASHCARD_TIMED_DECK_BUILD.md, supersedes
+        // the old "game wins"). The quarter track turns a missing-but-due Blooket into 0;
+        // null here = "no evidence yet."
+        const bestDeck = maxNullable(acc.blooketFlashcard, acc.blooketFlashcardDay);
+        const bestBlooket = maxNullable(acc.blooketGame, bestDeck);
+        acc.blooket = bestBlooket != null ? Math.round(bestBlooket * 10) / 10 : null;
     
         // TI-84 trainer pct (0..100): mean over the topic's MAPPED procedures of the
         // best recorded score, a missing procedure counting 0 — transparent partial
@@ -2086,6 +2203,8 @@
     //                   from eventSchedule.posters, else the unit band
     //   workTracks   -- { posters } legacy override on [0, 1.15]; used only when
     //                   posterScores is not given (bespoke tests)
+    //   perDayGroups -- Set|array of "unit|worksheetKey" groups whose decks count one
+    //                   score per day (perDayDeckGroups); absent = none
     //
     // Returns { quarterGrade, ceiling, lessonsDue, lessonsGraded, lessonsTotal,
     //           pcAvg, workAvg } — quarterGrade/ceiling/pcAvg/workAvg on 0..100.
@@ -2104,6 +2223,7 @@
       quizLessons = /** @type {string[]|null} */ (null),      // [topicKey] that HAVE a quiz — the Quiz-track denominator
       trainerLessons = /** @type {string[]|null} */ (null),   // [topicKey] with mapped TI-84 skills — the trainer-track denominator
       eventSchedule = /** @type {any} */ (null),               // { progressChecks, posters } keyed by NEW unit (SY2627)
+      perDayGroups = /** @type {Set<string>|string[]|null} */ (null), // per-day deck groups (FLASHCARD_DECK_SLICES_SPEC.md D3)
     }) {
       const period = sectionToPeriod(section);
       const lessonWeights = (config && config.lessonFeederWeights) || { ws: 1, W: 2, Q: 3 };
@@ -2312,43 +2432,66 @@
       // surfaced as missing). Drawing from bandLessons (not dueLessons) also keeps a
       // phantom 0 out of the lessons/quizzes tracks for that ahead-of-schedule lesson.
       const blooketSet = new Set(Array.isArray(blooketLessons) ? blooketLessons : []);
+      const perDaySet = perDayGroupSet(perDayGroups);
       // Collapse combined-worksheet constituents into ONE slot. A single combined
       // Blooket (e.g. BLOOKET-U4L1-2) attaches the SAME score to every constituent
       // topic (4.1 AND 4.2), so counting each separately would over-weight it vs a
       // solo Blooket. Group by unit|worksheetKey; fall back to the topicKey for
       // solo lessons (and test schedules with no worksheetKey) so solos are never
-      // collapsed. No-op for today's all-solo Blooket set — guards a future rebake.
+      // collapsed.
+      // A per-day group (FLASHCARD_DECK_SLICES_SPEC.md D3) deals each day its own
+      // deck, so a day that is due is its own slot. Its days that are not due yet
+      // (ahead of schedule, or late after the quarter closed) still share the group's
+      // slot, worth the best of their scores: a full-deck score recorded early counts
+      // once, exactly as before, until the days come due.
       function blooketGroupKey(topicKey) {
         const entry = schedule[topicKey];
-        return (entry && entry.worksheetKey != null)
-          ? `${entry.unit}|${entry.worksheetKey}`
-          : topicKey;
+        if (!entry || entry.worksheetKey == null) return topicKey;
+        const groupKey = `${entry.unit}|${entry.worksheetKey}`;
+        if (perDaySet.has(groupKey) && isDue(topicKey)) return topicKey;
+        return groupKey;
       }
-      const seenBlooketGroups = new Set();
-      let blooketSum = 0, blooketDue = 0, blooketDone = 0;
-      const blooketTodo = /** @type {string[]} */ ([]);
+      // The slots in the order they are first met: slot key → { topicKey, score }.
+      // score null = due with no score yet (a 0, a make-up opportunity).
+      const blooketSlots = new Map();
       for (const topicKey of bandLessons) {
         if (!blooketSet.has(topicKey)) continue;
         if (lateLessons.has(topicKey)) continue;   // late: added below, never a 0
         const r = lessonMap.get(topicKey);
-        if (!(isDue(topicKey) || (r && r.blooket != null))) continue;
-        const groupKey = blooketGroupKey(topicKey);
-        if (seenBlooketGroups.has(groupKey)) continue;
-        seenBlooketGroups.add(groupKey);
+        const score = r && r.blooket != null ? r.blooket : null;
+        if (!(isDue(topicKey) || score != null)) continue;
+        const slotKey = blooketGroupKey(topicKey);
+        const slot = blooketSlots.get(slotKey);
+        if (!slot) {
+          blooketSlots.set(slotKey, { topicKey, score });
+          continue;
+        }
+        // The not-yet-due days of a per-day group share one slot: it keeps their best.
+        if (perDaySet.has(slotKey)) slot.score = maxNullable(slot.score, score);
+      }
+      let blooketSum = 0, blooketDue = 0, blooketDone = 0;
+      const blooketTodo = /** @type {string[]} */ ([]);
+      for (const slot of blooketSlots.values()) {
         blooketDue += 1;
-        if (r && r.blooket != null) { blooketSum += r.blooket; blooketDone += 1; }
-        else { blooketTodo.push(topicKey); }   // due but no score → 0, a make-up opportunity
+        if (slot.score != null) { blooketSum += slot.score; blooketDone += 1; }
+        else { blooketTodo.push(slot.topicKey); }   // due but no score → 0, a make-up opportunity
       }
       // Late decks (quarter-end zero freeze): never a 0; a played one joins only
       // where it lifts the track, one slot per worksheet group as above (a group a
-      // due sibling already counted is not counted again).
-      const lateDecks = [];
+      // due sibling already counted is not counted again; the late days of a
+      // per-day group share one slot, worth their best score).
+      const lateDeckBySlot = new Map();
       for (const deck of lateScores((r, key) => (blooketSet.has(key) && r && r.blooket != null ? r.blooket : null))) {
-        const groupKey = blooketGroupKey(deck.key);
-        if (seenBlooketGroups.has(groupKey)) continue;
-        seenBlooketGroups.add(groupKey);
-        lateDecks.push(deck);
+        const slotKey = blooketGroupKey(deck.key);
+        if (blooketSlots.has(slotKey)) continue;
+        const kept = lateDeckBySlot.get(slotKey);
+        if (!kept) {
+          lateDeckBySlot.set(slotKey, deck);
+          continue;
+        }
+        if (perDaySet.has(slotKey) && deck.score > kept.score) lateDeckBySlot.set(slotKey, deck);
       }
+      const lateDecks = [...lateDeckBySlot.values()];
       const lateBlooketTrack = addLateScoresThatHelp(blooketSum, blooketDue, lateDecks);
       blooketSum = lateBlooketTrack.sum;
       blooketDue = lateBlooketTrack.count;
@@ -2759,7 +2902,7 @@
     
       return result;
     }
-    return { parseItemLesson: parseItemLesson, expandLessonKey: expandLessonKey, buildWorksheetBlankCounts: buildWorksheetBlankCounts, computeLessonGrades: computeLessonGrades, todayInTz: todayInTz, sectionToPeriod: sectionToPeriod, quarterOfLesson: quarterOfLesson, computeQuarterFromLessons: computeQuarterFromLessons, V3_WORK_WEIGHTS: V3_WORK_WEIGHTS, V3_GATES: V3_GATES, quarterGradeV3: quarterGradeV3, workAvgV3: workAvgV3, computeQuarterV3: computeQuarterV3, computeQuizTotals: computeQuizTotals, buildLessonsArray: buildLessonsArray, deriveQuarterBands: deriveQuarterBands, pcDatesFor: pcDatesFor, pcUnitsInQuarter: pcUnitsInQuarter, posterDatesFor: posterDatesFor, posterUnitsInQuarter: posterUnitsInQuarter, postersAvgV3: postersAvgV3, addDays: addDays, lessonZeroDate: lessonZeroDate, isLessonDue: isLessonDue };
+    return { parseItemLesson: parseItemLesson, expandLessonKey: expandLessonKey, buildWorksheetBlankCounts: buildWorksheetBlankCounts, computeLessonGrades: computeLessonGrades, todayInTz: todayInTz, sectionToPeriod: sectionToPeriod, quarterOfLesson: quarterOfLesson, computeQuarterFromLessons: computeQuarterFromLessons, V3_WORK_WEIGHTS: V3_WORK_WEIGHTS, V3_GATES: V3_GATES, quarterGradeV3: quarterGradeV3, workAvgV3: workAvgV3, computeQuarterV3: computeQuarterV3, computeQuizTotals: computeQuizTotals, buildLessonsArray: buildLessonsArray, deriveQuarterBands: deriveQuarterBands, pcDatesFor: pcDatesFor, pcUnitsInQuarter: pcUnitsInQuarter, posterDatesFor: posterDatesFor, posterUnitsInQuarter: posterUnitsInQuarter, postersAvgV3: postersAvgV3, addDays: addDays, lessonZeroDate: lessonZeroDate, isLessonDue: isLessonDue, perDayDeckGroups: perDayDeckGroups };
   })();
 
   // ── gradebook-grid.js ──────────────────────────────────────────────────────
@@ -3185,9 +3328,9 @@
     // The `units` field on the response is UNCHANGED in shape and values
     // (teacher dashboard via class.js fans out computeGrade and reads it).
     
-    const { PHASE3_CONFIG, unitNumber, quarterOfUnit, quarterOfDate, pcRawToP, pcCurvePct, quizRetryCutoff } = __reg["grade-config"];
+    const { PHASE3_CONFIG, unitNumber, quarterOfUnit, quarterOfDate, pcRawToP, pcCurvePct, quizRetryCutoff, blooketPerDayFrom } = __reg["grade-config"];
     const { latestPerItem, unitOf, answerKeyMapOrNull, scoreAgainstKey, scorePcRows } = __reg["scoring"];
-    const { buildWorksheetBlankCounts, computeLessonGrades, computeQuarterFromLessons, computeQuarterV3, buildLessonsArray, computeQuizTotals, todayInTz, sectionToPeriod, deriveQuarterBands, pcDatesFor, pcUnitsInQuarter, posterUnitsInQuarter } = __reg["lesson-grade"];
+    const { buildWorksheetBlankCounts, computeLessonGrades, computeQuarterFromLessons, computeQuarterV3, buildLessonsArray, computeQuizTotals, todayInTz, sectionToPeriod, deriveQuarterBands, pcDatesFor, pcUnitsInQuarter, posterUnitsInQuarter, perDayDeckGroups } = __reg["lesson-grade"];
     const { buildGradebook } = __reg["gradebook-grid"];
     
     
@@ -3224,6 +3367,26 @@
         (opts && opts.blooketRequired) ||
         BLOOKET_REQUIRED;
       return { blooketPresence, blooketRequired };
+    }
+    
+    /**
+     * The combined worksheets whose flashcard deck counts one score per day for this
+     * student (FLASHCARD_DECK_SLICES_SPEC.md D3), as a Set of "unit|worksheetKey".
+     * opts.perDayGroups (the list the server computed, as the offline pack ships it)
+     * wins; else the groups come from opts.deckSlices (the vendored slices file) for
+     * this section; neither → none, which is the one-score-per-worksheet rule.
+     * @param {any} opts
+     * @param {Record<string, any>|null} schedule
+     * @param {string|null} section
+     * @param {any} config
+     * @returns {Set<string>}
+     */
+    function resolvePerDayGroups(opts, schedule, section, config) {
+      if (opts && opts.perDayGroups instanceof Set) return opts.perDayGroups;
+      if (opts && Array.isArray(opts.perDayGroups)) return new Set(opts.perDayGroups);
+      const deckSlices = opts && opts.deckSlices;
+      if (!deckSlices || !schedule) return new Set();
+      return perDayDeckGroups({ schedule, deckSlices, section, perDayFrom: blooketPerDayFrom(config), config });
     }
     
     // TI-84 trainer lesson map — topicKey → [procedureId]: buckets `TI84-<proc>`
@@ -3282,6 +3445,9 @@
     // opts.section: student's section string (e.g. "PeriodB") for date filter.
     // opts.worksheetBlankCounts: { "<unit>.<lessonKey>": <int> } from buildWorksheetBlankCounts.
     //   If null/missing, Cws is null for every lesson (W/Q renormalize without ws feeder).
+    // opts.deckSlices: the parsed data/blooket-deck-slices.json (server callers), or
+    // opts.perDayGroups: the per-day deck groups already computed (offline clients).
+    //   Neither → every combined worksheet keeps one Blooket score (resolvePerDayGroups).
     // { [unitNum]: score } from POSTER-U{n} rows (source 'poster'); the latest
     // attempt per item wins, a malformed score is skipped.
     function posterScoresByUnit(posterRows) {
@@ -3443,6 +3609,10 @@
       // the baked map. `!== undefined` (not ||) so an explicit null stays null.
       const trainerMap = (opts && opts.trainerMap !== undefined) ? opts.trainerMap : TRAINER_LESSON_MAP;
       const trainerLessons = trainerMap ? Object.keys(trainerMap) : [];
+      // Combined worksheets whose deck is dealt one day at a time count one Blooket
+      // score per day (FLASHCARD_DECK_SLICES_SPEC.md D3). Built once for this
+      // student's section and handed to both engines below.
+      const perDayGroups = resolvePerDayGroups(opts, schedule, section, config);
       const allLatestRows = latestPerItem(rows);
       const lessonMap = computeLessonGrades(allLatestRows, config.frqBand, answerKey, schedule, {
         worksheetBlankCounts,
@@ -3451,6 +3621,7 @@
         bonusTopics: bonusTopicSet,
         frqFloorSince: config.frqProvisionalFloorSince || null,
         quizRetryHalfCreditFrom: quizCutoff,
+        perDayGroups,
       });
     
       // Quiz-bearing topics (gradable quizTotal > 0) — the v3 Quiz-track denominator,
@@ -3575,6 +3746,7 @@
             quizLessons,
             trainerLessons,
             eventSchedule,
+            perDayGroups,
           });
         } else if (schedule) {
           qResult = computeQuarterFromLessons({
@@ -3750,7 +3922,7 @@
     normalizeResponse: __reg["scoring"].normalizeResponse,
     scoreAgainstKey: __reg["scoring"].scoreAgainstKey,
     pcPaperBlend: __reg["scoring"].pcPaperBlend,
-    _engineVersion: "3e66030ffc4d",
+    _engineVersion: "b0f66d1efc95",
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = __api;

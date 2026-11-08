@@ -277,6 +277,7 @@ export function mountClass(app, {
   db, ledgerDb, loadAnswerKey, loadSkillMap, bkt, lessonSchedule, eventSchedule = null,
   config = PHASE3_CONFIG, worksheetBlankCounts = null, verifyToken, resolveUsername,
   blooketPresence = null, blooketRequired = null, blooketLessons = null,
+  deckSlices = null,   // per-day deck slices (FLASHCARD_DECK_SLICES_SPEC.md); null = none
   loadTriage = loadMisconceptionTriage,
 }) {
   const _presence = blooketPresence || blooketLessons || null;
@@ -447,6 +448,7 @@ export function mountClass(app, {
         blooketPresence: _presence || undefined,
         blooketRequired: _required || undefined,
         blooketLessons: _presence || undefined,
+        deckSlices,
       });
       const trainerRows = ledgerRows.filter(row => row && row.source === 'trainer');
       for (const [quarter, value] of Object.entries(computed.quarters || {})) {
@@ -544,6 +546,7 @@ export function mountClass(app, {
         blooketPresence: _presence || undefined,
         blooketRequired: _required || undefined,
         blooketLessons: _presence || undefined,
+        deckSlices,
       }),
     }));
     return { graded };

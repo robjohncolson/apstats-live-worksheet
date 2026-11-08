@@ -745,6 +745,20 @@ describe('computeDonow — selfDone (per-resource DESK_DONE → cross-device gre
     expect([...l11.selfDoneArtifacts].sort()).toEqual(['blooket', 'quiz', 'worksheet']);
   });
 
+  it('a finished day-slice deck (BL-…-DESK_DAY) marks that day\'s blooket done (FLASHCARD_DECK_SLICES_SPEC.md D3)', () => {
+    const byTopic = computeDonow([{ item_id: 'BL-U1-L1-DESK_DAY', topic: '1.1', source: 'worksheet' }], FIXTURE_MANIFEST);
+    const l11 = byTopic.lessons.find(l => l.lesson === '1.1');
+    expect(l11.selfDone).toBe(true);
+    expect(l11.selfDoneArtifacts).toEqual(['blooket']);
+    expect(byTopic.lessons.find(l => l.lesson === '1.2').selfDone).toBe(false);
+    // No topic field: the day is parsed from the item id.
+    const parsed = computeDonow([{ item_id: 'BL-U1-L2-DESK_DAY' }], FIXTURE_MANIFEST);
+    expect(parsed.lessons.find(l => l.lesson === '1.2').selfDoneArtifacts).toEqual(['blooket']);
+    // Only a BL- deck row counts; a lookalike worksheet id does not.
+    const lookalike = computeDonow([{ item_id: 'WS-U1-L1-DESK_DAY', topic: '1.1' }], FIXTURE_MANIFEST);
+    expect(lookalike.lessons.find(l => l.lesson === '1.1').selfDone).toBe(false);
+  });
+
   it('selfDoneArtifacts is an empty array when nothing is self-done', () => {
     const out = computeDonow([], FIXTURE_MANIFEST);
     expect(out.lessons.every(l => Array.isArray(l.selfDoneArtifacts) && l.selfDoneArtifacts.length === 0)).toBe(true);

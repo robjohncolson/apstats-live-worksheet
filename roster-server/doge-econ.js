@@ -34,7 +34,8 @@ export function keyPrice(n) {
 export function effortPointsFor(source, itemId) {
   if (source === 'bonus' || source === 'bonus_applied' || source === 'poster') return 0;
   if (source === 'quiz_verdict' || source === 'quiz_answer') return 0;
-  if (itemId && /^BL-.*-DESK_DONE$/i.test(itemId)) return 4;
+  // A finished timed flashcard deck: the whole CSV (DESK_DONE) or one day's slice (DESK_DAY).
+  if (itemId && /^BL-.*-DESK_(DONE|DAY)$/i.test(itemId)) return 4;
   return EFFORT_POINTS[source] != null ? EFFORT_POINTS[source] : 1;
 }
 

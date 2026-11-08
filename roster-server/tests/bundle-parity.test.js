@@ -35,6 +35,14 @@ describe('bundle parity — byte-identical canonical copies', () => {
     expect(bundled.equals(canonical)).toBe(true);
   });
 
+  it('roster-server/data/blooket-deck-slices.json === data/blooket-deck-slices.json (per-day decks)', () => {
+    // FLASHCARD_DECK_SLICES_SPEC.md §2: the server needs the slices for the per-day
+    // Blooket predicate; the Desk deals from the repo-root copy.
+    const bundled = readBytes(resolve(rs, 'data', 'blooket-deck-slices.json'));
+    const canonical = readBytes(resolve(repo, 'data', 'blooket-deck-slices.json'));
+    expect(bundled.equals(canonical)).toBe(true);
+  });
+
   it('the bundled bkt.js really exposes the study-guide BKT API', async () => {
     await import('../bkt.js');
     const BKT = globalThis.BKT;

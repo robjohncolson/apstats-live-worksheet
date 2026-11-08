@@ -79,6 +79,7 @@ describe('sw.js contracts', () => {
       'lib/flashcard-sync.js',
       'mobile-home.html',
       'data/blooket-difficulty.json',
+      'data/blooket-deck-slices.json',
       'data/blooket-topic-csv.json',
       'data/flashcard-flags.json',
     ]) {

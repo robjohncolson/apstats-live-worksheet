@@ -23,8 +23,9 @@ import {
   lessonNeverZero,
   addLateScoresThatHelp,
   isDateDue,
+  perDayDeckGroups,
 } from '../lesson-grade.js';
-import { PHASE3_CONFIG } from '../grade-config.js';
+import { PHASE3_CONFIG, BLOOKET_PER_DAY_FROM, blooketPerDayFrom } from '../grade-config.js';
 import { resolveProductionGradeInputs } from '../grade-contexts.js';
 import { summarizeOrphanRows } from '../grade.js';
 
@@ -1301,6 +1302,308 @@ describe('combined-worksheet lessons share one flashcard deck', () => {
   it('a solo worksheet never borrows another lesson\'s deck', () => {
     const map = computeLessonGrades([row('BL-U4-L1-DESK_DONE', 96.6)], FRQ_BAND, {}, SCHED, {});
     expect(map.get('4.6')).toBeUndefined();
+  });
+});
+
+// ── Per-day flashcard decks (FLASHCARD_DECK_SLICES_SPEC.md D3, teacher 2026-11-07) ──
+// A combined worksheet whose deck CSV is cut into day slices deals each day its own
+// deck, recorded as BL-…-DESK_DAY. In a per-day group each day keeps its own score and,
+// once due, its own slot in the Blooket track. Full-deck runs (DESK_DONE) and real
+// games still count for every day of the worksheet, so nothing already counted moves.
+
+describe('per-day flashcard decks (D3)', () => {
+  const FRQ_BAND = { E: 107.5, P: 92.5, I: 81.25, ungraded: 70 };
+  const LIVE = { ...PHASE3_CONFIG, pcTrack: { enabled: false } };   // PC off: isolate the Work tracks
+  // The real Unit-4 class days of both sections (old storage keys; CED 2.3-2.9), plus 5.1-2.
+  const SCHEDULE = {
+    '4.1': { unit: 4, worksheetKey: '1-2', periods: { B: '2026-10-23', E: '2026-10-26' } },
+    '4.2': { unit: 4, worksheetKey: '1-2', periods: { B: '2026-10-26', E: '2026-10-28' } },
+    '4.3': { unit: 4, worksheetKey: '3-4-5', periods: { B: '2026-10-27', E: '2026-10-28' } },
+    '4.4': { unit: 4, worksheetKey: '3-4-5', periods: { B: '2026-10-29', E: '2026-10-30' } },
+    '4.5': { unit: 4, worksheetKey: '3-4-5', periods: { B: '2026-10-30', E: '2026-11-02' } },
+    '4.6': { unit: 4, worksheetKey: '6', periods: { B: '2026-11-05', E: '2026-11-06' } },
+    '4.7': { unit: 4, worksheetKey: '7-8', periods: { B: '2026-11-06', E: '2026-11-09' } },
+    '4.8': { unit: 4, worksheetKey: '7-8', periods: { B: '2026-11-09', E: '2026-11-09' } },
+    '5.1': { unit: 5, worksheetKey: '1-2', periods: { B: '2026-11-23', E: '2026-11-20' } },
+    '5.2': { unit: 5, worksheetKey: '1-2', periods: { B: '2026-11-20', E: '2026-11-18' } },
+  };
+  // 5.1-2 has no slices entry; the u4_l6 entry shows a solo worksheet is never per-day.
+  const SLICES = { slices: {
+    'u4_l1_l2_blooket.csv': { '4.1': [[1, 34]], '4.2': [[35, 60]] },
+    'u4_l3_l4_l5_blooket.csv': { '4.3': [[1, 24]], '4.4': [[26, 42]], '4.5': [[43, 63]] },
+    'u4_l6_blooket.csv': { '4.6': [[1, 59]] },
+    'u4_l7_l8_blooket.csv': { '4.7': [[1, 40]], '4.8': [[41, 76]] },
+  } };
+  const PER_DAY = new Set(['4|7-8']);
+  const groupsFor = (section, perDayFrom = BLOOKET_PER_DAY_FROM, config = LIVE, schedule = SCHEDULE) =>
+    [...perDayDeckGroups({ schedule, deckSlices: SLICES, section, perDayFrom, config })];
+  const row = (itemId, score, source = 'worksheet') => ({ item_id: itemId, source, score, response: null, unit: null, recorded_at: null });
+  const lessons = (rows, perDayGroups) => computeLessonGrades(rows, FRQ_BAND, {}, SCHEDULE, { perDayGroups });
+  const blooketOf = (map, topicKey) => (map.get(topicKey) ? map.get(topicKey).blooket : null);
+  const mapOf = (entries) => new Map(Object.entries(entries));
+
+  describe('which worksheets are per-day', () => {
+    it('the cutoff is 2026-11-13 on zero dates; a config value wins; null turns it off', () => {
+      expect(BLOOKET_PER_DAY_FROM).toBe('2026-11-13');
+      expect(blooketPerDayFrom(PHASE3_CONFIG)).toBe('2026-11-13');
+      expect('blooketPerDayFrom' in PHASE3_CONFIG).toBe(false);   // outside the m2b-pinned config
+      expect(blooketPerDayFrom({ ...LIVE, blooketPerDayFrom: '2026-12-01' })).toBe('2026-12-01');
+      expect(blooketPerDayFrom({ ...LIVE, blooketPerDayFrom: null })).toBeNull();
+      expect(blooketPerDayFrom(null)).toBe('2026-11-13');
+    });
+
+    it('4.7-8 is per-day in both sections; 4.1-2 and 4.3-5 (zero dates before 11/13) are not', () => {
+      expect(groupsFor('PeriodB')).toEqual(['4|7-8']);
+      expect(groupsFor('PeriodE')).toEqual(['4|7-8']);
+      expect(groupsFor('B')).toEqual(['4|7-8']);
+      expect(groupsFor(null)).toEqual(['4|7-8']);   // unknown section: either period's dates
+    });
+
+    it('a solo worksheet, a worksheet with no slices entry, a null cutoff, or no slices: never', () => {
+      expect(groupsFor('PeriodB')).not.toContain('4|6');     // solo, even with a slices entry
+      expect(groupsFor('PeriodB')).not.toContain('5|1-2');   // zero dates 12/01+, but no slices entry
+      expect(groupsFor('PeriodB', null)).toEqual([]);
+      const withSlices = (deckSlices) => [...perDayDeckGroups({
+        schedule: SCHEDULE, deckSlices, section: 'PeriodB', perDayFrom: BLOOKET_PER_DAY_FROM, config: LIVE,
+      })];
+      expect(withSlices({})).toEqual([]);
+      expect(withSlices(null)).toEqual([]);
+      expect(withSlices({ slices: null })).toEqual([]);
+      const noSchedule = perDayDeckGroups({
+        schedule: null, deckSlices: SLICES, section: 'PeriodB', perDayFrom: BLOOKET_PER_DAY_FROM, config: LIVE,
+      });
+      expect([...noSchedule]).toEqual([]);
+    });
+
+    it('an undated worksheet is never per-day (SAMPLE_SCHEDULE: 4.1-2 has no dates)', () => {
+      expect(groupsFor('PeriodB', BLOOKET_PER_DAY_FROM, LIVE, SAMPLE_SCHEDULE)).toEqual([]);
+    });
+
+    it('the test is on the earliest zero date (class day + dueLagDays) of the group', () => {
+      // 4.3-5 zero dates: B 11/09, 11/11, 11/12; E 11/10, 11/12, 11/15.
+      expect(groupsFor('PeriodB', '2026-11-09')).toContain('4|3-4-5');
+      expect(groupsFor('PeriodB', '2026-11-10')).not.toContain('4|3-4-5');
+      expect(groupsFor('PeriodE', '2026-11-10')).toContain('4|3-4-5');
+      expect(groupsFor('PeriodE', '2026-11-11')).not.toContain('4|3-4-5');
+      // Without dueLagDays the zero date is the class day: B 4.7 on 11/06.
+      expect(groupsFor('PeriodB', '2026-11-06', { ...LIVE, dueLagDays: 0 })).toEqual(['4|7-8']);
+      expect(groupsFor('PeriodB', '2026-11-07', { ...LIVE, dueLagDays: 0 })).toEqual([]);
+    });
+
+    it('the real SY2627 schedule + vendored slices: 4.7-8 and 4.10-12 are per-day, 4.1-2 and 4.3-5 are not', () => {
+      const prod = resolveProductionGradeInputs('SY2627');
+      for (const section of ['PeriodB', 'PeriodE', null]) {
+        const groups = perDayDeckGroups({
+          schedule: prod.lessonSchedule, deckSlices: prod.deckSlices, section,
+          perDayFrom: blooketPerDayFrom(prod.config), config: prod.config,
+        });
+        expect([...groups].sort(), String(section)).toEqual(['4|10-12', '4|7-8']);
+      }
+    });
+  });
+
+  describe('lesson Blooket values', () => {
+    it('BL-...-DESK_DAY parses like DESK_DONE (solo and combined keys)', () => {
+      expect(parseItemLesson('BL-U4-L7-DESK_DAY')).toEqual({ unit: 4, lessonKey: '7' });
+      expect(parseItemLesson('BL-U4-L7-8-DESK_DAY')).toEqual({ unit: 4, lessonKey: '7-8' });
+    });
+
+    it('in a per-day group a day deck stays with its own day', () => {
+      const map = lessons([row('BL-U4-L7-DESK_DAY', 85)], PER_DAY);
+      expect(blooketOf(map, '4.7')).toBe(85);
+      expect(blooketOf(map, '4.8')).toBeNull();
+    });
+
+    it('in a group that is not per-day a day deck counts for every day, as DESK_DONE does', () => {
+      const map = lessons([row('BL-U4-L3-DESK_DAY', 70)], PER_DAY);
+      expect(['4.3', '4.4', '4.5'].map((t) => blooketOf(map, t))).toEqual([70, 70, 70]);
+      const noPerDay = lessons([row('BL-U4-L7-DESK_DAY', 85)]);   // no per-day groups at all
+      expect([blooketOf(noPerDay, '4.7'), blooketOf(noPerDay, '4.8')]).toEqual([85, 85]);
+    });
+
+    it('a full-deck run (DESK_DONE) and a real game still count for every day of a per-day group', () => {
+      const fullDeck = lessons([row('BL-U4-L8-DESK_DONE', 66.1)], PER_DAY);
+      expect([blooketOf(fullDeck, '4.7'), blooketOf(fullDeck, '4.8')]).toEqual([66.1, 66.1]);
+      const game = lessons([row('BLOOKET-U4L7-8', 0.9, 'blooket')], PER_DAY);
+      expect([blooketOf(game, '4.7'), blooketOf(game, '4.8')]).toEqual([90, 90]);
+    });
+
+    it('a day Blooket is the best of the game, the full deck and its own day deck', () => {
+      const map = lessons([
+        row('BLOOKET-U4L7-8', 0.6, 'blooket'),
+        row('BL-U4-L8-DESK_DONE', 70),
+        row('BL-U4-L7-DESK_DAY', 95),
+        row('BL-U4-L8-DESK_DAY', 50),
+      ], PER_DAY);
+      expect(blooketOf(map, '4.7')).toBe(95);   // its own day deck
+      expect(blooketOf(map, '4.8')).toBe(70);   // the full deck beats its 50 day deck
+    });
+
+    it('a score-less or non-numeric day deck row leaves the day unscored (no spurious 0); scores clamp to 0..100', () => {
+      for (const score of [null, undefined, '', 'abc']) {
+        expect(blooketOf(lessons([row('BL-U4-L7-DESK_DAY', score)], PER_DAY), '4.7'), String(score)).toBeNull();
+      }
+      expect(blooketOf(lessons([row('BL-U4-L7-DESK_DAY', 140)], PER_DAY), '4.7')).toBe(100);
+      expect(blooketOf(lessons([row('BL-U4-L7-DESK_DAY', -5)], PER_DAY), '4.7')).toBe(0);
+    });
+
+    it('a day deck is never a worksheet blank, a quiz answer or an orphan', () => {
+      const map = lessons([row('BL-U4-L7-DESK_DAY', 85)], PER_DAY);
+      expect(map.get('4.7').worksheetItems).toEqual([]);
+      expect(map.get('4.7').quizItems).toEqual([]);
+      expect(map.get('4.7').lessonGrade).toBeNull();
+      expect(map.orphans).toEqual([]);
+    });
+  });
+
+  describe('Blooket track slots (computeQuarterV3)', () => {
+    // Period E: 4.7 and 4.8 are both taught 11/09 (Q2) and zero 11/22, so due from 11/23.
+    function q2(lessonMap, today, perDayGroups) {
+      return computeQuarterV3({
+        quarterKey: 'Q2', config: LIVE, lessonMap, schedule: SCHEDULE, todayDateStr: today, section: 'PeriodE',
+        unitPcData: {}, blooketLessons: ['4.7', '4.8'], perDayGroups,
+      });
+    }
+    const slots = (r) => [r.blooketDue, r.blooketDone, r.blooketTodo, r.workTracks.blooket];
+
+    it('once due, each day is its own slot: a student who played only 4.7 owes 4.8', () => {
+      const played47 = mapOf({ '4.7': { blooket: 90 } });
+      expect(slots(q2(played47, '2026-11-24', PER_DAY))).toEqual([2, 1, ['4.8'], 45]);
+      // The same lesson map under one score per worksheet: one slot, nothing owed.
+      expect(slots(q2(played47, '2026-11-24', new Set()))).toEqual([1, 1, [], 90]);
+    });
+
+    it('once due, a full-deck score fills both days of a per-day group', () => {
+      const fullDeck = mapOf({ '4.7': { blooket: 80 }, '4.8': { blooket: 80 } });
+      expect(slots(q2(fullDeck, '2026-11-24', PER_DAY))).toEqual([2, 2, [], 80]);
+    });
+
+    it('before its days are due a per-day group is one slot, worth the best day', () => {
+      // 11/20: taught, not due. A weaker day deck played early never lowers the slot.
+      for (const early of [60, 30]) {
+        const ahead = mapOf({ '4.7': { blooket: early }, '4.8': { blooket: 95 } });
+        expect(slots(q2(ahead, '2026-11-20', PER_DAY)), String(early)).toEqual([1, 1, [], 95]);
+      }
+      // A full-deck score recorded early counts exactly as it does with no per-day groups.
+      const fullDeck = mapOf({ '4.7': { blooket: 80 }, '4.8': { blooket: 80 } });
+      expect(q2(fullDeck, '2026-11-20', PER_DAY)).toEqual(q2(fullDeck, '2026-11-20', new Set()));
+    });
+
+    it('a group that is not per-day stays one slot, before and after it is due', () => {
+      const shared = mapOf({ '4.7': { blooket: 70 }, '4.8': { blooket: 70 } });
+      for (const today of ['2026-11-20', '2026-11-24']) {
+        expect(slots(q2(shared, today, new Set())), today).toEqual([1, 1, [], 70]);
+      }
+    });
+
+    it('the zero-freeze late loop uses the same slot key: late days of a per-day group share one slot, worth the best day', () => {
+      // B: a 7-8 worksheet taught at the end of Q1 (zero dates 11/17, 11/18) is late after the close.
+      const LATE = {
+        '4.6': { unit: 4, worksheetKey: '6', periods: { B: '2026-10-20', E: '2026-10-21' } },   // zero 11/02: due in Q1
+        '4.7': { unit: 4, worksheetKey: '7-8', periods: { B: '2026-11-04', E: '2026-11-04' } },
+        '4.8': { unit: 4, worksheetKey: '7-8', periods: { B: '2026-11-05', E: '2026-11-05' } },
+      };
+      const perDay = perDayDeckGroups({ schedule: LATE, deckSlices: SLICES, section: 'PeriodB', perDayFrom: BLOOKET_PER_DAY_FROM, config: LIVE });
+      expect([...perDay]).toEqual(['4|7-8']);
+      const q1 = (lessonMap, groups) => computeQuarterV3({
+        quarterKey: 'Q1', config: LIVE, lessonMap, schedule: LATE, todayDateStr: '2026-11-20', section: 'PeriodB',
+        unitPcData: {}, blooketLessons: ['4.6', '4.7', '4.8'], perDayGroups: groups,
+      });
+      // One late candidate worth the best day (100); it lifts the 80: (80 + 100) / 2.
+      const r = q1(mapOf({ '4.6': { blooket: 80 }, '4.7': { blooket: 70 }, '4.8': { blooket: 100 } }), perDay);
+      expect(slots(r)).toEqual([2, 2, [], 90]);
+      // A full-deck score on the late days counts exactly as before per-day decks.
+      const fullDeck = mapOf({ '4.6': { blooket: 80 }, '4.7': { blooket: 90 }, '4.8': { blooket: 90 } });
+      expect(q1(fullDeck, perDay)).toEqual(q1(fullDeck, new Set()));
+    });
+
+    it('perDayGroups may be passed as an array (the offline pack ships JSON)', () => {
+      const played47 = mapOf({ '4.7': { blooket: 90 } });
+      expect(q2(played47, '2026-11-24', ['4|7-8'])).toEqual(q2(played47, '2026-11-24', PER_DAY));
+    });
+  });
+
+  // ── Acceptance (D3: "nothing already counted moves") ─────────────────────────
+  // Today's rows hold only full-deck runs (DESK_DONE) and real games. With no per-day
+  // group due, turning per-day decks on must leave every lesson's Blooket value and
+  // every quarter's Blooket-track numbers exactly where the engine with no per-day
+  // groups puts them. That engine runs the pre-change code path (the golden and m2b
+  // fixtures, unchanged by this feature, pin it).
+  describe('acceptance: DESK_DONE/game rows with no per-day group due move nothing', () => {
+    // SAMPLE_SCHEDULE with dates. "ahead in Q2": the 4.1-2 worksheet is per-day and taught
+    // in Q2 (zero dates B 11/29-11/30, E 11/26). "late in Q1": taught at the end of Q1 (zero
+    // dates 11/17-11/19), so after the close it is late, never due. 4.6, 1.1, 1.2 are due in Q1.
+    const dated = (b41, e41, b42, e42) => ({
+      ...SAMPLE_SCHEDULE,
+      '4.1': { ...SAMPLE_SCHEDULE['4.1'], periods: { B: b41, E: e41 } },
+      '4.2': { ...SAMPLE_SCHEDULE['4.2'], periods: { B: b42, E: e42 } },
+      '4.6': { ...SAMPLE_SCHEDULE['4.6'], periods: { B: '2026-10-20', E: '2026-10-21' } },
+    });
+    const CASES = [
+      { label: 'ahead in Q2', schedule: dated('2026-11-16', '2026-11-13', '2026-11-17', '2026-11-13'),
+        days: ['2026-11-07', '2026-11-13', '2026-11-20', '2026-11-26'] },
+      { label: 'late in Q1', schedule: dated('2026-11-04', '2026-11-05', '2026-11-05', '2026-11-06'),
+        days: ['2026-11-05', '2026-11-07', '2026-11-20', '2027-02-01'] },
+    ];
+    const TOPICS = ['4.1', '4.2', '4.6', '1.1', '1.2'];
+    // Every id a client records today for these lessons: solo and combined keys.
+    const DECK_IDS = ['BL-U4-L1-DESK_DONE', 'BL-U4-L2-DESK_DONE', 'BL-U4-L1-2-DESK_DONE', 'BL-U4-L6-DESK_DONE',
+      'BL-U1-L1-DESK_DONE', 'BL-U1-L2-DESK_DONE'];
+    const GAME_IDS = ['BLOOKET-U4L1', 'BLOOKET-U4L2', 'BLOOKET-U4L1-2', 'BLOOKET-U4L6', 'BLOOKET-U1L1', 'BLOOKET-U1L2'];
+    const NO_SCORE = [null, '', 'n/a'];
+    let seed = 20261107;
+    const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
+    const pick = (list) => list[Math.floor(rnd() * list.length)];
+    function todaysRows() {
+      const rows = [];
+      const count = Math.floor(rnd() * 7);
+      for (let i = 0; i < count; i++) {
+        const isDeck = rnd() < 0.6;
+        const noScore = rnd() < 0.1;
+        if (isDeck) rows.push(row(pick(DECK_IDS), noScore ? pick(NO_SCORE) : Math.round(rnd() * 1000) / 10));
+        else rows.push(row(pick(GAME_IDS), noScore ? pick(NO_SCORE) : Math.round(rnd() * 100) / 100, 'blooket'));
+      }
+      return rows;
+    }
+
+    it('both cases have a per-day group (the property is not vacuous)', () => {
+      for (const { schedule, label } of CASES) {
+        for (const section of ['PeriodB', 'PeriodE', null]) {
+          expect(groupsFor(section, BLOOKET_PER_DAY_FROM, LIVE, schedule), label).toEqual(['4|1-2']);
+        }
+      }
+    });
+
+    it('every lesson Blooket value and every quarter Blooket-track number is unchanged (400 seeded ledgers)', () => {
+      let bothDaysScored = 0;
+      for (let trial = 0; trial < 400; trial++) {
+        const rows = todaysRows();
+        for (const { schedule, days, label } of CASES) {
+          for (const section of ['PeriodB', 'PeriodE', null]) {
+            const perDayGroups = perDayDeckGroups({ schedule, deckSlices: SLICES, section, perDayFrom: BLOOKET_PER_DAY_FROM, config: LIVE });
+            const oneScore = computeLessonGrades(rows, FRQ_BAND, {}, schedule, {});
+            const perDay = computeLessonGrades(rows, FRQ_BAND, {}, schedule, { perDayGroups });
+            for (const topicKey of TOPICS) {
+              const where = [trial, label, section, topicKey].join(' ');
+              expect(blooketOf(perDay, topicKey), where).toBe(blooketOf(oneScore, topicKey));
+            }
+            if (blooketOf(perDay, '4.1') != null && blooketOf(perDay, '4.2') != null) bothDaysScored += 1;
+            for (const today of days) {
+              for (const quarterKey of ['Q1', 'Q2']) {
+                const quarter = (lessonMap, groups) => computeQuarterV3({
+                  quarterKey, config: LIVE, lessonMap, schedule, todayDateStr: today, section,
+                  unitPcData: {}, blooketLessons: TOPICS, perDayGroups: groups,
+                });
+                const where = [trial, label, section, today, quarterKey].join(' ');
+                expect(quarter(perDay, perDayGroups), where).toEqual(quarter(oneScore, new Set()));
+              }
+            }
+          }
+        }
+      }
+      // The case that matters: both days of the per-day worksheet already carry a score.
+      expect(bothDaysScored).toBeGreaterThan(100);
+    });
   });
 });
 

@@ -625,6 +625,13 @@ describe('view-as -- write-helper short-circuits', () => {
     'closeBlooketFlashcards',
     'recordProgress',
     'recordLinkVisit',
+    // FLASHCARD_DECK_SLICES_SPEC.md D4: the timed-deck save & resume helpers.
+    '_ftSaveResume',
+    '_ftLoadResume',
+    '_ftClearResume',
+    // Codex review 2026-11-07: the self-attest ledger row, which _blooketCommit also sends
+    // directly for a finished run that is not a new best (no recordProgress gate on that path).
+    '_deskDoneRow',
   ]) {
     it(`${name} short-circuits on _viewAsContext (typeof-guarded)`, () => {
       const b = fnBody(html_SRC, name);

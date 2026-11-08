@@ -41,6 +41,7 @@ export const ACTIVE_SCHOOL_YEAR = /** @type {SchoolYear} */ ('SY2627');
  * @property {string[]} blooketRequired   // Due denominator
  * @property {string[]} blooketBonusTopics
  * @property {string[]} blooketTopics     // alias of blooketPresence (back-compat)
+ * @property {{slices?: Record<string, any>}} deckSlices // per-day deck slices ({} = none)
  * @property {object|null} answerKey
  * @property {string|null} answerKeyHash
  */
@@ -395,6 +396,21 @@ export function loadEventScheduleWithPriority() {
   return null;
 }
 
+// Per-day slices of the combined-worksheet flashcard decks (FLASHCARD_DECK_SLICES_SPEC.md
+// §2, §6): bundled roster-server/data (Railway ships only roster-server/) → repo-root
+// data → {}. {} = no slices, so every combined worksheet keeps one Blooket score.
+export function loadDeckSlicesWithPriority() {
+  const candidates = [
+    resolve(__dirname, 'data', 'blooket-deck-slices.json'),
+    resolve(REPO_ROOT, 'data', 'blooket-deck-slices.json'),
+  ];
+  for (const p of candidates) {
+    const doc = loadJsonSoft(p);
+    if (doc && doc.slices && typeof doc.slices === 'object' && !Array.isArray(doc.slices)) return doc;
+  }
+  return {};
+}
+
 function resolveLiveAnswerKeyPath() {
   if (process.env.ANSWER_KEY_PATH) return process.env.ANSWER_KEY_PATH;
   const bundled = resolve(__dirname, 'data', 'answer-key.json');
@@ -511,6 +527,7 @@ function buildContext(year) {
       blooketRequired: bl.required,
       blooketBonusTopics: bl.bonus,
       blooketTopics: bl.presence,
+      deckSlices: {}, // frozen year: one Blooket score per worksheet
       answerKey: null,
       answerKeyHash: null,
     });
@@ -527,6 +544,7 @@ function buildContext(year) {
     blooketRequired: bl.required,
     blooketBonusTopics: bl.bonus,
     blooketTopics: bl.presence,
+    deckSlices: loadDeckSlicesWithPriority(),
     answerKey,
     answerKeyHash: keyVersionHash(answerKey.answerKey, {}),
   });
@@ -574,6 +592,7 @@ export function resolveProductionGradeInputs(year = ACTIVE_SCHOOL_YEAR) {
     blooketBonusTopics: ctx.blooketBonusTopics.slice(),
     // back-compat alias
     blooketTopics: ctx.blooketPresence.slice(),
+    deckSlices: JSON.parse(JSON.stringify(ctx.deckSlices)),
     answerKey: ctx.answerKey
       ? JSON.parse(JSON.stringify(ctx.answerKey))
       : null,

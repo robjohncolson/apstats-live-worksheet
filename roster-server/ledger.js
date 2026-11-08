@@ -81,6 +81,23 @@ function validGrantCredit(credit) {
   return typeof credit === 'number' && Number.isFinite(credit) && credit >= 0 && credit <= 1;
 }
 
+// The timed flashcard deck's self-attest rows (FLASHCARD_DECK_SLICES_SPEC.md D3): the Desk
+// (_studentMarkSave) and the phone (_fcCommit) record source 'worksheet' with item id
+// BL-U{u}-L{key}-DESK_DONE (a deck dealt from the whole CSV) or -DESK_DAY (one day's slice).
+// The deck score is the Blooket grade. Worksheet answer rows (WS-…-Q) never match.
+const SELF_ATTEST_DECK_ITEM = /^BL-U\d+-L[\d-]+-DESK_(DONE|DAY)$/;
+
+function isSelfAttestDeckRow(source, itemId) {
+  if (source !== 'worksheet') return false;
+  return typeof itemId === 'string' && SELF_ATTEST_DECK_ITEM.test(itemId);
+}
+
+// The rows whose stored score is a durable floor on POST /ledger/record (see the floor there).
+function keepsScoreFloor(source, itemId) {
+  if (source === 'frq' || source === 'quiz_review') return true;
+  return isSelfAttestDeckRow(source, itemId);
+}
+
 function normalizeWorksheetAnswer(value) {
   return String(value || '').toLowerCase().trim().replace(/[^\w\s./-]/g, '');
 }
@@ -554,10 +571,20 @@ export function mountLedger(app, {
     // Same floor for 'quiz_review' (QUIZ_AI_HALF_CREDIT_SPEC, 2026-09-29): the appeal and the
     // "Talk it through" conversation both write `<item>#rev`, so a later 1/2 grant must never
     // replace an earlier 2/3 or 1 (the signed grant decides the incoming score above).
-    if ((source === 'frq' || source === 'quiz_review') && typeof db.getLedgerByStudent === 'function') {
+    // Same floor for the timed flashcard deck's self-attest rows (2026-11-07,
+    // FLASHCARD_DECK_SLICES_SPEC.md D3): source 'worksheet' with BL-U{u}-L{key}-DESK_DONE or
+    // -DESK_DAY (isSelfAttestDeckRow). The deck score IS the Blooket grade, and a client cannot
+    // know one item's best (/grade shows one Blooket number per day: the max of the game,
+    // DESK_DONE and DESK_DAY), so the clients may send every finished run and this floor keeps
+    // the best. DESK_DONE and DESK_DAY are different items, so they never floor each other.
+    // Worksheet answer rows (WS-…-Q) keep verbatim rescore semantics and skip this extra read.
+    if (keepsScoreFloor(source, itemId) && typeof db.getLedgerByStudent === 'function') {
+      let floorReadFailed = false;
       try {
         const attemptNo = attempt ?? 1;
-        const { data: rows } = await db.getLedgerByStudent(studentId, { prefix: itemId });
+        const read = await db.getLedgerByStudent(studentId, { prefix: itemId });
+        if (!read || read.error) floorReadFailed = true;
+        const rows = read && read.data;
         const existing = Array.isArray(rows)
           ? rows.find((r) => r && r.item_id === itemId && r.source === source && Number(r.attempt ?? 1) === Number(attemptNo))
           : null;
@@ -568,7 +595,15 @@ export function mountLedger(app, {
             effectiveScore = stored;   // floor holds; the response text is still refreshed
           }
         }
-      } catch (_) { /* best-effort: a read failure must never block the write */ }
+      } catch (_) {
+        floorReadFailed = true;
+      }
+      // FRQ and quiz_review stay best-effort: a read failure must never block the write (drafts
+      // keep flowing). A deck row holds nothing but its score, so writing it unchecked could
+      // replace the best with a lower run: refuse it, the same answer a failed write gets.
+      if (floorReadFailed && isSelfAttestDeckRow(source, itemId)) {
+        return res.status(500).json({ ok: false, error: 'Database error' });
+      }
     }
 
     // Quiz retry rule v2 (teacher 2026-09-29, QUIZ_FIRST_ANSWER_SPEC v2 §2): per KEYED curriculum

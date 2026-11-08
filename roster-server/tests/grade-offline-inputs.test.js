@@ -10,6 +10,7 @@ import http from 'http';
 import express from 'express';
 import { buildRedactedKey, REDACTION_SENTINEL, mountOfflineInputs } from '../grade-offline-inputs.js';
 import { computeGrade } from '../grade.js';
+import { resolveProductionGradeInputs } from '../grade-contexts.js';
 import {
   CONFIG, ANSWER_KEY, GRADE_OPTS, ARCHETYPES, materialize,
 } from './fixtures/sim-world.js';
@@ -160,5 +161,65 @@ describe('GET /grade/offline-inputs route', () => {
     expect(bonusLesson).toBeTruthy();
     expect(bonusLesson.blooketBonus).toBe(true);
     expect(bonusLesson.hasBlooket).toBe(true);
+  });
+});
+
+// FLASHCARD_DECK_SLICES_SPEC.md D3 / section 6: the device gets the per-day deck groups
+// the server computed for its section, never the slices file, and re-derives the
+// server grade with them.
+describe('GET /grade/offline-inputs: per-day deck groups', () => {
+  const prod = resolveProductionGradeInputs('SY2627');
+  const config = { ...prod.config, useV3: true, pcTrack: { enabled: false } };
+  const answerKeyDoc = prod.answerKey;
+  const rows = [
+    { item_id: 'BL-U4-L7-DESK_DAY', source: 'worksheet', score: 90, attempt: 1, topic: '4.7', recorded_at: '2026-11-20T16:00:00.000Z' },
+    { item_id: 'BL-U4-L3-DESK_DAY', source: 'worksheet', score: 70, attempt: 1, topic: '4.3', recorded_at: '2026-11-20T16:00:00.000Z' },
+  ];
+  const servers = [];
+
+  async function mount(deckSlices) {
+    const app = express();
+    mountOfflineInputs(app, {
+      verifyToken: (t) => (t === 'good' ? 'stu_e' : null),
+      ledgerDb: { getLedgerByStudent: async () => ({ data: rows }) },
+      loadAnswerKey: async () => answerKeyDoc,
+      lessonSchedule: prod.lessonSchedule,
+      eventSchedule: prod.eventSchedule,
+      db: { findByStudentId: async () => ({ data: { section: 'PeriodE' } }) },
+      config,
+      blooketPresence: prod.blooketPresence,
+      blooketRequired: prod.blooketRequired,
+      blooketBonusTopics: prod.blooketBonusTopics,
+      deckSlices,
+    });
+    const server = http.createServer(app);
+    servers.push(server);
+    await new Promise((r) => server.listen(0, '127.0.0.1', r));
+    const res = await fetch(`http://127.0.0.1:${server.address().port}/grade/offline-inputs?token=good`);
+    return res.json();
+  }
+
+  afterAll(() => Promise.all(servers.map((s) => new Promise((r) => s.close(r)))));
+
+  it('ships the groups for the student section as a list, not the slices file', async () => {
+    const body = await mount(prod.deckSlices);
+    expect(body.perDayGroups).toEqual(['4|7-8', '4|10-12']);
+    expect(body).not.toHaveProperty('deckSlices');
+    const withoutSlices = await mount(null);
+    expect(withoutSlices.perDayGroups).toEqual([]);
+  });
+
+  it('the shipped groups re-derive the server grade', async () => {
+    const body = await mount(prod.deckSlices);
+    const asOf = Date.parse('2026-11-24T17:00:00.000Z');
+    const common = {
+      lessonSchedule: prod.lessonSchedule, eventSchedule: prod.eventSchedule, section: 'PeriodE', asOf,
+      blooketPresence: prod.blooketPresence, blooketRequired: prod.blooketRequired, blooketBonusTopics: prod.blooketBonusTopics,
+    };
+    const server = computeGrade(rows, answerKeyDoc.answerKey, config, { ...common, deckSlices: prod.deckSlices });
+    const device = computeGrade(rows, body.redactedKey, body.config, { ...common, perDayGroups: body.perDayGroups });
+    expect(device).toEqual(server);
+    expect(device.lessons.find((l) => l.lessonKey === '4.8').blooket).toBeNull();   // per-day: 2.9 not played
+    expect(device.lessons.find((l) => l.lessonKey === '4.5').blooket).toBe(70);     // 4.3-5: one score
   });
 });

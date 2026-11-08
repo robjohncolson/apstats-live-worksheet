@@ -207,13 +207,15 @@ function readLog(storage) {
   return JSON.parse(storage.getItem('apstats_srs_log_' + EMAIL) || '[]');
 }
 
-function makeDeskHarness(mode) {
+// opts.topic / opts.perDay: a run dealt from a per-day slice (FLASHCARD_DECK_SLICES_SPEC.md D3).
+function makeDeskHarness(mode, opts = {}) {
+  const topic = opts.topic || TOPIC;
   const dom = deskDom();
   const timers = createTimers();
   const recorded = [];
   dom.window.localStorage.setItem('apstats_desk_student_email', EMAIL);
   const bfState = {
-    topic: TOPIC,
+    topic: topic,
     btn: dom.window.document.getElementById('launcher'),
     deck: clone(DECK),
     idx: 0,
@@ -226,7 +228,7 @@ function makeDeskHarness(mode) {
     cardStart: NOW - 500
   };
   const ftState = {
-    topic: TOPIC,
+    topic: topic,
     btn: dom.window.document.getElementById('launcher'),
     round: null,
     answered: false,
@@ -234,7 +236,8 @@ function makeDeskHarness(mode) {
     advanceId: null,
     remaining: 40,
     cardStartMs: NOW - 500,
-    roundId: 'desk-' + NOW + '-0002'
+    roundId: 'desk-' + NOW + '-0002',
+    perDay: !!opts.perDay
   };
   const windowObject = {
     __WS_READ_ONLY__: false,
@@ -280,6 +283,7 @@ function makeDeskHarness(mode) {
     'var clearTimeout = deps.clearTimeout;',
     'var clearInterval = deps.clearTimeout;',
     'var BLOOKET_PASS_THRESHOLD = 0.80;',
+    'var BLOOKET_FULLDECK_SECONDS = 40;',
     'var _lastResourcePanel = null;',
     'var _bfSaveProgress = deps.noop;',
     'var _bfClearProgress = deps.noop;',
@@ -309,10 +313,12 @@ function makeDeskHarness(mode) {
     fnSource(DESK, '_ftRecordOutcome'),
     fnSource(DESK, '_ftScore'),
     fnSource(DESK, '_ftClearTimer'),
+    fnSource(DESK, '_ftSecondsLeft'),
     fnSource(DESK, '_ftHandle'),
     fnSource(DESK, '_ftLogToStore'),
     fnSource(DESK, '_ftFinish'),
     fnSource(DESK, '_studentMarkSave'),
+    fnSource(DESK, '_deskDoneRow'),
     fnSource(DESK, '_blooketCommit'),
     'return {',
     '  answer: _bfAnswer, next: _bfNext, finishQuick: _bfFinish,',
@@ -326,7 +332,8 @@ function makeDeskHarness(mode) {
   return { api, bfState, ftState, recorded, timers, dom };
 }
 
-function makeMobileHarness(mode) {
+function makeMobileHarness(mode, opts = {}) {
+  const topic = opts.topic || TOPIC;
   const dom = mobileDom();
   const timers = createTimers();
   const recorded = [];
@@ -349,7 +356,7 @@ function makeMobileHarness(mode) {
       }
     : {
         mode: 'full',
-        lesson: { id: TOPIC },
+        lesson: { id: topic },
         round: FC.createRound(clone(DECK)),
         answered: false,
         timer: null,
@@ -357,7 +364,8 @@ function makeMobileHarness(mode) {
         roundId: 'mobile-' + NOW + '-0002',
         seq: 0,
         misses: [],
-        cardStart: NOW - 500
+        cardStart: NOW - 500,
+        perDay: !!opts.perDay
       };
   const windowObject = {
     __WS_READ_ONLY__: false,
@@ -455,9 +463,9 @@ async function runQuickPair() {
   return result;
 }
 
-async function runTimedPair() {
-  const desk = makeDeskHarness('full');
-  const mobile = makeMobileHarness('full');
+async function runTimedPair(opts = {}) {
+  const desk = makeDeskHarness('full', opts);
+  const mobile = makeMobileHarness('full', opts);
 
   for (let index = 0; index < TIMED_OUTCOMES.length; index += 1) {
     const outcome = TIMED_OUTCOMES[index];
@@ -589,6 +597,22 @@ describe('Desk ⇄ mobile flashcard surface parity', function () {
     expect(result.mobileRecords[0].score).toBe(result.deskRecords[0].score);
   });
 
+  it('records the same BL-…-DESK_DAY payload for a run dealt from a per-day slice', async function () {
+    const result = await runTimedPair({ topic: '4.7', perDay: true });
+    expect(result.deskRecords).toHaveLength(1);
+    expect(result.mobileRecords).toHaveLength(1);
+    expect(result.deskRecords[0].itemId).toBe('BL-U4-L7-DESK_DAY');
+    expect(result.deskRecords[0].topic).toBe('4.7');
+    expect(payloadContract(result.deskRecords[0])).toEqual(payloadContract(result.mobileRecords[0]));
+    expect(result.mobileRecords[0].score).toBe(result.deskRecords[0].score);
+  });
+
+  it('a whole-deck run keeps the BL-…-DESK_DONE payload on both surfaces', async function () {
+    const result = await runTimedPair({ topic: '4.6', perDay: false });
+    expect(result.deskRecords[0].itemId).toBe('BL-U4-L6-DESK_DONE');
+    expect(payloadContract(result.deskRecords[0])).toEqual(payloadContract(result.mobileRecords[0]));
+  });
+
   it('records the same frozen gradebook payload shape', async function () {
     const result = await runTimedPair();
     const deskPayload = result.deskRecords[0];
@@ -628,6 +652,27 @@ describe('Desk ⇄ mobile flashcard surface parity', function () {
     expect(deskCorrect.classList.contains('bf-correct')).toBe(false);
     expect(mobileCorrect.classList.contains('right')).toBe(false);
     expect(mobile.dom.window.document.getElementById('fc-feedback').textContent).toMatch(/come back/);
+
+    desk.dom.window.close();
+    mobile.dom.window.close();
+  });
+
+  // Codex review 2026-11-07, defect 1: a resumed card keeps its original start, so a card
+  // found timed out on reopening is long past its deadline; its time still logs as 40 s.
+  it('a card timed out long after its deadline logs the full 40 s clock on both surfaces', function () {
+    const desk = makeDeskHarness('full');
+    const mobile = makeMobileHarness('full');
+    const mobileCard = mobile.fcState.round.deck[FC.currentIdx(mobile.fcState.round)];
+
+    desk.ftState.cardStartMs = NOW - 50_000;
+    mobile.fcState.cardStart = NOW - 50_000;
+    desk.api.handleTimed('timeout', -1);
+    mobile.api.resolve('timeout', mobileCard, -1);
+
+    const deskLast = desk.ftState.round.log[desk.ftState.round.log.length - 1];
+    const mobileLast = mobile.fcState.round.log[mobile.fcState.round.log.length - 1];
+    expect(deskLast).toMatchObject({ correct: false, wasTimeout: true, chosenIdx: -1, latencyMs: 40_000 });
+    expect(mobileLast).toMatchObject({ correct: false, wasTimeout: true, chosenIdx: -1, latencyMs: 40_000 });
 
     desk.dom.window.close();
     mobile.dom.window.close();

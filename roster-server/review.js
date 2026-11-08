@@ -172,6 +172,7 @@ export function mountReview(app, {
   db, ledgerDb, nudgesDb, loadAnswerKey, lessonSchedule, eventSchedule = null, config, worksheetBlankCounts,
   schoolTz = 'America/New_York',
   blooketPresence = null, blooketRequired = null, blooketLessons = null,
+  deckSlices = null,   // per-day deck slices (FLASHCARD_DECK_SLICES_SPEC.md); null = none
 }) {
   const _presence = blooketPresence || blooketLessons || null;
   const _required = blooketRequired || null;
@@ -302,6 +303,7 @@ export function mountReview(app, {
           blooketPresence: _presence || undefined,
           blooketRequired: _required || undefined,
           blooketLessons: _presence || undefined,
+          deckSlices,
         }),
         lastReviewedAt,
         daysSinceReview,

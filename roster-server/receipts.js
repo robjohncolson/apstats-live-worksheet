@@ -73,7 +73,7 @@ function gradingProvenance(source, itemId) {
   const id = String(itemId || '');
   if (src === 'curriculum_quiz' || src === 'pc' || src === 'worksheet') return 'key';
   if (src === 'ai' || src === 'ai-graded' || src === 'quiz_review' || src === 'quiz_exception') return 'ai';
-  if (src === 'self-graded' || src === 'frq' || /DESK_DONE/i.test(id)) return 'self';
+  if (src === 'self-graded' || src === 'frq' || /DESK_(DONE|DAY)/i.test(id)) return 'self';
   return undefined;
 }
 

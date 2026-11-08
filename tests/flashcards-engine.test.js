@@ -14,6 +14,8 @@ import { deskSource } from './helpers/desk-source.js';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const DESK = deskSource();
+const ENGINE_SRC = readFileSync(resolve(repo, 'flashcards.js'), 'utf8');
+const SLICES = JSON.parse(readFileSync(resolve(repo, 'data/blooket-deck-slices.json'), 'utf8')).slices;
 
 function loadEngine() {
   const win = {};
@@ -112,6 +114,66 @@ describe('flashcards.js — scoring', () => {
     expect(FC.blooketItemId('1.10')).toEqual({ unit: 'U1', itemId: 'BL-U1-L10-DESK_DONE' });
     expect(FC.blooketItemId('garbage').itemId).toBe('BL-U?-DESK_DONE');
   });
+
+  it('blooketItemId: a run dealt from a per-day slice records DESK_DAY; the default stays DESK_DONE', () => {
+    expect(FC.blooketItemId('4.7', true)).toEqual({ unit: 'U4', itemId: 'BL-U4-L7-DESK_DAY' });
+    expect(FC.blooketItemId('4.10', true)).toEqual({ unit: 'U4', itemId: 'BL-U4-L10-DESK_DAY' });
+    expect(FC.blooketItemId('4.7', false).itemId).toBe('BL-U4-L7-DESK_DONE');
+    expect(FC.blooketItemId('4.7').itemId).toBe('BL-U4-L7-DESK_DONE');
+  });
+
+  // Codex review 2026-11-07, defect 3: a pair cell deals its first key's slice, so it records
+  // under that lesson (before: BL-U?-…, an id the grade engine rejects, so zero credit).
+  it('blooketItemId: a pair cell "4.7+4.8" records under its first key', () => {
+    expect(FC.blooketItemId('4.7+4.8', true)).toEqual({ unit: 'U4', itemId: 'BL-U4-L7-DESK_DAY' });
+    expect(FC.blooketItemId('4.7+4.8', false)).toEqual({ unit: 'U4', itemId: 'BL-U4-L7-DESK_DONE' });
+    expect(FC.blooketItemId('4.10+4.11').itemId).toBe('BL-U4-L10-DESK_DONE');
+    expect(FC.blooketItemId('+4.8').itemId).toBe('BL-U?-DESK_DONE');   // no first key: still unparsed
+  });
+});
+
+describe('flashcards.js — 30-card sittings, per-day slices, resume', () => {
+  const cards = (n) => Array.from({ length: n }, (_, i) => ({ qnum: i + 1, q: 'q' + i, choices: ['a', 'b'], correctIdx: 0 }));
+
+  it('DECK_CARDS is 30', () => {
+    expect(FC.DECK_CARDS).toBe(30);
+  });
+
+  it('sliceRanges + cardsInRanges deal a sliced topic its own day of the real 2.8-2.9 deck', () => {
+    const deck = FC.rowsToDeck(FC.parseCsv(readFileSync(resolve(repo, 'u4_l7_l8_blooket.csv'), 'utf8')));
+    const day1 = FC.cardsInRanges(deck, FC.sliceRanges(SLICES, 'u4_l7_l8_blooket.csv', '4.7'));
+    const day2 = FC.cardsInRanges(deck, FC.sliceRanges(SLICES, 'u4_l7_l8_blooket.csv', '4.8'));
+    expect([deck.length, day1.length, day2.length]).toEqual([77, 44, 33]);
+    expect(FC.sliceRanges(SLICES, 'u4_l6_blooket.csv', '4.6')).toBeNull();
+    expect(FC.cardsInRanges(deck, null)).toBe(deck);
+    expect(FC.cardsInRanges(deck, [[900, 999]])).toBe(deck);   // a bad range falls back to the whole CSV
+  });
+
+  it('dealDeck samples at most max cards and never mutates the pool', () => {
+    const pool = cards(44);
+    const dealt = FC.dealDeck(pool, FC.DECK_CARDS, FC.shuffle);
+    expect(dealt).toHaveLength(30);
+    expect(new Set(dealt.map((c) => c.qnum)).size).toBe(30);
+    expect(dealt.every((c) => c.qnum >= 1 && c.qnum <= 44)).toBe(true);
+    expect(pool.map((c) => c.qnum)).toEqual(cards(44).map((c) => c.qnum));
+    expect(FC.dealDeck(cards(12), FC.DECK_CARDS, FC.shuffle)).toHaveLength(12);
+  });
+
+  it('resumeRemaining: null between cards, the wall clock otherwise, floored at 0', () => {
+    expect(FC.resumeRemaining(null, 5_000, 40)).toBeNull();
+    expect(FC.resumeRemaining(5_000, 5_000, 40)).toBe(40);
+    expect(FC.resumeRemaining(5_000, 45_000, 40)).toBe(0);
+    expect(FC.resumeRemaining(5_000, 55_000, 40)).toBe(0);
+    expect(FC.resumeRemaining(5_000, 17_500, 40)).toBe(28);
+  });
+
+  it('savedRoundOk accepts a stored round and rejects a broken one', () => {
+    const round = JSON.parse(JSON.stringify(FC.createRound(cards(3))));
+    expect(FC.savedRoundOk(round)).toBe(true);
+    expect(FC.savedRoundOk({ ...round, order: [7] })).toBe(false);
+    expect(FC.savedRoundOk({ ...round, total: 2 })).toBe(false);
+    expect(FC.savedRoundOk(undefined)).toBe(false);
+  });
 });
 
 // ── PARITY vs the Desk's inline copies (the divergence guard) ──────────────────
@@ -188,9 +250,95 @@ describe('flashcards.js === the Desk inline engine (parity)', () => {
   it('the Desk still records via the same BL-…-DESK_DONE shape + threshold this engine encodes', () => {
     // Source pins: the Desk builds the item-id and threshold flashcards.js must match.
     expect(DESK).toContain("'-DESK_DONE'");
+    expect(DESK).toContain("'-DESK_DAY'");
     expect(DESK).toMatch(/BLOOKET_PASS_THRESHOLD\s*=\s*0\.80/);
     expect(DESK).toMatch(/BLOOKET_FULLDECK_SECONDS\s*=\s*40/);
+    expect(DESK).toMatch(/BLOOKET_DECK_CARDS\s*=\s*30;/);
     expect(FC.PASS_THRESHOLD).toBe(0.80);
     expect(FC.FULLDECK_SECONDS).toBe(40);
+    expect(FC.DECK_CARDS).toBe(30);
+  });
+
+  // FLASHCARD_DECK_SLICES_SPEC.md §4: the sittings/slices/resume helpers are the SAME text
+  // on both surfaces (only the name and the indent differ), and behave the same.
+  const SLICE_PAIRS = [
+    ['_ftSliceRanges', 'sliceRanges'],
+    ['_ftCardsInRanges', 'cardsInRanges'],
+    ['_ftDealDeck', 'dealDeck'],
+    ['_ftResumeRemaining', 'resumeRemaining'],
+    ['_ftSavedRoundOk', 'savedRoundOk'],
+  ];
+  function sameText(src, name) {
+    const body = fnBody(src, name);
+    const unnamed = 'function X' + body.slice(body.indexOf('('));
+    return unnamed.split('\n').map((line) => line.trim()).join('\n');
+  }
+
+  it.each(SLICE_PAIRS)('%s is line for line the text of flashcards.js %s', (deskName, engineName) => {
+    expect(sameText(DESK, deskName)).toBe(sameText(ENGINE_SRC, engineName));
+  });
+
+  it('the slice / deal / resume helpers return the same results as the Desk copies', () => {
+    const desk = {};
+    for (const [deskName] of SLICE_PAIRS) desk[deskName] = deskFn(deskName);
+    const cards = Array.from({ length: 12 }, (_, i) => ({ qnum: i + 1, q: 'q' + i, choices: ['a', 'b'], correctIdx: 0 }));
+    const reverse = (list) => list.slice().reverse();
+    for (const args of [[SLICES, 'u4_l7_l8_blooket.csv', '4.8'], [SLICES, 'u4_l1_l2_blooket.csv', '4.1+4.2'], [SLICES, 'nope.csv', '4.7'], [null, 'x', '1.1']]) {
+      expect(FC.sliceRanges(...args)).toEqual(desk._ftSliceRanges(...args));
+    }
+    for (const ranges of [null, [], [[2, 4], [9, 9]], [[40, 50]], ['junk']]) {
+      expect(FC.cardsInRanges(cards, ranges)).toEqual(desk._ftCardsInRanges(cards, ranges));
+    }
+    for (const max of [0, 5, 30]) {
+      expect(FC.dealDeck(cards, max, reverse)).toEqual(desk._ftDealDeck(cards, max, reverse));
+    }
+    for (const [startMs, nowMs] of [[null, 1], [1_000, 1_000], [1_000, 41_000], [1_000, 99_000], [9_000, 1_000]]) {
+      expect(FC.resumeRemaining(startMs, nowMs, 40)).toBe(desk._ftResumeRemaining(startMs, nowMs, 40));
+    }
+    const round = JSON.parse(JSON.stringify(FC.createRound(cards)));
+    for (const candidate of [round, { ...round, order: [99] }, { ...round, deck: [] }, null]) {
+      expect(FC.savedRoundOk(candidate)).toBe(desk._ftSavedRoundOk(candidate));
+    }
+  });
+
+  // The Desk builds the BL- item id in _deskDoneRow, which both commit paths use: a new best
+  // through _studentMarkSave, any other finished run directly from _blooketCommit. Run each
+  // path for real and compare.
+  function deskRowSandbox(rows) {
+    return new Function(
+      'window', 'recordProgress', '_lastResourcePanel',
+      fnBody(DESK, '_studentMarkSave') + '\n' + fnBody(DESK, '_deskDoneRow')
+        + '\nreturn { save: _studentMarkSave, row: _deskDoneRow };'
+    )({ gradebookClient: { record: (row) => { rows.push(row); return null; } } }, async () => true, null);
+  }
+  async function deskRecordedRow(topic, artifact, perDay) {
+    const rows = [];
+    await deskRowSandbox(rows).save(null, topic, artifact, 90, perDay);
+    return rows[0];
+  }
+  function deskDirectRow(topic, artifact, perDay) {
+    const rows = [];
+    deskRowSandbox(rows).row(topic, artifact, 90, perDay);
+    return rows[0];
+  }
+
+  it('the Desk _studentMarkSave and _deskDoneRow build the same BL- item id as blooketItemId(topic, perDay)', async () => {
+    for (const topic of ['4.7', '4.10', '1.1', '4.1-2', '3.6-7', '4.7+4.8', 'garbage']) {
+      for (const perDay of [true, false, undefined]) {
+        const built = FC.blooketItemId(topic, perDay);
+        for (const row of [await deskRecordedRow(topic, 'blooket', perDay), deskDirectRow(topic, 'blooket', perDay)]) {
+          expect(row.itemId, topic + ' perDay=' + perDay).toBe(built.itemId);
+          expect(row.unit, topic + ' perDay=' + perDay).toBe(built.unit);
+        }
+      }
+    }
+    // A pair cell records under its first key on both surfaces (Codex review, defect 3).
+    expect((await deskRecordedRow('4.7+4.8', 'blooket', true)).itemId).toBe('BL-U4-L7-DESK_DAY');
+    expect(deskDirectRow('4.7+4.8', 'blooket', false)).toMatchObject({ itemId: 'BL-U4-L7-DESK_DONE', unit: 'U4', topic: '4.7' });
+  });
+
+  it('perDay never changes a worksheet or quiz Done row (DESK_DAY is flashcards only)', async () => {
+    expect((await deskRecordedRow('4.7', 'worksheet', true)).itemId).toBe('WS-U4-L7-DESK_DONE');
+    expect((await deskRecordedRow('4.7', 'quiz', true)).itemId).toBe('CR-U4-L7-DESK_DONE');
   });
 });

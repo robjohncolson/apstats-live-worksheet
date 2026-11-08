@@ -171,7 +171,10 @@ describe('CED flashcard titles preserve deck and resume keys', () => {
       _bfShuffle: (cards) => cards, _bfShowQuizUI: () => {}, _bfLoadProgress: () => null,
       _bfLoadDifficultyTags: async () => ({}), _bfSelectTop10: (cards) => cards,
       _bfSaveProgress: () => {}, _bfRenderCard: () => {}, _bfKeydownHandler: () => {},
-      _ftCreateRound: (cards) => ({ deck: cards }), _ftRenderCard: () => {}, _ftKeydownHandler: () => {},
+      _ftCreateRound: (cards) => ({ deck: cards, total: cards.length }), _ftRenderCard: () => {}, _ftKeydownHandler: () => {},
+      // FLASHCARD_DECK_SLICES_SPEC.md §3: the timed deck deals from a slice pool and can resume.
+      _bfLoadDeckSlices: async () => ({}), _ftSliceRanges: () => null, _ftCardsInRanges: (cards) => cards,
+      _ftDealDeck: (cards) => cards, _ftLoadResume: () => null, _ftShowStartOver: () => {}, BLOOKET_DECK_CARDS: 30,
       _rvRenderCard: () => {}, _rvKeydownHandler: () => {},
       FlashcardSrs: { dueCards: () => ['u3_l1_blooket.csv#1'], dayIndex: () => 0 },
       FlashcardStore: {}, _srsFoldedState: () => ({ store: { save: () => {} }, log: [], folded: {} }),
@@ -179,6 +182,11 @@ describe('CED flashcard titles preserve deck and resume keys', () => {
     });
     await win[name](null, '3.1');
     expect(win.document.getElementById('bf-header').textContent).toContain(prefix + ' — ' + foldedTitle);
+    if (name === '_ftStart') {
+      // D5 header: the CED label, the dealt card count, the clock, the cap (never the old key).
+      expect(win.document.getElementById('bf-header').textContent)
+        .toBe('Timed deck — ' + foldedTitle + ' · 1 card · 20s/card · up to 100%');
+    }
     expect(csvPath).toHaveBeenCalledWith('3.1');
     expect(fetch).toHaveBeenCalledWith('u3_l1_blooket.csv');
     expect(win[stateKey].topic).toBe('3.1');

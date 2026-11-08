@@ -113,7 +113,9 @@ async function j5SettleSignIn(harness) {
   }
 }
 
-async function j5OpenPicker(harness) {
+// doubleClick: click the launcher twice, the second click landing while the first is still
+// loading the deck's CSV (the deck window opens only once it has loaded).
+async function j5OpenPicker(harness, { doubleClick = false } = {}) {
   const resourceOverlay = harness.document.getElementById('resource-overlay');
   if (resourceOverlay.style.display !== 'block') {
     // The calendar re-renders after sign-in (grade fetch) — wait for the tile
@@ -133,6 +135,7 @@ async function j5OpenPicker(harness) {
     )
   ), { message: 'real lesson panel has no flashcards launcher' });
   launcher.click();
+  if (doubleClick) launcher.click();
   // No picker any more: the launcher opens straight into the timed deck.
   await harness.waitFor(() => (
     harness.document.getElementById('bf-overlay').style.display === 'block'
@@ -207,7 +210,10 @@ async function j5SettleRoster(harness) {
 }
 
 describe('Desk journey J5', () => {
-  it('J5 Full timed deck rejects a lower re-run and posts one higher best (supersedes desk-timed-deck it 17 “_ftFinish logs, recaps, and commits the score (best-wins)” and it 24 “_blooketCommit only saves a NEW best + refreshes /grade BEFORE the floor”)', async () => {
+  // Re-pinned 2026-11-07 (Codex review, defect 2): a finished run below the recorded best still
+  // posts its own row (the server keeps each item's best; the best shown can be another
+  // item's), while the local mark and the finish screen keep the best.
+  it('J5 Full timed deck: a lower re-run posts its own row but keeps the best, then a higher run posts the new best (supersedes desk-timed-deck it 17 “_ftFinish logs, recaps, and commits the score (best-wins)” and it 24 “_blooketCommit only saves a NEW best + refreshes /grade BEFORE the floor”)', async () => {
     const harness = await bootDesk({
       now: NOW,
       fakeTimers: true,
@@ -217,7 +223,12 @@ describe('Desk journey J5', () => {
     try {
       await j5SettleSignIn(harness);
       const srsLogBefore = JSON.parse(harness.window.localStorage.getItem(LOG_KEY) || '[]');
-      let picker = await j5OpenPicker(harness);
+      // Opus verifier 2026-11-07: a double click opens ONE fresh deck. The second click used to
+      // run _ftStart again, find the first deal's save and show the new deck as resumed.
+      let picker = await j5OpenPicker(harness, { doubleClick: true });
+      await harness.flush(4);   // let a second start finish, if one ran
+      expect(picker.textContent).not.toContain('Picking up');
+      expect(harness.document.getElementById('bf-startover')).toBeNull();
       expect(picker.textContent).toContain(`Your best so far: ${INITIAL_BLOOKET}%`);
       expect(picker.textContent).toMatch(/your Blooket grade/);   // teacher 2026-10-12: the score IS the grade
       const gradeRequestsBeforeLower = harness.roster.state.requests.filter((request) => (
@@ -238,8 +249,28 @@ describe('Desk journey J5', () => {
           request.method === 'GET' && request.path === '/grade'
         )).length >= gradeRequestsBeforeLower + 2
       ), { message: 'lower run did not complete both best-wins grade refreshes' });
+      await harness.waitFor(() => j5LedgerPosts(harness).length >= 1, {
+        timeoutMs: 3_000, message: 'lower timed run did not post its own row',
+      });
       await j5SettleRoster(harness);
-      expect(j5LedgerPosts(harness)).toEqual([]);
+      const lowerPosts = j5LedgerPosts(harness);
+      expect(lowerPosts).toHaveLength(1);
+      const { token: lowerToken, ...lowerPayload } = lowerPosts[0].body;
+      expect(lowerToken).toBe('token:alpha_otter');
+      expect(lowerPayload).toEqual({
+        source: 'worksheet',
+        itemId: 'BL-U1-L1-DESK_DONE',
+        unit: 'U1',
+        topic: TOPIC,
+        response: { selfAttest: 'blooket' },
+        score: lowerScore,
+        attempt: 1,
+      });
+      // The finish screen keeps the best and claims no new one.
+      const label = harness.window.cedLabel(TOPIC).text;
+      expect(harness.document.querySelector('#bf-result .bf-outcome').textContent).toBe(
+        `Recorded. Your best for ${label} stays at ${FRESH_BLOOKET.toFixed(1)}% (this run: ${lowerScore.toFixed(1)}%).`,
+      );
       const lowerLog = JSON.parse(harness.window.localStorage.getItem(LOG_KEY) || '[]');
       const lowerEntries = lowerLog.slice(srsLogBefore.length);
       expect(lowerEntries.length).toBeGreaterThan(0);
@@ -269,7 +300,7 @@ describe('Desk journey J5', () => {
       expect(higherScore).toBeGreaterThan(FRESH_BLOOKET);
       await harness.waitFor(() => {
         const recorded = j5LedgerPosts(harness);
-        return recorded.length >= 1;
+        return recorded.length >= 2;
       }, { timeoutMs: 3_000, message: 'higher timed run did not post its new best' });
       await harness.waitFor(() => (
         harness.roster.state.requests.filter((request) => (
@@ -279,14 +310,18 @@ describe('Desk journey J5', () => {
       await j5SettleRoster(harness);
 
       const posts = j5LedgerPosts(harness);
-      expect(j5LedgerPosts(harness)).toHaveLength(1);
-      expect(harness.roster.state.ledgerRecords).toHaveLength(1);
+      expect(posts).toHaveLength(2);                                   // the lower run's row, then the new best
+      expect(harness.roster.state.ledgerRecords).toHaveLength(2);
       const higherLog = JSON.parse(harness.window.localStorage.getItem(LOG_KEY) || '[]');
       const higherEntries = higherLog.slice(lowerLog.length);
       expect(higherEntries.length).toBeGreaterThan(0);
       expect(higherEntries.every((entry) => entry.mode === 'full')).toBe(true);
-      expect(posts[0].body.token).toBe('token:alpha_otter');
-      const { token, ...payload } = posts[0].body;
+      const higherMarks = JSON.parse(
+        harness.window.localStorage.getItem('apstats_desk_marks_alpha_otter') || '{}',
+      );
+      expect(higherMarks[`${TOPIC}|blooket`].score).toBe(100);         // a new best writes the local mark
+      expect(posts[1].body.token).toBe('token:alpha_otter');
+      const { token, ...payload } = posts[1].body;
       expect(token).toBe('token:alpha_otter');
       expect(payload).toEqual({
         source: 'worksheet',
@@ -297,6 +332,7 @@ describe('Desk journey J5', () => {
         score: 100,
         attempt: 1,
       });
+      // One CSV fetch per opened deck: the double click's second start never fetched.
       expect(harness.requests.filter(({ method, url }) => (
         method === 'GET' && new URL(url).pathname.endsWith(`/${CSV_FILE}`)
       ))).toHaveLength(2);
