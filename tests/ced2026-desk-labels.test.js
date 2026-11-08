@@ -175,6 +175,10 @@ describe('CED flashcard titles preserve deck and resume keys', () => {
       // FLASHCARD_DECK_SLICES_SPEC.md §3: the timed deck deals from a slice pool and can resume.
       _bfLoadDeckSlices: async () => ({}), _ftSliceRanges: () => null, _ftCardsInRanges: (cards) => cards,
       _ftDealDeck: (cards) => cards, _ftLoadResume: () => null, _ftShowStartOver: () => {}, BLOOKET_DECK_CARDS: 30,
+      // Owner-bound decks (2026-11-08): the deck captures its owner, checks it before dealing and
+      // offers a pending finished run first; this sandbox has one consistent student and no pending run.
+      _ftCaptureOwner: () => ({ email: 'student@roster.local', studentId: 'student-1', username: 'student', consistent: true }),
+      _ftOwnerIsCurrent: () => true, _ftLoadPending: () => null, _ftShowPending: () => {},
       _rvRenderCard: () => {}, _rvKeydownHandler: () => {},
       FlashcardSrs: { dueCards: () => ['u3_l1_blooket.csv#1'], dayIndex: () => 0 },
       FlashcardStore: {}, _srsFoldedState: () => ({ store: { save: () => {} }, log: [], folded: {} }),

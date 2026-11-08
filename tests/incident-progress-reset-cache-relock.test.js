@@ -41,7 +41,13 @@ describe('PROGRESS_RESET_FIX_SPEC — renderDoNowGrades: every failure kind is c
     // D2: gated on _gradeLoadState === 'unavailable' (every kind), not a
     // network-only flag like the old _gradeOffline.
     expect(body).toMatch(/else if \(_gradeLoadState === 'unavailable'\)/);
-    expect(body).toMatch(/_phase2ReDeriveGrade\(\)\)\s*\|\|\s*_loadGradeCache\(\)/);
+    // Since 2026-11-08 (owner-bound renders) the restore is three statements: re-derive,
+    // then exit if a newer render, sign-in or view-as change superseded this one (that
+    // render restores for itself), then fall back to the last cached /grade blob. Every
+    // unavailable kind still reaches _loadGradeCache() when the render is current.
+    expect(body).toMatch(
+      /data = await _phase2ReDeriveGrade\(\);\s*if \(!requestIsCurrent\(\)\) return;\s*data = data \|\| _loadGradeCache\(\);/
+    );
     expect(body).not.toMatch(/_gradeOffline/); // the old network-only flag is gone
   });
 
