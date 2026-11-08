@@ -111,3 +111,49 @@ describe('VideoOnDemand.evictionPlan (pure)', () => {
     expect(V.evictionPlan({}, [1, 2]).sort()).toEqual([1, 2]);
   });
 });
+
+describe('VideoOnDemand download integrity', () => {
+  it.each([0, 999, 1001])('removes a known %i-byte mismatch so a retry can download it', async (bytes) => {
+    const store = memStore();
+    store.size = (key) => Promise.resolve(store._map.get(key).size);
+    let body = new Blob([new Uint8Array(bytes)]);
+    const V = load({ store, fetchImpl: async () => ({ ok: true, blob: async () => body }) });
+    V.setCatalog([CATALOG[0]]);
+    expect(await V.downloadUnit(1)).toMatchObject({ downloaded: 0, failed: 1 });
+    expect(await V.isDownloaded('net/u1a')).toBe(false);
+    expect((await V.resolve('net/u1a')).state).toBe('remote');
+    body = new Blob([new Uint8Array(1000)]);
+    expect(await V.downloadUnit(1)).toMatchObject({ downloaded: 1, failed: 0 });
+    expect((await V.resolve('net/u1a')).state).toBe('downloaded');
+  });
+
+  it('preserves optional-size adapters when the stored size is unavailable', async () => {
+    const store = memStore();
+    store.size = async () => null;
+    const V = load({ store, fetchImpl: okFetch });
+    V.setCatalog(CATALOG);
+    await V.download('net/u1a');
+    expect(await V.isDownloaded('net/u1a')).toBe(true);
+  });
+});
+
+describe('VideoStore size contract', () => {
+  const STORE_SOURCE = readFileSync(resolve(import.meta.dirname, '..', 'video-store.js'), 'utf8');
+  function adapter(stat) {
+    const win = { Capacitor: { Plugins: { Filesystem: { stat } } } };
+    runInContext(STORE_SOURCE, createContext({ window: win, Promise, Number, isFinite }));
+    return win.VideoStore;
+  }
+
+  it('returns zero for a known empty file', async () => {
+    expect(await adapter(async () => ({ size: 0 })).size('video.mp4')).toBe(0);
+  });
+
+  it.each([{}, { size: null }, { size: -1 }, { size: 'invalid' }])('returns null for unavailable or invalid stat size %j', async (stat) => {
+    expect(await adapter(async () => stat).size('video.mp4')).toBeNull();
+  });
+
+  it('returns null if stat fails', async () => {
+    expect(await adapter(async () => { throw new Error('stat failed'); }).size('video.mp4')).toBeNull();
+  });
+});

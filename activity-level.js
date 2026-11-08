@@ -441,12 +441,29 @@
 
     handle.updateState = function (activityState) {
       if (handle.destroyed || !handle.ctx) { return; }
-      if (!handle._levelDef && activityState && activityState.level) {
-        handle._levelDef = activityState.level;
-        var map = activityState.level.map;
-        if (map && typeof map.chipSize === 'number' && map.chipSize > 0) {
-          handle.chipSize = map.chipSize;
+      var nextLevel = activityState && activityState.level;
+      // The Desk can reuse this renderer when another level starts before
+      // the previous outcome's teardown timer fires. Replace its definition
+      // and geometry together; ordinary ticks can omit the level metadata.
+      // Polls deserialize fresh objects even for the same level. Keep its
+      // tooltip in place, while still accepting edited text or map geometry.
+      if (nextLevel && typeof nextLevel === 'object' && nextLevel !== handle._levelDef) {
+        var sameLevel = handle._levelDef && nextLevel.levelKey
+          && nextLevel.levelKey === handle._levelDef.levelKey;
+        if (!sameLevel) { removeTooltip(handle); }
+        handle._levelDef = nextLevel;
+        var map = nextLevel.map || {};
+        handle.chipSize = (typeof map.chipSize === 'number' && map.chipSize > 0)
+          ? map.chipSize : DEFAULT_CHIP_SIZE;
+        var nextHeight = (typeof map.height === 'number' && map.height > 0)
+          ? map.height * handle.chipSize + TOP_MARGIN
+          : ((typeof opts.height === 'number' && opts.height > 0) ? opts.height : DEFAULT_OVERLAY_H + TOP_MARGIN);
+        if (nextHeight !== handle.cssH) {
+          handle.cssH = nextHeight;
+          canvas.height = Math.max(1, Math.floor(nextHeight));
+          canvas.style.height = nextHeight + 'px';
         }
+        mountEl.style.height = nextHeight + 'px';
       }
       renderScene(handle, activityState);
     };

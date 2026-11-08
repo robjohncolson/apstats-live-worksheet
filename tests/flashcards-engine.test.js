@@ -307,7 +307,9 @@ describe('flashcards.js === the Desk inline engine (parity)', () => {
   function deskRowSandbox(rows) {
     return new Function(
       'window', 'recordProgress', '_lastResourcePanel',
-      fnBody(DESK, '_studentMarkSave') + '\n' + fnBody(DESK, '_deskDoneRow')
+      'function getStudentEmail() { return "Alice"; }\n'
+        + fnBody(DESK, '_ftCaptureOwner') + '\n' + fnBody(DESK, '_ftOwnerIsCurrent') + '\n'
+        + fnBody(DESK, '_studentMarkSave') + '\n' + fnBody(DESK, '_deskDoneRow')
         + '\nreturn { save: _studentMarkSave, row: _deskDoneRow };'
     )({ gradebookClient: { record: (row) => { rows.push(row); return null; } } }, async () => true, null);
   }

@@ -114,7 +114,8 @@
         // when the store can't size or the catalog has no expected bytes.
         if (typeof s.size !== 'function' || !e.bytes) return;
         return Promise.resolve(s.size(e.file)).then(function (got) {
-          if (got > 0 && got !== Number(e.bytes)) {
+          // Unavailable size is distinct from a known empty (zero-byte) file.
+          if (typeof got === 'number' && isFinite(got) && got >= 0 && got !== Number(e.bytes)) {
             return Promise.resolve(s.remove(e.file)).then(function () { throw new Error('download size mismatch'); });
           }
         });

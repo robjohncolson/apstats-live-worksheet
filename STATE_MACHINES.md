@@ -1,5 +1,7 @@
 # Live Worksheet State Machine Documentation
 
+For the current app-wide ownership map, invariants and regression commands, start with [STATE_MACHINE_MAP.md](STATE_MACHINE_MAP.md). This document retains the original worksheet-specific diagrams; its historical line numbers and client-grading descriptions are not the current server-authority contract.
+
 This document describes the state machines governing the interactive behaviors in the live worksheets (`u3_lesson6-7_live.html`, `u4_lesson1-2_live.html`).
 
 ---

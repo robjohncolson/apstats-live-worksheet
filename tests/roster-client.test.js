@@ -113,7 +113,8 @@ describe('roster-client.js expiry', () => {
       clock.mockReturnValue(now + 31 * 86400000);
       expect(rosterClient.isExpired()).toBe(true);
       expect((await rosterClient.changePassword('new-pin')).ok).toBe(true);
-      expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).signedInAt).toBe(new Date(now + 31 * 86400000).toISOString());
+      expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).signedInAt).toBe(new Date(now).toISOString());
+      expect(rosterClient.isExpired()).toBe(true);
     } finally { clock.mockRestore(); win.close(); }
   });
 

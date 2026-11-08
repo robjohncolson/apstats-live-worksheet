@@ -234,13 +234,16 @@
   var _sendChains = {};
   function _recordKey(opts) {
     var attempt = opts && opts.attempt != null ? opts.attempt : 1;
-    return String(opts && opts.source) + '|' + String(opts && opts.itemId) + '|' + String(attempt);
+    return JSON.stringify([opts && opts.studentId || null, String(opts && opts.source), String(opts && opts.itemId), String(attempt)]);
   }
   function _stampRecord(opts) {
     var stamped = /** @type {RecordOpts & {transportSequence: number}} */ ({});
     for (var key in opts) {
       if (Object.prototype.hasOwnProperty.call(opts, key)) stamped[key] = opts[key];
     }
+    // Ownership belongs to the session that admitted this write. A later sign-in
+    // must not reattribute it while it waits for another POST or local storage.
+    stamped.studentId = _studentId() || undefined;
     var now = Date.now();
     _transportSequence = Math.max(_transportSequence + 1, now);
     stamped.transportSequence = _transportSequence;
@@ -258,7 +261,7 @@
   function _enqueueOffline(opts) {
     if (!_hasQueue()) return Promise.resolve(false);
     if (_isSuperseded(opts)) return Promise.resolve(false);
-    var sid = _studentId();
+    if (!opts.studentId) return Promise.resolve(false);
     try {
       // Cast: _hasQueue() above guarantees enqueue exists; tsc can't see across the call.
       return Promise.resolve(/** @type {any} */ (window.OfflineQueue).enqueue({
@@ -267,7 +270,7 @@
         unit: opts.unit, topic: opts.topic, skill: opts.skill,
         requestGrade: opts.requestGrade,
         transportSequence: opts.transportSequence,
-        studentId: sid || undefined, kind: opts.kind || 'record'
+        studentId: opts.studentId, kind: opts.kind || 'record'
       })).then(function (stored) {
         return !!stored && !_isSuperseded(opts)
           && (!stored.transportSequence || stored.transportSequence >= opts.transportSequence);
@@ -325,6 +328,7 @@
       try { data = await res.json(); } catch (_) { data = null; }
 
       if (data && data.ok) {
+        if (_lastAuthFailToken === token) _lastAuthFailToken = null;
         _captureReceipt(data.receipt, opts.source, opts.itemId, opts.score);
         var out = { ok: true, ledgerId: data.ledgerId, receipt: data.receipt || null };
         if (Object.prototype.hasOwnProperty.call(data, 'clientScoreIgnored')) out.clientScoreIgnored = data.clientScoreIgnored;
@@ -332,7 +336,12 @@
         if (Object.prototype.hasOwnProperty.call(data, 'responseVersion')) out.responseVersion = data.responseVersion;
         return out;
       }
-      if (res && (res.status === 401 || res.status === 403)) { console.warn('gradebook-client: auth failed', data); return { ok: false, reason: 'auth', status: res.status }; }
+      if (res && (res.status === 401 || res.status === 403)) {
+        // A delayed rejection applies only to the credentials actually sent.
+        if (_token() === token && opts.studentId === (_studentId() || undefined)) _lastAuthFailToken = token;
+        console.warn('gradebook-client: auth failed', data);
+        return { ok: false, reason: 'auth', status: res.status };
+      }
       // Queue on the authenticated FRQ body contract, not a hard-coded status.
       // This covers today's 429/503 responses and future retryable statuses.
       if (opts.source === 'frq' && opts.requestGrade === true && data && data.retryable === true) {
@@ -347,19 +356,20 @@
     }
   }
 
-  // Serialize network sends per source/item/attempt. Sequences are still
+  // Serialize network sends per owner/source/item/attempt. Sequences are still
   // stamped when record() starts, so newer intent wins in the outbox while the
   // wire order guarantees an older POST cannot finish after a newer POST.
   function _sendRecord(opts) {
     var key = _recordKey(opts);
     var previous = _sendChains[key] || Promise.resolve();
     var run = previous.catch(function () {}).then(function () { return _postRecord(opts); });
-    _sendChains[key] = run.then(function () {}, function () {});
+    var tail = run.then(function () {}, function () {});
+    _sendChains[key] = tail;
     return run.then(function (value) {
-      if (_sendChains[key]) delete _sendChains[key];
+      if (_sendChains[key] === tail) delete _sendChains[key];
       return value;
     }, function (err) {
-      if (_sendChains[key]) delete _sendChains[key];
+      if (_sendChains[key] === tail) delete _sendChains[key];
       throw err;
     });
   }
@@ -376,6 +386,10 @@
   // don't spend N POSTs per keystroke re-learning that. Cleared by a successful send or a
   // sign-in (storage event); a genuinely new token always differs from the failed one.
   var _lastAuthFailToken = null;
+  function _isCurrentAuthFailure(opts) {
+    return !!_lastAuthFailToken && _lastAuthFailToken === _token()
+      && opts.studentId === (_studentId() || undefined);
+  }
   function _scheduleOfflineDrain(delayMs) {
     // Coalesce reconnect/sign-in events while a batch is awaiting the network.
     if (_offlineDrainInFlight) { _offlineDrainRerun = true; return; }
@@ -491,17 +505,17 @@
         // studentId (the token alone is drain-time state, not ownership).
         // 2026-09-09: an expired session (401 → 'auth') is captured too — the row carries the
         // owner's studentId and the ownership-gated drain replays it once they sign in again.
-        if ((r.reason === 'network' || r.reason === 'auth') && _hasQueue() && _studentId()) {
+        if ((r.reason === 'network' || r.reason === 'auth') && _hasQueue() && opts.studentId) {
           if (await _enqueueOffline(opts)) {
-            if (r.reason === 'auth') { _lastAuthFailToken = _token(); _showNoIdentityNudge('expired'); }
+            if (r.reason === 'auth' && _isCurrentAuthFailure(opts)) _showNoIdentityNudge('expired');
             _scheduleOfflineDrain(30000);
             return { ok: false, reason: r.reason, queued: true };
           }
-          if (r.reason === 'auth') _showNoIdentityNudge('expired-lost');
+          if (r.reason === 'auth' && _isCurrentAuthFailure(opts)) _showNoIdentityNudge('expired-lost');
           return r;
         }
         if (r.reason === 'no-identity') _showNoIdentityNudge();
-        if (r.reason === 'auth') _showNoIdentityNudge('expired-lost');   // nothing was captured on this page
+        if (r.reason === 'auth' && _isCurrentAuthFailure(opts)) _showNoIdentityNudge('expired-lost');   // nothing was captured on this page
         return r;
 
       } catch (err) {
@@ -545,8 +559,6 @@
           }
           if (_isSuperseded(r)) return { ok: true, superseded: true };
           return _sendRecord(r).then(function (result) {
-            if (result && result.reason === 'auth') _lastAuthFailToken = _token();
-            if (result && result.ok) _lastAuthFailToken = null;
             if (result && result.ok && typeof r.transportSequence === 'number') {
               var key = _recordKey(r);
               _successfulSequence[key] = Math.max(_successfulSequence[key] || 0, r.transportSequence);

@@ -304,6 +304,8 @@ function makeDeskHarness(mode, opts = {}) {
     'var recordProgress = deps.recordProgress;',
     fnSource(DESK, '_mayScore'),
     fnSource(DESK, 'getStudentEmail'),
+    ...['_ftCaptureOwner', '_ftOwnerIsCurrent', '_ftPendingKey', '_ftSavePending', '_ftClearPending']
+      .map(name => fnSource(DESK, name)),
     writerSource(DESK, '_srsAppendLog', 'Desk'),
     fnSource(DESK, '_bfAnswer'),
     fnSource(DESK, '_bfNext'),

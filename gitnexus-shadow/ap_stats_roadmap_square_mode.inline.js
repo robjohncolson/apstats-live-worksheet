@@ -5202,9 +5202,14 @@ function _marksAliasKeys(extraLegacyKey) {
 // identity within the same page load; re-arms on an identity change (e.g.
 // sign-in as a different student on a shared device).
 var _marksAliasMigratedFor = null;
-function _migrateMarksAliases(extraLegacyKey) {
+function _migrateMarksAliases(extraLegacyKey, previousStudentId) {
   try {
     if (typeof _viewAsContext === 'function' && _viewAsContext()) return false;
+    // A prior roster owner is not an alias of the newly signed-in student.
+    // With no prior roster session, keep recovering genuine pre-roster marks.
+    var roster = window.rosterClient;
+    var currentStudentId = roster && typeof roster.studentId === 'function' ? roster.studentId() : null;
+    if (previousStudentId && previousStudentId !== currentStudentId) extraLegacyKey = null;
     var primary = (typeof getStudentEmail === 'function') ? getStudentEmail() : null;
     if (!primary) return false;
     if (_marksAliasMigratedFor === primary) return false; // already ran this identity
@@ -7465,7 +7470,7 @@ async function submitSignIn() {
     if (typeof _resetGradeStateForIdentitySwitch === 'function') _resetGradeStateForIdentitySwitch();
     // PROGRESS_RESET_FIX_SPEC D6 — union any bare-username/legacy-email marks
     // bucket into this freshly-resolved identity before the Do Now refresh.
-    try { if (typeof _migrateMarksAliases === 'function') _migrateMarksAliases(_priorLegacyEmail); } catch (_) {}
+    try { if (typeof _migrateMarksAliases === 'function') _migrateMarksAliases(_priorLegacyEmail, prevId); } catch (_) {}
     try {
       var signedInPeriod = (typeof _currentRosterPeriod === 'function') ? _currentRosterPeriod() : null;
       if (signedInPeriod && typeof setP === 'function'
@@ -7716,6 +7721,8 @@ async function _nfSubmitPassword() {
   if (err) err.textContent = 'Signing in…';
   try {
     var result;
+    var prevId = typeof window.rosterClient.studentId === 'function'
+      ? window.rosterClient.studentId() : null;
     try { result = await window.rosterClient.signIn(r.username, password); }
     catch (e) { result = { ok: false, error: (e && e.message) || 'Network error' }; }
     if (!result || !result.ok) {
@@ -7751,7 +7758,7 @@ async function _nfSubmitPassword() {
     if (typeof _resetGradeStateForIdentitySwitch === 'function') _resetGradeStateForIdentitySwitch();
     // PROGRESS_RESET_FIX_SPEC D6 — union any bare-username/legacy-email marks
     // bucket into this freshly-resolved identity before the Do Now refresh.
-    try { if (typeof _migrateMarksAliases === 'function') _migrateMarksAliases(_priorLegacyEmail); } catch (_) {}
+    try { if (typeof _migrateMarksAliases === 'function') _migrateMarksAliases(_priorLegacyEmail, prevId); } catch (_) {}
     try {
       var signedInPeriod = (typeof _currentRosterPeriod === 'function') ? _currentRosterPeriod() : null;
       if (signedInPeriod && typeof setP === 'function'
@@ -7995,6 +8002,8 @@ async function submitSignUp() {
   if (err) err.textContent = 'Creating your account…';
   try {
     var result;
+    var prevId = typeof window.rosterClient.studentId === 'function'
+      ? window.rosterClient.studentId() : null;
     try {
       result = await window.rosterClient.claim({ realName: realName, section: section, username: username, pin: pin, teacherKey: teacherKey || undefined });
     } catch (e) {
@@ -8012,7 +8021,7 @@ async function submitSignUp() {
       }
       return;
     }
-    _applySignedUpSession(result);
+    _applySignedUpSession(result, prevId);
   } finally {
     submitSignUp._pending = false;
     if (okBtn) okBtn.disabled = false;
@@ -8022,7 +8031,7 @@ async function submitSignUp() {
 // Post-claim: claim already persisted the session (claim == sign-in). Mirror the
 // identity into the legacy key + refresh the Desk, like submitSignIn's tail, but
 // must_change_password is always false for self-signup (the student set their PIN).
-function _applySignedUpSession(result) {
+function _applySignedUpSession(result, previousStudentId) {
   var who = (window.rosterClient.current && window.rosterClient.current()) || null;
   // Fail-closed: claim() succeeded on the SERVER, but if writeSession could not
   // persist locally (localStorage blocked/full — private mode, quota) the session
@@ -8053,7 +8062,7 @@ function _applySignedUpSession(result) {
   if (typeof _resetGradeStateForIdentitySwitch === 'function') _resetGradeStateForIdentitySwitch();
   // PROGRESS_RESET_FIX_SPEC D6 — union any bare-username/legacy-email marks
   // bucket into this freshly-resolved identity before the Do Now refresh.
-  try { if (typeof _migrateMarksAliases === 'function') _migrateMarksAliases(_priorLegacyEmail); } catch (_) {}
+  try { if (typeof _migrateMarksAliases === 'function') _migrateMarksAliases(_priorLegacyEmail, previousStudentId); } catch (_) {}
   try {
     var signedInPeriod = (typeof _currentRosterPeriod === 'function') ? _currentRosterPeriod() : null;
     if (signedInPeriod && typeof setP === 'function'
@@ -8703,6 +8712,8 @@ var _gradeLastRenderedState = 'unknown'; // D7: detects an unavailable->availabl
 // data. signOutStudent() already reloads the page (a stronger reset), so it
 // does not need this call.
 function _resetGradeStateForIdentitySwitch() {
+  if (typeof renderDoNowGrades === 'function') renderDoNowGrades._request = null;
+  if (typeof _phase2RefreshOnline === 'function') _phase2RefreshOnline._request = null;
   if (window.StudentWalletPrint) window.StudentWalletPrint.clear();
   try {
     if (_gradeRetryTimer) { clearTimeout(_gradeRetryTimer); _gradeRetryTimer = null; }
@@ -8712,6 +8723,8 @@ function _resetGradeStateForIdentitySwitch() {
     _gradeQuartersCache = null;
     _gradeUnitsCache = null;
     _gradeClosedCache = null;   // D8: a close snapshot is per student
+    if (typeof _officialGradeCache !== 'undefined') _officialGradeCache = null;
+    if (typeof _officialGradeByQuarter !== 'undefined') _officialGradeByQuarter = {};
     _gradeLoadState = 'unknown';
     _gradeLoadError = null;
     _gradeLastRenderedState = 'unknown';
@@ -8954,18 +8967,30 @@ function _phase2LoadInputs() {
 var _phase2BaseUrl = null;             // last roster base seen (for the wallet refresh)
 function _phase2RefreshOnline(baseUrl, token) {
   try {
+    var key = _phase2InputsKey();
+    if (key == null) return; // view-as / signed-out → skip
+    var roster = window.rosterClient;
+    var sessionToken = roster && typeof roster.token === 'function' ? roster.token() : token;
+    if (sessionToken !== token) return;
+    var request = {};
+    _phase2RefreshOnline._request = request;
+    function requestIsCurrent() {
+      var currentRoster = window.rosterClient;
+      var currentToken = currentRoster && typeof currentRoster.token === 'function' ? currentRoster.token() : token;
+      return _phase2RefreshOnline._request === request
+        && _phase2InputsKey() === key && currentToken === sessionToken;
+    }
     _phase2BaseUrl = baseUrl || _phase2BaseUrl;
-    if (_phase2InputsKey() == null) return; // view-as / signed-out → skip
     if (typeof fetch === 'function') {
       fetch(baseUrl + '/grade/offline-inputs?token=' + encodeURIComponent(token))
-        .then(function (r) { return r && r.ok ? r.json() : null; })
-        .then(function (j) { if (j && j.ok) _phase2PersistInputs(j); })
+        .then(function (r) { return requestIsCurrent() && r && r.ok ? r.json() : null; })
+        .then(function (j) { if (requestIsCurrent() && j && j.ok) _phase2PersistInputs(j); })
         .catch(function () {});
     }
     _phase2RegisterIssuer(baseUrl);
     if (window.LedgerStore && typeof LedgerStore.pull === 'function') {
       LedgerStore.pull(window.rosterClient, { serverUrl: baseUrl })
-        .then(function () { _phase2RefreshVerifySummary(); })
+        .then(function () { if (requestIsCurrent()) _phase2RefreshVerifySummary(); })
         .catch(function () {});
     }
   } catch (_) {}
@@ -9237,7 +9262,9 @@ function _scheduleGradeRetry(baseUrl, token) {
     _gradeRetryCount++;
     _gradeRetryTimer = setTimeout(function () {
       _gradeRetryTimer = null;
-      if (typeof renderDoNowGrades === 'function') renderDoNowGrades(baseUrl, token);
+      var currentToken = window.rosterClient && typeof window.rosterClient.token === 'function'
+        ? window.rosterClient.token() : token;
+      if (currentToken && typeof renderDoNowGrades === 'function') renderDoNowGrades(baseUrl, currentToken);
     }, delay);
   } catch (_) { /* retry scheduling is best-effort */ }
 }
@@ -9503,6 +9530,28 @@ function _officialGradeTitle(official) {
 }
 
 async function renderDoNowGrades(baseUrl, token) {
+  // Each render owns its continuation. A newer render, sign-in or view-as change
+  // must not let an older response write into the current student's caches.
+  function requestOwner() {
+    var roster = window.rosterClient;
+    var viewed = (typeof _viewAsContext === 'function') ? _viewAsContext() : null;
+    return JSON.stringify([
+      roster && typeof roster.studentId === 'function' ? roster.studentId() : null,
+      roster && typeof roster.token === 'function' ? roster.token() : null,
+      viewed ? viewed.studentId : null,
+      window.__VIEW_AS_STUDENT_ID__ || null,
+      window.ROSTER_SERVICE_URL || null
+    ]);
+  }
+  var owner = requestOwner();
+  var roster = window.rosterClient;
+  if (roster && typeof roster.token === 'function' && token !== roster.token()
+      && !(typeof _viewAsContext === 'function' && _viewAsContext())) return;
+  var request = {};
+  renderDoNowGrades._request = request;
+  function requestIsCurrent() {
+    return renderDoNowGrades._request === request && requestOwner() === owner;
+  }
   var host = document.getElementById('donow-grades');
   if (!host) return;
   host.style.display = 'none';
@@ -9545,11 +9594,13 @@ async function renderDoNowGrades(baseUrl, token) {
       var res = (typeof _roadmapFetch === 'function')
         ? await _roadmapFetch(baseUrl + __va.endpoint, { headers: __va.headers }, ROADMAP_FETCH_TIMEOUT_MS)
         : await fetch(baseUrl + __va.endpoint, { headers: __va.headers });
+      if (!requestIsCurrent()) return;
       if (!res) {
         _gradeLoadState = 'unavailable'; _gradeLoadError = { kind: 'network', status: null };
       } else if (res.ok) {
         var _j = null;
         try { _j = await res.json(); } catch (_) { _j = null; } // malformed JSON -> server, not network
+        if (!requestIsCurrent()) return;
         if (_j && _j.ok) { data = _j; _gradeLoadState = 'available'; }
         else { _gradeLoadState = 'unavailable'; _gradeLoadError = { kind: 'server', status: res.status }; }
       } else if (res.status === 401 || res.status === 403) {
@@ -9557,7 +9608,10 @@ async function renderDoNowGrades(baseUrl, token) {
       } else {
         _gradeLoadState = 'unavailable'; _gradeLoadError = { kind: 'server', status: res.status };
       }
-    } catch (_) { _gradeLoadState = 'unavailable'; _gradeLoadError = { kind: 'network', status: null }; }
+    } catch (_) {
+      if (!requestIsCurrent()) return;
+      _gradeLoadState = 'unavailable'; _gradeLoadError = { kind: 'network', status: null };
+    }
     // Only a live rejection of the still-current token warrants asking for sign-in.
     // Unknown/offline state and teacher view-as must never become a sign-out.
     if (_gradeLoadError && _gradeLoadError.kind === 'auth' && !_expiredSignInShown
@@ -9586,7 +9640,9 @@ async function renderDoNowGrades(baseUrl, token) {
       // offline work); fall back to the last cached /grade blob otherwise.
       // The restored payload warms the cache + paints, but load state STAYS
       // 'unavailable' — it is not a live confirmation.
-      data = (await _phase2ReDeriveGrade()) || _loadGradeCache();
+      data = await _phase2ReDeriveGrade();
+      if (!requestIsCurrent()) return;
+      data = data || _loadGradeCache();
       if (typeof _scheduleGradeRetry === 'function') _scheduleGradeRetry(baseUrl, token);
     }
     if (typeof _renderGradeStatus === 'function') _renderGradeStatus();
@@ -9697,6 +9753,7 @@ async function renderDoNowGrades(baseUrl, token) {
       (typeof _fetchOfficialGrade === 'function') ? _fetchOfficialGrade(baseUrl, token, curQ) : null,
       (sideQ && typeof _fetchSideOfficialGrade === 'function') ? _fetchSideOfficialGrade(baseUrl, token, sideQ) : null,
     ]);
+    if (!requestIsCurrent()) return;
     var official = officials[0];
     // Finding R6b (Codex re-review, finding 6): a quarter that has not started has no grade yet (the
     // engine reports none before its start date), so its pill reads "starts Mon Nov 9" with no number,
@@ -9874,6 +9931,7 @@ async function renderDoNowGrades(baseUrl, token) {
     if (typeof updateWalletReadinessIcon === 'function') updateWalletReadinessIcon();
     if (typeof _paintDoNowReadiness === 'function') _paintDoNowReadiness();
   } catch (_) {
+    if (!requestIsCurrent()) return;
     host.style.display = 'none';
     var _wh = document.getElementById('donow-helper');
     if (_wh && !_coachPanelOpen()) _wh.innerHTML = '';
@@ -13213,7 +13271,15 @@ if (typeof window !== 'undefined' && window.addEventListener) {
 // has been validated (score === null for non-quiz artifacts).
 // Applies optimistic UI mutation before the async write, then re-renders or
 // rolls back depending on the result. perDay: blooket only (see _blooketCommit).
-async function _studentMarkSave(btn, topicId, artifact, score, perDay) {
+async function _studentMarkSave(btn, topicId, artifact, score, perDay, identity) {
+    var directSave = !identity;
+    identity = identity || _ftCaptureOwner();
+    if (!_ftOwnerIsCurrent(identity)) {
+        if (directSave && !(typeof _mayScore === 'function' && !_mayScore()) && typeof showDialog === 'function') {
+            showDialog('⚠️', 'Your sign-in changed in another app. Sign in again on the Desk before saving your work.', 'OK');
+        }
+        return false;
+    }
     // Optimistic mutation: go straight to "✓ Completed" — no interim state.
     // localStorage write (the source of truth per 540d168) happens inside
     // recordProgress FIRST, so this matches reality immediately.
@@ -13223,6 +13289,9 @@ async function _studentMarkSave(btn, topicId, artifact, score, perDay) {
         btn.style.opacity = '0.6';
     }
     var ok = await recordProgress(topicId, artifact, score);
+    // The local write belongs to the captured owner. Even a resolved promise
+    // yields: do not send its ledger row or repaint under a later sign-in.
+    if (!_ftOwnerIsCurrent(identity)) return false;
 
     // Phase 4a+ compat: ALSO write the self-attest ledger row (_deskDoneRow) so the
     // teacher-dashboard's completion readouts AND the CROSS-DEVICE Done/grey-out
@@ -13256,6 +13325,7 @@ async function _studentMarkSave(btn, topicId, artifact, score, perDay) {
         btn.disabled = false;
         btn.innerHTML = '&#10003; Done';
     }
+    return ok;
 }
 
 // The self-attest ledger row behind a Desk Done, sent fire-and-forget through the gradebook
@@ -15938,6 +16008,109 @@ function _ftSecondsLeft() {
     return Math.max(0, Math.ceil(msLeft / 1000));
 }
 
+// Capture both identity sources before work starts. Another app on this origin can
+// change the roster session without changing the Desk's legacy marks key.
+function _ftCaptureOwner() {
+    var owner = (typeof getStudentEmail === 'function') ? getStudentEmail() : null;
+    var roster = window.rosterClient;
+    var session = roster && typeof roster.current === 'function' ? roster.current() : null;
+    var studentId = roster && typeof roster.studentId === 'function' ? roster.studentId() : null;
+    var username = session && session.username ? session.username : null;
+    // Roster verification ignores case and may omit a canonical username.
+    // Compare aliases without changing the existing local-storage keys.
+    var ownerAlias = typeof owner === 'string' ? owner.trim().toLowerCase() : '';
+    var rosterAlias = typeof username === 'string' ? username.trim().toLowerCase() : '';
+    var consistent = !!ownerAlias && (!studentId || (rosterAlias &&
+        (ownerAlias === rosterAlias || ownerAlias === rosterAlias + '@roster.local')));
+    return Object.freeze({ owner: owner, studentId: studentId, username: username, consistent: !!consistent });
+}
+
+function _ftOwnerIsCurrent(identity) {
+    if (!identity || !identity.consistent) return false;
+    if (typeof _mayScore === 'function' && !_mayScore()) return false;
+    var current = _ftCaptureOwner();
+    if (!current.consistent || current.studentId !== identity.studentId) return false;
+    // The UUID owns a roster student's work. Normalizing that student's legacy
+    // key from username@roster.local to username does not transfer ownership.
+    return identity.studentId ? true : current.owner === identity.owner;
+}
+
+// Keep finished scores until local saving and ledger handoff succeed. Each run has
+// its own key, so another tab's result cannot overwrite its recovery record. This
+// protects pre-save recovery; accepted offline rows still use the shared queue.
+function _ftPendingKey(identity, topic, id) {
+    if (!identity || !identity.consistent || !topic) return null;
+    return 'apstats_desk_ft_pending_' + JSON.stringify([
+        identity.studentId ? 'roster' : 'legacy', identity.studentId || identity.owner, topic
+    ]) + ':' + (id == null ? '' : encodeURIComponent(String(id)));
+}
+
+function _ftSavePending(result) {
+    var key = result && _ftPendingKey(result.identity, result.topic, result.id);
+    if (!key) return false;
+    try {
+        var round = result.round;
+        localStorage.setItem(key, JSON.stringify({
+            v: 1, id: result.id, identity: result.identity, topic: result.topic,
+            csv: result.csv, perDay: result.perDay, roundId: result.roundId,
+            score: result.score, logged: !!result.logged, createdAt: result.createdAt,
+            round: { deck: round.deck, order: round.order, status: round.status, log: round.log, total: round.total }
+        }));
+        return true;
+    } catch (_) { return false; }
+}
+
+function _ftLoadPending(identity, topic) {
+    if (!_ftOwnerIsCurrent(identity)) return null;
+    var prefix = _ftPendingKey(identity, topic);
+    if (!prefix) return null;
+    try {
+        var oldest = null;
+        for (var i = 0; i < localStorage.length; i++) {
+            var key = localStorage.key(i);
+            if (!key || key.indexOf(prefix) !== 0) continue;
+            var result;
+            try { result = JSON.parse(localStorage.getItem(key) || 'null'); } catch (_) { continue; }
+            if (!result || result.v !== 1 || !result.id || result.topic !== topic) continue;
+            if (!_ftOwnerIsCurrent(result.identity) || _ftPendingKey(result.identity, topic, result.id) !== key) continue;
+            if (!_ftSavedRoundOk(result.round) || !_ftDone(result.round)) continue;
+            if (typeof result.score !== 'number' || !Number.isFinite(result.score) || result.score < 0 || result.score > 100) continue;
+            if (!oldest || result.createdAt < oldest.createdAt) oldest = result;
+        }
+        if (oldest) Object.freeze(oldest.identity);
+        return oldest;
+    } catch (_) { return null; }
+}
+
+function _ftClearPending(result) {
+    var key = result && _ftPendingKey(result.identity, result.topic, result.id);
+    if (!key) return;
+    try {
+        var saved = JSON.parse(localStorage.getItem(key) || 'null');
+        // A late completion may remove only its own result, never a newer run.
+        if (saved && saved.id === result.id) localStorage.removeItem(key);
+    } catch (_) {}
+}
+
+function _ftShowPending(result, btn) {
+    _ftState.topic = result.topic;
+    _ftState.btn = btn;
+    _ftState.csv = result.csv;
+    _ftState.perDay = !!result.perDay;
+    _ftState.roundId = result.roundId;
+    _ftState.round = result.round;
+    _ftState.round.owner = result.identity;
+    _ftState.round.finishedResult = result;
+    _ftState.resumed = true;
+    _bfShowQuizUI(true);
+    document.getElementById('bf-overlay').style.display = 'block';
+    var header = document.getElementById('bf-header');
+    if (header) header.textContent = 'Finished deck — ' + cedLabel(result.topic).text;
+    var note = document.getElementById('bf-note');
+    if (note) { note.textContent = 'Your finished run is kept on this device. Save it without playing again.'; note.style.display = 'block'; }
+    _ftFinish(true);
+}
+
 // ── Save & resume (FLASHCARD_DECK_SLICES_SPEC.md D4) ──
 // A half-finished run survives closing the deck: it is saved after every card render and
 // every outcome, per student and per topic, and only finishing or Start over clears it.
@@ -15946,12 +16119,22 @@ function _ftSecondsLeft() {
 // means saved between cards. Runs older than BLOOKET_RESUME_MAX_AGE_MS are dropped.
 // Per device only (the per-card SRS log still syncs at finish). The calls from
 // _ftRenderCard, _ftHandle and _ftFinish are typeof-guarded: tests run those alone.
-function _ftResumeKey() {
+function _ftResumeKey(identity) {
     try {
-        var email = (typeof getStudentEmail === 'function') ? getStudentEmail() : null;
+        var email = identity ? identity.owner : ((typeof getStudentEmail === 'function') ? getStudentEmail() : null);
         if (!email) return null;
         return 'apstats_desk_ft_resume_' + email;
     } catch (_) { return null; }
+}
+
+function _ftResumeKeys(identity) {
+    identity = identity || _ftCaptureOwner();
+    var keys = [_ftResumeKey(identity)];
+    if (identity.studentId && identity.username) {
+        keys.push(_ftResumeKey({ owner: identity.username }));
+        keys.push(_ftResumeKey({ owner: identity.username + '@roster.local' }));
+    }
+    return keys.filter(function (key, index) { return key && keys.indexOf(key) === index; });
 }
 
 // A saved run can resume for BLOOKET_RESUME_MAX_AGE_MS after its last save.
@@ -15963,8 +16146,10 @@ function _ftResumeFresh(entry, nowMs) {
 function _ftSaveResume() {
     if (typeof _viewAsContext === 'function' && _viewAsContext()) return;
     if (typeof window !== 'undefined' && window.__WS_READ_ONLY__) return;
-    var key = _ftResumeKey();
     var round = _ftState.round;
+    var identity = round && round.owner ? round.owner : _ftCaptureOwner();
+    if (!_ftOwnerIsCurrent(identity)) return;
+    var key = _ftResumeKey(_ftCaptureOwner());
     if (!key || !_ftState.topic || !_ftState.csv || !round) return;
     try {
         var all = JSON.parse(localStorage.getItem(key) || '{}');
@@ -15975,6 +16160,7 @@ function _ftSaveResume() {
         });
         all[_ftState.topic] = {
             v: 1,
+            identity: identity,
             csv: _ftState.csv,
             perDay: !!_ftState.perDay,
             roundId: _ftState.roundId,
@@ -15991,29 +16177,42 @@ function _ftSaveResume() {
 function _ftLoadResume(topic, csv) {
     if (typeof _viewAsContext === 'function' && _viewAsContext()) return null;
     if (typeof window !== 'undefined' && window.__WS_READ_ONLY__) return null;
-    var key = _ftResumeKey();
-    if (!key || !topic) return null;
+    if (!topic) return null;
+    var identity = _ftCaptureOwner();
+    if (!_ftOwnerIsCurrent(identity)) return null;
     try {
-        var all = JSON.parse(localStorage.getItem(key) || '{}');
-        var entry = all ? all[topic] : null;
-        if (!entry || entry.v !== 1) return null;
-        if (entry.csv !== csv) return null;
-        if (!_ftResumeFresh(entry, Date.now())) return null;
-        if (!_ftSavedRoundOk(entry.round)) return null;
-        return entry;
+        var keys = _ftResumeKeys(identity);
+        var newest = null;
+        for (var i = 0; i < keys.length; i++) {
+            var all;
+            try { all = JSON.parse(localStorage.getItem(keys[i]) || '{}'); } catch (_) { continue; }
+            var entry = all ? all[topic] : null;
+            if (!entry || entry.v !== 1) continue;
+            if (entry.identity && !_ftOwnerIsCurrent(entry.identity)) continue;
+            if (entry.csv !== csv || !_ftResumeFresh(entry, Date.now()) || !_ftSavedRoundOk(entry.round)) continue;
+            if (!newest || entry.savedAt > newest.savedAt) newest = entry;
+        }
+        return newest;
     } catch (_) { return null; }
 }
 
-function _ftClearResume(topic) {
+function _ftClearResume(topic, identity, expectedRoundId) {
     if (typeof _viewAsContext === 'function' && _viewAsContext()) return;
     if (typeof window !== 'undefined' && window.__WS_READ_ONLY__) return;
-    var key = _ftResumeKey();
-    if (!key || !topic) return;
+    if (!topic) return;
     try {
-        var all = JSON.parse(localStorage.getItem(key) || '{}');
-        if (!all || typeof all !== 'object' || Array.isArray(all)) return;
-        delete all[topic];
-        localStorage.setItem(key, JSON.stringify(all));
+        var keys = _ftResumeKeys(identity);
+        for (var i = 0; i < keys.length; i++) {
+            var all;
+            try { all = JSON.parse(localStorage.getItem(keys[i]) || '{}'); } catch (_) { continue; }
+            if (!all || typeof all !== 'object' || Array.isArray(all)) continue;
+            // A finished run's late save may not erase a newer partial run.
+            // Clear matching copies under both aliases so one cannot resurrect.
+            if (typeof expectedRoundId !== 'undefined' &&
+                (!expectedRoundId || !all[topic] || all[topic].roundId !== expectedRoundId)) continue;
+            delete all[topic];
+            localStorage.setItem(keys[i], JSON.stringify(all));
+        }
     } catch (_) {}
 }
 
@@ -16047,9 +16246,10 @@ function _ftShowStartOver(show) {
 function _ftStartOver() {
     var topic = _ftState.topic, btn = _ftState.btn;
     if (!topic) return;
+    var identity = _ftState.round && _ftState.round.owner;
     _ftClearTimer();          // stop the old card's clock and any pending auto-advance
     _ftState.round = null;    // so nothing can save the old run again
-    _ftClearResume(topic);
+    _ftClearResume(topic, identity);
     _ftStart(btn, topic);
 }
 
@@ -16063,11 +16263,23 @@ async function _ftStart(btn, topicId) {
     // BLOOKET_START_STALE_MS (a stalled network) stops blocking: the next click takes over and
     // the stalled start is dropped when its fetch returns.
     if (_ftState.loading && Date.now() - _ftState.loading.at < BLOOKET_START_STALE_MS) return;
+    var identity = _ftCaptureOwner();
+    var readOnly = typeof _mayScore === 'function' && !_mayScore();
+    if (!readOnly && !_ftOwnerIsCurrent(identity)) {
+        showDialog('⚠️', 'Your sign-in changed in another app. Sign in again on the Desk before starting a deck.', 'OK');
+        return;
+    }
     var loading = { at: Date.now() };   // this call's token
     _ftState.loading = loading;
     // A pair cell "4.7+4.8" runs its first key's deck (the slice _ftSliceRanges deals), so the
     // header, the note, the saved run, the card log and the ledger row all name that lesson.
     topicId = String(topicId == null ? '' : topicId).split('+')[0];
+    var pendingResult = readOnly ? null : _ftLoadPending(identity, topicId);
+    if (pendingResult) {
+        _ftState.loading = null;
+        _ftShowPending(pendingResult, btn);
+        return;
+    }
     var csvPath = _bfCsvPath(topicId);
     if (!csvPath) {
         _ftState.loading = null;
@@ -16086,6 +16298,7 @@ async function _ftStart(btn, topicId) {
         return;
     }
     if (_ftState.loading !== loading) return;   // closed while the deck loaded
+    if (!readOnly && !_ftOwnerIsCurrent(identity)) { _ftState.loading = null; return; }
     var allCards = _bfRowsToDeck(_bfParseCsv(text));
     if (!allCards.length) {
         _ftState.loading = null;
@@ -16095,6 +16308,7 @@ async function _ftStart(btn, topicId) {
     var slices = await _bfLoadDeckSlices();
     if (_ftState.loading !== loading) return;   // closed while the slices loaded
     _ftState.loading = null;                    // the deck opens now
+    if (!readOnly && !_ftOwnerIsCurrent(identity)) return;
     // The topic's card pool: its per-day slice of a combined deck, else the whole CSV (D2).
     var ranges = _ftSliceRanges(slices, csvPath, topicId);
     var pool = _ftCardsInRanges(allCards, ranges);
@@ -16117,6 +16331,8 @@ async function _ftStart(btn, topicId) {
         _ftState.perDay = perDay;
         _ftState.resumed = false;
     }
+    _ftState.round.owner = identity;
+    _ftState.round.readOnly = readOnly;
     var total = _ftState.round.total;
     var header = document.getElementById('bf-header');
     if (header) header.textContent = 'Timed deck — ' + cedLabel(topicId).text + ' · ' + total + (total === 1 ? ' card' : ' cards') + ' · ' + BLOOKET_FULLDECK_SECONDS + 's/card · up to 100%';
@@ -16286,7 +16502,7 @@ function _ftKeydownHandler(e) {
     _ftAnswer(realIdx);
 }
 
-async function _ftFinish() {
+async function _ftFinish(waitForRetry) {
     _ftClearTimer();
     document.removeEventListener('keydown', _ftKeydownHandler);
     var round = _ftState.round;
@@ -16294,37 +16510,87 @@ async function _ftFinish() {
     var score = Math.round(_ftScore(round) * 10) / 10;
     var topic = _ftState.topic, btn = _ftState.btn;
     var perDay = !!_ftState.perDay;
-    // A finished run never resumes, and Start over has nothing left to restart.
-    if (typeof _ftClearResume === 'function') _ftClearResume(topic);
     if (typeof _ftShowStartOver === 'function') _ftShowStartOver(false);
-    _ftLogToStore(topic, round.log);   // per-card log (SRS/BKT foundation)
     _ftRenderRecap(round, score);      // "review your misses"
-    if (typeof _mayScore === 'function' && !_mayScore()) { _ftRenderOutcome(topic, score, null); return; }
-    var outcome = null;
-    try { outcome = await _blooketCommit(btn, topic, score, perDay); }   // best-wins + grade refresh
-    catch (_) { outcome = { saved: false, best: null, error: true }; }
-    _ftRenderOutcome(topic, score, outcome);
+    if (round.readOnly || (typeof _mayScore === 'function' && !_mayScore())) { _ftRenderOutcome(topic, score, null); return; }
+    var identity = round.owner || _ftCaptureOwner();
+    var result = round.finishedResult;
+    if (!result) {
+        result = {
+            v: 1, id: _ftState.roundId || (Date.now().toString(36) + '-' + Math.random().toString(36).slice(2)),
+            identity: identity, topic: topic, csv: _ftState.csv, perDay: perDay,
+            roundId: _ftState.roundId, round: round, score: score, logged: false, createdAt: Date.now()
+        };
+        round.finishedResult = result;
+    }
+    identity = result.identity;
+    if (!result.logged && _ftOwnerIsCurrent(identity)) {
+        _ftLogToStore(topic, round.log);   // retrying never repeats the card log
+        result.logged = true;
+    }
+    // Capture the finished result BEFORE the first await. Its key belongs to the
+    // original student, so closing, reloading, or another student's deck cannot lose it.
+    var keptOnDevice = _ftSavePending(result);
+    if (keptOnDevice && typeof _ftClearResume === 'function') _ftClearResume(topic, identity, result.roundId);
+    var saving = false;
+    // Retry only this finished score. The card log, recap and timer run once;
+    // closing or opening another round makes this continuation obsolete.
+    async function saveFinishedRun() {
+        if (saving || _ftState.round !== round) return;
+        saving = true;
+        if (!keptOnDevice) keptOnDevice = _ftSavePending(result);
+        var outcome = null;
+        try {
+            if (!_ftOwnerIsCurrent(identity)) outcome = { saved: false, best: null, error: true, ownerChanged: true };
+            else outcome = await _blooketCommit(btn, topic, score, perDay, identity);
+        } catch (_) { outcome = { saved: false, best: null, error: true }; }
+        saving = false;
+        if (outcome && !outcome.error) {
+            _ftClearPending(result);
+            if (typeof _ftClearResume === 'function') _ftClearResume(topic, identity, result.roundId);
+        } else if (outcome && !keptOnDevice) {
+            outcome.keepOpen = true;
+        }
+        if (_ftState.round !== round) return;
+        _ftRenderOutcome(topic, score, outcome, saveFinishedRun);
+    }
+    if (waitForRetry) {
+        _ftRenderOutcome(topic, score, { saved: false, best: null, error: true, pending: true }, saveFinishedRun);
+        return;
+    }
+    await saveFinishedRun();
 }
 
 // The last screen must SAY what happened to the grade and offer one obvious way
 // out (teacher 2026-09-23: a lone "Cancel" after finishing a deck read as
 // "did I just lose my work?"). outcome: null = not recorded (read-only view),
 // { saved, best, error? } from _blooketCommit.
-function _ftRenderOutcome(topic, score, outcome) {
+function _ftRenderOutcome(topic, score, outcome, retrySave) {
     var result = document.getElementById('bf-result');
     if (result) {
         var old = result.querySelector('.bf-outcome');
         if (old) old.remove();
         var line = document.createElement('div');
         line.className = 'bf-outcome';
+        line.setAttribute('role', 'status');
+        line.setAttribute('aria-live', 'polite');
+        line.setAttribute('aria-atomic', 'true');
         line.style.cssText = 'margin-top:10px;padding-top:8px;border-top:1px solid #bbb;font-weight:bold';
         var label = (typeof cedLabel === 'function') ? cedLabel(topic).text : ('Topic ' + topic);
         if (!outcome) {
             line.textContent = 'Not recorded \u2014 this is a read-only view.';
             line.style.color = '#7a0010';
         } else if (outcome.error) {
-            line.textContent = 'Could not save this run. Your best score is kept; try again when you are back online.';
+            line.textContent = outcome.ownerChanged
+                ? 'Your sign-in changed. Sign back in as the original account, then save this finished run.'
+                : outcome.pending
+                    ? 'Your finished run is kept on this device. Save it without playing again.'
+                    : 'Could not save this run. Your earlier best is kept. Try saving again.';
+            if (outcome.keepOpen) line.textContent += ' This device could not keep a recovery copy. Keep this screen open until the run is saved.';
             line.style.color = '#7a0010';
+        } else if (outcome.savedForOriginalOwner) {
+            line.textContent = 'This run was recorded for the original account before your sign-in changed.';
+            line.style.color = '#25663F';
         } else if (outcome.saved) {
             line.textContent = '\u2713 Saved to your grade \u2014 ' + label + ' flashcards: ' + score.toFixed(1) + '%. Your ledger is up to date.';
             line.style.color = '#25663F';
@@ -16339,6 +16605,19 @@ function _ftRenderOutcome(topic, score, outcome) {
     var actions = document.getElementById('bf-actions');
     if (!actions) return;
     while (actions.firstChild) actions.removeChild(actions.firstChild);
+    var retry = null;
+    if (outcome && outcome.error && typeof retrySave === 'function') {
+        retry = document.createElement('button');
+        retry.id = 'bf-retry-save';
+        retry.className = 's7btn s7btn-default';
+        retry.textContent = outcome.pending || outcome.ownerChanged ? 'Save your finished run' : 'Retry save';
+        retry.onclick = function () {
+            retry.disabled = true;
+            retry.textContent = 'Saving…';
+            retrySave();
+        };
+        actions.appendChild(retry);
+    }
     var done = document.createElement('button');
     done.id = 'bf-done';
     done.className = 's7btn s7btn-default';
@@ -16347,7 +16626,7 @@ function _ftRenderOutcome(topic, score, outcome) {
         if (typeof closeBlooketFlashcards === 'function') closeBlooketFlashcards();
     };
     actions.appendChild(done);
-    try { done.focus(); } catch (_) {}
+    try { (retry || done).focus(); } catch (_) {}
 }
 
 function _ftRenderRecap(round, score) {
@@ -16422,8 +16701,13 @@ function _ftLogToStore(topic, log) {
 // local mark's best) decides only the local mark (never lowered) and the "new best" copy.
 // Then refreshes /grade and re-renders the panel so the score chip updates immediately.
 // perDay: the run was dealt from a per-day slice, so its row is BL-…-DESK_DAY (spec D3).
-async function _blooketCommit(btn, topic, score, perDay) {
+async function _blooketCommit(btn, topic, score, perDay, identity) {
     if (typeof _mayScore === 'function' && !_mayScore()) return;
+    identity = identity || _ftCaptureOwner();
+    function ownerIsCurrent() {
+        return _ftOwnerIsCurrent(identity);
+    }
+    if (!ownerIsCurrent()) return { saved: false, best: null, error: true, ownerChanged: true };
     // Refresh /grade FIRST so the best-wins floor sees the latest CROSS-DEVICE
     // score: the local mark and the outcome copy must never claim less than the
     // best already recorded elsewhere.
@@ -16437,6 +16721,7 @@ async function _blooketCommit(btn, topic, score, perDay) {
         } catch (_) {}
     }
     await _refreshGrade();   // floor now reflects the latest cross-device best
+    if (!ownerIsCurrent()) return { saved: false, best: null, error: true, ownerChanged: true };
     // Floor on the BEST already recorded: the displayed /grade blooket AND the local
     // mark's last-saved score (recordProgress writes mark.score synchronously, and we
     // only ever save a NEW best below, so that stored score IS the prior best).
@@ -16450,13 +16735,16 @@ async function _blooketCommit(btn, topic, score, perDay) {
     } catch (_) {}
     var saved = score > floor;
     if (saved) {
-        await _studentMarkSave(btn, topic, 'blooket', score, perDay);   // records mark.score = score
+        var locallySaved = await _studentMarkSave(btn, topic, 'blooket', score, perDay, identity);
+        if (!ownerIsCurrent()) return { saved: false, best: null, error: true, ownerChanged: true };
+        if (!locallySaved) return { saved: false, best: floor, error: true };
     } else if (typeof _deskDoneRow === 'function') {
         // Not a new best: the run still sends its own row (the server floors it per item),
         // and the local mark is left alone, so it keeps its best. typeof-guarded: tests run
         // _blooketCommit alone.
         _deskDoneRow(topic, 'blooket', score, perDay);
     }
+    if (!ownerIsCurrent()) return { saved: false, best: null, error: true, ownerChanged: true };
     // Make the Desk agree with the ledger NOW: patch the /grade lessons cache with
     // the score we just recorded so the My Ledger "about to become a 0" card and
     // badge drop this deck immediately, instead of waiting for the next poll
@@ -16466,6 +16754,7 @@ async function _blooketCommit(btn, topic, score, perDay) {
     // Conversion fix: refresh /grade again + re-render the panel so the chip
     // reflects the just-saved score now, not on the next manual open.
     await _refreshGrade();
+    if (!ownerIsCurrent()) return { saved: saved, best: saved ? score : floor, savedForOriginalOwner: true };
     try {
         if (_lastResourcePanel && typeof showResourcePanel === 'function') {
             showResourcePanel(_lastResourcePanel.inf, _lastResourcePanel.dateStr);
@@ -24435,11 +24724,27 @@ function _refreshRosterSession() {
   if (typeof window.rosterClient.isExpired === 'function' && window.rosterClient.isExpired()) return;
   if (window.__VIEW_AS_STUDENT_ID__) return;
   if (typeof _viewAsContext === 'function' && _viewAsContext()) return;
-  try { window.rosterClient.refreshIfNeeded().catch(function () {}); } catch (_) {}
+  var studentId = typeof window.rosterClient.studentId === 'function' ? window.rosterClient.studentId() : null;
+  try {
+    window.rosterClient.refreshIfNeeded().then(function (result) {
+      if (!result || !result.ok || !result.refreshed) return;
+      var roster = window.rosterClient;
+      if (!studentId || !roster || typeof roster.studentId !== 'function' || roster.studentId() !== studentId) return;
+      if (window.__VIEW_AS_STUDENT_ID__) return;
+      if (typeof _viewAsContext === 'function' && _viewAsContext()) return;
+      var baseUrl = window.ROSTER_SERVICE_URL;
+      var token = typeof roster.token === 'function' ? roster.token() : null;
+      // Rotating a token invalidates the grade request already in flight.
+      // Replace it immediately, keeping this same student's cached evidence.
+      if (baseUrl && token && typeof renderDoNowGrades === 'function') {
+        return renderDoNowGrades(baseUrl, token);
+      }
+    }).catch(function () {});
+  } catch (_) {}
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-11-08-wh8i';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-11-08-c2ix';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

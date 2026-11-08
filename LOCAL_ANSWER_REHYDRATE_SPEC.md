@@ -239,9 +239,10 @@ Codex adversarial review returned BLOCK (2 blockers, 7 majors). All addressed in
 
 - **B2 pre-flight DROPPED.** Local expiry is advisory only (chip, modal, banner). A skewed device clock
   must never veto writes; the server 401 stays the sole write authority. `isExpired(0)` means zero skew.
-- **Expiry is duration-based** when the session has `signedInAt` (ISO string, written at sign-in and
-  password change): expiry = signedInAt + 30 days by the device's own clock. Token `exp` decode is the
-  fallback for older sessions only.
+- **Expiry is duration-based** when the session has `signedInAt` (ISO string, written at sign-in or
+  token renewal): expiry = signedInAt + 30 days by the device's own clock. Password change preserves
+  the latest session's timestamp because that endpoint does not reissue the token. Token `exp`
+  decode is the fallback for older sessions only.
 - **Restored values are owned.** Every restored element (server or local) carries `data-restored-owner`;
   `_lrResetForeignRestores(sid)` clears foreign values before any re-hydrate and on session change, so
   a classmate signing in on another tab never inherits — or heals/records — the previous student's answers.

@@ -90,12 +90,24 @@ describe('finish screen outcome', () => {
   it('_ftFinish renders the outcome after the commit, and _blooketCommit reports it', () => {
     const finish = fnSrc('_ftFinish');
     const commitAt = finish.indexOf('_blooketCommit(');
-    expect(commitAt).toBeGreaterThan(-1);
-    expect(finish.indexOf('_ftRenderOutcome(topic, score, outcome)')).toBeGreaterThan(commitAt);
-    expect(finish).toMatch(/!_mayScore\(\)\) \{ _ftRenderOutcome\(topic, score, null\); return; \}/);
+    const saveFinishedAt = finish.indexOf('async function saveFinishedRun()');
+    const admissionAt = finish.indexOf('if (_ftState.round !== round) return;', commitAt);
+    const outcomeAt = finish.indexOf('_ftRenderOutcome(topic, score, outcome, saveFinishedRun)');
+    expect(saveFinishedAt).toBeGreaterThan(-1);
+    expect(commitAt).toBeGreaterThan(saveFinishedAt);
+    expect(admissionAt).toBeGreaterThan(commitAt);
+    expect(outcomeAt).toBeGreaterThan(admissionAt); // only the still-current round gets an outcome/retry
+    expect(finish).toContain('await saveFinishedRun();');
+    const readOnlyAt = finish.indexOf('_ftRenderOutcome(topic, score, null)');
+    expect(readOnlyAt).toBeGreaterThan(-1);
+    expect(readOnlyAt).toBeLessThan(commitAt);
     const commit = fnSrc('_blooketCommit');
     expect(commit).toMatch(/return \{ saved: saved, best: saved \? score : floor \};/);
-    expect(commit.indexOf('_blooketPatchGradeCache(')).toBeGreaterThan(commit.indexOf('_studentMarkSave('));
+    const localSaveAt = commit.indexOf('var locallySaved = await _studentMarkSave(');
+    const failedSaveAt = commit.indexOf('if (!locallySaved) return { saved: false, best: floor, error: true };');
+    expect(localSaveAt).toBeGreaterThan(-1);
+    expect(failedSaveAt).toBeGreaterThan(localSaveAt);
+    expect(commit.indexOf('_blooketPatchGradeCache(')).toBeGreaterThan(failedSaveAt);
     expect(commit.indexOf('_walletRefreshZeroCard()')).toBeGreaterThan(commit.indexOf('_blooketPatchGradeCache('));
   });
 });

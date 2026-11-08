@@ -283,7 +283,10 @@ describe('Phase C — boot session refresh', () => {
       d.sandbox.window.__VIEW_AS_STUDENT_ID__ = 'other';
       d.sandbox._refreshRosterSession();
       expect(calls).toBe(1);
-      expect(html).toMatch(/_reconcileRosterExpiry\(\); \} catch \(_\) \{\}\n[\s\S]{0,700}try \{ _refreshRosterSession\(\); \}/);
+      const expiryBoot = html.indexOf('_reconcileRosterExpiry(); } catch (_) {}');
+      const refreshBoot = html.indexOf('try { _refreshRosterSession(); }');
+      expect(expiryBoot).toBeGreaterThan(-1);
+      expect(refreshBoot).toBeGreaterThan(expiryBoot);
     } finally { d.close(); }
   });
 });

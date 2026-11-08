@@ -4,7 +4,8 @@
 // On the web (no Capacitor Filesystem) it stays inert and VideoOnDemand degrades.
 //
 // Adapter contract: has(key)->Promise<bool>, uri(key)->Promise<string|null>,
-//   write(key, blob)->Promise, remove(key)->Promise.
+//   write(key, blob)->Promise, remove(key)->Promise,
+//   size(key)->Promise<number|null> (null means unavailable; zero is known empty).
 
 (function () {
   'use strict';
@@ -38,8 +39,12 @@
       return f.stat({ path: p(key), directory: DIR }).then(function () { return true; }).catch(function () { return false; });
     },
     size: function (key) {
-      var f = fs(); if (!f) return Promise.resolve(0);
-      return f.stat({ path: p(key), directory: DIR }).then(function (s) { return Number(s && s.size) || 0; }).catch(function () { return 0; });
+      var f = fs(); if (!f) return Promise.resolve(null);
+      return f.stat({ path: p(key), directory: DIR }).then(function (s) {
+        if (!s || s.size == null) return null;
+        var bytes = Number(s.size);
+        return isFinite(bytes) && bytes >= 0 ? bytes : null;
+      }).catch(function () { return null; });
     },
     uri: function (key) {
       var f = fs(); if (!f) return Promise.resolve(null);

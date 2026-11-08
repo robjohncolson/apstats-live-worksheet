@@ -367,7 +367,11 @@ function makeFetchRouter({ requests, unhandled, roster, opts }) {
       const absolutePath = resolve(REPO_ROOT, repoPath);
       const insideRepo = absolutePath.startsWith(REPO_ROOT + sep);
       if (insideRepo && isFetchableRepoFile(repoPath) && existsSync(absolutePath) && statSync(absolutePath).isFile()) {
-        let body = await readFile(absolutePath);
+        // Fixture bytes are ready in this turn so boot continuations cannot be
+        // stranded behind filesystem I/O when a test closes its JSDOM window.
+        // routedFetch still returns a Promise<Response>; remote handlers keep
+        // their own asynchronous delays below.
+        let body = readFileSync(absolutePath);
         if (repoPath === 'data/flashcard-flags.json') {
           body = mergeFlashcardFlags(body, opts.flags);
         }
@@ -477,10 +481,9 @@ function makeFlush(fakeClock) {
     for (let index = 0; index < n; index += 1) {
       await Promise.resolve();
       if (fakeClock) fakeClock.runPending();
-      // ALWAYS yield one host macrotask: the fetch router reads repo files from
-      // disk (real libuv I/O) even when the Desk's clock is fake — without this
-      // yield a fake-timer journey spins forever waiting for a CSV that can never
-      // resolve. HOST_SET_TIMEOUT is the real Node timer, untouched by the fake clock.
+      // Yield a host turn for response parsing, external-script loading and real
+      // timers, even when the Desk's clock is fake. HOST_SET_TIMEOUT is the real
+      // Node timer, untouched by the fake clock.
       await new Promise((resolveTick) => HOST_SET_TIMEOUT(resolveTick, 0));
     }
   };

@@ -62,13 +62,20 @@ describe('renderDoNowGrades offline behavior', () => {
 
   it('restores from cache on EVERY failure kind (auth/server/network), not just a thrown fetch', () => {
     // PROGRESS_RESET_FIX_SPEC D1/D2: a thrown/unreachable fetch, a 401/403, and
-    // any other non-ok response all set _gradeLoadState = 'unavailable'.
-    expect(body).toMatch(/catch \(_\) \{ _gradeLoadState = 'unavailable'; _gradeLoadError = \{ kind: 'network', status: null \}; \}/);
+    // any other non-ok response set 'unavailable' only for the current request.
+    expect(body).toMatch(/catch \(_\) \{\s*if \(!requestIsCurrent\(\)\) return;\s*_gradeLoadState = 'unavailable'; _gradeLoadError = \{ kind: 'network', status: null \};\s*\}/);
     expect(body).toMatch(/res\.status === 401 \|\| res\.status === 403/);
     // restore gated on the unified 'unavailable' state (ANDROID Phase 2: re-derive
     // from the local signed ledger first, falling back to the last cached /grade payload)
-    expect(body).toMatch(/else if \(_gradeLoadState === 'unavailable'\)/);
-    expect(body).toMatch(/_phase2ReDeriveGrade\(\)\)\s*\|\|\s*_loadGradeCache\(\)/);
+    const unavailableAt = body.indexOf("else if (_gradeLoadState === 'unavailable')");
+    const deriveAt = body.indexOf('data = await _phase2ReDeriveGrade();', unavailableAt);
+    const admissionAt = body.indexOf('if (!requestIsCurrent()) return;', deriveAt);
+    const cacheAt = body.indexOf('data = data || _loadGradeCache();', admissionAt);
+    expect(unavailableAt).toBeGreaterThan(-1);
+    expect(deriveAt).toBeGreaterThan(unavailableAt);
+    expect(admissionAt).toBeGreaterThan(deriveAt); // a pending derivation may outlive its owner
+    expect(cacheAt).toBeGreaterThan(admissionAt); // still falls back when derivation returns no evidence
+    expect(body.indexOf('_scheduleGradeRetry(baseUrl, token)', cacheAt)).toBeGreaterThan(cacheAt);
   });
 
   it('still bails (honestly) when there is neither a live nor a cached payload', () => {

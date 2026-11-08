@@ -45,3 +45,7 @@ This project is indexed by GitNexus as **apstats-live-worksheet** (30899 symbols
 ## Code Style
 
 Write extremely easy to consume code. Optimize for how easy the code is to read. Make the code skimmable. Avoid cleverness. Use early returns.
+
+## State-machine navigation
+
+[STATE_MACHINE_MAP.md](STATE_MACHINE_MAP.md) maps current lifecycle owners, invariants, transition tests and remaining risks. For identity, async, persistence or teardown changes, use it to locate the relevant source and behavioral tests. `npm run test:state-machines` runs the focused boundary checks; broader release gates remain separate.

@@ -202,7 +202,7 @@ function loadDesk({ withRefresh }) {
   let freshLessons = () => null;
   const win = {
     ROSTER_SERVICE_URL: 'https://api.test',
-    rosterClient: { token: () => 'tok' },
+    rosterClient: { token: () => 'tok', studentId: () => 'student-a', current: () => ({ username: 'Alice' }) },
     gradebookClient: { record: (row) => { rows.push(row); return { ok: true, ledgerId: 'L1' }; } },
   };
   const ctx = createContext({
@@ -213,6 +213,7 @@ function loadDesk({ withRefresh }) {
   const script = [
     'var _gradeLessonsCache = null, _lastResourcePanel = null;',
     'var __marks = {}, __markWrites = 0;',
+    'function getStudentEmail() { return "Alice"; }',
     'function getStudentMarks() { return __marks; }',
     'async function recordProgress(topic, artifact, score) {',
     '  __marks[topic + "|" + artifact] = { score: score };',
@@ -223,6 +224,8 @@ function loadDesk({ withRefresh }) {
       ? 'function renderDoNowGrades(base, tok) { _gradeLessonsCache = __fresh(); return Promise.resolve(); }'
       : '',
     fnBody(DESK, '_blooketScoreFor'),
+    fnBody(DESK, '_ftCaptureOwner'),
+    fnBody(DESK, '_ftOwnerIsCurrent'),
     fnBody(DESK, '_blooketCommit'),
     fnBody(DESK, '_studentMarkSave'),
     fnBody(DESK, '_deskDoneRow'),

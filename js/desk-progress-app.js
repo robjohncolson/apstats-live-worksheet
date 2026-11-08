@@ -12,8 +12,18 @@ const ProgressApp = {
     cacheMaxAge: 60000,
     activeTab: 'driller',
     foundIn: { driller: false, quiz: false },
+    // Each open/login/logout/close owns its asynchronous work. A username alone
+    // cannot distinguish signing out and signing back in as the same person.
+    sessionVersion: 0,
+    tabRequests: {},
+
+    isCurrentSession: function(version, username) {
+        return this.sessionVersion === version && this.username === username;
+    },
 
     open: function() {
+        var self = this;
+        var version = ++this.sessionVersion;
         bumpUsage('progress');
         MacSFX.play('wildEep', 0.5);
         var overlay = document.getElementById('app-progress-overlay');
@@ -23,16 +33,25 @@ const ProgressApp = {
         win.style.transform = 'translate(-50%, -50%)';
         win.classList.remove('maximized');
         overlay.style.display = 'block';
-        this.username = localStorage.getItem('progress-username') || null;
+        var username = localStorage.getItem('progress-username') || null;
+        if (this.username !== username) {
+            this.cache = {};
+            this.realName = null;
+            this.foundIn = { driller: false, quiz: false };
+        }
+        this.username = username;
         if (this.username) {
             this.showLoading();
-            this.lookupUser().then(function() { ProgressApp.renderMain(); });
+            this.lookupUser().then(function() {
+                if (self.isCurrentSession(version, username)) self.renderMain();
+            });
         } else {
             this.renderLogin();
         }
     },
 
     close: function() {
+        this.sessionVersion += 1;
         MacSFX.play('click', 0.3);
         document.getElementById('app-progress-overlay').style.display = 'none';
     },
@@ -162,6 +181,7 @@ const ProgressApp = {
         if (!username) { this.renderLogin('Please select a username.'); return; }
         if (!password) { this.renderLogin('Please enter your password.'); return; }
         var self = this;
+        var version = ++this.sessionVersion;
         this.showLoading();
         fetch(PROG_DRILLER_API + '/api/users/verify', {
             method: 'POST',
@@ -169,14 +189,18 @@ const ProgressApp = {
             body: JSON.stringify({ username: username, password: password })
         }).then(function(r) { return r.json(); })
           .then(function(result) {
+            if (self.sessionVersion !== version) return;
             if (result.valid) {
+                self.cache = {};
+                self.tabRequests = {};
                 self.username = username;
                 self.realName = result.real_name || username;
                 localStorage.setItem('progress-username', username);
-                self.foundIn.driller = true;
+                self.foundIn = { driller: true, quiz: false };
                 // Also check quiz DB
                 self.quizFetch('users', 'username=eq.' + encodeURIComponent(username) + '&select=real_name')
                     .then(function(q) {
+                        if (!self.isCurrentSession(version, username)) return;
                         self.foundIn.quiz = q && q.length > 0;
                         self.renderMain();
                     });
@@ -184,6 +208,7 @@ const ProgressApp = {
                 self.renderLogin(result.error || 'Incorrect password.');
             }
         }).catch(function() {
+            if (self.sessionVersion !== version) return;
             self.renderLogin('Connection error. Try again.');
         });
     },
@@ -191,10 +216,13 @@ const ProgressApp = {
     lookupUser: function() {
         // Called when reopening with cached username — re-verify against both DBs
         var self = this;
+        var username = this.username;
+        var version = this.sessionVersion;
         return Promise.all([
-            this.drillerFetch('/api/users/' + encodeURIComponent(this.username) + '/stars'),
-            this.quizFetch('users', 'username=eq.' + encodeURIComponent(this.username) + '&select=real_name')
+            this.drillerFetch('/api/users/' + encodeURIComponent(username) + '/stars'),
+            this.quizFetch('users', 'username=eq.' + encodeURIComponent(username) + '&select=real_name')
         ]).then(function(results) {
+            if (!self.isCurrentSession(version, username)) return;
             self.foundIn.driller = results[0] && !results[0].error;
             self.foundIn.quiz = results[1] && results[1].length > 0;
             if (self.foundIn.quiz) self.realName = results[1][0].real_name || self.username;
@@ -207,6 +235,7 @@ const ProgressApp = {
     },
 
     logout: function() {
+        this.sessionVersion += 1;
         this.username = null;
         this.realName = null;
         this.cache = {};
@@ -250,7 +279,12 @@ const ProgressApp = {
     },
 
     switchTab: function(tabId) {
+        if (!this.username) return;
         var self = this;
+        var username = this.username;
+        var version = this.sessionVersion;
+        var request = (this.tabRequests[tabId] || 0) + 1;
+        this.tabRequests[tabId] = request;
         this.activeTab = tabId;
         this.renderTabs();
         var body = document.getElementById('progress-body');
@@ -261,6 +295,8 @@ const ProgressApp = {
             return;
         }
         this.fetchTab(tabId).then(function(data) {
+            if (!self.isCurrentSession(version, username)) return;
+            if (self.tabRequests[tabId] !== request) return;
             self.cache[tabId] = { data: data, ts: Date.now() };
             if (self.activeTab === tabId) self.renderTabContent(tabId, data);
         });

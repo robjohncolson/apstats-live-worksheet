@@ -232,7 +232,7 @@ Use the `live-worksheet.skill` to generate worksheets. The skill expects:
 
 ## Key State Machines
 
-See `STATE_MACHINES.md` for detailed diagrams. Key flows:
+Start with [STATE_MACHINE_MAP.md](STATE_MACHINE_MAP.md) for current owners, invariants, remaining risks, and test commands across the app. `npm run test:state-machines` runs the focused behavioral transition checks. [STATE_MACHINES.md](STATE_MACHINES.md) retains the older worksheet-specific diagrams. Key worksheet flows:
 
 1. **Answer Validation** - Unchecked → Correct/Partial/Incorrect/Revealed
 2. **AI Grading** - Click → Build Prompt → API Call → Display Feedback

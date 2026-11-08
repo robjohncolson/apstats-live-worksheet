@@ -374,7 +374,9 @@ const SANDBOX_FUNCTIONS = [
   '_ftCreateRound', '_ftCurrentIdx', '_ftRecordOutcome', '_ftScore', '_ftMisses', '_ftDone',
   '_ftSliceRanges', '_ftCardsInRanges', '_ftDealDeck', '_ftResumeRemaining', '_ftSavedRoundOk',
   '_ftClearTimer', '_ftRenderTimer', '_ftStartTimer', '_ftSecondsLeft',
-  '_ftResumeKey', '_ftResumeFresh', '_ftSaveResume', '_ftLoadResume', '_ftClearResume',
+  '_ftCaptureOwner', '_ftOwnerIsCurrent', '_ftPendingKey', '_ftSavePending',
+  '_ftLoadPending', '_ftClearPending', '_ftShowPending',
+  '_ftResumeKey', '_ftResumeKeys', '_ftResumeFresh', '_ftSaveResume', '_ftLoadResume', '_ftClearResume',
   '_ftResumeLine', '_ftShowStartOver', '_ftStartOver',
   '_ftStart', '_ftRenderCard', '_ftAnswer', '_ftHandle', '_ftKeydownHandler', '_ftFinish',
   '_ftRenderOutcome', '_ftRenderRecap', '_ftLogToStore',
@@ -919,6 +921,120 @@ describe('Timed deck — every finished run sends its row; the floor keeps the l
     } finally {
       readOnly.dom.window.close();
     }
+  });
+});
+
+describe('Timed deck — failed local save and finished-result recovery', () => {
+  it('keeps the original local mark but sends no row under an owner changed at the save await', async () => {
+    const s = bootTimedDeck({ csvFor: {} });
+    let studentId = 'alice';
+    Object.assign(s.win, {
+      rosterClient: { studentId: () => studentId, current: () => ({ username: studentId }) },
+      getStudentEmail: () => studentId,
+      SUPABASE_URL: 'https://legacy.test', SUPABASE_ANON_KEY: 'test',
+      fetch: async () => ({ ok: true }),
+    });
+    s.win.eval(fnBody(DESK, 'getStudentMarks') + '\n' + fnBody(DESK, 'recordProgress'));
+    try {
+      const pending = s.win._studentMarkSave(null, '4.7', 'blooket', 90, true);
+      studentId = 'bob';
+      expect(await pending).toBe(false);
+      expect(JSON.parse(s.win.localStorage.getItem('apstats_desk_marks_alice'))['4.7|blooket'].score).toBe(90);
+      expect(s.win.localStorage.getItem('apstats_desk_marks_bob')).toBeNull();
+      expect(s.records).toEqual([]);
+      expect(s.win._gradeLessonsCache).toBeNull();
+    } finally { s.win.close(); }
+  });
+
+  it('does not claim a failed new best, and retries the same score without replaying the round log', async () => {
+    const s = bootTimedDeck({ csvFor: { '4.7': 'u4_l7_l8_blooket.csv' } });
+    let logs = 0;
+    s.win._srsAppendLog = () => { logs++; };
+    s.win.eval(fnBody(DESK, 'getStudentMarks') + '\n' + fnBody(DESK, 'recordProgress'));
+    const storagePrototype = s.win.Storage.prototype;
+    const originalSet = storagePrototype.setItem;
+    let failMark = true;
+    storagePrototype.setItem = function (key, value) {
+      if (failMark && key.startsWith('apstats_desk_marks_')) throw new Error('quota');
+      return originalSet.call(this, key, value);
+    };
+    const outcomes = captureOutcomes(s);
+    try {
+      await openDeck(s, '4.7');
+      await playDeck(s, 3); // 90% on the same 30-card slice
+      expect(outcomes.at(-1)).toEqual({ saved: false, best: 0, error: true });
+      expect(s.records).toEqual([]);
+      expect(s.win.getStudentMarks()).toEqual({});
+      expect(s.win._gradeLessonsCache).toBeNull();
+      expect(s.doc.querySelector('.bf-outcome').textContent).toContain('Could not save');
+      expect(s.doc.querySelector('.bf-outcome').getAttribute('role')).toBe('status');
+      const retry = s.doc.getElementById('bf-retry-save');
+      expect(retry).not.toBeNull();
+      expect(s.doc.activeElement).toBe(retry);
+      const loggedOnce = logs;
+      expect(loggedOnce).toBeGreaterThan(0);
+      const finishedRound = s.win._ftState.round;
+      failMark = false;
+      retry.click();
+      retry.click(); // the in-flight retry must not submit twice
+      await settle();
+      expect(s.win._ftState.round).toBe(finishedRound);
+      expect(logs).toBe(loggedOnce);
+      expect(s.records).toHaveLength(1);
+      expect(s.records[0].score).toBe(90);
+      expect(s.records[0].itemId).toBe('BL-U4-L7-DESK_DAY');
+      expect(s.win.getStudentMarks()['4.7|blooket'].score).toBe(90);
+      expect(outcomes.at(-1)).toEqual({ saved: true, best: 90 });
+      expect(s.doc.getElementById('bf-retry-save')).toBeNull();
+      expect(s.doc.querySelector('.bf-outcome').textContent).toContain('Saved to your grade');
+    } finally {
+      storagePrototype.setItem = originalSet;
+      s.win.close();
+    }
+  });
+
+  it('does not paint an old finished result into another round after the save resolves', async () => {
+    const s = bootTimedDeck({ csvFor: { '4.7': 'u4_l7_l8_blooket.csv', '4.8': 'u4_l7_l8_blooket.csv' } });
+    let release;
+    s.win._blooketCommit = () => new Promise((resolve) => { release = resolve; });
+    try {
+      await openDeck(s, '4.7');
+      await finishDeck(s);
+      expect(release).toBeTypeOf('function');
+      s.win._bfCloseUI();
+      // Reopening 4.7 now offers its pending finished result. Open a different
+      // topic to exercise the unrelated-round repaint boundary.
+      await openDeck(s, '4.8');
+      const newRound = s.win._ftState.round;
+      release({ saved: true, best: 100 });
+      await settle();
+      expect(s.win._ftState.round).toBe(newRound);
+      expect(s.doc.querySelector('.bf-outcome')).toBeNull();
+      expect(s.doc.getElementById('bf-result').style.display).toBe('none');
+      expect(s.doc.getElementById('bf-done')).toBeNull();
+    } finally { s.win.close(); }
+  });
+
+  it('does not save a finished score into an account that signs in during the grade refresh', async () => {
+    const s = bootTimedDeck({ csvFor: { '4.7': 'u4_l7_l8_blooket.csv' } });
+    let release;
+    let studentId = 'alice';
+    Object.assign(s.win, {
+      ROSTER_SERVICE_URL: 'https://roster.test',
+      rosterClient: { token: () => studentId + '-token', studentId: () => studentId,
+        current: () => ({ username: studentId }) },
+      getStudentEmail: () => studentId,
+      renderDoNowGrades: () => new Promise((resolve) => { release = resolve; }),
+    });
+    try {
+      const pending = s.win._blooketCommit(null, '4.7', 90, true);
+      studentId = 'bob';
+      release();
+      const result = await pending;
+      expect(result).toEqual({ saved: false, best: null, error: true, ownerChanged: true });
+      expect(s.records).toEqual([]);
+      expect(s.win._gradeLessonsCache).toBeNull();
+    } finally { s.win.close(); }
   });
 });
 

@@ -202,9 +202,14 @@
           return { ok: false, error: data.error || 'Password change failed' };
         }
 
-        session.mustChangePassword = false;
-        session.signedInAt = new Date(Date.now()).toISOString();
-        writeSession(session);
+        var latest = readSession();
+        if (!session.studentId || !latest || latest.studentId !== session.studentId) {
+          return { ok: false, error: 'Password changed for the original account. Sign in to that account to continue.' };
+        }
+        // A same-student token renewal does not undo a successful password
+        // change. Keep the latest credentials, age and concurrent profile edits.
+        latest.mustChangePassword = false;
+        writeSession(latest);
 
         return { ok: true };
       } catch (err) {

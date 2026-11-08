@@ -231,6 +231,99 @@ describe('ActivityLevel.mount() handle shape', function () {
 });
 
 describe('updateState renders decoration overlays', function () {
+  it('replaces a finished level with the next level before the Desk disposes the handle', function () {
+    var env = loadModule();
+    var first = makeLevelDef();
+    var next = makeLevelDef({
+      levelKey: 'U1.2',
+      map: { width: 32, height: 12, chipSize: 12 },
+      actors: [{ type: 'Text', x: 4, y: 1, text: 'Sort the new variables' }]
+    });
+    var mount = getMount(env);
+    var handle = env.module.mount(mount, { currentUsername: 'alice', level: first });
+    handle.updateState(makeActivityState({ level: first, players: { alice: { x: 40, y: 10 } } }));
+    var oldTooltip = mount.querySelector('.activity-level-tooltip');
+    expect(oldTooltip).not.toBeNull();
+    handle.showOutcome('success');
+    var stub = env.lastStub();
+    stub.texts.length = 0;
+
+    handle.updateState(makeActivityState({ level: next, players: { alice: { x: 48, y: 12 } } }));
+
+    expect(stub.texts.map(function (row) { return row.text; })).toContain('Sort the new variables');
+    expect(stub.texts.map(function (row) { return row.text; })).not.toContain('Welcome to AP Stats!');
+    expect(mount.querySelector('.activity-level-tooltip').textContent).toContain('Sort the new variables');
+    expect(mount.contains(oldTooltip)).toBe(false);
+    expect(handle.chipSize).toBe(12);
+    expect(handle.cssH).toBe(154);
+    expect(mount.querySelector('canvas').height).toBe(154);
+    expect(mount.querySelector('canvas').style.height).toBe('154px');
+    expect(mount.style.height).toBe('154px');
+    expect(mount.querySelectorAll('canvas')).toHaveLength(1);
+    handle.destroy();
+    env.dom.window.close();
+  });
+
+  it('keeps the tooltip when a poll repeats the same level', function () {
+    var env = loadModule();
+    var level = makeLevelDef();
+    var mount = getMount(env);
+    var handle = env.module.mount(mount, { currentUsername: 'alice', level: level });
+    var players = { alice: { x: 40, y: 10 } };
+    handle.updateState(makeActivityState({ level: level, players: players }));
+    var tooltip = mount.querySelector('.activity-level-tooltip');
+    expect(tooltip).not.toBeNull();
+
+    handle.updateState(makeActivityState({ level: JSON.parse(JSON.stringify(level)), players: players }));
+
+    expect(mount.querySelector('.activity-level-tooltip')).toBe(tooltip);
+    expect(tooltip.textContent).toContain('Welcome to AP Stats!');
+    expect(handle.cssH).toBe(90);
+    handle.destroy();
+    env.dom.window.close();
+  });
+
+  it('applies same-key definition edits without replacing the tooltip', function () {
+    var env = loadModule();
+    var level = makeLevelDef();
+    var mount = getMount(env);
+    var handle = env.module.mount(mount, { currentUsername: 'alice', level: level });
+    handle.updateState(makeActivityState({ level: level, players: { alice: { x: 40, y: 10 } } }));
+    var tooltip = mount.querySelector('.activity-level-tooltip');
+    var edited = makeLevelDef({
+      map: { width: 32, height: 12, chipSize: 12 },
+      actors: [{ type: 'Text', x: 4, y: 1, text: 'Updated level instructions' }]
+    });
+
+    handle.updateState(makeActivityState({ level: edited, players: { alice: { x: 48, y: 12 } } }));
+
+    expect(mount.querySelector('.activity-level-tooltip')).toBe(tooltip);
+    expect(tooltip.textContent).toContain('Updated level instructions');
+    expect(handle.chipSize).toBe(12);
+    expect(handle.cssH).toBe(154);
+    expect(mount.querySelector('canvas').height).toBe(154);
+    handle.destroy();
+    env.dom.window.close();
+  });
+
+  it('keeps the current definition and tooltip on an ordinary tick without level metadata', function () {
+    var env = loadModule();
+    var level = makeLevelDef();
+    var mount = getMount(env);
+    var handle = env.module.mount(mount, { currentUsername: 'alice', level: level });
+    var activity = makeActivityState({ level: level, players: { alice: { x: 40, y: 10 } } });
+    handle.updateState(activity);
+    var tooltip = mount.querySelector('.activity-level-tooltip');
+
+    handle.updateState({ state: activity.state });
+
+    expect(handle._levelDef).toBe(level);
+    expect(mount.querySelector('.activity-level-tooltip')).toBe(tooltip);
+    expect(handle.cssH).toBe(90);
+    handle.destroy();
+    env.dom.window.close();
+  });
+
   it('V7.2 sprite-collide: coin rendering moved to the avatar canvas; overlay no longer draws coin rects', function () {
     var env = loadModule();
     var handle = env.module.mount(getMount(env), { currentUsername: 'alice' });

@@ -15,6 +15,7 @@ import {
 } from './harness.js';
 
 const ROADMAP = JSON.parse(readFileSync(resolve(import.meta.dirname, '../../roadmap-data.json'), 'utf8'));
+const BULLETIN = JSON.parse(readFileSync(resolve(import.meta.dirname, '../../data/bulletin.json'), 'utf8'));
 
 describe('Desk journey harness smoke', { timeout: budget(20_000) }, () => {
   it('boots the real Desk cleanly with Do Now and disk-backed roadmap tiles in under 6 seconds', async () => {
@@ -42,6 +43,17 @@ describe('Desk journey harness smoke', { timeout: budget(20_000) }, () => {
       )), 'no rendered roadmap tile maps to roadmap-data.json').toBe(true);
 
       expect(harness.bootTimeMs).toBeLessThan(budget(6_000));
+
+      // Local fixture reads must not outlive a test waiting only for page load.
+      // Preserve fetch's async interface, but require its bytes before a host
+      // I/O turn: pending filesystem reads used to resume after JSDOM teardown.
+      let fixtureResponse;
+      const pendingFixture = harness.window.fetch('data/bulletin.json');
+      expect(pendingFixture.then).toBeTypeOf('function');
+      pendingFixture.then((response) => { fixtureResponse = response; });
+      await Promise.resolve();
+      expect(fixtureResponse, 'local fixture fetch still waits for filesystem I/O').toBeInstanceOf(Response);
+      expect(await fixtureResponse.json()).toEqual(BULLETIN);
     } finally {
       harness.teardown();
     }
