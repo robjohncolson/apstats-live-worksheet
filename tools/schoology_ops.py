@@ -942,14 +942,16 @@ def _pick_period_by_select2(cdp, want: str, mp_range: Optional[dict]) -> Optiona
 
 
 def select_grading_period(cdp, grading_period_id, mp_range: Optional[dict] = None,
-                          timeout_s: float = 12.0) -> dict:
+                          timeout_s: float = 12.0, *, expected_columns: Optional[int] = None,
+                          reload_url: Optional[str] = None) -> dict:
     """Show ONE marking period in the loaded gradebook and PROVE it.
 
-    Returns {'ok', 'view', 'method', 'error'}. 'ok' only when grading_period_view_matches
-    passes and the grid has settled. Tries a real click on the filter first (what a
-    teacher does), then the select2 API. Nothing here writes a grade. The gradebook
-    reopens on its default period after any navigation, so callers select after every
-    gradebook load.
+    Returns {'ok', 'view', 'method', 'error'} (plus 'grid_empty' / 'reloaded', below). 'ok'
+    only when grading_period_view_matches passes and the grid has settled. Tries a real
+    click on the filter first (what a teacher does), then the select2 API. Nothing here
+    writes a grade. After any navigation the gradebook reopens on the LAST SELECTED period
+    (the 11/08 log: the Q2 pass started on MP1 right after the Q1 pass selected it), not
+    necessarily the one a pass wants, so callers select after every gradebook load.
 
     After a switch the filter and the header are not enough (finding A3): Schoology may
     switch both before the new period's grid data arrives, and the old period's grid
@@ -963,22 +965,89 @@ def select_grading_period(cdp, grading_period_id, mp_range: Optional[dict] = Non
     the same twice (finding R4d); a grid that never settles is not ok. Whether its
     columns belong to the period is the caller's check (schoology_sync_section
     PassEvidence, schoology_official read_gradebook: view_content_problem).
+
+    expected_columns: registered columns the sync state files in this marking period (the
+    caller's stamps). None = unknown: an empty grid is accepted, as before. 0 = the stamps
+    say the period is empty: accepted. N > 0: the grid must show an assignment column
+    first; only the count is used, which titles are on the grid stays the caller's check.
+    reload_url: the gradebook URL. When the grid does not render the period's columns
+    (grid_empty), the page is reloaded ONCE and the whole check runs again from scratch.
+    Why: 2026-11-08 08:13, MP2's grid rendered no student row for the whole wait while
+    every other switch that day rendered in ~3 s. Extra wait: one reload + one more check
+    (~65 s worst case, plus up to 1.5 s per attempt to confirm a late grid), only on that
+    refusal.
+
+    The reload carries the grid identity of the period the first try LEFT (when that grid had
+    an assignment column): the reopened page may show the target's filter and header over a
+    stale render of the leaving period's columns, and such a grid is refused, never verified.
     """
     want = str(grading_period_id)
+    first, leaving_ids = _select_once(cdp, want, mp_range, timeout_s, expected_columns)
+    if first["ok"] or not first.get("grid_empty"):
+        return first
+    if not reload_url:
+        return first
+    # Every CDP call on the reopened page can raise (CDP down, tab gone, an eval timeout), the
+    # second attempt included: inside this boundary that is a clean refusal the callers turn
+    # into exit 3 (and the .ps1 retry), not an exception that crashes the pass. Never a second
+    # reload.
+    try:
+        navigate(cdp, reload_url)
+        inject_helpers(cdp)          # a reload drops window.SchoologyDomHelpers
+        # From scratch: the page may reopen on the target (already shown) or elsewhere (switch).
+        second, _ = _select_once(cdp, want, mp_range, timeout_s, expected_columns, leaving_ids)
+    except Exception as exc:  # noqa: BLE001 -- any failure here is the same retryable refusal
+        return {"ok": False, "view": first.get("view"), "method": first.get("method"),
+                "error": "after a reload of the gradebook: the reload failed (%s)" % type(exc).__name__,
+                "reloaded": True}
+    second["reloaded"] = True
+    if second["ok"]:
+        return second
+    if second.get("grid_empty"):
+        second["error"] = _empty_after_reload(want, expected_columns, first["error"], second["error"])
+        return second
+    second["error"] = "after a reload of the gradebook: %s" % second["error"]
+    return second
+
+
+def _empty_after_reload(want: str, expected_columns: Optional[int], first_error: str,
+                        second_error: str) -> str:
+    """The refusal when the grid stayed empty on both tries (both reasons kept)."""
+    if expected_columns:
+        return ("the grid rendered no columns for marking period %s after a reload of the "
+                "gradebook; %d stamped column(s) were expected (first try: %s; after the "
+                "reload: %s)" % (want, expected_columns, first_error, second_error))
+    return ("the grid did not render a settled student row for marking period %s after a "
+            "reload of the gradebook (first try: %s; after the reload: %s)"
+            % (want, first_error, second_error))
+
+
+def _select_once(cdp, want: str, mp_range: Optional[dict], timeout_s: float,
+                 expected_columns: Optional[int], leaving_ids: Optional[frozenset] = None) -> tuple:
+    """One full attempt of select_grading_period on the page as it is now.
+
+    Returns (result, left): `left` is the grid identity of the period this attempt switched
+    away from, or None when it did not switch or that grid had no assignment column (two
+    empty periods look alike, so an empty grid identifies nothing). `leaving_ids` is the
+    first attempt's `left`, passed to the attempt after a reload: a settled grid with that
+    identity is the leaving period's stale render, whichever path the reopened page takes.
+    """
     view = _wait_for_view(cdp, timeout_s)
     if not view or view.get("gp") is None:
         return {"ok": False, "view": view, "method": None,
-                "error": "the gradebook has no marking-period filter (page not loaded?)"}
+                "error": "the gradebook has no marking-period filter (page not loaded?)"}, None
     if grading_period_view_matches(view, want, mp_range) is None:
-        return _already_shown(cdp, view)
+        return _already_shown(cdp, view, want, mp_range, expected_columns, leaving_ids), None
     available = view.get("available")
     if isinstance(available, list) and want not in [str(a) for a in available]:
         return {"ok": False, "view": view, "method": None,
-                "error": "marking period %s is not in Drupal.available_grading_periods" % want}
+                "error": "marking period %s is not in Drupal.available_grading_periods" % want}, None
+    # The period we leave may be empty (no assignment column): that is a fine 'before'.
     before = _settled_grid_signature(cdp)
     if before is None:
         return {"ok": False, "view": view, "method": None,
-                "error": "the grid did not show a settled student row before the switch"}
+                "error": "the grid did not show a settled student row before the switch"}, None
+    left = _grid_identity(before) or None
     last_error = "unverified"
     for method, pick in (("click", _pick_period_by_click), ("select2", _pick_period_by_select2)):
         problem = pick(cdp, want, mp_range)
@@ -988,21 +1057,49 @@ def select_grading_period(cdp, grading_period_id, mp_range: Optional[dict] = Non
         view = _poll_view(cdp, want, mp_range, timeout_s)
         reason = grading_period_view_matches(view, want, mp_range)
         if reason is None:
-            return _settled_after_switch(cdp, view, method, before, want, mp_range)
+            result = _settled_after_switch(cdp, view, method, before, want, mp_range,
+                                           expected_columns, leaving_ids)
+            return result, left
         last_error = "%s: %s" % (method, reason)
-    return {"ok": False, "view": view, "method": None, "error": last_error}
+    return {"ok": False, "view": view, "method": None, "error": last_error}, left
 
 
-def _already_shown(cdp, view: dict) -> dict:
+def _already_shown(cdp, view: dict, want: str, mp_range: Optional[dict],
+                   expected_columns: Optional[int] = None,
+                   leaving_ids: Optional[frozenset] = None) -> dict:
     """The period is on screen already: 'ok' only once its grid is RENDERED (finding R4d).
 
     Before this, two reads of an empty page (no row at all, or a grid still loading)
-    counted as 'settled', and the caller read an empty marking period.
+    counted as 'settled', and the caller read an empty marking period. With stamped
+    columns expected here, a grid with rows but no assignment column is not rendered yet.
+
+    After a reload (leaving_ids given) the page can reopen with the target's filter and
+    header over the leaving period's grid: that grid is refused as stale (no further
+    reload). The filter can also move while the grid settles, so the view is proven again
+    on the settled grid, as after a switch.
     """
-    if _settled_grid_signature(cdp) is None:
-        return {"ok": False, "view": view, "method": "already shown",
-                "error": "the grid did not show a settled student row"}
-    return {"ok": True, "view": view, "method": "already shown", "error": None}
+    need_columns = bool(expected_columns)
+    signature = _settled_grid_signature(cdp, need_columns=need_columns)
+    if signature is None:
+        error = "the grid did not show a settled student row"
+        if need_columns:
+            error = ("the grid did not show a settled student row with an assignment column; "
+                     "%d stamped column(s) were expected" % expected_columns)
+        return _refused(view, "already shown", error, grid_empty=True)
+    if leaving_ids and _grid_identity(signature) == leaving_ids:
+        return _refused(view, "already shown", _STALE_GRID_ERROR)
+    settled_view = displayed_grading_period(cdp)
+    reason = grading_period_view_matches(settled_view, want, mp_range)
+    if reason is not None:
+        return _refused(settled_view, "already shown", "after the grid settled: " + reason)
+    return {"ok": True, "view": settled_view, "method": "already shown", "error": None}
+
+
+# The refusal for a grid that still shows the columns of the period being left: after a
+# switch with an unchanged identity, and after a reload when the reopened page shows the
+# first try's leaving grid. Never grid_empty: reloading a stale grid proves nothing.
+_STALE_GRID_ERROR = ("the filter and header switched but the grid still shows the previous "
+                     "marking period's columns")
 
 
 def _grid_has_rows(signature) -> bool:
@@ -1022,16 +1119,27 @@ def _grid_identity(signature) -> Optional[frozenset]:
     return frozenset(pair for pair in pairs.splitlines() if pair)
 
 
-def _settled_grid_signature(cdp, rounds: int = 12, pause_s: float = 0.75) -> Optional[str]:
+def _grid_ready(signature, need_columns: bool) -> bool:
+    """A student row, and (need_columns) at least one assignment column."""
+    if not _grid_has_rows(signature):
+        return False
+    if not need_columns:
+        return True
+    return bool(_grid_identity(signature))
+
+
+def _settled_grid_signature(cdp, rounds: int = 12, pause_s: float = 0.75,
+                            need_columns: bool = False) -> Optional[str]:
     """Row 0's assignment signature once the grid shows a row and reads the same twice.
 
     None when it never does. A grid that has not rendered yet must not be the 'before'
     of a switch: the old period's rows arriving late would then look like a change.
+    need_columns: rows with no assignment column do not count as rendered either.
     """
     last = None
     for _ in range(rounds):
         signature = cdp.eval_js(_ASSIGNMENT_SIGNATURE_JS)
-        if _grid_has_rows(signature):
+        if _grid_ready(signature, need_columns):
             if signature == last:
                 return signature
             last = signature
@@ -1041,37 +1149,124 @@ def _settled_grid_signature(cdp, rounds: int = 12, pause_s: float = 0.75) -> Opt
     return None
 
 
-def _wait_for_new_grid(cdp, before: str, rounds: int = 12, pause_s: float = 0.75) -> bool:
-    """True once row 0's set of assignment identities differs from `before`'s and the grid
-    reads the same twice (finding R4a: a changed score is not a changed grid)."""
+# Extra reads that confirm a new grid seen only on the LAST round of the wait (F1). Before
+# them a grid that rendered nothing for 11 rounds and showed the target's columns on round 12
+# was called 'unsettled'. Worst case added per attempt: 2 x 0.75 s = 1.5 s of sleep. The old
+# bound for the whole select_grading_period call (about 65 s extra, once, on a grid_empty
+# refusal with reload_url) therefore grows by at most 1.5 s per attempt, 3 s in all.
+LATE_GRID_CONFIRM_READS = 2
+
+
+def _grid_after_switch(cdp, before: str, expected_columns: Optional[int] = None,
+                       rounds: int = 12, pause_s: float = 0.75) -> tuple:
+    """(outcome, last signature) of the wait for the new period's grid.
+
+    'changed' once row 0's set of assignment identities differs from `before`'s and the
+    grid reads the same twice (finding R4a: a changed score is not a changed grid). Else
+    why it did not, from the last read: 'no rows' | 'no columns' | 'unchanged' |
+    'unsettled' (_why_not_new). Replaces a bool wait whose False hid WHY, so every failure
+    printed the stale-grid text (2026-11-08: the grid had rendered nothing at all).
+
+    A new grid first seen on the last round is not judged yet: _confirm_late_grid reads
+    again, so a slow render is not called 'unsettled' and an empty one is not called 'new'.
+    """
     before_ids = _grid_identity(before)
+    need_columns = bool(expected_columns)
     last = None
+    signature = None
     for _ in range(rounds):
         signature = cdp.eval_js(_ASSIGNMENT_SIGNATURE_JS)
-        ids = _grid_identity(signature)
-        if ids is not None and ids != before_ids:
+        if _is_new_grid(_grid_identity(signature), before_ids, need_columns):
             if signature == last:
-                return True
+                return "changed", signature
             last = signature
         else:
             last = None
         time.sleep(pause_s)
-    return False
+    if last is not None:
+        return _confirm_late_grid(cdp, last, before_ids, need_columns, pause_s)
+    return _why_not_new(signature, before_ids, need_columns), signature
+
+
+def _confirm_late_grid(cdp, candidate: str, before_ids: Optional[frozenset], need_columns: bool,
+                       pause_s: float) -> tuple:
+    """Up to LATE_GRID_CONFIRM_READS more reads for a new grid seen once, on the last round.
+
+    The same signature twice is 'changed'. A read that is no longer a new grid (no rows, no
+    columns, the old columns) ends the wait and is classified by itself. Only grids that keep
+    differing from each other end as 'unsettled'.
+    """
+    signature = candidate
+    for _ in range(LATE_GRID_CONFIRM_READS):
+        signature = cdp.eval_js(_ASSIGNMENT_SIGNATURE_JS)
+        if signature == candidate:
+            return "changed", signature
+        if not _is_new_grid(_grid_identity(signature), before_ids, need_columns):
+            break
+        candidate = signature
+        time.sleep(pause_s)
+    return _why_not_new(signature, before_ids, need_columns), signature
+
+
+def _is_new_grid(ids: Optional[frozenset], before_ids: Optional[frozenset], need_columns: bool) -> bool:
+    if ids is None:
+        return False                 # no student row yet
+    if need_columns and not ids:
+        return False                 # rows, but the expected columns have not arrived
+    return ids != before_ids
+
+
+def _why_not_new(signature, before_ids: Optional[frozenset], need_columns: bool) -> str:
+    """Why the wait ended without a new grid, from its LAST read (the state when time ran
+    out). Order matters: an empty grid while columns are expected is an empty render even
+    when the period we left was empty too."""
+    ids = _grid_identity(signature)
+    if ids is None:
+        return "no rows"
+    if need_columns and not ids:
+        return "no columns"
+    if ids == before_ids:
+        return "unchanged"
+    return "unsettled"
 
 
 def _settled_after_switch(cdp, view: dict, method: str, before: str, want: str,
-                          mp_range: Optional[dict]) -> dict:
+                          mp_range: Optional[dict], expected_columns: Optional[int] = None,
+                          leaving_ids: Optional[frozenset] = None) -> dict:
     """'ok' only when the grid changed after the switch, settled, and the filter and the
-    header still name the period once it has (finding A3)."""
-    if not _wait_for_new_grid(cdp, before):
-        return {"ok": False, "view": view, "method": method,
-                "error": "the filter and header switched but the grid still shows the previous "
-                         "marking period's columns"}
+    header still name the period once it has (finding A3). An empty render is flagged
+    grid_empty (select_grading_period may reload once); a stale grid never is.
+
+    leaving_ids (after a reload only): the first try's leaving grid. The reopened page may
+    have started on a third grid, so 'changed from before' alone does not rule it out."""
+    outcome, signature = _grid_after_switch(cdp, before, expected_columns)
+    if outcome == "no rows":
+        return _refused(view, method, "the filter and header switched but the grid rendered "
+                        "no student row", grid_empty=True)
+    if outcome == "no columns":
+        return _refused(view, method, "the filter and header switched but the grid shows no "
+                        "assignment column; %d stamped column(s) were expected" % expected_columns,
+                        grid_empty=True)
+    if outcome == "unchanged":
+        return _refused(view, method, _STALE_GRID_ERROR)
+    if outcome == "unsettled":
+        return _refused(view, method, "the filter and header switched but the grid did not "
+                        "settle (it read differently each time)")
+    if leaving_ids and _grid_identity(signature) == leaving_ids:
+        return _refused(view, method, _STALE_GRID_ERROR)
     view = displayed_grading_period(cdp)
     reason = grading_period_view_matches(view, want, mp_range)
     if reason is not None:
-        return {"ok": False, "view": view, "method": method, "error": "after the grid settled: " + reason}
+        return _refused(view, method, "after the grid settled: " + reason)
     return {"ok": True, "view": view, "method": method, "error": None}
+
+
+def _refused(view, method: Optional[str], error: str, grid_empty: bool = False) -> dict:
+    """A refusal; grid_empty marks the one kind select_grading_period may reload for."""
+    result = {"ok": False, "view": view, "method": method, "error": error}
+    if grid_empty:
+        result["grid_empty"] = True
+    return result
 
 
 def visible_column_titles(cdp) -> Optional[list]:
@@ -1563,10 +1758,52 @@ def materials_url(course_id: str, folder_id: str | None = None) -> str:
     return url + (f"?f={folder_id}" if folder_id else "")
 
 
+# Readiness poll for the Materials listing (2026-11-08): from a cold start the first dry run of
+# schoology_move_columns.py read the page after the fixed 3 s sleep, saw ZERO rows (every column
+# "no assignment titled ... in Materials"), and a re-run moments later listed all 66. The page
+# fills in after navigation, so one read at a fixed time is not proof of anything.
+MATERIALS_POLL_INTERVAL_S = 0.5
+MATERIALS_POLL_TIMEOUT_S = 15.0
+
+
 def list_materials(cdp: EdgeCDP, course_id: str, folder_id: str | None = None) -> list:
-    """Return [{nid, title, kind}] ('assignment' | 'folder' | 'other') at one materials level."""
+    """Return [{nid, title, kind}] ('assignment' | 'folder' | 'other') at one materials level.
+
+    Re-reads every 0.5 s until the listing is non-empty and the same size on two consecutive
+    reads, for at most 15 s. On timeout it returns the last read, possibly [], so callers still
+    fail closed on an empty listing (a genuinely empty folder costs the full 15 s).
+    """
     cdp.attach_url(materials_url(course_id, folder_id), wait_ms=3000)
-    return cdp.eval_js(_LIST_MATERIALS_JS) or []
+    started = time.monotonic()
+    # Bounded by read count as well as the clock, so a patched sleep cannot spin for 15 real seconds.
+    max_reads = int(MATERIALS_POLL_TIMEOUT_S / MATERIALS_POLL_INTERVAL_S) + 1
+    rows: list = []
+    previous_count = -1
+    reads = 0
+    for _ in range(max_reads):
+        rows = cdp.eval_js(_LIST_MATERIALS_JS) or []
+        reads += 1
+        if rows and len(rows) == previous_count:
+            # Quiet on the normal two-read listing; only a slow one is worth a line.
+            if reads > 2:
+                _log_materials(rows, started, "")
+            return rows
+        previous_count = len(rows)
+        if time.monotonic() - started >= MATERIALS_POLL_TIMEOUT_S:
+            break
+        time.sleep(MATERIALS_POLL_INTERVAL_S)
+    if rows:
+        _log_materials(rows, started, " (count never settled)")
+        return rows
+    print(f"Materials: still 0 assignments after {MATERIALS_POLL_TIMEOUT_S:.0f} s", flush=True)
+    return rows
+
+
+def _log_materials(rows: list, started: float, note: str) -> None:
+    """One line: assignments only (folders are rows too), with the row total for context."""
+    assignments = sum(1 for row in rows if row.get("kind") == "assignment")
+    print(f"Materials: {assignments} assignments ({len(rows)} rows) after "
+          f"{time.monotonic() - started:.1f} s{note}", flush=True)
 
 
 def find_folder_id(cdp: EdgeCDP, course_id: str, title: str = ASSIGNMENTS_FOLDER_TITLE) -> Optional[str]:

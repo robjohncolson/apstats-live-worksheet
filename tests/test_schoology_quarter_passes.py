@@ -127,6 +127,7 @@ class ViewOps(FakeOps):
         # refresh): the gradebook reopens on default_gp, with no select by the sync.
         self.reload_after_writes = reload_after_writes
         self.selects = []
+        self.select_calls = []           # (mp id, expected_columns, reload_url)
         self.writes = []                 # (mp shown, column, row, value)
         self.reads = []                  # (mp shown, column, row)
 
@@ -135,9 +136,11 @@ class ViewOps(FakeOps):
         if self.current_page == "gradebook":
             self.current_gp = self.default_gp
 
-    def select_grading_period(self, cdp, grading_period_id, mp_range=None):
+    def select_grading_period(self, cdp, grading_period_id, mp_range=None, *,
+                              expected_columns=None, reload_url=None):
         self._require_page("gradebook", "select_grading_period")
         self.selects.append(grading_period_id)
+        self.select_calls.append((grading_period_id, expected_columns, reload_url))
         works = self.selectable and (self.fail_after is None or len(self.selects) <= self.fail_after)
         if works:
             self.current_gp = grading_period_id
@@ -481,6 +484,43 @@ class TestMarkingPeriodEvidence(unittest.TestCase):
         row = state.get_assignment("PeriodB", "QUIZ:4.2")
         self.assertEqual((row["schoology_assignment_id"], row["grading_period_id"]),
                          ("COL[1173889]4.2 Quiz", MP2))
+
+
+class TestSelectGetsTheStampCount(unittest.TestCase):
+    """Every gradebook load tells select_grading_period how many registered columns the state
+    files in the pass's marking period (may its grid be empty?) and the URL it may reload
+    once when the grid renders nothing (2026-11-08 08:13)."""
+
+    URL = "https://schoology.example.com/course/course/grades"
+
+    def test_a_q2_pass_tells_the_select_how_many_columns_are_filed_there(self):
+        # After the move: 2 columns stamped in MP1, the 4 moved ones in MP2.
+        fake = ViewOps(_views(moved=True))
+        summary, _ = _run(fake, _state(stamps=_stamps(moved=True)), "Q2", through="2026-11-08")
+        self.assertEqual(summary["errors"], [])
+        self.assertTrue(fake.select_calls)
+        self.assertEqual({call for call in fake.select_calls}, {(MP2, len(MOVED), self.URL)})
+
+    def test_no_stamp_at_all_expects_nothing(self):
+        fake = ViewOps(_views(moved=False))
+        _, out = _run(fake, _state(), "Q2", through="2026-11-08")
+        self.assertTrue(fake.select_calls)
+        self.assertTrue(all(call[1] is None for call in fake.select_calls), fake.select_calls)
+        self.assertIn("no marking-period evidence on record", out)
+
+    def test_stamps_only_elsewhere_expect_an_empty_period(self):
+        fake = ViewOps(_views(moved=False))
+        _run(fake, _state(stamps=_stamps(moved=False)), "Q2", through="2026-11-08")
+        self.assertTrue(fake.select_calls)
+        self.assertTrue(all(call[1] == 0 for call in fake.select_calls), fake.select_calls)
+
+    def test_a_column_created_in_the_pass_is_expected_on_the_next_load(self):
+        # 4.8's three columns are created in MP2: each create's second load (after the state
+        # row is stamped) expects one more, and the push's reload expects all seven.
+        fake = ViewOps(_views(moved=True))
+        summary, _ = _run(fake, _state(stamps=_stamps(moved=True)), "Q2")
+        self.assertEqual(summary["errors"], [])
+        self.assertEqual([call[1] for call in fake.select_calls], [4, 4, 5, 5, 6, 6, 7, 7])
 
 
 class TestRigWindowStop(unittest.TestCase):

@@ -999,6 +999,7 @@ class FakeOfficialOps(FlippingPage):
         self.content_checks = []
         self.connected = False
         self.selects = []
+        self.select_calls = []           # (gp, expected_columns, reload_url)
 
     def connect(self, reuse=True):
         self.connected = True
@@ -1019,8 +1020,10 @@ class FakeOfficialOps(FlippingPage):
     def list_students(self, cdp):
         return list(self.students)
 
-    def select_grading_period(self, cdp, gp, mp_range=None):
+    def select_grading_period(self, cdp, gp, mp_range=None, *, expected_columns=None,
+                              reload_url=None):
         self.selects.append(gp)
+        self.select_calls.append((gp, expected_columns, reload_url))
         if self.select_ok:
             self.shown = gp
             return {"ok": True, "view": {"gp": gp}}
@@ -1522,6 +1525,21 @@ class TestReadGradebookViews(unittest.TestCase):
             so.read_gradebook(self._ops(loaded=False), self._cdp(5), "course")
         with self.assertRaises(SystemExit):
             so.read_gradebook(self._ops(loaded=False), self._cdp(None), "course")
+
+    def test_the_select_gets_the_stamp_count_and_the_reload_url(self):
+        # How many titles are filed here (may the grid be empty?), and the URL the select
+        # may reload once when the grid renders nothing (2026-11-08 08:13).
+        view = {"quarter": "Q1", "grading_period_id": MP1, "mp_range": LIVE_MPS[MP1]}
+        ops = self._ops(loaded=True)
+        so.read_gradebook(ops, self._cdp(0), "course", view, titles=({"a", "b"}, {"c"}))
+        self.assertEqual(ops.select_calls, [(MP1, 2, "gradebook")])
+
+    def test_no_stamp_expects_nothing_and_stamps_elsewhere_expect_an_empty_period(self):
+        view = {"quarter": "Q2", "grading_period_id": MP2, "mp_range": LIVE_MPS[MP2]}
+        for titles, expected in ((None, None), ((set(), set()), None), ((set(), {"c"}), 0)):
+            ops = self._ops(loaded=True)
+            so.read_gradebook(ops, self._cdp(0), "course", view, titles=titles)
+            self.assertEqual(ops.select_calls, [(MP2, expected, "gradebook")], titles)
 
     def test_an_unverified_view_raises_before_any_read(self):
         view = {"quarter": "Q1", "grading_period_id": MP1, "mp_range": LIVE_MPS[MP1]}

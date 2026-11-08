@@ -50,19 +50,39 @@ LIVE_MPS = {
 # QUARTER_LINE_BY_DUE_DATE_SPEC.md section 4: every after-the-line column (CED titles).
 SPEC_B = {"2.3 Day 2 Quiz", "2.4-2.6 Follow-Along", "2.4-2.6 Blooket", "2.4 Quiz", "2.5 Quiz", "2.6 Quiz",
           "2.7 Follow-Along", "2.7 Blooket", "2.7 Quiz", "2.8-2.9 Follow-Along", "2.8-2.9 Blooket", "2.8 Quiz"}
+# (B's "2.8-2.9 Blooket" is the legacy group column named above; the 2.8 / 2.9 day columns are not in it.)
 SPEC_E = {"2.2 Follow-Along", "2.2 Blooket", "2.2 Quiz", "2.3 Follow-Along", "2.3 Blooket", "2.3 Day 2 Quiz",
           "2.4-2.6 Follow-Along", "2.4-2.6 Blooket", "2.4 Quiz", "2.5 Quiz", "2.6 Quiz",
           "2.7 Follow-Along", "2.7 Blooket", "2.7 Quiz"}
 
 
+# The one-time move ran on 2026-11-08, when Schoology still held ONE group column per combined
+# deck: "2.8-2.9 Blooket" (key BL:4.7-8). Since then the scope files ONE Blooket column per day
+# (BLOOKET_PER_DAY_COLUMNS_SPEC.md): BL:4.7 "2.8 Blooket" and BL:4.8 "2.9 Blooket", each with its
+# own due and filing date. Those day columns do NOT exist in Schoology yet (the daily sync creates
+# them from Mon 11/09), so the 11/07 registry holds the legacy group column and no day column.
+LEGACY_GROUP = {"key": "BL:4.7-8", "title": "2.8-2.9 Blooket", "topic_keys": ["4.7", "4.8"]}
+NOT_YET_CREATED_DAY_COLUMNS = {"BL:4.7": "2.8 Blooket", "BL:4.8": "2.9 Blooket"}
+
+
 def _live_items(section):
-    return sync.build_component_scope(sync.load_schedule(), section, ced=True)
+    """The live per-day scope plus the legacy group column the 11/08 move actually moved.
+
+    The legacy item copies BL:4.7's dates (the group's due/filing date was its first day's). The
+    per-day items stay in the scope so a plan shows them as unregistered: left to the sync.
+    """
+    items = sync.build_component_scope(sync.load_schedule(), section, ced=True)
+    first_day = next(i for i in items if i["key"] == "BL:4.7")
+    return items + [dict(first_day, **LEGACY_GROUP)]
 
 
 def _registered(items, through="2026-11-07"):
-    """The columns the sync had created by Saturday 11/07: every column due by then."""
+    """The columns the sync had created by Saturday 11/07: every column due by then, except the
+    per-day Blooket columns (BL:4.7 / BL:4.8 do not exist in Schoology yet; the legacy group
+    column BL:4.7-8 is what 11/07 held)."""
     return {i["key"]: {"schoology_assignment_id": "id-" + i["key"], "title": i["title"]}
-            for i in items if i.get("due_date") and i["due_date"] <= through}
+            for i in items
+            if i.get("due_date") and i["due_date"] <= through and i["key"] not in NOT_YET_CREATED_DAY_COLUMNS}
 
 
 class TestPlanOnTheLiveSchedule(unittest.TestCase):
@@ -107,6 +127,30 @@ class TestPlanOnTheLiveSchedule(unittest.TestCase):
         self.assertEqual([m["title"] for m in plan["conflicts"]], ["2.5 Quiz"])
         plan = mv.plan_moves("PeriodB", items, registered, LIVE_MPS, {}, {})
         self.assertEqual({m["title"] for m in plan["missing"]}, SPEC_B)
+
+    def test_the_per_day_blooket_columns_do_not_exist_yet_and_are_not_planned(self):
+        # Explicit, not hidden: on the live schedule the 2.8 / 2.9 Blooket day columns are in the
+        # scope (own title, own due date) but not registered, so the plan neither moves nor lists
+        # them as missing; the daily sync creates them from Mon 11/09 and files them by date.
+        for section in ("PeriodB", "PeriodE"):
+            items = _live_items(section)
+            by_key = {i["key"]: i for i in items}
+            for key, title in NOT_YET_CREATED_DAY_COLUMNS.items():
+                self.assertEqual(by_key[key]["title"], title, section)
+                self.assertNotIn(key, _registered(items), section)
+            plan = self._plan(section)
+            planned_keys = {m["key"] for kind in ("moves", "done", "excluded", "missing", "conflicts")
+                            for m in plan[kind]}
+            self.assertEqual(planned_keys & set(NOT_YET_CREATED_DAY_COLUMNS), set(), section)
+            self.assertEqual(plan["missing"], [], section)
+        # What 11/07 did hold in Period B is the legacy group column, and that is what moved.
+        b_items = _live_items("PeriodB")
+        self.assertIn(LEGACY_GROUP["key"], _registered(b_items))
+        self.assertIn(LEGACY_GROUP["title"], {m["title"] for m in self._plan("PeriodB")["moves"]})
+        # Period B's day columns have different due dates (11/06 and 11/09), not one group date.
+        by_key = {i["key"]: i for i in _live_items("PeriodB")}
+        self.assertNotEqual(by_key["BL:4.7"]["due_date"], by_key["BL:4.8"]["due_date"])
+        self.assertNotEqual(by_key["BL:4.7"]["filing_date"], by_key["BL:4.8"]["filing_date"])
 
     def test_unregistered_columns_are_left_to_the_sync(self):
         items = _live_items("PeriodB")

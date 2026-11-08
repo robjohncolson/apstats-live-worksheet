@@ -110,8 +110,73 @@ def titles_to_look_up(columns: dict) -> list[str]:
     return seen
 
 
+def _own_title_owners(columns: dict) -> dict:
+    """{title: column_key} for real columns created with their CED title (old == ced).
+
+    These are never renamed, so their title is not a rename target; it can coincide with the
+    old title of another key (a per-day Blooket column reuses a retired lesson's title).
+    """
+    return {entry["ced"]: key for key, entry in columns.items()
+            if entry.get("schoologyColumn") and entry["old"] == entry["ced"]}
+
+
+def colliding_own_titles(columns: dict, present: dict, renamed: dict | None = None) -> dict:
+    """{title: owner_key} for gradebook titles claimed by two different keys.
+
+    The title is the CED title of a never-renamed key (the per-day column, the owner) AND the
+    old title of a still-open candidate (the legacy key). Title presence alone cannot say
+    which column wears it, so these are the only titles that need an ownership check.
+    """
+    renamed = renamed or {}
+    claimed = {rec["newTitle"] for rec in renamed.values()}
+    own_titles = _own_title_owners(columns)
+    return {c["old"]: own_titles[c["old"]]
+            for c in rename_candidates(columns)
+            if c["key"] not in renamed and c["old"] in present and c["old"] not in claimed
+            and c["old"] in own_titles}
+
+
+def ownership_for_titles(assignments: list[dict], titles, section: str,
+                         sync_state: dict | None) -> dict:
+    """{title: {'nids': [...], 'bound': [column_key, ...]}} from Materials + the sync state.
+
+    nids: every assignment node in Materials carrying exactly this title (the gradebook
+    collapses duplicates into one grid column, Materials does not).
+    bound: the column keys the sync state registers to one of those nodes
+    (tools/.schoology-sync-state.json: "<section>/<column_key>" -> {schoology_assignment_id}).
+    """
+    registered = (sync_state or {}).get("assignments", {})
+    prefix = f"{section}/"
+    ownership = {}
+    for title in titles:
+        nids = [a["nid"] for a in assignments if a["title"] == title]
+        bound = sorted(key[len(prefix):] for key, row in registered.items()
+                       if key.startswith(prefix)
+                       and str((row or {}).get("schoology_assignment_id")) in nids)
+        ownership[title] = {"nids": nids, "bound": bound}
+    return ownership
+
+
+def _ownership_problem(title: str, legacy: str, owner: str, ownership: dict | None) -> str | None:
+    """Why this shared title cannot be accepted as the per-day column's own, or None."""
+    info = (ownership or {}).get(title)
+    if info is None:
+        return (f"{legacy}: {title!r} is also the title of {owner}; Materials was not read, "
+                "so the two columns cannot be told apart")
+    if len(info["nids"]) != 1:
+        return (f"{legacy}: {len(info['nids'])} assignments are titled {title!r} in Materials "
+                f"(the legacy {legacy} column and the per-day {owner} column?); "
+                "cannot tell which column is which")
+    others = [key for key in info["bound"] if key != owner]
+    if others:
+        return (f"{legacy}: {title!r} is the per-day title of {owner}, but the sync state "
+                f"registers that assignment to {', '.join(others)}; cannot tell which column is which")
+    return None
+
+
 def plan_renames(columns: dict, present: dict, renamed: dict | None = None,
-                 only: str | None = None, status: str = "not-started") -> dict:
+                 only: str | None = None, status: str = "not-started",
+                 ownership: dict | None = None) -> dict:
     """Decide what to rename from the fixture, the live gradebook and the manifest.
 
     columns: the fixture's {column_key: entry}.
@@ -121,6 +186,10 @@ def plan_renames(columns: dict, present: dict, renamed: dict | None = None,
     only:    restrict renames to the column whose OLD title is exactly this.
     status:  the manifest status; "done" = verify only (columns the sync created since are
              expected and fine).
+    ownership: {title: {'nids', 'bound'}} from ownership_for_titles; run_section computes it
+             (it needs Materials) so this planner stays pure. In "done" mode a title shared
+             by a per-day column and a legacy key is exempted only when it says exactly one
+             node wears it and the sync state binds it to no other key; missing = refuse.
 
     Returns {'renames': [...ordered...], 'done': [...], 'missing': [...], 'conflicts': [...],
              'contradictions': [...]}. Never proposes a create.
@@ -148,9 +217,27 @@ def plan_renames(columns: dict, present: dict, renamed: dict | None = None,
             missing.append(c)
 
     if status == "done":
+        # A per-day Blooket column (old == ced, never renamed) wears a title that is also the
+        # OLD title of a different key. Once it exists, that title is its own, not a come-back.
+        own_titles = _own_title_owners(columns)
+        collisions = colliding_own_titles(columns, present, renamed)
         for c in pending:
+            if c["old"] in collisions:
+                problem = _ownership_problem(c["old"], c["key"], collisions[c["old"]], ownership)
+                if problem:
+                    contradictions.append(problem)
+                continue
             contradictions.append(
                 f"{c['key']}: the manifest says done, but {c['old']!r} is back in the gradebook")
+        # Ambiguous ownership: the manifest binds that same title to a renamed key too.
+        for title, owner in sorted(own_titles.items()):
+            if title not in present:
+                continue
+            for key, rec in sorted(renamed.items()):
+                if rec["newTitle"] == title and key != owner:
+                    contradictions.append(
+                        f"{owner}: {title!r} is also the manifest's new title for {key}; "
+                        "cannot tell which column is which")
         return {"renames": [], "done": done, "missing": missing, "conflicts": [],
                 "contradictions": contradictions}
 
@@ -366,9 +453,11 @@ def _settle_in_flight(ops, cdp, course_id: str, entry: dict, save) -> str | None
 
 
 def run_section(ops, cdp, section: str, course_id: str, columns: dict, *,
-                apply: bool, only: str | None, state: dict, save) -> dict:
+                apply: bool, only: str | None, state: dict, save,
+                sync_state: dict | None = None) -> dict:
     """Plan (and with apply, perform) one section's rename. `state` is the whole manifest;
-    `save()` persists it. Returns {'plan', 'renamed', 'failed', 'status'}."""
+    `save()` persists it. `sync_state` is the parsed sync registry (read only; main loads it).
+    Returns {'plan', 'renamed', 'failed', 'status'}."""
     ops.navigate(cdp, ops.gradebook_url(course_id))
     ops.inject_helpers(cdp)
     if ops.detect_login_state(cdp) != "authenticated":
@@ -394,7 +483,16 @@ def run_section(ops, cdp, section: str, course_id: str, columns: dict, *,
 
     status = entry["status"]
     present = read_present_titles(ops, cdp, titles_to_look_up(columns))
-    plan = plan_renames(columns, present, entry["renamed"], only=only, status=status)
+    ownership = None
+    if status == "done":
+        # Only a title shared by a per-day column and a legacy key needs Materials; any other
+        # run reads nothing extra.
+        shared = colliding_own_titles(columns, present, entry["renamed"])
+        if shared:
+            assignments = list_course_assignments(ops, cdp, course_id)
+            ownership = ownership_for_titles(assignments, shared, section, sync_state)
+    plan = plan_renames(columns, present, entry["renamed"], only=only, status=status,
+                        ownership=ownership)
     for line in format_plan(section, status, plan):
         print(line)
 
@@ -440,6 +538,15 @@ def run_section(ops, cdp, section: str, course_id: str, columns: dict, *,
     return {"plan": plan, "renamed": renamed, "failed": None, "status": entry["status"]}
 
 
+def load_sync_state(path: str | None = None) -> dict:
+    """The sync's assignment registry, read only ({} when the file does not exist)."""
+    path = path or os.path.join(SCRIPT_DIR, ".schoology-sync-state.json")
+    if not os.path.exists(path):
+        return {}
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
 def _parse_args(argv=None):
     p = argparse.ArgumentParser(
         description="One-time rename of Schoology columns to CED-2026 titles (dry-run by default)."
@@ -458,6 +565,7 @@ def main(argv=None) -> int:
     columns = lib.load_ced_columns(args.titles)
     sections = list(SECTIONS) if args.section == "all" else [args.section]
     state = lib.load_rename_state()
+    sync_state = load_sync_state()
     print(f"[rename] mode={'APPLY' if args.apply else 'DRY-RUN'} sections={','.join(sections)}"
           + (f" only={args.only!r}" if args.only else "")
           + f" manifest={lib.rename_state_path()}")
@@ -467,7 +575,8 @@ def main(argv=None) -> int:
     failed = False
     for section in sections:
         outcome = run_section(ops, cdp, section, SECTIONS[section], columns, apply=args.apply,
-                              only=args.only, state=state, save=lambda: lib.save_rename_state(state))
+                              only=args.only, state=state, save=lambda: lib.save_rename_state(state),
+                              sync_state=sync_state)
         if outcome["failed"]:
             failed = True
             break

@@ -5,7 +5,8 @@ throwaway _periody_finegrained.py).
 A "component" is one gradebook column for one lesson:
   - Follow-Along  (worksheet blanks -> category 'Lesson')   key  FA:<group>
   - Quiz          (curriculum quiz  -> category 'Quizzes')   key  QUIZ:<topic>
-  - Blooket       (Blooket game     -> category 'Blooket')   key  BL:<group>
+  - Blooket       (Blooket game     -> category 'Blooket')   key  BL:<group>,
+                   or BL:<topic> for each day of a per-day flashcard group
 
 Presence is DATA-DRIVEN, never a fixed grid:
   - Follow-Along exists for every lesson (one column per worksheet GROUP, so a
@@ -24,6 +25,11 @@ Presence is DATA-DRIVEN, never a fixed grid:
   - Blooket exists only for topics in blooket-lessons.json (the engine's
     hasBlooket denominator). Units 4-7 are absent there today (roadmap-data has
     no Blooket URLs for them) -> no Blooket columns for those units.
+  - PER-DAY BLOOKET (BLOOKET_PER_DAY_COLUMNS_SPEC.md, teacher 2026-11-08): a combined
+    worksheet whose deck the engine counts one score PER DAY (per_day_groups, the
+    mirror of roster-server perDayDeckGroups) gets one Blooket column per day,
+    BL:<topic>, instead of the group's one BL:<group> column. Each day column is dated,
+    filed, zeroed and routed by its OWN lesson row, like a quiz.
 
 The SAME key scheme is shared by:
   - the column generator (component_columns)  -> what the orchestrator creates
@@ -199,6 +205,161 @@ def load_blooket_topics(blooket_lessons_path: str) -> set:
 
 
 # ---------------------------------------------------------------------------
+# Per-day flashcard groups (the engine's perDayDeckGroups, mirrored; pinned by tests)
+# ---------------------------------------------------------------------------
+
+# roster-server/grade-config.js BLOOKET_PER_DAY_FROM: a sliced combined deck counts one
+# score per day only when the worksheet's earliest zero date is on or after this day.
+# The doc's own config is NOT read here on purpose: the columns (built from the schedule)
+# and the grades (built from the doc) must use one cutoff, or a key would have no column.
+BLOOKET_PER_DAY_FROM = "2026-11-13"
+
+_TOOLS_DIR = os.path.dirname(os.path.abspath(__file__))
+_REPO_ROOT = os.path.dirname(_TOOLS_DIR)
+# The engine reads the roster-server copy first (grade-contexts.js), then the root one.
+_ROSTER_DECK_SLICES = os.path.join(_REPO_ROOT, "roster-server", "data", "blooket-deck-slices.json")
+_ROOT_DECK_SLICES = os.path.join(_REPO_ROOT, "data", "blooket-deck-slices.json")
+DECK_SLICES_PATH = _ROSTER_DECK_SLICES if os.path.exists(_ROSTER_DECK_SLICES) else _ROOT_DECK_SLICES
+
+_deck_slices_cache = None
+
+
+def load_deck_slices(path: str | None = None) -> dict:
+    """The parsed blooket-deck-slices.json ({"slices": {"<csv>": {"<topic>": ranges}}}).
+
+    No path = the engine's file, read once per process. A missing file RAISES: without it
+    the per-day groups would fall back to group columns and the sync would create the
+    group column the teacher retired (fail closed, never guess).
+    """
+    global _deck_slices_cache
+    if path is not None:
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    if _deck_slices_cache is None:
+        with open(DECK_SLICES_PATH, "r", encoding="utf-8") as f:
+            _deck_slices_cache = json.load(f)
+    return _deck_slices_cache
+
+
+def _slices_or_default(deck_slices):
+    """None = the engine's slices file; a dict = exactly that ({} = no per-day groups)."""
+    if deck_slices is None:
+        return load_deck_slices()
+    return deck_slices
+
+
+# The schedule the sync builds its columns from (schoology_sync_section.SCHEDULE_PATH):
+# the roster-server copy first (the engine's file), the root one only when it is missing.
+_ROSTER_SCHEDULE = os.path.join(_REPO_ROOT, "roster-server", "data", "lesson-schedule.json")
+_ROOT_SCHEDULE = os.path.join(_REPO_ROOT, "data", "lesson-schedule.json")
+SCHEDULE_PATH = _ROSTER_SCHEDULE if os.path.exists(_ROSTER_SCHEDULE) else _ROOT_SCHEDULE
+
+_schedule_lessons_cache = None
+
+
+def load_schedule_lessons(path: str | None = None) -> dict:
+    """The canonical lesson-schedule.json "lessons" map, read once per process.
+
+    The producers decide per-day membership from it, never from a payload's rows: a doc
+    missing one day's row must not turn a per-day group back into its retired group key.
+    A missing file RAISES (fail closed, the same as the slices file).
+    """
+    global _schedule_lessons_cache
+    if path is not None:
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f).get("lessons") or {}
+    if _schedule_lessons_cache is None:
+        with open(SCHEDULE_PATH, "r", encoding="utf-8") as f:
+            _schedule_lessons_cache = json.load(f).get("lessons") or {}
+    return _schedule_lessons_cache
+
+
+def _per_day_scope(schedule_lessons, deck_slices):
+    """period -> the per-day group labels of the column scope, memoised per period.
+
+    The same per_day_groups(schedule lessons, period, slices) call component_columns
+    makes, so a producer key always has a column (finding B3, 2026-11-08). With {}
+    slices (per-day off, the code path from before per-day columns) the schedule is
+    never read, so that path needs no schedule file.
+    """
+    slices = _slices_or_default(deck_slices)
+    memo = {}
+
+    def groups_for(period):
+        if period in memo:
+            return memo[period]
+        if not (slices or {}).get("slices"):
+            memo[period] = set()
+            return memo[period]
+        lessons = load_schedule_lessons() if schedule_lessons is None else schedule_lessons
+        memo[period] = per_day_groups(lessons, period, slices)
+        return memo[period]
+
+    return groups_for
+
+
+def deck_csv(unit, worksheet_key) -> str:
+    """A worksheet's deck CSV, the engine's worksheetDeckCsv rule: 4 + '7-8' -> 'u4_l7_l8_blooket.csv'."""
+    return f"u{unit}_l{str(worksheet_key).replace('-', '_l')}_blooket.csv"
+
+
+def _lesson_entries(lessons):
+    """(topic, unit, worksheetKey, {period: class day}) for schedule entries or doc rows.
+
+    Schedule: {topic: {unit, worksheetKey, periods: {B, E}}}. A /class/grades doc:
+    [{lessonKey, unit, worksheetKey, due: {B, E}}].
+    """
+    if isinstance(lessons, dict):
+        for topic, entry in lessons.items():
+            if isinstance(entry, dict):
+                yield topic, entry.get("unit"), entry.get("worksheetKey"), entry.get("periods") or {}
+        return
+    for row in lessons or []:
+        if isinstance(row, dict):
+            yield row.get("lessonKey"), row.get("unit"), row.get("worksheetKey"), row.get("due") or {}
+
+
+def per_day_groups(lessons, period, deck_slices=None, per_day_from: str | None = BLOOKET_PER_DAY_FROM) -> set:
+    """The worksheet group labels ('4.7-8') whose deck counts one Blooket score per day.
+
+    The engine's perDayDeckGroups: two or more topics, the deck CSV has a slices entry,
+    and the group's earliest zero date (class day + 13) for the period is on or after
+    per_day_from. period None = either period's dates. It accepts the schedule's
+    lessons map or a list of doc rows, but every live caller passes the SCHEDULE
+    (component_columns, and the producers through _per_day_scope): rows alone can miss
+    a day and would decide a different scope (finding B3). deck_slices None = the
+    engine's slices file.
+    """
+    if not per_day_from:
+        return set()
+    sliced = (_slices_or_default(deck_slices) or {}).get("slices")
+    if not isinstance(sliced, dict) or not sliced:
+        return set()
+    groups = {}   # label -> {"csv": str, "topics": set, "first_zero": str | None}
+    for topic, unit, wk, days in _lesson_entries(lessons):
+        if unit is None or wk is None:
+            continue
+        label = group_label(unit, wk)
+        g = groups.setdefault(label, {"csv": deck_csv(unit, wk), "topics": set(), "first_zero": None})
+        g["topics"].add(topic)
+        class_days = [days.get(period)] if period else [days.get("B"), days.get("E")]
+        for class_day in class_days:
+            zero = zero_date_of(class_day)
+            if zero and (g["first_zero"] is None or zero < g["first_zero"]):
+                g["first_zero"] = zero
+    out = set()
+    for label, g in groups.items():
+        if len(g["topics"]) < 2:
+            continue   # a solo worksheet is one deck already
+        if g["csv"] not in sliced:
+            continue
+        if g["first_zero"] is None or g["first_zero"] < per_day_from:
+            continue   # zeroes before the cutoff: one score per worksheet, nothing moves
+        out.add(label)
+    return out
+
+
+# ---------------------------------------------------------------------------
 # Zero dates and quarters (the engine's rules, mirrored; pinned by tests)
 # ---------------------------------------------------------------------------
 
@@ -319,7 +480,7 @@ def quarter_close_date(doc: dict | None, quarter: str, fallback: str | None = No
     """The quarter's close date: /class/grades config.quarters[quarter].close, else fallback.
 
     The close is the evening the teacher freezes the quarter (POST /class/quarter/close);
-    Quarter 1 closes Thu 2026-11-12 (QUARTER_LINE_BY_DUE_DATE_SPEC.md section 2).
+    Quarter 1 closes Tue 2026-11-10 (teacher 2026-11-08; QUARTER_LINE_BY_DUE_DATE_SPEC.md section 2).
     """
     window = ((((doc or {}).get("config") or {}).get("quarters") or {}).get(quarter)) or {}
     return window.get("close") or fallback
@@ -398,6 +559,7 @@ def component_columns(
     progress_checks: dict | None = None,
     posters: dict | None = None,
     ced: bool = False,
+    deck_slices: dict | None = None,
 ) -> list:
     """Generate the fine-grained column specs for a section.
 
@@ -420,11 +582,13 @@ def component_columns(
                      PeriodB/E behavior -- mirrors build_scope).
     ced:             True = CED-2026 titles (data/ced-column-titles.json); False =
                      today's titles. Keys never change, only the 'title' field.
+    deck_slices:     the parsed blooket-deck-slices.json (None = the engine's file;
+                     {} = no per-day groups). A per-day group gets BL:<topic> per day.
 
     Returns a list of column specs, each::
 
         {
-          'key':        str,   # FA:<group> | QUIZ:<topic> | BL:<group>
+          'key':        str,   # FA:<group> | QUIZ:<topic> | BL:<group> | BL:<topic> (per-day)
           'kind':       str,   # 'lesson' | 'quiz' | 'blooket'
           'title':      str,   # '1.1 Follow-Along' | '1.2 Quiz' | '1.1 Blooket'
           'group_label':str,   # '1.1' | '6.1-2'
@@ -459,6 +623,7 @@ def component_columns(
         if date and (g["date"] is None or date < g["date"]):
             g["date"] = date
 
+    per_day = per_day_groups(lessons, period_letter, deck_slices)
     columns = []
     for label, g in groups.items():
         topics_sorted = sorted(g["topics"], key=_topic_sort_key)
@@ -492,6 +657,27 @@ def component_columns(
                 "filing_date": filing_date_of(tdate),
                 "unit": unit,
             })
+
+        # Per-day flashcard group: one Blooket column per day that has a Blooket, dated
+        # and filed by that day (the engine counts each day as its own slot once due).
+        # topics_sorted holds only the days dated for this period (unless include_undated),
+        # so a day with no class day (4.12) never gets a column.
+        if label in per_day:
+            for tk in topics_sorted:
+                if tk not in blooket_topics:
+                    continue
+                tdate = (lessons.get(tk, {}).get("periods") or {}).get(period_letter)
+                columns.append({
+                    "key": bl_key(tk),
+                    "kind": KIND_BLOOKET,
+                    "title": bl_title(tk, ced),
+                    "group_label": label,
+                    "topic_keys": [tk],
+                    "due_date": tdate,
+                    "filing_date": filing_date_of(tdate),
+                    "unit": unit,
+                })
+            continue
 
         # Blooket: one per group, only if ANY constituent has a Blooket.
         if any(tk in blooket_topics for tk in topics_sorted):
@@ -679,16 +865,23 @@ def quiz_zero_due(lesson: dict, period, today: str | None) -> bool:
 
 def component_comments_from_class_doc(doc: dict, uid_map: dict | None = None,
                                       today: str | None = None, ced: bool | None = None,
-                                      quarter: str | None = None, zeros: bool = True) -> dict:
+                                      quarter: str | None = None, zeros: bool = True,
+                                      deck_slices: dict | None = None,
+                                      schedule_lessons: dict | None = None) -> dict:
     """Fixed messages for lagged zeros; empty strings for other emitted cells.
 
     Use the grade producer's first-emitted group rule, including UID precedence.
     No student identity fields are interpolated into comment text. The lesson is
     named the way its Schoology column is (ced=None reads the config flag).
-    quarter / zeros: the same pass filter as component_grades_from_class_doc, so the
-    comment keys always match the grade targets of that pass.
+    quarter / zeros / deck_slices / schedule_lessons: the same filters as
+    component_grades_from_class_doc, so the comment keys always match the grade targets
+    of that pass. A per-day Blooket column's zero comment names its own day
+    ("Missing: 2.10 Day 2 flashcards").
     """
-    grades = component_grades_from_class_doc(doc, uid_map, today, quarter=quarter, zeros=zeros)
+    grades = component_grades_from_class_doc(doc, uid_map, today, quarter=quarter, zeros=zeros,
+                                             deck_slices=deck_slices,
+                                             schedule_lessons=schedule_lessons)
+    per_day_for = _per_day_scope(schedule_lessons, deck_slices)
     out = dict.fromkeys(grades, "")
     uid_map = uid_map or {}
     for student in doc.get("students", []) or []:
@@ -696,7 +889,9 @@ def component_comments_from_class_doc(doc: dict, uid_map: dict | None = None,
         surfaced = student.get("schoologyUid")
         uid = str(surfaced) if surfaced not in (None, "") else uid_map.get(rid, rid)
         emitted = set()
-        group_zero = group_zero_due(student.get("lessons"), period_of(student), today)
+        period = period_of(student)
+        group_zero = group_zero_due(student.get("lessons"), period, today)
+        per_day = per_day_for(period)
         for lesson in student.get("lessons") or []:
             unit, wk = lesson.get("unit"), lesson.get("worksheetKey")
             if unit is None or wk is None:
@@ -712,10 +907,15 @@ def component_comments_from_class_doc(doc: dict, uid_map: dict | None = None,
             worksheet = lesson.get("lessonGradeNoQuiz")
             if worksheet is None:
                 worksheet = lesson.get("Cws")
-            for kind, score, present in (("FA", worksheet, True),
-                                         ("BL", lesson.get("blooket"), lesson.get("hasBlooket"))):
-                key = f"{uid}/{kind}:{group}"
-                if not present or key in emitted or (score is None and not due):
+            # A per-day Blooket column is this lesson's own (key BL:<topic>, its own zero date).
+            bl_column, bl_due = group, due
+            if group in per_day:
+                bl_column, bl_due = label, zero_due(lesson, period, today)
+            for kind, column, score, present, zero in (
+                    ("FA", group, worksheet, True, due),
+                    ("BL", bl_column, lesson.get("blooket"), lesson.get("hasBlooket"), bl_due)):
+                key = f"{uid}/{kind}:{column}"
+                if not present or key in emitted or (score is None and not zero):
                     continue
                 emitted.add(key)
                 if score is not None or not valid_label or grades.get(key) != 0:
@@ -748,7 +948,9 @@ def component_grades_from_class_doc(doc: dict, uid_map: dict | None = None,
                                     today: str | None = None,
                                     poster_grades: dict | None = None,
                                     quarter: str | None = None,
-                                    zeros: bool = True) -> dict:
+                                    zeros: bool = True,
+                                    deck_slices: dict | None = None,
+                                    schedule_lessons: dict | None = None) -> dict:
     """Map a /class/grades response to {"<uid>/<component_key>": value}.
 
     quarter ('Q1'..'Q4'): emit ONLY the targets of that quarter's Schoology pass, a score
@@ -769,6 +971,21 @@ def component_grades_from_class_doc(doc: dict, uid_map: dict | None = None,
                         exists; an opener like 1.1 has quizTotal 0 -> skipped)
       - Blooket      <- lesson.blooket  (one per group; needs hasBlooket;
                         0 once the lesson's zero date has passed with no score)
+      - Blooket, per-day group (per_day_groups; deck_slices None = the engine's file,
+                        {} = none) <- EACH day's own row: key BL:<topic>, the row's
+                        blooket, a 0 only after THAT row's zero date, routed by that
+                        row's quarter. The row value is the engine's own per-day value:
+                        max(game, whole-deck DESK_DONE, that day's DESK_DAY); another
+                        day's slice score is never in it (lesson-grade.js
+                        shareBlooketAcrossWorksheetGroups keeps DESK_DAY per day in a
+                        per-day group). So a not-yet-due day writes its own score if it
+                        has one and is blank otherwise, never the group's shared best.
+                        A day with no class day for the period gets nothing (no column).
+                        Membership comes from the SCHEDULE (schedule_lessons None = the
+                        canonical lesson-schedule.json) + slices, exactly as
+                        component_columns decides the columns, never from which rows the
+                        doc holds: a day whose row is missing gets nothing (no 0), and
+                        the retired BL:<group> key is never emitted for a per-day group.
 
     Per student, per unit:
       - Progress Check <- units[U#].pcRawPct
@@ -787,6 +1004,7 @@ def component_grades_from_class_doc(doc: dict, uid_map: dict | None = None,
     uid_map = uid_map or {}
     poster_grades = poster_grades or {}
     quarters = doc_quarters(doc)
+    per_day_for = _per_day_scope(schedule_lessons, deck_slices)
     out = {}
     for s in doc.get("students", []) or []:
         rid = str(s.get("studentId"))
@@ -797,6 +1015,7 @@ def component_grades_from_class_doc(doc: dict, uid_map: dict | None = None,
         emitted_bl = set()
         period = period_of(s)
         deciders = group_deciders(s.get("lessons"), period)
+        per_day = per_day_for(period)
         group_zero = {label: zero_due(lesson, period, today) for label, lesson in deciders.items()}
         group_quarter = {label: lesson_quarter(lesson, period, quarters)
                          for label, lesson in deciders.items()}
@@ -839,6 +1058,12 @@ def component_grades_from_class_doc(doc: dict, uid_map: dict | None = None,
             if quiz_in_pass and q is not None and (lesson.get("quizTotal") or 0) > 0 and topic_key:
                 out[f"{uid}/{quiz_key(topic_key)}"] = q
 
+            if label in per_day:
+                day_key, day_value = _per_day_blooket(lesson, period, today, zeros)
+                if quiz_in_pass and day_key:
+                    out[f"{uid}/{day_key}"] = day_value
+                continue
+
             blooket = lesson.get("blooket")
             if blooket is None and lesson.get("hasBlooket") and due_zero:
                 blooket = 0
@@ -874,6 +1099,25 @@ def component_grades_from_class_doc(doc: dict, uid_map: dict | None = None,
             out[f"{uid}/{poster_key(unit_num)}"] = score
 
     return out
+
+
+def _per_day_blooket(lesson: dict, period, today: str | None, zeros: bool):
+    """(BL:<topic>, value) for one day of a per-day flashcard group, or (None, None).
+
+    The day's own row decides everything: its score, else a 0 once ITS zero date has
+    passed (when zeros are on), else nothing. No class day for the period = no column.
+    """
+    topic_key = lesson.get("lessonKey")
+    if not topic_key or not lesson.get("hasBlooket"):
+        return None, None
+    if not (lesson.get("due") or {}).get(period):
+        return None, None
+    value = lesson.get("blooket")
+    if value is None and zeros and zero_due(lesson, period, today):
+        value = 0
+    if value is None:
+        return None, None
+    return bl_key(topic_key), value
 
 
 def _unit_in(unit_num, units: set) -> bool:

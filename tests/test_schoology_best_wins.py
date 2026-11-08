@@ -120,7 +120,8 @@ def test_best_wins_holds_inside_a_verified_quarter_pass(tmp_path):
             super().__init__(values)
             self.selected = []
 
-        def select_grading_period(self, cdp, gp, mp_range=None):
+        def select_grading_period(self, cdp, gp, mp_range=None, *, expected_columns=None,
+                                  reload_url=None):
             self._require_page("gradebook", "select_grading_period")
             self.selected.append(gp)
             return {"ok": True, "view": {"gp": gp}}

@@ -6,6 +6,8 @@ against gradebook truth instead of the false-negative confirm-form check.
 """
 from __future__ import annotations
 
+import contextlib
+import io
 import json
 import os
 import shutil
@@ -225,6 +227,92 @@ class TestAssignmentsFolder(unittest.TestCase):
             res = ops.delete_empty_folder(fake, "123", "F1")
         self.assertTrue(res["ok"])
         self.assertEqual(fake.materials[None], [])
+
+
+class ScriptedListingCDP:
+    """Serves one scripted listing per read (the last one repeats); counts the reads."""
+
+    def __init__(self, reads):
+        self.reads = list(reads)
+        self.read_count = 0
+        self.urls = []
+
+    def attach_url(self, url, wait_ms=0):
+        self.urls.append(url)
+
+    def eval_js(self, expr):
+        index = min(self.read_count, len(self.reads) - 1)
+        self.read_count += 1
+        return list(self.reads[index])
+
+
+class TestListMaterialsReadiness(unittest.TestCase):
+    """2026-11-08 cold-start flake: the first listing read saw nothing, a re-run saw all 66."""
+
+    def _rows(self, count):
+        return [{"nid": str(n), "kind": "assignment", "title": f"T{n}"} for n in range(count)]
+
+    def test_empty_then_list_returns_without_waiting_out_the_bound(self):
+        fake = ScriptedListingCDP([[], [], self._rows(3), self._rows(3)])
+        with mock.patch.object(ops.time, "sleep") as sleep:
+            rows = ops.list_materials(fake, "123")
+        self.assertEqual(len(rows), 3)
+        self.assertEqual(fake.read_count, 4)
+        self.assertEqual(sleep.call_count, 3)
+
+    def test_a_growing_count_is_not_returned_until_it_settles(self):
+        fake = ScriptedListingCDP([self._rows(2), self._rows(5), self._rows(5)])
+        with mock.patch.object(ops.time, "sleep"):
+            rows = ops.list_materials(fake, "123")
+        self.assertEqual(len(rows), 5)
+        self.assertEqual(fake.read_count, 3)
+
+    def test_always_empty_returns_empty_after_the_bound(self):
+        fake = ScriptedListingCDP([[]])
+        with mock.patch.object(ops.time, "sleep"):
+            rows = ops.list_materials(fake, "123")
+        self.assertEqual(rows, [])
+        self.assertGreater(fake.read_count, 5)
+        self.assertLessEqual(fake.read_count, 31)
+
+    def test_clock_bound_stops_the_poll_and_returns_the_last_read(self):
+        fake = ScriptedListingCDP([self._rows(1), self._rows(2), self._rows(3), self._rows(4)])
+        ticks = iter([0.0, 0.0, 20.0, 20.0, 20.0, 20.0])
+        with mock.patch.object(ops.time, "sleep"), mock.patch.object(ops.time, "monotonic", lambda: next(ticks)):
+            rows = ops.list_materials(fake, "123")
+        self.assertEqual(len(rows), 2)
+        self.assertEqual(fake.read_count, 2)
+
+
+class TestListMaterialsLogLine(unittest.TestCase):
+    """The Materials line counts assignments only, and only a slow or empty listing prints it."""
+
+    def _list(self, reads):
+        fake = ScriptedListingCDP(reads)
+        out = io.StringIO()
+        with mock.patch.object(ops.time, "sleep"), contextlib.redirect_stdout(out):
+            ops.list_materials(fake, "123")
+        return out.getvalue()
+
+    def _rows(self, assignments, folders):
+        rows = [{"nid": str(n), "kind": "assignment", "title": f"T{n}"} for n in range(assignments)]
+        return rows + [{"nid": f"f{n}", "kind": "folder", "title": f"F{n}"} for n in range(folders)]
+
+    def test_a_listing_that_settles_on_the_second_read_prints_nothing(self):
+        self.assertEqual(self._list([self._rows(3, 1)]), "")
+
+    def test_a_slow_listing_counts_assignments_not_folders(self):
+        printed = self._list([[], self._rows(3, 2), self._rows(3, 2)])
+        self.assertIn("Materials: 3 assignments (5 rows) after", printed)
+
+    def test_a_count_that_never_settles_says_so(self):
+        reads = [self._rows(n, 1) for n in range(1, 40)]
+        printed = self._list(reads)
+        self.assertIn("assignments (", printed)
+        self.assertIn("(count never settled)", printed)
+
+    def test_an_empty_listing_prints_the_empty_line(self):
+        self.assertIn("Materials: still 0 assignments after 15 s", self._list([[]]))
 
 
 class TestDeleteVerify(unittest.TestCase):
@@ -564,15 +652,43 @@ class PeriodPage:
     grids: {mp: row-0 cells}. rows=False: no student row has rendered. rescore: labels
     that change on the grid still shown once the filter switched ({data-x: new label}):
     the old period's grid re-rendering a changed score (finding R4a).
+
+    The empty render of 2026-11-08: empty_reads = the first N grid reads after a switch
+    show no student row; empty_until_reload = every grid read after the switch shows none
+    until the page is reloaded (attach_url). after_reload: attributes the reload sets
+    ({"gp": MP1} reopens on the other period, {"rows": False} still renders nothing,
+    {"grids": {...}} what renders, {"filter": False} no filter on the page). Without an
+    override the reload reopens on the last selected period.
     """
 
-    def __init__(self, shown=MP2, lag=0, rows=True, grids=None, rescore=None):
+    def __init__(self, shown=MP2, lag=0, rows=True, grids=None, rescore=None, empty_reads=0,
+                 empty_until_reload=False, after_reload=None):
         self.gp = shown          # the filter and the header
         self.grid_gp = shown     # the period whose cells the grid shows
         self.lag = lag
         self.rows = rows
         self.grids = {gp: list(cells) for gp, cells in (grids or _GRIDS).items()}
         self.rescore = dict(rescore or {})
+        self.reads_since_switch = 0
+        self.empty_reads = empty_reads
+        self.empty_until_reload = empty_until_reload
+        self.after_reload = dict(after_reload or {})
+        self.filter = True
+        self.switched = False
+        self.reloads = []
+        self.events = []         # "navigate" / "inject_helpers", in the order they happened
+
+    def attach_url(self, url, wait_ms=None):
+        self.reloads.append(url)
+        self.events.append("navigate")
+        self.switched = False
+        self.empty_until_reload = False
+        for name, value in self.after_reload.items():
+            if name == "grids":
+                self.grids.update({gp: list(cells) for gp, cells in value.items()})
+                continue
+            setattr(self, name, value)
+        self.grid_gp = self.gp
         self.reads_since_switch = 0
 
     def send(self, method, params=None):
@@ -586,6 +702,7 @@ class PeriodPage:
 
     def _switch(self, gp):
         self.gp = gp
+        self.switched = True
         self.reads_since_switch = 0
         if not self.rescore:
             return
@@ -593,6 +710,8 @@ class PeriodPage:
 
     def eval_js(self, expr):
         if expr == ops._GRADING_PERIOD_VIEW_JS:
+            if not self.filter:
+                return None
             return json.dumps({"gp": self.gp, "header": _LABELS[self.gp], "chosen": _LABELS[self.gp],
                                "available": [MP1, MP2, "all", "final", "none"]})
         if "select2('val'" in expr:
@@ -604,6 +723,11 @@ class PeriodPage:
                 if self.reads_since_switch > self.lag:
                     self.grid_gp = self.gp
             if not self.rows:
+                return "0:"
+            if self.switched and self.empty_until_reload:
+                return "0:"
+            if self.switched and self.empty_reads > 0:
+                self.empty_reads -= 1
                 return "0:"
             return _signature_of(self.cells())
         return None
@@ -702,6 +826,374 @@ class TestStaleGridAfterTheSwitch(unittest.TestCase):
         self.assertFalse(self.select(page, MP1)["ok"])
         page = PeriodPage(shown=MP2, lag=0, grids={MP1: _row(("0", "")), MP2: _row(("0", ""), ("1", ""))})
         self.assertFalse(self.select(page, MP1)["ok"])     # placeholder cells carry no identity
+
+
+GRADEBOOK_URL = "https://schoology.example/course/1/grades"
+
+_E1 = "the filter and header switched but the grid rendered no student row"
+_E5_MP2_12 = ("the grid rendered no columns for marking period 1173889 after a reload of the "
+              "gradebook; 12 stamped column(s) were expected")
+_PLACEHOLDERS = _row(("0", ""), ("1", ""))      # rows, no assignment column
+_STALE = "the filter and header switched but the grid still shows the previous marking period's columns"
+_AFTER_RELOAD = "after a reload of the gradebook: "
+
+
+class TestEmptyGridReload(unittest.TestCase):
+    """2026-11-08 08:13: after the switch to MP2 the grid rendered no student row for the
+    whole wait, and the refusal claimed it still showed MP1's columns. A grid that renders
+    empty is reloaded ONCE and checked again from scratch; the texts say what happened."""
+
+    def setUp(self):
+        self.sleeps = []
+        patchers = (mock.patch.object(ops.time, "sleep", self.sleeps.append),
+                    mock.patch.object(ops, "inject_helpers",                     # reads a file
+                                      lambda cdp: cdp.events.append("inject_helpers")))
+        for patcher in patchers:
+            patcher.start()
+            self.addCleanup(patcher.stop)
+
+    def select(self, page, gp, expected=None, reload_url=GRADEBOOK_URL, timeout_s=0.05):
+        return ops.select_grading_period(page, gp, _RANGES[gp], timeout_s=timeout_s,
+                                         expected_columns=expected, reload_url=reload_url)
+
+    def test_a_grid_that_renders_empty_then_fills_is_ok(self):
+        page = PeriodPage(shown=MP1, empty_reads=3)
+        result = self.select(page, MP2, expected=12)
+        self.assertEqual((result["ok"], result["method"]), (True, "select2"))
+        self.assertEqual(page.reloads, [])
+        self.assertEqual(page.events, [])                        # no reload, no helpers injected
+        self.assertNotIn("reloaded", result)
+
+    def test_an_empty_grid_after_the_switch_reloads_and_then_shows_the_period(self):
+        # The 11/08 shape: the reload reopens on the period just selected, and it renders.
+        page = PeriodPage(shown=MP1, empty_until_reload=True)
+        result = self.select(page, MP2, expected=12)
+        self.assertEqual((result["ok"], result["method"]), (True, "already shown"))
+        self.assertTrue(result["reloaded"])
+        self.assertEqual(page.reloads, [GRADEBOOK_URL])
+        # A reload drops the helpers: exactly one injection, and only after the navigate.
+        self.assertEqual(page.events, ["navigate", "inject_helpers"])
+
+    def test_after_the_reload_the_page_can_reopen_on_the_other_period(self):
+        page = PeriodPage(shown=MP1, empty_until_reload=True, after_reload={"gp": MP1})
+        result = self.select(page, MP2, expected=12)
+        self.assertEqual((result["ok"], result["method"]), (True, "select2"))
+        self.assertTrue(result["reloaded"])
+        self.assertEqual(page.reloads, [GRADEBOOK_URL])
+        self.assertEqual((page.gp, page.grid_gp), (MP2, MP2))
+
+    def test_still_empty_after_a_reload_is_refused_with_the_true_text(self):
+        page = PeriodPage(shown=MP1, empty_until_reload=True, after_reload={"rows": False})
+        result = self.select(page, MP2, expected=12)
+        self.assertFalse(result["ok"])
+        self.assertIn(_E5_MP2_12, result["error"])
+        self.assertIn("first try: " + _E1, result["error"])
+        self.assertNotIn("still shows the previous", result["error"])
+        self.assertTrue(result["grid_empty"])
+        self.assertTrue(result["reloaded"])
+        self.assertEqual(page.reloads, [GRADEBOOK_URL])          # exactly one reload
+
+    def test_still_no_row_after_a_reload_without_stamps_says_so(self):
+        page = PeriodPage(shown=MP1, empty_until_reload=True, after_reload={"rows": False})
+        result = self.select(page, MP2, expected=None)
+        self.assertFalse(result["ok"])
+        self.assertTrue(result["error"].startswith(
+            "the grid did not render a settled student row for marking period 1173889 after a "
+            "reload of the gradebook (first try: " + _E1 + "; after the reload: "))
+        self.assertEqual(page.reloads, [GRADEBOOK_URL])
+
+    def test_rows_without_columns_while_columns_are_expected_reloads_then_refuses(self):
+        page = PeriodPage(shown=MP1, grids={**_GRIDS, MP2: _PLACEHOLDERS})
+        result = self.select(page, MP2, expected=12)
+        self.assertFalse(result["ok"])
+        self.assertIn(_E5_MP2_12, result["error"])
+        self.assertIn("first try: the filter and header switched but the grid shows no assignment "
+                      "column; 12 stamped column(s) were expected", result["error"])
+        self.assertEqual(page.reloads, [GRADEBOOK_URL])
+
+    def test_a_genuinely_empty_period_with_zero_expected_is_ok(self):
+        # MP3 before its first column, MP2 before the move: the stamps say nothing is here.
+        for expected in (0, None):
+            page = PeriodPage(shown=MP1, lag=1, grids={**_GRIDS, MP2: _PLACEHOLDERS})
+            result = self.select(page, MP2, expected=expected)
+            self.assertEqual((result["ok"], result["method"]), (True, "select2"), expected)
+            self.assertEqual(page.reloads, [], expected)
+            self.assertEqual(page.events, [], expected)
+
+    def test_unchanged_identity_keeps_the_old_text_and_does_not_reload(self):
+        page = PeriodPage(shown=MP2, lag=None)
+        result = self.select(page, MP1, expected=1)
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["error"], "the filter and header switched but the grid still shows "
+                                          "the previous marking period's columns")
+        self.assertEqual(page.reloads, [])
+        self.assertEqual(page.events, [])
+        self.assertNotIn("grid_empty", result)
+
+    def test_no_reload_url_returns_the_first_true_refusal(self):
+        page = PeriodPage(shown=MP1, empty_until_reload=True)
+        result = self.select(page, MP2, expected=12, reload_url=None)
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["error"], _E1)
+        self.assertTrue(result["grid_empty"])
+        self.assertEqual(page.reloads, [])
+
+    def test_already_shown_empty_while_columns_are_expected_reloads(self):
+        page = PeriodPage(shown=MP2, grids={MP2: _PLACEHOLDERS})
+        result = self.select(page, MP2, expected=3)
+        self.assertFalse(result["ok"])
+        self.assertIn("the grid rendered no columns for marking period 1173889 after a reload of "
+                      "the gradebook; 3 stamped column(s) were expected (first try: the grid did "
+                      "not show a settled student row with an assignment column; 3 stamped "
+                      "column(s) were expected", result["error"])
+        self.assertEqual(page.reloads, [GRADEBOOK_URL])
+
+    def test_already_shown_with_columns_expected_and_shown_is_ok(self):
+        result = self.select(PeriodPage(shown=MP2), MP2, expected=3)
+        self.assertEqual((result["ok"], result["method"]), (True, "already shown"))
+
+    def test_a_reload_that_fails_another_way_says_so(self):
+        page = PeriodPage(shown=MP1, empty_until_reload=True, after_reload={"filter": False})
+        result = self.select(page, MP2, expected=12)
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["error"], "after a reload of the gradebook: the gradebook has no "
+                                          "marking-period filter (page not loaded?)")
+        self.assertNotIn("grid_empty", result)
+        self.assertEqual(page.reloads, [GRADEBOOK_URL])
+
+    def test_a_grid_that_keeps_changing_is_unsettled_not_stale(self):
+        class Flicker(PeriodPage):
+            def eval_js(self, expr):
+                if expr == ops._ASSIGNMENT_SIGNATURE_JS and self.switched:
+                    self.reads_since_switch += 1
+                    return "6:0|2.%d Quiz" % self.reads_since_switch      # a new title every read
+                return super().eval_js(expr)
+
+        page = Flicker(shown=MP1)
+        result = self.select(page, MP2, expected=1)
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["error"], "the filter and header switched but the grid did not "
+                                          "settle (it read differently each time)")
+        self.assertNotIn("grid_empty", result)
+        self.assertEqual(page.reloads, [])
+
+    def test_a_reload_that_raises_is_a_clean_refusal_not_a_crash(self):
+        for failing in ("navigate", "inject_helpers"):
+            page = PeriodPage(shown=MP1, empty_until_reload=True)
+            with mock.patch.object(ops, failing, side_effect=RuntimeError("tab gone")):
+                result = self.select(page, MP2, expected=12)
+            self.assertFalse(result["ok"], failing)
+            self.assertEqual(result["error"], "after a reload of the gradebook: the reload failed "
+                                              "(RuntimeError)", failing)
+            self.assertTrue(result["reloaded"], failing)
+            self.assertNotIn("grid_empty", result, failing)
+
+    def test_a_reopened_target_over_the_leaving_grid_is_refused_as_stale(self):
+        # Codex B1: the reload reopens with MP2's filter and header over a stale render of
+        # MP1's columns (the grid the first try left). Without the leaving identity the
+        # already-shown check accepted any settled grid and verified MP1's columns as MP2.
+        page = PeriodPage(shown=MP1, empty_until_reload=True,
+                          after_reload={"grids": {MP2: _GRIDS[MP1]}})
+        result = self.select(page, MP2, expected=12)
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["error"], _AFTER_RELOAD + _STALE)
+        self.assertEqual(result["method"], "already shown")
+        self.assertTrue(result["reloaded"])
+        self.assertNotIn("grid_empty", result)
+        self.assertEqual(page.reloads, [GRADEBOOK_URL])
+        self.assertEqual(page.events, ["navigate", "inject_helpers"])     # no third attempt
+        # The old grid's settle (1), the 12-round wait, the reopened grid's settle (1): no more.
+        self.assertEqual(self.sleeps, [0.75] * (1 + 12 + 1))
+
+    def test_a_switch_after_the_reload_into_the_leaving_grid_is_refused_as_stale(self):
+        # The reopened page starts on MP1 re-rendered with other columns, so the grid does
+        # change after the switch, but into the first try's leaving columns.
+        other = _row(("0", "S, 2.7 Quiz, 70 out of 100 points"))
+        page = PeriodPage(shown=MP1, empty_until_reload=True,
+                          after_reload={"gp": MP1, "grids": {MP1: other, MP2: _GRIDS[MP1]}})
+        result = self.select(page, MP2, expected=12)
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["error"], _AFTER_RELOAD + _STALE)
+        self.assertEqual(result["method"], "select2")
+        self.assertNotIn("grid_empty", result)
+        self.assertEqual(page.reloads, [GRADEBOOK_URL])
+
+    def test_a_filter_that_flips_back_while_the_grid_settles_is_refused(self):
+        class FlipBack(PeriodPage):
+            """After the reload, the filter and header move back to MP1 on the first grid read."""
+            flipped = False
+
+            def eval_js(self, expr):
+                if expr == ops._ASSIGNMENT_SIGNATURE_JS and self.reloads and not self.flipped:
+                    self.flipped = True
+                    self.gp = MP1
+                return super().eval_js(expr)
+
+        # lag=None: the grid stays on MP2's columns, so only the view re-read can catch it.
+        page = FlipBack(shown=MP1, lag=None, empty_until_reload=True)
+        result = self.select(page, MP2, expected=12)
+        self.assertFalse(result["ok"])
+        self.assertTrue(result["error"].startswith(
+            _AFTER_RELOAD + "after the grid settled: the filter holds '1173888'"), result["error"])
+        self.assertNotIn("grid_empty", result)
+        self.assertEqual(page.reloads, [GRADEBOOK_URL])
+        # lag=0: the grid follows the filter back to MP1, the leaving grid.
+        page = FlipBack(shown=MP1, lag=0, empty_until_reload=True)
+        result = self.select(page, MP2, expected=12)
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["error"], _AFTER_RELOAD + _STALE)
+        self.assertEqual(page.reloads, [GRADEBOOK_URL])
+
+    def test_a_reopened_target_with_its_own_columns_is_still_ok(self):
+        page = PeriodPage(shown=MP1, empty_until_reload=True)
+        result = self.select(page, MP2, expected=12)
+        self.assertEqual((result["ok"], result["method"]), (True, "already shown"))
+        self.assertTrue(result["reloaded"])
+        self.assertEqual(result["view"]["gp"], MP2)         # the view re-read on the settled grid
+        self.assertEqual(page.reloads, [GRADEBOOK_URL])
+
+    def test_an_empty_leaving_grid_does_not_refuse_an_empty_target(self):
+        # Two genuinely empty periods: an empty identity identifies nothing, so today's
+        # acceptance stands (expected 0 = the stamps say empty, None = no stamps).
+        for expected in (0, None):
+            page = PeriodPage(shown=MP1, empty_until_reload=True,
+                              grids={MP1: _PLACEHOLDERS, MP2: _PLACEHOLDERS})
+            result = self.select(page, MP2, expected=expected)
+            self.assertEqual((result["ok"], result["method"]), (True, "already shown"), expected)
+            self.assertTrue(result["reloaded"], expected)
+            self.assertEqual(page.reloads, [GRADEBOOK_URL], expected)
+
+    def test_a_timeout_on_the_reopened_page_is_a_clean_refusal_not_a_crash(self):
+        # Codex B2: the navigate works, then the first eval of the second attempt times out.
+        class TimesOut(PeriodPage):
+            def eval_js(self, expr):
+                if self.reloads:
+                    raise TimeoutError("eval timed out")
+                return super().eval_js(expr)
+
+        page = TimesOut(shown=MP1, empty_until_reload=True)
+        result = self.select(page, MP2, expected=12)
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["error"], _AFTER_RELOAD + "the reload failed (TimeoutError)")
+        self.assertTrue(result["reloaded"])
+        self.assertNotIn("grid_empty", result)
+        self.assertEqual(page.reloads, [GRADEBOOK_URL])                 # never a second reload
+        self.assertEqual(page.events, ["navigate", "inject_helpers"])
+
+    def test_the_old_name_is_gone(self):
+        # Its bool hid WHY the wait failed; a str outcome under the old name would pass any `if`.
+        self.assertFalse(hasattr(ops, "_wait_for_new_grid"))
+
+    def test_the_extra_wait_is_bounded(self):
+        page = PeriodPage(shown=MP1, empty_until_reload=True, after_reload={"rows": False})
+        result = self.select(page, MP2, expected=12, timeout_s=0.05)
+        self.assertFalse(result["ok"])
+        # Pinned exactly: one settle read of the old grid (1 pause), the 12 x 0.75 s wait for the
+        # new grid, the reload, then the 12 x 0.75 s wait for a settled row on the reopened period.
+        # The leaving-grid check and the view re-read run only on a settled grid and add no pause.
+        self.assertEqual(self.sleeps, [0.75] * (1 + 12 + 12))
+        self.assertEqual(page.reloads, [GRADEBOOK_URL])
+
+    def test_a_grid_that_renders_on_the_last_round_is_confirmed_not_unsettled(self):
+        # 11 empty reads, the columns on read 12, the same again on the confirming read 13.
+        page = PeriodPage(shown=MP1, empty_reads=11)
+        result = self.select(page, MP2, expected=12)
+        self.assertEqual((result["ok"], result["method"]), (True, "select2"))
+        self.assertEqual(page.reloads, [])
+        self.assertEqual(self.sleeps, [0.75] * (1 + 12))          # the confirming read adds no pause
+
+    def test_a_grid_seen_once_on_the_last_round_then_gone_reloads_with_the_true_text(self):
+        class Vanishing(PeriodPage):
+            """Row 0 renders on grid read 12 after the switch only."""
+            def eval_js(self, expr):
+                if expr == ops._ASSIGNMENT_SIGNATURE_JS and self.switched:
+                    self.reads_since_switch += 1
+                    if self.reads_since_switch != 12:
+                        return "0:"
+                    return _signature_of(self.grids[self.gp])    # the target's grid
+                return super().eval_js(expr)
+
+        page = Vanishing(shown=MP1)
+        result = self.select(page, MP2, expected=12, reload_url=None)
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["error"], _E1)                     # not "did not settle"
+        self.assertTrue(result["grid_empty"])
+
+    def test_nothing_but_the_period_filter_is_touched(self):
+        # I6: the select reads, clicks the filter (here: absent) and calls select2 only.
+        class Recording(PeriodPage):
+            def __init__(self, **kw):
+                super().__init__(**kw)
+                self.exprs = []
+
+            def eval_js(self, expr):
+                self.exprs.append(expr)
+                return super().eval_js(expr)
+
+        page = Recording(shown=MP1, empty_until_reload=True, after_reload={"gp": MP1})
+        self.assertTrue(self.select(page, MP2, expected=12)["ok"])
+        allowed = {ops._GRADING_PERIOD_VIEW_JS, ops._ASSIGNMENT_SIGNATURE_JS, ops._OPEN_PERIOD_FILTER_JS}
+        others = [e for e in page.exprs if e not in allowed]
+        self.assertTrue(others)
+        self.assertTrue(all("select2('val'" in e for e in others), others)
+
+
+class ScriptedGridCDP:
+    """Serves one scripted grid signature per read (the last one repeats)."""
+
+    def __init__(self, reads):
+        self.reads = list(reads)
+        self.count = 0
+
+    def eval_js(self, expr):
+        value = self.reads[min(self.count, len(self.reads) - 1)]
+        self.count += 1
+        return value
+
+
+class TestGridAfterSwitchLateGrid(unittest.TestCase):
+    """A new grid first seen on the LAST of the 12 rounds is confirmed by up to two more reads."""
+
+    BEFORE = _signature_of(_GRIDS[MP1])
+    NEW = _signature_of(_GRIDS[MP2])
+    OTHER = _signature_of(_row(("0", "S, 2.7 Quiz, 70 out of 100 points")))
+    THIRD = _signature_of(_row(("0", "S, 2.8 Quiz, 60 out of 100 points")))
+    PLACEHOLDERS = _signature_of(_PLACEHOLDERS)
+
+    def after_switch(self, reads, expected=12):
+        cdp = ScriptedGridCDP(reads)
+        with mock.patch.object(ops.time, "sleep"):
+            outcome, _ = ops._grid_after_switch(cdp, self.BEFORE, expected)
+        return outcome, cdp.count
+
+    def test_confirmed_by_the_first_extra_read(self):
+        self.assertEqual(self.after_switch(["0:"] * 11 + [self.NEW, self.NEW]), ("changed", 13))
+
+    def test_a_different_new_grid_is_confirmed_by_the_second_extra_read(self):
+        reads = ["0:"] * 11 + [self.NEW, self.OTHER, self.OTHER]
+        self.assertEqual(self.after_switch(reads), ("changed", 14))
+
+    def test_no_rows_on_the_extra_read_is_an_empty_render(self):
+        self.assertEqual(self.after_switch(["0:"] * 11 + [self.NEW, "0:"]), ("no rows", 13))
+
+    def test_no_columns_on_the_extra_read_is_an_empty_render(self):
+        reads = [self.PLACEHOLDERS] * 11 + [self.NEW, self.PLACEHOLDERS]
+        self.assertEqual(self.after_switch(reads), ("no columns", 13))
+
+    def test_the_old_columns_on_the_extra_read_are_unchanged(self):
+        reads = ["0:"] * 11 + [self.NEW, self.BEFORE]
+        self.assertEqual(self.after_switch(reads), ("unchanged", 13))
+
+    def test_three_distinct_new_grids_are_unsettled(self):
+        reads = ["0:"] * 11 + [self.NEW, self.OTHER, self.THIRD]
+        self.assertEqual(self.after_switch(reads), ("unsettled", 14))
+
+    def test_a_grid_that_settled_early_reads_nothing_extra(self):
+        self.assertEqual(self.after_switch([self.NEW, self.NEW]), ("changed", 2))
+
+    def test_the_extra_reads_are_bounded_at_two(self):
+        reads = ["0:"] * 11 + [self.NEW] + [self.OTHER, self.THIRD, self.NEW, self.OTHER]
+        self.assertEqual(self.after_switch(reads)[1], 14)
 
 
 class TestGridIdentity(unittest.TestCase):

@@ -412,19 +412,29 @@ def _load_gradebook_page(ops, cdp, course_id: str, view: dict | None = None,
     """Return CDP to the gradebook after setup/create pages have navigated away.
 
     view (a quarter pass): also switch the gradebook to that pass's marking period and
-    VERIFY it. The gradebook reopens on its default marking period after every
-    navigation, so every reload re-selects. Raises ViewNotVerified when it cannot:
-    the caller stops before its next read or write.
+    VERIFY it. The gradebook reopens on the last selected marking period after every
+    navigation, not necessarily this pass's, so every reload re-selects. Raises
+    ViewNotVerified when it cannot: the caller stops before its next read or write.
     evidence (the pass's PassEvidence): then the grid's columns must agree with the
-    marking periods the sync state records for them (finding R4b).
+    marking periods the sync state records for them (finding R4b). Its stamp count also
+    tells the select whether this period's grid may be empty, and the URL lets the select
+    reload the page once when the grid renders nothing (2026-11-08 08:13).
     """
-    ops.navigate(cdp, ops.gradebook_url(course_id))
+    url = ops.gradebook_url(course_id)
+    ops.navigate(cdp, url)
     ops.inject_helpers(cdp)
     if view is None:
         return
-    result = ops.select_grading_period(cdp, view["grading_period_id"], view.get("mp_range")) or {}
+    expected = evidence.expected_here() if evidence is not None else None
+    result = ops.select_grading_period(cdp, view["grading_period_id"], view.get("mp_range"),
+                                       expected_columns=expected, reload_url=url) or {}
     if not result.get("ok"):
         raise ViewNotVerified(lib.view_error(view, result))
+    if result.get("reloaded"):
+        # Not the "verified: the gradebook shows" marker: that one is printed only by the
+        # pass itself, and tools/daily_schoology_sync.ps1 keys on it.
+        print(f"[{lib.quarter_label(view['quarter'])}] the grid rendered empty after the switch; "
+              "reloaded the gradebook once", flush=True)
     if evidence is not None:
         evidence.check(ops, cdp)
 
@@ -472,6 +482,16 @@ class PassEvidence:
                 elsewhere.add(item["title"])
         both = here & elsewhere
         return here - both, elsewhere - both, sorted(unstamped)
+
+    def expected_here(self) -> int | None:
+        """How many registered columns the state files in this pass's marking period, or None
+        when no column carries a stamp yet (then the grid-signature check stands alone).
+        Re-read on every call: a column the pass just created and stamped here counts on
+        the very next gradebook load."""
+        here, elsewhere, _ = self.read()
+        if not here and not elsewhere:
+            return None
+        return len(here)
 
     def check(self, ops, cdp) -> None:
         """Raise ViewNotVerified unless the grid agrees with the evidence."""
@@ -544,8 +564,9 @@ def _view_lost_reason(ops, cdp, view: dict | None) -> str | None:
 
     Finding B2 (verifier 2026-11-08): the view is verified once per gradebook load, but a
     page reload in the middle of the push (a Schoology session refresh) reopens the
-    gradebook on its DEFAULT period, MP2 since 11/07, and the remaining Quarter 1 cells
-    would be read and written in MP2. One JS eval, so the push runs it before every cell.
+    gradebook on the LAST SELECTED period (the 11/08 log: the Q2 pass started on MP1 right
+    after the Q1 pass selected it), which need not be this pass's, and the remaining cells
+    would be read and written in the wrong marking period. One JS eval, so the push runs it before every cell.
     view None (a legacy run without --quarter) has nothing to check.
     """
     if view is None:
@@ -666,6 +687,7 @@ def build_component_scope(
     blooket_lessons_path: str = BLOOKET_LESSONS_PATH,
     answer_key_path: str = ANSWER_KEY_PATH,
     ced: bool = False,
+    deck_slices: dict | None = None,
 ) -> list[dict]:
     """Return FINE-GRAINED (per-component) scope items for the given section.
 
@@ -680,6 +702,11 @@ def build_component_scope(
 
     include_undated: include lessons with no date for this section's period
     (the summer mock forces every column into MP4 regardless of the calendar).
+
+    deck_slices: the parsed blooket-deck-slices.json (None = the engine's file). A per-day
+    flashcard group yields one BL:<topic> column per day and NO BL:<group> column, so a
+    retired group column (B's BL:4.7-8) is out of scope and never written again
+    (BLOOKET_PER_DAY_COLUMNS_SPEC.md section 5).
 
     Items share the SAME shape as build_scope ({key, kind, title, due_date,
     unit}) plus group_label/topic_keys, so the rest of the pipeline is unchanged.
@@ -699,6 +726,7 @@ def build_component_scope(
         progress_checks=schedule.get("progressChecks"),
         posters=schedule.get("posters"),
         ced=ced,
+        deck_slices=deck_slices,
     )
     return columns
 
@@ -1338,7 +1366,7 @@ def sync_section(
         try:
             comment_texts = component_comments_from_class_doc(
                 class_doc or {}, uid_map, today or today_school_date(),
-                quarter=quarter, zeros=zeros,
+                quarter=quarter, zeros=zeros, deck_slices=components.load_deck_slices(),
             )
         except Exception as exc:
             print(f"[comments] Text generation skipped ({type(exc).__name__})")

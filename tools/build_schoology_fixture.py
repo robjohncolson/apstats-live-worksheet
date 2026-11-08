@@ -40,6 +40,11 @@ READ-ONLY (roster only, no Schoology; the secret stays in the environment):
   python tools/build_schoology_fixture.py --section PeriodB --granularity component --quarter Q1 --today 2026-11-09 --out tools/.schoology-sync-logs/preview-PeriodB-Q1-20261109.json
   (repeat with PeriodE; --out writes only that local preview file)
 
+PER-DAY BLOOKET (BLOOKET_PER_DAY_COLUMNS_SPEC.md): component granularity loads
+data/blooket-deck-slices.json (the engine's file) and passes it on, so a per-day
+flashcard group yields BL:<topic> per day (never BL:<group>). --inspect lists each
+section's per-day groups under "per_day_blooket_groups".
+
 The Schoology push keys on the SCHOOLOGY uid. Once the durable roster.schoology_uid
 bridge (P4b) is populated, /class/grades surfaces each student's schoologyUid and the
 fixture is keyed by it automatically -- so --uid-map is now OPTIONAL. Pass --uid-map
@@ -258,7 +263,28 @@ def _fetch_ledger_rows(base: str, rid: str, prefix: str, secret: str) -> list:
     return ledger.get("rows") or ledger.get("ledger") or ledger.get("items") or []
 
 
-def inspect_summary(doc: dict) -> dict:
+def per_day_blooket_groups(doc: dict, deck_slices: dict | None = None,
+                           schedule_lessons: dict | None = None) -> dict:
+    """{section: sorted per-day flashcard group labels} for each section in the doc.
+
+    The same scope the fixture uses: the canonical schedule + slices (schedule_lessons
+    None = lesson-schedule.json), never the students' rows, so --inspect shows exactly
+    which groups get one Blooket column per day even when a row is missing (finding B3).
+    """
+    lessons = components.load_schedule_lessons() if schedule_lessons is None else schedule_lessons
+    out = {}
+    for s in doc.get("students", []) or []:
+        period = _period_of(s)
+        if not period:
+            continue
+        section = str(s.get("section"))
+        if section in out:
+            continue
+        out[section] = components.per_day_groups(lessons, period, deck_slices)
+    return {section: sorted(groups) for section, groups in sorted(out.items())}
+
+
+def inspect_summary(doc: dict, deck_slices: dict | None = None) -> dict:
     """Pipeline-state summary -- the P3 sanity check, no network needed."""
     students = doc.get("students", []) or []
     quarters = [q for s in students for q in (s.get("quarters") or {}).values()]
@@ -297,6 +323,7 @@ def inspect_summary(doc: dict) -> dict:
         "lessons_with_quarter_field": quarter_rows,
         "quarter_windows": {q: [w.get("start"), w.get("end"), w.get("close")]
                             for q, w in components.doc_quarters(doc).items()},
+        "per_day_blooket_groups": per_day_blooket_groups(doc, deck_slices),
     }
 
 
@@ -382,8 +409,11 @@ def main(argv=None) -> int:
         print(" ".join(passes) if passes else "none")
         return 0
 
+    # The engine's slices file: missing = raise (never fall back to the retired group column).
+    deck_slices = components.load_deck_slices()
+
     if args.inspect:
-        summary = inspect_summary(doc)
+        summary = inspect_summary(doc, deck_slices)
         print(json.dumps(summary, indent=2))
         if not summary["v3_active"]:
             print("\nNOTE: v3 NOT active (no pcAvg/workAvg) -- USE_V3_GRADING is not in "
@@ -417,7 +447,7 @@ def main(argv=None) -> int:
         poster_grades = fetch_poster_grades(args.base, doc, secret)
         fixture = components.component_grades_from_class_doc(
             doc, uid_map=uid_map, today=today, poster_grades=poster_grades,
-            quarter=args.quarter, zeros=not args.no_zeros)
+            quarter=args.quarter, zeros=not args.no_zeros, deck_slices=deck_slices)
     else:
         fixture = build_fixture(doc, uid_map=uid_map, granularity=args.granularity, today=today)
     payload = json.dumps(fixture, indent=2)

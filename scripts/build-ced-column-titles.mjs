@@ -8,23 +8,30 @@
 //   - 2026-crosswalk.json          the single crosswalk
 //   - js/ced2026-labels.js         the Desk's label logic (topic, Day N, bonus), run in a vm
 //   - data/lesson-schedule.json    lessons (worksheet groups), progressChecks, posters
+//   - data/blooket-deck-slices.json + roster-server perDayDeckGroups / blooketPerDayFrom
+//                                  which combined worksheets count one Blooket score per day
 //
 // One entry per Schoology column key, the same keys the sync uses:
 //   FA:<group>  QUIZ:<topic>  BL:<group>  PC:U<n>  POSTER:U<n>
 // plus FA:<topic> for each topic inside a combined worksheet (lesson granularity only,
-// "schoologyColumn": false -- never a real column, never renamed).
+// "schoologyColumn": false -- never a real column, never renamed),
+// plus BL:<topic> for each topic of a per-day flashcard group (BLOOKET_PER_DAY_COLUMNS_SPEC.md
+// section 2: one Blooket column per day; "perDayDeck": true, old == ced because the column is new).
 //
 // Run: node scripts/build-ced-column-titles.mjs          (writes the file)
 //      node scripts/build-ced-column-titles.mjs --check  (fails if the file is stale)
 
 import { readFileSync, writeFileSync } from 'node:fs';
 import vm from 'node:vm';
+import { perDayDeckGroups } from '../roster-server/lesson-grade.js';
+import { blooketPerDayFrom, PHASE3_CONFIG } from '../roster-server/grade-config.js';
 
 const REPO = new URL('../', import.meta.url);
 const CROSSWALK = new URL('2026-crosswalk.json', REPO);
 const LABELS_JS = new URL('js/ced2026-labels.js', REPO);
 const SCHEDULE = new URL('data/lesson-schedule.json', REPO);
 const OUTPUT = new URL('data/ced-column-titles.json', REPO);
+const DECK_SLICES = new URL('data/blooket-deck-slices.json', REPO);
 
 const KIND_SUFFIX = { lesson: 'Follow-Along', quiz: 'Quiz', blooket: 'Blooket' };
 const KIND_RANK = { lesson: 0, quiz: 1, blooket: 2, progress_check: 3, poster: 4 };
@@ -162,6 +169,20 @@ function worksheetGroups(lessons) {
   return groups;
 }
 
+// "4|7-8" -> "4.7-8": the worksheet groups (in either section) whose deck counts one score
+// per day, found with the grade engine's own rule so the titles can never drift from it.
+function perDayGroupLabels(schedule) {
+  const deckSlices = JSON.parse(readFileSync(DECK_SLICES, 'utf8'));
+  const perDayFrom = blooketPerDayFrom(PHASE3_CONFIG);
+  const labels = new Set();
+  for (const section of ['B', 'E']) {
+    const groups = perDayDeckGroups({ schedule: schedule.lessons || {}, deckSlices, section, perDayFrom,
+      config: PHASE3_CONFIG });
+    for (const group of groups) labels.add(group.replace('|', '.'));
+  }
+  return labels;
+}
+
 function eventUnits(schedule) {
   const units = new Set();
   for (const map of [schedule.progressChecks || {}, schedule.posters || {}]) {
@@ -206,21 +227,30 @@ function build() {
   }
 
   const entries = [];
+  // oldTitle null = a column that never had an old title: old = ced, so the rename tool
+  // and the sync's unrenamed-title check pass over it.
   function add(columnKey, kind, oldKey, topicKeys, oldTitle, schoologyColumn) {
     const suffix = KIND_SUFFIX[kind];
     const { prefix, bonus } = cedPrefix(topicKeys, cedLabel, bonusSiblings);
-    const entry = { columnKey, kind, oldKey, topicKeys, old: oldTitle, ced: prefix + ' ' + suffix,
+    const ced = prefix + ' ' + suffix;
+    const entry = { columnKey, kind, oldKey, topicKeys, old: oldTitle === null ? ced : oldTitle, ced,
       schoologyColumn };
     if (bonus.length) entry.bonusTopicKeys = bonus;
     if (bonus.length === topicKeys.length) entry.flag = 'bonus-only: Beyond the Exam column, no CED topic';
     else if (bonus.length) entry.flag = 'bonus topic(s) folded into the core column title';
     entries.push(entry);
+    return entry;
   }
 
   const groups = worksheetGroups(schedule.lessons || {});
+  const perDay = perDayGroupLabels(schedule);
   for (const [group, topicKeys] of groups) {
     add('FA:' + group, 'lesson', group, topicKeys, group + ' Follow-Along', true);
     add('BL:' + group, 'blooket', group, topicKeys, group + ' Blooket', true);
+    // A per-day flashcard group: one Blooket column per day, titled like that day's quiz.
+    if (perDay.has(group)) {
+      for (const topic of topicKeys) add('BL:' + topic, 'blooket', topic, [topic], null, true).perDayDeck = true;
+    }
     for (const topic of topicKeys) {
       add('QUIZ:' + topic, 'quiz', topic, [topic], topic + ' Quiz', true);
       if (topic !== group) add('FA:' + topic, 'lesson', topic, [topic], topic + ' Follow-Along', false);
@@ -268,6 +298,8 @@ function build() {
         + '", <title>" inside the gradebook cell aria-label, so a comma-space would let "3.3 Quiz" match "2.4, 3.3 Quiz".',
       'Every real column has a unique CED title (asserted at build time).',
       'schoologyColumn false = lesson-granularity topic key inside a combined worksheet; never a real column.',
+      'perDayDeck true = one day of a per-day flashcard group (BLOOKET_PER_DAY_COLUMNS_SPEC.md): its own '
+        + 'Blooket column "<topic> Blooket"; a new column, so old = ced.',
     ],
     columns,
   };

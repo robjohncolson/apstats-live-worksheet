@@ -1419,3 +1419,116 @@ class TestStableRosterRead(unittest.TestCase):
         out = sync._list_students_stable(ops, None, attempts=3, pause_s=0)
         self.assertEqual(ops.list_students.call_count, 3)
         self.assertEqual(len(out), 1)
+
+
+# ---------------------------------------------------------------------------
+# Per-day Blooket columns (BLOOKET_PER_DAY_COLUMNS_SPEC.md, teacher 2026-11-08)
+# ---------------------------------------------------------------------------
+
+PER_DAY_MPS = {   # the live Schoology marking periods (read-only probe 2026-11-07)
+    "1173888": {"start": "2026-09-02", "end": "2026-11-06"},
+    "1173889": {"start": "2026-11-07", "end": "2027-01-22"},
+    "1173886": {"start": "2027-01-23", "end": "2027-04-14"},
+    "1173887": {"start": "2027-04-15", "end": "2027-06-30"},
+}
+RENAME_DONE = {s: {"status": "done", "renamed": {}, "inFlight": None} for s in ("PeriodB", "PeriodE")}
+B_GROUP_COLUMN = {"schoology_assignment_id": "8641235937", "grading_period_id": "1173889",
+                  "title": "2.8-2.9 Blooket"}
+GROUP_TITLES = {"2.8-2.9 Blooket", "2.10 Blooket"}
+
+
+class HandEnteredOps(FakeOps):
+    """A gradebook where some cells already hold a hand-entered grade: {title: value}."""
+
+    def __init__(self, hand=None, **kw):
+        super().__init__(**kw)
+        self.hand = hand or {}
+
+    def read_grade_from_cell(self, cdp, column_key, row_index):
+        self._require_page("gradebook", "read_grade_from_cell")
+        for title, value in self.hand.items():
+            if column_key == f"EXISTING_{title.replace(' ', '_')}" and row_index == 0:
+                return value
+        return None
+
+
+class TestPerDayBlooketSync(unittest.TestCase):
+    """The real schedule, CED titles, fakes only: which Blooket columns a run creates and writes."""
+
+    def _run(self, section, through, grades=None, ops=None, state=None):
+        import io
+        from contextlib import redirect_stdout
+        state = state or FakeStateStore()
+        ops = ops or FakeOps(marking_periods=PER_DAY_MPS)
+        blooket = components.load_blooket_topics(
+            os.path.join(REPO_ROOT, "roster-server", "data", "blooket-lessons.json"))
+        with redirect_stdout(io.StringIO()):
+            summary = sync_section(
+                section, SECTION_TO_COURSE_ID[section], dry_run=False, state=state,
+                grades=grades or {}, ops=ops, granularity="component", quiz_topics=set(),
+                blooket_topics=blooket, through_date=through, ced=True, rename_state=RENAME_DONE)
+        return summary, ops, state
+
+    def _blooket_created(self, ops):
+        return {c["title"]: c for c in ops.created_assignments if c["title"].endswith(" Blooket")}
+
+    def test_b_creates_each_day_column_on_its_class_day(self):
+        _, ops, _ = self._run("PeriodB", "2026-11-08")
+        created = self._blooket_created(ops)
+        self.assertIn("2.8 Blooket", created)            # 4.7, class day Fri 11/06
+        self.assertNotIn("2.9 Blooket", created)         # 4.8, class day Mon 11/09
+        _, ops, _ = self._run("PeriodB", "2026-11-09")
+        created = self._blooket_created(ops)
+        for title in ("2.8 Blooket", "2.9 Blooket"):
+            self.assertEqual(created[title]["grading_period_id"], "1173889", title)   # MP2
+            self.assertEqual(created[title]["category_id"], "CAT_BLOOKET", title)
+        self.assertFalse(GROUP_TITLES & set(created))
+
+    def test_b_never_writes_the_retired_group_column(self):
+        state = FakeStateStore()
+        state.upsert_assignment("PeriodB", "BL:4.7-8", dict(B_GROUP_COLUMN))
+        ops = FakeOps(marking_periods=PER_DAY_MPS, existing_titles={"2.8-2.9 Blooket"})
+        grades = {("S1", "BL:4.7-8"): 90,    # a stale group target: no column takes it
+                  ("S1", "BL:4.7"): 70, ("S2", "BL:4.8"): 0}
+        summary, ops, state = self._run("PeriodB", "2026-11-09", grades, ops, state)
+        written = {(col, row): value for col, row, value in ops.written_grades}
+        self.assertNotIn("EXISTING_2.8-2.9_Blooket", {col for col, _ in written})
+        self.assertEqual(written[("EXISTING_2.8_Blooket", 0)], 70)
+        self.assertEqual(written[("EXISTING_2.9_Blooket", 1)], 0)
+        self.assertEqual(state.get_assignment("PeriodB", "BL:4.7-8"), B_GROUP_COLUMN)  # history only
+        self.assertIsNone(state.get_last_synced("S1", "BL:4.7-8"))
+        self.assertEqual(summary["grades_deferred"], 1)
+        self.assertFalse(summary["errors"])
+        self.assertNotIn("2.8-2.9 Blooket", self._blooket_created(ops))
+
+    def test_e_never_creates_a_group_column(self):
+        for through in ("2026-11-09", "2026-11-13", "2026-12-15"):
+            _, ops, _ = self._run("PeriodE", through)
+            created = self._blooket_created(ops)
+            self.assertFalse(GROUP_TITLES & set(created), through)
+            self.assertNotIn("Beyond the Exam: Geometric distribution Blooket", created)   # 4.12: no class day
+            self.assertIn("2.8 Blooket", created)
+            self.assertIn("2.9 Blooket", created)
+        _, ops, _ = self._run("PeriodE", "2026-11-12")
+        self.assertNotIn("2.10 Day 1 Blooket", self._blooket_created(ops))
+        _, ops, _ = self._run("PeriodE", "2026-11-13")
+        created = self._blooket_created(ops)
+        for title in ("2.10 Day 1 Blooket", "2.10 Day 2 Blooket"):
+            self.assertEqual(created[title]["grading_period_id"], "1173889", title)
+
+    def test_a_higher_hand_entered_cell_is_kept(self):
+        ops = HandEnteredOps(hand={"2.8 Blooket": 97}, marking_periods=PER_DAY_MPS)
+        state = FakeStateStore()
+        summary, ops, state = self._run("PeriodB", "2026-11-09", {("S1", "BL:4.7"): 70}, ops, state)
+        self.assertEqual(summary["grades_kept"], 1)
+        self.assertEqual(summary["grades_pushed"], 0)
+        self.assertEqual(ops.written_grades, [])
+        self.assertEqual(state.get_last_synced("S1", "BL:4.7"), 97)
+
+    def test_scope_has_day_keys_and_no_group_key(self):
+        schedule = sync.load_schedule(sync.SCHEDULE_PATH)
+        for section in ("PeriodB", "PeriodE"):
+            keys = {i["key"] for i in build_component_scope(schedule, section, ced=True)}
+            self.assertTrue({"BL:4.7", "BL:4.8", "BL:4.10", "BL:4.11"} <= keys, section)
+            self.assertFalse({"BL:4.7-8", "BL:4.10-12", "BL:4.12"} & keys, section)
+            self.assertTrue({"BL:4.1-2", "BL:4.3-4-5"} <= keys, section)

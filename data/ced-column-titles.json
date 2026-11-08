@@ -10,7 +10,8 @@
     "Progress Check / Poster: \"Unit <new unit> Progress Check\" / \"Unit <new unit> Poster\" (unchanged).",
     "Plain ASCII only (hyphen \"-\", never an en dash) and never \", \": the sync finds a column by matching \", <title>\" inside the gradebook cell aria-label, so a comma-space would let \"3.3 Quiz\" match \"2.4, 3.3 Quiz\".",
     "Every real column has a unique CED title (asserted at build time).",
-    "schoologyColumn false = lesson-granularity topic key inside a combined worksheet; never a real column."
+    "schoologyColumn false = lesson-granularity topic key inside a combined worksheet; never a real column.",
+    "perDayDeck true = one day of a per-day flashcard group (BLOOKET_PER_DAY_COLUMNS_SPEC.md): its own Blooket column \"<topic> Blooket\"; a new column, so old = ced."
   ],
   "columns": {
     "FA:1.1": {
@@ -1019,6 +1020,17 @@
       "ced": "2.8 Quiz",
       "schoologyColumn": true
     },
+    "BL:4.7": {
+      "kind": "blooket",
+      "oldKey": "4.7",
+      "topicKeys": [
+        "4.7"
+      ],
+      "old": "2.8 Blooket",
+      "ced": "2.8 Blooket",
+      "schoologyColumn": true,
+      "perDayDeck": true
+    },
     "FA:4.7-8": {
       "kind": "lesson",
       "oldKey": "4.7-8",
@@ -1060,6 +1072,17 @@
       "old": "4.8 Quiz",
       "ced": "2.9 Quiz",
       "schoologyColumn": true
+    },
+    "BL:4.8": {
+      "kind": "blooket",
+      "oldKey": "4.8",
+      "topicKeys": [
+        "4.8"
+      ],
+      "old": "2.9 Blooket",
+      "ced": "2.9 Blooket",
+      "schoologyColumn": true,
+      "perDayDeck": true
     },
     "FA:4.9": {
       "kind": "lesson",
@@ -1123,6 +1146,17 @@
       "ced": "2.10 Day 1 Quiz",
       "schoologyColumn": true
     },
+    "BL:4.10": {
+      "kind": "blooket",
+      "oldKey": "4.10",
+      "topicKeys": [
+        "4.10"
+      ],
+      "old": "2.10 Day 1 Blooket",
+      "ced": "2.10 Day 1 Blooket",
+      "schoologyColumn": true,
+      "perDayDeck": true
+    },
     "FA:4.10-12": {
       "kind": "lesson",
       "oldKey": "4.10-12",
@@ -1175,6 +1209,17 @@
       "ced": "2.10 Day 2 Quiz",
       "schoologyColumn": true
     },
+    "BL:4.11": {
+      "kind": "blooket",
+      "oldKey": "4.11",
+      "topicKeys": [
+        "4.11"
+      ],
+      "old": "2.10 Day 2 Blooket",
+      "ced": "2.10 Day 2 Blooket",
+      "schoologyColumn": true,
+      "perDayDeck": true
+    },
     "FA:4.12": {
       "kind": "lesson",
       "oldKey": "4.12",
@@ -1202,6 +1247,21 @@
         "4.12"
       ],
       "flag": "bonus-only: Beyond the Exam column, no CED topic"
+    },
+    "BL:4.12": {
+      "kind": "blooket",
+      "oldKey": "4.12",
+      "topicKeys": [
+        "4.12"
+      ],
+      "old": "Beyond the Exam: Geometric distribution Blooket",
+      "ced": "Beyond the Exam: Geometric distribution Blooket",
+      "schoologyColumn": true,
+      "bonusTopicKeys": [
+        "4.12"
+      ],
+      "flag": "bonus-only: Beyond the Exam column, no CED topic",
+      "perDayDeck": true
     },
     "FA:5.1": {
       "kind": "lesson",

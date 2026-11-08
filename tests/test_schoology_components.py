@@ -404,23 +404,25 @@ class TestComponentGradesFromClassDoc(unittest.TestCase):
         # Freeze-era rows: 4.7 is never-zero while 4.8 is a Q2 lesson that zeroes after 11/22.
         # The group's deciding lesson (4.7, the earliest) decides the shared FA/BL columns, so
         # 4.8 never writes a 0 there; its own quiz column still zeroes.
+        # deck_slices={}: the group-decider rule for a Blooket group that is NOT per-day (4.7-8
+        # itself is per-day with the real slices file: TestPerDayBlooket).
         g = sc.group_label(4, "7-8")
         fa, bl, quiz = f"u9/{sc.fa_key(g)}", f"u9/{sc.bl_key(g)}", f"u9/{sc.quiz_key('4.8')}"
         for section in ("PeriodB", "PeriodE"):
             doc = self._group_doc(section, None, True)
             for today in ("2026-11-06", "2026-11-12", "2026-11-23", "2027-02-01"):
-                out = sc.component_grades_from_class_doc(doc, today=today)
+                out = sc.component_grades_from_class_doc(doc, today=today, deck_slices={})
                 self.assertNotIn(fa, out, section + " " + today)
                 self.assertNotIn(bl, out, section + " " + today)
-            out = sc.component_grades_from_class_doc(doc, today="2026-11-23")
+            out = sc.component_grades_from_class_doc(doc, today="2026-11-23", deck_slices={})
             self.assertEqual(out, {quiz: 0})
-            comments = sc.component_comments_from_class_doc(doc, today="2026-11-23")
+            comments = sc.component_comments_from_class_doc(doc, today="2026-11-23", deck_slices={})
             self.assertEqual(sorted(comments), [quiz])
             self.assertIn("Missing: 4.8 quiz", comments[quiz])
             # Real work still goes through to the shared columns.
             for lesson in doc["students"][0]["lessons"]:
                 lesson.update(lessonGradeNoQuiz=91, blooket=77)
-            out = sc.component_grades_from_class_doc(doc, today="2026-11-23")
+            out = sc.component_grades_from_class_doc(doc, today="2026-11-23", deck_slices={})
             self.assertEqual((out[fa], out[bl]), (91, 77))
 
     def test_group_column_zero_without_the_freeze_is_unchanged(self):
@@ -429,14 +431,21 @@ class TestComponentGradesFromClassDoc(unittest.TestCase):
         g = sc.group_label(4, "7-8")
         fa, bl = f"u9/{sc.fa_key(g)}", f"u9/{sc.bl_key(g)}"
         doc = self._group_doc("PeriodB", "2026-11-19", None)
-        self.assertEqual(sc.component_grades_from_class_doc(doc, today="2026-11-19"), {})
-        self.assertEqual(sc.component_grades_from_class_doc(doc, today="2026-11-20"), {fa: 0, bl: 0})
-        comments = sc.component_comments_from_class_doc(doc, today="2026-11-20")
+        off = {}   # no per-day groups: the group-decider rule (4.7-8 per-day: TestPerDayBlooket)
+        self.assertEqual(sc.component_grades_from_class_doc(doc, today="2026-11-19", deck_slices=off), {})
+        self.assertEqual(sc.component_grades_from_class_doc(doc, today="2026-11-20", deck_slices=off),
+                         {fa: 0, bl: 0})
+        comments = sc.component_comments_from_class_doc(doc, today="2026-11-20", deck_slices=off)
         self.assertIn("Missing: 4.7 worksheet", comments[fa])
+        # With the real slices file the Follow-Along is unchanged and the Blooket is per day:
+        # B 4.7 is 0 from the 11/20 run while 4.8 (zero date 11/22) stays blank.
+        self.assertEqual(sc.component_grades_from_class_doc(doc, today="2026-11-20"),
+                         {fa: 0, "u9/BL:4.7": 0})
         # A group with no due dates (an older caller): its first lesson decides, as before.
         for lesson in doc["students"][0]["lessons"]:
             lesson.pop("due")
-        self.assertEqual(sc.component_grades_from_class_doc(doc, today="2026-11-20"), {fa: 0, bl: 0})
+        self.assertEqual(sc.component_grades_from_class_doc(doc, today="2026-11-20", deck_slices=off),
+                         {fa: 0, bl: 0})
 
     def test_emits_pc_from_units_and_skips_poster_without_ledger_letter(self):
         # PC <- units[U#].pcRawPct (the unit mastery track). Poster has no
@@ -682,7 +691,7 @@ class TestEngineParity(unittest.TestCase):
         engine = re.search(r"Q1: \{[^\n]*\n?[^\n]*close: '([\d-]+)'", self.config)
         if engine:
             self.assertEqual(fallback, engine.group(1))
-        self.assertEqual(fallback, "2026-11-12")
+        self.assertEqual(fallback, "2026-11-10")   # teacher 2026-11-08: Quarter 1 closes Tue 11/10
 
 
 class TestZeroQuarterRule(unittest.TestCase):
@@ -781,11 +790,13 @@ class TestQuarterPasses(unittest.TestCase):
         return sc.quarter_passes(self.doc if doc is None else doc, today, q1_close=q1_close)
 
     def test_the_real_config_this_week(self):
-        self.assertEqual(self.doc["config"]["quarters"]["Q1"].get("close"), "2026-11-12")
+        # Teacher 2026-11-08: Quarter 1 closes Tue 11/10, so its close + final run Wed 11/11.
+        self.assertEqual(self.doc["config"]["quarters"]["Q1"].get("close"), "2026-11-10")
         self.assertEqual(self.passes("2026-11-08"), ["Q1", "Q2"])     # Sunday, a gap day
         self.assertEqual(self.passes("2026-11-09"), ["Q1", "Q2"])
-        self.assertEqual(self.passes("2026-11-12"), ["Q1", "Q2"])     # the close evening
-        self.assertEqual(self.passes("2026-11-13"), ["Q2"])
+        self.assertEqual(self.passes("2026-11-10"), ["Q1", "Q2"])     # the close evening
+        self.assertEqual(self.passes("2026-11-11"), ["Q2"])            # Wed: the close day after
+        self.assertEqual(self.passes("2026-11-12"), ["Q2"])
 
     def test_the_real_config_in_january(self):
         q2_close = self.doc["config"]["quarters"]["Q2"].get("close")
@@ -937,6 +948,262 @@ class TestQuarterPassTargets(unittest.TestCase):
     def test_rows_carry_quarter(self):
         self.assertTrue(sc.rows_carry_quarter(_doc("PeriodB", self._b_rows(True))))
         self.assertFalse(sc.rows_carry_quarter(_doc("PeriodB", self._b_rows(False))))
+
+
+# ---------------------------------------------------------------------------
+# Per-day Blooket columns (BLOOKET_PER_DAY_COLUMNS_SPEC.md, teacher 2026-11-08)
+# ---------------------------------------------------------------------------
+
+def _live_schedule():
+    with open(os.path.join(REPO_ROOT, "data", "lesson-schedule.json"), encoding="utf-8") as f:
+        return json.load(f)
+
+
+def _live_rows(schedule, scored=True):
+    """One doc row per scheduled lesson, both periods' dates, a fixed spread of scores."""
+    rows = []
+    for i, (key, e) in enumerate(sorted(schedule["lessons"].items())):
+        if e.get("kind") == "work" or e.get("unit") is None:
+            continue
+        p = e.get("periods") or {}
+        row = _row(key, e["unit"], e["worksheetKey"], p.get("B"), p.get("E"))
+        if scored and i % 3 == 1:
+            row.update(lessonGradeNoQuiz=70 + i % 30, Q=50 + i % 40, blooket=60 + i % 35)
+        if scored and i % 3 == 2:
+            row.update(blooket=40 + i % 50)
+        rows.append(row)
+    return rows
+
+
+PER_DAY_TITLES = {   # spec section 2
+    "BL:4.7": "2.8 Blooket", "BL:4.8": "2.9 Blooket",
+    "BL:4.10": "2.10 Day 1 Blooket", "BL:4.11": "2.10 Day 2 Blooket",
+}
+PER_DAY_DATES = {    # (class day, filing date = zero date + 1) per section, spec section 4
+    "B": {"BL:4.7": ("2026-11-06", "2026-11-20"), "BL:4.8": ("2026-11-09", "2026-11-23"),
+          "BL:4.10": ("2026-11-16", "2026-11-30"), "BL:4.11": ("2026-11-17", "2026-12-01")},
+    "E": {"BL:4.7": ("2026-11-09", "2026-11-23"), "BL:4.8": ("2026-11-09", "2026-11-23"),
+          "BL:4.10": ("2026-11-13", "2026-11-27"), "BL:4.11": ("2026-11-13", "2026-11-27")},
+}
+
+
+class TestPerDayBlooket(unittest.TestCase):
+
+    def test_cutoff_matches_the_engine(self):
+        with open(GRADE_CONFIG, encoding="utf-8") as fh:
+            config = fh.read()
+        match = re.search(r"export const BLOOKET_PER_DAY_FROM = '(\d{4}-\d{2}-\d{2})';", config)
+        self.assertEqual(sc.BLOOKET_PER_DAY_FROM, match.group(1))
+
+    def test_deck_csv_is_the_engine_rule(self):
+        self.assertEqual(sc.deck_csv(4, "7-8"), "u4_l7_l8_blooket.csv")
+        self.assertEqual(sc.deck_csv(4, "10-12"), "u4_l10_l12_blooket.csv")
+        self.assertIn(sc.deck_csv(4, "3-4-5"), sc.load_deck_slices()["slices"])
+
+    def test_per_day_set_from_the_real_schedule(self):
+        schedule = _live_schedule()
+        rows = _live_rows(schedule, scored=False)
+        for period in ("B", "E", None):
+            self.assertEqual(sc.per_day_groups(schedule["lessons"], period), {"4.7-8", "4.10-12"}, period)
+            self.assertEqual(sc.per_day_groups(rows, period), {"4.7-8", "4.10-12"}, period)
+        # 4.1-2 and 4.3-4-5 zero before 11/13: one score each. No slices file: no per-day group.
+        self.assertEqual(sc.per_day_groups(schedule["lessons"], "B", {}), set())
+        self.assertEqual(sc.per_day_groups(schedule["lessons"], "B", per_day_from=None), set())
+
+    def test_columns_are_one_per_day_in_marking_period_2(self):
+        import schoology_sync_lib as lib
+        schedule = _live_schedule()
+        blooket = sc.load_blooket_topics(os.path.join(REPO_ROOT, "roster-server", "data",
+                                                      "blooket-lessons.json"))
+        for period in ("B", "E"):
+            for ced in (True, False):   # the keys never depend on the title mode
+                cols = {c["key"]: c for c in sc.component_columns(
+                    schedule["lessons"], period, quiz_topics=set(), blooket_topics=blooket, ced=ced,
+                    progress_checks=schedule["progressChecks"], posters=schedule["posters"])}
+                for gone in ("BL:4.7-8", "BL:4.10-12", "BL:4.12"):
+                    self.assertNotIn(gone, cols, (period, gone))
+                # The groups that zero before the cutoff keep their one column.
+                self.assertIn("BL:4.1-2", cols)
+                self.assertIn("BL:4.3-4-5", cols)
+                for key, title in PER_DAY_TITLES.items():
+                    col = cols[key]
+                    if ced:   # the live mode (the old-title mode is refused once renamed)
+                        self.assertEqual(col["title"], title, period)
+                    self.assertEqual((col["due_date"], col["filing_date"]), PER_DAY_DATES[period][key])
+                    self.assertEqual(col["topic_keys"], [key[3:]])
+                    self.assertEqual(col["kind"], sc.KIND_BLOOKET)
+                    self.assertEqual(lib.marking_period_for_date(col["filing_date"], LIVE_MPS), "1173889")
+        self.assertEqual(sc.bl_title("4.7", True), "2.8 Blooket")
+
+    def _b_doc(self, b47=None, b48=None):
+        rows = [_row("4.7", 4, "7-8", "2026-11-06", "2026-11-09", quizTotal=0, blooket=b47),
+                _row("4.8", 4, "7-8", "2026-11-09", "2026-11-09", blooket=b48)]
+        return _doc("PeriodB", rows)
+
+    def test_each_day_keeps_its_own_score(self):
+        out = sc.component_grades_from_class_doc(self._b_doc(60, 95), today="2026-11-12", quarter="Q2")
+        self.assertEqual(out, {"u9/BL:4.7": 60, "u9/BL:4.8": 95})
+        # A whole-deck or game score is in every day's own engine value: it fills both days.
+        out = sc.component_grades_from_class_doc(self._b_doc(88, 88), today="2026-11-12", quarter="Q2")
+        self.assertEqual(out, {"u9/BL:4.7": 88, "u9/BL:4.8": 88})
+
+    def test_a_day_not_yet_due_is_blank_never_zero(self):
+        # 11/12: neither day is past its zero date; only the day with a score of its own writes.
+        out = sc.component_grades_from_class_doc(self._b_doc(None, 72), today="2026-11-12", quarter="Q2")
+        self.assertEqual(out, {"u9/BL:4.8": 72})
+        self.assertEqual(sc.component_grades_from_class_doc(self._b_doc(), today="2026-11-12", quarter="Q2"), {})
+
+    def test_each_day_zeroes_on_its_own_date(self):
+        doc = self._b_doc()
+        for today, expected in (("2026-11-19", {}),
+                                ("2026-11-20", {"u9/BL:4.7": 0, "u9/QUIZ:4.8": None}),
+                                ("2026-11-23", {"u9/BL:4.7": 0, "u9/BL:4.8": 0})):
+            out = sc.component_grades_from_class_doc(doc, today=today, quarter="Q2")
+            bl = {k: v for k, v in out.items() if "/BL:" in k}
+            self.assertEqual(bl, {k: v for k, v in expected.items() if "/BL:" in k}, today)
+        # --no-zeros: no lagged zero, a real score still goes.
+        self.assertEqual(sc.component_grades_from_class_doc(doc, today="2026-11-23", quarter="Q2",
+                                                            zeros=False), {})
+        # Every day column is a Quarter 2 target: none lands in the Quarter 1 pass.
+        self.assertEqual(sc.component_grades_from_class_doc(self._b_doc(90, 90), today="2026-11-10",
+                                                            quarter="Q1"), {})
+
+    def test_zero_comment_names_the_day(self):
+        rows = [_row("4.10", 4, "10-12", "2026-11-16", "2026-11-13", quizTotal=0),
+                _row("4.11", 4, "10-12", "2026-11-17", "2026-11-13", quizTotal=0),
+                _row("4.12", 4, "10-12", None, None, quizTotal=0, blooket=99)]
+        doc = _doc("PeriodE", rows)
+        grades = sc.component_grades_from_class_doc(doc, today="2026-11-27", quarter="Q2")
+        self.assertEqual(grades, {"u9/FA:4.10-12": 0, "u9/BL:4.10": 0, "u9/BL:4.11": 0})
+        comments = sc.component_comments_from_class_doc(doc, today="2026-11-27", ced=True, quarter="Q2")
+        self.assertEqual(set(comments), set(grades))
+        self.assertIn("Missing: 2.10 Day 1 flashcards", comments["u9/BL:4.10"])
+        self.assertIn("Missing: 2.10 Day 2 flashcards", comments["u9/BL:4.11"])
+        self.assertIn("Not a permanent 0.", comments["u9/BL:4.11"])
+        # 4.12 has no class day: no column, so its score goes nowhere (and it never counts).
+        self.assertNotIn("u9/BL:4.12", sc.component_grades_from_class_doc(doc, today="2026-11-27"))
+
+    def test_quarter_1_pass_is_byte_identical(self):
+        # The Wed 11/11 final Quarter 1 sync: the per-day change may not move one byte of it.
+        # deck_slices={} is the code path from before the change (no per-day group anywhere).
+        schedule = _live_schedule()
+        rows = _live_rows(schedule)
+        for section in ("PeriodB", "PeriodE"):
+            doc = _doc(section, rows)
+            for today in ("2026-11-09", "2026-11-10", "2026-11-11", "2026-11-12"):
+                for zeros in (True, False):
+                    args = dict(today=today, quarter="Q1", zeros=zeros)
+                    before = json.dumps(sc.component_grades_from_class_doc(doc, deck_slices={}, **args),
+                                        sort_keys=True)
+                    after = json.dumps(sc.component_grades_from_class_doc(doc, **args), sort_keys=True)
+                    self.assertEqual(after, before, (section, today, zeros))
+                    for ced in (True, False):
+                        before = json.dumps(sc.component_comments_from_class_doc(
+                            doc, ced=ced, deck_slices={}, **args), sort_keys=True)
+                        after = json.dumps(sc.component_comments_from_class_doc(doc, ced=ced, **args),
+                                           sort_keys=True)
+                        self.assertEqual(after, before, (section, today, zeros, ced))
+            # The only change anywhere: the per-day groups' Blooket keys.
+            old = sc.component_grades_from_class_doc(doc, today="2026-12-15", deck_slices={})
+            new = sc.component_grades_from_class_doc(doc, today="2026-12-15")
+            self.assertTrue({k.split("/", 1)[1] for k in set(old) - set(new)}
+                            <= {"BL:4.7-8", "BL:4.10-12"})
+            self.assertEqual({k.split("/", 1)[1] for k in set(new) - set(old)},
+                             {"BL:4.7", "BL:4.8", "BL:4.10", "BL:4.11"})
+            self.assertEqual({k: v for k, v in new.items() if k in old}, {k: old[k] for k in new if k in old})
+
+    def test_quarter_1_fixture_and_comments_pinned(self):
+        # A fixed doc around the Quarter 1 line (B): the exact Q1 targets and comment texts.
+        rows = [_row("4.1", 4, "1-2", "2026-10-23", quizTotal=0, blooket=80),
+                _row("4.2", 4, "1-2", "2026-10-26"),
+                _row("4.6", 4, "6", "2026-11-05", "2026-11-06"),
+                _row("4.7", 4, "7-8", "2026-11-06", "2026-11-09", quizTotal=0, blooket=70),
+                _row("4.8", 4, "7-8", "2026-11-09", "2026-11-09")]
+        doc = _doc("PeriodB", rows)
+        q1 = sc.component_grades_from_class_doc(doc, today="2026-11-11", quarter="Q1")
+        self.assertEqual(q1, {"u9/FA:4.1-2": 0, "u9/BL:4.1-2": 80})
+        comments = sc.component_comments_from_class_doc(doc, today="2026-11-11", quarter="Q1", ced=True)
+        self.assertEqual(comments, {
+            "u9/FA:4.1-2": "Not a permanent 0. Missing: 2.3 Day 1 worksheet. Finish it on the Desk "
+                           "(it is listed first in My Ledger) and this grade updates at the next sync.",
+            "u9/BL:4.1-2": ""})
+
+
+class TestPerDayScopeFromSchedule(unittest.TestCase):
+    """Finding B3 (2026-11-08): per-day membership comes from the schedule + slices, the
+    same scope component_columns builds, never from which rows a doc happens to hold."""
+
+    def _b_doc(self, rows):
+        return _doc("PeriodB", rows)
+
+    def _day_47(self, **fields):
+        return _row("4.7", 4, "7-8", "2026-11-06", "2026-11-09", quizTotal=0, **fields)
+
+    def test_a_missing_day_row_keeps_the_present_day_and_never_the_group_key(self):
+        doc = self._b_doc([self._day_47(blooket=61)])
+        # 11/12: nothing due yet; 11/23: past 4.8's zero date too, but 4.8 has no row -> no 0.
+        for today in ("2026-11-12", "2026-11-20", "2026-11-23"):
+            for quarter in ("Q2", None):
+                grades = sc.component_grades_from_class_doc(doc, today=today, quarter=quarter)
+                blooket = {k: v for k, v in grades.items() if "/BL:" in k}
+                self.assertEqual(blooket, {"u9/BL:4.7": 61}, (today, quarter))
+                comments = sc.component_comments_from_class_doc(doc, today=today, quarter=quarter,
+                                                                ced=True)
+                self.assertEqual(set(comments), set(grades), (today, quarter))
+                self.assertEqual(comments["u9/BL:4.7"], "")
+                self.assertNotIn("u9/BL:4.7-8", comments)
+                self.assertNotIn("u9/BL:4.8", comments)
+        # The present day still zeroes on its own date when it has no score.
+        doc = self._b_doc([self._day_47()])
+        grades = sc.component_grades_from_class_doc(doc, today="2026-11-20", quarter="Q2")
+        self.assertEqual({k: v for k, v in grades.items() if "/BL:" in k}, {"u9/BL:4.7": 0})
+        comments = sc.component_comments_from_class_doc(doc, today="2026-11-20", quarter="Q2", ced=True)
+        self.assertIn("Missing: 2.8 flashcards", comments["u9/BL:4.7"])
+        self.assertEqual(set(comments), set(grades))
+
+    def test_no_per_day_rows_emits_nothing_for_the_group(self):
+        doc = self._b_doc([_row("4.6", 4, "6", "2026-11-05", "2026-11-06", blooket=70)])
+        for today in ("2026-11-12", "2026-11-23", "2026-12-15"):
+            grades = sc.component_grades_from_class_doc(doc, today=today)
+            self.assertEqual({k for k in grades if "/BL:" in k}, {"u9/BL:4.6"}, today)
+            comments = sc.component_comments_from_class_doc(doc, today=today, ced=True)
+            self.assertEqual(set(comments), set(grades), today)
+
+    def test_a_non_per_day_group_with_a_missing_row_is_unchanged(self):
+        # 4.3-4-5 zeroes before the cutoff: one group column, decided by its earliest PRESENT
+        # row, exactly as before per-day columns existed ({} slices = the old code path).
+        docs = (
+            self._b_doc([_row("4.3", 4, "3-4-5", "2026-10-27", blooket=77),
+                         _row("4.5", 4, "3-4-5", "2026-10-30")]),
+            self._b_doc([_row("4.4", 4, "3-4-5", "2026-10-29"),
+                         _row("4.5", 4, "3-4-5", "2026-10-30")]),
+        )
+        for doc, expected in zip(docs, (77, 0)):
+            for today in ("2026-11-12", "2026-11-20"):
+                for quarter in ("Q1", "Q2", None):
+                    args = dict(today=today, quarter=quarter)
+                    old = sc.component_grades_from_class_doc(doc, deck_slices={}, **args)
+                    self.assertEqual(sc.component_grades_from_class_doc(doc, **args), old, args)
+                    self.assertEqual(sc.component_comments_from_class_doc(doc, ced=True, **args),
+                                     sc.component_comments_from_class_doc(doc, ced=True, deck_slices={},
+                                                                          **args), args)
+            grades = sc.component_grades_from_class_doc(doc, today="2026-11-12")
+            self.assertEqual(grades["u9/BL:4.3-4-5"], expected)
+
+    def test_the_schedule_decides_not_the_rows(self):
+        both_days = self._b_doc([self._day_47(blooket=61),
+                                 _row("4.8", 4, "7-8", "2026-11-09", "2026-11-09", blooket=95)])
+        # A schedule where the worksheet is a single day: not per-day, so the group key,
+        # even though the doc holds two rows for it.
+        solo = {"4.7": {"unit": 4, "worksheetKey": "7-8",
+                        "periods": {"B": "2026-11-06", "E": "2026-11-09"}}}
+        grades = sc.component_grades_from_class_doc(both_days, today="2026-11-12", schedule_lessons=solo)
+        self.assertEqual({k: v for k, v in grades.items() if "/BL:" in k}, {"u9/BL:4.7-8": 61})
+        # The canonical schedule: per day, whatever the doc holds.
+        grades = sc.component_grades_from_class_doc(both_days, today="2026-11-12")
+        self.assertEqual({k: v for k, v in grades.items() if "/BL:" in k},
+                         {"u9/BL:4.7": 61, "u9/BL:4.8": 95})
+        self.assertEqual(sc.load_schedule_lessons(), _live_schedule()["lessons"])
 
 
 if __name__ == "__main__":

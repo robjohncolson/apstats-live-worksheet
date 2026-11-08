@@ -343,6 +343,73 @@ class TestQuarterFixtureCli(unittest.TestCase):
         self.assertEqual(summary["quarter_windows"]["Q1"], ["2026-09-02", "2026-11-06", "2026-11-12"])
 
 
+class TestPerDayBlooketFixture(unittest.TestCase):
+    """BLOOKET_PER_DAY_COLUMNS_SPEC.md section 5: the fixture holds BL:<topic> per day, never BL:<group>."""
+
+    def _student(self, section, uid, b47, b48):
+        p = section[-1]
+        day = {"B": ("2026-11-06", "2026-11-09"), "E": ("2026-11-09", "2026-11-09")}[p]
+        rows = [
+            {"lessonKey": "4.7", "unit": 4, "worksheetKey": "7-8", "due": {p: day[0]},
+             "zeroDate": {p: bsf.components.zero_date_of(day[0])}, "quizTotal": 0, "hasBlooket": True,
+             "blooket": b47},
+            {"lessonKey": "4.8", "unit": 4, "worksheetKey": "7-8", "due": {p: day[1]},
+             "zeroDate": {p: bsf.components.zero_date_of(day[1])}, "quizTotal": 0, "hasBlooket": True,
+             "blooket": b48},
+            {"lessonKey": "4.1", "unit": 4, "worksheetKey": "1-2", "due": {p: "2026-10-23"},
+             "zeroDate": {p: "2026-11-05"}, "quizTotal": 0, "hasBlooket": True, "blooket": 81},
+            {"lessonKey": "4.2", "unit": 4, "worksheetKey": "1-2", "due": {p: "2026-10-26"},
+             "zeroDate": {p: "2026-11-08"}, "quizTotal": 0, "hasBlooket": True, "blooket": 81},
+        ]
+        return {"studentId": uid, "schoologyUid": uid, "section": section, "units": {}, "lessons": rows}
+
+    _main = TestQuarterFixtureCli._main   # the same mocked CLI run, against this class's DOC
+
+    def setUp(self):
+        self.DOC = dict(TestQuarterFixtureCli.DOC, students=[
+            self._student("PeriodB", "u1", 60, 95), self._student("PeriodE", "u2", None, 72)])
+
+    def test_q2_fixture_has_day_keys(self):
+        code, q2, _ = self._main(["--quarter", "Q2", "--today", "2026-11-09"])
+        self.assertEqual(code, 0)
+        self.assertEqual({k: v for k, v in q2.items() if "/BL:" in k},
+                         {"u1/BL:4.7": 60, "u1/BL:4.8": 95, "u2/BL:4.8": 72})
+        self.assertFalse([k for k in q2 if k.endswith("/BL:4.7-8")])
+
+    def test_quarter_1_fixture_unchanged(self):
+        # B 4.1-2 zeroes before the cutoff: still its one group column, in Quarter 1.
+        code, q1, _ = self._main(["--quarter", "Q1", "--today", "2026-11-09"])
+        self.assertEqual((code, q1), (0, {"u1/FA:4.1-2": 0, "u1/BL:4.1-2": 81,
+                                          "u2/FA:4.1-2": 0, "u2/BL:4.1-2": 81}))
+
+    def test_q2_fixture_with_a_missing_day_row_has_no_group_key(self):
+        # Finding B3: B with the 4.7 row and no 4.8 row still writes only its day column.
+        rows = [r for r in self.DOC["students"][0]["lessons"] if r["lessonKey"] != "4.8"]
+        self.DOC["students"][0] = dict(self.DOC["students"][0], lessons=rows)
+        code, q2, _ = self._main(["--quarter", "Q2", "--today", "2026-11-23"])
+        self.assertEqual(code, 0)
+        self.assertEqual({k: v for k, v in q2.items() if k.startswith("u1/BL:")}, {"u1/BL:4.7": 60})
+
+    def test_inspect_lists_each_sections_per_day_groups(self):
+        # The scope is the schedule's (both per-day groups), not the rows this doc holds.
+        per_day = {"PeriodB": ["4.10-12", "4.7-8"], "PeriodE": ["4.10-12", "4.7-8"]}
+        summary = bsf.inspect_summary(self.DOC)
+        self.assertEqual(summary["per_day_blooket_groups"], per_day)
+        self.assertEqual(bsf.inspect_summary(self.DOC, {})["per_day_blooket_groups"],
+                         {"PeriodB": [], "PeriodE": []})
+        import io
+        import json
+        from contextlib import redirect_stderr, redirect_stdout
+        from unittest import mock
+        with mock.patch.dict(os.environ, {"ROSTER_TEACHER_SECRET": "s"}), \
+                mock.patch.object(bsf, "fetch_class_grades", lambda base, section, secret: self.DOC), \
+                redirect_stdout(io.StringIO()) as out, redirect_stderr(io.StringIO()):
+            self.assertEqual(bsf.main(["--inspect"]), 0)
+        printed = json.loads(out.getvalue())
+        self.assertEqual(printed["per_day_blooket_groups"], per_day)
+
+
+
 class TestPassesCli(unittest.TestCase):
     """--passes prints the day's quarter passes for daily_schoology_sync.ps1 (finding B3)."""
 

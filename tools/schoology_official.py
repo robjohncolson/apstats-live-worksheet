@@ -22,7 +22,7 @@ QUARTER PASSES (QUARTER_LINE_BY_DUE_DATE_SPEC.md section 4, teacher 2026-11-07):
   Close            a quarter's pass stops the day after its close date (/class/grades
                    config.quarters.<Q>.close, else --close) and once its final is written.
   --final Q1       once, the morning after the close date (tools/close_quarter.py runs it
-                   after POST /class/quarter/close + apply-bonus, Fri 11/13 before school):
+                   after POST /class/quarter/close + apply-bonus, Wed 11/11, no school):
                    final override = max(closedGrade incl. the applied bonus, current override),
                    recorded per student in tools/.schoology-sync-logs/official-final-state.json
                    so it is written exactly once.
@@ -54,7 +54,7 @@ SAFETY (review fixes, 2026-11-08):
   The view         after the marking-period switch the grid must change and settle; the
                    columns the sync state files in another marking period must not be on it;
                    and before EACH fresh re-read (so before each write) the filter and header
-                   must still show the pass's period (a reload reopens the default one).
+                   must still show the pass's period (a reload reopens the last selected one).
                    Otherwise: [ABORT], exit 3.
   No rows          a gradebook view with no student rows stops the run (SystemExit).
   Rig lock         every run that touches Schoology holds tools/.schoology-sync-logs/rig.lock
@@ -84,7 +84,7 @@ READ-ONLY on the rig (CMD 7): the three dry runs above, for PeriodB and PeriodE,
 or after 17:05 (the tool refuses 16:00-17:05; the LIVE tasks run 16:25-17:05). Each switches
 the gradebook view (a filter, not a write). Before Mon 11/09 a Quarter 2 dry run needs
 --today 2026-11-09; without it the pass prints "[Quarter 2] starts 2026-11-09" and stops.
-The --final --apply normally runs from tools/close_quarter.py (Fri 11/13, early morning).
+The --final --apply normally runs from tools/close_quarter.py (Wed 11/11, morning).
 
 Students with no Schoology row are kept in a pending log (tools/.official-grade-pending.json)
 so their grade can be written once they are added to the course.
@@ -466,7 +466,8 @@ def read_gradebook(ops, cdp, course_id: str, view: dict | None = None,
     view_titles_from_state; the grid's columns must agree with them (finding A3).
     A student row the reader did not see is UNREADABLE, never empty (finding A1).
     """
-    ops.navigate(cdp, ops.gradebook_url(course_id))
+    url = ops.gradebook_url(course_id)
+    ops.navigate(cdp, url)
     students = []
     for _ in range(15):
         time.sleep(2)
@@ -475,9 +476,19 @@ def read_gradebook(ops, cdp, course_id: str, view: dict | None = None,
         if students:
             break
     if view is not None:
-        result = ops.select_grading_period(cdp, view["grading_period_id"], view.get("mp_range")) or {}
+        # The stamp count says whether this period's grid may be empty; the URL lets the
+        # select reload the page once when the grid renders nothing (2026-11-08 08:13).
+        result = ops.select_grading_period(cdp, view["grading_period_id"], view.get("mp_range"),
+                                           expected_columns=_expected_columns(titles),
+                                           reload_url=url) or {}
         if not result.get("ok"):
             raise lib.ViewNotVerified(lib.view_error(view, result))
+        if result.get("reloaded"):
+            # Not the "verified: the gradebook shows" marker (tools/daily_schoology_sync.ps1 keys on it).
+            print("[%s] the grid rendered empty after the switch; reloaded the gradebook once"
+                  % lib.quarter_label(view["quarter"]), flush=True)
+        # The pre-select rows are the same roster in the same order, and every write
+        # re-reads its own row fresh (read_row), so falling back to them is safe.
         students = ops.list_students(cdp) or students
     # Finding A2: no student rows is a failed read, never an empty marking period (that
     # published Desk-only numbers and let --final report done with nothing written).
@@ -500,6 +511,17 @@ def read_gradebook(ops, cdp, course_id: str, view: dict | None = None,
     for s in students:
         out[str(s["studentId"])] = {"row": s["rowIndex"], **_row_reading(rows.get(str(s["rowIndex"])))}
     return out
+
+
+def _expected_columns(titles: tuple | None) -> int | None:
+    """How many titles are filed in this marking period, or None when there is no stamp to
+    compare (titles None, or both sets empty): then an empty grid stays acceptable."""
+    if titles is None:
+        return None
+    here, elsewhere = titles
+    if not here and not elsewhere:
+        return None
+    return len(here)
 
 
 def view_titles_from_state(section: str, grading_period_id, path: str | None = None) -> tuple:
@@ -952,9 +974,9 @@ def guard_write(ops, cdp, view: dict | None, window_clock=None) -> None:
     and before the re-read of a row that is only published or recorded (finding R8).
 
     view: the gradebook must still show the pass's marking period. A page reload reopens
-    it on its default period (MP2 now), and the override cells use the same row ids in
-    every period, so the next read or write would land in the wrong one. Raises
-    lib.ViewNotVerified. window_clock: see check_window.
+    it on the LAST SELECTED period (observed 11/08), which may not be this pass's, and the
+    override cells use the same row ids in every period, so the next read or write would
+    land in the wrong one. Raises lib.ViewNotVerified. window_clock: see check_window.
     """
     if view is not None:
         shown = ops.displayed_grading_period(cdp)
