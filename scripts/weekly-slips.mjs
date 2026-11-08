@@ -56,11 +56,39 @@ export function lessonLabel(lessonKey) {
 // Other quarters carry placeholder numbers (a lone Unit-2 lesson lands in Q3 with a 50), so any
 // "pick the quarter with a number" heuristic mis-reads a 100 as a 50. Fallback when the server
 // key is unavailable: the earliest quarter that has lessons due.
-export function currentQuarterKey(quarters, serverKey) {
+//
+// pinned: the key was resolved from the config windows (resolveQuarterKey), so it IS the quarter
+// even when this student has no row for it yet: a student with only a Q1 row on 11/13 has "no
+// Q2 grade yet", not a Q1 "so far" (the fallback below is for runs without windows).
+export function currentQuarterKey(quarters, serverKey, pinned = false) {
+  if (pinned && serverKey) return serverKey;
   if (serverKey && quarters && quarters[serverKey]) return serverKey;
   const keys = Object.keys(quarters || {}).filter(key => /^Q[0-9]+$/.test(key))
     .sort((a, b) => Number(a.slice(1)) - Number(b.slice(1)));
   return keys.find(key => (quarters[key]?.lessonsDue || 0) > 0) || keys[0] || null;
+}
+
+// The current quarter for a slip dated `date`, from the /class/grades doc's config.quarters
+// (windows with start / close). The server's key wins when it names a real window. When the
+// /class/snapshot call failed (null) or named an unknown quarter, currentQuarterKey()'s
+// "earliest quarter with lessons due" fallback would pick a CLOSED Quarter 1 on 11/13 and call
+// it "so far", so resolve from the dates instead: of the quarters that have started and whose
+// close has not passed, the latest start. Without windows nothing can be resolved, so the
+// server key is returned as is and currentQuarterKey()'s old fallback applies downstream.
+export function resolveQuarterKey(windows, serverKey, date) {
+  if (!windows || !date) return serverKey || null;
+  if (serverKey && windows[serverKey]) return serverKey;
+  const open = Object.entries(windows)
+    .filter(([key, window]) => /^Q[0-9]+$/.test(key) && window && window.start)
+    .filter(([, window]) => window.start <= date && !(window.close && window.close < date))
+    .sort((a, b) => (a[1].start < b[1].start ? 1 : -1));
+  return open.length ? open[0][0] : (serverKey || null);
+}
+
+// True when `key` names a window of config.quarters: the key is then pinned for every consumer
+// (quarterGrade, label, effort lines, box summary), whether or not the student has a row for it.
+export function isPinnedKey(windows, key) {
+  return Boolean(windows && key && windows[key]);
 }
 
 // What Schoology shows for the marking period: the teacher's override, else its own calculation.
@@ -79,13 +107,13 @@ export function officialGrade(student) {
   return Number.isFinite(grade) ? grade : null;
 }
 
-export function quarterGrade(student, serverKey) {
+export function quarterGrade(student, serverKey, pinned = false) {
   const official = officialGrade(student);
   if (official != null) return official;
   const shown = schoologyGrade(student);
   if (shown != null) return shown;
-  const key = currentQuarterKey(student.quarters, serverKey);
-  const grade = key ? student.quarters[key]?.quarterGrade : null;
+  const key = currentQuarterKey(student.quarters, serverKey, pinned);
+  const grade = key ? student.quarters?.[key]?.quarterGrade : null;
   return Number.isFinite(grade) ? grade : null;
 }
 
@@ -102,7 +130,7 @@ function lateRows(lesson, dueDate) {
 }
 
 // QUARTER_LINE_BY_DUE_DATE_SPEC.md decision 8.7 (fixer finding C7): from the day after a
-// quarter's close (config.quarters[Q].close, e.g. Quarter 1 Thu 11/12) its grade is frozen, so
+// quarter's close (config.quarters[Q].close, e.g. Quarter 1 Tue 11/10) its grade is frozen, so
 // its lessons leave the slip, as they leave the Desk. The quarters whose close is before `date`:
 export function closedQuarterKeys(quarters, date) {
   const closed = new Set();
@@ -243,8 +271,8 @@ export function realStudents(students) {
   return (students || []).filter(student => student && student.role !== 'teacher' && !/^zz_/.test(String(student.username || '')));
 }
 
-export function boxSummary(students, quarterKey) {
-  const values = realStudents(students).map(student => quarterGrade(student, quarterKey)).filter(Number.isFinite).map(Math.round).sort((a, b) => a - b);
+export function boxSummary(students, quarterKey, pinned = false) {
+  const values = realStudents(students).map(student => quarterGrade(student, quarterKey, pinned)).filter(Number.isFinite).map(Math.round).sort((a, b) => a - b);
   if (values.length < 5) return null;
   const five = globalThis.ClassSnapshot.fiveNumber(values);
   const fences = globalThis.ClassSnapshot.fences(five);
@@ -457,11 +485,41 @@ function weekLabelFor(date) {
   return week.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
 }
 
+// The quarters whose final is still on the slip for `date`: closed before it, and `date` is
+// within finalUntil (config.quarters[Q].close / finalUntil, the Desk's "final" window).
+export function finalWindowKeys(quarters, date) {
+  if (!quarters || !date) return [];
+  return Object.entries(quarters)
+    .filter(([, window]) => window && window.close && window.finalUntil)
+    .filter(([, window]) => window.close < date && date <= window.finalUntil)
+    .map(([key]) => key);
+}
+
+// A quarter that closed before `date` keeps its final on the slip until its finalUntil. The
+// number is the one the Desk and phone call "Quarter 1 final" (_quarterFinalGrade): the frozen
+// quarters[Q].closedGrade (applied bonus wins) but never below the official grade of THAT
+// quarter (student.officialByQuarter[Q], the Schoology marking-period override), because the
+// final written into Schoology is the higher of the two. No close snapshot (closedGrade null)
+// means no final is printed. null when no quarter is in the window.
+export function closedFinalFor(student, quarters, date, currentKey) {
+  for (const key of finalWindowKeys(quarters, date)) {
+    if (key === currentKey) continue;
+    const frozen = student?.quarters?.[key]?.closedGrade;
+    if (!Number.isFinite(frozen)) continue;
+    const official = student?.officialByQuarter?.[key]?.grade;
+    const grade = Number.isFinite(official) ? Math.max(frozen, official) : frozen;
+    return { key, grade: Math.round(grade) };
+  }
+  return null;
+}
+
 // §1.1: "Q1 so far: 31%. Class median 97."
-export function headerLine(own, quarterLabel, summary) {
+// closedFinal ({ key, grade } from closedFinalFor) goes first: "Q1 final: 88%. Q2 so far: 31%."
+export function headerLine(own, quarterLabel, summary, closedFinal = null) {
   const quarter = quarterLabel || 'This quarter';
   const grade = own == null ? `${quarter}: no grade yet.` : `${quarter} so far: ${own}%.`;
-  return summary ? `${grade} Class median ${summary.median}.` : grade;
+  const finalPhrase = closedFinal ? `${closedFinal.key} final: ${closedFinal.grade}%. ` : '';
+  return summary ? `${finalPhrase}${grade} Class median ${summary.median}.` : finalPhrase + grade;
 }
 
 function positionText(own, summary) {
@@ -522,11 +580,21 @@ export function officialPcSentence(parts, floor = 40) {
     + 'a higher Progress Check score would take over.';
 }
 
-export function effortLines(student, section, date, quarterKey, schedule = loadSchedule()) {
+// The Progress Check on file for the slip's quarter. EffortFacts.pcOnFile falls back to Q1 when
+// the named quarter row is missing, and student.units carries the CLOSED quarter's paper
+// scores, so a pinned Q2 with no row yet would print Q1's Progress Check as "counting in your
+// grade now". When pinned, use ONLY the pinned row; with no row there is no line at all.
+function pcOnFilePinned(facts, student, period, schedule, date, key, quarter, pinned) {
+  if (!pinned) return facts.pcOnFile(student.units, student.quarters, period, schedule, date, key);
+  if (!quarter) return null;
+  return facts.pcOnFile(student.units, { [key]: quarter }, period, schedule, date, key);
+}
+
+export function effortLines(student, section, date, quarterKey, schedule = loadSchedule(), pinned = false) {
   const facts = globalThis.EffortFacts;
   const period = section.slice(-1);
-  const key = currentQuarterKey(student.quarters, quarterKey);
-  const quarter = key ? student.quarters[key] : null;
+  const key = currentQuarterKey(student.quarters, quarterKey, pinned);
+  const quarter = key ? student.quarters?.[key] : null;
   // UNROUNDED averages: the 40% gate test must see the engine's own numbers.
   const engineWork = quarter && Number.isFinite(quarter.workAvg) ? quarter.workAvg : null;
   // Teacher 2026-10-01: Schoology's calculated grade IS the work grade (the official grade carries it).
@@ -534,7 +602,7 @@ export function effortLines(student, section, date, quarterKey, schedule = loadS
   const workAvg = Number.isFinite(parts.work) ? parts.work
     : Number.isFinite(student.schoology?.calc) ? student.schoology.calc : engineWork;
   const pcAvg = quarter && Number.isFinite(quarter.pcAvg) ? quarter.pcAvg : null;
-  const pc = facts.pcOnFile(student.units, student.quarters, period, schedule, date, key);
+  const pc = pcOnFilePinned(facts, student, period, schedule, date, key, quarter, pinned);
   // In Schoology the Progress Check already counts once work + bonuses reach 40% (the official
   // grade takes the higher of the two), so say "now", not a future date.
   const countsNow = pc && (Number.isFinite(parts.line)
@@ -567,8 +635,8 @@ export function topicNumber(lessonKey) {
   return String(lessonKey);
 }
 
-export function effortTex(student, section, date, quarterKey, schedule = loadSchedule()) {
-  const lines = effortLines(student, section, date, quarterKey, schedule);
+export function effortTex(student, section, date, quarterKey, schedule = loadSchedule(), pinned = false) {
+  const lines = effortLines(student, section, date, quarterKey, schedule, pinned);
   const out = [];
   if (lines.pc) out.push(`{\\small ${latexText(lines.pc)}\\par}`);
   if (lines.ahead) out.push(`{\\small\\textcolor{deskgreen}{\\rule{5pt}{5pt}}\\hspace{4pt}${latexText(lines.ahead)}\\par}`);
@@ -576,19 +644,22 @@ export function effortTex(student, section, date, quarterKey, schedule = loadSch
 }
 
 // quarters: the /class/grades doc's config.quarters (a closed quarter's lessons leave the slip).
-export function renderSlip(student, section, date, summary, quarterKey, pool = null, quarters = null) {
+export function renderSlip(student, section, date, summary, serverKey, pool = null, quarters = null) {
+  // Everything below (grade, label, effort lines) is bound to this one resolved quarter.
+  const quarterKey = resolveQuarterKey(quarters, serverKey, date);
+  const pinned = isPinnedKey(quarters, quarterKey);
   const lessons = student.lessons || [];
   const missing = missingWork(lessons, section.slice(-1), date, quarters);
-  const grade = quarterGrade(student, quarterKey);
+  const grade = quarterGrade(student, quarterKey, pinned);
   const own = grade == null ? null : Math.round(grade);
-  const quarterName = currentQuarterKey(student.quarters, quarterKey);
+  const quarterName = currentQuarterKey(student.quarters, quarterKey, pinned);
   const quarterLabel = officialGrade(student) != null ? `${quarterName} official`
     : schoologyGrade(student) != null ? `${quarterName} in Schoology` : quarterName;
   const plan = [retakeStep(student), ...planFor(lessons, missing, section.slice(-1), date, quarters)].filter(Boolean);
   const steps = plan.map((line, index) => `${index + 1}. ${latexText(line)}\\par`).join('\n');
   const name = student.realName || student.name || student.username || 'Student';
-  const header = headerLine(own, quarterLabel, summary);
-  const effort = effortLines(student, section, date, quarterKey);
+  const header = headerLine(own, quarterLabel, summary, closedFinalFor(student, quarters, date, quarterName));
+  const effort = effortLines(student, section, date, quarterKey, undefined, pinned);
   const share = leftColumnShare(missingRowTexts(missing), [
     { text: effort.pc, size: 10 },
     { text: effort.ahead, size: 10 },
@@ -602,7 +673,7 @@ export function renderSlip(student, section, date, summary, quarterKey, pool = n
   return String.raw`\Slip{\SlipBody[${share}]{%
 {\fontsize{17}{20}\bfseries Where you stand --- ${latexText(name)}\par}
 {\normalsize Period ${section.slice(-1)} --- week of ${weekLabelFor(date)} $\cdot$ {\bfseries ${latexText(header)}}\par}}{%
-${effortTex(student, section, date, quarterKey)}}{%
+${effortTex(student, section, date, quarterKey, undefined, pinned)}}{%
 \textbf{Missing work}\par
 ${missingRowsTex(missing)}}{%
 ${classStripTex(missing, pool, section, date)}}{%
@@ -615,8 +686,9 @@ ${steps}
 }`;
 }
 
-export function renderTex(students, candidates, section, date, quarterKey, pool = null, quarters = null) {
-  const summary = boxSummary(students, quarterKey);
+export function renderTex(students, candidates, section, date, serverKey, pool = null, quarters = null) {
+  const quarterKey = resolveQuarterKey(quarters, serverKey, date);
+  const summary = boxSummary(students, quarterKey, isPinnedKey(quarters, quarterKey));
   // One slip per Letter page (teacher 2026-09-27: "as legible as possible", no cutting): 12pt
   // body, the whole text height available, the density steps only for the very longest slips.
   const pages = candidates.map(candidate => renderSlip(candidate, section, date, summary, quarterKey, pool, quarters));
@@ -784,16 +856,26 @@ export async function main(args = process.argv.slice(2)) {
     const students = realStudents(doc.students);
     // The quarter windows with their close dates: a closed quarter's lessons leave the slips.
     const quarters = doc.config && doc.config.quarters ? doc.config.quarters : null;
+    // The snapshot key can be missing (failed call): resolve from the windows and the slip date.
+    quarterKey = resolveQuarterKey(quarters, quarterKey, options.date);
     if (schoology) for (const student of students) student.schoology = schoology[student.schoologyUid] || null;
-    // The official grade each student sees on the Desk and in Schoology (published nightly).
-    await Promise.all(students.map(async student => { student.official = await fetchOfficial(config, student.studentId, quarterKey); }));
-    const candidates = students.filter(student => isCandidate(quarterGrade(student, quarterKey),
+    // The official grade each student sees on the Desk and in Schoology (published nightly), for
+    // the current quarter; and for each closed quarter still showing its final, keyed by quarter
+    // (/official-grade?quarter=Qn), so the printed final can never sit below the Schoology one.
+    const finalKeys = finalWindowKeys(quarters, options.date).filter(key => key !== quarterKey);
+    await Promise.all(students.map(async student => {
+      student.official = await fetchOfficial(config, student.studentId, quarterKey);
+      student.officialByQuarter = {};
+      for (const key of finalKeys) student.officialByQuarter[key] = await fetchOfficial(config, student.studentId, key);
+    }));
+    const pinned = isPinnedKey(quarters, quarterKey);
+    const candidates = students.filter(student => isCandidate(quarterGrade(student, quarterKey, pinned),
       missingWork(student.lessons, section.slice(-1), options.date, quarters), options));
     counts.push({ section, count: candidates.length });
     if (options.dryRun) {
       console.log(`${section}: ${candidates.length} candidates`);
       for (const student of candidates) console.log(JSON.stringify({ name: student.realName || student.username,
-        quarterGrade: quarterGrade(student, quarterKey), missing: missingWork(student.lessons, section.slice(-1), options.date, quarters) }));
+        quarterGrade: quarterGrade(student, quarterKey, pinned), missing: missingWork(student.lessons, section.slice(-1), options.date, quarters) }));
       continue;
     }
     fs.mkdirSync(out, { recursive: true });

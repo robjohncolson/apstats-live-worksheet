@@ -50,7 +50,7 @@ so historical grades and the goldens do not move. Flags absent = the old behavio
   late scores gives, so:
   - starting late work (one blank, one quiz answer, a weak deck run) never lowers the taught
     quarter's grade, and a finished late lesson counts there as soon as it lifts its track, from
-    the day after the quarter ends, not from its own zero date (it counts on the Thu 11/12 close day);
+    the day after the quarter ends, not from its own zero date (it counts on the Tue 11/10 close day);
   - raising any score, due or late, never lowers a grade (A3), and attempting a due quiz never does
     either (A6);
   - a late score below the student's average in that track is left out, never a drag.
@@ -109,8 +109,9 @@ they always agree. No SY2627 lesson has a zero date on a quarter end.
 
 ## The lessons taught in Q1 and due in Q2
 
-Q1 ends Fri 2026-11-06; its close date is Thu 2026-11-12, and `tools/close_quarter.py` runs the close
-(`POST /class/quarter/close`) on the morning after, Fri 2026-11-13 before school.
+Q1 ends Fri 2026-11-06; its close date is Tue 2026-11-10 (moved from Thu 11/12 by the teacher on
+2026-11-08), and `tools/close_quarter.py` runs the close (`POST /class/quarter/close`) on the
+morning after, Wed 2026-11-11 (Veterans Day, no school).
 Old storage keys, from the live schedule (pinned by `lesson-grade.test.js` and
 `zero-quarter-membership.test.js`). Under the 2026-11-06 rule these were never a 0; since the
 amendment each is a regular Q2 lesson with its real zero date and a lift-only Q1 lesson:

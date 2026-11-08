@@ -1,22 +1,23 @@
 """close_quarter.py -- the Quarter 1 close (QUARTER_LINE_BY_DUE_DATE_SPEC.md section 4.5).
 
-Quarter 1 stays fixable through its close date, Thu 2026-11-12: students are told "fix by
-Thu 11/12", so the whole of Thursday counts, including Thursday evening. Run the close ONCE
-the next morning: Fri 2026-11-13, early, before school (and never 16:00-17:05):
+Quarter 1 stays fixable through its close date, Tue 2026-11-10 (moved from Thu 11/12 by the
+teacher on 2026-11-08): students are told "fix by Tue 11/10", so the whole of Tuesday counts,
+including Tuesday evening. Run the close ONCE the next morning: Wed 2026-11-11 (Veterans Day,
+no school), so the final is in Schoology before Thursday (and never 16:00-17:05):
   1. POST /class/quarter/close {quarter, section}                 PeriodB, then PeriodE
      freezes each student's Quarter 1 grade (the first close of a student wins)
   2. POST /class/quarter/apply-bonus {quarter, section, dryRun: false}   both sections
      adds the banked bonus (a BONUS-APPLIED-Q1 row); /class/grades closedGrade includes it
   3. schoology_official.py --section <S> --final Q1 --apply        both sections
      MP1 final override = max(closedGrade incl. the bonus, current MP1 override), once
-From Fri 11/13 the daily job skips the Quarter 1 pass (the close date has passed).
+From Wed 11/11 the daily job skips the Quarter 1 pass (the close date has passed).
 Every step is safe to re-run: the close keeps the first freeze, the bonus is applied once
 per student, and the final records each student it wrote and published
 (tools/.schoology-sync-logs/official-final-state.json).
 
     python tools/close_quarter.py                       # DRY RUN (default): plan + read-only preview
-    python tools/close_quarter.py --today 2026-11-13    # the same preview, as of another date
-    python tools/close_quarter.py --apply               # the close (Fri 11/13 early morning)
+    python tools/close_quarter.py --today 2026-11-11    # the same preview, as of another date
+    python tools/close_quarter.py --apply               # the close (Wed 11/11 morning)
 
 --apply is refused (exit 2, nothing changed):
   - while the REAL school date (America/New_York) is on or before the close date. --today
@@ -92,7 +93,7 @@ def apply_refusal(quarter: str, today: str, hhmm: str, close_date: str | None) -
     """Why --apply must not START now (None = go). today / hhmm: the REAL school clock.
 
     Finding A6: the quarter stays fixable through the whole close date (the student copy
-    says "fix by Thu 11/12"), and the first close wins, so the close runs the morning
+    says "fix by Tue 11/10"), and the first close wins, so the close runs the morning
     AFTER the close date. Finding A5: never from 16:00 to 17:05.
     """
     if not close_date:

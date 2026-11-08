@@ -1048,7 +1048,7 @@
   };
   // QUARTER_LINE_BY_DUE_DATE_SPEC §3.6 (teacher 2026-11-07): Quarter 1's 0s stay fixable until it
   // closes (grade-config.js quarters.Q1.close).
-  var QUARTER_CLOSE_LABEL = { Q1: 'closes Thu Nov 12' };
+  var QUARTER_CLOSE_LABEL = { Q1: 'closes Tue Nov 10' };
 
   function renderQuarters(host, quarters) {
     var strip = el('div', { class: 'wys-quarters' });

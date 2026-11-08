@@ -896,7 +896,7 @@
     return n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0') + '-' + String(n.getDate()).padStart(2, '0');
   }
 
-  // 'Thu Nov 12' for an ISO date.
+  // 'Tue Nov 10' for an ISO date.
   function _quarterDayText(iso) {
     var d = new Date(iso + 'T00:00:00');
     return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d.getDay()] + ' '
@@ -937,7 +937,7 @@
 
   // QUARTER_LINE_BY_DUE_DATE_SPEC §3.10 (teacher 2026-11-07): while a quarter is closing (its 0s
   // still fixable) or a week after ("final"), the pill shows it BESIDE the current quarter, never
-  // the new quarter alone: '📊 Quarter 1 92% · closes Thu Nov 12 · Quarter 2 85%'. '' outside that
+  // the new quarter alone: '📊 Quarter 1 92% · closes Tue Nov 10 · Quarter 2 85%'. '' outside that
   // window, or without close dates (an older cached payload): the one-quarter line stays.
   // Review D1: while closing, the number is the official grade when the phone has it (as on the
   // Desk's pill), else today's; the final is the higher of the frozen grade and the official one

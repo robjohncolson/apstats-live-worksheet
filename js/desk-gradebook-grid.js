@@ -57,7 +57,7 @@ function _firstGradebookQuarter(gb) {
 }
 
 // A gradebook tab's words (§3.5): while a quarter is closing or final its tab and the next one
-// carry the rule ('Quarter 1 · closes Thu Nov 12', 'Quarter 2 · 0 dates after Nov 6'); every
+// carry the rule ('Quarter 1 · closes Tue Nov 10', 'Quarter 2 · 0 dates after Nov 6'); every
 // other tab, and every tab without close dates, is just 'Quarter 1'..'Quarter 4' (review D4,
 // 2026-11-08: never "Q1"; Q1 / Q3 are quartiles elsewhere on the Desk).
 function _gradebookTabLabel(qk) {

@@ -131,13 +131,17 @@ export const PHASE3_CONFIG = {
   // `units` lists are the OLD-id fallback only — with a schedule present,
   // deriveQuarterBands() places each old unit by its latest scheduled date.
   // Q1 `close` / `finalUntil` are display-only (QUARTER_LINE_BY_DUE_DATE_SPEC.md §3,
-  // teacher 2026-11-07): the day the teacher closes Quarter 1 (POST
-  // /class/quarter/close, Thu evening) and the last day the Desk shows "Quarter 1
-  // final". The engine never reads them; the Desk gets them from /grade
-  // config.quarters and the offline inputs.
+  // teacher 2026-11-07): `close` is the last day Quarter 1's 0s stay fixable (POST
+  // /class/quarter/close runs the morning after it; tools/close_quarter.py refuses
+  // until then) and `finalUntil` the last day the Desk shows "Quarter 1 final". The
+  // engine never reads them; the Desk gets them from /grade config.quarters and the
+  // offline inputs.
+  // close moved Thu 11/12 -> Tue 11/10 (teacher 2026-11-08) so the close, the bonus and
+  // the MP1 final sync can run Wed 11/11 (Veterans Day, no school): final Quarter 1
+  // grades are in Schoology before Thursday, as insurance against a bad Thursday.
   quarters: {
     Q1: { units: [1, 2, 3], start: '2026-09-02', end: '2026-11-06', pcAnchor: { p85: 40, p100: 60 },
-          close: '2026-11-12', finalUntil: '2026-11-19' },
+          close: '2026-11-10', finalUntil: '2026-11-19' },
     Q2: { units: [4, 5],    start: '2026-11-09', end: '2027-01-22', pcAnchor: { p85: 45, p100: 64 } },
     Q3: { units: [6, 7],    start: '2027-01-25', end: '2027-04-14', pcAnchor: { p85: 50, p100: 67 } },
     Q4: { units: [8, 9],    start: '2027-04-15', end: '2027-06-17', pcAnchor: { p85: 55, p100: 70 } },

@@ -36,7 +36,8 @@ const UPDATE = process.env.UPDATE_M2B_GOLDEN === '1';
 //   QUARTER_LINE_BY_DUE_DATE_SPEC.md (teacher 2026-11-07). These goldens run the Phase 6
 //   engine (useV3 false), which keeps taught-quarter membership, so no grade moves.
 const SY2627_CONFIG_ADDED = { zeroFreezeAtQuarterEnd: true, zeroQuarterMembership: true };
-const SY2627_QUARTER_KEYS_ADDED = { Q1: { close: '2026-11-12', finalUntil: '2026-11-19' } };
+// close moved Thu 11/12 -> Tue 11/10 (teacher 2026-11-08); display-only, so no golden grade moves.
+const SY2627_QUARTER_KEYS_ADDED = { Q1: { close: '2026-11-10', finalUntil: '2026-11-19' } };
 
 function withSy2627ConfigAdded(golden) {
   const frozenConfig = { ...SY2627_CONFIG_ADDED, ...golden.frozenConfig };

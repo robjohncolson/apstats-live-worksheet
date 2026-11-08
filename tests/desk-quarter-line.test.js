@@ -1,5 +1,5 @@
 // tests/desk-quarter-line.test.js — QUARTER_LINE_BY_DUE_DATE_SPEC.md §3 (teacher 2026-11-07): the Desk,
-// Pico and phone delineation of Quarter 1 (ended Fri Nov 6, closes Thu Nov 12, "final" through Nov 19)
+// Pico and phone delineation of Quarter 1 (ended Fri Nov 6, closes Tue Nov 10, "final" through Nov 19)
 // and Quarter 2. Pure helpers in js/desk-missing-work.js, the Desk's own functions run in a JSDOM
 // sandbox on fixture /grade payloads that carry the new server fields (lessons[].quarter{B,E},
 // liftQuarter{B,E}, config.quarters.Q1.close/finalUntil, quarters.Q1.closed), plus the degrade path
@@ -36,7 +36,7 @@ function declaration(name, open, close) {
 
 // ── Fixtures: the real SY2627 schedule rows (data/lesson-schedule.json), Period B and E ──────────
 const CONFIG_QUARTERS = {
-  Q1: { start: '2026-09-02', end: '2026-11-06', close: '2026-11-12', finalUntil: '2026-11-19' },
+  Q1: { start: '2026-09-02', end: '2026-11-06', close: '2026-11-10', finalUntil: '2026-11-19' },
   Q2: { start: '2026-11-09', end: '2027-01-22' },
   Q3: { start: '2027-01-25', end: '2027-04-14' },
   Q4: { start: '2027-04-15', end: '2027-06-17' },
@@ -159,13 +159,14 @@ describe('js/desk-missing-work.js — the quarter line, pure', () => {
   runInContext(MISSING_WORK + '\nthis.M = DeskMissingWork;', ctx);
   const M = ctx.M;
 
-  it('quarterPhase: Q1 current through Fri Nov 6; closing Sat Nov 7 – Thu Nov 12 (gap days: Q2 current); final through Nov 19', () => {
+  it('quarterPhase: Q1 current through Fri Nov 6; closing Sat Nov 7 – Tue Nov 10 (gap days: Q2 current); final Wed Nov 11 – Nov 19', () => {
     const at = (d) => JSON.parse(JSON.stringify(M.quarterPhase(CONFIG_QUARTERS, d)));
     expect(at('2026-11-06')).toEqual({ current: 'Q1', closing: null, final: null });
     expect(at('2026-11-07')).toEqual({ current: 'Q2', closing: 'Q1', final: null });
     expect(at('2026-11-08')).toEqual({ current: 'Q2', closing: 'Q1', final: null });
     expect(at('2026-11-09')).toEqual({ current: 'Q2', closing: 'Q1', final: null });
-    expect(at('2026-11-12')).toEqual({ current: 'Q2', closing: 'Q1', final: null });
+    expect(at('2026-11-10')).toEqual({ current: 'Q2', closing: 'Q1', final: null });
+    expect(at('2026-11-11')).toEqual({ current: 'Q2', closing: null, final: 'Q1' });
     expect(at('2026-11-13')).toEqual({ current: 'Q2', closing: null, final: 'Q1' });
     expect(at('2026-11-19')).toEqual({ current: 'Q2', closing: null, final: 'Q1' });
     expect(at('2026-11-20')).toEqual({ current: 'Q2', closing: null, final: null });
@@ -178,8 +179,8 @@ describe('js/desk-missing-work.js — the quarter line, pure', () => {
   it('D8: a quarter /grade reports closed (closed: true) is final at once; without it the dates still decide', () => {
     const at = (quarters, d) => JSON.parse(JSON.stringify(M.quarterPhase(quarters, d)));
     const closedQ1 = { ...CONFIG_QUARTERS, Q1: { ...CONFIG_QUARTERS.Q1, closed: true } };
-    // Closed on Thu Nov 12 (before the date rule says so): final, never "closes Thu".
-    expect(at(closedQ1, '2026-11-12')).toEqual({ current: 'Q2', closing: null, final: 'Q1' });
+    // Closed on Tue Nov 10 (before the date rule says so): final, never "closes Tue".
+    expect(at(closedQ1, '2026-11-10')).toEqual({ current: 'Q2', closing: null, final: 'Q1' });
     expect(at(closedQ1, '2026-11-09')).toEqual({ current: 'Q2', closing: null, final: 'Q1' });
     // Not closed on the server yet on Fri Nov 13: final by the date, as before.
     expect(at(CONFIG_QUARTERS, '2026-11-13')).toEqual({ current: 'Q2', closing: null, final: 'Q1' });
@@ -189,16 +190,16 @@ describe('js/desk-missing-work.js — the quarter line, pure', () => {
     // The choke point and the snapshot follow the same rule.
     const L = lessons();
     const rows = [{ lessonKey: '2.1', kind: 'worksheet' }, { lessonKey: '4.2', kind: 'quiz' }];
-    expect(M.openQuarterRows(rows, L, 'B', '2026-11-12', closedQ1).map((r) => r.lessonKey)).toEqual(['4.2']);
-    expect(M.openQuarterRows(rows, L, 'B', '2026-11-12', CONFIG_QUARTERS)).toBe(rows);
-    expect(M.closedQuarterOf(L, '2.1', 'B', '2026-11-12', closedQ1, 'worksheet')).toBe('Q1');
+    expect(M.openQuarterRows(rows, L, 'B', '2026-11-10', closedQ1).map((r) => r.lessonKey)).toEqual(['4.2']);
+    expect(M.openQuarterRows(rows, L, 'B', '2026-11-10', CONFIG_QUARTERS)).toBe(rows);
+    expect(M.closedQuarterOf(L, '2.1', 'B', '2026-11-10', closedQ1, 'worksheet')).toBe('Q1');
     expect(M.closedQuarterOf(L, '2.1', 'B', '2026-11-06', closedQ1, 'worksheet')).toBeNull();
   });
 
   it('openQuarterRows: the one choke point keeps every row until the close, then drops the closed quarter’s rows', () => {
     const L = lessons();
     const rows = [{ lessonKey: '2.1', kind: 'worksheet' }, { lessonKey: '4.1', kind: 'blooket' }, { lessonKey: '4.2', kind: 'quiz' }, { lessonKey: '9.9', kind: 'worksheet' }];
-    expect(M.openQuarterRows(rows, L, 'B', '2026-11-12', CONFIG_QUARTERS)).toBe(rows);   // before the close: untouched
+    expect(M.openQuarterRows(rows, L, 'B', '2026-11-10', CONFIG_QUARTERS)).toBe(rows);   // before the close: untouched
     expect(M.openQuarterRows(rows, L, 'B', '2026-11-13', CONFIG_QUARTERS).map((r) => r.lessonKey)).toEqual(['4.2', '9.9']);
     // Period E: 4.1 counts in Quarter 2 there, so it stays.
     expect(M.openQuarterRows(rows, L, 'E', '2026-11-13', CONFIG_QUARTERS).map((r) => r.lessonKey)).toEqual(['4.1', '4.2', '9.9']);
@@ -214,7 +215,7 @@ describe('js/desk-missing-work.js — the quarter line, pure', () => {
     expect(JSON.parse(JSON.stringify(M.lessonQuarters(L, 'E')['4.1']))).toEqual({ quarter: 'Q2', lift: 'Q1' });
     expect(M.lessonQuarters(lessons({ withQuarters: false }), 'B')).toEqual({});
     expect(M.closedQuarterOf(L, '2.1', 'B', '2026-11-13', CONFIG_QUARTERS, 'worksheet')).toBe('Q1');
-    expect(M.closedQuarterOf(L, '2.1', 'B', '2026-11-12', CONFIG_QUARTERS, 'worksheet')).toBeNull();   // not closed yet
+    expect(M.closedQuarterOf(L, '2.1', 'B', '2026-11-10', CONFIG_QUARTERS, 'worksheet')).toBeNull();   // not closed yet
     expect(M.closedQuarterOf(L, '4.1', 'B', '2026-11-13', CONFIG_QUARTERS, 'worksheet')).toBeNull();   // 4.2 (Q2) shares it
     expect(M.closedQuarterOf(L, '4.1', 'B', '2026-11-13', CONFIG_QUARTERS, 'quiz')).toBe('Q1');
     expect(M.closedQuarterOf(L, '4.1', 'E', '2026-11-13', CONFIG_QUARTERS, 'worksheet')).toBeNull();
@@ -243,7 +244,7 @@ describe('QUARTER_WINDOWS mirrors grade-config.js (close dates included); quarte
       expect({ start: iso(w.start), end: iso(w.end), close: iso(w.close), finalUntil: iso(w.finalUntil) }, 'Q' + w.q)
         .toEqual({ start: server.start, end: server.end, close: server.close, finalUntil: server.finalUntil });
     }
-    expect(iso(windows[0].close)).toBe('2026-11-12');
+    expect(iso(windows[0].close)).toBe('2026-11-10');   // teacher 2026-11-08: moved from Tue 11/10
     expect(iso(windows[0].finalUntil)).toBe('2026-11-19');
   });
 
@@ -263,7 +264,7 @@ describe('the typed close day (start-here, the Desk help) equals grade-config qu
   const START = read('start-here.html');
   const DESK_HTML = deskHtml();
   const dayText = new Function(fnBody('_quarterDayText') + '\nreturn _quarterDayText;')();
-  const close = dayText(PHASE3_CONFIG.quarters.Q1.close);   // 'Thu Nov 12'
+  const close = dayText(PHASE3_CONFIG.quarters.Q1.close);   // 'Tue Nov 10'
   const end = dayText(PHASE3_CONFIG.quarters.Q1.end);       // 'Fri Nov 6'
   const DAY = '(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun) (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \\d{1,2}';
   // Every "closes <day>" / "by <day>" (bold or not) in a text, as the day it names.
@@ -304,41 +305,44 @@ describe('calendar (js/desk-calendar.js, §3.4): band text, the two marks, the P
     return win;
   }
 
+  // The real QUARTER_WINDOWS: Quarter 1 closes Tue Nov 10 (teacher 2026-11-08, moved from Tue 11/10).
   it('the Quarter 2 band names Quarter 1’s close only while it is closing', () => {
     const win = calendar();
     const band = (y, m, d) => win._calQuarterBandText(2, new win.Date(y, m - 1, d));
     expect(band(2026, 11, 6)).toBe('Quarter 2  (Nov 9 – Jan 22)');
-    expect(band(2026, 11, 8)).toBe('Quarter 2  (Nov 9 – Jan 22) · Quarter 1 closes Thu Nov 12');
-    expect(band(2026, 11, 12)).toBe('Quarter 2  (Nov 9 – Jan 22) · Quarter 1 closes Thu Nov 12');
+    expect(band(2026, 11, 8)).toBe('Quarter 2  (Nov 9 – Jan 22) · Quarter 1 closes Tue Nov 10');
+    expect(band(2026, 11, 10)).toBe('Quarter 2  (Nov 9 – Jan 22) · Quarter 1 closes Tue Nov 10');
+    expect(band(2026, 11, 11)).toBe('Quarter 2  (Nov 9 – Jan 22)');
     expect(band(2026, 11, 13)).toBe('Quarter 2  (Nov 9 – Jan 22)');
     expect(win._calQuarterBandText(1, new win.Date(2026, 10, 9))).toBe('Quarter 1  (Sep 2 – Nov 6)');
     expect(win._calQuarterBandText(3, new win.Date(2027, 0, 23))).toBe('Quarter 3  (Jan 25 – Apr 14)');   // Q2 has no close date
     // D8: once the Desk's phase says Quarter 1 is final (its close reported), the band stops saying "closes".
     win._deskQuarterPhase = () => ({ current: 'Q2', closing: null, final: 'Q1' });
-    expect(band(2026, 11, 12)).toBe('Quarter 2  (Nov 9 – Jan 22)');
+    expect(band(2026, 11, 10)).toBe('Quarter 2  (Nov 9 – Jan 22)');
     win._deskQuarterPhase = () => ({ current: 'Q2', closing: 'Q1', final: null });
-    expect(band(2026, 11, 12)).toBe('Quarter 2  (Nov 9 – Jan 22) · Quarter 1 closes Thu Nov 12');
+    expect(band(2026, 11, 10)).toBe('Quarter 2  (Nov 9 – Jan 22) · Quarter 1 closes Tue Nov 10');
   });
 
-  it('marks Fri Nov 6 "Quarter 1 ends" and Thu Nov 12 "Quarter 1 closes", appended after the cell content', () => {
+  it('marks Fri Nov 6 "Quarter 1 ends" and Tue Nov 10 "Quarter 1 closes", appended after the cell content', () => {
     const win = calendar();
     expect(win._calQuarterMark(new win.Date(2026, 10, 6))).toBe('Quarter 1 ends');
-    expect(win._calQuarterMark(new win.Date(2026, 10, 12))).toBe('Quarter 1 closes');
+    expect(win._calQuarterMark(new win.Date(2026, 10, 10))).toBe('Quarter 1 closes');
+    expect(win._calQuarterMark(new win.Date(2026, 10, 12))).toBe('');
     expect(win._calQuarterMark(new win.Date(2026, 10, 9))).toBe('');
     expect(win._calQuarterMark(new win.Date(2027, 0, 22))).toBe('');   // no close date for Q2 yet
     const cell = win.document.getElementById('cell');
-    cell.innerHTML = '<div class="dn">Nov 12</div><div class="tl">2.6 · Conditional Probability</div>';
-    win._calPaintQuarterMark(cell, new win.Date(2026, 10, 12));
+    cell.innerHTML = '<div class="dn">Nov 10</div><div class="tl">2.6 · Conditional Probability</div>';
+    win._calPaintQuarterMark(cell, new win.Date(2026, 10, 10));
     expect(cell.lastElementChild.className).toBe('cal-qmark');
     expect(cell.lastElementChild.textContent).toBe('Quarter 1 closes');
     expect(cell.querySelector('.tl').textContent).toBe('2.6 · Conditional Probability');   // the label Pico parses
     expect(cell.dataset.qmark).toBe('Quarter 1 closes');
   });
 
-  it('Pico week badge: "Q1 ENDS FRI" on the week of Nov 2, "Q2 · Q1 CLOSES THU" on the week of Nov 9, else nothing', () => {
+  it('Pico week badge: "Q1 ENDS FRI" on the week of Nov 2, "Q2 · Q1 CLOSES TUE" on the week of Nov 9, else nothing', () => {
     const win = calendar();
     expect(win._quarterWeekBadge(new win.Date(2026, 10, 2))).toBe('Q1 ENDS FRI');
-    expect(win._quarterWeekBadge(new win.Date(2026, 10, 9))).toBe('Q2 · Q1 CLOSES THU');
+    expect(win._quarterWeekBadge(new win.Date(2026, 10, 9))).toBe('Q2 · Q1 CLOSES TUE');
     expect(win._quarterWeekBadge(new win.Date(2026, 9, 5))).toBe('');
     expect(win._quarterWeekBadge(new win.Date(2026, 10, 16))).toBe('');
     expect(win._quarterWeekBadge(null)).toBe('');
@@ -357,17 +361,17 @@ describe('calendar (js/desk-calendar.js, §3.4): band text, the two marks, the P
 
 // ── 3. Do Now pills and the missing pill (§3.1) ─────────────────────────────────────────────────
 describe('Do Now: the closing / final pill first, the current pill by role, the missing pill after the last pill', () => {
-  it('closing (Mon Nov 9): "Quarter 1 · 92.4 · official · closes Thu Nov 12", data-quarter / data-role, fixable title', () => {
+  it('closing (Mon Nov 9): "Quarter 1 · 92.4 · official · closes Tue Nov 10", data-quarter / data-role, fixable title', () => {
     const win = desk();
     const phase = win._deskQuarterPhase();
     expect(JSON.parse(JSON.stringify(phase))).toEqual({ current: 'Q2', closing: 'Q1', final: null });
     const pill = win._doNowSidePill('Q1', win._gradeQuartersCache.Q1, OFFICIAL_Q1, phase);
     expect(pill.dataset.quarter).toBe('Q1');
     expect(pill.dataset.role).toBe('closing');
-    expect(texts(pill.children)).toEqual(['Quarter 1', '92.4', 'official · closes Thu Nov 12']);
-    expect(pill.title).toMatch(/^Quarter 1 ended Fri Nov 6\. Its 0s are fixable until Thu Nov 12, then this grade is final\./);
+    expect(texts(pill.children)).toEqual(['Quarter 1', '92.4', 'official · closes Tue Nov 10']);
+    expect(pill.title).toMatch(/^Quarter 1 ended Fri Nov 6\. Its 0s are fixable until Tue Nov 10, then this grade is final\./);
     const engine = win._doNowSidePill('Q1', win._gradeQuartersCache.Q1, null, phase);
-    expect(texts(engine.children)).toEqual(['Quarter 1', '92', 'closes Thu Nov 12']);
+    expect(texts(engine.children)).toEqual(['Quarter 1', '92', 'closes Tue Nov 10']);
     pill.click();
     expect(win.__opened).toBe(1);
   });
@@ -375,7 +379,7 @@ describe('Do Now: the closing / final pill first, the current pill by role, the 
   it('final (Fri Nov 13): "Quarter 1 final 92.4" — the frozen grade, never below the official one', () => {
     const win = desk({ today: '2026-11-13' });
     const phase = win._deskQuarterPhase();
-    const closed = { ...win._gradeQuartersCache.Q1, closed: { grade: 91.9, at: '2026-11-12T22:00:00Z', bonusApplied: null } };
+    const closed = { ...win._gradeQuartersCache.Q1, closed: { grade: 91.9, at: '2026-11-10T22:00:00Z', bonusApplied: null } };
     const pill = win._doNowSidePill('Q1', closed, OFFICIAL_Q1, phase);
     expect(pill.dataset.role).toBe('final');
     expect(texts(pill.children)).toEqual(['Quarter 1 final', '92.4']);
@@ -384,24 +388,24 @@ describe('Do Now: the closing / final pill first, the current pill by role, the 
     expect(win._quarterFinalGrade('Q1', {}, null)).toBeNull();
   });
 
-  it('D8: a close /grade reports flips every surface to "final" at once (Thu Nov 12); unreported, Fri Nov 13 is final by the date', () => {
+  it('D8: a close /grade reports flips every surface to "final" at once (Tue Nov 10); unreported, Fri Nov 13 is final by the date', () => {
     const closedQuarters = GRADE_QUARTERS();
-    closedQuarters.Q1.closed = { grade: 91.9, at: '2026-11-12T21:00:00Z', bonusApplied: null };
-    const thu = desk({ today: '2026-11-12', quarters: closedQuarters, officialByQuarter: { Q1: OFFICIAL_Q1 } });
+    closedQuarters.Q1.closed = { grade: 91.9, at: '2026-11-10T21:00:00Z', bonusApplied: null };
+    const thu = desk({ today: '2026-11-10', quarters: closedQuarters, officialByQuarter: { Q1: OFFICIAL_Q1 } });
     const phase = thu._deskQuarterPhase();
     expect(JSON.parse(JSON.stringify(phase))).toEqual({ current: 'Q2', closing: null, final: 'Q1' });
     const pill = thu._doNowSidePill('Q1', closedQuarters.Q1, OFFICIAL_Q1, phase);
     expect(pill.dataset.role).toBe('final');
-    expect(texts(pill.children)).toEqual(['Quarter 1 final', '92.4']);   // never "closes Thu"
+    expect(texts(pill.children)).toEqual(['Quarter 1 final', '92.4']);   // never "closes Tue"
     expect(thu._walletOtherQuarterLine('Q2')).toBe('Quarter 1 final: 92.4%');
     expect(thu._zeroCurrentWarnings().map((w) => w.lessonKey)).not.toContain('2.1');   // its 0s left the Do Now
     expect(thu._gradebookTabLabel('Q1')).toBe('Quarter 1 · final');
     expect(thu._coachMissingList().map((m) => m.lesson)).not.toContain('2.1');
     // The cached config itself is never changed (a copy carries closed: true).
     expect(thu._gradeConfigCache.quarters.Q1.closed).toBeUndefined();
-    // Not reported closed: Thu Nov 12 is still closing; Fri Nov 13 is final by the date, its number
+    // Not reported closed: Tue Nov 10 is still closing; Fri Nov 13 is final by the date, its number
     // the higher of the frozen grade and the official one, or none at all.
-    expect(desk({ today: '2026-11-12' })._deskQuarterPhase().closing).toBe('Q1');
+    expect(desk({ today: '2026-11-10' })._deskQuarterPhase().closing).toBe('Q1');
     const fri = desk({ today: '2026-11-13', officialByQuarter: { Q1: OFFICIAL_Q1 } });
     const friPhase = fri._deskQuarterPhase();
     expect(friPhase.final).toBe('Q1');
@@ -468,7 +472,7 @@ describe('Do Now: the closing / final pill first, the current pill by role, the 
     const pill = host.querySelector('.qpill-missing');
     expect(host.querySelectorAll('.qpill-missing')).toHaveLength(1);
     expect(pill.previousElementSibling.dataset.role).toBe('current');
-    expect(pill.textContent).toBe('Quarter 1: 2 are 0s now, fix by Thu 11/12 · Quarter 2: 2 are 0s now · 1 more by Mon 11/9');
+    expect(pill.textContent).toBe('Quarter 1: 2 are 0s now, fix by Tue 11/10 · Quarter 2: 2 are 0s now · 1 more by Mon 11/9');
     expect(pill.classList.contains('qpill-now')).toBe(true);
     win._updateDoNowMissingPill();   // a refresh keeps the one pill in place
     expect(host.querySelectorAll('.qpill-missing')).toHaveLength(1);
@@ -487,7 +491,7 @@ describe('Do Now: the closing / final pill first, the current pill by role, the 
 
 // ── 4. My Ledger / My Grade rows (§3.2) and the choke point (§3.3) ──────────────────────────────
 describe('My Ledger Missing-work card: every row once, under the quarter it counts in', () => {
-  const lift = 'finishing it by Thu can also raise Quarter 1 (never lower)';
+  const lift = 'finishing it by Tue can also raise Quarter 1 (never lower)';
 
   it('Mon Nov 9 (B): Quarter 1 heading + its 0s, Quarter 2 heading + its rows, lift notes, a status per quarter', () => {
     const win = desk({ officialByQuarter: { Q1: OFFICIAL_Q1 } });
@@ -500,7 +504,7 @@ describe('My Ledger Missing-work card: every row once, under the quarter it coun
       'wz-quarter-head geneva', 'wz-row wz-past wz-quiz wz-has-lift', 'wz-row wz-past wz-blooket wz-has-lift', 'wz-row wz-has-lift',
       'wz-later-head geneva', 'wz-row wz-later wz-has-lift',
     ]);
-    expect(texts(card.querySelectorAll('.wz-quarter-head'))).toEqual(['Quarter 1 (closes Thu Nov 12)', 'Quarter 2 (0 dates after Fri Nov 6)']);
+    expect(texts(card.querySelectorAll('.wz-quarter-head'))).toEqual(['Quarter 1 (closes Tue Nov 10)', 'Quarter 2 (0 dates after Fri Nov 6)']);
     expect(card.querySelector('.wz-later-head').textContent).toBe('Past due — not counting yet');
     // Every row once: no lesson + track twice.
     const keys = [...card.querySelectorAll('.wz-row')].map((r) => r.dataset.key);
@@ -510,15 +514,15 @@ describe('My Ledger Missing-work card: every row once, under the quarter it coun
     expect(texts(card.querySelectorAll('.wz-lift'))).toEqual([lift, lift, lift, lift]);
     expect(card.querySelector('.wz-row[data-key="2.1:worksheet"] .wz-lift')).toBeNull();
     expect(card.querySelector('.wz-status').textContent).toBe(
-      'Quarter 1 so far: 92.4% (closes Thu Nov 12). The 2 items below count as 0 — finishing them is the fastest way up. '
+      'Quarter 1 so far: 92.4% (closes Tue Nov 10). The 2 items below count as 0 — finishing them is the fastest way up. '
       + 'Quarter 2 so far: 85%. 2 items below are 0s now, 1 more becomes a 0 by Mon 11/9 — finishing them is the fastest way up.');
     expect(card.querySelector('.wz-status').textContent).not.toMatch(/\bQ[1-4]\b/);   // never "Q1" (quartiles)
     expect(card.textContent).not.toContain('Late — never a 0');
   });
 
   it('the signature carries the grouping: the same rows rebuild when the close is crossed', () => {
-    const win = desk({ today: '2026-11-12' });
-    // Only Quarter 2 work is missing, so the rows are the same on Thu Nov 12 and Fri Nov 13.
+    const win = desk({ today: '2026-11-10' });
+    // Only Quarter 2 work is missing, so the rows are the same on Tue Nov 10 and Fri Nov 13.
     win._gradeLessonsCache = lessons().map((L) => (L.lessonKey === '2.1' ? { ...L, Cws: 80, lessonGradeNoQuiz: 80 }
       : L.lessonKey === '4.1' ? { ...L, blooket: 90 } : L));
     const host = win.document.getElementById('wallet-content');
@@ -586,16 +590,16 @@ describe('balance card scoping (§3.2): the number speaks for the quarter shown;
 
   it('the other-quarter line: closing, final (read-only for the week), and nothing after Nov 19', () => {
     const closing = desk({ officialByQuarter: { Q1: OFFICIAL_Q1 } });
-    expect(closing._walletOtherQuarterLine('Q2')).toBe('Quarter 1: 92.4% official · closes Thu Nov 12. Its 0s can still be fixed until then.');
+    expect(closing._walletOtherQuarterLine('Q2')).toBe('Quarter 1: 92.4% official · closes Tue Nov 10. Its 0s can still be fixed until then.');
     const quarters = GRADE_QUARTERS();
-    quarters.Q1.closed = { grade: 92, at: '2026-11-12T22:00:00Z', bonusApplied: null };
+    quarters.Q1.closed = { grade: 92, at: '2026-11-10T22:00:00Z', bonusApplied: null };
     expect(desk({ today: '2026-11-13', quarters })._walletOtherQuarterLine('Q2')).toBe('Quarter 1 final: 92%');
     expect(desk({ today: '2026-11-20', quarters })._walletOtherQuarterLine('Q2')).toBe('');
     // Sunday with no Quarter 2 grade yet the card itself shows Quarter 1: only the close is named.
     const sunday = GRADE_QUARTERS(); sunday.Q2.quarterGrade = null;
     const sun = desk({ today: '2026-11-08', quarters: sunday });
     expect(sun._walletCurrentQuarter().quarter).toBe('Q1');
-    expect(sun._walletOtherQuarterLine('Q1')).toBe('Quarter 1 closes Thu Nov 12. Its 0s can still be fixed until then.');
+    expect(sun._walletOtherQuarterLine('Q1')).toBe('Quarter 1 closes Tue Nov 10. Its 0s can still be fixed until then.');
   });
 
   it('per-quarter official cache: Q1’s official answers for Q1, never for Q2 (and the alias wins for its own quarter)', () => {
@@ -639,7 +643,7 @@ describe('coach (§3.7): one quarter at a time; the closing quarter gets its own
     const ctx = { missing: win._coachMissingList('Q2') };
     expect(ctx.missing.map((m) => m.lesson)).toEqual(['4.2', '4.2', '4.3']);
     win._coachQuarterLine(ctx, 'Q2');
-    expect(ctx.quarterLine).toBe('Quarter 1 closes Thu Nov 12: 2 zeros still fixable.');
+    expect(ctx.quarterLine).toBe('Quarter 1 closes Tue Nov 10: 2 zeros still fixable.');
     const q1 = { missing: win._coachMissingList('Q1') };
     win._coachQuarterLine(q1, 'Q1');   // explaining the closing quarter itself: no extra line
     expect(q1.missing.map((m) => m.lesson)).toEqual(['2.1', '4.1']);
@@ -683,7 +687,7 @@ describe('coach (§3.7): one quarter at a time; the closing quarter gets its own
     const ctx = { missing: win._coachMissingList('Q2') };
     expect(ctx.missing.map((m) => m.lesson)).toEqual(['4.2', '4.3', '4.4', '4.5', '4.6']);
     win._coachQuarterLine(ctx, 'Q2');
-    expect(ctx.quarterLine).toBe('Quarter 1 closes Thu Nov 12: 15 zeros still fixable.');
+    expect(ctx.quarterLine).toBe('Quarter 1 closes Tue Nov 10: 15 zeros still fixable.');
     // Explaining Quarter 1 (Sunday, no Quarter 2 grade yet): its own 15, cut to 12.
     expect(win._coachMissingList('Q1')).toHaveLength(12);
     expect(win._coachMissingList('Q1').every((m) => m.quarter === 'Q1')).toBe(true);
@@ -729,15 +733,15 @@ describe('coach (§3.7): one quarter at a time; the closing quarter gets its own
   });
 });
 
-describe('bonus (§3.8): never "Q0" on a gap day; a closing quarter’s bonus is added at Thursday’s close', () => {
+describe('bonus (§3.8): never "Q0" on a gap day; a closing quarter’s bonus is added at Tuesday’s close', () => {
   const sheet = { src: 'bonus', i: 'BONUS-screen', sc: 3, response: JSON.stringify({ quarter: 'Q1', grade: 'P', title: 'Screen Time' }) };
-  it('Sunday in the window: Quarter 1’s sheet, "added at Thursday\'s close"', () => {
+  it('Sunday in the window: Quarter 1’s sheet, "added at Tuesday\'s close"', () => {
     const win = desk({ today: '2026-11-08' });
     const summary = win._bonusSummary([sheet]);
     expect(summary.quarter).toBe('Q1');
-    expect(summary.closeDay).toBe('Thursday');
-    expect(win._doNowBonusText(summary)).toBe('Bonus banked: Screen Time P (+4.5) = +4.5, added at Thursday\'s close');
-    expect(win._walletBonusBlock([sheet]).lastChild.textContent).toBe('Added at Thursday\'s close to whichever track helps you more.');
+    expect(summary.closeDay).toBe('Tuesday');
+    expect(win._doNowBonusText(summary)).toBe('Bonus banked: Screen Time P (+4.5) = +4.5, added at Tuesday\'s close');
+    expect(win._walletBonusBlock([sheet]).lastChild.textContent).toBe('Added at Tuesday\'s close to whichever track helps you more.');
   });
   it('a gap day without close dates falls back to a real quarter (never "Q0"); after the close it is Quarter 2', () => {
     const old = desk({ today: '2026-11-08', withQuarters: false, config: OLD_CONFIG_QUARTERS });
@@ -772,8 +776,8 @@ describe('Class Snapshot (§3.11): after the close, no "Do this next" for a clos
     expect(win._snapFocus([A21], [null], undefined, [false], ['Q1'])).toEqual({ index: 0, clear: true });
     expect(win._snapFocus([A21, B42], [null, null], undefined, [false, false])).toEqual({ index: 0, clear: false });   // no flags: as before
   });
-  it('during the window (Thu Nov 12) nothing is final yet', () => {
-    const win = snap('2026-11-12');
+  it('during the window (Tue Nov 10) nothing is final yet', () => {
+    const win = snap('2026-11-10');
     expect(win._snapClosedQuarterFor(A21, 'PeriodB', win._gradeLessonsCache)).toBeNull();
   });
 });
@@ -828,7 +832,7 @@ describe('My Gradebook (§3.5): the closing quarter opens first; tab labels; lif
     expect(desk({ today: '2026-11-13' })._firstGradebookQuarter(gradebook())).toBe('Q2');
     expect(desk({ today: '2026-11-09', withQuarters: false, config: OLD_CONFIG_QUARTERS })._firstGradebookQuarter(gradebook())).toBe('Q2');
     const win = desk({ today: '2026-11-09' });
-    expect(['Q1', 'Q2', 'Q3', 'Q4'].map(win._gradebookTabLabel)).toEqual(['Quarter 1 · closes Thu Nov 12', 'Quarter 2 · 0 dates after Nov 6', 'Quarter 3', 'Quarter 4']);
+    expect(['Q1', 'Q2', 'Q3', 'Q4'].map(win._gradebookTabLabel)).toEqual(['Quarter 1 · closes Tue Nov 10', 'Quarter 2 · 0 dates after Nov 6', 'Quarter 3', 'Quarter 4']);
     expect(desk({ today: '2026-11-13' })._gradebookTabLabel('Q1')).toBe('Quarter 1 · final');
     expect(desk({ today: '2026-11-20' })._gradebookTabLabel('Q1')).toBe('Quarter 1');   // review D4: never "Q1"
     expect(desk({ today: '2026-11-09', withQuarters: false, config: OLD_CONFIG_QUARTERS })._gradebookTabLabel('Q2')).toBe('Quarter 2');
@@ -841,8 +845,8 @@ describe('My Gradebook (§3.5): the closing quarter opens first; tab labels; lif
     const body = win.document.getElementById('my-gradebook-body');
     expect(body.querySelector('.mgb-lift').textContent).toBe('can raise Quarter 1');
     expect(body.textContent).not.toMatch(/due, not done yet/);   // the lift-only quiz is not owed
-    expect(texts(win.document.getElementById('my-gradebook-qtabs').children)).toEqual(['Quarter 1 · closes Thu Nov 12', 'Quarter 2 · 0 dates after Nov 6', 'Quarter 3', 'Quarter 4']);
-    expect(body.firstChild.textContent).toMatch(/^Quarter 1 · closes Thu Nov 12 — /);
+    expect(texts(win.document.getElementById('my-gradebook-qtabs').children)).toEqual(['Quarter 1 · closes Tue Nov 10', 'Quarter 2 · 0 dates after Nov 6', 'Quarter 3', 'Quarter 4']);
+    expect(body.firstChild.textContent).toMatch(/^Quarter 1 · closes Tue Nov 10 — /);
     win.renderMyGradebook('Q2');
     expect(body.querySelector('.mgb-lift')).toBeNull();
     expect(body.textContent).toMatch(/1 thing is due, not done yet/);   // the regular Q2 quiz is owed
@@ -940,13 +944,13 @@ describe('mobile-home.html (§3.10): never Quarter 2 alone while Quarter 1 is fi
   const payload = (extra = {}) => ({ lessons: [], config: { quarters: CONFIG_QUARTERS }, quarters: { ...GRADE_QUARTERS(), ...extra } });
   const pill = (win) => win.document.getElementById('gradepill').textContent;
 
-  it('closing: "Quarter 1 92% · closes Thu Nov 12 · Quarter 2 85%"; Sunday without a Q2 grade: "starts Mon Nov 9"', () => {
+  it('closing: "Quarter 1 92% · closes Tue Nov 10 · Quarter 2 85%"; Sunday without a Q2 grade: "starts Mon Nov 9"', () => {
     const mon = phone('2026-11-09');
     mon._applyGradeData(payload(), false);
-    expect(pill(mon)).toBe('📊 Quarter 1 92% · closes Thu Nov 12 · Quarter 2 85%');
+    expect(pill(mon)).toBe('📊 Quarter 1 92% · closes Tue Nov 10 · Quarter 2 85%');
     const sun = phone('2026-11-08');
     sun._applyGradeData(payload({ Q2: { quarterGrade: null } }), false);
-    expect(pill(sun)).toBe('📊 Quarter 1 92% · closes Thu Nov 12 · Quarter 2 starts Mon Nov 9');
+    expect(pill(sun)).toBe('📊 Quarter 1 92% · closes Tue Nov 10 · Quarter 2 starts Mon Nov 9');
   });
 
   it('Finding R6b: Sunday with a cached official, Quarter 2 still reads "starts Mon Nov 9" with no number; Monday shows its number', () => {
@@ -957,14 +961,14 @@ describe('mobile-home.html (§3.10): never Quarter 2 alone while Quarter 1 is fi
     const sunday = payload({ Q2: { quarterGrade: null } });
     const sun = signedIn('2026-11-08');
     cacheQ2(sun);
-    expect(line(sun, sunday)).toBe('\u{1F4CA} Quarter 1 92% \u00b7 closes Thu Nov 12 \u00b7 Quarter 2 starts Mon Nov 9');
+    expect(line(sun, sunday)).toBe('\u{1F4CA} Quarter 1 92% \u00b7 closes Tue Nov 10 \u00b7 Quarter 2 starts Mon Nov 9');
     // Quarter 1 (closing) keeps its own official.
     cacheOfficial(sun, 94.4);
-    expect(line(sun, sunday)).toBe('\u{1F4CA} Quarter 1 94% \u00b7 closes Thu Nov 12 \u00b7 Quarter 2 starts Mon Nov 9');
+    expect(line(sun, sunday)).toBe('\u{1F4CA} Quarter 1 94% \u00b7 closes Tue Nov 10 \u00b7 Quarter 2 starts Mon Nov 9');
     // Mon Nov 9: Quarter 2 has started; its number is today's grade, as before (the phone never shows a Quarter 2 official).
     const mon = signedIn('2026-11-09');
     cacheQ2(mon);
-    expect(line(mon, payload())).toBe('\u{1F4CA} Quarter 1 92% \u00b7 closes Thu Nov 12 \u00b7 Quarter 2 85%');
+    expect(line(mon, payload())).toBe('\u{1F4CA} Quarter 1 92% \u00b7 closes Tue Nov 10 \u00b7 Quarter 2 85%');
   });
   it('final week: "Quarter 1 final 92%" from the closed grade; after Nov 19 and without close dates: the one-quarter line', () => {
     const fri = phone('2026-11-13');
@@ -1004,16 +1008,16 @@ describe('mobile-home.html (§3.10): never Quarter 2 alone while Quarter 1 is fi
     const mon = phone('2026-11-09', { who: 'kid' });
     mon._gradeOwner = 'kid';
     cacheOfficial(mon, 94.4);
-    expect(line(mon, payload())).toBe('📊 Quarter 1 94% · closes Thu Nov 12 · Quarter 2 85%');
+    expect(line(mon, payload())).toBe('📊 Quarter 1 94% · closes Tue Nov 10 · Quarter 2 85%');
   });
 
-  it('D8: a close /grade reports is final at once, even on Thu Nov 12; unreported, the dates decide', () => {
-    const thu = phone('2026-11-12');
+  it('D8: a close /grade reports is final at once, even on Tue Nov 10; unreported, the dates decide', () => {
+    const thu = phone('2026-11-10');
     thu._applyGradeData(payload({ Q1: { quarterGrade: 91.6, closed: { grade: 91 } } }), false);
     expect(pill(thu)).toBe('📊 Quarter 1 final 91% · Quarter 2 85%');
-    const open = phone('2026-11-12');
+    const open = phone('2026-11-10');
     open._applyGradeData(payload(), false);
-    expect(pill(open)).toBe('📊 Quarter 1 92% · closes Thu Nov 12 · Quarter 2 85%');
+    expect(pill(open)).toBe('📊 Quarter 1 92% · closes Tue Nov 10 · Quarter 2 85%');
     const after = phone('2026-11-20');
     after._applyGradeData(payload({ Q1: { quarterGrade: 91.6, closed: { grade: 91 } } }), false);
     expect(pill(after)).toBe('📊 Current grade: 85% · Quarter 2');   // the final week is over

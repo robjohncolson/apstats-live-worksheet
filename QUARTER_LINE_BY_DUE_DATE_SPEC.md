@@ -4,7 +4,13 @@
 gpt-6-astra `--effort max` + 4 Opus verifiers), fix pass 1 folded; fix pass 2 (the seven findings of the Codex
 re-review) folded 2026-11-08; a third Codex pass is pending. Deploy Sunday 2026-11-08 (no class blocks) after
 teacher sign-off; Schoology column move Sunday after 17:05 or Monday before 16:00; Quarter 1 close run on the morning
-after the close date, Fri 2026-11-13 before school (§4.5).**
+after the close date (§4.5).**
+
+**Amendment (teacher 2026-11-08): Quarter 1's close date moves from Thu 2026-11-12 to Tue 2026-11-10.** The close
+run (close → apply-bonus → MP1 final) happens Wed 2026-11-11 (Veterans Day, no school), so the final Quarter 1
+grades are in Schoology Marking Period 1 before Thursday, as insurance against a bad Thursday. `finalUntil` stays
+Thu 2026-11-19; Quarter 2 (from Mon 11/09) is unchanged. Only `quarters.Q1.close` moved: the engine never reads it.
+The dates below now read Tue 11/10 (close) / Wed 11/11 (close run); the earlier Thu/Fri plan is in git history.
 Grade-affecting (roster-server auto-deploys) and student-visible (Desk, Pico Desk, phone page, Schoology).
 
 ## 0. Decisions (teacher, 2026-11-07)
@@ -24,14 +30,14 @@ Grade-affecting (roster-server auto-deploys) and student-visible (Desk, Pico Des
    The 13-day rule stays consistent.
 4. **Quarter 2 holds** storage `4.2` (CED 2.3 Day 2) onward for B, storage `2.3` (CED 2.2) onward for E. **Schoology
    MP2 must be repopulated** with that work by Monday 11/09's syncs; MP1 keeps the columns through the line and its
-   final grade, frozen at the close (close date Thu 11/12; run Fri 11/13 before school, §4.5).
-5. **Delineation:** students must see plainly what counts for Quarter 1 (closing Thu) and what counts for Quarter 2,
+   final grade, frozen at the close (close date Tue 11/10; run Wed 11/11, no school, §4.5).
+5. **Delineation:** students must see plainly what counts for Quarter 1 (closing Tue) and what counts for Quarter 2,
    on the Desk, the Pico Desk home and the phone page.
 
 ### What changes for students (Monday 11/09)
-- The Do Now shows two grade pills until Thursday: `Quarter 1 92 · closes Thu Nov 12` and `Quarter 2 …`. After the
+- The Do Now shows two grade pills through Tuesday 11/10: `Quarter 1 92 · closes Tue Nov 10` and `Quarter 2 …`. After the
   close the Quarter 1 pill reads `final` for a week, then goes away.
-- My Grade / My Ledger list every row once, under `Quarter 1 (closes Thu Nov 12)` or `Quarter 2 (0 dates after Fri
+- My Grade / My Ledger list every row once, under `Quarter 1 (closes Tue Nov 10)` or `Quarter 2 (0 dates after Fri
   Nov 6)`. Q1 rows are the zeros still fixable; Q2 rows include 2.3 Day 2 / 2.2 onward with their real zero dates.
 - B `4.2`, `4.3`; E `2.3`, `4.1` turn from "late · no 0" (Fri/Sat) to a Sunday warning to a Monday 0 in Quarter 2.
   That is decision 3; a one-time Desk notice on Sunday says so (§4.9).
@@ -74,7 +80,7 @@ Changes (smallest set):
 - `grade-config.js` `PHASE3_CONFIG`: add `zeroQuarterMembership: true` after `zeroFreezeAtQuarterEnd`. Effective only
   with `zeroFreezeAtQuarterEnd` AND `v3LessonsByDate`. Do NOT add to `data/grade-config.sy2526-freeze.json` nor the
   golden fixture config (the synthetic golden's `3.1` straddles 11/02→11/15; gating on the freeze keeps it still).
-  Also add display-only `quarters.Q1.close: '2026-11-12'` (and `finalUntil: '2026-11-19'`); the engine ignores them.
+  Also add display-only `quarters.Q1.close: '2026-11-10'` (was `'2026-11-12'` until the 2026-11-08 amendment) (and `finalUntil: '2026-11-19'`); the engine ignores them.
 - `lesson-grade.js`: new pure exports `zeroQuarterOf(zeroDate, config)` and `lessonQuarters(entry, period, config)`
   → `{ quarter, taught }` (quarter = zeroQuarterOf when the three flags are on AND it is strictly later than
   taught; else taught). Insert after `lessonNeverZero` (~869).
@@ -133,19 +139,19 @@ quartiles). Say **"0 dates after Fri Nov 6"**, not "due after" (the Desk's "due"
 only. Never "80%" as done/credit/pass.
 
 1. **Do Now pills** (`renderDoNowGrades` 9258-9577): during the close window (`Q.end < today <= Q.close`) render the
-   closing quarter's pill first: `Quarter 1 92 · closes Thu Nov 12` (official when published; title: "fixable until
+   closing quarter's pill first: `Quarter 1 92 · closes Tue Nov 10` (official when published; title: "fixable until
    Thu"), then the current quarter's pill with today's chips. When `close < today <= finalUntil`: `Quarter 1 final 92`
    (from `quarters.Q1.closed` or the official). Pills carry `data-quarter` and `data-role` (closing | final |
    current). Per-quarter official cache: `_officialGradeByQuarter` holds every quarter; the single
    `_officialGradeCache` is KEPT as the current quarter's slot. Both quarters are fetched together and the side
    (closing) quarter's official is cached per school day. Pico `gradeInfo` (1281-1297) and
    `_updateDoNowMissingPill` (16822-16848) read by role, not "first pill"; the missing pill goes after the last
-   quarter pill and reads per quarter: `Quarter 1: 2 are 0s now, fix by Thu 11/12 · Quarter 2: 1 becomes a 0 Mon`.
+   quarter pill and reads per quarter: `Quarter 1: 2 are 0s now, fix by Tue 11/10 · Quarter 2: 1 becomes a 0 Mon`.
    Re-pin `tests/desk-grade-outlook.test.js` 19-20, `desk-official-grade.test.js` 96-141, j1 journey (first `.qkey`
    on 2026-08-18 stays `Q1`), `desk-donow-zero-state.test.js` 87, `desk-zero-warning.test.js` 229-246.
 2. **My Ledger / Missing-work card** (`_walletPrependZeroCard` 17500-17553, status 17558-17652) and **Pico My Grade**
    buckets (`ledgerBuckets` 2605-2639, `renderLedgerZero` 2709-2761): every row **once**, under its regular quarter
-   (`quarter[cP]`), with new heading class (not `.wz-later-head`): `Quarter 1 (closes Thu Nov 12)` then
+   (`quarter[cP]`), with new heading class (not `.wz-later-head`): `Quarter 1 (closes Tue Nov 10)` then
    `Quarter 2 (0 dates after Fri Nov 6)`; each group its own status lead (`Quarter 2 so far: X%` counts only Q2 rows;
    `_walletGradeDropText` scoped to the displayed quarter). Rows with `liftQuarter[cP]==='Q1'` add one short line:
    `finishing it by Thu can also raise Quarter 1 (never lower)`. Include grouping + closed state in `sig`/
@@ -156,31 +162,31 @@ only. Never "80%" as done/credit/pass.
    the parity snapshot pins their shapes): rows whose regular quarter has closed drop out of the Do Now tint, badge,
    coach, calendar `!` marks, snapshot focus and Pico buckets; before the close every row stays.
 4. **Calendar**: the `.cal-qband` divider already sits between the Nov 2 and Nov 9 week rows (`rCal` 368-380). In the
-   window its text becomes `Quarter 2 (Nov 9 – Jan 22) · Quarter 1 closes Thu Nov 12`; mark Fri 11/06 `Quarter 1
-   ends` and Thu 11/12 `Quarter 1 closes` after `c.innerHTML = htm(...)`, never inside `htm()` (Pico parses `.tl`).
+   window its text becomes `Quarter 2 (Nov 9 – Jan 22) · Quarter 1 closes Tue Nov 10`; mark Fri 11/06 `Quarter 1
+   ends` and Tue 11/10 `Quarter 1 closes` after `c.innerHTML = htm(...)`, never inside `htm()` (Pico parses `.tl`).
    Pico week window: a new badge element (`Q1 ENDS FRI` / `Q2 · Q1 CLOSES THU`); do not touch `#pico-week-title`
    or `#pico-unit` (pinned).
 5. **My Gradebook** (`js/desk-gradebook-grid.js` 40-51, 254-305 + server `roster-server/gradebook-grid.js`
    123-200): file lesson columns by `quarter[period]` (lift-only lessons appear in the Q1 tab marked "can raise
    Quarter 1", excluded from the owe badge) instead of the old-unit band (today Q1 = units 1,3,4 and 2.1–2.3 sit under
    Q3, matching nothing). Default to the closing quarter during the window; tab labels carry the rule
-   (`Quarter 1 · closes Thu Nov 12`, `Quarter 2 · 0 dates after Nov 6`). `_gradebookSchoologyTitle` quarter-aware
+   (`Quarter 1 · closes Tue Nov 10`, `Quarter 2 · 0 dates after Nov 6`). `_gradebookSchoologyTitle` quarter-aware
    (`Schoology MP2: …` when MP1 and MP2 share a title).
 6. **Help text** (Desk modal 2548-2569; `start-here.html` 656, 714, 717) replaces "Unless its quarter ends first …
    never a 0" with: "A 0 counts in the quarter its 0 date lands in. Quarter 1 ended Fri Nov 6: work whose 0 date was
-   by Nov 6 counts for Quarter 1, and you can fix those 0s until it closes Thu Nov 12. Work with a 0 date after Nov 6
-   counts for Quarter 2 (Nov 9 – Jan 22) even if it was taught in Quarter 1; finishing it by Thu Nov 12 can also raise
+   by Nov 6 counts for Quarter 1, and you can fix those 0s until it closes Tue Nov 10. Work with a 0 date after Nov 6
+   counts for Quarter 2 (Nov 9 – Jan 22) even if it was taught in Quarter 1; finishing it by Tue Nov 10 can also raise
    Quarter 1, never lower it. Progress Check retakes for Quarter 1 end at the close too." Re-pin
    `tests/grade-clarity.test.js` 94, 133. Drop the stale ↑ ceiling sentence.
 7. **Coach** (`_buildCoachContext` 9597-9794): tag missing items by quarter; the missing list, the flashcard list and
    the weak lessons are filtered to the displayed quarter BEFORE they are truncated, so the Quarter 2 explanation
-   never counts Quarter 1 zeros; window line `Quarter 1 closes Thu Nov 12: N zeros still fixable`.
+   never counts Quarter 1 zeros; window line `Quarter 1 closes Tue Nov 10: N zeros still fixable`.
 8. **`_bonusSummary`** (19236-19300): never `'Q' + quarterOfDate(new Date())` (gives `Q0` on gap days); use the
-   closing/current quarter; show Quarter 1's banked DOK bonus as `added at Thursday's close` during the window.
+   closing/current quarter; show Quarter 1's banked DOK bonus as `added at Tuesday's close` during the window.
 9. **One-time notice (Sun 11/08 → Mon)** for students with missing B `4.2`/`4.3` or E `2.3`/`4.1` work: "Quarter 1
    ended Friday. 2.3 Day 2 counts for Quarter 2 and its 0 date is today; finish it to clear it." (Desk Do Now line +
    Pico sign; dismissable; gone after 11/10.)
-10. **Phone page** `mobile-home.html` 881-901: show `Quarter 1 92 · closes Thu Nov 12` beside the current quarter
+10. **Phone page** `mobile-home.html` 881-901: show `Quarter 1 92 · closes Tue Nov 10` beside the current quarter
     during the window; never jump to Quarter 2 alone while Quarter 1 is fixable. After the close its
     `Quarter 1 final` = max(frozen + applied bonus, official MP1 override), the same as the Desk.
 11. **Class Snapshot / Where you stand**: after the close, no "Do this next … any score replaces the 0" for a closed
@@ -263,8 +269,8 @@ zeros into MP1 columns** and lowers the MP1 official. So:
    when the persisted display then shows the written number; otherwise it is a failed write (exit 1), retried the
    next night. Baseline Sunday's overrides before the move (`CMD 5`) so the move itself cannot lower anyone
    (estimated MP1 work shifts of at most −0.65 for 4 E students and −0.22 for 3 B students without the guard).
-5. **The close** (`tools/close_quarter.py`), run on the **morning AFTER the close date**: Fri 11/13 before school, so
-   Thursday's 16:30/16:45 runs and Thursday-evening fixes all count. The tool refuses `--apply` while today <= the
+5. **The close** (`tools/close_quarter.py`), run on the **morning AFTER the close date**: Wed 11/11 (no school), so
+   Tuesday's 16:30/16:45 runs and Tuesday-evening fixes all count. The tool refuses `--apply` while today <= the
    close date and refuses `--today` together with `--apply`. Sequence: `POST /class/quarter/close {quarter:'Q1'}`
    for both sections → `POST /class/quarter/apply-bonus` → write the MP1 final override =
    `max(closedGrade incl. applied bonus, current MP1 override)` ONCE, recorded per student. The maximum is taken
@@ -304,8 +310,8 @@ move has not run yet no column carries a stamp, so the sync warns and checks the
 verify, else after 17:05; readback `CMD 5`. Its `--apply` stamps every registered column, which arms the stamp
 check of section 4.1 from the next pass (`--stamp` writes the stamps without moving).
 **Monday 11/09 16:30/16:45:** both passes; Quarter 2 pass writes MP2 scores, the first Q2 zeros (B `4.2` quiz;
-E `2.3`, `4.1-2`) and the first MP2 override. **Tue–Thu 11/12:** Quarter 1 pass continues (fixes propagate, never
-lower). **Fri 11/13 before school:** the close, §4.5; the Quarter 1 pass is skipped from then on.
+E `2.3`, `4.1-2`) and the first MP2 override. **Tue 11/10:** Quarter 1 pass continues (fixes propagate, never
+lower). **Wed 11/11 (no school), morning:** the close, §4.5; the Quarter 1 pass is skipped from then on.
 **Report cards 11/16** read the MP1 final.
 
 ## 6. Acceptance (all lanes)
@@ -361,7 +367,7 @@ lower). **Fri 11/13 before school:** the close, §4.5; the Quarter 1 pass is ski
 1. The 26 columns are moved **by tool** (§4.3), not by hand.
 2. B's straddling `2.3 Follow-Along` / `2.3 Blooket` **stay in MP1**.
 3. MP1 final at the close = **the Desk's frozen Quarter 1 (closedGrade + applied bonus), never below the current MP1
-   override**, written once (the close run, Fri 11/13 before school, so Thursday's work counts; §4.5).
+   override**, written once (the close run, Wed 11/11, so Tuesday's work counts; §4.5).
 4. Schoology due date for the moved columns: **the class day, unchanged**.
 5. MP2 override: **count a Progress Check only from its Day 2 date** (so U2 Part A does not lift it from Monday).
 6. **Two pills from Sunday** (the Quarter 2 pill reads `starts Mon Nov 9` until it has a grade); `final` shown

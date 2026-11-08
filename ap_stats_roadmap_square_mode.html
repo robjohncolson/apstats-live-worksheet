@@ -2570,7 +2570,7 @@
             <p style="margin:0 0 4px">&#9312; <b>Your work</b> &mdash; worksheets <b>30%</b>, quizzes <b>30%</b>, the unit poster <b>30%</b>, Blookets <b>10%</b>. Your unit poster is scored <b>90 to 115</b>, so it can only help you unless the rest of your Work is above 90. A lesson's flashcard deck earns its Blooket credit.</p>
             <p style="margin:0 0 6px">&#9313; <b>Progress Checks</b> &mdash; one per unit, AP-exam-style, retakable until the quarter closes. Your <b>best score</b> counts.</p>
             <p style="margin:0 0 6px">Your grade starts as your <b>Work</b> track. Once Work (with bonus) is at least <b>40%</b>, your <b>Progress Check</b> score replaces it <b>if it's higher</b>. A low Progress Check <b>never lowers</b> you &mdash; either track can reach 100%.</p>
-            <p style="margin:0 0 6px"><b>Missing work becomes a 0</b> 13 days after its class day (worksheets and Blookets). The Desk warns you <b>3 days</b> before. Nothing locks &mdash; finish it later and the 0 goes away. <b>A 0 counts in the quarter its 0 date lands in.</b> Quarter 1 ended Fri Nov 6: work whose 0 date was by Nov 6 counts for Quarter 1, and you can fix those 0s until it closes <b>Thu Nov 12</b>. Work with a 0 date after Nov 6 counts for Quarter 2 (Nov 9 – Jan 22) even if it was taught in Quarter 1; finishing it by Thu Nov 12 can also raise Quarter 1, never lower it. Progress Check retakes for Quarter 1 end at the close too.</p>
+            <p style="margin:0 0 6px"><b>Missing work becomes a 0</b> 13 days after its class day (worksheets and Blookets). The Desk warns you <b>3 days</b> before. Nothing locks &mdash; finish it later and the 0 goes away. <b>A 0 counts in the quarter its 0 date lands in.</b> Quarter 1 ended Fri Nov 6: work whose 0 date was by Nov 6 counts for Quarter 1, and you can fix those 0s until it closes <b>Tue Nov 10</b>. Work with a 0 date after Nov 6 counts for Quarter 2 (Nov 9 – Jan 22) even if it was taught in Quarter 1; finishing it by Tue Nov 10 can also raise Quarter 1, never lower it. Progress Check retakes for Quarter 1 end at the close too.</p>
             <p style="margin:0 0 6px"><b>Worksheets stay open</b>: change an answer and Check again. <b>Grade with AI</b> only ever raises your score. <b>Quizzes</b>: miss a question and you get <b>one retry</b> with a short explanation &mdash; a correct retry earns <b>half credit</b>. Still wrong? <b>Talk it through</b> can earn back <b>half credit</b>.</p>
             <p style="margin:0 0 6px"><b>Bonus only goes up.</b> An exit ticket adds <b>+5 / +3 / +1</b> (E/P/I) to its lesson. DOK bonus sheets add <b>+7.5 / +4.5 / +1.5</b>, banked and added at the end of the quarter to whichever track helps you more. A worksheet finished by its class day adds <b>+1</b> (up to +5 a quarter). Quarters still top out at 100%.</p>
             <p style="margin:0 0 6px"><b>One official grade.</b> Every night your grade is written to Schoology, and the Desk shows that same number marked <b>official</b>. <b>Today's estimate</b> moves as you work, so it's <b>a step ahead of Schoology</b> until tonight's sync. It uses a slightly stricter formula (it also asks for 40% on the Progress Check side, and otherwise is capped at 70% of the better track), so it can differ from the official number until the nightly write. A score Mr. Colson types into Schoology by hand is never lowered by the sync.</p>
@@ -2972,8 +2972,8 @@
 <!-- Teacher-only Class Log "Recording" fold on the day panel (track L): the summary
      lib copied from a2 + the Desk glue (a2 sign-in token, mount). Both fail soft. -->
 <script src="lib/class-log-summary.js" onerror=""></script>
-<script src="js/desk-class-log.js?v=2026-11-08-r0un" onerror=""></script>
-<script src="js/desk-missing-work.js?v=2026-11-08-r0un"></script>
+<script src="js/desk-class-log.js?v=2026-11-08-5d8p" onerror=""></script>
+<script src="js/desk-missing-work.js?v=2026-11-08-5d8p"></script>
 <script src="pwa-register.js"></script>
 <script src="js/wallet_logic.js"></script>
 <script type="module" src="js/student-wallet.js"></script>
@@ -2983,10 +2983,10 @@
 <script src="js/ced2026-crosswalk.js"></script>
 <script src="js/ced2026-labels.js"></script>
 <script src="lib/qrcode.min.js"></script>
-<script src="canvas_engine.js?v=2026-11-08-r0un"></script>
-<script src="sprite_sheet.js?v=2026-11-08-r0un"></script>
-<script src="classroom-board.js?v=2026-11-08-r0un"></script>
-<script src="pico-home.js?v=2026-11-08-r0un"></script>
+<script src="canvas_engine.js?v=2026-11-08-5d8p"></script>
+<script src="sprite_sheet.js?v=2026-11-08-5d8p"></script>
+<script src="classroom-board.js?v=2026-11-08-5d8p"></script>
+<script src="pico-home.js?v=2026-11-08-5d8p"></script>
 <script src="ti84-plot.js"></script>
 <script src="activity-bridge.js"></script>
 <script src="activity-colorbox.js"></script>
@@ -8515,11 +8515,11 @@ const QUARTER_BAND_LABEL = {
 // here (Sep = 9), matching the ISO dates in grade-config.js. Re-edit
 // both files together once per school year.
 // close / finalUntil (QUARTER_LINE_BY_DUE_DATE_SPEC §3, teacher 2026-11-07): Quarter 1's
-// 0s stay fixable until it closes; then it reads "final" for a week. Display only; the
+// 0s stay fixable until it closes; then it reads "final" until finalUntil. Display only; the
 // calendar reads them here, every grade surface from /grade config.quarters. Pinned equal
 // to grade-config.js by tests/desk-quarter-line.test.js.
 const QUARTER_WINDOWS = [   // SY2627 real LEHS marking periods (2026-09-03)
-  { q: 1, start: [2026, 9, 2],   end: [2026, 11, 6], close: [2026, 11, 12], finalUntil: [2026, 11, 19] },
+  { q: 1, start: [2026, 9, 2],   end: [2026, 11, 6], close: [2026, 11, 10], finalUntil: [2026, 11, 19] },
   { q: 2, start: [2026, 11, 9],  end: [2027, 1, 22]  },
   { q: 3, start: [2027, 1, 25],  end: [2027, 4, 14]  },
   { q: 4, start: [2027, 4, 15],  end: [2027, 6, 17]  },
@@ -8541,7 +8541,7 @@ function quarterOfDate(dt) {
 // A lesson counts in the quarter its 0 date lands in (/grade lessons[].quarter[period]); a
 // lesson taught in the quarter before also carries liftQuarter[period]: finishing it can still
 // raise that quarter, never lower it. Quarter 1 ended Fri Nov 6, its 0s stay fixable until it
-// closes Thu Nov 12, then it reads "final" through Nov 19. The close dates come from the last
+// closes Tue Nov 10 (moved from Thu 11/12, teacher 2026-11-08), then it reads "final" through Nov 19. The close dates come from the last
 // /grade (config.quarters). An older cached payload has none: every surface then keeps its
 // single-quarter view. Every date test goes through _zeroTodayIso() (tdy), so tests pin it.
 var _gradeConfigCache = null;   // latest /grade config { quarters, ... }; null before a load
@@ -8597,7 +8597,7 @@ function _quarterName(q) {
   return 'Quarter ' + String(q || '').replace(/^Q/, '');
 }
 
-// 'Thu Nov 12' for an ISO date; '' when missing.
+// 'Tue Nov 10' for an ISO date; '' when missing.
 function _quarterDayText(iso) {
   if (!iso) return '';
   var d = new Date(iso + 'T00:00:00');
@@ -8606,7 +8606,7 @@ function _quarterDayText(iso) {
   return DAYS[d.getDay()] + ' ' + MONTHS[d.getMonth()] + ' ' + d.getDate();
 }
 
-// The heading over a quarter's rows (My Ledger, My Grade): 'Quarter 1 (closes Thu Nov 12)' for
+// The heading over a quarter's rows (My Ledger, My Grade): 'Quarter 1 (closes Tue Nov 10)' for
 // the closing quarter, 'Quarter 2 (0 dates after Fri Nov 6)' for a quarter after another one.
 // "0 dates", never "due": on the Desk "due" means the class day.
 function _quarterHeadingText(q, phase) {
@@ -9384,7 +9384,7 @@ function _quarterFinalGrade(q, data, official) {
 }
 
 // The pill of the quarter that just ended, shown BEFORE the current quarter's pill (§3.1):
-//   closing (its 0s fixable until the close): 'Quarter 1 · 92 · closes Thu Nov 12' (official when published)
+//   closing (its 0s fixable until the close): 'Quarter 1 · 92 · closes Tue Nov 10' (official when published)
 //   final (a week after the close):          'Quarter 1 final · 92'
 // data-quarter / data-role let Pico and the missing pill find each pill by role, not by position.
 function _doNowSidePill(q, data, official, phase) {
@@ -10098,7 +10098,7 @@ function _coachMissingList(quarter) {
 }
 // QUARTER_LINE_BY_DUE_DATE_SPEC §3.7: while another quarter is closing, ctx.quarterLine names its
 // fixable 0s, counted from the FULL warning list (never the coach's cut list):
-// 'Quarter 1 closes Thu Nov 12: 2 zeros still fixable.'
+// 'Quarter 1 closes Tue Nov 10: 2 zeros still fixable.'
 function _coachQuarterLine(ctx, quarter) {
     if (!quarter) return;
     var phase = (typeof _deskQuarterPhase === 'function') ? _deskQuarterPhase() : null;
@@ -16888,7 +16888,7 @@ function _walletQuarterGrade(quarter) {
 }
 
 // The balance card's line for the quarter that just ended (§3.2, decision 8.7), or '':
-//   closing: 'Quarter 1: 92% · closes Thu Nov 12. Its 0s can still be fixed until then.'
+//   closing: 'Quarter 1: 92% · closes Tue Nov 10. Its 0s can still be fixed until then.'
 //   final:   'Quarter 1 final: 92%' (read-only, for the week after the close)
 // When the card itself shows that quarter (the new one has no grade yet) only the close is named.
 function _walletOtherQuarterLine(shownQuarter) {
@@ -17213,7 +17213,7 @@ function _zeroPillText(warns) {
     return soon + (soon === 1 ? ' becomes a 0 by ' : ' become a 0 by ') + by;
 }
 // QUARTER_LINE_BY_DUE_DATE_SPEC \u00a73.1: the missing pill per quarter while rows are grouped, e.g.
-// 'Quarter 1: 2 are 0s now, fix by Thu 11/12 \u00b7 Quarter 2: 1 becomes a 0 by Mon 11/9'. '' otherwise.
+// 'Quarter 1: 2 are 0s now, fix by Tue 11/10 \u00b7 Quarter 2: 1 becomes a 0 by Mon 11/9'. '' otherwise.
 function _zeroQuarterPillText(warns) {
     var view = (typeof _zeroQuarterView === 'function') ? _zeroQuarterView(warns) : null;
     if (!view) return '';
@@ -18227,7 +18227,7 @@ function _zeroQuarterStatus(warns, later) {
         return _zeroCardStatus(warns.filter(mine), later.filter(mine), _quarterStatusLead(q, view.phase));
     }).join(' ');
 }
-// 'Quarter 2 so far: 85%. ', 'Quarter 1 so far: 92% (closes Thu Nov 12). ', or 'Quarter 2: '
+// 'Quarter 2 so far: 85%. ', 'Quarter 1 so far: 92% (closes Tue Nov 10). ', or 'Quarter 2: '
 // before the quarter has a grade.
 function _quarterStatusLead(q, phase) {
     var grade = (typeof _walletQuarterGrade === 'function') ? _walletQuarterGrade(q) : null;
@@ -19919,7 +19919,7 @@ function _bonusSummary(receipts) {
     }
     if (!quarter && typeof _walletCurrentQuarter === 'function') quarter = _walletCurrentQuarter().quarter;
     if (!quarter) quarter = 'Q1';
-    // 'Thursday' while that quarter closes ahead of us: its bonus is added at Thursday's close.
+    // 'Tuesday' (the close day's weekday, from config) while that quarter closes ahead of us: its bonus is added at that close.
     var closeDay = null;
     if (phase && phase.closing === quarter && typeof _quarterConfig === 'function') {
         var close = _quarterConfig(quarter).close;
@@ -19951,7 +19951,7 @@ function _bonusSummary(receipts) {
     });
     return { quarter: quarter, sheets: sheets, total: total, applied: applied, closeDay: closeDay };
 }
-// "Added at Thursday's close to whichever track helps you more." while the quarter is closing;
+// "Added at Tuesday's close to whichever track helps you more." while the quarter is closing;
 // the ledger's usual footer otherwise (QUARTER_LINE_BY_DUE_DATE_SPEC §3.8).
 function _bonusPendingText(summary) {
     if (summary && summary.closeDay && !summary.applied) return 'Added at ' + summary.closeDay + '\'s close to whichever track helps you more.';
@@ -19993,7 +19993,7 @@ function _doNowBonusText(summary) {
     var parts = summary.sheets.map(function (sheet) {
         return sheet.title + ' ' + sheet.grade + ' (+' + sheet.points + ')';
     });
-    // §3.8: a closing quarter's bonus is added at its close ("added at Thursday's close").
+    // §3.8: a closing quarter's bonus is added at its close ("added at Tuesday's close").
     var when = summary.closeDay ? ', added at ' + summary.closeDay + '\'s close' : ' at quarter end';
     return 'Bonus banked: ' + parts.join(' · ') + ' = +' + summary.total + when;
 }
@@ -21994,7 +21994,7 @@ function _paintReviewByItem(host, data) {
 <!-- My Gradebook grid (openMyGradebook, renderMyGradebook, the teacher Class Gradebook picker, date-gating + colour helpers):
      Moved byte for byte to js/desk-gradebook-grid.js (FABLE_SPRINT_2026_10_22C_SPEC.md track C3). Same globals,
      same load position, versioned by scripts/bump-build.mjs like the other entry scripts. -->
-<script src="js/desk-gradebook-grid.js?v=2026-11-08-r0un"></script>
+<script src="js/desk-gradebook-grid.js?v=2026-11-08-5d8p"></script>
 <script>
 
 // openDayGrade(dateStr) — opens the Day Grade modal for a calendar date.
@@ -22391,11 +22391,11 @@ function _pwaInstallHelp() {
 <!-- Study Break Tetris (studyBreak, openGame, closeGame):
      Moved byte for byte to js/desk-study-break.js (FABLE_SPRINT_2026_10_22C_SPEC.md track C3). Same globals,
      same load position, versioned by scripts/bump-build.mjs like the other entry scripts. -->
-<script src="js/desk-study-break.js?v=2026-11-08-r0un"></script>
+<script src="js/desk-study-break.js?v=2026-11-08-5d8p"></script>
 <!-- My Progress app window (ProgressApp, openProgress, destroyProgress): moved byte for byte to
      js/desk-progress-app.js (FABLE_SPRINT_2026_10_22B_SPEC.md track H). Same globals, same load
      position, versioned by scripts/bump-build.mjs like the other entry scripts. -->
-<script src="js/desk-progress-app.js?v=2026-11-08-r0un"></script>
+<script src="js/desk-progress-app.js?v=2026-11-08-5d8p"></script>
 <script>
 
 
@@ -22428,7 +22428,7 @@ function bumpUsage(id) {
 <!-- Desk <-> APStat Park calculator bridge (TI-84 skill button, calc-due chip, _openParkSolo, Calculator Skills progress modal):
      Moved byte for byte to js/desk-park-bridge.js (FABLE_SPRINT_2026_10_22C_SPEC.md track C3). Same globals,
      same load position, versioned by scripts/bump-build.mjs like the other entry scripts. -->
-<script src="js/desk-park-bridge.js?v=2026-11-08-r0un"></script>
+<script src="js/desk-park-bridge.js?v=2026-11-08-5d8p"></script>
 <script>
 
 // The URL an app window opens (SOLO_DOOR_SPEC §5: the calculator is no longer an app window).
@@ -23872,7 +23872,7 @@ window.DogePresence = DogePresence;
 <!-- Completion calendar (cP/setP, cell helpers, paging, summer-prep weeks, rCal, rCD, rProg, uClock):
      Moved byte for byte to js/desk-calendar.js (FABLE_SPRINT_2026_10_22C_SPEC.md track C3). Same globals,
      same load position, versioned by scripts/bump-build.mjs like the other entry scripts. -->
-<script src="js/desk-calendar.js?v=2026-11-08-r0un"></script>
+<script src="js/desk-calendar.js?v=2026-11-08-5d8p"></script>
 <script>
 
 /* ═══ TOOLTIP ═══ */
@@ -24435,11 +24435,27 @@ function _refreshRosterSession() {
   if (typeof window.rosterClient.isExpired === 'function' && window.rosterClient.isExpired()) return;
   if (window.__VIEW_AS_STUDENT_ID__) return;
   if (typeof _viewAsContext === 'function' && _viewAsContext()) return;
-  try { window.rosterClient.refreshIfNeeded().catch(function () {}); } catch (_) {}
+  var studentId = typeof window.rosterClient.studentId === 'function' ? window.rosterClient.studentId() : null;
+  try {
+    window.rosterClient.refreshIfNeeded().then(function (result) {
+      if (!result || !result.ok || !result.refreshed) return;
+      var roster = window.rosterClient;
+      if (!studentId || !roster || typeof roster.studentId !== 'function' || roster.studentId() !== studentId) return;
+      if (window.__VIEW_AS_STUDENT_ID__) return;
+      if (typeof _viewAsContext === 'function' && _viewAsContext()) return;
+      var baseUrl = window.ROSTER_SERVICE_URL;
+      var token = typeof roster.token === 'function' ? roster.token() : null;
+      // Rotating a token invalidates the grade request already in flight.
+      // Replace it immediately, keeping this same student's cached evidence.
+      if (baseUrl && token && typeof renderDoNowGrades === 'function') {
+        return renderDoNowGrades(baseUrl, token);
+      }
+    }).catch(function () {});
+  } catch (_) {}
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-11-08-r0un';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-11-08-5d8p';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

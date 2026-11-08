@@ -8515,11 +8515,11 @@ const QUARTER_BAND_LABEL = {
 // here (Sep = 9), matching the ISO dates in grade-config.js. Re-edit
 // both files together once per school year.
 // close / finalUntil (QUARTER_LINE_BY_DUE_DATE_SPEC §3, teacher 2026-11-07): Quarter 1's
-// 0s stay fixable until it closes; then it reads "final" for a week. Display only; the
+// 0s stay fixable until it closes; then it reads "final" until finalUntil. Display only; the
 // calendar reads them here, every grade surface from /grade config.quarters. Pinned equal
 // to grade-config.js by tests/desk-quarter-line.test.js.
 const QUARTER_WINDOWS = [   // SY2627 real LEHS marking periods (2026-09-03)
-  { q: 1, start: [2026, 9, 2],   end: [2026, 11, 6], close: [2026, 11, 12], finalUntil: [2026, 11, 19] },
+  { q: 1, start: [2026, 9, 2],   end: [2026, 11, 6], close: [2026, 11, 10], finalUntil: [2026, 11, 19] },
   { q: 2, start: [2026, 11, 9],  end: [2027, 1, 22]  },
   { q: 3, start: [2027, 1, 25],  end: [2027, 4, 14]  },
   { q: 4, start: [2027, 4, 15],  end: [2027, 6, 17]  },
@@ -8541,7 +8541,7 @@ function quarterOfDate(dt) {
 // A lesson counts in the quarter its 0 date lands in (/grade lessons[].quarter[period]); a
 // lesson taught in the quarter before also carries liftQuarter[period]: finishing it can still
 // raise that quarter, never lower it. Quarter 1 ended Fri Nov 6, its 0s stay fixable until it
-// closes Thu Nov 12, then it reads "final" through Nov 19. The close dates come from the last
+// closes Tue Nov 10 (moved from Thu 11/12, teacher 2026-11-08), then it reads "final" through Nov 19. The close dates come from the last
 // /grade (config.quarters). An older cached payload has none: every surface then keeps its
 // single-quarter view. Every date test goes through _zeroTodayIso() (tdy), so tests pin it.
 var _gradeConfigCache = null;   // latest /grade config { quarters, ... }; null before a load
@@ -8597,7 +8597,7 @@ function _quarterName(q) {
   return 'Quarter ' + String(q || '').replace(/^Q/, '');
 }
 
-// 'Thu Nov 12' for an ISO date; '' when missing.
+// 'Tue Nov 10' for an ISO date; '' when missing.
 function _quarterDayText(iso) {
   if (!iso) return '';
   var d = new Date(iso + 'T00:00:00');
@@ -8606,7 +8606,7 @@ function _quarterDayText(iso) {
   return DAYS[d.getDay()] + ' ' + MONTHS[d.getMonth()] + ' ' + d.getDate();
 }
 
-// The heading over a quarter's rows (My Ledger, My Grade): 'Quarter 1 (closes Thu Nov 12)' for
+// The heading over a quarter's rows (My Ledger, My Grade): 'Quarter 1 (closes Tue Nov 10)' for
 // the closing quarter, 'Quarter 2 (0 dates after Fri Nov 6)' for a quarter after another one.
 // "0 dates", never "due": on the Desk "due" means the class day.
 function _quarterHeadingText(q, phase) {
@@ -9384,7 +9384,7 @@ function _quarterFinalGrade(q, data, official) {
 }
 
 // The pill of the quarter that just ended, shown BEFORE the current quarter's pill (§3.1):
-//   closing (its 0s fixable until the close): 'Quarter 1 · 92 · closes Thu Nov 12' (official when published)
+//   closing (its 0s fixable until the close): 'Quarter 1 · 92 · closes Tue Nov 10' (official when published)
 //   final (a week after the close):          'Quarter 1 final · 92'
 // data-quarter / data-role let Pico and the missing pill find each pill by role, not by position.
 function _doNowSidePill(q, data, official, phase) {
@@ -10098,7 +10098,7 @@ function _coachMissingList(quarter) {
 }
 // QUARTER_LINE_BY_DUE_DATE_SPEC §3.7: while another quarter is closing, ctx.quarterLine names its
 // fixable 0s, counted from the FULL warning list (never the coach's cut list):
-// 'Quarter 1 closes Thu Nov 12: 2 zeros still fixable.'
+// 'Quarter 1 closes Tue Nov 10: 2 zeros still fixable.'
 function _coachQuarterLine(ctx, quarter) {
     if (!quarter) return;
     var phase = (typeof _deskQuarterPhase === 'function') ? _deskQuarterPhase() : null;
@@ -16888,7 +16888,7 @@ function _walletQuarterGrade(quarter) {
 }
 
 // The balance card's line for the quarter that just ended (§3.2, decision 8.7), or '':
-//   closing: 'Quarter 1: 92% · closes Thu Nov 12. Its 0s can still be fixed until then.'
+//   closing: 'Quarter 1: 92% · closes Tue Nov 10. Its 0s can still be fixed until then.'
 //   final:   'Quarter 1 final: 92%' (read-only, for the week after the close)
 // When the card itself shows that quarter (the new one has no grade yet) only the close is named.
 function _walletOtherQuarterLine(shownQuarter) {
@@ -17213,7 +17213,7 @@ function _zeroPillText(warns) {
     return soon + (soon === 1 ? ' becomes a 0 by ' : ' become a 0 by ') + by;
 }
 // QUARTER_LINE_BY_DUE_DATE_SPEC \u00a73.1: the missing pill per quarter while rows are grouped, e.g.
-// 'Quarter 1: 2 are 0s now, fix by Thu 11/12 \u00b7 Quarter 2: 1 becomes a 0 by Mon 11/9'. '' otherwise.
+// 'Quarter 1: 2 are 0s now, fix by Tue 11/10 \u00b7 Quarter 2: 1 becomes a 0 by Mon 11/9'. '' otherwise.
 function _zeroQuarterPillText(warns) {
     var view = (typeof _zeroQuarterView === 'function') ? _zeroQuarterView(warns) : null;
     if (!view) return '';
@@ -18227,7 +18227,7 @@ function _zeroQuarterStatus(warns, later) {
         return _zeroCardStatus(warns.filter(mine), later.filter(mine), _quarterStatusLead(q, view.phase));
     }).join(' ');
 }
-// 'Quarter 2 so far: 85%. ', 'Quarter 1 so far: 92% (closes Thu Nov 12). ', or 'Quarter 2: '
+// 'Quarter 2 so far: 85%. ', 'Quarter 1 so far: 92% (closes Tue Nov 10). ', or 'Quarter 2: '
 // before the quarter has a grade.
 function _quarterStatusLead(q, phase) {
     var grade = (typeof _walletQuarterGrade === 'function') ? _walletQuarterGrade(q) : null;
@@ -19919,7 +19919,7 @@ function _bonusSummary(receipts) {
     }
     if (!quarter && typeof _walletCurrentQuarter === 'function') quarter = _walletCurrentQuarter().quarter;
     if (!quarter) quarter = 'Q1';
-    // 'Thursday' while that quarter closes ahead of us: its bonus is added at Thursday's close.
+    // 'Tuesday' (the close day's weekday, from config) while that quarter closes ahead of us: its bonus is added at that close.
     var closeDay = null;
     if (phase && phase.closing === quarter && typeof _quarterConfig === 'function') {
         var close = _quarterConfig(quarter).close;
@@ -19951,7 +19951,7 @@ function _bonusSummary(receipts) {
     });
     return { quarter: quarter, sheets: sheets, total: total, applied: applied, closeDay: closeDay };
 }
-// "Added at Thursday's close to whichever track helps you more." while the quarter is closing;
+// "Added at Tuesday's close to whichever track helps you more." while the quarter is closing;
 // the ledger's usual footer otherwise (QUARTER_LINE_BY_DUE_DATE_SPEC §3.8).
 function _bonusPendingText(summary) {
     if (summary && summary.closeDay && !summary.applied) return 'Added at ' + summary.closeDay + '\'s close to whichever track helps you more.';
@@ -19993,7 +19993,7 @@ function _doNowBonusText(summary) {
     var parts = summary.sheets.map(function (sheet) {
         return sheet.title + ' ' + sheet.grade + ' (+' + sheet.points + ')';
     });
-    // §3.8: a closing quarter's bonus is added at its close ("added at Thursday's close").
+    // §3.8: a closing quarter's bonus is added at its close ("added at Tuesday's close").
     var when = summary.closeDay ? ', added at ' + summary.closeDay + '\'s close' : ' at quarter end';
     return 'Bonus banked: ' + parts.join(' · ') + ' = +' + summary.total + when;
 }
@@ -24435,11 +24435,27 @@ function _refreshRosterSession() {
   if (typeof window.rosterClient.isExpired === 'function' && window.rosterClient.isExpired()) return;
   if (window.__VIEW_AS_STUDENT_ID__) return;
   if (typeof _viewAsContext === 'function' && _viewAsContext()) return;
-  try { window.rosterClient.refreshIfNeeded().catch(function () {}); } catch (_) {}
+  var studentId = typeof window.rosterClient.studentId === 'function' ? window.rosterClient.studentId() : null;
+  try {
+    window.rosterClient.refreshIfNeeded().then(function (result) {
+      if (!result || !result.ok || !result.refreshed) return;
+      var roster = window.rosterClient;
+      if (!studentId || !roster || typeof roster.studentId !== 'function' || roster.studentId() !== studentId) return;
+      if (window.__VIEW_AS_STUDENT_ID__) return;
+      if (typeof _viewAsContext === 'function' && _viewAsContext()) return;
+      var baseUrl = window.ROSTER_SERVICE_URL;
+      var token = typeof roster.token === 'function' ? roster.token() : null;
+      // Rotating a token invalidates the grade request already in flight.
+      // Replace it immediately, keeping this same student's cached evidence.
+      if (baseUrl && token && typeof renderDoNowGrades === 'function') {
+        return renderDoNowGrades(baseUrl, token);
+      }
+    }).catch(function () {});
+  } catch (_) {}
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-11-08-r0un';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-11-08-5d8p';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

@@ -534,13 +534,14 @@ describe('the flag is gated, and the Q1 close dates are display-only', () => {
     }
   });
 
-  it('Q1 close (Thu 11/12) and finalUntil (Thu 11/19) never change a grade', () => {
-    expect(PHASE3_CONFIG.quarters.Q1.close).toBe('2026-11-12');
+  // close moved Thu 11/12 -> Tue 11/10 (teacher 2026-11-08): the close + MP1 final run Wed 11/11.
+  it('Q1 close (Tue 11/10) and finalUntil (Thu 11/19) never change a grade', () => {
+    expect(PHASE3_CONFIG.quarters.Q1.close).toBe('2026-11-10');
     expect(PHASE3_CONFIG.quarters.Q1.finalUntil).toBe('2026-11-19');
     const { close: _close, finalUntil: _finalUntil, ...plainQ1 } = LIVE.quarters.Q1;
     const plain = { ...LIVE, quarters: { ...LIVE.quarters, Q1: plainQ1 } };
     const rows = seededLedger('B');
-    for (const today of ['2026-11-09', '2026-11-13', '2026-11-20']) {
+    for (const today of ['2026-11-09', '2026-11-11', '2026-11-13', '2026-11-20']) {
       expect(grade(rows, LIVE, 'PeriodB', today), today).toStrictEqual(grade(rows, plain, 'PeriodB', today));
     }
   });

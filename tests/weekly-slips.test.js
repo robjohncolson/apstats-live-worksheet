@@ -632,3 +632,198 @@ describe('a closed quarter leaves the slip (QUARTER_LINE_BY_DUE_DATE_SPEC decisi
     expect(renderTex([kid], [kid], 'PeriodB', '2026-11-10', 'Q2', [], QUARTERS).match(/\\MissRow\{/g)).toHaveLength(4);
   });
 });
+
+// Quarter 1's final stays on the slip from the day after its close until finalUntil, in the
+// label style the slip already prints ("Q1", never "Quarter 1"), ahead of the current quarter.
+// Production windows (roster-server/grade-config.js): Q1 closes Tue 11/10, final through 11/19.
+describe('a closed quarter\'s final shows on the slip until finalUntil', () => {
+  const QUARTERS = {
+    Q1: { start: '2026-09-02', end: '2026-11-06', close: '2026-11-10', finalUntil: '2026-11-19' },
+    Q2: { start: '2026-11-09', end: '2027-01-22' },
+  };
+  const LESSONS = [{ lessonKey: '4.2', quarter: { B: 'Q2' }, zeroDate: { B: '2026-11-08' }, Cws: null, quizTotal: 3 }];
+  const kid = { realName: 'X', lessons: LESSONS,
+    quarters: { Q1: { quarterGrade: 80, closedGrade: 87.6 }, Q2: { quarterGrade: 72, lessonsDue: 1 } } };
+  const withOfficial = (q1Official, extra = {}) => ({ ...kid, ...extra,
+    officialByQuarter: { Q1: { quarter: 'Q1', grade: q1Official } } });
+  const slip = async (date, student = kid, serverKey = 'Q2') => {
+    const { renderTex } = await import('../scripts/weekly-slips.mjs');
+    return renderTex([student], [student], 'PeriodB', date, serverKey, [], QUARTERS);
+  };
+
+  it('Fri 11/13: "Q1 final: 88\\%." comes before "Q2 so far: 72\\%."', async () => {
+    const tex = await slip('2026-11-13');
+    expect(tex).toContain('Q1 final: 88\\%. Q2 so far: 72\\%.');
+    expect(tex).not.toContain('Quarter 1');
+  });
+
+  it('Tue 11/10 (the close day) is still "so far": no final yet', async () => {
+    const tex = await slip('2026-11-10');
+    expect(tex).not.toContain('final:');
+    expect(tex).toContain('Q2 so far: 72\\%.');
+  });
+
+  it('Wed 11/11, Fri 11/13 and Thu 11/19 (finalUntil) show it; Fri 11/20 does not', async () => {
+    for (const date of ['2026-11-11', '2026-11-13', '2026-11-19']) {
+      expect(await slip(date)).toContain('Q1 final: 88\\%.');
+    }
+    const gone = await slip('2026-11-20');
+    expect(gone).not.toContain('final:');
+    expect(gone).toContain('Q2 so far: 72\\%.');
+  });
+
+  it('Fri 11/06 (Q2 has not started): a Q1 header, no final', async () => {
+    const early = { ...kid, quarters: { Q1: { quarterGrade: 80, closedGrade: null }, Q2: { quarterGrade: 72, lessonsDue: 0 } } };
+    const tex = await slip('2026-11-06', early, 'Q1');
+    expect(tex).not.toContain('final:');
+    expect(tex).toContain('{\\bfseries Q1 so far: 80\\%.');
+  });
+
+  it('no closed grade for the student, or no windows in the doc: nothing added', async () => {
+    const open = { ...kid, quarters: { ...kid.quarters, Q1: { quarterGrade: 80, closedGrade: null } } };
+    expect(await slip('2026-11-13', open)).not.toContain('final:');
+    // Even an official Q1 grade does not make a final without the close snapshot.
+    expect(await slip('2026-11-13', withOfficial(92.4, { quarters: open.quarters }))).not.toContain('final:');
+    const { renderTex } = await import('../scripts/weekly-slips.mjs');
+    expect(renderTex([kid], [kid], 'PeriodB', '2026-11-13', 'Q2', [])).not.toContain('final:');
+  });
+
+  // The Desk and Schoology show max(frozen, official); the slip must print the same number.
+  it('official Q1 above the frozen grade wins: 87.6 frozen, 92.4 official prints 92', async () => {
+    const tex = await slip('2026-11-13', withOfficial(92.4));
+    expect(tex).toContain('Q1 final: 92\\%. Q2 so far: 72\\%.');
+  });
+
+  it('official Q1 below the frozen grade: the frozen grade wins (88, not 80)', async () => {
+    expect(await slip('2026-11-13', withOfficial(80))).toContain('Q1 final: 88\\%.');
+  });
+
+  it('the Q1 official never leaks into the current quarter\'s label or grade', async () => {
+    const tex = await slip('2026-11-13', withOfficial(92.4));
+    expect(tex).not.toContain('official so far');
+    expect(tex).toContain('Q2 so far: 72\\%.');
+  });
+
+  // /class/snapshot failed: serverKey null. The earliest-quarter-with-lessons fallback would
+  // name the closed Q1 "so far"; the slip date decides instead.
+  it('failed snapshot on Fri 11/13: "Q1 final: 88\\%. Q2 so far: 72\\%." (Q1 is never "so far")', async () => {
+    const tex = await slip('2026-11-13', kid, null);
+    expect(tex).toContain('Q1 final: 88\\%. Q2 so far: 72\\%.');
+    expect(tex).not.toContain('Q1 so far');
+  });
+
+  it('failed snapshot with a Q2 official grade: "Q2 official so far", never "Q1 official"', async () => {
+    const student = { ...kid, official: { quarter: 'Q2', grade: 70 }, quarters: { Q1: { quarterGrade: 80, closedGrade: 87.6, lessonsDue: 5 }, Q2: { quarterGrade: 72, lessonsDue: 1 } } };
+    const tex = await slip('2026-11-13', student, 'Q9');
+    expect(tex).toContain('Q1 final: 88\\%. Q2 official so far: 70\\%.');
+    expect(tex).not.toContain('Q1 official');
+  });
+});
+
+// B4: a quarter resolved from the windows is authoritative for every consumer. A student whose
+// payload has only a Q1 row (no Q2 yet) has "no Q2 grade yet"; the old earliest-quarter fallback
+// must not turn the header back into a Q1 "so far" or hide the Q1 final.
+describe('a resolved quarter with no student row for it stays that quarter', () => {
+  const QUARTERS = {
+    Q1: { start: '2026-09-02', end: '2026-11-06', close: '2026-11-10', finalUntil: '2026-11-19' },
+    Q2: { start: '2026-11-09', end: '2027-01-22' },
+  };
+  const onlyQ1 = { realName: 'X', lessons: [],
+    quarters: { Q1: { quarterGrade: 80, closedGrade: 87.6, lessonsDue: 5 } } };
+  const render = async (student, summary, quarters = QUARTERS, serverKey = null) => {
+    const { renderSlip } = await import('../scripts/weekly-slips.mjs');
+    return renderSlip(student, 'PeriodB', '2026-11-13', summary, serverKey, [], quarters);
+  };
+
+  it('failed snapshot, Q1-only payload: "Q1 final: 88\\%. Q2: no grade yet."', async () => {
+    const tex = await render(onlyQ1, null);
+    expect(tex).toContain('Q1 final: 88\\%. Q2: no grade yet.');
+    expect(tex).not.toContain('Q1 so far');
+    expect(tex).not.toContain('Q1 official');
+  });
+
+  it('the median phrase follows when a class summary is given', async () => {
+    const summary = { min: 50, q1: 60, median: 75, q3: 85, max: 99, lowerWhisker: 50, upperWhisker: 99, outliers: [] };
+    expect(await render(onlyQ1, summary)).toContain('Q1 final: 88\\%. Q2: no grade yet. Class median 75.');
+  });
+
+  it('a snapshot that names Q2 behaves the same', async () => {
+    expect(await render(onlyQ1, null, QUARTERS, 'Q2')).toContain('Q1 final: 88\\%. Q2: no grade yet.');
+  });
+
+  it('with a fetched Q2 official grade: "Q1 final: 88\\%. Q2 official so far: 72\\%."', async () => {
+    const student = { ...onlyQ1, official: { quarter: 'Q2', grade: 72 } };
+    const tex = await render(student, null);
+    expect(tex).toContain('Q1 final: 88\\%. Q2 official so far: 72\\%.');
+    expect(tex).not.toContain('Q1 official');
+  });
+
+  it('quarterGrade, currentQuarterKey and effortLines honor a pinned key', async () => {
+    const m = await import('../scripts/weekly-slips.mjs');
+    expect(m.quarterGrade(onlyQ1, 'Q2', true)).toBeNull();
+    expect(m.quarterGrade(onlyQ1, 'Q2')).toBe(80);          // unpinned: the old fallback
+    expect(m.currentQuarterKey(onlyQ1.quarters, 'Q2', true)).toBe('Q2');
+    expect(m.currentQuarterKey(onlyQ1.quarters, 'Q2')).toBe('Q1');
+    expect(() => m.effortLines(onlyQ1, 'PeriodB', '2026-11-13', 'Q2', undefined, true)).not.toThrow();
+    expect(m.boxSummary([onlyQ1, onlyQ1, onlyQ1, onlyQ1, onlyQ1], 'Q2', true)).toBeNull();
+  });
+
+  // B4 residual: units carries the CLOSED quarter's paper Progress Check; a pinned Q2 with no
+  // row must not print it as "counting in your grade now".
+  it('pinned Q2 with no row: the Q1 Progress Check never prints on the effort line', async () => {
+    const withPc = { ...onlyQ1, units: { U1: { pcRawPct: 91 } },
+      quarters: { Q1: { ...onlyQ1.quarters.Q1, pcUnits: [1] } } };
+    const m = await import('../scripts/weekly-slips.mjs');
+    expect(m.effortLines(withPc, 'PeriodB', '2026-11-13', 'Q2', undefined, true).pc).toBe('');
+    const tex = await render(withPc, null);
+    expect(tex).toContain('Q1 final: 88\\%. Q2: no grade yet.');
+    expect(tex).not.toContain('Progress Check so far');
+    expect(tex).not.toContain('counting in your grade now');
+  });
+
+  it('pinned Q2 with its own row: its Progress Check prints as before', async () => {
+    const withRow = { ...onlyQ1, units: { U2: { pcRawPct: 77 } },
+      quarters: { ...onlyQ1.quarters, Q2: { quarterGrade: 72, lessonsDue: 1, pcUnits: [2] } } };
+    const m = await import('../scripts/weekly-slips.mjs');
+    const pc = m.effortLines(withRow, 'PeriodB', '2026-11-13', 'Q2', undefined, true).pc;
+    expect(pc).toMatch(/^Progress Check so far: 77% \(paper\)/);
+  });
+
+  it('unpinned (no windows): the fallback still reads the earliest quarter row', async () => {
+    const withPc = { ...onlyQ1, units: { U1: { pcRawPct: 91 } },
+      quarters: { Q1: { ...onlyQ1.quarters.Q1, pcUnits: [1] } } };
+    const m = await import('../scripts/weekly-slips.mjs');
+    expect(m.effortLines(withPc, 'PeriodB', '2026-11-13', null).pc).toMatch(/^Progress Check so far: 91% \(paper\)/);
+  });
+
+  it('a doc without config.quarters keeps today\'s fallback (earliest quarter)', async () => {
+    const tex = await render(onlyQ1, null, null);
+    expect(tex).toContain('Q1 so far: 80\\%.');
+    expect(tex).not.toContain('final:');
+  });
+});
+
+describe('resolveQuarterKey (which quarter is current for the slip date)', () => {
+  const WINDOWS = {
+    Q1: { start: '2026-09-02', end: '2026-11-06', close: '2026-11-10', finalUntil: '2026-11-19' },
+    Q2: { start: '2026-11-09', end: '2027-01-22' },
+  };
+  it('a server key that names a window wins', async () => {
+    const { resolveQuarterKey } = await import('../scripts/weekly-slips.mjs');
+    expect(resolveQuarterKey(WINDOWS, 'Q1', '2026-11-13')).toBe('Q1');
+  });
+  it('a missing or unknown server key resolves from the date, never to a closed quarter', async () => {
+    const { resolveQuarterKey } = await import('../scripts/weekly-slips.mjs');
+    for (const key of [null, undefined, 'Q9']) {
+      expect(resolveQuarterKey(WINDOWS, key, '2026-11-13')).toBe('Q2');
+      expect(resolveQuarterKey(WINDOWS, key, '2026-11-10')).toBe('Q2');
+      expect(resolveQuarterKey(WINDOWS, key, '2026-11-07')).toBe('Q1');
+      expect(resolveQuarterKey(WINDOWS, key, '2026-10-05')).toBe('Q1');
+    }
+  });
+  it('without windows the server key is returned as is (old fallback applies downstream)', async () => {
+    const { resolveQuarterKey } = await import('../scripts/weekly-slips.mjs');
+    expect(resolveQuarterKey(null, null, '2026-11-13')).toBeNull();
+    expect(resolveQuarterKey(null, 'Q2', '2026-11-13')).toBe('Q2');
+  });
+});

@@ -1873,7 +1873,9 @@ describe('quarter-end zero freeze', () => {
     });
   });
 
-  describe('the real SY2627 schedule around the Q1 close (Thu 2026-11-12)', () => {
+  // The close moved to Tue 2026-11-10 (teacher 2026-11-08); the engine never reads it, so the
+  // dates below (late-week days around the close) still pin the same grades.
+  describe('the real SY2627 schedule around the Q1 close (Tue 2026-11-10)', () => {
     const prod = resolveProductionGradeInputs('SY2627');
     const config = { ...prod.config, pcTrack: { enabled: false } };
     const schedule = prod.lessonSchedule.lessons || prod.lessonSchedule;

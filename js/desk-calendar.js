@@ -224,13 +224,13 @@ var CAL_DOW_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 function _calWindowKey(ymd) { return ymd[0] * 10000 + ymd[1] * 100 + ymd[2]; }
 function _calDateKey(dt) { return dt.getFullYear() * 10000 + (dt.getMonth() + 1) * 100 + dt.getDate(); }
 function _calWindowDate(ymd) { return new Date(ymd[0], ymd[1] - 1, ymd[2]); }
-// 'Thu Nov 12' for a [y, m, d] window date.
+// 'Tue Nov 10' for a [y, m, d] window date.
 function _calDayText(ymd) {
     const d = _calWindowDate(ymd);
     return CAL_DOW_SHORT[d.getDay()] + ' ' + MN[d.getMonth()] + ' ' + d.getDate();
 }
 // The band over a quarter's first week. While the quarter before it is still closing it names
-// that close: 'Quarter 2  (Nov 9 – Jan 22) · Quarter 1 closes Thu Nov 12'.
+// that close: 'Quarter 2  (Nov 9 – Jan 22) · Quarter 1 closes Tue Nov 10'.
 function _calQuarterBandText(q, today) {
     const text = 'Quarter ' + q + '  (' + QUARTER_BAND_LABEL['Q' + q] + ')';
     const prev = QUARTER_WINDOWS.filter(function (w) { return w.q === q - 1; })[0];
@@ -447,7 +447,7 @@ function rCal(){
             const dt=new Date(en[0],en[1],en[2]),ds=MN[dt.getMonth()]+" "+dt.getDate();
             const inf=cP==="B"?en[3]:en[4];
             c.classList.add(cls(inf));c.innerHTML=htm(inf,ds);
-            // §3.4: 'Quarter 1 ends' (Fri 11/6) / 'Quarter 1 closes' (Thu 11/12), after htm(), never inside it.
+            // §3.4: 'Quarter 1 ends' (Fri 11/6) / 'Quarter 1 closes' (Tue 11/10), after htm(), never inside it.
             if(typeof _calPaintQuarterMark==='function')_calPaintQuarterMark(c,dt);
             if(eq(dt,t)){
               c.classList.add("cell-today");

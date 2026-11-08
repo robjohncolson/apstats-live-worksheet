@@ -20,7 +20,9 @@ const LESSONS = () => [
   { lessonKey: '4.6', unit: 4, worksheetKey: '6', due: P('2026-11-05', '2026-11-06'), zeroDate: P('2026-11-18', '2026-11-19'),
     quarter: P('Q2', 'Q2'), liftQuarter: P('Q1', 'Q1'), lessonGradeNoQuiz: null, Cws: null, quizTotal: 0, Q: null },
 ];
-const CONFIG = { Q1: { start: '2026-09-02', end: '2026-11-06', close: '2026-11-12', finalUntil: '2026-11-19' },
+// close = the live grade-config (Tue 11/10 since the teacher's 2026-11-08 decision), so the Desk's baked
+// QUARTER_WINDOWS (the calendar band and the Pico week badge) and /grade agree, as they do in production.
+const CONFIG = { Q1: { start: '2026-09-02', end: '2026-11-06', close: '2026-11-10', finalUntil: '2026-11-19' },
   Q2: { start: '2026-11-09', end: '2027-01-22' }, Q3: { start: '2027-01-25', end: '2027-04-14' }, Q4: { start: '2027-04-15', end: '2027-06-17' } };
 const OLD_CONFIG = Object.fromEntries(Object.entries(CONFIG).map(([q, { start, end }]) => [q, { start, end }]));
 const OFFICIAL_Q1 = { quarter: 'Q1', grade: 92.4, asOf: '2026-11-09T02:00:00.000Z', parts: { work: 92.4, rule: 'work' } };
@@ -98,17 +100,17 @@ describe('quarter line on the real Desk (Mon Nov 9, Period B)', { timeout: budge
       const pills = [...doc.querySelectorAll('#donow-grades .qpill:not(.qpill-missing)')];
       expect(pills.map((p) => p.dataset.role)).toEqual(['closing', 'current']);
       expect(pills.map((p) => p.dataset.quarter)).toEqual(['Q1', 'Q2']);
-      expect(pillText(pills[0])).toBe('Quarter 1 92.4 official · closes Thu Nov 12');
+      expect(pillText(pills[0])).toBe('Quarter 1 92.4 official · closes Tue Nov 10');
       expect(norm(pills[1].querySelector('.qkey').textContent)).toBe('Quarter 2');
       expect(norm(pills[1].querySelector('.qgrade').textContent)).toBe('85');
       const missing = doc.querySelector('#donow-grades .qpill-missing');
       expect(missing.previousElementSibling).toBe(pills[1]);
-      expect(missing.textContent).toBe('Quarter 1: 2 are 0s now, fix by Thu 11/12 · Quarter 2: 2 are 0s now · 1 more by Mon 11/9');
-      // The calendar: Quarter 2's band names the close; Thu 11/12 carries its mark.
+      expect(missing.textContent).toBe('Quarter 1: 2 are 0s now, fix by Tue 11/10 · Quarter 2: 2 are 0s now · 1 more by Mon 11/9');
+      // The calendar: Quarter 2's band names the close; Tue 11/10 carries its mark.
       // (A student who is behind opens on the overdue week; Today shows this week.)
       harness.window.calToday();
       const bands = [...doc.querySelectorAll('#cg .cal-qband')].map((b) => norm(b.textContent));
-      expect(bands).toContain('Quarter 2 (Nov 9 – Jan 22) · Quarter 1 closes Thu Nov 12');
+      expect(bands).toContain('Quarter 2 (Nov 9 – Jan 22) · Quarter 1 closes Tue Nov 10');
       const marks = [...doc.querySelectorAll('#cg .cal-qmark')].map((m) => m.textContent);
       expect(marks).toContain('Quarter 1 closes');
       // The one-time notice (its 0 dates: Sun 11/8 and today).
@@ -120,12 +122,12 @@ describe('quarter line on the real Desk (Mon Nov 9, Period B)', { timeout: budge
       await openLedger(harness, '#wallet-content .wallet-zero-card .wz-row');
       const card = doc.querySelector('#wallet-content .wallet-zero-card');
       expect([...card.querySelectorAll('.wz-quarter-head')].map((h) => norm(h.textContent)))
-        .toEqual(['Quarter 1 (closes Thu Nov 12)', 'Quarter 2 (0 dates after Fri Nov 6)']);
+        .toEqual(['Quarter 1 (closes Tue Nov 10)', 'Quarter 2 (0 dates after Fri Nov 6)']);
       const keys = [...card.querySelectorAll('.wz-row')].map((r) => r.dataset.key);
       expect(keys).toEqual(['2.1:worksheet', '4.1:blooket', '4.2:quiz', '4.2:blooket', '4.3:worksheet', '4.6:worksheet:later']);
-      expect(norm(card.querySelector('.wz-status').textContent)).toMatch(/^Quarter 1 so far: 92\.4% \(closes Thu Nov 12\)\. .* Quarter 2 so far: 85%\. /);
+      expect(norm(card.querySelector('.wz-status').textContent)).toMatch(/^Quarter 1 so far: 92\.4% \(closes Tue Nov 10\)\. .* Quarter 2 so far: 85%\. /);
       expect(norm(doc.querySelector('#wallet-content .wallet-grade-other').textContent))
-        .toBe('Quarter 1: 92.4% official · closes Thu Nov 12. Its 0s can still be fixed until then.');
+        .toBe('Quarter 1: 92.4% official · closes Tue Nov 10. Its 0s can still be fixed until then.');
     } finally {
       harness.teardown();
     }
@@ -146,7 +148,7 @@ describe('quarter line on the real Desk (Mon Nov 9, Period B)', { timeout: budge
       expect(asked('Q1')).toBe(1);            // boot + 3 re-renders: once in all (4 times before the fix)
       const pills = [...harness.document.querySelectorAll('#donow-grades .qpill:not(.qpill-missing)')];
       expect(pills.map((p) => p.dataset.role)).toEqual(['closing', 'current']);
-      expect(pillText(pills[0])).toBe('Quarter 1 92.4 official · closes Thu Nov 12');   // the cached official still leads
+      expect(pillText(pills[0])).toBe('Quarter 1 92.4 official · closes Tue Nov 10');   // the cached official still leads
     } finally {
       harness.teardown();
     }
@@ -169,9 +171,9 @@ describe('quarter line on the real Desk (Mon Nov 9, Period B)', { timeout: budge
       const sign = doc.getElementById('pico-sign');
       expect(norm(sign.querySelector('.grade-num').textContent)).toBe('85');
       expect(norm(sign.querySelector('.grade-cap').textContent)).toBe('Quarter 2');
-      expect(norm(sign.querySelector('.grade-side').textContent)).toBe('Quarter 1 92.4 · official · closes Thu Nov 12');
+      expect(norm(sign.querySelector('.grade-side').textContent)).toBe('Quarter 1 92.4 · official · closes Tue Nov 10');
       expect(norm(sign.querySelector('.sign-notice span').textContent)).toMatch(/^Quarter 1 ended Friday\. 2\.3 Day 2/);
-      expect(norm(doc.getElementById('pico-quarter').textContent)).toBe('Q2 · Q1 CLOSES THU');
+      expect(norm(doc.getElementById('pico-quarter').textContent)).toBe('Q2 · Q1 CLOSES TUE');
       expect(doc.getElementById('pico-quarter').hidden).toBe(false);
       expect(norm(doc.getElementById('pico-week-title').textContent)).toBe('WEEK OF NOV 9');   // untouched
       await openLedger(harness, '#pico-ledger-zero .pl-tile');
@@ -179,12 +181,12 @@ describe('quarter line on the real Desk (Mon Nov 9, Period B)', { timeout: budge
       expect(tiles.map(rowFacts)).toEqual(s7.rows);
       expect(norm(doc.getElementById('pico-ledger-status').textContent)).toBe(s7.status);
       const heads = (bucket) => [...doc.querySelectorAll('#pico-ledger-zero .pl-quarter-head[data-bucket="' + bucket + '"]')].map((h) => norm(h.textContent));
-      expect(heads('zeroed')).toEqual(['Quarter 1 (closes Thu Nov 12)', 'Quarter 2 (0 dates after Fri Nov 6)']);
+      expect(heads('zeroed')).toEqual(['Quarter 1 (closes Tue Nov 10)', 'Quarter 2 (0 dates after Fri Nov 6)']);
       expect(heads('soon')).toEqual(['Quarter 2 (0 dates after Fri Nov 6)']);
       expect(heads('notyet')).toEqual(['Quarter 2 (0 dates after Fri Nov 6)']);
       expect(doc.querySelector('#pico-ledger-zero .wz-quarter-head')).toBeNull();   // Pico's own heading class
       expect(norm(doc.querySelector('#pico-ledger-balance .wallet-grade-other').textContent))
-        .toBe('Quarter 1: 92.4% official · closes Thu Nov 12. Its 0s can still be fixed until then.');
+        .toBe('Quarter 1: 92.4% official · closes Tue Nov 10. Its 0s can still be fixed until then.');
       // Dismissing on the sign dismisses the Desk's notice too.
       sign.querySelector('.sign-notice button').click();
       await harness.waitFor(() => !doc.querySelector('#pico-sign .sign-notice'), { timeoutMs: 4000, message: 'the notice stayed on the sign' });
@@ -219,13 +221,13 @@ describe('the week after the close (Fri Nov 13) and the degrade path', { timeout
     }
   });
 
-  it('D8: Thu Nov 12 with the close already reported: "final" at once, Quarter 1 rows gone, the band stops saying "closes"', async () => {
-    const harness = await boot({ now: '2026-11-12T14:00:00.000Z', grade: payload({ closed: { grade: 92, at: '2026-11-12T13:00:00Z', bonusApplied: null } }) });
+  it('D8: Tue Nov 10 with the close already reported: "final" at once, Quarter 1 rows gone, the band stops saying "closes"', async () => {
+    const harness = await boot({ now: '2026-11-10T14:00:00.000Z', grade: payload({ closed: { grade: 92, at: '2026-11-10T13:00:00Z', bonusApplied: null } }) });
     try {
       const doc = harness.document;
       const pills = [...doc.querySelectorAll('#donow-grades .qpill:not(.qpill-missing)')];
       expect(pills.map((p) => p.dataset.role)).toEqual(['final', 'current']);
-      expect(pillText(pills[0])).toBe('Quarter 1 final 92.4');   // never "closes Thu Nov 12" once it has closed
+      expect(pillText(pills[0])).toBe('Quarter 1 final 92.4');   // never "closes Tue Nov 10" once it has closed
       expect(doc.querySelector('#donow-grades .qpill-missing').textContent).not.toMatch(/Quarter 1|fix by/);
       harness.window.calToday();
       expect([...doc.querySelectorAll('#cg .cal-qband')].map((b) => b.textContent).join('|')).not.toContain('closes');
@@ -258,7 +260,7 @@ describe('the week after the close (Fri Nov 13) and the degrade path', { timeout
       // Review D9 (the engine reports Quarter 2 null before Mon Nov 9): no Quarter 2 number anywhere.
       // The balance card and the coach speak for Quarter 1 until Quarter 2 has a grade.
       expect(harness.window._walletCurrentQuarter().quarter).toBe('Q1');
-      expect(harness.window._walletOtherQuarterLine('Q1')).toBe('Quarter 1 closes Thu Nov 12. Its 0s can still be fixed until then.');
+      expect(harness.window._walletOtherQuarterLine('Q1')).toBe('Quarter 1 closes Tue Nov 10. Its 0s can still be fixed until then.');
       const coach = doc.querySelector('#donow-helper .wsl-btn');
       expect(coach).not.toBeNull();
       coach.click();
@@ -309,7 +311,7 @@ describe('Finding R6b: a Quarter 2 official published before Quarter 2 starts', 
       expect(harness.requests.some((r) => r.url.includes('/official-grade?quarter=Q2'))).toBe(true);
       const pills = [...doc.querySelectorAll('#donow-grades .qpill:not(.qpill-missing)')];
       expect(pills.map((p) => p.dataset.role)).toEqual(['closing', 'current']);
-      expect(pillText(pills[0])).toBe('Quarter 1 92.4 official \u00b7 closes Thu Nov 12');   // Quarter 1 unaffected
+      expect(pillText(pills[0])).toBe('Quarter 1 92.4 official \u00b7 closes Tue Nov 10');   // Quarter 1 unaffected
       expect(pillText(pills[1])).toBe('Quarter 2 \u2014 starts Mon Nov 9');
       expect(pills[1].classList.contains('empty')).toBe(true);
       expect(pills[1].title).toMatch(/^Quarter 2 starts Mon Nov 9\. It has no grade until then\. Quarter 2 covers /);
@@ -337,7 +339,7 @@ describe('Finding R6b: a Quarter 2 official published before Quarter 2 starts', 
       const doc = harness.document;
       const pills = [...doc.querySelectorAll('#donow-grades .qpill:not(.qpill-missing)')];
       expect(pills.map((p) => p.dataset.role)).toEqual(['closing', 'current']);
-      expect(pillText(pills[0])).toBe('Quarter 1 92.4 official \u00b7 closes Thu Nov 12');
+      expect(pillText(pills[0])).toBe('Quarter 1 92.4 official \u00b7 closes Tue Nov 10');
       expect(pillText(pills[1])).toBe('Quarter 2 80 official (same as Schoology)');
       expect(pills[1].title).toMatch(/^Official Quarter 2 grade/);
       expect(harness.window._officialGradeCache).toMatchObject({ quarter: 'Q2', grade: 80 });
@@ -347,7 +349,7 @@ describe('Finding R6b: a Quarter 2 official published before Quarter 2 starts', 
       const sign = doc.getElementById('pico-sign');
       expect(norm(sign.querySelector('.grade-num').textContent)).toBe('80');
       expect(norm(sign.querySelector('.grade-cap').textContent)).toBe('Quarter 2 official');
-      expect(norm(sign.querySelector('.grade-side').textContent)).toBe('Quarter 1 92.4 \u00b7 official \u00b7 closes Thu Nov 12');
+      expect(norm(sign.querySelector('.grade-side').textContent)).toBe('Quarter 1 92.4 \u00b7 official \u00b7 closes Tue Nov 10');
     } finally {
       harness.teardown();
     }

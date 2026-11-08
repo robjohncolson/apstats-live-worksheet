@@ -1307,7 +1307,7 @@
 
   // The current quarter's pill exactly as the Do Now shows it (official when published).
   // QUARTER_LINE_BY_DUE_DATE_SPEC §3.1: pills are read by data-role, never by position. While a
-  // quarter is closing or final, its pill rides along as `side` ('Quarter 1 92 · closes Thu Nov 12').
+  // quarter is closing or final, its pill rides along as `side` ('Quarter 1 92 · closes Tue Nov 10').
   // A pill without data-role (an older Desk build) is the current one.
   function gradeInfo() {
     var status = byId('donow-grade-status');
@@ -1352,7 +1352,7 @@
     };
   }
 
-  // A pill in one line: 'Quarter 1 92 · closes Thu Nov 12', 'Quarter 1 final 92',
+  // A pill in one line: 'Quarter 1 92 · closes Tue Nov 10', 'Quarter 1 final 92',
   // 'Quarter 2 · starts Mon Nov 9' (no grade yet: the dash is left out).
   function sidePillText(pill) {
     var parts = ['.qkey', '.qgrade'].map(function (sel) {

@@ -6,7 +6,8 @@
 # and prints them (finding B3, 2026-11-08; no quarter is hard-coded here):
 #   - the quarter holding today (on a gap day between two quarters, the next one), and
 #   - each earlier quarter that has ended but is still open for fixes (today <= its close).
-#   Sun 11/08 - Thu 11/12: "Q1 Q2". From Fri 11/13: "Q2". From Sat 2027-01-23: "Q3" (and
+#   Sun 11/08 - Tue 11/10: "Q1 Q2". From Wed 11/11: "Q2" (Quarter 1 closes Tue 11/10, teacher
+#   2026-11-08; its close + final run Wed 11/11 from tools/close_quarter.py). From Sat 2027-01-23: "Q3" (and
 #   "Q2" too only once grade-config carries a quarters.Q2.close).
 #   If that call fails, NOTHING runs and the job exits non-zero (there is no fallback list).
 # Each pass has three steps:
@@ -31,7 +32,7 @@
 #     missing work (B: 2.3 Day 2 Quiz; E: 2.2 Follow-Along / Blooket / Quiz and 2.3
 #     Follow-Along / Blooket), then the MP2 official override (a Progress Check counts only
 #     after its Day 2).
-#   Tue-Thu the same. From Fri 11/13 only the Quarter 2 pass runs.
+#   Tue 11/10 the same. From Wed 11/11 only the Quarter 2 pass runs.
 #
 # DEFAULTS TO DRY-RUN BY DESIGN. Steps 2 and 3 write only with -Live.
 #   -Q2ScoresOnly  the Quarter 2 pass builds its fixture without the lagged zeros (an earned
@@ -61,7 +62,7 @@ param(
   [string]$Base = '',
   [string]$LogDir = '',
   [switch]$Q2ScoresOnly,
-  [string]$Q1Close = '2026-11-12'
+  [string]$Q1Close = '2026-11-10'
 )
 
 $ErrorActionPreference = 'Continue'
