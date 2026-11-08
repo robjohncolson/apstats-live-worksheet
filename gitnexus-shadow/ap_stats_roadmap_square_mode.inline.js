@@ -24435,27 +24435,11 @@ function _refreshRosterSession() {
   if (typeof window.rosterClient.isExpired === 'function' && window.rosterClient.isExpired()) return;
   if (window.__VIEW_AS_STUDENT_ID__) return;
   if (typeof _viewAsContext === 'function' && _viewAsContext()) return;
-  var studentId = typeof window.rosterClient.studentId === 'function' ? window.rosterClient.studentId() : null;
-  try {
-    window.rosterClient.refreshIfNeeded().then(function (result) {
-      if (!result || !result.ok || !result.refreshed) return;
-      var roster = window.rosterClient;
-      if (!studentId || !roster || typeof roster.studentId !== 'function' || roster.studentId() !== studentId) return;
-      if (window.__VIEW_AS_STUDENT_ID__) return;
-      if (typeof _viewAsContext === 'function' && _viewAsContext()) return;
-      var baseUrl = window.ROSTER_SERVICE_URL;
-      var token = typeof roster.token === 'function' ? roster.token() : null;
-      // Rotating a token invalidates the grade request already in flight.
-      // Replace it immediately, keeping this same student's cached evidence.
-      if (baseUrl && token && typeof renderDoNowGrades === 'function') {
-        return renderDoNowGrades(baseUrl, token);
-      }
-    }).catch(function () {});
-  } catch (_) {}
+  try { window.rosterClient.refreshIfNeeded().catch(function () {}); } catch (_) {}
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-11-08-5d8p';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-11-08-wh8i';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.
