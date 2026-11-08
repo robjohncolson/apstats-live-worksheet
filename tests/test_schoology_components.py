@@ -191,6 +191,20 @@ class TestComponentColumns(unittest.TestCase):
         l12 = [c["key"] for c in cols if c["group_label"] == "1.2"]
         self.assertEqual(l12, ["FA:1.2", "QUIZ:1.2", "BL:1.2"])
 
+    def test_every_lesson_column_is_filed_on_the_day_its_zero_lands(self):
+        # QUARTER_LINE_BY_DUE_DATE_SPEC.md 4.2: the marking period comes from the zero date
+        # (class day + 13), one day later (the 0 lands the next morning); the Schoology due
+        # date stays the class day (decision 4).
+        by_key = {c["key"]: c for c in self._cols()}
+        self.assertEqual(by_key["FA:1.2"]["due_date"], "2026-01-06")
+        self.assertEqual(by_key["FA:1.2"]["filing_date"], "2026-01-20")
+        self.assertEqual(by_key["QUIZ:1.2"]["filing_date"], "2026-01-20")
+        self.assertEqual(by_key["BL:1.2"]["filing_date"], "2026-01-20")
+        # A combined group is filed by its earliest lesson.
+        self.assertEqual(by_key["FA:6.1-2"]["filing_date"], "2026-03-16")
+        undated = {c["key"]: c for c in self._cols(include_undated=True)}
+        self.assertIsNone(undated["FA:4.6"]["filing_date"])
+
 
 class TestLiveScheduleUnit2Poster(unittest.TestCase):
     """U2_CLAIM_POSTER_SPEC.md B4, read from the live data/lesson-schedule.json.
@@ -219,6 +233,22 @@ class TestLiveScheduleUnit2Poster(unittest.TestCase):
     def test_unit_1_poster_dates_are_unchanged(self):
         self.assertEqual(self._by_key("B")["POSTER:U1"]["due_date"], "2026-10-08")
         self.assertEqual(self._by_key("E")["POSTER:U1"]["due_date"], "2026-10-09")
+
+    def test_pc_is_filed_by_day_2_and_a_poster_by_its_date(self):
+        # A PC counts in the quarter it is due (Day 2, engine pcUnitsInQuarter); its
+        # Schoology due date stays Day 1.
+        b = self._by_key("B")
+        self.assertEqual((b["PC:U2"]["due_date"], b["PC:U2"]["filing_date"]), ("2026-11-30", "2026-12-01"))
+        self.assertEqual((b["PC:U1"]["due_date"], b["PC:U1"]["filing_date"]), ("2026-10-13", "2026-10-15"))
+        self.assertEqual(b["POSTER:U2"]["filing_date"], "2026-11-10")
+        self.assertEqual(self._by_key("E")["PC:U2"]["filing_date"], "2026-11-25")
+
+    def test_b_2_3_columns_straddle_the_line_and_file_in_mp1(self):
+        # B 4.1 (10/23, zero 11/05) and 4.2 (10/26, zero 11/08) share the 4.1-2 worksheet:
+        # 4.1 files the group on 11/06 (MP1). E's 4.1 (10/26) files it on 11/09 (MP2).
+        self.assertEqual(self._by_key("B")["FA:4.1-2"]["filing_date"], "2026-11-06")
+        self.assertEqual(self._by_key("E")["FA:4.1-2"]["filing_date"], "2026-11-09")
+        self.assertEqual(self._by_key("B")["FA:4.3-4-5"]["filing_date"], "2026-11-10")
 
 
 class TestComponentGradesFromClassDoc(unittest.TestCase):
@@ -329,10 +359,11 @@ class TestComponentGradesFromClassDoc(unittest.TestCase):
             sc.QUIZ_ZEROS_FROM = saved
 
     def test_never_zero_lesson_is_never_zeroed_even_when_due_has_passed(self):
-        # QUARTER_ZERO_FREEZE_SPEC.md (teacher 2026-11-06): a lesson whose zero date fell
-        # after its quarter's last day comes from /class/grades with zeroDate null for the
-        # period (and neverZero true). Schoology never gets a 0 for it, even long after
-        # its class day, and the cells stay blank until the student does the work.
+        # A never-zero row comes from /class/grades with zeroDate null for the period (and
+        # neverZero true): under QUARTER_ZERO_FREEZE_SPEC.md that was every after-the-line
+        # lesson; since QUARTER_LINE_BY_DUE_DATE_SPEC.md only a zero date past the last
+        # quarter (the year end). Schoology never gets a 0 for it, even long after its
+        # class day, and the cells stay blank until the student does the work.
         lesson = {"lessonKey": "4.5", "unit": 4, "worksheetKey": "5", "lessonGradeNoQuiz": None, "Cws": None,
                   "Q": None, "quizTotal": 3, "blooket": None, "hasBlooket": True,
                   "due": {"B": "2026-10-30", "E": "2026-11-02"},
@@ -356,7 +387,7 @@ class TestComponentGradesFromClassDoc(unittest.TestCase):
 
     def _group_doc(self, section, first_zero, first_never):
         # 4.7 (11/06) and 4.8 (11/09) share the 4.7-8 worksheet and deck; the group's columns
-        # are dated 11/06 (the earliest lesson), so Schoology files them in MP1.
+        # are dated 11/06 (the earliest lesson). These are freeze-era rows (no quarter field).
         p = section[-1]
         first = {"lessonKey": "4.7", "unit": 4, "worksheetKey": "7-8", "lessonGradeNoQuiz": None, "Cws": None,
                  "Q": None, "quizTotal": 0, "blooket": None, "hasBlooket": True,
@@ -370,9 +401,9 @@ class TestComponentGradesFromClassDoc(unittest.TestCase):
                               "lessons": [first, second], "units": {}}]}
 
     def test_group_column_zero_is_decided_by_the_lesson_that_dates_it(self):
-        # QUARTER_ZERO_FREEZE_SPEC.md: 4.7 is never-zero (Q1 closed before its zero date) while
-        # 4.8 is a Q2 lesson that zeroes after 11/22. The shared FA/BL columns live in MP1, so
-        # 4.8 must never write a 0 there; its own quiz column (MP2) still zeroes.
+        # Freeze-era rows: 4.7 is never-zero while 4.8 is a Q2 lesson that zeroes after 11/22.
+        # The group's deciding lesson (4.7, the earliest) decides the shared FA/BL columns, so
+        # 4.8 never writes a 0 there; its own quiz column still zeroes.
         g = sc.group_label(4, "7-8")
         fa, bl, quiz = f"u9/{sc.fa_key(g)}", f"u9/{sc.bl_key(g)}", f"u9/{sc.quiz_key('4.8')}"
         for section in ("PeriodB", "PeriodE"):
@@ -393,7 +424,8 @@ class TestComponentGradesFromClassDoc(unittest.TestCase):
             self.assertEqual((out[fa], out[bl]), (91, 77))
 
     def test_group_column_zero_without_the_freeze_is_unchanged(self):
-        # No freeze: 4.7's own zero date (11/19) zeroes the group first, exactly as before.
+        # No freeze (and the rows of QUARTER_LINE_BY_DUE_DATE_SPEC.md, which restore 4.7's
+        # zero date): 4.7's own zero date (11/19) zeroes the group first.
         g = sc.group_label(4, "7-8")
         fa, bl = f"u9/{sc.fa_key(g)}", f"u9/{sc.bl_key(g)}"
         doc = self._group_doc("PeriodB", "2026-11-19", None)
@@ -593,6 +625,318 @@ class TestComponentComments(unittest.TestCase):
         student["lessons"].insert(0, {**self.lesson, "Cws": 75, "blooket": 80})
         out = sc.component_comments_from_class_doc(self.doc, {"r1": "mapped"}, "2026-09-21")
         self.assertEqual(out, {"mapped/FA:1.2": "", "mapped/BL:1.2": ""})
+
+
+# ---------------------------------------------------------------------------
+# Quarter routing (QUARTER_LINE_BY_DUE_DATE_SPEC.md section 4.1, teacher 2026-11-07)
+# ---------------------------------------------------------------------------
+
+import re  # noqa: E402
+
+GRADE_CONFIG = os.path.join(REPO_ROOT, "roster-server", "grade-config.js")
+LIVE_MPS = {   # the live Schoology marking periods (read-only probe 2026-11-07)
+    "1173888": {"start": "2026-09-02", "end": "2026-11-06"},
+    "1173889": {"start": "2026-11-07", "end": "2027-01-22"},
+    "1173886": {"start": "2027-01-23", "end": "2027-04-14"},
+    "1173887": {"start": "2027-04-15", "end": "2027-06-30"},
+}
+
+
+def _row(key, unit, wk, b_day, e_day=None, **fields):
+    """A /class/grades lesson row with nothing done (every score None)."""
+    row = {"lessonKey": key, "unit": unit, "worksheetKey": wk,
+           "due": {"B": b_day, "E": e_day},
+           "zeroDate": {"B": sc.zero_date_of(b_day), "E": sc.zero_date_of(e_day)},
+           "lessonGradeNoQuiz": None, "Cws": None, "Q": None, "quizTotal": 3,
+           "blooket": None, "hasBlooket": True}
+    row.update(fields)
+    return row
+
+
+def _doc(section, lessons, **student):
+    return {"students": [dict({"studentId": "s9", "schoologyUid": "u9", "section": section,
+                               "lessons": lessons, "units": {}}, **student)]}
+
+
+class TestEngineParity(unittest.TestCase):
+    """The Python mirrors of the engine's numbers stay equal to roster-server/grade-config.js."""
+
+    def setUp(self):
+        with open(GRADE_CONFIG, encoding="utf-8") as fh:
+            self.config = fh.read()
+
+    def test_due_lag_days(self):
+        self.assertEqual(sc.DUE_LAG_DAYS, int(re.search(r"dueLagDays: (\d+)", self.config).group(1)))
+
+    def test_default_quarter_windows(self):
+        found = dict((q, {"start": s, "end": e}) for q, s, e in re.findall(
+            r"(Q\d): \{ units: \[[^\]]*\],\s*start: '([\d-]+)', end: '([\d-]+)'", self.config))
+        self.assertEqual(set(found), {"Q1", "Q2", "Q3", "Q4"})
+        self.assertEqual(sc.DEFAULT_QUARTERS, found)
+
+    def test_daily_job_close_fallback_matches_the_engine(self):
+        # daily_schoology_sync.ps1 -Q1Close is only a fallback; it must equal grade-config's
+        # quarters.Q1.close whenever the engine carries one.
+        with open(os.path.join(REPO_ROOT, "tools", "daily_schoology_sync.ps1"), encoding="utf-8") as fh:
+            fallback = re.search(r"\[string\]\$Q1Close = '([\d-]+)'", fh.read()).group(1)
+        engine = re.search(r"Q1: \{[^\n]*\n?[^\n]*close: '([\d-]+)'", self.config)
+        if engine:
+            self.assertEqual(fallback, engine.group(1))
+        self.assertEqual(fallback, "2026-11-12")
+
+
+class TestZeroQuarterRule(unittest.TestCase):
+    def test_zero_quarter_boundaries(self):
+        # Spec section 2 test (5): a gap day or a quarter's last day rolls forward.
+        self.assertEqual(sc.zero_quarter_of("2026-11-05"), "Q1")
+        for d in ("2026-11-06", "2026-11-07", "2026-11-08"):
+            self.assertEqual(sc.zero_quarter_of(d), "Q2", d)
+        for d in ("2027-01-22", "2027-01-24"):
+            self.assertEqual(sc.zero_quarter_of(d), "Q3", d)
+        self.assertEqual(sc.zero_quarter_of("2027-06-16"), "Q4")
+        self.assertIsNone(sc.zero_quarter_of("2027-06-17"))
+        self.assertIsNone(sc.zero_quarter_of(None))
+
+    def test_zero_date_and_filing_date(self):
+        self.assertEqual(sc.zero_date_of("2026-10-26"), "2026-11-08")
+        self.assertEqual(sc.filing_date_of("2026-10-23"), "2026-11-06")
+        self.assertEqual(sc.filing_date_of("2026-10-26"), "2026-11-09")
+        self.assertIsNone(sc.filing_date_of(None))
+        self.assertIsNone(sc.add_days("not a date", 1))
+
+    def test_filing_date_lands_in_the_marking_period_of_the_zero_quarter(self):
+        # For every dated lesson of the live schedule, the MP the filing date lands in is
+        # the Nth MP where N is the engine's regular quarter of that lesson (class day +
+        # 13): Schoology's contiguous MPs and the engine's gapped windows agree.
+        import schoology_sync_lib as lib
+        with open(os.path.join(REPO_ROOT, "data", "lesson-schedule.json"), encoding="utf-8") as f:
+            lessons = json.load(f)["lessons"]
+        checked = 0
+        for key, entry in lessons.items():
+            for period in ("B", "E"):
+                day = (entry.get("periods") or {}).get(period)
+                if not day or entry.get("kind") == "work":
+                    continue
+                quarter = sc.lesson_quarter({"due": {period: day}}, period)
+                mp = lib.marking_period_for_date(sc.filing_date_of(day), LIVE_MPS)
+                self.assertEqual(lib.quarter_for_marking_period(mp, LIVE_MPS), quarter, (key, period, day))
+                checked += 1
+        self.assertGreater(checked, 100)
+
+    def test_lesson_quarter_prefers_the_engine_field(self):
+        row = {"due": {"B": "2026-10-26"}, "quarter": {"B": "Q1"}}
+        self.assertEqual(sc.lesson_quarter(row, "B"), "Q1")        # the engine's word wins
+        never = {"due": {"B": "2027-06-10"}, "quarter": {"B": None}, "liftQuarter": {"B": "Q4"}}
+        self.assertEqual(sc.lesson_quarter(never, "B"), "Q4")      # year end: where it was taught
+
+    def test_lesson_quarter_is_derived_for_rows_without_the_field(self):
+        # The freeze-era engine sends zeroDate null for B 4.2 (after the line): derive it
+        # from the class day + 13 -> Q2. 4.1 (zero 11/05) stays Q1.
+        self.assertEqual(sc.lesson_quarter({"due": {"B": "2026-10-26"}, "zeroDate": {"B": None}}, "B"), "Q2")
+        self.assertEqual(sc.lesson_quarter({"due": {"B": "2026-10-23"}}, "B"), "Q1")
+        self.assertEqual(sc.lesson_quarter({"due": {"E": "2026-11-09"}}, "E"), "Q2")
+        self.assertIsNone(sc.lesson_quarter({"due": {"B": None}}, "B"))
+        self.assertIsNone(sc.lesson_quarter({"due": {"B": "2026-10-23"}}, None))
+        # The doc's own windows win over the defaults.
+        shifted = {"Q1": {"start": "2026-09-02", "end": "2026-11-13"},
+                   "Q2": {"start": "2026-11-16", "end": "2027-01-22"}}
+        self.assertEqual(sc.lesson_quarter({"due": {"B": "2026-10-26"}}, "B", shifted), "Q1")
+
+    def test_doc_quarters_falls_back_to_the_defaults(self):
+        self.assertIs(sc.doc_quarters({}), sc.DEFAULT_QUARTERS)
+        mine = {"Q1": {"start": "2026-09-02", "end": "2026-11-06"}}
+        self.assertIs(sc.doc_quarters({"config": {"quarters": mine}}), mine)
+
+    def test_close_dates(self):
+        doc = {"config": {"quarters": {"Q1": {"start": "2026-09-02", "end": "2026-11-06",
+                                              "close": "2026-11-12"}}}}
+        self.assertEqual(sc.quarter_close_date(doc, "Q1"), "2026-11-12")
+        self.assertEqual(sc.quarter_close_date({}, "Q1", "2026-11-13"), "2026-11-13")
+        self.assertIsNone(sc.quarter_close_date({}, "Q1"))
+        self.assertFalse(sc.quarter_is_closed("2026-11-12", "2026-11-12"))   # the close evening
+        self.assertTrue(sc.quarter_is_closed("2026-11-13", "2026-11-12"))
+        self.assertFalse(sc.quarter_is_closed("2026-11-13", None))
+        self.assertFalse(sc.quarter_has_ended(doc, "Q1", "2026-11-06"))
+        self.assertTrue(sc.quarter_has_ended(doc, "Q1", "2026-11-07"))
+
+
+def _real_quarters():
+    """roster-server/grade-config.js PHASE3_CONFIG.quarters, read by node (the engine's own object)."""
+    import subprocess
+    script = ("import('./roster-server/grade-config.js')"
+              ".then(m => process.stdout.write(JSON.stringify(m.PHASE3_CONFIG.quarters)))")
+    result = subprocess.run(["node", "--input-type=module", "-e", script], cwd=REPO_ROOT,
+                            capture_output=True, text=True, encoding="utf-8", check=True, timeout=60)
+    return json.loads(result.stdout)
+
+
+class TestQuarterPasses(unittest.TestCase):
+    """quarter_passes: which passes the daily job runs (finding B3, 2026-11-08)."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.doc = {"config": {"quarters": _real_quarters()}}
+
+    def passes(self, today, doc=None, q1_close=None):
+        return sc.quarter_passes(self.doc if doc is None else doc, today, q1_close=q1_close)
+
+    def test_the_real_config_this_week(self):
+        self.assertEqual(self.doc["config"]["quarters"]["Q1"].get("close"), "2026-11-12")
+        self.assertEqual(self.passes("2026-11-08"), ["Q1", "Q2"])     # Sunday, a gap day
+        self.assertEqual(self.passes("2026-11-09"), ["Q1", "Q2"])
+        self.assertEqual(self.passes("2026-11-12"), ["Q1", "Q2"])     # the close evening
+        self.assertEqual(self.passes("2026-11-13"), ["Q2"])
+
+    def test_the_real_config_in_january(self):
+        q2_close = self.doc["config"]["quarters"]["Q2"].get("close")
+        self.assertEqual(self.passes("2027-01-22"), ["Q2"])
+        expected = ["Q2", "Q3"] if q2_close and "2027-01-23" <= q2_close else ["Q3"]
+        self.assertEqual(self.passes("2027-01-23"), expected)       # Saturday: Q3 is next
+        self.assertEqual(self.passes("2027-01-25")[-1], "Q3")
+
+    def test_inside_a_quarter_and_at_the_ends_of_the_year(self):
+        self.assertEqual(self.passes("2026-10-15"), ["Q1"])
+        self.assertEqual(self.passes("2026-11-06"), ["Q1"])          # Quarter 1's last day
+        self.assertEqual(self.passes("2026-08-20"), ["Q1"])          # before the first quarter
+        self.assertEqual(self.passes("2027-06-17"), ["Q4"])
+        q4_close = self.doc["config"]["quarters"]["Q4"].get("close")
+        after = ["Q4"] if q4_close and "2027-06-18" <= q4_close else []
+        self.assertEqual(self.passes("2027-06-18"), after)           # after the year: only a closing Q4
+
+    def test_a_closing_quarter_needs_a_close_date(self):
+        windows = {q: {"start": w["start"], "end": w["end"]} for q, w in sc.DEFAULT_QUARTERS.items()}
+        bare = {"config": {"quarters": windows}}
+        self.assertEqual(self.passes("2026-11-09", bare), ["Q2"])
+        # The ps1's -Q1Close fallback applies to Quarter 1 only.
+        self.assertEqual(self.passes("2026-11-09", bare, q1_close="2026-11-12"), ["Q1", "Q2"])
+        self.assertEqual(self.passes("2026-11-13", bare, q1_close="2026-11-12"), ["Q2"])
+        # A far-off Quarter 1 fallback keeps Quarter 1 open; Quarter 2 (no close) gets none.
+        self.assertEqual(self.passes("2027-01-25", bare, q1_close="2027-02-01"), ["Q1", "Q3"])
+        # A doc without config.quarters uses the engine defaults.
+        self.assertEqual(self.passes("2026-11-09", {}, q1_close="2026-11-12"), ["Q1", "Q2"])
+
+    def test_each_quarter_runs_its_pass_on_its_own_days(self):
+        # So no lesson's regular quarter goes without a pass while that quarter runs.
+        import datetime as dt
+        quarters = self.doc["config"]["quarters"]
+        for q in ("Q1", "Q2", "Q3", "Q4"):
+            day = dt.date.fromisoformat(quarters[q]["start"])
+            end = dt.date.fromisoformat(quarters[q]["end"])
+            while day <= end:
+                self.assertIn(q, self.passes(day.isoformat()), (q, day))
+                day += dt.timedelta(days=7)
+
+
+class TestQuarterPassTargets(unittest.TestCase):
+    """component_grades_from_class_doc(quarter=...) emits only that pass's targets."""
+
+    def _b_rows(self, with_field):
+        # B 4.1 (Q1) and 4.2 (Q2) share the 4.1-2 worksheet + deck; 4.2 has a quiz.
+        r41 = _row("4.1", 4, "1-2", "2026-10-23", quizTotal=0)
+        r42 = _row("4.2", 4, "1-2", "2026-10-26")
+        r43 = _row("4.3", 4, "3-4-5", "2026-10-27")
+        if with_field:   # the engine's own rows (zeroQuarterMembership)
+            r41.update(quarter={"B": "Q1", "E": "Q2"}, liftQuarter={"B": None, "E": "Q1"})
+            r42.update(quarter={"B": "Q2", "E": "Q2"}, liftQuarter={"B": "Q1", "E": "Q1"})
+            r43.update(quarter={"B": "Q2", "E": "Q2"}, liftQuarter={"B": "Q1", "E": "Q1"})
+        return [r41, r42, r43]
+
+    def test_b_quarter_1_pass_has_only_the_4_1_columns(self):
+        for with_field in (True, False):
+            doc = _doc("PeriodB", self._b_rows(with_field))
+            q1 = sc.component_grades_from_class_doc(doc, today="2026-11-10", quarter="Q1")
+            # The straddling 2.3 Follow-Along / Blooket are decided by 4.1: Q1 zeros (11/05).
+            self.assertEqual(q1, {"u9/FA:4.1-2": 0, "u9/BL:4.1-2": 0}, with_field)
+            q2 = sc.component_grades_from_class_doc(doc, today="2026-11-10", quarter="Q2")
+            # 4.2's quiz (zero 11/08) and 4.3's columns (zero 11/09) are Quarter 2 zeros.
+            self.assertEqual(q2, {"u9/QUIZ:4.2": 0, "u9/FA:4.3-4-5": 0, "u9/BL:4.3-4-5": 0,
+                                  "u9/QUIZ:4.3": 0}, with_field)
+            # Legacy (no pass): every target, as before.
+            legacy = sc.component_grades_from_class_doc(doc, today="2026-11-10")
+            self.assertEqual(set(legacy), set(q1) | set(q2))
+
+    def test_no_quarter_2_zero_ever_lands_in_the_quarter_1_pass(self):
+        # Every lesson of the live schedule missing, both sections, the restored zero dates:
+        # each Quarter 1 target is a Quarter 1 lesson's column, filed in MP1.
+        import schoology_sync_lib as lib
+        with open(os.path.join(REPO_ROOT, "data", "lesson-schedule.json"), encoding="utf-8") as f:
+            schedule = json.load(f)
+        lessons = []
+        for key, e in schedule["lessons"].items():
+            if e.get("kind") == "work" or e.get("unit") is None:
+                continue
+            p = e.get("periods") or {}
+            lessons.append(_row(key, e["unit"], e["worksheetKey"], p.get("B"), p.get("E")))
+        for section, period in (("PeriodB", "B"), ("PeriodE", "E")):
+            cols = {c["key"]: c for c in sc.component_columns(
+                schedule["lessons"], period, quiz_topics={l["lessonKey"] for l in lessons},
+                blooket_topics={l["lessonKey"] for l in lessons})}
+            doc = _doc(section, lessons)
+            for today in ("2026-11-09", "2026-11-10", "2026-11-12", "2026-11-20"):
+                for quarter, mp in (("Q1", "1173888"), ("Q2", "1173889")):
+                    out = sc.component_grades_from_class_doc(doc, today=today, quarter=quarter)
+                    for target in out:
+                        key = target.split("/", 1)[1]
+                        filed = lib.marking_period_for_date(cols[key]["filing_date"], LIVE_MPS)
+                        self.assertEqual(filed, mp, (section, today, quarter, key))
+            q1 = sc.component_grades_from_class_doc(doc, today="2026-11-12", quarter="Q1")
+            q2 = sc.component_grades_from_class_doc(doc, today="2026-11-12", quarter="Q2")
+            self.assertTrue(q1 and q2)
+            self.assertFalse(set(q1) & set(q2))
+
+    def test_e_4_1_2_group_is_entirely_quarter_2(self):
+        rows = [_row("4.1", 4, "1-2", None, "2026-10-26", quizTotal=0),
+                _row("4.2", 4, "1-2", None, "2026-10-28")]
+        doc = _doc("PeriodE", rows)
+        self.assertEqual(sc.component_grades_from_class_doc(doc, today="2026-11-09", quarter="Q1"), {})
+        self.assertEqual(sc.component_grades_from_class_doc(doc, today="2026-11-09", quarter="Q2"),
+                         {"u9/FA:4.1-2": 0, "u9/BL:4.1-2": 0})
+
+    def test_scores_route_like_zeros(self):
+        rows = self._b_rows(True)
+        rows[0].update(lessonGradeNoQuiz=91, blooket=80)
+        rows[1].update(lessonGradeNoQuiz=91, blooket=80, Q=66.7)
+        doc = _doc("PeriodB", rows)
+        q1 = sc.component_grades_from_class_doc(doc, today="2026-11-08", quarter="Q1")
+        self.assertEqual(q1, {"u9/FA:4.1-2": 91, "u9/BL:4.1-2": 80})
+        q2 = sc.component_grades_from_class_doc(doc, today="2026-11-08", quarter="Q2")
+        self.assertEqual(q2, {"u9/QUIZ:4.2": 66.7})
+
+    def test_no_zeros_holds_lagged_zeros_but_keeps_scores_and_earned_zeros(self):
+        rows = self._b_rows(True)
+        rows[2].update(Q=0)   # 4.3's quiz taken and scored 0: a real score
+        doc = _doc("PeriodB", rows)
+        out = sc.component_grades_from_class_doc(doc, today="2026-11-10", quarter="Q2", zeros=False)
+        self.assertEqual(out, {"u9/QUIZ:4.3": 0})
+        self.assertEqual(sc.component_comments_from_class_doc(doc, today="2026-11-10", quarter="Q2",
+                                                              zeros=False), {"u9/QUIZ:4.3": ""})
+
+    def test_comments_follow_the_pass(self):
+        doc = _doc("PeriodB", self._b_rows(True))
+        for quarter in ("Q1", "Q2"):
+            grades = sc.component_grades_from_class_doc(doc, today="2026-11-10", quarter=quarter)
+            comments = sc.component_comments_from_class_doc(doc, today="2026-11-10", quarter=quarter)
+            self.assertEqual(set(comments), set(grades))
+        q1 = sc.component_comments_from_class_doc(doc, today="2026-11-10", quarter="Q1")
+        self.assertIn("Missing: 4.1 worksheet", q1["u9/FA:4.1-2"])
+
+    def test_pc_and_poster_follow_the_quarter_unit_lists(self):
+        doc = _doc("PeriodB", [], units={"U1": {"pcRawPct": 70}, "U2": {"pcRawPct": 80}},
+                   quarters={"Q1": {"pcUnits": [1], "posterUnits": [1]},
+                             "Q2": {"pcUnits": [2, 3], "posterUnits": [2]}})
+        posters = {"s9": {1: 115, 2: 100}}
+        q1 = sc.component_grades_from_class_doc(doc, quarter="Q1", poster_grades=posters)
+        self.assertEqual(q1, {"u9/PC:U1": 70, "u9/POSTER:U1": 115})
+        q2 = sc.component_grades_from_class_doc(doc, quarter="Q2", poster_grades=posters)
+        self.assertEqual(q2, {"u9/PC:U2": 80, "u9/POSTER:U2": 100})
+        # A doc without the unit lists routes no unit-level target in a pass.
+        bare = _doc("PeriodB", [], units={"U1": {"pcRawPct": 70}})
+        self.assertEqual(sc.component_grades_from_class_doc(bare, quarter="Q1"), {})
+        self.assertEqual(sc.component_grades_from_class_doc(bare), {"u9/PC:U1": 70})
+
+    def test_rows_carry_quarter(self):
+        self.assertTrue(sc.rows_carry_quarter(_doc("PeriodB", self._b_rows(True))))
+        self.assertFalse(sc.rows_carry_quarter(_doc("PeriodB", self._b_rows(False))))
 
 
 if __name__ == "__main__":

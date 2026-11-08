@@ -31,7 +31,7 @@ export function createLiveDb() {
 // ── Thin wrapper (accepts any Supabase-compatible client) ─────────────────────
 
 export function createDb(client) {
-  return { insertRoster, findByUsername, findByStudentId, findTeacherUsername, getRoleByStudentId, getSpriteHueByStudentId, getSchoologyUidMap, updatePassword, updateStudent, setRosterStatus, deleteRoster, deletePeerAnswers, updateSpriteHue, updateSchoologyUid, listRoster, getDogeAccount, listDogeAccounts, upsertDogeAccount, ensureDogeAccount, updateDogeField, setDogeAddressProposal, listDogeAddressProposals, approveDogeAddressProposal, rejectDogeAddressProposal, storeWalletCustody, getWalletCustody, auditWalletKeyReveal, deleteWalletCustody, listWalletCustody, insertDogeLedger, listDogeLedger, dogeSpend, updateDogeChain, dogeGift, dogeMark, dogeGiveBack, dogeSell, dogeCoinFlows, dogeGiftedSince, parkKeyBuy, parkKeyGranted, parkKeyRefund, getKeyPurchase, listKeyPurchases, listPendingKeyPurchases, tetrisBetOpen, tetrisBetResolve, tetrisBetRefund, listStaleBets, listSettledBets, upsertReviewMark, listReviewMarksByStudents, listReviewMarksByStudent, reviewAward, snapshotQuarter, listQuarterSnapshot, addTrustedIssuer, listTrustedIssuers, revokeTrustedIssuer, findStudentKey, insertStudentKey, listStudentKeys, listStudentKeysByStudent, revokeStudentKey, insertSubmissionArchive, listSubmissionArchive };
+  return { insertRoster, findByUsername, findByStudentId, findTeacherUsername, getRoleByStudentId, getSpriteHueByStudentId, getSchoologyUidMap, updatePassword, updateStudent, setRosterStatus, deleteRoster, deletePeerAnswers, updateSpriteHue, updateSchoologyUid, listRoster, getDogeAccount, listDogeAccounts, upsertDogeAccount, ensureDogeAccount, updateDogeField, setDogeAddressProposal, listDogeAddressProposals, approveDogeAddressProposal, rejectDogeAddressProposal, storeWalletCustody, getWalletCustody, auditWalletKeyReveal, deleteWalletCustody, listWalletCustody, insertDogeLedger, listDogeLedger, dogeSpend, updateDogeChain, dogeGift, dogeMark, dogeGiveBack, dogeSell, dogeCoinFlows, dogeGiftedSince, parkKeyBuy, parkKeyGranted, parkKeyRefund, getKeyPurchase, listKeyPurchases, listPendingKeyPurchases, tetrisBetOpen, tetrisBetResolve, tetrisBetRefund, listStaleBets, listSettledBets, upsertReviewMark, listReviewMarksByStudents, listReviewMarksByStudent, reviewAward, snapshotQuarter, listQuarterSnapshot, listQuarterSnapshotsByStudent, addTrustedIssuer, listTrustedIssuers, revokeTrustedIssuer, findStudentKey, insertStudentKey, listStudentKeys, listStudentKeysByStudent, revokeStudentKey, insertSubmissionArchive, listSubmissionArchive };
 
   // Phase 6: look up a single roster row by student_id -- used by /grade to
   // resolve the student's section, and by the Console routes (P3 nudges,
@@ -606,6 +606,13 @@ export function createDb(client) {
     return client.from('quarter_grade_snapshot')
       .select('student_id, login_username, quarter, frozen_grade, frozen_pc_avg, frozen_work_avg, closed_by, frozen_at')
       .eq('quarter', quarter);
+  }
+
+  // One student's frozen rows, every quarter (GET /grade's quarters[Q].closed).
+  async function listQuarterSnapshotsByStudent(studentId) {
+    return client.from('quarter_grade_snapshot')
+      .select('student_id, quarter, frozen_grade, frozen_pc_avg, frozen_work_avg, closed_by, frozen_at')
+      .eq('student_id', studentId);
   }
 
   // ── Trusted issuers (migration 0026) ──────────────────────────────────────────

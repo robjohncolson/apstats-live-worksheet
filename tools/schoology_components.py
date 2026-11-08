@@ -31,10 +31,18 @@ The SAME key scheme is shared by:
   - the mock fixture builder (build_periody_mock_fixture)
 so a fixture key always resolves to exactly one generated column.
 
+QUARTER ROUTING (QUARTER_LINE_BY_DUE_DATE_SPEC.md section 4, teacher 2026-11-07): a lesson
+belongs to the quarter its ZERO date falls in (class day + 13; a zero date on a quarter's last
+day or a gap day rolls to the next quarter). The daily job runs one Schoology pass per
+quarter; component_grades_from_class_doc(quarter=...) emits only the targets whose column
+belongs to that pass, and component_columns gives each column the 'filing_date' that picks
+its marking period.
+
 Pure logic. stdlib only. No I/O except the small JSON loaders. ASCII only. LF.
 """
 from __future__ import annotations
 
+import datetime as _dt
 import json
 import os
 import re
@@ -191,6 +199,184 @@ def load_blooket_topics(blooket_lessons_path: str) -> set:
 
 
 # ---------------------------------------------------------------------------
+# Zero dates and quarters (the engine's rules, mirrored; pinned by tests)
+# ---------------------------------------------------------------------------
+
+# roster-server/grade-config.js dueLagDays: the zero date is the class day + 13.
+DUE_LAG_DAYS = 13
+
+# roster-server/grade-config.js PHASE3_CONFIG.quarters (SY2627). Used only when a
+# /class/grades doc carries no config.quarters (old payloads, unit tests).
+DEFAULT_QUARTERS = {
+    "Q1": {"start": "2026-09-02", "end": "2026-11-06"},
+    "Q2": {"start": "2026-11-09", "end": "2027-01-22"},
+    "Q3": {"start": "2027-01-25", "end": "2027-04-14"},
+    "Q4": {"start": "2027-04-15", "end": "2027-06-17"},
+}
+
+
+def add_days(iso_date, days: int):
+    """'2026-10-26' + 13 -> '2026-11-08'. None (or a malformed date) stays None."""
+    try:
+        return (_dt.date.fromisoformat(str(iso_date)) + _dt.timedelta(days=days)).isoformat()
+    except ValueError:
+        return None
+
+
+def zero_date_of(class_day):
+    """The lesson's zero date (class day + 13). Missing work is a 0 the day AFTER it."""
+    if not class_day:
+        return None
+    return add_days(class_day, DUE_LAG_DAYS)
+
+
+def filing_date_of(class_day):
+    """The day a missing lesson becomes a 0 (zero date + 1).
+
+    A lesson column is filed in the marking period of this day. That is the engine's own
+    strict rule: a zero date ON a quarter's last day, or on a gap day, belongs to the NEXT
+    quarter (QUARTER_LINE_BY_DUE_DATE_SPEC.md decision 1).
+    """
+    zero = zero_date_of(class_day)
+    if not zero:
+        return None
+    return add_days(zero, 1)
+
+
+def _ordered_quarters(quarters: dict) -> list:
+    """Quarter keys with a start and an end, in calendar order."""
+    dated = [q for q, w in (quarters or {}).items()
+             if isinstance(w, dict) and w.get("start") and w.get("end")]
+    return sorted(dated, key=lambda q: quarters[q]["start"])
+
+
+def doc_quarters(doc: dict | None) -> dict:
+    """The engine's quarter windows from a /class/grades doc (config.quarters), else the defaults."""
+    quarters = ((doc or {}).get("config") or {}).get("quarters")
+    if _ordered_quarters(quarters):
+        return quarters
+    return DEFAULT_QUARTERS
+
+
+def quarter_of_date(date, quarters: dict | None = None):
+    """The quarter whose window holds the date (inclusive), or None (engine quarterOfDate)."""
+    quarters = quarters or DEFAULT_QUARTERS
+    if not date:
+        return None
+    for q in _ordered_quarters(quarters):
+        if quarters[q]["start"] <= date <= quarters[q]["end"]:
+            return q
+    return None
+
+
+def zero_quarter_of(zero_date, quarters: dict | None = None):
+    """The first quarter (calendar order) whose last day the zero date is due by, else None.
+
+    Engine zeroQuarterOf under dueAfterLessonDay: zero_date < end. So a zero date on a gap
+    day or ON a last day rolls to the next quarter; None means after the last quarter ends.
+    """
+    quarters = quarters or DEFAULT_QUARTERS
+    if not zero_date:
+        return None
+    for q in _ordered_quarters(quarters):
+        if zero_date < quarters[q]["end"]:
+            return q
+    return None
+
+
+def lesson_quarter(lesson: dict, period, quarters: dict | None = None):
+    """The quarter whose Schoology pass carries this lesson (its regular, zero-able quarter).
+
+    The engine's own row field quarter[period] wins (zeroQuarterMembership). A never-zero
+    row (zero date past the last quarter) has quarter[period] null: it counts where it was
+    taught, liftQuarter[period]. A row from an engine that predates those fields is DERIVED
+    here with the same rule: the later of the quarter it was taught in (its class day) and
+    the quarter its zero date falls in (zeroDate[period], else class day + 13). None
+    without a class day for the period.
+    """
+    if not period:
+        return None
+    field = lesson.get("quarter")
+    if isinstance(field, dict) and field.get(period):
+        return field[period]
+    lift = lesson.get("liftQuarter")
+    if isinstance(field, dict) and isinstance(lift, dict) and lift.get(period):
+        return lift[period]
+    quarters = quarters or DEFAULT_QUARTERS
+    class_day = (lesson.get("due") or {}).get(period)
+    if not class_day:
+        return None
+    taught = quarter_of_date(class_day, quarters)
+    zero = (lesson.get("zeroDate") or {}).get(period) or zero_date_of(class_day)
+    regular = zero_quarter_of(zero, quarters)
+    order = _ordered_quarters(quarters)
+    if regular and (taught is None or order.index(regular) > order.index(taught)):
+        return regular
+    return taught
+
+
+def quarter_close_date(doc: dict | None, quarter: str, fallback: str | None = None):
+    """The quarter's close date: /class/grades config.quarters[quarter].close, else fallback.
+
+    The close is the evening the teacher freezes the quarter (POST /class/quarter/close);
+    Quarter 1 closes Thu 2026-11-12 (QUARTER_LINE_BY_DUE_DATE_SPEC.md section 2).
+    """
+    window = ((((doc or {}).get("config") or {}).get("quarters") or {}).get(quarter)) or {}
+    return window.get("close") or fallback
+
+
+def quarter_is_closed(today: str | None, close_date: str | None) -> bool:
+    """True from the day AFTER the close date (the close itself happens that evening)."""
+    return bool(today and close_date and today > close_date)
+
+
+def quarter_has_ended(doc: dict | None, quarter: str, today: str | None) -> bool:
+    """True once the quarter's last day is over (Quarter 1: from Sat 2026-11-07)."""
+    end = (doc_quarters(doc).get(quarter) or {}).get("end")
+    return bool(today and end and today > end)
+
+
+def quarter_passes(doc: dict | None, today: str, q1_close: str | None = None) -> list:
+    """The quarter passes the daily job runs on this day, in calendar order.
+
+    Finding B3 (2026-11-08): the job used to run a hard-coded Quarter 1 and Quarter 2
+    pass, so from Mon 2027-01-25 no pass would write Marking Period 3 and the Quarter 2
+    pass would run forever. The passes now come from config.quarters:
+      1. the quarter whose window holds today; on a gap day between two quarters (a
+         weekend), or before the first one, the NEXT quarter;
+      2. every EARLIER quarter that has ended but is still open for fixes: end < today
+         and today <= its close date (config.quarters[Q].close). A quarter with no close
+         date gets no pass once it has ended. q1_close is Quarter 1's close when the
+         config has none (the ps1's -Q1Close; no other quarter has a fallback).
+    After the last quarter ends nothing is current; only a closing quarter still runs.
+    """
+    quarters = doc_quarters(doc)
+    order = _ordered_quarters(quarters)
+    current = next((q for q in order if today <= quarters[q]["end"]), None)
+    passes = []
+    for q in order:
+        if q == current:
+            passes.append(q)
+            continue
+        if quarters[q]["end"] >= today:
+            continue   # a later quarter: it has not started
+        fallback = q1_close if q == "Q1" else None
+        close = quarter_close_date(doc, q, fallback)
+        if close and today <= close:
+            passes.append(q)
+    return passes
+
+
+def rows_carry_quarter(doc: dict | None) -> bool:
+    """True once the engine sends quarter{B,E} on lesson rows (no derivation needed)."""
+    for student in (doc or {}).get("students", []) or []:
+        for lesson in student.get("lessons") or []:
+            if isinstance(lesson.get("quarter"), dict):
+                return True
+    return False
+
+
+# ---------------------------------------------------------------------------
 # The generator
 # ---------------------------------------------------------------------------
 
@@ -243,7 +429,9 @@ def component_columns(
           'title':      str,   # '1.1 Follow-Along' | '1.2 Quiz' | '1.1 Blooket'
           'group_label':str,   # '1.1' | '6.1-2'
           'topic_keys': [str], # constituents (combined -> >1)
-          'due_date':   str|None,
+          'due_date':   str|None,   # the class day: Schoology's due date + the --through gate
+          'filing_date':str|None,   # picks the marking period (lessons: zero date + 1,
+                                    # PC: Day 2, poster: its date)
           'unit':       int,
         }
 
@@ -277,7 +465,7 @@ def component_columns(
         unit = g["unit"]
         date = g["date"]
 
-        # Follow-Along: one per group.
+        # Follow-Along: one per group, filed by the group's earliest lesson.
         columns.append({
             "key": fa_key(label),
             "kind": KIND_FOLLOWALONG,
@@ -285,6 +473,7 @@ def component_columns(
             "group_label": label,
             "topic_keys": list(topics_sorted),
             "due_date": date,
+            "filing_date": filing_date_of(date),
             "unit": unit,
         })
 
@@ -300,6 +489,7 @@ def component_columns(
                 "group_label": label,
                 "topic_keys": [tk],
                 "due_date": tdate,
+                "filing_date": filing_date_of(tdate),
                 "unit": unit,
             })
 
@@ -312,6 +502,7 @@ def component_columns(
                 "group_label": label,
                 "topic_keys": list(topics_sorted),
                 "due_date": date,
+                "filing_date": filing_date_of(date),
                 "unit": unit,
             })
 
@@ -325,6 +516,7 @@ def component_columns(
     # derived from the groups already filtered by include_undated.
     unit_dates = {}  # unit -> earliest group date (str) or None
     poster_dates = {}  # unit -> poster date (str) or None (event schedule only)
+    pc_filing = {}  # unit -> PC Day 2: a PC counts in the quarter it is due (engine pcUnitsInQuarter)
     if isinstance(progress_checks, dict) and progress_checks:
         for ukey, entry in progress_checks.items():
             try:
@@ -336,6 +528,9 @@ def component_columns(
             if d is None and not include_undated:
                 continue
             unit_dates[u] = d
+            day2 = (entry or {}).get("adminDay2")
+            day2 = day2.get(period_letter) if isinstance(day2, dict) else day2
+            pc_filing[u] = day2 or d
             pe = ((posters or {}).get(ukey) or (posters or {}).get(str(u)) or {}).get("periods") or {}
             poster_dates[u] = pe.get(period_letter) or d
     else:
@@ -354,6 +549,7 @@ def component_columns(
             "group_label": f"U{u}",
             "topic_keys": [],
             "due_date": udate,
+            "filing_date": pc_filing.get(u, udate),
             "unit": u,
         })
         columns.append({
@@ -363,6 +559,7 @@ def component_columns(
             "group_label": f"U{u}",
             "topic_keys": [],
             "due_date": pdate,
+            "filing_date": pdate,
             "unit": u,
         })
 
@@ -396,16 +593,14 @@ def zero_due(lesson: dict, period, today: str | None) -> bool:
     return bool(zd) and zd < today
 
 
-def group_zero_due(lessons: list | None, period, today: str | None) -> dict:
-    """{group label: zero_due} for each worksheet group's Follow-Along and Blooket columns.
+def group_deciders(lessons: list | None, period) -> dict:
+    """{group label: the lesson that decides the group's Follow-Along and Blooket columns}.
 
-    component_columns dates a group's column by its EARLIEST lesson for the period, and
-    that date files the column in a Schoology marking period. So that lesson's zero date
-    decides the whole group: a later sibling must never write a 0 into a column filed
-    in an earlier marking period. This matters only under the quarter-end zero freeze
-    (QUARTER_ZERO_FREEZE_SPEC.md): B and E 4.7 (11/06, never-zero in Q1) and 4.8 (11/09,
-    a Q2 lesson) share the 4.7-8 worksheet, whose columns sit in MP1. Without the freeze
-    nothing changes: the earliest lesson always reaches its zero date first.
+    component_columns dates and files a group's column by its EARLIEST lesson for the
+    period, so that lesson decides the whole group: its zero date writes the 0, and its
+    quarter picks the Schoology pass. A later sibling must never write a 0 into a column
+    filed in an earlier marking period. B's 4.1-2 worksheet (4.1 zero 11/05, 4.2 zero
+    11/08) is therefore a Quarter 1 column (QUARTER_LINE_BY_DUE_DATE_SPEC.md decision 2).
     A lesson with no due date for the period sorts after every dated one."""
     deciding = {}
     for lesson in lessons or []:
@@ -418,7 +613,34 @@ def group_zero_due(lessons: list | None, period, today: str | None) -> dict:
         held_due = ((held or {}).get("due") or {}).get(period)
         if held is None or (due and (not held_due or due < held_due)):
             deciding[label] = lesson
-    return {label: zero_due(lesson, period, today) for label, lesson in deciding.items()}
+    return deciding
+
+
+def group_zero_due(lessons: list | None, period, today: str | None) -> dict:
+    """{group label: zero_due} for each worksheet group's Follow-Along and Blooket columns,
+    decided by the group's earliest lesson (group_deciders)."""
+    return {label: zero_due(lesson, period, today)
+            for label, lesson in group_deciders(lessons, period).items()}
+
+
+def _quarter_units(student: dict, quarter, field: str):
+    """The unit numbers in quarters[quarter][field] ('pcUnits' / 'posterUnits'), as a set.
+
+    None when no pass is asked for (every unit goes). An absent list routes nothing:
+    a unit-level column is never written into a pass it cannot be placed in.
+    """
+    if quarter is None:
+        return None
+    units = (((student.get("quarters") or {}).get(quarter)) or {}).get(field)
+    if not isinstance(units, list):
+        return set()
+    out = set()
+    for u in units:
+        try:
+            out.add(int(str(u).lstrip("Uu")))
+        except ValueError:
+            continue
+    return out
 
 
 # Quiz columns get the same lagged zero as Follow-Along and Blooket, starting with the
@@ -456,14 +678,17 @@ def quiz_zero_due(lesson: dict, period, today: str | None) -> bool:
 
 
 def component_comments_from_class_doc(doc: dict, uid_map: dict | None = None,
-                                      today: str | None = None, ced: bool | None = None) -> dict:
+                                      today: str | None = None, ced: bool | None = None,
+                                      quarter: str | None = None, zeros: bool = True) -> dict:
     """Fixed messages for lagged zeros; empty strings for other emitted cells.
 
     Use the grade producer's first-emitted group rule, including UID precedence.
     No student identity fields are interpolated into comment text. The lesson is
     named the way its Schoology column is (ced=None reads the config flag).
+    quarter / zeros: the same pass filter as component_grades_from_class_doc, so the
+    comment keys always match the grade targets of that pass.
     """
-    grades = component_grades_from_class_doc(doc, uid_map, today)
+    grades = component_grades_from_class_doc(doc, uid_map, today, quarter=quarter, zeros=zeros)
     out = dict.fromkeys(grades, "")
     uid_map = uid_map or {}
     for student in doc.get("students", []) or []:
@@ -521,8 +746,20 @@ def component_comments_from_class_doc(doc: dict, uid_map: dict | None = None,
 
 def component_grades_from_class_doc(doc: dict, uid_map: dict | None = None,
                                     today: str | None = None,
-                                    poster_grades: dict | None = None) -> dict:
+                                    poster_grades: dict | None = None,
+                                    quarter: str | None = None,
+                                    zeros: bool = True) -> dict:
     """Map a /class/grades response to {"<uid>/<component_key>": value}.
+
+    quarter ('Q1'..'Q4'): emit ONLY the targets of that quarter's Schoology pass, a score
+    or a 0 alike. A Follow-Along / Blooket group goes with its deciding lesson's quarter
+    (group_deciders + lesson_quarter), a quiz with its own lesson's, a Progress Check with
+    quarters[quarter].pcUnits and a Poster with quarters[quarter].posterUnits. So a
+    Quarter 2 lesson can never write a 0 in the Quarter 1 pass. None = every target
+    (legacy callers; the daily job always passes a quarter).
+    zeros=False: scores only, no lagged zeros (the --no-zeros fallback). An earned 0
+    (work done, scored 0) is a score and still goes. This is the ONLY zero filter: the
+    sync writes every target the fixture holds (finding B4, 2026-11-08).
 
     Per student, per lesson:
       - Follow-Along <- lesson.lessonGradeNoQuiz (worksheet blanks + AI reflections,
@@ -549,6 +786,7 @@ def component_grades_from_class_doc(doc: dict, uid_map: dict | None = None,
     """
     uid_map = uid_map or {}
     poster_grades = poster_grades or {}
+    quarters = doc_quarters(doc)
     out = {}
     for s in doc.get("students", []) or []:
         rid = str(s.get("studentId"))
@@ -558,7 +796,10 @@ def component_grades_from_class_doc(doc: dict, uid_map: dict | None = None,
         emitted_fa = set()
         emitted_bl = set()
         period = period_of(s)
-        group_zero = group_zero_due(s.get("lessons"), period, today)
+        deciders = group_deciders(s.get("lessons"), period)
+        group_zero = {label: zero_due(lesson, period, today) for label, lesson in deciders.items()}
+        group_quarter = {label: lesson_quarter(lesson, period, quarters)
+                         for label, lesson in deciders.items()}
         for lesson in (s.get("lessons") or []):
             unit = lesson.get("unit")
             wk = lesson.get("worksheetKey")
@@ -566,6 +807,9 @@ def component_grades_from_class_doc(doc: dict, uid_map: dict | None = None,
             if unit is None or wk is None:
                 continue
             label = group_label(unit, wk)
+            # The pass filter: a group column goes with its deciding lesson, a quiz with its own.
+            group_in_pass = quarter is None or group_quarter.get(label) == quarter
+            quiz_in_pass = quarter is None or lesson_quarter(lesson, period, quarters) == quarter
 
             # Follow-Along = the v3 Lessons-track value (worksheet blanks + AI
             # reflections), so the Schoology push matches the in-app grid + v3's
@@ -582,46 +826,62 @@ def component_grades_from_class_doc(doc: dict, uid_map: dict | None = None,
             # the sync side means later work replaces the 0 and a higher hand
             # entry is kept. The group's earliest lesson decides the Follow-Along
             # and Blooket zero (group_zero_due); the quiz stays per lesson.
-            due_zero = group_zero.get(label, False)
+            due_zero = zeros and group_zero.get(label, False)
             if fa_val is None and due_zero:
                 fa_val = 0
-            if fa_val is not None and label not in emitted_fa:
+            if group_in_pass and fa_val is not None and label not in emitted_fa:
                 out[f"{uid}/{fa_key(label)}"] = fa_val
                 emitted_fa.add(label)
 
             q = lesson.get("Q")
-            if q is None and quiz_zero_due(lesson, period, today):
+            if q is None and zeros and quiz_zero_due(lesson, period, today):
                 q = 0
-            if q is not None and (lesson.get("quizTotal") or 0) > 0 and topic_key:
+            if quiz_in_pass and q is not None and (lesson.get("quizTotal") or 0) > 0 and topic_key:
                 out[f"{uid}/{quiz_key(topic_key)}"] = q
 
             blooket = lesson.get("blooket")
             if blooket is None and lesson.get("hasBlooket") and due_zero:
                 blooket = 0
-            if blooket is not None and lesson.get("hasBlooket") and label not in emitted_bl:
+            if group_in_pass and blooket is not None and lesson.get("hasBlooket") and label not in emitted_bl:
                 out[f"{uid}/{bl_key(label)}"] = blooket
                 emitted_bl.add(label)
 
         # Per-unit Progress Check from the unit-level mastery track
         # (units[U#].pcRawPct) -- the SAME source gradebook-grid.js cellValue uses.
+        pc_units = _quarter_units(s, quarter, "pcUnits")
         for ukey, u in (s.get("units") or {}).items():
             if not isinstance(u, dict):
                 continue
             pc = u.get("pcRawPct")
-            if pc is not None:
-                unit_num = str(ukey).lstrip("Uu") or ukey
-                out[f"{uid}/{pc_key(unit_num)}"] = pc
+            if pc is None:
+                continue
+            unit_num = str(ukey).lstrip("Uu") or ukey
+            if pc_units is not None and not _unit_in(unit_num, pc_units):
+                continue
+            out[f"{uid}/{pc_key(unit_num)}"] = pc
 
         # Per-unit Poster: the POSTER-U# ledger row's 90-115 score, written to the
         # Schoology Posters category (30% of Work, POSTER_WORK_TRACK_SPEC.md). A
         # legacy letter (pre-conversion BONUS-POSTER-U# row) maps through
         # POSTER_SCORE so the column is right on both sides of the cutover.
+        poster_units = _quarter_units(s, quarter, "posterUnits")
         for unit_num, value in (poster_grades.get(rid) or {}).items():
             score = poster_score(value)
-            if score is not None:
-                out[f"{uid}/{poster_key(unit_num)}"] = score
+            if score is None:
+                continue
+            if poster_units is not None and not _unit_in(unit_num, poster_units):
+                continue
+            out[f"{uid}/{poster_key(unit_num)}"] = score
 
     return out
+
+
+def _unit_in(unit_num, units: set) -> bool:
+    """'2' / 2 / 'U2' is in {2}."""
+    try:
+        return int(str(unit_num).lstrip("Uu")) in units
+    except ValueError:
+        return False
 
 
 # Poster scale (teacher 2026-10-14): the floor is 90 and the ceiling 115, never

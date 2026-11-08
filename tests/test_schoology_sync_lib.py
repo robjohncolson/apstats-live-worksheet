@@ -251,16 +251,97 @@ class TestMarkingPeriodForDate(unittest.TestCase):
             lib.marking_period_for_date('2025-01-01', self.MP_RANGES),
         )
 
-    def test_between_q1_and_q2_is_none(self):
-        # There is no gap in this range set, but an edge case: what if date == q1.end+1?
-        # Already covered by q2 start test above; add an explicit gap scenario.
+    def test_between_q1_and_q2_rolls_forward_to_q2(self):
+        # QUARTER_LINE_BY_DUE_DATE_SPEC.md 4.2 (teacher 2026-11-07): a gap day belongs to
+        # the NEXT marking period, never to none.
         ranges_with_gap = {
             'q1': {'start': '2026-09-01', 'end': '2026-10-31'},
             'q2': {'start': '2026-12-01', 'end': '2027-01-31'},
         }
-        self.assertIsNone(
+        self.assertEqual(
             lib.marking_period_for_date('2026-11-15', ranges_with_gap),
+            'q2',
         )
+        self.assertEqual(lib.marking_period_for_date('2026-11-01', ranges_with_gap), 'q2')
+        self.assertEqual(lib.marking_period_for_date('2026-10-31', ranges_with_gap), 'q1')
+
+    def test_outside_all_ranges_stays_none_on_both_sides(self):
+        ranges_with_gap = {
+            'q1': {'start': '2026-09-01', 'end': '2026-10-31'},
+            'q2': {'start': '2026-12-01', 'end': '2027-01-31'},
+        }
+        self.assertIsNone(lib.marking_period_for_date('2026-08-31', ranges_with_gap))
+        self.assertIsNone(lib.marking_period_for_date('2027-02-01', ranges_with_gap))
+
+    def test_engine_gap_days_roll_into_the_next_quarter(self):
+        # The engine's own windows have weekend gaps (Q1 ends Fri 11/06, Q2 starts Mon 11/09).
+        engine = {
+            'Q1': {'start': '2026-09-02', 'end': '2026-11-06'},
+            'Q2': {'start': '2026-11-09', 'end': '2027-01-22'},
+            'Q3': {'start': '2027-01-25', 'end': '2027-04-14'},
+        }
+        self.assertEqual(lib.marking_period_for_date('2026-11-07', engine), 'Q2')
+        self.assertEqual(lib.marking_period_for_date('2026-11-08', engine), 'Q2')
+        self.assertEqual(lib.marking_period_for_date('2027-01-24', engine), 'Q3')
+
+    def test_unordered_ids_are_read_in_calendar_order(self):
+        # The live ids are not in calendar order (2026-11-07 probe: MP3 is 1173886).
+        live = {
+            '1173886': {'start': '2027-01-23', 'end': '2027-04-14'},
+            '1173889': {'start': '2026-11-07', 'end': '2027-01-22'},
+            '1173887': {'start': '2027-04-15', 'end': '2027-06-30'},
+            '1173888': {'start': '2026-09-02', 'end': '2026-11-06'},
+        }
+        self.assertEqual(lib.marking_periods_in_order(live), ['1173888', '1173889', '1173886', '1173887'])
+        self.assertEqual(lib.marking_period_for_quarter('Q1', live), '1173888')
+        self.assertEqual(lib.marking_period_for_quarter('Q2', live), '1173889')
+        self.assertEqual(lib.marking_period_for_quarter('Q3', live), '1173886')
+        self.assertIsNone(lib.marking_period_for_quarter('Q5', live))
+        self.assertIsNone(lib.marking_period_for_quarter('Q2', {}))
+        self.assertEqual(lib.quarter_for_marking_period('1173889', live), 'Q2')
+        self.assertIsNone(lib.quarter_for_marking_period('999', live))
+        self.assertEqual(lib.marking_period_for_date('2026-11-06', live), '1173888')
+        self.assertEqual(lib.marking_period_for_date('2026-11-07', live), '1173889')
+
+    def test_pass_view_needs_the_period_that_covers_the_quarter(self):
+        # Finding A9: an extra dated period (a semester) must never be picked, whatever its
+        # place in the dict; the pass then aborts (None) rather than write into it.
+        live = {
+            '1173888': {'start': '2026-09-02', 'end': '2026-11-06'},
+            '1173889': {'start': '2026-11-07', 'end': '2027-01-22'},
+            '1173886': {'start': '2027-01-23', 'end': '2027-04-14'},
+            '1173887': {'start': '2027-04-15', 'end': '2027-06-30'},
+        }
+        self.assertEqual([lib.pass_view(q, live)['grading_period_id'] for q in ('Q1', 'Q2', 'Q3', 'Q4')],
+                         ['1173888', '1173889', '1173886', '1173887'])
+        semester = {'start': '2026-09-02', 'end': '2027-01-22'}
+        first = dict({'S1': semester}, **live)      # ties MP1 on start date and sorts first
+        last = dict(live, S1=semester)               # ties MP1 and sorts second
+        for ranges in (first, last):
+            for quarter in ('Q1', 'Q2', 'Q3', 'Q4'):
+                view = lib.pass_view(quarter, ranges)
+                self.assertNotEqual((view or {}).get('grading_period_id'), 'S1', quarter)
+        self.assertIsNone(lib.pass_view('Q1', first))                       # Nth pick = the semester
+        self.assertEqual(lib.pass_view('Q1', last)['grading_period_id'], '1173888')
+        self.assertIsNone(lib.pass_view('Q2', last))                        # Nth pick = the semester
+
+    def test_pass_view_uses_the_docs_quarter_windows(self):
+        live = {'1173888': {'start': '2026-09-02', 'end': '2026-11-06'},
+                '1173889': {'start': '2026-11-07', 'end': '2027-01-22'}}
+        doc_quarters = {'Q1': {'start': '2026-09-02', 'end': '2026-11-06', 'close': '2026-11-12'},
+                        'Q2': {'start': '2026-11-09', 'end': '2027-01-22'}}
+        self.assertEqual(lib.pass_view('Q2', live, doc_quarters)['grading_period_id'], '1173889')
+        # A quarter whose window no marking period covers: no view.
+        late = {'Q2': {'start': '2026-11-09', 'end': '2027-01-29'}}
+        self.assertIsNone(lib.pass_view('Q2', live, late))
+        self.assertIsNone(lib.pass_view('Q2', live, {'Q1': doc_quarters['Q1']}))   # no Q2 window
+        # Two marking periods with the very same range: ambiguous.
+        twin = dict(live, twin={'start': '2026-11-07', 'end': '2027-01-22'})
+        self.assertIsNone(lib.pass_view('Q2', twin, doc_quarters))
+
+    def test_quarter_label_reads_quarter_n(self):
+        self.assertEqual(lib.quarter_label('Q1'), 'Quarter 1')
+        self.assertEqual(lib.quarter_label('Q2'), 'Quarter 2')
 
     def test_none_date_returns_none(self):
         self.assertIsNone(

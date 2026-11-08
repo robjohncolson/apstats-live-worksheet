@@ -13,7 +13,7 @@ import { PHASE3_CONFIG } from './grade-config.js';
 import { readFile } from 'node:fs/promises';
 import { computeMastery, masteryObservations } from './mastery.js';
 import { answerKeyMapOrNull, skillMapValidOrNull } from './scoring.js';
-import { computeGrade } from './grade.js';
+import { computeGrade, addClosedQuarters } from './grade.js';
 import { computeDonow } from './donow.js';
 import { requireTeacher } from './teacher-auth.js';
 
@@ -128,6 +128,9 @@ export function mountTeacherStudent(app, {
       blooketLessons: _presence || undefined,
       deckSlices,
     });
+    // The same quarters[Q].closed as the student's own GET /grade, so view-as shows the
+    // student's "Quarter 1 final" too (QUARTER_LINE_BY_DUE_DATE_SPEC.md §2; fixer C4).
+    await addClosedQuarters(computed.quarters, db, studentId, ledgerRows);
 
     return res.json({
       ok: true,

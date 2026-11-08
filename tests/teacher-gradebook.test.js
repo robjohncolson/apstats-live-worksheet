@@ -172,3 +172,106 @@ describe('teacher-dashboard in-app gradebook grid', () => {
     expect(card.textContent).toContain('Schoology categories'); // Schoology category averages line
   });
 });
+
+// Fixer finding C5 (QUARTER_LINE_BY_DUE_DATE_SPEC.md §3.5): columns are filed per section now,
+// so an unfiltered load (both periods; listRoster puts Period B first) must show every
+// student's columns, and a lift-only or other-marking-period column must read as such.
+describe('teacher-dashboard gradebook with both periods in one load', () => {
+  let win, doc;
+
+  beforeAll(async () => {
+    const dom = new JSDOM(html, {
+      runScripts: 'dangerously',
+      url: 'https://example.test/teacher-dashboard.html',
+      pretendToBeVisual: true,
+    });
+    win = dom.window;
+    doc = win.document;
+    await new Promise((r) => setTimeout(r, 30));
+  });
+
+  const col = (key, category, topicKeys, flags = {}) => ({
+    key, kind: category === 'Lesson' ? 'followalong' : 'quiz', category, title: key, unit: 4, topicKeys, due: true, ...flags,
+  });
+  // The Quarter 2 tab as the server files it. Period B: 4.1-2 is decided by 4.1 (Quarter 1),
+  // so its Follow-Along sits in MP1; 4.8 is a regular Quarter 2 lesson. Period E: 2.3 and
+  // 4.1-2 are regular Quarter 2 lessons (Period B has no 2.3 column in Quarter 2).
+  function mixedPayload() {
+    const student = (studentId, realName, section, columns, cells) => ({
+      studentId, realName, username: studentId, section,
+      quarters: { Q2: { quarterGrade: 80 } }, units: {}, completion: {}, lessons: [],
+      gradebook: { weights: { Lesson: 15, Quizzes: 15 }, quarters: { Q2: {
+        columns, cells, categoryAverages: {}, schoologyTotal: 80, v3Total: 80, reconciliation: {},
+      } } },
+    });
+    return {
+      ok: true,
+      students: [
+        student('b1', 'Bea B', 'PeriodB', [
+          col('FA:4.1-2', 'Lesson', ['4.2'], { schoologyQuarter: 'Q1' }),
+          col('QUIZ:4.2', 'Quizzes', ['4.2']),
+          col('FA:4.8', 'Lesson', ['4.8']),
+          col('FA:5.7', 'Lesson', ['5.7'], { liftOnly: true }),
+        ], { 'FA:4.1-2': 80, 'QUIZ:4.2': 70, 'FA:4.8': 90, 'FA:5.7': 60 }),
+        student('e1', 'Eli E', 'PeriodE', [
+          col('FA:2.3', 'Lesson', ['2.3']),
+          col('FA:4.1-2', 'Lesson', ['4.1', '4.2']),
+          col('QUIZ:4.2', 'Quizzes', ['4.2']),
+          col('FA:4.8', 'Lesson', ['4.8']),
+        ], { 'FA:2.3': 75, 'FA:4.1-2': 85, 'QUIZ:4.2': 65, 'FA:4.8': 95 }),
+      ],
+    };
+  }
+  const headerTitles = () => Array.from(doc.querySelectorAll('#gb-thead th.gb-col')).map((th) => th.getAttribute('title'));
+  const rowOf = (name) => Array.from(doc.querySelectorAll('#gb-tbody tr')).find((tr) => tr.textContent.includes(name));
+  const cellUnder = (tr, title) => {
+    const index = headerTitles().indexOf(title);
+    return tr.querySelectorAll('td.gb-cell')[index];
+  };
+
+  it('takes the union of every student\'s columns, in first-seen order', () => {
+    win.currentQuarter = 'Q2';
+    win.renderGradebook(mixedPayload());
+    const titles = headerTitles().map((t) => t.split(' — ')[0]);
+    // Lessons first (category order), each category in first-seen order: Period B's, then Period E's 2.3.
+    expect(titles).toEqual(['FA:4.1-2', 'FA:4.8', 'FA:5.7', 'FA:2.3', 'QUIZ:4.2']);
+    // Period E's own 2.3 cell renders; Period B has no such column, so its cell is empty.
+    expect(cellUnder(rowOf('Eli E'), 'FA:2.3').textContent).toBe('75.0');
+    expect(cellUnder(rowOf('Bea B'), 'FA:2.3').textContent.trim()).toBe('·');
+  });
+
+  it('dims lift-only and other-marking-period columns, with the reason on hover', () => {
+    win.currentQuarter = 'Q2';
+    win.renderGradebook(mixedPayload());
+    const ths = Array.from(doc.querySelectorAll('#gb-thead th.gb-col'));
+    const th = (key) => ths.find((el) => el.getAttribute('title').startsWith(key));
+    expect(th('FA:4.1-2').classList.contains('gb-other')).toBe(true);
+    expect(th('FA:4.1-2').getAttribute('title')).toContain('Schoology column in MP1');
+    expect(th('FA:5.7').classList.contains('gb-other')).toBe(true);
+    expect(th('FA:5.7').getAttribute('title')).toContain('can raise Quarter 2 (never a 0)');
+    expect(th('FA:4.8').classList.contains('gb-other')).toBe(false);
+    expect(th('QUIZ:4.2').classList.contains('gb-other')).toBe(false);
+  });
+
+  it('dims each cell by the student\'s own column: Period B\'s 4.1-2 is MP1\'s, Period E\'s counts', () => {
+    win.currentQuarter = 'Q2';
+    win.renderGradebook(mixedPayload());
+    const title = headerTitles().find((t) => t.startsWith('FA:4.1-2'));
+    const bCell = cellUnder(rowOf('Bea B'), title);
+    const eCell = cellUnder(rowOf('Eli E'), title);
+    expect(bCell.classList.contains('gb-other')).toBe(true);
+    expect(bCell.getAttribute('title')).toBe('Schoology column in MP1');
+    expect(eCell.classList.contains('gb-other')).toBe(false);
+    expect(eCell.hasAttribute('title')).toBe(false);
+    expect(eCell.textContent).toBe('85.0');
+  });
+
+  it('a one-period load renders exactly as before (no dimming without the flags)', () => {
+    win.currentQuarter = 'Q2';
+    const payload = mixedPayload();
+    payload.students = payload.students.slice(1);   // Period E only
+    win.renderGradebook(payload);
+    expect(headerTitles().map((t) => t.split(' — ')[0])).toEqual(['FA:2.3', 'FA:4.1-2', 'FA:4.8', 'QUIZ:4.2']);
+    expect(doc.querySelectorAll('#gb-thead .gb-other, #gb-tbody .gb-other').length).toBe(0);
+  });
+});

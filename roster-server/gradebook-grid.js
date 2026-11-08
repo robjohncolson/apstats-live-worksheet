@@ -113,39 +113,116 @@ function _columnDueDate(col, lessons, period, events) {
   return earliest;
 }
 
-// ── Column generator (schedule-driven; identical for every student) ────────────
+// Which quarter's columns list a lesson row (QUARTER_LINE_BY_DUE_DATE_SPEC.md §3.5).
+// When the engine files lessons by zero date (zeroQuarterMembership), each row names
+// per period its regular quarter (`quarter`) and the earlier quarter it was taught in
+// (`liftQuarter`). Returns 'regular' (it counts in quarterKey and can be a 0 there),
+// 'lift' (taught in quarterKey but regular in a later quarter: it can only raise
+// quarterKey), or null.
+function lessonRole(L, quarterKey, period) {
+  if (L.quarter && L.quarter[period] === quarterKey) return 'regular';
+  if (L.liftQuarter && L.liftQuarter[period] === quarterKey) return 'lift';
+  return null;
+}
+
+function hasQuarterFields(L) {
+  return !!(L && L.quarter && typeof L.quarter === 'object');
+}
+
+// { liftOnly: true } on a lift-only column; {} keeps every other column's shape.
+function liftOnlyField(liftOnly) {
+  return liftOnly ? { liftOnly: true } : {};
+}
+
+// {group label: the quarter whose Schoology marking period holds that worksheet's
+// Follow-Along and Blooket columns}. The Schoology tooling files and decides a group's
+// column by its EARLIEST lesson for the period (tools/schoology_components.py
+// group_deciders), so that lesson's regular quarter names it (its taught quarter for a
+// year-end row, whose regular quarter is null). A lesson with no class day for the
+// period sorts after every dated one. Period B's 4.1-2 (2.3 Follow-Along / 2.3 Blooket)
+// is decided by 4.1, so it stays in MP1 (QUARTER_LINE_BY_DUE_DATE_SPEC.md decision 8.2).
+function groupSchoologyQuarters(lessons, period) {
+  const deciders = new Map();
+  for (const L of lessons) {
+    if (!L || L.worksheetKey == null) continue;
+    const label = groupLabel(L.unit, L.worksheetKey);
+    const held = deciders.get(label);
+    const day = L.due ? L.due[period] : null;
+    const heldDay = held && held.due ? held.due[period] : null;
+    if (!held || (day && (!heldDay || day < heldDay))) deciders.set(label, L);
+  }
+  const quarters = new Map();
+  for (const [label, L] of deciders) {
+    const regular = L.quarter ? L.quarter[period] : null;
+    const taught = L.liftQuarter ? L.liftQuarter[period] : null;
+    quarters.set(label, regular || taught || null);
+  }
+  return quarters;
+}
+
+// The flag on a worksheet group's Follow-Along / Blooket column in quarterKey's tab:
+//   { liftOnly: true }          every topic here is lift-only: it can only raise this quarter
+//   { schoologyQuarter: 'Qn' }  a topic is regular here, but Schoology keeps the column in
+//                               quarter Qn's marking period (B's 2.3 Follow-Along in the Q2 tab)
+//   {}                          a regular column (its shape stays as it was)
+function groupColumnFlags(allLift, schoologyQuarter, quarterKey) {
+  if (allLift) return { liftOnly: true };
+  if (schoologyQuarter && schoologyQuarter !== quarterKey) return { schoologyQuarter };
+  return {};
+}
+
+// ── Column generator (schedule-driven; identical for every student of a section) ──
 //
 // gradeObj: a computeGrade() result ({ lessons, units, quarters, ... }).
-// quarterKey: 'Q1'..'Q4'. Columns cover the quarter's unit band.
+// quarterKey: 'Q1'..'Q4'. Columns cover the quarter's lessons: by the rows' own
+// quarter fields when the engine sends them (lessonRole), else the quarter's
+// old-unit band (older payloads, the golden fixtures, an unknown section).
+// With the rows' quarter fields a lesson column may carry ONE flag, and a flagged
+// column stays out of the quarter's totals (buildGradebookRow):
+//   liftOnly: true          taught here, regular in a later quarter: it can only raise this one
+//   schoologyQuarter: 'Qn'  a worksheet whose Schoology column sits in quarter Qn's marking
+//                           period (groupSchoologyQuarters: decided by its earliest lesson)
 // dueOpts (optional): { lessons, section, todayStr } — when given, each column is
 // stamped with a `due` boolean (its calendar date has arrived by todayStr). Omitted
 // → columns carry no `due` field, and date-gating clients show everything (degrade).
-export function buildGradebookColumns(gradeObj, quarterKey, dueOpts) {
+// section (optional): picks the rows' per-period quarter fields; defaults to
+// dueOpts.section.
+export function buildGradebookColumns(gradeObj, quarterKey, dueOpts, section = dueOpts ? dueOpts.section : null) {
   const quarter = gradeObj && gradeObj.quarters && gradeObj.quarters[quarterKey];
   const band = quarter && Array.isArray(quarter.units) ? quarter.units : [];
   const bandSet = new Set(band);
   const lessons = Array.isArray(gradeObj && gradeObj.lessons) ? gradeObj.lessons : [];
+  const period = sectionToPeriod(section);
+  const byRowQuarter = period != null && lessons.some(hasQuarterFields);
+  const schoologyQuarterOf = byRowQuarter ? groupSchoologyQuarters(lessons, period) : new Map();
 
   // Group lessons by unit.worksheetKey so a combined worksheet yields ONE
   // Follow-Along / Blooket column (quizzes stay per-topic).
   const groups = new Map();
   for (const L of lessons) {
-    if (!L || !bandSet.has(L.unit) || L.worksheetKey == null) continue;
+    if (!L || L.worksheetKey == null) continue;
+    const role = byRowQuarter ? lessonRole(L, quarterKey, period) : (bandSet.has(L.unit) ? 'regular' : null);
+    if (!role) continue;
     const label = groupLabel(L.unit, L.worksheetKey);
     let g = groups.get(label);
-    if (!g) { g = { unit: L.unit, worksheetKey: L.worksheetKey, topics: [] }; groups.set(label, g); }
+    if (!g) { g = { unit: L.unit, worksheetKey: L.worksheetKey, topics: [], liftKeys: new Set() }; groups.set(label, g); }
     g.topics.push(L);
+    if (role === 'lift') g.liftKeys.add(L.lessonKey);
   }
 
   const cols = [];
   for (const [label, g] of groups) {
     const topicKeys = g.topics.map((t) => t.lessonKey);
+    // A worksheet whose every topic is lift-only here can only raise this quarter; one
+    // whose Schoology column sits in another quarter's marking period is flagged with it.
+    const allLift = g.liftKeys.size === g.topics.length;
+    const groupFlags = groupColumnFlags(allLift, schoologyQuarterOf.get(label), quarterKey);
     cols.push({ key: `FA:${label}`, kind: 'followalong', category: 'Lesson',
-      title: `${label} Follow-Along`, unit: g.unit, topicKeys });
+      title: `${label} Follow-Along`, unit: g.unit, topicKeys, ...groupFlags });
     for (const t of g.topics) {
       if ((t.quizTotal || 0) > 0) {
         cols.push({ key: `QUIZ:${t.lessonKey}`, kind: 'quiz', category: 'Quizzes',
-          title: `${t.lessonKey} Quiz`, unit: g.unit, topicKeys: [t.lessonKey] });
+          title: `${t.lessonKey} Quiz`, unit: g.unit, topicKeys: [t.lessonKey], ...liftOnlyField(g.liftKeys.has(t.lessonKey)) });
       }
     }
     if (g.topics.some((t) => t.hasBlooket)) {
@@ -162,6 +239,7 @@ export function buildGradebookColumns(gradeObj, quarterKey, dueOpts) {
         unit: g.unit,
         topicKeys,
         blooketBonus: allBonus,
+        ...groupFlags,
       });
     }
   }
@@ -248,7 +326,13 @@ export function reconcileQuarter(gradeObj, quarterKey, schoologyTotal, v3Total) 
   var delta = (schoologyTotal != null && v3Total != null) ? round1(v3Total - schoologyTotal) : null;
 
   var branch, reason;
-  if (pcF == null && workF == null) {
+  if (v3Total == null && (pcF != null || workF != null)) {
+    // A quarter that has not started has no grade yet, though its tracks may already hold
+    // work (lesson-grade.js computeQuarterV3 "Not started", spec decision 8.6). Without
+    // this the reason would read "v3 = Work (85)" next to a blank grade.
+    branch = 'none';
+    reason = 'No grade yet: this quarter has not started.';
+  } else if (pcF == null && workF == null) {
     if (v3Total != null) {
       // A real grade exists but the two-track breakdown doesn't (Phase-6 fallback
       // or v3 off / schedule failed to load) — don't claim "nothing due yet".
@@ -329,6 +413,12 @@ export function buildGradebookRow(gradeObj, columns, weights = SCHOOLOGY_CATEGOR
     const v = cellValue(col, lessonsByKey, units);
     cells[col.key] = v;
     if (v == null) continue;
+    // A lift-only column (taught this quarter, regular in a later one) shows its cell
+    // but stays out of this quarter's totals: the engine counts it here only where it
+    // helps, and its Schoology column belongs to the later quarter. A schoologyQuarter
+    // column stays out too: its Schoology column sits in that other quarter's marking
+    // period, so this quarter's Schoology total never sees it.
+    if (col.liftOnly || col.schoologyQuarter) continue;
     if (col.due === false) {
       if (!LESSON_CATEGORIES.has(col.category)) continue;   // not-yet-due PC / Poster: neither total
       aheadCells += 1;
@@ -381,7 +471,7 @@ export function buildGradebook(gradeObj, { weights = SCHOOLOGY_CATEGORY_WEIGHTS,
   const quartersOut = {};
   const quarterKeys = Object.keys((gradeObj && gradeObj.quarters) || {});
   for (const qk of quarterKeys) {
-    const columns = buildGradebookColumns(gradeObj, qk, dueOpts);
+    const columns = buildGradebookColumns(gradeObj, qk, dueOpts, section);
     const row = buildGradebookRow(gradeObj, columns, weights);
     var v3Total = gradeObj.quarters[qk].quarterGrade != null ? gradeObj.quarters[qk].quarterGrade : null;
     quartersOut[qk] = {

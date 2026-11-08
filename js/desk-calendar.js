@@ -217,6 +217,68 @@ function _openBaselineInfo() {
     'Got it');
 }
 
+// ── QUARTER_LINE_BY_DUE_DATE_SPEC §3.4 (teacher 2026-11-07): the quarter line on the calendar ──
+// Read from the Desk's QUARTER_WINDOWS mirror (close dates included), so the calendar needs no
+// /grade. A quarter with no close date gets none of this.
+var CAL_DOW_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+function _calWindowKey(ymd) { return ymd[0] * 10000 + ymd[1] * 100 + ymd[2]; }
+function _calDateKey(dt) { return dt.getFullYear() * 10000 + (dt.getMonth() + 1) * 100 + dt.getDate(); }
+function _calWindowDate(ymd) { return new Date(ymd[0], ymd[1] - 1, ymd[2]); }
+// 'Thu Nov 12' for a [y, m, d] window date.
+function _calDayText(ymd) {
+    const d = _calWindowDate(ymd);
+    return CAL_DOW_SHORT[d.getDay()] + ' ' + MN[d.getMonth()] + ' ' + d.getDate();
+}
+// The band over a quarter's first week. While the quarter before it is still closing it names
+// that close: 'Quarter 2  (Nov 9 – Jan 22) · Quarter 1 closes Thu Nov 12'.
+function _calQuarterBandText(q, today) {
+    const text = 'Quarter ' + q + '  (' + QUARTER_BAND_LABEL['Q' + q] + ')';
+    const prev = QUARTER_WINDOWS.filter(function (w) { return w.q === q - 1; })[0];
+    if (!prev || !prev.close) return text;
+    const t = _calDateKey(today);
+    if (t <= _calWindowKey(prev.end) || t > _calWindowKey(prev.close)) return text;
+    // Review D8 (2026-11-08): once /grade reports the close, that quarter is final on every
+    // surface, so the band stops saying it "closes" (the Desk's phase knows; no /grade, no change).
+    const phase = (typeof _deskQuarterPhase === 'function') ? _deskQuarterPhase() : null;
+    if (phase && phase.final === 'Q' + prev.q) return text;
+    return text + ' · Quarter ' + prev.q + ' closes ' + _calDayText(prev.close);
+}
+// 'Quarter 1 ends' on a quarter's last day, 'Quarter 1 closes' on its close day, else ''.
+function _calQuarterMark(dt) {
+    const key = _calDateKey(dt);
+    for (const w of QUARTER_WINDOWS) {
+        if (!w.close) continue;
+        if (key === _calWindowKey(w.end)) return 'Quarter ' + w.q + ' ends';
+        if (key === _calWindowKey(w.close)) return 'Quarter ' + w.q + ' closes';
+    }
+    return '';
+}
+// The mark goes on AFTER the cell's htm() (Pico parses htm()'s .tl text for its tile labels).
+function _calPaintQuarterMark(cell, dt) {
+    const mark = _calQuarterMark(dt);
+    if (!mark) return;
+    const span = document.createElement('div');
+    span.className = 'cal-qmark';
+    span.textContent = mark;
+    cell.appendChild(span);
+    cell.dataset.qmark = mark;
+}
+// The Pico week window's badge for the week starting `monday`: 'Q1 ENDS FRI' on the week a
+// quarter ends, 'Q2 · Q1 CLOSES THU' on the week it closes; '' otherwise.
+function _quarterWeekBadge(monday) {
+    if (!(monday instanceof Date)) return '';
+    const lo = _calDateKey(monday);
+    const sunday = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + 6);
+    const hi = _calDateKey(sunday);
+    for (const w of QUARTER_WINDOWS) {
+        if (!w.close) continue;
+        const end = _calWindowKey(w.end), close = _calWindowKey(w.close);
+        if (end >= lo && end <= hi) return 'Q' + w.q + ' ENDS ' + CAL_DOW_SHORT[_calWindowDate(w.end).getDay()].toUpperCase();
+        if (close >= lo && close <= hi) return 'Q' + (w.q + 1) + ' · Q' + w.q + ' CLOSES ' + CAL_DOW_SHORT[_calWindowDate(w.close).getDay()].toUpperCase();
+    }
+    return '';
+}
+
 function rCal(){
     const t=tdy(),g=document.getElementById("cg");if(!g)return;
     const _frag=document.createDocumentFragment();
@@ -377,13 +439,16 @@ function rCal(){
         // grade-config's windows), matching the date-driven grade math --
         // no longer the week's unit band. Label keeps the unit list.
         const _wkQ=quarterOfDate(wk.m);
-        if(_wkQ&&_wkQ!==_lastQ&&!wk._summer){const _qb=document.createElement("div");_qb.className="cal-qband";_qb.textContent="Quarter "+_wkQ+"  ("+QUARTER_BAND_LABEL["Q"+_wkQ]+")";_frag.appendChild(_qb);_lastQ=_wkQ;}
+        // QUARTER_LINE_BY_DUE_DATE_SPEC §3.4: while the previous quarter is closing, the band names its close.
+        if(_wkQ&&_wkQ!==_lastQ&&!wk._summer){const _qb=document.createElement("div");_qb.className="cal-qband";_qb.textContent=(typeof _calQuarterBandText==='function')?_calQuarterBandText(_wkQ,t):"Quarter "+_wkQ+"  ("+QUARTER_BAND_LABEL["Q"+_wkQ]+")";_frag.appendChild(_qb);_lastQ=_wkQ;}
         for(let dw=1;dw<=5;dw++){
             const c=document.createElement("div");c.className="dc";
             const en=dm[dw];if(!en){c.classList.add("cell-noclass");r.appendChild(c);continue;}
             const dt=new Date(en[0],en[1],en[2]),ds=MN[dt.getMonth()]+" "+dt.getDate();
             const inf=cP==="B"?en[3]:en[4];
             c.classList.add(cls(inf));c.innerHTML=htm(inf,ds);
+            // §3.4: 'Quarter 1 ends' (Fri 11/6) / 'Quarter 1 closes' (Thu 11/12), after htm(), never inside it.
+            if(typeof _calPaintQuarterMark==='function')_calPaintQuarterMark(c,dt);
             if(eq(dt,t)){
               c.classList.add("cell-today");
               // v1c: stash today's lesson so _focusTodayLessonVideo opens its
@@ -493,6 +558,7 @@ function rCal(){
             if (c.classList.contains('cal-current')) { _aria += ' (next up)'; c.setAttribute('aria-current', 'step'); }
             else if (c.classList.contains('dc-localdone') || c.classList.contains('dc-done')) { _aria += ' (completed)'; }
             if (c.classList.contains('cell-locked')) { _aria += ' (locked — finish the previous lesson first)'; }
+            if (c.dataset.qmark) _aria += ' (' + c.dataset.qmark + ')';   // §3.4 quarter mark, in words
             c.setAttribute('aria-label', _aria);
             if (c.onclick) {
                 c.setAttribute('role', 'button');

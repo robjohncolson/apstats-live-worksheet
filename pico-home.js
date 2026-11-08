@@ -204,6 +204,10 @@
     '#pico-home .week-title { margin: 0; font-size: 24px; font-weight: 800; letter-spacing: .04em; white-space: nowrap; }',
     '#pico-home .week-page { font-size: 20px; font-weight: 700; min-height: 44px; display: inline-flex; align-items: center; }',
     '#pico-home .week-exam { font-size: 16px; }',
+    /* QUARTER_LINE_BY_DUE_DATE_SPEC §3.4: the quarter line in the week window (its own element). */
+    '#pico-home .week-quarter { font-size: 16px; font-weight: 800; letter-spacing: .04em; padding: 2px 8px;',
+    '  background: var(--ink); color: var(--paper); border-radius: 4px; white-space: nowrap; }',
+    '#pico-home .week-quarter[hidden] { display: none; }',
     '#pico-home .crown[hidden] { display: none; }',
     '#pico-home .arrow { background: none; border: 0; padding: 0; cursor: pointer; min-width: 44px; min-height: 44px;',
     '  display: inline-flex; align-items: center; justify-content: center; }',
@@ -230,6 +234,10 @@
     '#pico-home .sign-grade:hover, #pico-home .sign-grade:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }',
     '#pico-home .grade-num { font-size: 40px; font-weight: 800; line-height: 1; }',
     '#pico-home .grade-cap { font-size: 16px; }',
+    /* QUARTER_LINE_BY_DUE_DATE_SPEC §3.1 / §3.9: the closing quarter under the grade; the notice. */
+    '#pico-home .grade-side { font-size: 13px; line-height: 1.2; margin-top: 2px; }',
+    '#pico-home .sign-notice { font-size: 16px; display: flex; flex-wrap: wrap; align-items: center; column-gap: 12px;',
+    '  margin-top: 4px; padding: 2px 8px; background: #fff9db; border-left: 4px solid var(--warn); }',
     '#pico-home .grade-status { font-size: 16px; }',
     /* Stage-select tiles. The tile art is recovered; the one-row grid is our reconstruction
        (the runtime captures never reached the game's stage-select screen). */
@@ -420,6 +428,7 @@
     'html.pico-home .pico-grade-head { background: var(--paper); text-align: center; padding: 12px 16px 4px; }',
     'html.pico-home .pico-grade-head .grade-num { display: block; font-size: 56px; font-weight: 800; line-height: 1; }',
     'html.pico-home .pico-grade-head .grade-cap { display: block; font-size: 18px; }',
+    'html.pico-home .pico-grade-head .grade-side { display: block; font-size: 15px; }',   // §3.1
     'html.pico-home .pico-grade-head .grade-status { margin: 0; font-size: 18px; }',
     'html.pico-home #app-wallet-overlay.pico-mygrade #wallet-content { background: var(--paper); border: 0; margin: 0;',
     '  font-size: 16px; font-family: var(--plain-font); flex: none !important; overflow: visible !important; padding: 4px 16px 16px !important; }',
@@ -448,6 +457,10 @@
     'html.pico-home .pico-ledger .pl-tile .wz-label { font-size: 18px; font-weight: 800; min-width: 0; }',
     'html.pico-home .pico-ledger .pl-tile .wz-when { margin-left: auto; font-size: 15px; white-space: nowrap; }',
     'html.pico-home .pico-ledger .pl-later-head { margin: 8px 0 0; font-size: 14px; font-weight: 800; letter-spacing: .06em; color: #555; }',
+    /* QUARTER_LINE_BY_DUE_DATE_SPEC §3.2: the quarter a bucket's rows count in, and the lift note. */
+    'html.pico-home .pico-ledger .pl-quarter-head { margin: 10px 0 0; padding-bottom: 2px; font-size: 15px; font-weight: 800;',
+    '  letter-spacing: .04em; color: var(--ink); border-bottom: 2px solid var(--ink); }',
+    'html.pico-home .pico-ledger .pl-tile .wz-lift { flex-basis: 100%; font-size: 14px; color: #1f6b3a; }',
     'html.pico-home .pico-ledger .pl-badge { display: inline-block; padding: 1px 8px; border: 2px solid currentColor; border-radius: 4px;',
     '  font-size: 13px; font-weight: 700; line-height: 1.4; white-space: nowrap; }',
     'html.pico-home .pico-ledger .pl-badge.wz-sgy { color: #555; font-weight: 400; }',
@@ -1171,6 +1184,13 @@
     var examNum = byId('cd-days') && byId('cd-days').querySelector('.num');
     var examText = examNum ? examNum.textContent.trim() : '';
     byId('pico-exam').textContent = /^\d+$/.test(examText) ? examText + ' days to exam' : '';
+    // §3.4: 'Q1 ENDS FRI' / 'Q2 · Q1 CLOSES THU' on those weeks (the Desk's calendar mirror decides).
+    var quarterBadge = byId('pico-quarter');
+    if (quarterBadge) {
+      var badgeText = callDesk('_quarterWeekBadge', [monday]) || '';
+      quarterBadge.textContent = badgeText;
+      quarterBadge.hidden = !badgeText;
+    }
     var onToday = index === todayWeekIndex(weeks, deskToday());
     var todayBtn = document.querySelector('#pico-home .navbtn[data-nav="TODAY"]');
     if (onToday) todayBtn.setAttribute('aria-current', 'page');
@@ -1277,15 +1297,51 @@
     return pill ? pill.textContent.trim() : '';
   }
 
+  // The Desk's one-time quarter notice (QUARTER_LINE_BY_DUE_DATE_SPEC §3.9) while it shows, else ''.
+  function quarterNoticeText() {
+    var host = byId('donow-notice');
+    if (!host || host.style.display === 'none') return '';
+    var words = host.querySelector('.donow-notice-text');
+    return words ? words.textContent.trim() : '';
+  }
+
   // The current quarter's pill exactly as the Do Now shows it (official when published).
+  // QUARTER_LINE_BY_DUE_DATE_SPEC §3.1: pills are read by data-role, never by position. While a
+  // quarter is closing or final, its pill rides along as `side` ('Quarter 1 92 · closes Thu Nov 12').
+  // A pill without data-role (an older Desk build) is the current one.
   function gradeInfo() {
     var status = byId('donow-grade-status');
     if (status && status.style.display !== 'none' && status.textContent.trim()) {
       var span = status.querySelector('span');
       return { status: (span || status).textContent.trim() };
     }
-    var pill = document.querySelector('#donow-grades .qpill:not(.qpill-missing)');
+    var pill = document.querySelector('#donow-grades .qpill[data-role="current"]')
+      || document.querySelector('#donow-grades .qpill:not(.qpill-missing)');
     if (!pill) return null;
+    var info = pillInfo(pill);
+    var side = document.querySelector('#donow-grades .qpill[data-role="closing"], #donow-grades .qpill[data-role="final"]');
+    if (!side || side === pill) return info;
+    // Sunday: the new quarter has no grade yet ('starts Mon Nov 9'), so the closing quarter leads,
+    // as on the balance card, and the new quarter rides along.
+    if (info.value === '—') {
+      var lead = pillInfo(side);
+      lead.side = sidePillText(pill);
+      return lead;
+    }
+    info.side = sidePillText(side);
+    return info;
+  }
+
+  // A pill key in words for a caption (review D4, 2026-11-08): the single Do Now pill keeps its
+  // short 'Q2' label, but the sign says 'Quarter 2' (Q1 / Q3 are quartiles elsewhere). Keys that
+  // are already words ('Quarter 1', 'Quarter 1 final') pass through.
+  function quarterWords(key) {
+    var m = /^Q([1-9])$/.exec(key || '');
+    return m ? 'Quarter ' + m[1] : key;
+  }
+
+  // { key, value, official } of one quarter pill.
+  function pillInfo(pill) {
     var key = pill.querySelector('.qkey');
     var value = pill.querySelector('.qgrade');
     var rule = pill.querySelector('.qrule');
@@ -1294,6 +1350,18 @@
       value: value ? value.textContent.trim() : '',
       official: Boolean(rule && /official/.test(rule.textContent)),
     };
+  }
+
+  // A pill in one line: 'Quarter 1 92 · closes Thu Nov 12', 'Quarter 1 final 92',
+  // 'Quarter 2 · starts Mon Nov 9' (no grade yet: the dash is left out).
+  function sidePillText(pill) {
+    var parts = ['.qkey', '.qgrade'].map(function (sel) {
+      var node = pill.querySelector(sel);
+      return node ? node.textContent.trim() : '';
+    }).filter(function (text) { return text && text !== '—'; });
+    var rule = pill.querySelector('.qrule');
+    var text = parts.join(' ');
+    return rule && rule.textContent.trim() ? text + ' · ' + rule.textContent.trim() : text;
   }
 
   // The Do Now's own primary action: today's lesson panel when there is one, else the card.
@@ -1328,10 +1396,12 @@
       return;
     }
     var value = info && info.value ? info.value : '—';
-    var caption = info ? (info.key + (info.official ? ' official' : '')) : 'My grade';
+    var caption = info ? (quarterWords(info.key) + (info.official ? ' official' : '')) : 'My grade';
     grade.appendChild(el('span', 'grade-num', value));
     grade.appendChild(el('span', 'grade-cap', caption));
-    grade.setAttribute('aria-label', caption + ' grade ' + value + '. Open My Grade');
+    // §3.1: the closing / final quarter under the current one, in its own words.
+    if (info && info.side) grade.appendChild(el('span', 'grade-side', info.side));
+    grade.setAttribute('aria-label', caption + ' grade ' + value + (info && info.side ? '. ' + info.side : '') + '. Open My Grade');
     board.appendChild(grade);
   }
 
@@ -1360,6 +1430,17 @@
     action.appendChild(el('span', null, lines[0] || '…'));
     main.appendChild(action);
     if (lines.length > 1) main.appendChild(el('p', 'sign-context', lines.slice(1).join(' ')));
+    // §3.9: the quarter notice, dismissed here the Desk's way (one dismissal for both homes).
+    var notice = quarterNoticeText();
+    if (notice) {
+      var noticeLine = el('p', 'sign-notice');
+      noticeLine.appendChild(el('span', null, notice));
+      var ok = button('sign-link', 'OK');
+      ok.setAttribute('aria-label', 'Dismiss this notice');
+      ok.addEventListener('click', function () { callDesk('_dismissQuarterNotice'); scheduleRender(); });
+      noticeLine.appendChild(ok);
+      main.appendChild(noticeLine);
+    }
     if (warn) {
       var when = el('p', 'sign-when');
       var pillText = missingPillText();
@@ -2365,9 +2446,10 @@
       return;
     }
     var value = info && info.value ? info.value : '—';
-    var caption = info ? (info.key + (info.official ? ' official' : '')) : 'My grade';
+    var caption = info ? (quarterWords(info.key) + (info.official ? ' official' : '')) : 'My grade';
     head.appendChild(el('span', 'grade-num', value));
     head.appendChild(el('span', 'grade-cap', caption));
+    if (info && info.side) head.appendChild(el('span', 'grade-side', info.side));   // §3.1
   }
 
   function setupMyGrade() {
@@ -2584,10 +2666,13 @@
   // The Desk card's data-sig: the same rows keep the tiles (and focus on a tile's button)
   // across a grade poll; only the status line is refreshed (as the Desk does). A row turning
   // late (QUARTER_ZERO_FREEZE_SPEC) changes its words, so it rebuilds the tiles.
-  function zeroSignature(warns, later, done) {
+  // quarterSig (optional, QUARTER_LINE_BY_DUE_DATE_SPEC §3.2): the Desk's quarter grouping, so a
+  // regrouping or a close rebuilds the tiles.
+  function zeroSignature(warns, later, done, quarterSig) {
     var sig = warns.map(function (w) { return w.lessonKey + ':' + w.kind + ':' + (w.past ? 1 : 0); }).join('|');
     if (later.length) sig += '#later:' + later.map(function (w) { return w.lessonKey + ':' + w.kind + (w.late ? ':late' : ''); }).join('|');
     if (done.length) sig += '#done:' + done.map(function (w) { return w.lessonKey + ':' + w.kind; }).join('|');
+    if (quarterSig) sig += '#q:' + quarterSig;
     return sig;
   }
 
@@ -2661,7 +2746,9 @@
   // yellow; wz-later = past due, not counting yet, grey); data-zero says the same in words.
   var BUCKET_OF_STATE = { now: 'zeroed', soon: 'soon', later: 'notyet', done: 'done' };
 
-  function zeroTile(w, state) {
+  // view (optional): the Desk's _zeroQuarterView; a row taught in the closing quarter but counting in
+  // the next one carries the Desk's one-line lift note (QUARTER_LINE_BY_DUE_DATE_SPEC §3.2).
+  function zeroTile(w, state, view) {
     var later = state === 'later';
     var className = 'pl-tile wz-row';
     if (later) className += ' wz-later';
@@ -2687,14 +2774,20 @@
       tile.appendChild(verb);
     }
     tile.appendChild(el('span', 'wz-label', label));
+    // The Desk's tag words ('Schoology MP2: …' when two marking periods share the title, §3.5).
     var title = callDesk('_zeroSchoologyTitle', [w]);
-    if (title) tile.appendChild(el('span', 'pl-badge wz-sgy', 'Schoology: ' + title));
+    var sgyLabel = callDesk('_zeroSchoologyLabel', [w]) || (title ? 'Schoology: ' + title : '');
+    if (sgyLabel) tile.appendChild(el('span', 'pl-badge wz-sgy', sgyLabel));
     if (state === 'done') {
       tile.appendChild(el('span', 'wz-when', 'Done'));
       return tile;
     }
     tile.appendChild(el('span', 'wz-when', callDesk(later ? '_pastDueWhenText' : '_zeroWhenText', [w]) || ''));
-    if (later) return tile;
+    var lift = view ? view.lift(w) : '';
+    if (later) {
+      if (lift) tile.appendChild(el('span', 'wz-lift', lift));
+      return tile;
+    }
 
     // "graph": enabled (and switched to the inline graph) by the Desk's _zeroCardAttachScores once
     // the class picture has loaded; until then it opens the Snapshot app on this assignment.
@@ -2703,7 +2796,16 @@
     see.disabled = true;
     see.onclick = function () { callDesk('_snapOpenAssignment', [w.lessonKey, w.kind]); };
     tile.appendChild(see);
+    if (lift) tile.appendChild(el('span', 'wz-lift', lift));
     return tile;
+  }
+
+  // DONE rows in quarter order while the rows are grouped (stable within a quarter).
+  function doneInQuarterOrder(done, view) {
+    if (!view) return done;
+    return done.map(function (w, i) { return { w: w, i: i, q: view.quarterOf(w) || 'Q9' }; })
+      .sort(function (x, y) { return x.q === y.q ? x.i - y.i : (x.q < y.q ? -1 : 1); })
+      .map(function (x) { return x.w; });
   }
 
   function renderLedgerZero() {
@@ -2719,7 +2821,9 @@
     if (status.textContent !== text) status.textContent = text;
     status.hidden = !text;
 
-    var sig = zeroSignature(warns, later, b.done);
+    // QUARTER_LINE_BY_DUE_DATE_SPEC §3.2: the Desk's own quarter grouping (null = one plain list).
+    var view = callDesk('_zeroQuarterView', [warns.concat(later)]) || null;
+    var sig = zeroSignature(warns, later, b.done, view ? view.sig : '');
     if (sig !== ledgerState.zeroSig) {
       ledgerState.zeroSig = sig;
       box.textContent = '';
@@ -2730,25 +2834,46 @@
       if (frame) box.setAttribute('data-frame', frame);
       else box.removeAttribute('data-frame');
 
+      // §3.2: inside each bucket, the Desk's quarter heading before the first row of each quarter
+      // (rows stay in the Desk's order, so Pico and System 7 list them one to one).
+      var shownQuarter = null;
+      var quarterHead = function (w, bucket) {
+        var q = view ? view.quarterOf(w) : null;
+        if (!q || q === shownQuarter) return;
+        shownQuarter = q;
+        var qHead = el('p', 'pl-quarter-head', view.heading(q));
+        qHead.setAttribute('data-bucket', bucket);
+        box.appendChild(qHead);
+      };
+      var addTile = function (w, state, bucket) {
+        quarterHead(w, bucket);
+        box.appendChild(zeroTile(w, state, view));
+      };
       // Past first, then by date (the warnings are already date-ordered), as the Desk orders them.
       var ordered = b.zeroed.concat(b.soon);
-      ordered.forEach(function (w) { box.appendChild(zeroTile(w, w.past ? 'now' : 'soon')); });
+      b.zeroed.forEach(function (w) { addTile(w, 'now', 'zeroed'); });
+      shownQuarter = null;
+      b.soon.forEach(function (w) { addTile(w, 'soon', 'soon'); });
       // The Desk's two grey headings: past due (a 0 still to come) and late (never a 0).
       var notYet = later.filter(function (w) { return !w.late; });
       var late = later.filter(function (w) { return w.late; });
+      shownQuarter = null;
       if (notYet.length) {
+        quarterHead(notYet[0], 'notyet');
         var head = el('p', 'pl-later-head', 'Past due — not counting yet');
         head.setAttribute('data-bucket', 'notyet');
         box.appendChild(head);
-        notYet.forEach(function (w) { box.appendChild(zeroTile(w, 'later')); });
+        notYet.forEach(function (w) { addTile(w, 'later', 'notyet'); });
       }
       if (late.length) {
+        quarterHead(late[0], 'notyet');
         var lateHead = el('p', 'pl-later-head pl-late-head', 'Late — never a 0');
         lateHead.setAttribute('data-bucket', 'notyet');
         box.appendChild(lateHead);
-        late.forEach(function (w) { box.appendChild(zeroTile(w, 'later')); });
+        late.forEach(function (w) { addTile(w, 'later', 'notyet'); });
       }
-      b.done.forEach(function (w) { box.appendChild(zeroTile(w, 'done')); });
+      shownQuarter = null;
+      doneInQuarterOrder(b.done, view).forEach(function (w) { addTile(w, 'done', 'done'); });
       LEDGER_BUCKETS.forEach(function (bucket) {
         var empty = el('p', 'pl-empty', LEDGER_EMPTY[bucket.key]);
         empty.setAttribute('data-bucket', bucket.key);
@@ -2874,7 +2999,7 @@
 
     var who = el('div', 'pl-who');
     who.appendChild(el('span', 'pl-name', rosterName() || 'Your ledger'));
-    if (grade.q) who.appendChild(el('span', 'pl-badge pl-quarter', grade.q));
+    if (grade.q) who.appendChild(el('span', 'pl-badge pl-quarter', quarterWords(grade.q)));   // review D4: 'Quarter 2'
     var seeClass = callDesk('_walletSeeClassButton');   // students only; opens the Snapshot app
     if (seeClass && seeClass.nodeType === 1) {
       seeClass.className = 'pl-btn wallet-see-class';
@@ -2887,8 +3012,12 @@
     var num = el('span', 'pl-grade-num', grade.pct != null ? grade.pct + '%' : '—');
     if (hued) num.style.color = 'hsl(' + readiness.hue + ',70%,35%)';
     var labelText = grade.official ? 'Official grade (same as Schoology)' : 'Grade';
-    if (warns.length) {
-      num.style.color = callDesk('_zeroAnyPast', [warns]) ? '#a30000' : '#7a5c00';
+    // QUARTER_LINE_BY_DUE_DATE_SPEC §3.2: the number's colour and drop sentence count only the
+    // quarter shown, exactly as the Desk's balance card does.
+    var shownWarns = callDesk('_zeroRowsInQuarter', [warns, grade.q]);
+    if (!Array.isArray(shownWarns)) shownWarns = warns;
+    if (shownWarns.length) {
+      num.style.color = callDesk('_zeroAnyPast', [shownWarns]) ? '#a30000' : '#7a5c00';
       if (!grade.official) labelText = 'Grade today';
     }
     if (grade.official) {
@@ -2903,9 +3032,12 @@
       box.appendChild(el('p', 'wallet-grade-estimate pl-line', "Today's estimate: " + (grade.estimate != null ? grade.estimate + '%' : '—')
         + ' — moves as you work; the official grade updates every night.'));
     }
-    if (warns.length) {
-      box.appendChild(el('p', 'wallet-grade-drop pl-line', callDesk('_walletGradeDropText', [warns]) || ''));
+    if (shownWarns.length) {
+      box.appendChild(el('p', 'wallet-grade-drop pl-line', callDesk('_walletGradeDropText', [shownWarns]) || ''));
     }
+    // §3.2, decision 8.7: the quarter that just ended, read-only, in the Desk's words.
+    var otherLine = callDesk('_walletOtherQuarterLine', [grade.q]);
+    if (otherLine) box.appendChild(el('p', 'wallet-grade-other pl-line', otherLine));
 
     // Under the tiles: the PC on file + strategy and the work done ahead (the Desk block's own
     // lines, as text). "How your grade is counted" goes in its fold (renderLedgerFolds).
@@ -3501,6 +3633,7 @@
     '        <span class="week-page" id="pico-week-page"></span>',
     '        <span class="crown" id="pico-crown" hidden><span class="sr-only">Whole week finished</span></span>',
     '        <span class="week-exam" id="pico-exam"></span>',
+    '        <span class="week-quarter" id="pico-quarter" hidden></span>',
     '      </div>',
     '    </div>',
     '  </section>',

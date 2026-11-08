@@ -42,7 +42,7 @@ function load({ response, viewAs = null, teacherToken = 'teacher-tok' } = {}) {
       return response;
     },
   };
-  runInNewContext(fnSource('_fetchOfficialGrade') + '\n' + fnSource('_officialGradeTitle') + '\nthis._f=_fetchOfficialGrade;this._t=_officialGradeTitle;', sandbox);
+  runInNewContext(fnSource('_fetchOfficialGrade') + '\n' + fnSource('_quarterName') + '\n' + fnSource('_officialGradeTitle') + '\nthis._f=_fetchOfficialGrade;this._t=_officialGradeTitle;', sandbox);
   return { fetchOfficial: sandbox._f, title: sandbox._t, calls };
 }
 
@@ -75,7 +75,7 @@ describe('_fetchOfficialGrade', () => {
 describe('_officialGradeTitle', () => {
   it('explains the number: Schoology work, the PC that counts, the early bonus', () => {
     const t = load({ response: null }).title(OFFICIAL);
-    expect(t).toMatch(/^Official Q1 grade/);
+    expect(t).toMatch(/^Official Quarter 1 grade/);   // re-pinned 2026-11-08 (review D4): never "Q1"
     expect(t).toContain('the same number Schoology shows');
     expect(t).toContain('Work 36.1 (from Schoology)');
     expect(t).toContain('your Progress Check 66.7 is higher, and it counts because Work + bonuses reached 40');
@@ -89,11 +89,16 @@ describe('_officialGradeTitle', () => {
 });
 
 describe('My Ledger balance card (_walletCurrentGrade)', () => {
-  function walletGrade({ official, quarterGrade = 37.9, quarter = 'Q1' }) {
+  // byQuarter: the per-quarter cache (QUARTER_LINE_BY_DUE_DATE_SPEC §3.1); undefined = an older page
+  // without it (the sandbox then has only the single _officialGradeCache, as before).
+  // startsText (optional) stands in for the Desk's _quarterStartsText(q): 'starts Mon Nov 9' while q has not started.
+  function walletGrade({ official, quarterGrade = 37.9, quarter = 'Q1', byQuarter, startsText }) {
     const sandbox = {
       _officialGradeCache: official,
       _walletCurrentQuarter: () => ({ quarter, data: { quarterGrade } }),
     };
+    if (byQuarter !== undefined) sandbox._officialGradeByQuarter = byQuarter;
+    if (startsText !== undefined) sandbox._quarterStartsText = startsText;
     runInNewContext(fnSource('_walletPct') + '\n' + fnSource('_walletCurrentGrade') + '\nthis._g=_walletCurrentGrade;', sandbox);
     return sandbox._g();
   }
@@ -112,6 +117,31 @@ describe('My Ledger balance card (_walletCurrentGrade)', () => {
 
   it('ignores an official grade from another quarter', () => {
     expect(walletGrade({ official: { ...OFFICIAL, quarter: 'Q2' } })).toEqual({ pct: 38, q: 'Q1' });
+    // Re-pinned 2026-11-07: also with the per-quarter cache holding only other quarters.
+    expect(walletGrade({ official: { ...OFFICIAL, quarter: 'Q2' }, byQuarter: { Q2: { ...OFFICIAL, quarter: 'Q2' } } }))
+      .toEqual({ pct: 38, q: 'Q1' });
+  });
+
+  it('per-quarter cache (QUARTER_LINE §3.1): the shown quarter\'s own official grade, even when the Do Now\'s current pill is another quarter', () => {
+    // Sunday 11/8: the Do Now's current pill is Quarter 2 (no grade yet), so the single slot holds
+    // Q2's (empty) official while this card shows Quarter 1; the per-quarter cache answers for Q1.
+    const g = walletGrade({ official: null, byQuarter: { Q1: OFFICIAL, Q2: null } });
+    expect(g).toEqual({ pct: 68.7, q: 'Q1', official: OFFICIAL, estimate: 38 });
+    // The single slot still wins for its own quarter (the same object in a real page).
+    const own = { ...OFFICIAL, grade: 70.1 };
+    expect(walletGrade({ official: own, byQuarter: { Q1: OFFICIAL } }).pct).toBe(70.1);
+  });
+
+  it('Finding R6b: never the official grade of a quarter that has not started, even a cached one', () => {
+    const sunday = (q) => (q === 'Q2' ? 'starts Mon Nov 9' : '');   // Sun Nov 8: Quarter 2 starts Monday
+    const early = { ...OFFICIAL, quarter: 'Q2', grade: 80 };
+    // No quarter with a grade yet: no number at all, never Quarter 2's early 80.
+    expect(walletGrade({ official: early, quarter: null, quarterGrade: null, startsText: sunday })).toEqual({ pct: null, q: null });
+    // The quarter shown (Quarter 1, started) keeps its own official.
+    expect(walletGrade({ official: early, byQuarter: { Q1: OFFICIAL, Q2: early }, startsText: sunday }))
+      .toEqual({ pct: 68.7, q: 'Q1', official: OFFICIAL, estimate: 38 });
+    // Monday: Quarter 2 has started, so its official leads as before.
+    expect(walletGrade({ official: early, quarter: 'Q2', startsText: () => '' })).toMatchObject({ pct: 80, q: 'Q2', official: early });
   });
 
   it('the card labels it and shows the estimate line', () => {
@@ -131,5 +161,31 @@ describe('renderDoNowGrades wiring', () => {
   it('shows the live Desk grade as "Today\'s estimate" only when an official grade exists', () => {
     expect(body).toMatch(/if \(official\) host\.appendChild\(_trackChip\("Today's estimate", gradeRaw/);
     expect(body).toMatch(/else host\.appendChild\(_trackChip\('Schoology today'/);
+  });
+  it('Finding R6b: the official of a quarter that has not started is dropped before the pill or any cache reads it', () => {
+    const drop = body.indexOf('if (startsText) official = null;');
+    expect(body).toContain("var startsText = (sideQ && typeof _quarterStartsText === 'function') ? _quarterStartsText(curQ) : '';");
+    expect(drop).toBeGreaterThan(body.indexOf('var official = officials[0];'));
+    expect(drop).toBeLessThan(body.indexOf('_officialGradeCache = official;'));
+    expect(drop).toBeLessThan(body.indexOf('_officialGradeByQuarter[curQ] = official;'));
+    expect(drop).toBeLessThan(body.indexOf('if (official) gradeSpan.textContent'));
+    // The starts rule, in the pill and in its tooltip; the readers skip a not-started official too.
+    expect(body).toContain('} else if (startsText) {');
+    expect(body).toContain("if (startsText && gradeRaw == null) pill.title = curQWords + ' ' + startsText + '. It has no grade until then. ' + pill.title;");
+    expect(fnSource('_officialGradeFor')).toContain("if (typeof _quarterStartsText === 'function' && _quarterStartsText(q)) return null;");
+    expect(fnSource('_walletCurrentGrade')).toContain("if (official && typeof _quarterStartsText === 'function' && _quarterStartsText(official.quarter)) official = null;");
+  });
+  it('one official per quarter (QUARTER_LINE §3.1): the closing / final pill fetches its own into the per-quarter cache', () => {
+    // Re-pinned 2026-11-08 (review D3): both fetched at once; the ended quarter's through its per-day cache.
+    expect(body).toContain('var officials = await Promise.all([');
+    expect(body).toContain("(sideQ && typeof _fetchSideOfficialGrade === 'function') ? _fetchSideOfficialGrade(baseUrl, token, sideQ) : null,");
+    expect(body).toContain('var sideOfficial = officials[1];');
+    expect(fnSource('_fetchSideOfficialGrade')).toContain('_fetchOfficialGrade(baseUrl, token, quarter)');
+    expect(body).toContain('_officialGradeByQuarter = {};');
+    expect(body).toContain('_officialGradeByQuarter[curQ] = official;');
+    expect(body).toContain('if (sideQ) _officialGradeByQuarter[sideQ] = sideOfficial;');
+    // The single slot stays the CURRENT pill's official (never the side quarter's).
+    expect(body).toContain('if (typeof _officialGradeCache !== \'undefined\') _officialGradeCache = official;');
+    expect(body).not.toMatch(/_officialGradeCache = sideOfficial/);
   });
 });

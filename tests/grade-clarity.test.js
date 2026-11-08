@@ -17,7 +17,12 @@ const DESK_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code
 // Just the "How your grade works" modal markup.
 const MODAL = DESK.slice(DESK.indexOf('<div id="grade-help-overlay"'), DESK.indexOf('<!-- ═══ My Gradebook Modal'));
 
-const plain = html => html.replace(/<[^>]+>/g, '').replace(/&mdash;/g, '—').replace(/&nbsp;/g, ' ');
+const plain = html => html.replace(/<[^>]+>/g, '').replace(/&mdash;/g, '—').replace(/&ndash;/g, '–').replace(/&nbsp;/g, ' ');
+// QUARTER_LINE_BY_DUE_DATE_SPEC §3.6 (teacher 2026-11-07), word for word in both explanations.
+const QUARTER_LINE_TEXT = 'A 0 counts in the quarter its 0 date lands in. Quarter 1 ended Fri Nov 6: work whose 0 date was by Nov 6 '
+  + 'counts for Quarter 1, and you can fix those 0s until it closes Thu Nov 12. Work with a 0 date after Nov 6 counts for '
+  + 'Quarter 2 (Nov 9 – Jan 22) even if it was taught in Quarter 1; finishing it by Thu Nov 12 can also raise Quarter 1, '
+  + 'never lower it. Progress Check retakes for Quarter 1 end at the close too.';
 const occurrences = (s, needle) => s.split(needle).length - 1;
 // The one <p>…</p> that contains `needle`.
 function paragraphWith(html, needle) {
@@ -90,8 +95,13 @@ describe('ap_stats_roadmap_square_mode.html — Desk "how grades work" modal', (
     expect(text).toContain('Your unit poster is scored 90 to 115, so it can only help you unless the rest of your Work is above 90.');
     expect(text).not.toMatch(/unit posters\)/);                              // posters are not banked bonus
     expect(text).toContain('13 days after its class day');                   // grade-config dueLagDays
-    // grade-config zeroFreezeAtQuarterEnd (QUARTER_ZERO_FREEZE_SPEC.md, teacher 2026-11-06)
-    expect(text).toContain('Unless its quarter ends first: then it is late, never a 0, and finishing it still counts.');
+    // QUARTER_LINE_BY_DUE_DATE_SPEC §3.6 (teacher 2026-11-07): grade-config zeroQuarterMembership +
+    // quarters.Q1.close replace the 2026-11-06 "late, never a 0" freeze wording.
+    expect(text).toContain(QUARTER_LINE_TEXT);
+    expect(text).not.toContain('Unless its quarter ends first');
+    expect(text).not.toMatch(/late, never a 0/);
+    // The pill lost its ↑ ceiling (desk-grade-outlook 12), so the modal no longer explains one.
+    expect(MODAL).not.toMatch(/&uarr;|↑/);
     expect(text).toContain('3 days before');                                 // Desk ZERO_WARN_DAYS
     expect(text).toContain('+5 / +3 / +1');                                  // exit-ticket bonus
     expect(text).toContain('+7.5 / +4.5 / +1.5');                            // 5/3/1 x BONUS_MULTIPLIER 1.5
@@ -130,7 +140,11 @@ describe('start-here.html — the full explanation carries the same numbers', ()
     expect(text).not.toMatch(/100\/85\/60/);
     expect(text).toContain('never lowers');
     expect(text).toContain('13 days after its class day');
-    expect(text).toContain('Unless its quarter ends first: work still missing when its quarter ends, before its 13 days are up, is late, never a 0 (in the Desk and in Schoology), and finishing it still counts.');
+    // QUARTER_LINE_BY_DUE_DATE_SPEC §3.6: the same quarter-line sentence as the Desk modal.
+    expect(text).toContain(QUARTER_LINE_TEXT);
+    expect(text).not.toContain('Unless its quarter ends first');
+    expect(text).toContain('retakable until the quarter closes (Quarter 1 closes Thu Nov 12)');
+    expect(text).toContain('Quarter 1 runs Sep 2 – Nov 6 and closes Thu Nov 12');
     expect(text).toContain('3 days before');
     expect(text).toContain('+5 (E), +3 (P), or +1 (I)');
     expect(text).toContain('+7.5 / +4.5 / +1.5');

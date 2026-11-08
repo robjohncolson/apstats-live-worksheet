@@ -296,24 +296,148 @@ def assignment_points(kind: str | None = None) -> int:
 
 
 def marking_period_for_date(date_iso: str, mp_ranges: dict) -> str | None:
-    """Return the grading_period_id that contains date_iso (inclusive), or None.
+    """Return the grading_period_id that files date_iso, or None.
 
     mp_ranges format::
         { grading_period_id: {'start': 'YYYY-MM-DD', 'end': 'YYYY-MM-DD'} }
 
+    A date inside an MP (inclusive) gets that MP. A date in a gap BETWEEN two MPs rolls
+    forward to the next MP (teacher 2026-11-07: a gap day belongs to the next quarter).
+    None only outside all MPs (before the first, after the last) or for a None/empty date.
     ISO date strings compare correctly as plain strings (lexicographic == chronological).
-    A None or empty date_iso returns None.
     """
     if not date_iso:
         return None
 
-    for period_id, bounds in mp_ranges.items():
-        start = bounds.get('start', '')
-        end = bounds.get('end', '')
-        if start and end and start <= date_iso <= end:
+    ordered = marking_periods_in_order(mp_ranges)
+    for period_id in ordered:
+        bounds = mp_ranges[period_id]
+        if bounds['start'] <= date_iso <= bounds['end']:
+            return period_id
+
+    # In a gap: the first MP that starts after the date, if an earlier MP already ended.
+    started_before = any(mp_ranges[pid]['end'] < date_iso for pid in ordered)
+    for period_id in ordered:
+        if started_before and mp_ranges[period_id]['start'] > date_iso:
             return period_id
 
     return None
+
+
+def marking_periods_in_order(mp_ranges: dict) -> list:
+    """The MP ids with a start AND an end date, in calendar order (by start date).
+
+    Schoology's ids are not in calendar order (live 2026-11-07: MP3 is 1173886, MP2 1173889).
+    """
+    dated = [pid for pid, b in (mp_ranges or {}).items()
+             if isinstance(b, dict) and b.get('start') and b.get('end')]
+    return sorted(dated, key=lambda pid: mp_ranges[pid]['start'])
+
+
+QUARTER_KEYS = ('Q1', 'Q2', 'Q3', 'Q4')
+
+
+def marking_period_for_quarter(quarter: str, mp_ranges: dict) -> str | None:
+    """The MP id for quarter 'Q1'..'Q4': the Nth marking period in calendar order, or None."""
+    if quarter not in QUARTER_KEYS:
+        return None
+    ordered = marking_periods_in_order(mp_ranges)
+    index = QUARTER_KEYS.index(quarter)
+    return ordered[index] if index < len(ordered) else None
+
+
+def quarter_for_marking_period(period_id, mp_ranges: dict) -> str | None:
+    """'Q1'..'Q4' for an MP id (its place in calendar order), or None."""
+    ordered = marking_periods_in_order(mp_ranges)
+    if str(period_id) not in [str(p) for p in ordered]:
+        return None
+    index = [str(p) for p in ordered].index(str(period_id))
+    return QUARTER_KEYS[index] if index < len(QUARTER_KEYS) else None
+
+
+def quarter_label(quarter: str) -> str:
+    """'Q2' -> 'Quarter 2' (headings say Quarter N; Q1/Q3 also read as quartiles)."""
+    if quarter in QUARTER_KEYS:
+        return f"Quarter {quarter[1]}"
+    return str(quarter)
+
+
+class ViewNotVerified(Exception):
+    """The gradebook could not be shown (and proven) in a pass's marking period."""
+
+
+def pass_view(quarter: str, mp_ranges: dict, quarters: dict | None = None) -> dict | None:
+    """{quarter, grading_period_id, mp_range} for a quarter pass, or None (no such MP).
+
+    The MP is the Nth one in calendar order (marking_period_for_quarter), and it must also
+    be the one marking period that covers the engine's quarter window most tightly
+    (mp.start <= Q.start and Q.end <= mp.end). quarters: /class/grades config.quarters,
+    else schoology_components.DEFAULT_QUARTERS. Why (verifier finding A9): an extra dated
+    period, such as a "Semester 1 09/02 - 01/22", shifts or ties the Nth pick, and the
+    view check would still pass because it checks the header against the chosen period's
+    own dates. None makes the pass abort with no-marking-period, before any write.
+    """
+    grading_period_id = marking_period_for_quarter(quarter, mp_ranges)
+    if grading_period_id is None:
+        return None
+    window = _quarter_window(quarter, quarters)
+    if window is None:
+        return None
+    if _tightest_covering_period(window, mp_ranges) != str(grading_period_id):
+        return None
+    return {"quarter": quarter, "grading_period_id": str(grading_period_id),
+            "mp_range": dict(mp_ranges[grading_period_id])}
+
+
+def _quarter_window(quarter: str, quarters: dict | None) -> dict | None:
+    """The engine's {start, end} for the quarter, or None when it has no dated window."""
+    if quarters is None:
+        import schoology_components   # imported here: schoology_components imports this module
+        quarters = schoology_components.DEFAULT_QUARTERS
+    window = (quarters or {}).get(quarter)
+    if not isinstance(window, dict) or not window.get("start") or not window.get("end"):
+        return None
+    return window
+
+
+def _tightest_covering_period(window: dict, mp_ranges: dict) -> str | None:
+    """The MP id whose range covers the window with the fewest days.
+
+    None when no dated MP covers it, when two tie, or when a date does not parse.
+    """
+    spans = {}
+    for period_id in marking_periods_in_order(mp_ranges):
+        bounds = mp_ranges[period_id]
+        if not (bounds["start"] <= window["start"] and window["end"] <= bounds["end"]):
+            continue
+        try:
+            days = (date.fromisoformat(bounds["end"]) - date.fromisoformat(bounds["start"])).days
+        except ValueError:
+            return None
+        spans[str(period_id)] = days
+    if not spans:
+        return None
+    fewest = min(spans.values())
+    tightest = [pid for pid, days in spans.items() if days == fewest]
+    if len(tightest) != 1:
+        return None
+    return tightest[0]
+
+
+def describe_view(view: dict) -> str:
+    """'Marking Period 1173888 (2026-09-02 - 2026-11-06) for Quarter 1'."""
+    rng = view.get("mp_range") or {}
+    return (f"Marking Period {view['grading_period_id']} ({rng.get('start')} - {rng.get('end')}) "
+            f"for {quarter_label(view['quarter'])}")
+
+
+def view_error(view: dict, result: dict | None) -> str:
+    """The log line for a select_grading_period result that did not verify."""
+    result = result or {}
+    shown = result.get("view") or {}
+    return (f"could not verify the gradebook shows {describe_view(view)}: "
+            f"{result.get('error') or 'unverified'} "
+            f"(page: filter={shown.get('gp')!r}, header={shown.get('header')!r})")
 
 
 def should_push(target_value, last_synced_value, tol: float = 1e-9) -> bool:
@@ -399,3 +523,211 @@ def compute_sync_actions(targets: dict, last_synced: dict) -> dict:
             skip.append(key)
 
     return {'push': push, 'skip': skip}
+
+
+# ---------------------------------------------------------------------------
+# Rig lock -- shared with tools/daily_schoology_sync.ps1 (Enter-RigLock)
+# ---------------------------------------------------------------------------
+# One Edge window serves every Schoology tool. The daily job, the column move
+# (schoology_move_columns.py), the close (close_quarter.py) and a standalone
+# schoology_official.py run must each HOLD this lock from before they connect to
+# CDP until their last read or write, so two of them never drive the same page.
+# File: tools/.schoology-sync-logs/rig.lock (gitignored), one line
+#   "<pid> <owner> <ISO time>"  -- the ps1 writes "<pid> <Section> <Get-Date -Format o>".
+# A lock is stale when its process is gone or it is older than RIG_LOCK_STALE_HOURS;
+# both sides remove a stale lock and try again. Nested runs (close_quarter.py
+# running schoology_official.py --final) inherit the parent's lock through the
+# APSTATS_RIG_LOCK_OWNER environment variable (the holder's pid).
+
+RIG_LOCK_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.schoology-sync-logs', 'rig.lock')
+RIG_LOCK_STALE_HOURS = 3
+RIG_LOCK_OWNER_ENV = 'APSTATS_RIG_LOCK_OWNER'
+RIG_LOCK_INHERITED = 'inherited'
+
+
+def pid_alive(pid: int) -> bool:
+    """True when a process with this pid exists. Never signals it (os.kill(pid, 0) on
+    Windows would TERMINATE the process), so Windows asks the kernel directly."""
+    if not isinstance(pid, int) or pid <= 0:
+        return False
+    if os.name == 'nt':
+        import ctypes
+        PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
+        STILL_ACTIVE = 259
+        kernel32 = ctypes.windll.kernel32  # type: ignore[attr-defined]
+        handle = kernel32.OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, False, pid)
+        if not handle:
+            return False
+        try:
+            code = ctypes.c_ulong()
+            if not kernel32.GetExitCodeProcess(handle, ctypes.byref(code)):
+                return False
+            return code.value == STILL_ACTIVE
+        finally:
+            kernel32.CloseHandle(handle)
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
+def rig_lock_holder(path: str = RIG_LOCK_PATH) -> dict | None:
+    """{'pid', 'owner', 'at', 'age_hours'} from the lock file, or None when there is none.
+    pid is None when the first token is not a number."""
+    try:
+        with open(path, 'r', encoding='utf-8', errors='replace') as fh:
+            line = (fh.readline() or '').strip()
+        mtime = os.path.getmtime(path)
+    except (FileNotFoundError, OSError):
+        return None
+    parts = line.split(' ')
+    try:
+        pid = int(parts[0])
+    except (ValueError, IndexError):
+        pid = None
+    import time as _time
+    return {
+        'pid': pid,
+        'owner': parts[1] if len(parts) > 1 else '',
+        'at': parts[2] if len(parts) > 2 else '',
+        'age_hours': max(0.0, (_time.time() - mtime) / 3600.0),
+    }
+
+
+def rig_lock_is_stale(holder: dict | None, alive=pid_alive) -> bool:
+    """A lock whose process is gone, or that is older than RIG_LOCK_STALE_HOURS."""
+    if not holder:
+        return False
+    if holder.get('age_hours', 0) > RIG_LOCK_STALE_HOURS:
+        return True
+    pid = holder.get('pid')
+    return pid is not None and not alive(pid)
+
+
+def acquire_rig_lock(owner: str, path: str = RIG_LOCK_PATH, wait_seconds: float = 0,
+                     poll_seconds: float = 5, sleep=None, alive=pid_alive) -> str | None:
+    """Take the rig lock for this process. Returns a token for release_rig_lock, or None
+    when another live run holds it past wait_seconds.
+
+    Atomic: os.O_CREAT | os.O_EXCL, the same contract as the ps1's New-Item. A stale
+    lock is removed and the attempt repeats. When APSTATS_RIG_LOCK_OWNER names the pid
+    that holds the lock (a parent tool), the lock is inherited and the token is
+    RIG_LOCK_INHERITED: release_rig_lock then leaves the parent's file alone.
+    """
+    import time as _time
+    sleep = sleep or _time.sleep
+    env_pid = os.environ.get(RIG_LOCK_OWNER_ENV)
+    holder = rig_lock_holder(path)
+    if env_pid and holder and holder.get('pid') is not None and str(holder['pid']) == env_pid:
+        return RIG_LOCK_INHERITED
+    deadline = _time.time() + max(0.0, wait_seconds)
+    while True:
+        os.makedirs(os.path.dirname(path) or '.', exist_ok=True)
+        try:
+            fd = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+        except FileExistsError:
+            holder = rig_lock_holder(path)
+            if holder is None:
+                continue   # released between the two checks: try again
+            if rig_lock_is_stale(holder, alive):
+                try:
+                    os.remove(path)
+                except OSError:
+                    pass
+                continue
+            if _time.time() >= deadline:
+                return None
+            sleep(poll_seconds)
+            continue
+        stamp = _time.strftime('%Y-%m-%dT%H:%M:%S%z')
+        with os.fdopen(fd, 'w', encoding='utf-8') as fh:
+            fh.write('%d %s %s' % (os.getpid(), owner, stamp) + chr(10))
+        os.environ[RIG_LOCK_OWNER_ENV] = str(os.getpid())   # children inherit the lock
+        return path
+
+
+def release_rig_lock(token: str | None) -> None:
+    """Release a lock taken by acquire_rig_lock. An inherited or None token is a no-op."""
+    if not token or token == RIG_LOCK_INHERITED:
+        return
+    try:
+        os.remove(token)
+    except FileNotFoundError:
+        pass
+    os.environ.pop(RIG_LOCK_OWNER_ENV, None)
+
+
+def take_rig_lock(owner: str, path: str | None = None, parent_pid: int | None = None) -> str | None:
+    """acquire_rig_lock for a tool that the daily job also runs (schoology_official.py).
+
+    One more way to inherit: the lock is held by the process that started this one.
+    tools/daily_schoology_sync.ps1 writes its own PowerShell $PID into the lock and runs
+    each step as its child without exporting APSTATS_RIG_LOCK_OWNER, so without this the
+    nightly official step would refuse its own job's lock (finding A5). path=None reads
+    RIG_LOCK_PATH at call time (tests point it at a temp folder).
+    """
+    path = path or RIG_LOCK_PATH
+    token = acquire_rig_lock(owner, path=path)
+    if token is not None:
+        return token
+    holder = rig_lock_holder(path)
+    parent = os.getppid() if parent_pid is None else parent_pid
+    if holder and holder.get('pid') is not None and holder['pid'] == parent:
+        return RIG_LOCK_INHERITED
+    return None
+
+
+def rig_lock_owner(path: str | None = None) -> str:
+    """The owner word of the rig lock now on disk ('' when there is none)."""
+    holder = rig_lock_holder(path or RIG_LOCK_PATH)
+    return (holder or {}).get('owner') or ''
+
+
+def is_daily_job_owner(owner: str) -> bool:
+    """True for a lock taken by tools/daily_schoology_sync.ps1: it writes its section
+    name (PeriodB / PeriodE) as the owner. Every Python tool writes its own name."""
+    return str(owner or '').startswith('Period')
+
+
+# ---------------------------------------------------------------------------
+# The school clock and the LIVE window (QUARTER_LINE_BY_DUE_DATE_SPEC.md section 4)
+# ---------------------------------------------------------------------------
+# The LIVE tasks ApStatsSchoologySync-B (16:30) and -E (16:45) drive the rig 16:25-17:05.
+# A manual write run (the close, a standalone official --apply or --final --apply) never
+# STARTS from 16:00, because a run started after 16:00 could still be running at 16:25,
+# and a run already going stops cleanly at its next section or student once 16:00 is
+# reached (finding A5). The daily job's own steps are exempt: that window is theirs.
+
+SCHOOL_TZ = 'America/New_York'
+RIG_QUIET_WINDOW = ('16:00', '17:05')
+RIG_WINDOW_REASON = ('the LIVE sync tasks use the rig 16:25-17:05; a run started after 16:00 '
+                     'could still be running then')
+# The scheduled tasks that own the window (named in every refusal; finding R3).
+RIG_LIVE_TASKS = 'ApStatsSchoologySync-B at 16:30, ApStatsSchoologySync-E at 16:45'
+
+
+def school_now():
+    """Now on the school clock (America/New_York), as a naive datetime.
+
+    Windows CPython has zoneinfo data only with the tzdata package; without it this falls
+    back to the machine clock, which on the rig is Eastern time (its scheduled tasks use it).
+    """
+    from datetime import datetime
+    try:
+        from zoneinfo import ZoneInfo
+        return datetime.now(ZoneInfo(SCHOOL_TZ)).replace(tzinfo=None)
+    except Exception:  # ZoneInfoNotFoundError on a box without tzdata
+        return datetime.now()
+
+
+def school_hhmm() -> str:
+    """'HH:MM' on the school clock."""
+    return school_now().strftime('%H:%M')
+
+
+def in_rig_quiet_window(hhmm: str) -> bool:
+    """True from 16:00 until 17:05: no manual Schoology write run may start or go on."""
+    return RIG_QUIET_WINDOW[0] <= str(hhmm) < RIG_QUIET_WINDOW[1]

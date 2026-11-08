@@ -268,5 +268,129 @@ class TestInspectSummary(unittest.TestCase):
         self.assertEqual(bsf.inspect_summary(doc)["uid_bridge_covered"], 2)
 
 
+class TestQuarterFixtureCli(unittest.TestCase):
+    """QUARTER_LINE_BY_DUE_DATE_SPEC.md 4.1 / 4.7: one fixture per quarter pass, previews by --today."""
+
+    DOC = {"ok": True, "config": {"quarters": {
+        "Q1": {"start": "2026-09-02", "end": "2026-11-06", "close": "2026-11-12"},
+        "Q2": {"start": "2026-11-09", "end": "2027-01-22"}}},
+        "students": [{"studentId": "s9", "schoologyUid": "u9", "section": "PeriodB", "units": {}, "lessons": [
+            {"lessonKey": "4.1", "unit": 4, "worksheetKey": "1-2", "due": {"B": "2026-10-23"},
+             "zeroDate": {"B": "2026-11-05"}, "quizTotal": 0, "hasBlooket": True},
+            {"lessonKey": "4.2", "unit": 4, "worksheetKey": "1-2", "due": {"B": "2026-10-26"},
+             "zeroDate": {"B": "2026-11-08"}, "quizTotal": 3, "hasBlooket": True},
+            {"lessonKey": "4.3", "unit": 4, "worksheetKey": "3", "due": {"B": "2026-10-27"},
+             "zeroDate": {"B": "2026-11-09"}, "quizTotal": 3, "hasBlooket": False, "Q": 75},
+        ]}]}
+
+    def _main(self, argv):
+        import io
+        import json
+        import tempfile
+        from contextlib import redirect_stderr, redirect_stdout
+        from unittest import mock
+        out_path = os.path.join(tempfile.mkdtemp(), "fixture.json")
+        with mock.patch.dict(os.environ, {"ROSTER_TEACHER_SECRET": "s"}), \
+                mock.patch.object(bsf, "fetch_class_grades", lambda base, section, secret: self.DOC), \
+                mock.patch.object(bsf, "fetch_poster_grades", lambda base, doc, secret: {}), \
+                redirect_stdout(io.StringIO()) as out, redirect_stderr(io.StringIO()) as err:
+            code = bsf.main(["--section", "PeriodB", "--granularity", "component", "--out", out_path] + argv)
+        fixture = None
+        if os.path.exists(out_path):
+            with open(out_path, encoding="utf-8") as f:
+                fixture = json.load(f)
+        return code, fixture, out.getvalue() + err.getvalue()
+
+    def test_monday_preview_per_quarter(self):
+        code, q1, _ = self._main(["--quarter", "Q1", "--today", "2026-11-09"])
+        self.assertEqual((code, q1), (0, {"u9/FA:4.1-2": 0, "u9/BL:4.1-2": 0}))
+        code, q2, note = self._main(["--quarter", "Q2", "--today", "2026-11-09"])
+        self.assertEqual((code, q2), (0, {"u9/QUIZ:4.2": 0, "u9/QUIZ:4.3": 75}))
+        self.assertIn("derived from its zero date", note)      # these rows carry no quarter field
+        # Sunday (11/08): 4.2's zero date is that day, so nothing new zeros yet.
+        code, q2, _ = self._main(["--quarter", "Q2", "--today", "2026-11-08"])
+        self.assertEqual(q2, {"u9/QUIZ:4.3": 75})
+
+    def test_no_zeros(self):
+        code, q2, _ = self._main(["--quarter", "Q2", "--today", "2026-11-09", "--no-zeros"])
+        self.assertEqual((code, q2), (0, {"u9/QUIZ:4.3": 75}))
+
+    def test_a_closed_quarter_exits_4_and_writes_nothing(self):
+        code, fixture, out = self._main(["--quarter", "Q1", "--today", "2026-11-13"])
+        self.assertEqual((code, fixture), (bsf.QUARTER_CLOSED_EXIT, None))
+        self.assertEqual(bsf.QUARTER_CLOSED_EXIT, 4)            # daily_schoology_sync.ps1 skips the pass
+        self.assertIn("Quarter 1 closed on 2026-11-12", out)
+        code, fixture, _ = self._main(["--quarter", "Q1", "--today", "2026-11-12"])
+        self.assertEqual(code, 0)
+        self.assertIsNotNone(fixture)
+
+    def test_the_close_fallback(self):
+        doc = dict(self.DOC, config={"quarters": {"Q1": {"start": "2026-09-02", "end": "2026-11-06"}}})
+        with __import__("unittest").mock.patch.object(self, "DOC", doc):
+            self.assertEqual(self._main(["--quarter", "Q1", "--today", "2026-11-13"])[0], 0)
+            code, _, _ = self._main(["--quarter", "Q1", "--today", "2026-11-13", "--close", "2026-11-12"])
+            self.assertEqual(code, 4)
+
+    def test_bad_today_is_refused(self):
+        import io
+        from contextlib import redirect_stderr
+        with redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
+            bsf.main(["--section", "PeriodB", "--today", "Monday"])
+
+    def test_inspect_reports_the_quarter_field_and_windows(self):
+        summary = bsf.inspect_summary(self.DOC)
+        self.assertEqual(summary["lessons_with_quarter_field"], 0)
+        self.assertEqual(summary["quarter_windows"]["Q1"], ["2026-09-02", "2026-11-06", "2026-11-12"])
+
+
+class TestPassesCli(unittest.TestCase):
+    """--passes prints the day's quarter passes for daily_schoology_sync.ps1 (finding B3)."""
+
+    DOC = {"ok": True, "config": {"quarters": {
+        "Q1": {"start": "2026-09-02", "end": "2026-11-06", "close": "2026-11-12"},
+        "Q2": {"start": "2026-11-09", "end": "2027-01-22"},
+        "Q3": {"start": "2027-01-25", "end": "2027-04-14"},
+        "Q4": {"start": "2027-04-15", "end": "2027-06-17"}}}, "students": []}
+
+    def _main(self, argv, doc=None):
+        import io
+        from contextlib import redirect_stderr, redirect_stdout
+        from unittest import mock
+        doc = self.DOC if doc is None else doc
+        with mock.patch.dict(os.environ, {"ROSTER_TEACHER_SECRET": "s"}), \
+                mock.patch.object(bsf, "fetch_class_grades", lambda base, section, secret: doc), \
+                mock.patch.object(bsf, "fetch_poster_grades", side_effect=AssertionError("no fixture")), \
+                redirect_stdout(io.StringIO()) as out, redirect_stderr(io.StringIO()) as err:
+            code = bsf.main(["--section", "PeriodB", "--passes"] + argv)
+        return code, out.getvalue(), err.getvalue()
+
+    def test_prints_one_line(self):
+        self.assertEqual(self._main(["--today", "2026-11-08"])[:2], (0, "Q1 Q2\n"))
+        self.assertEqual(self._main(["--today", "2026-11-13"])[:2], (0, "Q2\n"))
+        self.assertEqual(self._main(["--today", "2027-01-23"])[:2], (0, "Q3\n"))
+        self.assertEqual(self._main(["--today", "2027-06-18"])[:2], (0, "none\n"))
+
+    def test_the_q1_close_fallback(self):
+        doc = {"ok": True, "config": {"quarters": {
+            "Q1": {"start": "2026-09-02", "end": "2026-11-06"},
+            "Q2": {"start": "2026-11-09", "end": "2027-01-22"}}}, "students": []}
+        self.assertEqual(self._main(["--today", "2026-11-09"], doc)[1], "Q2\n")
+        self.assertEqual(self._main(["--today", "2026-11-09", "--q1-close", "2026-11-12"], doc)[1], "Q1 Q2\n")
+
+    def test_a_roster_failure_is_an_error_not_a_list(self):
+        code, out, _ = self._main(["--today", "2026-11-09"], {"ok": False, "error": "boom"})
+        self.assertEqual((code, out), (1, ""))
+
+    def test_no_secret_no_call(self):
+        import io
+        from contextlib import redirect_stderr, redirect_stdout
+        from unittest import mock
+        with mock.patch.dict(os.environ, {"ROSTER_TEACHER_SECRET": ""}), \
+                mock.patch.object(bsf, "fetch_class_grades", side_effect=AssertionError("called")), \
+                redirect_stdout(io.StringIO()) as out, redirect_stderr(io.StringIO()):
+            code = bsf.main(["--section", "PeriodB", "--passes"])
+        self.assertEqual((code, out.getvalue()), (2, ""))
+
+
 if __name__ == "__main__":
     unittest.main()

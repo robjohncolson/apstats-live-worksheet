@@ -244,6 +244,15 @@ describe('missing work entry points', () => {
       s._gradeLessonsCache = [];
       s._updateDoNowMissingPill();
       expect(doc.querySelector('.qpill-missing')).toBeNull();
+      // QUARTER_LINE_BY_DUE_DATE_SPEC §3.1 (re-pinned 2026-11-07): with a closing pill before the
+      // current one, the missing pill goes after the LAST quarter pill.
+      doc.getElementById('donow-grades').insertAdjacentHTML('afterbegin', '<span class="qpill" data-role="closing">Quarter 1 92</span>');
+      s._gradeLessonsCache = LESSONS;
+      s._updateDoNowMissingPill();
+      expect(doc.querySelector('.qpill-missing').previousElementSibling.textContent).toBe('Q1: 80');
+      expect(fnSrc('_updateDoNowMissingPill')).toContain("host.querySelectorAll('.qpill:not(.qpill-missing)')");
+      s._gradeLessonsCache = [];
+      s._updateDoNowMissingPill();
       expect(fnSrc('renderDoNowGrades')).toContain('_updateDoNowMissingPill()');
       expect(fnSrc('updateWalletReadinessIcon')).toContain('_updateDoNowMissingPill()');
       expect(fnSrc('_walletRefreshZeroCard')).toContain('_updateDoNowMissingPill()');

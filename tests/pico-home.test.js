@@ -385,7 +385,7 @@ describe('pico-home -- the sign mirrors the Do Now', () => {
     expect(sign.classList.contains('is-warn')).toBe(false);
     expect(sign.querySelector('.sp-bang')).toBeNull();
     expect(sign.querySelector('.grade-num').textContent).toBe('91.5');
-    expect(sign.querySelector('.grade-cap').textContent).toBe('Q1 official');
+    expect(sign.querySelector('.grade-cap').textContent).toBe('Quarter 1 official');   // re-pinned 2026-11-08 (review D4)
     sign.querySelector('.sign-grade').click();
     expect(spies.openWallet).toHaveBeenCalledTimes(1);
   });
@@ -455,6 +455,22 @@ describe('pico-home -- the sign mirrors the Do Now', () => {
     expect(sign.querySelector('.sign-grade')).toBeNull();
     doc.getElementById('pico-sign-go').click();
     expect(spies.openSignInModal).toHaveBeenCalledTimes(1);
+  });
+
+  it('Finding R6b: a current pill that has not started ("starts Mon Nov 9", no number) is never read as official; Quarter 1 leads', () => {
+    const { doc, win } = createDesk();
+    loadPico(win);
+    setDoNow(doc, { msg: 'Do Now: 2.4 \u00b7 Two variables.' });
+    doc.getElementById('donow-grades').innerHTML =
+      '<span class="qpill qpill-side" data-quarter="Q1" data-role="closing"><span class="qkey">Quarter 1</span>'
+      + '<span class="qgrade">92.4</span><span class="qrule">official \u00b7 closes Thu Nov 12</span></span>'
+      + '<span class="qpill empty" data-quarter="Q2" data-role="current"><span class="qkey">Quarter 2</span>'
+      + '<span class="qgrade">\u2014</span><span class="qrule">starts Mon Nov 9</span></span>';
+    win.PicoHome.render();
+    const sign = doc.getElementById('pico-sign');
+    expect(sign.querySelector('.grade-num').textContent).toBe('92.4');
+    expect(sign.querySelector('.grade-cap').textContent).toBe('Quarter 1 official');
+    expect(sign.querySelector('.grade-side').textContent).toBe('Quarter 2 \u00b7 starts Mon Nov 9');
   });
 
   it('re-renders when the Desk rewrites the Do Now card', async () => {

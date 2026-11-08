@@ -641,6 +641,68 @@ export function summarizeOrphanRows(orphans) {
 
 // ── Route mounter ─────────────────────────────────────────────────────────────
 
+// Closed quarters for GET /grade. Server-only: they sit after the route-mounter
+// banner, where scripts/build-grade-engine.mjs cuts the offline bundle.
+
+// PostgREST sends `numeric` columns as strings.
+function numberOrNull(value) {
+  if (value == null || value === '') return null;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
+// The applied banked bonus for a quarter (the BONUS-APPLIED-Q# row that POST
+// /class/quarter/apply-bonus writes), in the shape /class/grades reports as
+// bonusApplied, or null. Mirrors class.js bankedBonus.
+function appliedBonusFor(ledgerRows, quarterKey) {
+  /** @type {{ adjustedGrade: number, appliedAt: string|null, placement?: string } | null} */
+  let applied = null;
+  for (const row of Array.isArray(ledgerRows) ? ledgerRows : []) {
+    if (!row || row.source !== 'bonus_applied' || row.item_id !== `BONUS-APPLIED-${quarterKey}`) continue;
+    let detail;
+    try { detail = JSON.parse(row.response); } catch { detail = {}; }
+    applied = { adjustedGrade: Number(row.score), appliedAt: (detail && detail.appliedAt) || null };
+    if (detail && detail.placement) applied.placement = detail.placement;
+  }
+  return applied;
+}
+
+// quarters[Q].closed = { grade, pcAvg, workAvg, at, bonusApplied } from the student's
+// first-close-wins quarter_grade_snapshot row (POST /class/quarter/close), or null
+// while Q is not closed. grade is the number /class/grades reports as closedGrade:
+// the applied banked bonus when there is one, else the frozen grade. A db without
+// the reader (test fakes) leaves the quarters untouched; a failed read means "not
+// closed" and never fails /grade. Exported so another route that returns one
+// student's grade (teacher view-as) can add the same field.
+export async function addClosedQuarters(quarters, db, studentId, ledgerRows) {
+  if (!db || typeof db.listQuarterSnapshotsByStudent !== 'function') return;
+  let snapshots = [];
+  try {
+    const { data, error } = await db.listQuarterSnapshotsByStudent(studentId);
+    if (error) throw error;
+    snapshots = Array.isArray(data) ? data : [];
+  } catch (err) {
+    const e = /** @type {any} */ (err);
+    const tableMissing = !!e && (e.code === '42P01' || String(e.message || '').includes('quarter_grade_snapshot'));
+    if (!tableMissing) console.error('GET /grade quarter snapshot error:', err);
+  }
+  for (const [quarterKey, quarter] of Object.entries(quarters || {})) {
+    const snapshot = snapshots.find((row) => row && row.quarter === quarterKey);
+    if (!snapshot) {
+      quarter.closed = null;
+      continue;
+    }
+    const bonusApplied = appliedBonusFor(ledgerRows, quarterKey);
+    quarter.closed = {
+      grade: bonusApplied ? bonusApplied.adjustedGrade : numberOrNull(snapshot.frozen_grade),
+      pcAvg: numberOrNull(snapshot.frozen_pc_avg),
+      workAvg: numberOrNull(snapshot.frozen_work_avg),
+      at: snapshot.frozen_at || null,
+      bonusApplied,
+    };
+  }
+}
+
 export function mountGrade(app, {
   verifyToken, ledgerDb, loadAnswerKey, lessonSchedule, eventSchedule = null, db,
   config = PHASE3_CONFIG, worksheetBlankCounts = null,
@@ -732,6 +794,9 @@ export function mountGrade(app, {
         deckSlices,
       }
     );
+    // Once the teacher closes a quarter it carries the student's frozen grade, so the
+    // Desk can show "final" (QUARTER_LINE_BY_DUE_DATE_SPEC.md §2).
+    await addClosedQuarters(quarters, db, studentId, ledgerRows);
 
     return res.json({
       ok: true,

@@ -507,8 +507,10 @@ describe('never-zero lessons on the slip (QUARTER_ZERO_FREEZE_SPEC, teacher 2026
     const notYet = nz('4.8', '2026-11-12', { lessonGradeNoQuiz: 30, Cws: 30 });   // class day still ahead
     expect(lowestDueScores([low, notYet], 'B', '2026-11-09')).toEqual([
       { lessonKey: '4.2', kind: 'worksheet', score: 45 }, { lessonKey: '4.2', kind: 'quiz', score: 60 }]);
+    // Storage 4.2 is CED 2.3 Day 2: the plan prints the label, as the rows do.
     expect(planFor([low, notYet], [], 'B', '2026-11-09')).toEqual([
-      'Raise your 4.2 worksheet (now 45) - it is revisable.', 'Raise your 4.2 quiz (now 60) - it is revisable.']);
+      'Raise your 2.3 · Estimating Probabilities Using Simulation · Day 2 worksheet (now 45) - it is revisable.',
+      'Raise your 2.3 · Estimating Probabilities Using Simulation · Day 2 quiz (now 60) - it is revisable.']);
     // Without the flag a lesson with no zero date for the period stays out (as before).
     const { neverZero, ...noFlag } = low;
     expect(lowestDueScores([noFlag], 'B', '2026-11-09')).toEqual([]);
@@ -530,5 +532,103 @@ describe('never-zero lessons on the slip (QUARTER_ZERO_FREEZE_SPEC, teacher 2026
     expect(tex).not.toContain("Class scores for this one aren't available yet.");   // no first item, no strip
     expect(tex).not.toMatch(/NaN|undefined/);
     expect(missingRowsTex(missingWork(LATE, 'B', '2026-11-10'))).not.toMatch(/NaN|undefined|null/);
+  });
+});
+
+// Fixer finding C6: the plan used to print the storage key ("Finish 4.1 follow-along worksheet."
+// for 2.3 Day 1; E's storage 2.3 is CED 2.2) next to rows that print the CED label.
+describe('the plan names lessons by their CED label, never the storage key', () => {
+  it('Finish lines read the same label as the Missing-work rows', async () => {
+    const { planFor } = await import('../scripts/weekly-slips.mjs');
+    const lessons = [
+      { lessonKey: '4.1', zeroDate: { B: '2026-11-05' }, Cws: null },
+      { lessonKey: '2.3', zeroDate: { E: '2026-11-08' }, Cws: null, quizTotal: 3 },
+    ];
+    expect(planFor(lessons, missingWork(lessons, 'B', '2026-11-09'), 'B', '2026-11-09')).toEqual([
+      'Finish 2.3 · Estimating Probabilities Using Simulation · Day 1 follow-along worksheet.']);
+    expect(planFor(lessons, missingWork(lessons, 'E', '2026-11-09'), 'E', '2026-11-09')).toEqual([
+      'Finish 2.2 · Two Categorical Variables: Summary Statistics follow-along worksheet.',
+      'Finish 2.2 · Two Categorical Variables: Summary Statistics quiz.']);
+  });
+
+  it('a rendered slip never prints a storage key in its plan', async () => {
+    const { renderTex } = await import('../scripts/weekly-slips.mjs');
+    const lessons = [{ lessonKey: '4.2', zeroDate: { B: '2026-11-08' }, Cws: null, quizTotal: 3 }];
+    const kid = { realName: 'X', quarters: { Q2: { quarterGrade: 40, lessonsDue: 1 } }, lessons };
+    const tex = renderTex([kid], [kid], 'PeriodB', '2026-11-09', 'Q2', []);
+    expect(tex).toContain('1. Finish 2.3 $\\cdot$ Estimating Probabilities Using Simulation $\\cdot$ Day 2 follow-along worksheet.');
+    expect(tex).not.toMatch(/Finish 4\.2|Raise your 4\.2/);
+  });
+});
+
+// Fixer finding C7 / decision 8.7: after Quarter 1 closes (Thu 11/12) its zeros are frozen and
+// leave the slips, as they leave the Desk; the footer "Every item on this list can still be
+// finished" stays true. The /class/grades doc carries lessons[].quarter and config.quarters.
+describe('a closed quarter leaves the slip (QUARTER_LINE_BY_DUE_DATE_SPEC decision 8.7)', () => {
+  const DOC = {
+    config: {
+      quarters: {
+        Q1: { start: '2026-09-02', end: '2026-11-06', close: '2026-11-12', finalUntil: '2026-11-19' },
+        Q2: { start: '2026-11-09', end: '2027-01-22' },
+      },
+    },
+  };
+  const QUARTERS = DOC.config.quarters;
+  // Period B: 4.1 (2.3 Day 1) counts in Quarter 1; 4.2 (2.3 Day 2) and 4.3 (2.4) count in
+  // Quarter 2 (taught in Quarter 1, lift-only there).
+  const lesson = (lessonKey, quarter, liftQuarter, zeroDate, extra = {}) => ({ lessonKey,
+    quarter: { B: quarter }, liftQuarter: { B: liftQuarter }, zeroDate: { B: zeroDate }, Cws: null, ...extra });
+  const Q1_ROW = lesson('4.1', 'Q1', null, '2026-11-05');
+  const Q2_ROWS = [
+    lesson('4.2', 'Q2', 'Q1', '2026-11-08', { quizTotal: 3 }),
+    lesson('4.3', 'Q2', 'Q1', '2026-11-09', { lessonGradeNoQuiz: 80, quizTotal: 3 }),
+  ];
+  const LESSONS = [Q1_ROW, ...Q2_ROWS];
+  const keys = rows => rows.map(row => `${row.lessonKey}:${row.kind}`);
+
+  it('Fri 11/13: the closed Quarter 1 row is dropped; the Quarter 2 rows stay', () => {
+    expect(keys(missingWork(LESSONS, 'B', '2026-11-13', QUARTERS))).toEqual(['4.2:worksheet', '4.2:quiz', '4.3:quiz']);
+  });
+
+  it('Tue 11/10 and Thu 11/12 (the close day): the Quarter 1 row is still fixable and listed', () => {
+    for (const date of ['2026-11-10', '2026-11-12']) {
+      expect(keys(missingWork(LESSONS, 'B', date, QUARTERS)), date).toEqual(['4.1:worksheet', '4.2:worksheet', '4.2:quiz', '4.3:quiz']);
+    }
+  });
+
+  it('without close dates (an older doc) every row stays, as before', () => {
+    expect(keys(missingWork(LESSONS, 'B', '2026-11-13'))).toEqual(['4.1:worksheet', '4.2:worksheet', '4.2:quiz', '4.3:quiz']);
+    const noClose = { Q1: { start: '2026-09-02', end: '2026-11-06' } };
+    expect(keys(missingWork(LESSONS, 'B', '2026-11-13', noClose))).toEqual(['4.1:worksheet', '4.2:worksheet', '4.2:quiz', '4.3:quiz']);
+  });
+
+  it('a closed quarter\'s 0 never makes a student a candidate', () => {
+    expect(isCandidate(95, missingWork([Q1_ROW], 'B', '2026-11-10', QUARTERS))).toBe(true);
+    expect(isCandidate(95, missingWork([Q1_ROW], 'B', '2026-11-13', QUARTERS))).toBe(false);
+    expect(isCandidate(95, missingWork(LESSONS, 'B', '2026-11-13', QUARTERS))).toBe(true);   // the Q2 zeros
+  });
+
+  it('the plan never sends a student back to a closed quarter, even with nothing missing', async () => {
+    const { planFor } = await import('../scripts/weekly-slips.mjs');
+    const done = [
+      lesson('4.1', 'Q1', null, '2026-11-05', { lessonGradeNoQuiz: 40 }),
+      lesson('4.2', 'Q2', 'Q1', '2026-11-08', { lessonGradeNoQuiz: 70 }),
+    ];
+    expect(planFor(done, missingWork(done, 'B', '2026-11-13', QUARTERS), 'B', '2026-11-13', QUARTERS)).toEqual([
+      'Raise your 2.3 · Estimating Probabilities Using Simulation · Day 2 worksheet (now 70) - it is revisable.']);
+    expect(planFor(done, missingWork(done, 'B', '2026-11-10', QUARTERS), 'B', '2026-11-10', QUARTERS)[0])
+      .toBe('Raise your 2.3 · Estimating Probabilities Using Simulation · Day 1 worksheet (now 40) - it is revisable.');
+  });
+
+  it('the rendered 11/13 slip lists only open work and keeps its footer', async () => {
+    const { renderTex } = await import('../scripts/weekly-slips.mjs');
+    const kid = { realName: 'X', quarters: { Q2: { quarterGrade: 40, lessonsDue: 2 } }, lessons: LESSONS };
+    const tex = renderTex([kid], [kid], 'PeriodB', '2026-11-13', 'Q2', [], QUARTERS);
+    expect(tex.match(/\\MissRow\{/g)).toHaveLength(3);
+    expect(tex).not.toContain('Day 1}');   // 2.3 Day 1 = storage 4.1, closed with Quarter 1
+    expect(tex).toContain('{Follow-Along Worksheet 2.3 $\\cdot$ Estimating Probabilities Using Simulation $\\cdot$ Day 2}{0 since Sun 11/8}');
+    expect(tex).toContain('Every item on this list can still be finished.');
+    // The same slip on Tue 11/10 still lists the Quarter 1 row.
+    expect(renderTex([kid], [kid], 'PeriodB', '2026-11-10', 'Q2', [], QUARTERS).match(/\\MissRow\{/g)).toHaveLength(4);
   });
 });

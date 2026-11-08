@@ -1149,6 +1149,8 @@
 
 
 
+
+
     // ===== guardrails =====
     // The x-teacher-secret is NEVER auto-persisted client-side. It is read
     // fresh from the input on every fetch (see api()).
@@ -2360,15 +2362,47 @@
     var GB_CAT_ORDER = ['Lesson', 'Quizzes', 'Blooket', 'Progress Check', 'Posters'];
     var GB_CAT_SLUG = { 'Lesson': 'lesson', 'Quizzes': 'quizzes', 'Blooket': 'blooket', 'Progress Check': 'pc', 'Posters': 'posters' };
 
-    // Columns are schedule-driven (identical across students); take them from the
-    // first student that carries them for this quarter.
+    // Columns are schedule-driven but filed per section: a lesson counts in the quarter
+    // its period's 0 date lands in (QUARTER_LINE_BY_DUE_DATE_SPEC.md §3.5), so Period B
+    // and Period E can list different columns in the same tab. A load with both periods
+    // (the default "blank = all") takes the union by key, in first-seen order; each column
+    // carries the flags of the first student that has it (fixer finding C5).
     function gbColumnsFor(students, qk) {
+      var merged = [];
+      var seen = {};
       for (var i = 0; i < students.length; i++) {
         var gb = students[i] && students[i].gradebook;
         var q = gb && gb.quarters && gb.quarters[qk];
-        if (q && Array.isArray(q.columns) && q.columns.length) return q.columns;
+        var cols = q && Array.isArray(q.columns) ? q.columns : [];
+        for (var j = 0; j < cols.length; j++) {
+          var c = cols[j];
+          if (!c || !c.key || seen[c.key]) continue;
+          seen[c.key] = true;
+          merged.push(c);
+        }
       }
-      return [];
+      return merged;
+    }
+
+    // One student's own columns for a quarter, by key (their own flags: the same key can
+    // be regular for one period and lift-only for the other).
+    function gbColumnsByKey(quarter) {
+      var byKey = {};
+      var cols = quarter && Array.isArray(quarter.columns) ? quarter.columns : [];
+      cols.forEach(function (c) { if (c && c.key) byKey[c.key] = c; });
+      return byKey;
+    }
+
+    // Why a column stays out of this tab's Schoology total (roster-server/gradebook-grid.js
+    // buildGradebookRow), or '' for a regular column:
+    //   liftOnly          taught this quarter, its 0 date in a later one: it can only raise this one
+    //   schoologyQuarter  its Schoology column sits in that quarter's marking period
+    //                     (Period B's 2.3 Follow-Along / 2.3 Blooket stay in MP1)
+    function gbColumnNote(col, qk) {
+      if (!col) return '';
+      if (col.liftOnly) return 'can raise Quarter ' + String(qk).slice(1) + ' (never a 0)';
+      if (col.schoologyQuarter) return 'Schoology column in MP' + String(col.schoologyQuarter).slice(1);
+      return '';
     }
 
     function gbWeights(students) {
@@ -2544,7 +2578,9 @@
       // Row 2: per-column titles + the two total headers.
       var titleRow = '<tr>';
       orderedCols.forEach(function (c) {
-        titleRow += '<th class="gb-col gb-cat-' + GB_CAT_SLUG[c.category] + '" title="' + escHtml(gbColumnHover(c)) + '">' +
+        var note = gbColumnNote(c, qk);
+        var hover = gbColumnHover(c) + (note ? ' — ' + note : '');
+        titleRow += '<th class="gb-col gb-cat-' + GB_CAT_SLUG[c.category] + (note ? ' gb-other' : '') + '" title="' + escHtml(hover) + '">' +
           escHtml(gbShortTitle(c)) + '</th>';
       });
       titleRow += '<th class="gb-tot-h">Schoology</th><th class="gb-tot-h">v3</th></tr>';
@@ -2560,6 +2596,7 @@
       var rowsHtml = sorted.map(function (s) {
         var gq = s.gradebook && s.gradebook.quarters && s.gradebook.quarters[qk];
         var cells = (gq && gq.cells) || {};
+        var ownCols = gbColumnsByKey(gq);
         var html = '<tr class="grades-row-clickable"' +
           ' data-student-id="' + escHtml(s.studentId || '') + '"' +
           ' data-username="' + escHtml(s.username || '') + '"' +
@@ -2569,7 +2606,10 @@
         orderedCols.forEach(function (c) {
           var v = cells[c.key];
           if (v === undefined) v = null;
-          html += '<td class="gb-cell gb-cat-' + GB_CAT_SLUG[c.category] + ' ' + gbColor(v) + '">' +
+          // Dim by the student's own column: the same key can be filed differently per period.
+          var note = gbColumnNote(ownCols[c.key] || c, qk);
+          html += '<td class="gb-cell gb-cat-' + GB_CAT_SLUG[c.category] + ' ' + gbColor(v) + (note ? ' gb-other' : '') + '"' +
+            (note ? ' title="' + escHtml(note) + '"' : '') + '>' +
             (v == null ? '<span class="gb-null">·</span>' : escHtml(fmt1(v))) + '</td>';
         });
         var st = gq ? gq.schoologyTotal : null;

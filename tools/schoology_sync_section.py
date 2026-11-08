@@ -7,6 +7,66 @@ CLI:
     python tools/schoology_sync_section.py --sync-section PeriodB --grades-fixture path.json
     python tools/schoology_sync_section.py --sync-section PeriodB --limit 5
 
+QUARTER PASSES (QUARTER_LINE_BY_DUE_DATE_SPEC.md section 4, from 2026-11-08):
+    --quarter Q1|Q2   one pass per marking period. Before ANY read or write the pass switches
+                      the gradebook to that quarter's marking period (the Nth MP in calendar
+                      order) and VERIFIES it: the hidden filter input
+                      (select2-change-event=sGraderFilterGradingPeriodChanged) holds the MP id,
+                      the marking-period column header shows the MP's dates, and
+                      Drupal.available_grading_periods lists the id. If it cannot verify, the
+                      pass ABORTS with no writes ("[ABORT] ... view-not-verified", exit 3).
+                      Only the columns FILED in that MP are created or graded: a lesson column
+                      is filed by the day its 0 lands (class day + 13 + 1), a PC by its Day 2,
+                      a poster by its date (schoology_components.component_columns).
+                      The grade push re-checks the shown marking period before EVERY cell: a
+                      page reload reopens the gradebook on its default period, and the pass
+                      then stops (exit 3) before the next read or write; the cells not yet
+                      written are not marked synced.
+                      MARKING-PERIOD EVIDENCE (finding R4b): after every gradebook load the
+                      grid's columns are checked against the grading_period_id each column's
+                      row carries in tools/.schoology-sync-state.json (the move tool's --apply
+                      and --stamp write them; a column this sync creates gets one): a column
+                      filed in another MP on the grid, or none of the columns filed in this MP
+                      on it, aborts the pass (exit 3, nothing written). Once ANY column of the
+                      section carries one, every registered due column must: an unstamped one
+                      aborts the pass too, until `python tools/schoology_move_columns.py
+                      --section <S> --stamp` records it. A section with no stamp at all (before
+                      the move tool's first run) prints one WARNING and relies on the grid
+                      signature check of schoology_ops.select_grading_period.
+    --no-zeros        accepted for the daily job: the FIXTURE (build_schoology_fixture.py
+                      --no-zeros) leaves out the lagged zeros and keeps an earned 0 (work
+                      done, scored 0); the sync writes every target it is given. Here the
+                      flag only keeps the comment texts in step with that fixture.
+    --today DATE      the date for the lagged-zero comment texts and the default --through
+                      (a Sunday preview of Monday: --today 2026-11-09).
+    --apply           requires --quarter (every write needs an explicit, verified MP).
+
+THE RIG IS SHARED (finding R3, Codex re-review 2026-11-08). One Edge window serves every
+Schoology tool, and the LIVE tasks ApStatsSchoologySync-B (16:30) and -E (16:45) run
+tools/daily_schoology_sync.ps1, which runs this file. So, in EVERY mode (a dry run drives
+Edge too):
+  - The run holds the rig lock (tools/.schoology-sync-logs/rig.lock, schoology_sync_lib
+    take_rig_lock) from before it connects to Edge until it exits. A step of the daily job
+    inherits the job's lock and never releases it. A lock held by any other run refuses
+    this one before Edge (exit 5) and names the holder.
+  - A manual run never STARTS from 16:00 to 17:05 (exit 3). A manual --apply run also checks
+    the clock before each column it creates and each cell it reads or writes, and at 16:00
+    stops cleanly (exit 3, the true grades_pushed count; the cells not written are not
+    marked synced). The daily job's own steps (lock owner PeriodB / PeriodE) are exempt:
+    that window is theirs.
+Exit codes: 0 done (or dry run), 1 not signed in, 2 --apply without --quarter, 3 aborted (a
+marking period not verified, the 16:00-17:05 window), 5 the rig is busy.
+
+READ-ONLY COMMANDS for the rig (never 16:00-17:05: the LIVE tasks run 16:30 / 16:45). Build the
+preview fixtures first (tools/build_schoology_fixture.py, read-only), one per quarter:
+    python tools/build_schoology_fixture.py --section PeriodB --granularity component --quarter Q2 --today 2026-11-09 --out tools/.schoology-sync-logs/preview-PeriodB-Q2-20261109.json
+    python tools/build_schoology_fixture.py --section PeriodB --granularity component --quarter Q1 --today 2026-11-09 --out tools/.schoology-sync-logs/preview-PeriodB-Q1-20261109.json
+Then Monday's passes against the live gradebook, nothing written (CMD 6):
+    python tools/schoology_sync_section.py --sync-section PeriodB --granularity component --grades-fixture tools/.schoology-sync-logs/preview-PeriodB-Q2-20261109.json --quarter Q2 --dry-run --comments --today 2026-11-09
+    python tools/schoology_sync_section.py --sync-section PeriodB --granularity component --grades-fixture tools/.schoology-sync-logs/preview-PeriodB-Q1-20261109.json --quarter Q1 --dry-run --comments --today 2026-11-09
+(repeat with PeriodE). The Quarter 1 dry run switches the gradebook to MP1 first and aborts if
+it cannot verify it. A dry run creates nothing, writes no cell and no state.
+
 StateStore contract:
     get_assignment(section, lesson_key) -> dict|None
     upsert_assignment(section, lesson_key, fields)
@@ -167,6 +227,13 @@ class StateStore(abc.ABC):
     def log_run(self, summary: dict) -> None:
         """Append a run summary record (for audit / debugging)."""
 
+    def reload(self) -> None:
+        """Re-read the backing store before a write that must not use a stale copy.
+
+        A no-op here: a store that reads its backing store on every call has nothing
+        to refresh. LocalJsonStateStore overrides it.
+        """
+
 
 class LocalJsonStateStore(StateStore):
     """File-backed state store.  Persists to tools/.schoology-sync-state.json.
@@ -199,6 +266,12 @@ class LocalJsonStateStore(StateStore):
     def _save(self) -> None:
         with open(self._path, "w", encoding="utf-8") as f:
             json.dump(self._data, f, indent=2)
+
+    def reload(self) -> None:
+        """Re-read the file. Every save writes the WHOLE in-memory copy, so a long run
+        (the column move) re-reads first: another run may have saved new assignment ids
+        or last_synced values since this one loaded the file (finding B1, 2026-11-08)."""
+        self._data = self._load()
 
     # -- assignment registry ------------------------------------------------
 
@@ -331,10 +404,157 @@ def _list_students_stable(ops, cdp, *, attempts: int = 8, pause_s: float = 0.75)
     return students
 
 
-def _load_gradebook_page(ops, cdp, course_id: str) -> None:
-    """Return CDP to the gradebook after setup/create pages have navigated away."""
+ViewNotVerified = lib.ViewNotVerified
+
+
+def _load_gradebook_page(ops, cdp, course_id: str, view: dict | None = None,
+                         evidence: "PassEvidence | None" = None) -> None:
+    """Return CDP to the gradebook after setup/create pages have navigated away.
+
+    view (a quarter pass): also switch the gradebook to that pass's marking period and
+    VERIFY it. The gradebook reopens on its default marking period after every
+    navigation, so every reload re-selects. Raises ViewNotVerified when it cannot:
+    the caller stops before its next read or write.
+    evidence (the pass's PassEvidence): then the grid's columns must agree with the
+    marking periods the sync state records for them (finding R4b).
+    """
     ops.navigate(cdp, ops.gradebook_url(course_id))
     ops.inject_helpers(cdp)
+    if view is None:
+        return
+    result = ops.select_grading_period(cdp, view["grading_period_id"], view.get("mp_range")) or {}
+    if not result.get("ok"):
+        raise ViewNotVerified(lib.view_error(view, result))
+    if evidence is not None:
+        evidence.check(ops, cdp)
+
+
+class PassEvidence:
+    """The marking-period evidence of one quarter pass (finding R4b, Codex re-review).
+
+    Evidence = the grading_period_id the sync state records on the section's registered
+    columns (schoology_move_columns.py --apply / --stamp writes them; a column the sync
+    creates, or finds in a verified view, gets one). After every gradebook load:
+      - a column filed in another marking period is on the grid: wrong grid;
+      - none of the columns filed in this one is on the grid: wrong (or empty) grid;
+      - once any column of the section carries a stamp, every registered DUE column must
+        carry one too: an unstamped column could sit on the wrong grid unseen (fail closed).
+    No stamp at all (before the move tool's first run): one WARNING line per pass, and
+    the grid-signature check in schoology_ops.select_grading_period stands alone.
+    Titles come from the scope (what the sync looks columns up by); a state row's own
+    title can predate the CED rename.
+    """
+
+    def __init__(self, section: str, state: "StateStore", view: dict, items_by_key: dict,
+                 due_keys):
+        self.section = section
+        self.state = state
+        self.view = view
+        self.items_by_key = items_by_key
+        self.due_keys = set(due_keys)
+        self.warned = False
+
+    def read(self) -> tuple:
+        """(titles filed here, titles filed in another MP, registered due titles with no stamp)."""
+        here, elsewhere, unstamped = set(), set(), []
+        for key, item in self.items_by_key.items():
+            row = self.state.get_assignment(self.section, key) or {}
+            if not row.get("schoology_assignment_id"):
+                continue   # never created: nothing on any grid
+            period = row.get("grading_period_id")
+            if not period:
+                if key in self.due_keys:
+                    unstamped.append(item["title"])
+                continue
+            if str(period) == str(self.view["grading_period_id"]):
+                here.add(item["title"])
+            else:
+                elsewhere.add(item["title"])
+        both = here & elsewhere
+        return here - both, elsewhere - both, sorted(unstamped)
+
+    def check(self, ops, cdp) -> None:
+        """Raise ViewNotVerified unless the grid agrees with the evidence."""
+        here, elsewhere, unstamped = self.read()
+        if not here and not elsewhere:
+            self._warn_once()
+            return
+        ops.load_all_columns(cdp)   # the titles past the first 30 columns load on scroll
+        problem = ops.view_content_problem(cdp, self.view, here, elsewhere)
+        if problem:
+            raise ViewNotVerified(f"the grid does not match {lib.describe_view(self.view)}: {problem}")
+        if unstamped:
+            shown = ", ".join(unstamped[:3]) + (" ..." if len(unstamped) > 3 else "")
+            raise ViewNotVerified(
+                f"{len(unstamped)} registered due column(s) of {self.section} have no marking "
+                f"period on record ({shown}) while {len(here) + len(elsewhere)} do, so the grid "
+                "cannot be checked against them. Record them first: python "
+                f"tools/schoology_move_columns.py --section {self.section} --stamp "
+                "(read-only on Schoology)")
+
+    def _warn_once(self) -> None:
+        if self.warned:
+            return
+        self.warned = True
+        print(f"[WARNING] {self.section} {lib.describe_view(self.view)}: no marking-period "
+              "evidence on record; relying on the grid-signature check (no column of this "
+              "section carries a grading_period_id yet; schoology_move_columns.py --apply or "
+              "--stamp records them).")
+
+
+class GradePushStopped(ViewNotVerified):
+    """The pass's marking period was lost IN THE MIDDLE of the grade push.
+
+    Carries how many cells were written before the stop, so the run summary says so.
+    """
+
+    def __init__(self, reason: str, pushed: int):
+        super().__init__(f"{reason}; stopped after {pushed} written cell(s): the rest were "
+                         "not written and are not marked synced")
+        self.pushed = pushed
+
+
+class RigWindowStopped(GradePushStopped):
+    """A manual --apply run reached 16:00 (finding R3): stopped before the next create or
+    cell, like a lost view. args[0] says when and why."""
+
+    def __init__(self, hhmm: str, pushed: int):
+        super().__init__(rig_window_message(hhmm), pushed)
+        self.hhmm = hhmm
+
+
+def rig_window_message(hhmm: str) -> str:
+    """'it is 16:00: from 16:00 to 17:05 the rig belongs to the LIVE sync tasks (...)'."""
+    return (f"it is {hhmm}: from {lib.RIG_QUIET_WINDOW[0]} to {lib.RIG_QUIET_WINDOW[1]} the rig "
+            f"belongs to the LIVE sync tasks ({lib.RIG_LIVE_TASKS})")
+
+
+def _stop_at_rig_window(window_clock, pushed: int) -> None:
+    """window_clock (a manual --apply run only): raise RigWindowStopped from 16:00 to 17:05.
+    None (a dry run, or a step of the daily job) never stops here."""
+    if window_clock is None:
+        return
+    hhmm = window_clock()
+    if lib.in_rig_quiet_window(hhmm):
+        raise RigWindowStopped(hhmm, pushed)
+
+
+def _view_lost_reason(ops, cdp, view: dict | None) -> str | None:
+    """Why the gradebook no longer shows the pass's marking period, or None while it does.
+
+    Finding B2 (verifier 2026-11-08): the view is verified once per gradebook load, but a
+    page reload in the middle of the push (a Schoology session refresh) reopens the
+    gradebook on its DEFAULT period, MP2 since 11/07, and the remaining Quarter 1 cells
+    would be read and written in MP2. One JS eval, so the push runs it before every cell.
+    view None (a legacy run without --quarter) has nothing to check.
+    """
+    if view is None:
+        return None
+    shown = ops.displayed_grading_period(cdp)
+    reason = ops.grading_period_view_matches(shown, view["grading_period_id"], view.get("mp_range"))
+    if reason is None:
+        return None
+    return f"the gradebook no longer shows {lib.describe_view(view)}: {reason}"
 
 
 def _event_unit(unit_str, entry: dict | None):
@@ -385,6 +605,7 @@ def build_scope(schedule: dict, section: str, ced: bool = False) -> list[dict]:
             "kind": kind,
             "title": title,
             "due_date": date,
+            "filing_date": components.filing_date_of(date),
             "unit": lesson.get("unit"),
         })
 
@@ -401,11 +622,14 @@ def build_scope(schedule: dict, section: str, ced: bool = False) -> list[dict]:
         key = components.pc_key(unit)
         kind = "progress_check"
         title = lib.assignment_title(kind, key, ced=ced)
+        day2 = pc.get("adminDay2")
+        day2 = day2.get(period_letter) if isinstance(day2, dict) else day2
         items.append({
             "key": key,
             "kind": kind,
             "title": title,
             "due_date": date,
+            "filing_date": day2 or date,   # a PC counts in the quarter it is due (Day 2)
             "unit": unit,
         })
 
@@ -422,6 +646,7 @@ def build_scope(schedule: dict, section: str, ced: bool = False) -> list[dict]:
             "kind": kind,
             "title": title,
             "due_date": date,
+            "filing_date": date,
             "unit": unit,
         })
 
@@ -526,12 +751,22 @@ def _ensure_assignment(
     dry_run: bool,
     errors: list,
     force_mp_date: str | None = None,
+    view: dict | None = None,
+    evidence: PassEvidence | None = None,
 ) -> str | None:
     """Return the Schoology assignment id for this scope item (creating if needed).
 
+    The marking period comes from the item's filing_date (a lesson: the day its 0 lands,
+    class day + 13 + 1; a PC: Day 2), so a column sits in the quarter its zeros count in.
+    The Schoology due date stays the class day (teacher 2026-11-07, decision 4). The
+    MP id is recorded in the state row.
+
     force_mp_date: when set (summer mock -> MP4), EVERY assignment is filed into
-    the marking period covering this date and dated there too, instead of
-    resolving the MP from the lesson's own due-date. None -> resolve per due-date.
+    the marking period covering this date and dated there too.
+    view: the quarter pass's verified marking period (re-selected after the create).
+    evidence: the pass's PassEvidence, checked after each of those reloads (finding R4b).
+    The new column's state row records its marking period (grading_period_id): that is
+    evidence for every later check.
 
     Returns None on failure (error appended to errors list).
     """
@@ -542,6 +777,7 @@ def _ensure_assignment(
     # resolution AND as the assignment's due-date, so the assignment sits cleanly
     # inside the forced MP (no Sept-due-date-in-an-MP4-that-ends-in-June mismatch).
     due_date = force_mp_date or item["due_date"]
+    filing_date = force_mp_date or item.get("filing_date") or item["due_date"]
 
     # Check state store first (idempotency: already created in a prior run)
     stored = state.get_assignment(section, key)
@@ -549,24 +785,28 @@ def _ensure_assignment(
         return stored["schoology_assignment_id"]
 
     # Resolve the marking period up front (also shown in the dry-run line, so a
-    # dry-run proves WHICH MP each assignment would land in -- e.g. MP4 -- before
-    # any live write).
-    grading_period_id = lib.marking_period_for_date(due_date, mps)
-    if due_date and grading_period_id is None:
-        msg = f"No grading_period_id covering due_date={due_date!r} (key={key})"
+    # dry-run proves WHICH MP each assignment would land in before any live write).
+    grading_period_id = lib.marking_period_for_date(filing_date, mps)
+    if filing_date and grading_period_id is None:
+        msg = (f"No grading_period_id covering filing date {filing_date!r} "
+               f"(due_date={due_date!r}, key={key})")
         print(f"  [ERROR] {msg}")
         errors.append(msg)
         return None
 
     if dry_run:
-        print(f"  [DRY-RUN] WOULD CREATE: {title!r} (kind={kind}, due={due_date}, mp={grading_period_id})")
+        print(f"  [DRY-RUN] WOULD CREATE: {title!r} (kind={kind}, due={due_date}, "
+              f"files={filing_date}, mp={grading_period_id})")
         return None
 
-    # Pre-flight: does the assignment already exist in Schoology?
+    # Pre-flight: does the assignment already exist in Schoology (in the shown MP)?
     existing_id = ops.find_assignment_id_by_title(cdp, title)
     if existing_id:
         print(f"  [REUSE]  Found existing assignment {existing_id!r} for {title!r}")
-        state.upsert_assignment(section, key, {"schoology_assignment_id": existing_id, "title": title})
+        fields = {"schoology_assignment_id": existing_id, "title": title}
+        if view is not None:
+            fields["grading_period_id"] = view["grading_period_id"]   # seen in the verified MP
+        state.upsert_assignment(section, key, fields)
         return existing_id
 
     # Resolve category
@@ -589,7 +829,7 @@ def _ensure_assignment(
         sync_to_sis=True,
     )
 
-    _load_gradebook_page(ops, cdp, course_id)
+    _load_gradebook_page(ops, cdp, course_id, view, evidence)
 
     result_ok = bool(result and result.get("ok"))
     assignment_id = (result or {}).get("assignment_id")
@@ -601,14 +841,15 @@ def _ensure_assignment(
         assignment_id = ops.find_assignment_id_by_title(cdp, title)
 
     if assignment_id:
-        state.upsert_assignment(section, key, {"schoology_assignment_id": assignment_id, "title": title})
+        state.upsert_assignment(section, key, {"schoology_assignment_id": assignment_id, "title": title,
+                                               "grading_period_id": grading_period_id})
         label = "CREATED" if result_ok else "RECONCILED"
-        print(f"  [{label}] {title!r} -> id={assignment_id}")
+        print(f"  [{label}] {title!r} -> id={assignment_id} mp={grading_period_id}")
         # 2026-09-16 (teacher): every synced assignment lives in the "Assignments" materials
         # folder so the student-facing course page is not a wall of items. Best-effort: a
         # failed move is reported, never fatal (the gradebook column exists either way).
         _file_in_assignments_folder(ops, cdp, course_id, assignment_id, title, errors)
-        _load_gradebook_page(ops, cdp, course_id)
+        _load_gradebook_page(ops, cdp, course_id, view, evidence)
         return assignment_id
 
     if not result_ok:
@@ -677,8 +918,16 @@ def _push_grades(
     errors: list,
     comments: bool = False,
     comment_texts: dict | None = None,
+    view: dict | None = None,
+    window_clock=None,
 ) -> tuple[int, int, int]:
-    """Apply best-wins grades. Returns (pushed_count, skipped_count, kept_count)."""
+    """Apply best-wins grades. Returns (pushed_count, skipped_count, kept_count).
+
+    view (a quarter pass): before every cell the shown marking period is checked again;
+    when it is gone, GradePushStopped is raised before that cell is read or written.
+    window_clock (a manual --apply run): checked at the same place; from 16:00 to 17:05
+    RigWindowStopped is raised before that cell (finding R3).
+    """
 
     # Build last-synced map for the students + keys that appear in targets
     student_ids = {sid for sid, _ in targets}
@@ -697,6 +946,11 @@ def _push_grades(
     for composite_key in actions["push"]:
         student_id, lesson_key = composite_key
         target_value = targets[composite_key]
+
+        lost = _view_lost_reason(ops, cdp, view)
+        if lost:
+            raise GradePushStopped(lost, pushed)
+        _stop_at_rig_window(window_clock, pushed)
 
         scope_item = scope_items_by_key.get(lesson_key)
         if scope_item is None:
@@ -820,6 +1074,10 @@ def _push_grades(
                 plan = f"would ensure {text}" if text else "would clear the sync's earlier note"
                 print(f"  [DRY-RUN] existing 0 student={student_id} key={lesson_key} comment: {plan}")
                 continue
+            lost = _view_lost_reason(ops, cdp, view)
+            if lost:
+                raise GradePushStopped(lost, pushed)
+            _stop_at_rig_window(window_clock, pushed)
             scope_item = scope_items_by_key.get(lesson_key)
             student_row = students_by_id.get(str(student_id))
             column_key = ops.find_assignment_id_by_title(cdp, scope_item.get("title")) if scope_item else None
@@ -960,6 +1218,36 @@ def _aborted(section: str, course_id: str, dry_run: bool, code: str, msg: str) -
     return summary
 
 
+def _ced_guard(section: str, course_id: str, dry_run: bool, ops, cdp) -> dict | None:
+    """The rename sanity check: an aborted summary when old titles remain, else None.
+
+    (rename_gate is the real gate; this only catches a gradebook that contradicts it,
+    e.g. an old-title column created by hand after the rename.)
+    """
+    leftovers = unrenamed_old_titles(ops, cdp)
+    if not leftovers:
+        return None
+    msg = (f"The rename manifest says {section} is done, but {len(leftovers)} column(s) "
+           f"still carry an OLD title ({', '.join(leftovers[:5])}"
+           f"{' ...' if len(leftovers) > 5 else ''}). Run {RENAME_TOOL} --section "
+           f"{lib.rename_state_section(section)} to see the contradiction; rename or delete "
+           "those columns before the next sync.")
+    return _aborted(section, course_id, dry_run, "rename-incomplete", msg)
+
+
+def _split_by_marking_period(items: list, mps: dict, grading_period_id: str) -> tuple[list, set]:
+    """(items filed in this MP, keys filed elsewhere). Annotates each item's grading_period_id."""
+    here, elsewhere = [], set()
+    for item in items:
+        filing = item.get("filing_date") or item.get("due_date")
+        item["grading_period_id"] = lib.marking_period_for_date(filing, mps)
+        if str(item["grading_period_id"]) == str(grading_period_id):
+            here.append(item)
+        else:
+            elsewhere.add(item["key"])
+    return here, elsewhere
+
+
 def _lookup_assignment_id(section: str, lesson_key: str, state: StateStore) -> str | None:
     stored = state.get_assignment(section, lesson_key)
     return (stored or {}).get("schoology_assignment_id")
@@ -989,8 +1277,29 @@ def sync_section(
     uid_map: dict | None = None,
     ced: bool | None = None,
     rename_state: dict | None = None,
+    quarter: str | None = None,
+    zeros: bool = True,
+    today: str | None = None,
+    window_clock=None,
 ) -> dict:
     """Orchestrate one full sync for a single section.
+
+    quarter: 'Q1'..'Q4' = one quarter pass (QUARTER_LINE_BY_DUE_DATE_SPEC.md section 4.1).
+             The gradebook is switched to that quarter's marking period and VERIFIED before
+             any read or write; the pass aborts with no writes when it cannot be. Only the
+             columns filed in that MP are created or graded; targets for columns filed in
+             another MP are counted as grades_other_quarter (never pushed here, never errors).
+             None = legacy: whatever marking period the gradebook opens on.
+    zeros:   False = the fixture was built with --no-zeros: it leaves out the LAGGED zeros
+             and keeps an earned 0 (work done, scored 0). The sync writes every target it
+             is given, so the fixture alone decides (finding B4); zeros only keeps the
+             comment texts' keys in step with that fixture.
+    today:   YYYY-MM-DD for the lagged-zero comment texts (default: today in New York).
+    window_clock: a manual --apply run's school clock ('HH:MM'): checked before each column
+             it creates and each cell, the pass stops cleanly from 16:00 (aborted
+             'rig-window', finding R3). None: never stops on the clock (main() passes
+             None for dry runs and for the daily job's own steps).
+             The caller holds the rig lock (main() does); sync_section never takes it.
 
     through_date: only scope items due on/before this YYYY-MM-DD are created and
     graded (None = no gate; the summer mock passes None via force_mp_date).
@@ -1019,12 +1328,17 @@ def sync_section(
     blocked = rename_gate(section, ced, rename_state)
     if blocked:
         return _aborted(section, course_id, dry_run, *blocked)
+    if quarter is not None and quarter not in lib.QUARTER_KEYS:
+        return _aborted(section, course_id, dry_run, "bad-quarter",
+                        f"Unknown quarter {quarter!r}; use Q1..Q4")
+    pass_name = f"{lib.quarter_label(quarter)} pass" if quarter else "sync"
     comment_texts = {}
     if comments:
         from schoology_components import component_comments_from_class_doc
         try:
             comment_texts = component_comments_from_class_doc(
-                class_doc or {}, uid_map, today_school_date(),
+                class_doc or {}, uid_map, today or today_school_date(),
+                quarter=quarter, zeros=zeros,
             )
         except Exception as exc:
             print(f"[comments] Text generation skipped ({type(exc).__name__})")
@@ -1050,13 +1364,12 @@ def sync_section(
         before = len(scope_items)
         scope_items = filter_scope_through(scope_items, through_date)
         print(f"[sync_section] --through {through_date}: {len(scope_items)} of {before} scope items are due")
-    if limit is not None:
-        scope_items = scope_items[:limit]
+    # Every due column, in any marking period: each registered one needs a stamp (R4b).
+    due_keys = {item["key"] for item in scope_items}
 
-    scope_keys = [item["key"] for item in scope_items]
     print(f"\n[sync_section] section={section} course={course_id} "
           f"scope_items={len(scope_items)} dry_run={dry_run} "
-          f"titles={'CED-2026' if ced else 'old'}")
+          f"titles={'CED-2026' if ced else 'old'} pass={pass_name}")
 
     # -- lazy-import live ops (allows test injection) -----------------------
     if ops is None:
@@ -1077,23 +1390,48 @@ def sync_section(
         sys.exit(1)
 
     # -- CED titles: sanity check the gradebook against the DONE manifest ----
-    # (rename_gate above is the real gate; this only catches a gradebook that
-    # contradicts it, e.g. an old-title column created by hand after the rename.)
-    if ced:
-        leftovers = unrenamed_old_titles(ops, cdp)
-        if leftovers:
-            msg = (f"The rename manifest says {section} is done, but {len(leftovers)} column(s) "
-                   f"still carry an OLD title ({', '.join(leftovers[:5])}"
-                   f"{' ...' if len(leftovers) > 5 else ''}). Run {RENAME_TOOL} --section "
-                   f"{lib.rename_state_section(section)} to see the contradiction; rename or delete "
-                   "those columns before the next sync.")
-            return _aborted(section, course_id, dry_run, "rename-incomplete", msg)
+    # A quarter pass runs it only after its marking period is verified (below).
+    if ced and quarter is None:
+        aborted = _ced_guard(section, course_id, dry_run, ops, cdp)
+        if aborted:
+            return aborted
 
     # -- read live data ----------------------------------------------------
     print("[2/5] Reading live Schoology data ...")
     cats = ops.list_categories(cdp, course_id)
     mps = ops.list_marking_periods(cdp, course_id)
-    _load_gradebook_page(ops, cdp, course_id)
+
+    # -- a quarter pass: its marking period, and only the columns filed there --
+    view = None
+    other_quarter_keys: set = set()
+    if quarter is not None:
+        view = lib.pass_view(quarter, mps)
+        if view is None:
+            return _aborted(section, course_id, dry_run, "no-marking-period",
+                            f"[{pass_name}] no Schoology marking period for {quarter} "
+                            f"(read {len(mps or {})} marking periods); nothing written")
+        scope_items, _ = _split_by_marking_period(scope_items, mps, view["grading_period_id"])
+        _, other_quarter_keys = _split_by_marking_period(list(all_items_by_key.values()), mps,
+                                                         view["grading_period_id"])
+        print(f"[{pass_name}] {lib.describe_view(view)}: {len(scope_items)} due columns are filed here; "
+              f"{len(other_quarter_keys)} columns belong to another marking period")
+    evidence = PassEvidence(section, state, view, all_items_by_key, due_keys) if view else None
+    if limit is not None:
+        scope_items = scope_items[:limit]
+    scope_keys = [item["key"] for item in scope_items]
+
+    try:
+        _load_gradebook_page(ops, cdp, course_id, view, evidence)
+    except ViewNotVerified as exc:
+        return _aborted(section, course_id, dry_run, "view-not-verified",
+                        f"[{pass_name}] {exc}; nothing written")
+    if view is not None:
+        print(f"[{pass_name}] verified: the gradebook shows {lib.describe_view(view)}")
+    if ced and quarter is not None:
+        aborted = _ced_guard(section, course_id, dry_run, ops, cdp)
+        if aborted:
+            return aborted
+
     students = _list_students_stable(ops, cdp)
     students_by_id = {str(s["studentId"]): s for s in students}
 
@@ -1112,87 +1450,120 @@ def sync_section(
 
     # -- create missing assignments ----------------------------------------
     assignments_created = 0
+    grades_pushed = grades_skipped = grades_kept = grades_deferred = 0
+    grades_other_quarter = 0
+    ahead_waiting: list = []
     scope_items_by_key = {item["key"]: item for item in scope_items}
 
-    for key in plan["create"]:
-        item = scope_items_by_key[key]
-        assignment_id = _ensure_assignment(
-            item, section, course_id, cats, mps, state, ops, cdp, dry_run, errors,
-            force_mp_date=force_mp_date,
-        )
-        if assignment_id and not dry_run:
-            assignments_created += 1
-            # Attach id to the in-memory item for grade-push lookup
-            item["schoology_assignment_id"] = assignment_id
+    try:
+        for key in plan["create"]:
+            _stop_at_rig_window(window_clock, grades_pushed)   # a create is a write too
+            item = scope_items_by_key[key]
+            assignment_id = _ensure_assignment(
+                item, section, course_id, cats, mps, state, ops, cdp, dry_run, errors,
+                force_mp_date=force_mp_date, view=view, evidence=evidence,
+            )
+            if assignment_id and not dry_run:
+                assignments_created += 1
+                # Attach id to the in-memory item for grade-push lookup
+                item["schoology_assignment_id"] = assignment_id
 
-    # Re-attach ids for reuse items (already in state)
-    for key in plan["reuse"]:
-        stored = state.get_assignment(section, key)
-        if stored:
-            scope_items_by_key[key]["schoology_assignment_id"] = stored.get(
-                "schoology_assignment_id"
+        # Re-attach ids for reuse items (already in state)
+        for key in plan["reuse"]:
+            stored = state.get_assignment(section, key)
+            if stored:
+                scope_items_by_key[key]["schoology_assignment_id"] = stored.get(
+                    "schoology_assignment_id"
+                )
+
+        # -- push grades -------------------------------------------------------
+        # A quarter pass never pushes a target whose column is filed in another MP
+        # (a Quarter 2 lesson's 0 can never reach an MP1 column).
+        if grades and other_quarter_keys:
+            other = {k for k in grades if k[1] in other_quarter_keys}
+            grades_other_quarter = len(other)
+            grades = {k: v for k, v in grades.items() if k not in other}
+            if grades_other_quarter:
+                print(f"[{pass_name}] {grades_other_quarter} grade targets belong to another "
+                      "marking period (its own pass writes them)")
+        # No zero filter here (finding B4): a fixture built with --no-zeros already left
+        # out the lagged zeros, and the earned zeros it kept are real scores.
+        # SY2627 --through gate, grade side: targets for columns that are not yet
+        # due are DEFERRED (not errors) -- they get pushed on their day.
+        deferred_targets: dict = {}
+        if grades and through_date is not None and not force_mp_date:
+            in_scope = {k: v for k, v in grades.items() if k[1] in scope_items_by_key}
+            deferred_targets = {k: v for k, v in grades.items() if k[1] not in scope_items_by_key}
+            grades_deferred = len(grades) - len(in_scope)
+            if grades_deferred:
+                print(f"[sync_section] --through {through_date}: {grades_deferred} grade targets deferred (not yet due)")
+            grades = in_scope
+        if not grades:
+            print("[4/5] No grade targets supplied -- skipping grade push.")
+        else:
+            print(f"[4/5] Pushing grades ({len(grades)} targets) ...")
+            _load_gradebook_page(ops, cdp, course_id, view, evidence)
+            grades_pushed, grades_skipped, grades_kept = _push_grades(
+                grades,
+                scope_items_by_key,
+                students_by_id,
+                section,
+                state,
+                ops,
+                cdp,
+                dry_run,
+                errors,
+                comments=comments,
+                comment_texts=comment_texts,
+                view=view,
+                window_clock=window_clock,
             )
 
-    # -- push grades -------------------------------------------------------
-    # SY2627 --through gate, grade side: targets for columns that are not yet
-    # due are DEFERRED (not errors) -- they get pushed on their day.
-    grades_deferred = 0
-    deferred_targets: dict = {}
-    if grades and through_date is not None and not force_mp_date:
-        in_scope = {k: v for k, v in grades.items() if k[1] in scope_items_by_key}
-        deferred_targets = {k: v for k, v in grades.items() if k[1] not in scope_items_by_key}
-        grades_deferred = len(grades) - len(in_scope)
-        if grades_deferred:
-            print(f"[sync_section] --through {through_date}: {grades_deferred} grade targets deferred (not yet due)")
-        grades = in_scope
-    if not grades:
-        print("[4/5] No grade targets supplied -- skipping grade push.")
-        grades_pushed = 0
-        grades_skipped = 0
-        grades_kept = 0
-    else:
-        print(f"[4/5] Pushing grades ({len(grades)} targets) ...")
-        _load_gradebook_page(ops, cdp, course_id)
-        grades_pushed, grades_skipped, grades_kept = _push_grades(
-            grades,
-            scope_items_by_key,
-            students_by_id,
-            section,
-            state,
-            ops,
-            cdp,
-            dry_run,
-            errors,
-            comments=comments,
-            comment_texts=comment_texts,
-        )
-
-    # -- ahead scores (EFFORT_VISIBILITY_SPEC §5, dry-run only, read-only) ----
-    # Work scored before its column is due reaches Schoology only once the column
-    # exists; name the missing columns so the teacher knows which to create.
-    ahead_waiting: list = []
-    if dry_run and deferred_targets:
-        _load_gradebook_page(ops, cdp, course_id)
-        ahead_waiting = ahead_waiting_columns(
-            deferred_targets, all_items_by_key,
-            lambda title: ops.find_assignment_id_by_title(cdp, title) is not None,
-            ced=ced,
-        )
-        line = ahead_waiting_line(ahead_waiting)
-        if line:
-            print(f"[ahead] {section}: {line}")
+        # -- ahead scores (EFFORT_VISIBILITY_SPEC §5, dry-run only, read-only) ----
+        # Work scored before its column is due reaches Schoology only once the column
+        # exists; name the missing columns so the teacher knows which to create.
+        if dry_run and deferred_targets:
+            _load_gradebook_page(ops, cdp, course_id, view, evidence)
+            ahead_waiting = ahead_waiting_columns(
+                deferred_targets, all_items_by_key,
+                lambda title: ops.find_assignment_id_by_title(cdp, title) is not None,
+                ced=ced,
+            )
+            line = ahead_waiting_line(ahead_waiting)
+            if line:
+                print(f"[ahead] {section}: {line}")
+    except ViewNotVerified as exc:
+        # A reload lost the pass's marking period (or the grid stopped matching the
+        # evidence, or a manual run reached 16:00): stop before the next write.
+        if isinstance(exc, GradePushStopped):
+            grades_pushed = exc.pushed   # the cells written before the stop
+        code = "rig-window" if isinstance(exc, RigWindowStopped) else "view-not-verified"
+        msg = f"[{pass_name}] {exc}; stopped, nothing more written"
+        print(f"[ABORT] {msg}")
+        errors.append(msg)
+        summary = {"section": section, "course_id": course_id, "dry_run": dry_run,
+                   "aborted": code, "quarter": quarter,
+                   "assignments_created": assignments_created, "grades_pushed": grades_pushed,
+                   "errors": errors}
+        print(json.dumps(summary, indent=2))
+        if not dry_run:
+            state.log_run(summary)
+        return summary
 
     # -- summarise ---------------------------------------------------------
     summary = {
         "section": section,
         "course_id": course_id,
         "dry_run": dry_run,
+        "quarter": quarter,
+        "grading_period_id": view["grading_period_id"] if view else None,
         "scope_items": len(scope_items),
         "assignments_created": assignments_created,
         "grades_pushed": grades_pushed,
         "grades_skipped": grades_skipped,
         "grades_kept": grades_kept,
         "grades_deferred": grades_deferred,
+        "grades_other_quarter": grades_other_quarter,
         "ahead_waiting": ahead_waiting,
         "errors": errors,
     }
@@ -1209,6 +1580,15 @@ def sync_section(
 # ---------------------------------------------------------------------------
 # CLI entry point
 # ---------------------------------------------------------------------------
+
+def _iso_date(text: str) -> str:
+    """argparse type: a real YYYY-MM-DD date."""
+    from datetime import date as _date
+    try:
+        return _date.fromisoformat(str(text).strip()).isoformat()
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"not a YYYY-MM-DD date: {text!r}")
+
 
 def _parse_args(argv=None):
     p = argparse.ArgumentParser(
@@ -1275,6 +1655,30 @@ def _parse_args(argv=None):
         help="Disable the due-date gate (push every dated column).",
     )
     p.add_argument(
+        "--quarter",
+        choices=list(lib.QUARTER_KEYS),
+        default=None,
+        help=(
+            "Run one quarter pass: switch the gradebook to that quarter's marking period, "
+            "VERIFY it (abort with no writes if not), and create/grade only the columns "
+            "filed there. Required with --apply."
+        ),
+    )
+    p.add_argument(
+        "--no-zeros",
+        action="store_true",
+        help=("The fixture was built with --no-zeros (lagged zeros left out, an earned 0 kept). "
+              "The sync writes every target it is given; this only keeps the comment texts "
+              "in step with that fixture."),
+    )
+    p.add_argument(
+        "--today",
+        type=_iso_date,
+        default=None,
+        metavar="YYYY-MM-DD",
+        help="The date for the lagged-zero comment texts and the default --through (previews).",
+    )
+    p.add_argument(
         "--granularity",
         choices=["lesson", "component"],
         default="lesson",
@@ -1312,12 +1716,64 @@ def _load_grades_fixture(path: str) -> dict:
     return grades
 
 
-def main(argv=None):
+# The shared rig lock (schoology_sync_lib) and the exit codes of a refused start (finding R3).
+RIG_LOCK_OWNER = "sync"
+RIG_BUSY_EXIT = 5
+RIG_WINDOW_EXIT = 3
+
+
+def _is_daily_job_step(token) -> bool:
+    """True for a step of tools/daily_schoology_sync.ps1: this run inherited the lock, and
+    the lock's owner is a section name (PeriodB / PeriodE), which the ps1 writes."""
+    return token == lib.RIG_LOCK_INHERITED and lib.is_daily_job_owner(lib.rig_lock_owner())
+
+
+def main(argv=None, *, clock=None):
+    """clock (tests): returns the school time 'HH:MM'; default schoology_sync_lib.school_hhmm."""
     args = _parse_args(argv)
 
     section = args.sync_section
+    dry_run = args.dry_run
+    # From 2026-11-09 the gradebook holds two marking periods: a write needs an explicit,
+    # verified one (QUARTER_LINE_BY_DUE_DATE_SPEC.md section 4.1). The summer mock keeps its MP4.
+    if not dry_run and args.quarter is None and not SECTION_FORCE_MP_DATE.get(section):
+        print("[ABORT] --apply needs --quarter Q1|Q2: every write needs an explicit, verified "
+              "marking period. Nothing was written.")
+        sys.exit(2)
+    # Finding R3 (Codex re-review): HOLD the rig lock from before the CDP connect (inside
+    # sync_section) to the end, in every mode. A step of the daily job inherits the job's
+    # lock (RIG_LOCK_INHERITED) and release_rig_lock leaves it alone.
+    token = lib.take_rig_lock(RIG_LOCK_OWNER)
+    if token is None:
+        holder = lib.rig_lock_holder(lib.RIG_LOCK_PATH) or {}
+        print(f"[ABORT] the Schoology rig is busy: {lib.RIG_LOCK_PATH} is held by "
+              f"{holder.get('owner') or '?'} (pid {holder.get('pid')}); nothing read or written. "
+              "Wait for it to finish.")
+        sys.exit(RIG_BUSY_EXIT)
+    try:
+        _main_on_rig(args, token, clock or lib.school_hhmm)
+    finally:
+        lib.release_rig_lock(token)
+
+
+def _main_on_rig(args, token, clock) -> None:
+    """main() once the rig lock is held (or inherited): the LIVE window, then the sync."""
+    section = args.sync_section
     course_id = args.course_id or SECTION_TO_COURSE_ID[section]
     dry_run = args.dry_run
+    # Finding R3: a manual run (anything but a step of the daily job) never STARTS from
+    # 16:00 to 17:05, dry run included, and a manual --apply run stops before its next
+    # create or cell once it is 16:00 (window_clock). The daily job's steps are exempt.
+    window_clock = None
+    if not _is_daily_job_step(token):
+        hhmm = clock()
+        if lib.in_rig_quiet_window(hhmm):
+            print(f"[STOP] {rig_window_message(hhmm)}. Nothing read or written; run it before "
+                  f"{lib.RIG_QUIET_WINDOW[0]} or after {lib.RIG_QUIET_WINDOW[1]}.")
+            sys.exit(RIG_WINDOW_EXIT)
+        if not dry_run:
+            window_clock = clock
+    today = args.today or today_school_date()
     class_doc = None
     if args.comments:
         from build_schoology_fixture import DEFAULT_BASE, fetch_class_grades
@@ -1359,9 +1815,13 @@ def main(argv=None):
         limit=args.limit,
         force_mp_date=force_mp_date,
         granularity=args.granularity,
-        through_date=None if args.no_through else (args.through or today_school_date()),
+        through_date=None if args.no_through else (args.through or today),
         comments=args.comments,
         class_doc=class_doc,
+        quarter=args.quarter,
+        zeros=not args.no_zeros,
+        today=today,
+        window_clock=window_clock,
     )
     # A refused run must fail the daily job (daily_schoology_sync.ps1 checks the exit code),
     # not pass silently while nothing syncs.

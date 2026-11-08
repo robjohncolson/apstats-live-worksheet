@@ -1046,6 +1046,9 @@
     Q3: 'Jan 25 – Apr 14',
     Q4: 'Apr 15 – Jun 17',
   };
+  // QUARTER_LINE_BY_DUE_DATE_SPEC §3.6 (teacher 2026-11-07): Quarter 1's 0s stay fixable until it
+  // closes (grade-config.js quarters.Q1.close).
+  var QUARTER_CLOSE_LABEL = { Q1: 'closes Thu Nov 12' };
 
   function renderQuarters(host, quarters) {
     var strip = el('div', { class: 'wys-quarters' });
@@ -1062,7 +1065,9 @@
       var pill = el('span', { class: classes });
       // Tooltip: name the band + (if any work) the progress fraction.
       var bandLabel = QUARTER_BAND_LABEL[qKey] || '';
-      var tip = qKey + ' covers ' + bandLabel;
+      // Review D4 (2026-11-08): tooltips say 'Quarter 1' (the pill keeps its short 'Q1' label).
+      var quarterWords = 'Quarter ' + qKey.slice(1);
+      var tip = quarterWords + ' covers ' + bandLabel + (QUARTER_CLOSE_LABEL[qKey] ? ' · ' + QUARTER_CLOSE_LABEL[qKey] : '');
       if (graded != null && total != null) {
         tip += ' — ' + graded + ' of ' + total + ' topic group' + (total === 1 ? '' : 's') + ' graded';
       }
@@ -1076,7 +1081,7 @@
       if (ceiling != null && grade != null) {
         pill.appendChild(el('br'));
         var ceilEl = el('small', { html: '&uarr; ' + ceiling });
-        ceilEl.setAttribute('title', 'If you ace the remaining ' + (total - graded) + ' topic group' + ((total - graded) === 1 ? '' : 's') + ' in ' + qKey);
+        ceilEl.setAttribute('title', 'If you ace the remaining ' + (total - graded) + ' topic group' + ((total - graded) === 1 ? '' : 's') + ' in ' + quarterWords);
         ceilEl.style.color = '#25663F';
         ceilEl.style.fontSize = '0.85em';
         pill.appendChild(ceilEl);

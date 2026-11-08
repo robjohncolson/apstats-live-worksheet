@@ -235,7 +235,7 @@ describe('Pico My Grade: the same numbers as the System 7 ledger', { timeout: 18
       expect(classic.drop).toBeTruthy();
       expect(classic.effort).toHaveLength(2);
       expect(classic.bonus).toHaveLength(3);
-      expect(classic.status).toMatch(/^Q1 so far: 91\.2%\./);
+      expect(classic.status).toMatch(/^Quarter 1 so far: 91\.2%\./);   // re-pinned 2026-11-08 (review D4)
       // Pico = System 7, field by field.
       expect(picoView).toEqual(classic);
       // And the Desk's own (hidden) paint in the Pico run agrees with both.
@@ -378,7 +378,7 @@ describe('Pico My Grade: tiles, badges, panels and behaviour', { timeout: 120_00
       win._walletRefreshZeroCard();
       expect(doc.querySelector('#pico-ledger-zero .pl-tile')).toBe(first);
       expect(doc.activeElement).toBe(first.querySelector('.pl-verb'));
-      expect(doc.getElementById('pico-ledger-status').textContent).toMatch(/^Q1 so far: 92\.6%\./);
+      expect(doc.getElementById('pico-ledger-status').textContent).toMatch(/^Quarter 1 so far: 92\.6%\./);
       expect(doc.getElementById('pico-ledger-status').textContent)
         .toBe(doc.querySelector('#wallet-content .wallet-zero-card .wz-status').textContent);
     } finally {

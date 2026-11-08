@@ -88,6 +88,21 @@ describe('Do Now card colour (§1.1)', () => {
       expect(t.pill().previousElementSibling.textContent).toBe('Q1: 80');
     } finally { t.close(); }
   });
+  it('two quarter pills (QUARTER_LINE §3.1, re-pinned 2026-11-07): the missing pill goes after the LAST one, and stays there', () => {
+    const t = sandbox({ warns: [NOW_1, SOON_1] });
+    try {
+      const grades = t.doc.getElementById('donow-grades');
+      grades.innerHTML = '<span class="qpill" data-role="closing">Quarter 1 92</span><span class="qpill" data-role="current">Quarter 2 85</span>';
+      t.s._updateDoNowMissingPill();
+      expect(t.doc.querySelectorAll('.qpill-missing')).toHaveLength(1);
+      expect(t.pill().previousElementSibling.dataset.role).toBe('current');
+      t.s._updateDoNowMissingPill();
+      expect(t.doc.querySelectorAll('.qpill-missing')).toHaveLength(1);
+      expect(grades.lastElementChild).toBe(t.pill());
+      // Without the grouping helpers (this sandbox), the words stay the one sentence.
+      expect(t.pill().textContent).toBe('1 is a 0 now · 1 more by Sun 9/27');
+    } finally { t.close(); }
+  });
   it('singular tentative: "1 becomes a 0 by …"; no icon anywhere', () => {
     const t = sandbox({ warns: [SOON_1] });
     try {

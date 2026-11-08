@@ -300,7 +300,7 @@ describe('Why-so-low coach: PC-not-open + flashcard gate', () => {
 describe('coach facts match the zero-date rule (teacher 2026-09-26: "does this AI coach have accurate understanding of the dynamics?")', () => {
   it('_buildCoachContext ships the Missing-work list with zero dates and counting/tentative flags', () => {
     const body = fnBody(DESK_SRC, '_buildCoachContext');
-    expect(body).toMatch(/ctx\.missing = _coachMissingList\(\)/);
+    expect(body).toMatch(/ctx\.missing = _coachMissingList\(curQ\)/);   // re-pinned 2026-11-08 (review D2)
     const helper = fnBody(DESK_SRC, '_coachMissingList');
     expect(helper).toMatch(/_zeroCurrentWarnings\(\)/);
     expect(helper).toMatch(/past: Boolean\(w\.past\)/);

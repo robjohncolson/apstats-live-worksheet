@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
+import subprocess
 import sys
 import types
 import unittest
@@ -507,6 +509,313 @@ class TestLoadAllColumns(unittest.TestCase):
     def test_title_lookup_finds_a_column_past_the_first_batch(self):
         fake = GridLoadFake(loaded=30, total=34, per_scroll=4, title_after_load="33")
         self.assertEqual(ops.find_assignment_id_by_title(fake, "3.3 Blooket"), "33")
+
+
+# ---------------------------------------------------------------------------
+# Findings A3 (verifier) + R4a/R4d (Codex re-review): a switched filter + header over the
+# OLD period's grid, a changed score on that old grid, an already-shown grid not rendered
+# ---------------------------------------------------------------------------
+
+MP1, MP2 = "1173888", "1173889"
+_LABELS = {MP1: "Marking Period 1: 9/02/26 - 11/06/26", MP2: "Marking Period 2: 11/07/26 - 1/22/27"}
+_RANGES = {MP1: {"start": "2026-09-02", "end": "2026-11-06"}, MP2: {"start": "2026-11-07", "end": "2027-01-22"}}
+
+# Row 0 of a gradebook grid as Schoology renders it: (data-x, aria-label) per cell. The five
+# summary cells sit in every marking period (no aria-label); an assignment cell is keyed by
+# its column INDEX and its label carries the score.
+_SUMMARY_CELLS = [("overall_override", None), ("overall", None), ("total_points_awarded", None),
+                  ("gp_override", None), ("gp", None)]
+
+
+def _row(*cells):
+    return _SUMMARY_CELLS + list(cells)
+
+
+_GRIDS = {MP1: _row(("0", "S, 2.1 Day 1 Quiz, 90 out of 100 points")),
+          MP2: _row(("0", "S, 2.4 Quiz, 80 out of 100 points"))}
+
+
+def _signature_of(cells):
+    """What _ASSIGNMENT_SIGNATURE_JS returns for these row-0 cells: the count of all cells,
+    then the sorted 'data-x|title' pairs of the titled assignment cells. The oracle is
+    checked against the real JS on the captured gradebook (TestGridJsOnTheCapturedGradebook)."""
+    summary = {"overall", "overall_override", "total_points_awarded", "gp", "gp_override"}
+    pairs = []
+    for x, label in cells:
+        if x in summary:
+            continue
+        parts = (label or "").split(", ")
+        title = parts[1] if len(parts) > 1 else ""
+        if title:
+            pairs.append(x + "|" + title)
+    return "%d:%s" % (len(cells), chr(10).join(sorted(pairs)))
+
+
+def _score_signature_of(cells):
+    """The signature before finding R4a: every cell's full label, score included."""
+    return "%d:%s" % (len(cells), chr(10).join("%s|%s" % (x, label or "") for x, label in cells))
+
+
+class PeriodPage:
+    """A gradebook whose filter and header switch at once; its grid follows `lag` grid reads
+    later (lag=None: never, the verifier's stale-grid page). The click opener is absent, so
+    select_grading_period falls back to the select2 API.
+
+    grids: {mp: row-0 cells}. rows=False: no student row has rendered. rescore: labels
+    that change on the grid still shown once the filter switched ({data-x: new label}):
+    the old period's grid re-rendering a changed score (finding R4a).
+    """
+
+    def __init__(self, shown=MP2, lag=0, rows=True, grids=None, rescore=None):
+        self.gp = shown          # the filter and the header
+        self.grid_gp = shown     # the period whose cells the grid shows
+        self.lag = lag
+        self.rows = rows
+        self.grids = {gp: list(cells) for gp, cells in (grids or _GRIDS).items()}
+        self.rescore = dict(rescore or {})
+        self.reads_since_switch = 0
+
+    def send(self, method, params=None):
+        pass
+
+    def click(self, x, y):
+        pass
+
+    def cells(self):
+        return self.grids[self.grid_gp]
+
+    def _switch(self, gp):
+        self.gp = gp
+        self.reads_since_switch = 0
+        if not self.rescore:
+            return
+        self.grids[self.grid_gp] = [(x, self.rescore.get(x, label)) for x, label in self.cells()]
+
+    def eval_js(self, expr):
+        if expr == ops._GRADING_PERIOD_VIEW_JS:
+            return json.dumps({"gp": self.gp, "header": _LABELS[self.gp], "chosen": _LABELS[self.gp],
+                               "available": [MP1, MP2, "all", "final", "none"]})
+        if "select2('val'" in expr:
+            self._switch(json.loads(re.search(r'[(]("[0-9]+")[)]', expr).group(1)))
+            return "ok"
+        if expr == ops._ASSIGNMENT_SIGNATURE_JS:
+            if self.grid_gp != self.gp and self.lag is not None:
+                self.reads_since_switch += 1
+                if self.reads_since_switch > self.lag:
+                    self.grid_gp = self.gp
+            if not self.rows:
+                return "0:"
+            return _signature_of(self.cells())
+        return None
+
+
+class TestStaleGridAfterTheSwitch(unittest.TestCase):
+    def setUp(self):
+        patcher = mock.patch.object(ops.time, "sleep", lambda s: None)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def select(self, page, gp):
+        return ops.select_grading_period(page, gp, _RANGES[gp], timeout_s=0.05)
+
+    def test_filter_and_header_switched_but_the_grid_stayed_is_not_ok(self):
+        page = PeriodPage(shown=MP2, lag=None)
+        result = self.select(page, MP1)
+        self.assertFalse(result["ok"])
+        self.assertIn("still shows the previous marking period", result["error"])
+        self.assertEqual(page.gp, MP1)          # the filter did switch; the grid did not
+
+    def test_a_changed_score_on_the_old_grid_is_not_a_new_grid(self):
+        # Finding R4a: the same titles, but the first row's score goes 70 -> 80 after the
+        # filter and the header switched. The old score-text signature saw a "new" grid.
+        grids = {MP2: _row(("0", "S, 2.4 Quiz, 70 out of 100 points"), ("1", "S, 2.5 Quiz")),
+                 MP1: _row(("0", "S, 2.1 Day 1 Quiz, 90 out of 100 points"))}
+        page = PeriodPage(shown=MP2, lag=None, grids=grids, rescore={"0": "S, 2.4 Quiz, 80 out of 100 points"})
+        before = list(page.cells())
+        result = self.select(page, MP1)
+        self.assertFalse(result["ok"])
+        self.assertIn("still shows the previous marking period", result["error"])
+        self.assertEqual(page.cells()[5], ("0", "S, 2.4 Quiz, 80 out of 100 points"))   # it did change
+        self.assertNotEqual(_score_signature_of(before), _score_signature_of(page.cells()))
+        self.assertEqual(_signature_of(before), _signature_of(page.cells()))
+
+    def test_different_titles_after_the_switch_are_ok(self):
+        grids = {MP2: _row(("0", "S, 2.4 Quiz, 70 out of 100 points")),
+                 MP1: _row(("0", "S, 2.1 Day 1 Quiz, 70 out of 100 points"))}
+        page = PeriodPage(shown=MP2, lag=2, grids=grids)
+        result = self.select(page, MP1)
+        self.assertEqual((result["ok"], result["method"]), (True, "select2"))
+        self.assertEqual(page.grid_gp, MP1)
+
+    def test_columns_turning_into_an_empty_grid_is_a_real_change(self):
+        # MP2 has no column before the move: Schoology renders empty placeholder cells.
+        grids = {MP1: _row(("0", "S, 2.1 Day 1 Quiz, 90 out of 100 points")),
+                 MP2: _row(("0", ""), ("1", ""))}
+        result = self.select(PeriodPage(shown=MP1, lag=1, grids=grids), MP2)
+        self.assertEqual((result["ok"], result["method"]), (True, "select2"))
+
+    def test_a_grid_that_catches_up_is_ok(self):
+        page = PeriodPage(shown=MP2, lag=3)
+        result = self.select(page, MP1)
+        self.assertEqual((result["ok"], result["method"]), (True, "select2"))
+        self.assertEqual(page.grid_gp, MP1)
+
+    def test_already_shown_needs_no_change(self):
+        result = self.select(PeriodPage(shown=MP1, lag=None), MP1)
+        self.assertEqual((result["ok"], result["method"]), (True, "already shown"))
+
+    def test_already_shown_but_no_row_rendered_is_not_ok(self):
+        # Finding R4d: two reads of an unrendered page used to count as a settled grid.
+        page = PeriodPage(shown=MP1, rows=False)
+        result = self.select(page, MP1)
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["method"], "already shown")
+        self.assertIn("did not show a settled student row", result["error"])
+
+    def test_already_shown_but_never_settling_is_not_ok(self):
+        class Flicker(PeriodPage):
+            def eval_js(self, expr):
+                if expr == ops._ASSIGNMENT_SIGNATURE_JS:
+                    self.reads_since_switch += 1
+                    return "6:0|2.%d Quiz" % self.reads_since_switch      # a new title every read
+                return super().eval_js(expr)
+
+        result = self.select(Flicker(shown=MP1), MP1)
+        self.assertFalse(result["ok"])
+        self.assertIn("did not show a settled student row", result["error"])
+
+    def test_already_shown_and_rendered_but_empty_is_ok_here(self):
+        # An empty marking period (MP2 before the move) is a rendered grid: ok here; whether
+        # its columns are right is the callers' evidence check (finding R4b).
+        page = PeriodPage(shown=MP2, grids={MP2: _row(("0", ""), ("1", ""))})
+        self.assertTrue(self.select(page, MP2)["ok"])
+
+    def test_no_settled_row_before_the_switch_is_not_ok(self):
+        page = PeriodPage(shown=MP2, rows=False)
+        result = self.select(page, MP1)
+        self.assertFalse(result["ok"])
+        self.assertIn("before the switch", result["error"])
+        self.assertEqual(page.gp, MP2)          # nothing was switched
+
+    def test_two_periods_without_columns_cannot_be_told_apart(self):
+        page = PeriodPage(shown=MP2, lag=0, grids={MP1: _row(), MP2: _row()})
+        self.assertFalse(self.select(page, MP1)["ok"])
+        page = PeriodPage(shown=MP2, lag=0, grids={MP1: _row(("0", "")), MP2: _row(("0", ""), ("1", ""))})
+        self.assertFalse(self.select(page, MP1)["ok"])     # placeholder cells carry no identity
+
+
+class TestGridIdentity(unittest.TestCase):
+    def test_identity_is_the_set_of_index_title_pairs(self):
+        self.assertEqual(ops._grid_identity("7:0|2.4 Quiz" + chr(10) + "1|2.5 Quiz"),
+                         frozenset({"0|2.4 Quiz", "1|2.5 Quiz"}))
+        self.assertEqual(ops._grid_identity("5:"), frozenset())       # rendered, no column
+        self.assertIsNone(ops._grid_identity("0:"))                    # no student row yet
+        self.assertIsNone(ops._grid_identity(None))
+
+
+class TitlesPage:
+    def __init__(self, titles):
+        self.titles = titles
+        self.evals = 0
+
+    def eval_js(self, expr):
+        self.evals += 1
+        if expr == ops._VISIBLE_TITLES_JS and self.titles is not None:
+            return json.dumps(self.titles)
+        return None
+
+
+class TestViewContentMatches(unittest.TestCase):
+    view = {"quarter": "Q1", "grading_period_id": MP1}
+
+    def test_a_title_filed_elsewhere_on_the_grid_fails(self):
+        page = TitlesPage(["2.1 Day 1 Quiz", "2.4 Quiz"])
+        self.assertFalse(ops.view_content_matches(page, self.view, {"2.1 Day 1 Quiz"}, {"2.4 Quiz"}))
+        self.assertIn("filed in another marking period (2.4 Quiz)",
+                      ops.view_content_problem(page, self.view, {"2.1 Day 1 Quiz"}, {"2.4 Quiz"}))
+
+    def test_none_of_the_titles_filed_here_fails(self):
+        page = TitlesPage(["9.9 Quiz"])
+        self.assertFalse(ops.view_content_matches(page, self.view, {"2.1 Day 1 Quiz", "1.1 Quiz"}, set()))
+
+    def test_a_title_filed_here_and_none_elsewhere_passes(self):
+        page = TitlesPage(["2.1 Day 1 Quiz", "3.1 Quiz"])
+        self.assertTrue(ops.view_content_matches(page, self.view, {"2.1 Day 1 Quiz"}, {"2.4 Quiz"}))
+        self.assertTrue(ops.view_content_matches(page, self.view, set(), {"2.4 Quiz"}))
+
+    def test_nothing_registered_reads_nothing(self):
+        page = TitlesPage(None)
+        self.assertTrue(ops.view_content_matches(page, self.view, set(), set()))
+        self.assertEqual(page.evals, 0)
+
+    def test_unreadable_titles_fail(self):
+        self.assertFalse(ops.view_content_matches(TitlesPage(None), self.view, {"1.1 Quiz"}, set()))
+
+
+# Runs each step on ONE parse of the capture: set the given aria-labels, then evaluate the
+# expressions. Only our expressions run (no page scripts).
+_GRID_JS_NODE = r"""
+const fs = require('fs');
+const {JSDOM} = require('jsdom');
+const steps = JSON.parse(fs.readFileSync(0, 'utf8'));
+const dom = new JSDOM(fs.readFileSync('tests/fixtures/schoology-gradebook-apstats-sec1.html', 'utf8'),
+                      {runScripts: 'outside-only'});
+const doc = dom.window.document;
+const out = [];
+for (const step of steps) {
+  for (const [selector, label] of Object.entries(step.labels)) doc.querySelector(selector).setAttribute('aria-label', label);
+  const result = {};
+  for (const [name, expr] of Object.entries(step.exprs)) result[name] = dom.window.eval(expr);
+  out.push(result);
+}
+process.stdout.write(JSON.stringify(out));
+dom.window.close();
+"""
+
+# Row 0's raw cells, to check the _signature_of oracle against the real JS.
+_ROW0_CELLS_JS = r"""(function(){
+  var cells = document.querySelectorAll('[role="gridcell"][data-y="0"]');
+  var out = [];
+  for (var i = 0; i < cells.length; i++) out.push([cells[i].getAttribute('data-x') || '', cells[i].getAttribute('aria-label')]);
+  return JSON.stringify(out);
+})()"""
+
+
+@unittest.skipIf(shutil.which("node") is None, "node is not installed")
+class TestGridJsOnTheCapturedGradebook(unittest.TestCase):
+    """The grid JS runs on the real capture (a syntax error would only show live)."""
+
+    def _run(self, steps):
+        result = subprocess.run(["node", "-e", _GRID_JS_NODE], input=json.dumps(steps), text=True,
+                                encoding="utf-8", capture_output=True, check=True, cwd=REPO_ROOT, timeout=180)
+        return json.loads(result.stdout)
+
+    def test_signature_is_index_and_title_only(self):
+        sig, titles, cells = ops._ASSIGNMENT_SIGNATURE_JS, ops._VISIBLE_TITLES_JS, _ROW0_CELLS_JS
+        out = self._run([
+            {"labels": {"#grader-grid-cell-0-0": "Student, 2.4 Quiz, 90 out of 100 points",
+                        "#grader-grid-cell-1-0": "Student, 2.5 Quiz"},
+             "exprs": {"signature": sig, "titles": titles, "cells": cells}},
+            # Finding R4a: the score changes, the identity does not.
+            {"labels": {"#grader-grid-cell-0-0": "Student, 2.4 Quiz, 80 out of 100 points"},
+             "exprs": {"signature": sig}},
+            # A marking period without columns: only Schoology's empty placeholder cells.
+            {"labels": {"#grader-grid-cell-0-0": "", "#grader-grid-cell-1-0": ""},
+             "exprs": {"signature": sig}},
+        ])
+        first, rescored, empty = out
+        self.assertEqual(json.loads(first["titles"]), ["2.4 Quiz", "2.5 Quiz"])
+        # 5 summary cells + 10 assignment cells in row 0; the summary and untitled cells
+        # carry no identity, and no score reaches the signature.
+        self.assertEqual(first["signature"], "15:0|2.4 Quiz" + chr(10) + "1|2.5 Quiz")
+        self.assertNotIn("out of", first["signature"])
+        self.assertEqual(first["signature"], _signature_of([tuple(c) for c in json.loads(first["cells"])]))
+        self.assertEqual(rescored["signature"], first["signature"])
+        self.assertEqual(empty["signature"], "15:")
+        self.assertTrue(ops._grid_has_rows(first["signature"]))
+        self.assertEqual(ops._grid_identity(empty["signature"]), frozenset())
+        self.assertNotEqual(ops._grid_identity(first["signature"]), ops._grid_identity(empty["signature"]))
+        self.assertFalse(ops._grid_has_rows("0:"))
 
 
 if __name__ == "__main__":

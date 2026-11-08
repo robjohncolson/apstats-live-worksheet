@@ -28,7 +28,7 @@ tmpclaude-*
 .gitnexus
 
 # Schoology sync local state (use SupabaseStateStore in prod)
-tools/.schoology-sync-state.json
+tools/.schoology-sync-state.json*
 tools/.official-grade-pending.json
 tools/.schoology-rename-state.json
 tools/.schoology-rename-state.json.tmp

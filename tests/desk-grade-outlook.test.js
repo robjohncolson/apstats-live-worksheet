@@ -221,13 +221,23 @@ describe('Desk grade outlook (Q1-Q4 strip in Do Now card)', () => {
 
   // ── 2026-06: show only the CURRENT quarter + the two v3 tracks ───────────────
 
-  it('19: shows only the CURRENT quarter (quarterOfDate(today)), with a fallback', () => {
+  it('19: one CURRENT-quarter pill (quarterOfDate(tdy())), plus the ended quarter\'s pill only inside its close window', () => {
     const body = fnBody(DESK_SRC, 'renderDoNowGrades');
     expect(body, 'picks the current quarter via quarterOfDate').toMatch(/quarterOfDate\s*\(/);
-    expect(body, 'renders a single current-quarter pill keyed by curQ').toMatch(/curQ/);
-    // No per-quarter render loop anymore (the order array remains only as the
-    // fallback scan for the first graded quarter).
+    expect(body, 'the current-quarter pill is keyed by curQ').toMatch(/curQ/);
+    // No per-quarter render loop (the order array remains only as the fallback scan for the
+    // first graded quarter).
     expect(body, 'no per-quarter render loop').not.toMatch(/for\s*\(\s*var\s+i\s*=\s*0;[^)]*order\.length/);
+    // QUARTER_LINE_BY_DUE_DATE_SPEC §3.1 (re-pinned 2026-11-07): pills carry data-quarter / data-role;
+    // the closing / final quarter's pill comes FIRST and exists only while _deskQuarterPhase() has a
+    // window (no close dates in the payload → null → today's single pill).
+    expect(body).toContain('pill.dataset.quarter = curQ;');
+    expect(body).toContain("pill.dataset.role = 'current';");
+    expect(body).toMatch(/var phase = \(typeof _deskQuarterPhase === 'function'\) \? _deskQuarterPhase\(\) : null;/);
+    expect(body).toContain('var sideQ = phase ? (phase.closing || phase.final) : null;');
+    expect(body.indexOf('_doNowSidePill(sideQ')).toBeGreaterThan(-1);
+    expect(body.indexOf('_doNowSidePill(sideQ')).toBeLessThan(body.indexOf('host.appendChild(pill)'));
+    expect(fnBody(DESK_SRC, '_doNowSidePill')).toMatch(/pill\.dataset\.role = role;/);
   });
 
   it('20: renders the two v3 tracks INSIDE the pill (qrule / qtrack spans), not as separate PC / Work chips', () => {

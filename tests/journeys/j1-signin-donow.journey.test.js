@@ -71,6 +71,10 @@ describe('Desk journey J1', { timeout: 30_000 }, () => {
       const grades = harness.document.getElementById('donow-grades');
       expect(grades.style.display).toBe('flex');
       expect(grades.querySelector('.qkey')?.textContent).toBe('Q1');
+      // QUARTER_LINE_BY_DUE_DATE_SPEC §3.1 (re-pinned 2026-11-07): outside a close window there is
+      // one pill, the current one, still keyed "Q1".
+      expect([...grades.querySelectorAll('.qpill:not(.qpill-missing)')].map((p) => [p.dataset.role, p.dataset.quarter]))
+        .toEqual([['current', 'Q1']]);
       expect(grades.querySelector('.qgrade')?.textContent).toBe('88');
       // EFFORT_VISIBILITY_V2_SPEC §3: the tracks and the 40% rule ride in the pill; no ↑ceiling.
       expect(grades.querySelector('.qceil')).toBeNull();

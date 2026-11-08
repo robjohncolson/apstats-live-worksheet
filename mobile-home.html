@@ -869,6 +869,13 @@
   // network), then refresh from GET /grade when signed in + online. The grade is
   // computed server-side (authoritative) from the same ledger the app already pulls.
   var GRADE_KEY = 'apstats_mobile_grade_v1';
+  var GRADE_CONFIG_KEY = 'apstats_mobile_grade_config_v1';   // /grade config.quarters (QUARTER_LINE §3.10)
+  // Review D1 (2026-11-08): the ended quarter's official grade (GET /official-grade), stamped with
+  // its owner like GRADE_KEY: { owner, quarter, official }. "Quarter 1 final" is the higher of the
+  // frozen grade and this one, the number Schoology's MP1 final holds (decision 8.3).
+  var OFFICIAL_KEY = 'apstats_mobile_official_v1';
+  var _endedOfficial = null;      // that entry, or null
+  var _lastGradePayload = null;   // the /grade payload the pill shows (fresh or cached)
   var _gradeByTopic = {}, _lastLessons = [];
   // Whose /grade filled _gradeByTopic (stamped at FETCH time from the token's owner,
   // and persisted inside the GRADE_KEY cache). The map + cache are device-global, so
@@ -877,6 +884,124 @@
   // student's still-in-flight /grade response landing late.
   var _gradeOwner = null;
   function _normTopic(s) { s = String(s == null ? '' : s); var m = s.match(/U?(\d+)[.\-_ ]?L?(\d+)/i); return m ? (m[1] + '.' + m[2]) : s; }
+
+  // Today's ISO date in the school's timezone (America/New_York), like the Desk's tdy().
+  function _schoolTodayIso() {
+    var n = new Date();
+    try {
+      var p = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(n);
+      var part = function (type) { return (p.find(function (x) { return x.type === type; }) || {}).value; };
+      if (part('year') && part('month') && part('day')) return part('year') + '-' + part('month') + '-' + part('day');
+    } catch (_) {}
+    return n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0') + '-' + String(n.getDate()).padStart(2, '0');
+  }
+
+  // 'Thu Nov 12' for an ISO date.
+  function _quarterDayText(iso) {
+    var d = new Date(iso + 'T00:00:00');
+    return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d.getDay()] + ' '
+      + ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.getMonth()] + ' ' + d.getDate();
+  }
+
+  // The quarter that just ended while it is closing (its 0s still fixable) or final (the week
+  // after the close): { key, final }, else null. Review D8 (2026-11-08): once /grade reports the
+  // close (quarters[Q].closed) the quarter is final at once, whatever the clock says; until then
+  // the dates decide. Without close dates (an older cached payload): null.
+  function _endedQuarter(g) {
+    var config = g && g.config && g.config.quarters;
+    var quarters = g && g.quarters;
+    if (!config || !quarters || Array.isArray(quarters)) return null;
+    var today = _schoolTodayIso();
+    var keys = Object.keys(config).filter(function (k) { return /^Q[1-9]$/.test(k); }).sort();
+    for (var i = 0; i < keys.length; i++) {
+      var c = config[keys[i]] || {};
+      if (!c.end || !c.close || !(c.end < today)) continue;
+      var closed = Boolean((quarters[keys[i]] || {}).closed) || c.close < today;
+      if (!closed) return { key: keys[i], final: false };
+      if (c.finalUntil && today <= c.finalUntil) return { key: keys[i], final: true };
+    }
+    return null;
+  }
+
+  // The cached official grade of quarter q (a number), or null. A shared phone never shows
+  // another student's (review D1): the entry must belong to the student signed in now AND to the
+  // grade on screen.
+  function _endedOfficialGrade(q) {
+    var entry = (typeof _endedOfficial !== 'undefined') ? _endedOfficial : null;
+    if (!entry || entry.quarter !== q || !entry.official) return null;
+    var who = (typeof _fcStudent === 'function') ? _fcStudent() : null;
+    if (!who || entry.owner !== who || entry.owner !== _gradeOwner) return null;
+    var grade = entry.official.grade;
+    return (typeof grade === 'number' && isFinite(grade)) ? grade : null;
+  }
+
+  // QUARTER_LINE_BY_DUE_DATE_SPEC §3.10 (teacher 2026-11-07): while a quarter is closing (its 0s
+  // still fixable) or a week after ("final"), the pill shows it BESIDE the current quarter, never
+  // the new quarter alone: '📊 Quarter 1 92% · closes Thu Nov 12 · Quarter 2 85%'. '' outside that
+  // window, or without close dates (an older cached payload): the one-quarter line stays.
+  // Review D1: while closing, the number is the official grade when the phone has it (as on the
+  // Desk's pill), else today's; the final is the higher of the frozen grade and the official one
+  // (decision 8.3), whichever exists, or no number at all (never the live number, which moves).
+  function _quarterWindowLine(g) {
+    var ended = _endedQuarter(g);
+    if (!ended) return '';
+    var config = g.config.quarters;
+    var keys = Object.keys(config).filter(function (k) { return /^Q[1-9]$/.test(k); }).sort();
+    var today = _schoolTodayIso();
+    var pct = function (v) { return Math.round(v) + '%'; };
+    var isGrade = function (v) { return typeof v === 'number' && isFinite(v); };
+    var c = config[ended.key] || {};
+    var name = 'Quarter ' + ended.key.slice(1);
+    var data = g.quarters[ended.key] || {};
+    var official = _endedOfficialGrade(ended.key);
+    var first;
+    if (ended.final) {
+      var frozen = (data.closed && isGrade(data.closed.grade)) ? data.closed.grade : null;
+      var finalGrade = (frozen != null && official != null) ? Math.max(frozen, official) : (frozen != null ? frozen : official);
+      first = finalGrade != null ? name + ' final ' + pct(finalGrade) : name + ' final';
+    } else {
+      var live = official != null ? official : (isGrade(data.quarterGrade) ? data.quarterGrade : null);
+      first = live != null ? name + ' ' + pct(live) + ' · closes ' + _quarterDayText(c.close) : name + ' closes ' + _quarterDayText(c.close);
+    }
+    var nextKey = keys[keys.indexOf(ended.key) + 1];
+    if (!nextKey) return '📊 ' + first;
+    var next = g.quarters[nextKey] || {};
+    var nextName = 'Quarter ' + nextKey.slice(1);
+    var nextStart = (config[nextKey] || {}).start;
+    var second = isGrade(next.quarterGrade)
+      ? nextName + ' ' + pct(next.quarterGrade)
+      : (nextStart && today < nextStart ? nextName + ' starts ' + _quarterDayText(nextStart) : nextName + ' —');
+    return '📊 ' + first + ' · ' + second;
+  }
+
+  // Review D1: while a quarter is closing or final, fetch its official grade the Desk's way
+  // (GET /official-grade, the student's own token in the Authorization header, never the URL) and
+  // keep it owner-stamped in OFFICIAL_KEY for the offline pill. Fire-and-forget: the flashcard
+  // commit waits on loadGrade, never on this. A failed request keeps the cached entry.
+  function _loadEndedOfficial(base, token, owner, g) {
+    var ended = _endedQuarter(g);
+    if (!ended || !owner || !token || typeof fetch !== 'function') return;
+    fetch(base + '/official-grade?quarter=' + encodeURIComponent(ended.key), { headers: { Authorization: 'Bearer ' + token } })
+      .then(function (r) { return r && r.ok ? r.json() : null; })
+      .then(function (j) {
+        if (!j || !j.ok) return;
+        var official = (j.official && typeof j.official.grade === 'number') ? j.official : null;
+        _endedOfficial = { owner: owner, quarter: ended.key, official: official };
+        try { localStorage.setItem(OFFICIAL_KEY, JSON.stringify(_endedOfficial)); } catch (_) {}
+        _repaintQuarterLine();
+      })
+      .catch(function () {});
+  }
+
+  // Repaint only the header pill's two-quarter line from the payload on screen (the official grade
+  // just landed). _applyGradeData is not re-run: rebuilding _gradeByTopic could drop a best-wins bump.
+  function _repaintQuarterLine() {
+    var pill = document.getElementById('gradepill');
+    var line = _lastGradePayload ? _quarterWindowLine(_lastGradePayload) : '';
+    if (!pill || !line) return;
+    pill.textContent = line;
+    pill.style.display = '';
+  }
 
   // Populate the per-topic lesson-grade map + the header pill from a /grade payload.
   // repaint=true re-renders the tiles so their ✓ badges appear.
@@ -895,7 +1020,16 @@
     qs.forEach(function (q) { if (q && typeof q.quarterGrade === 'number' && isFinite(q.quarterGrade)) best = q; });
     var pill = document.getElementById('gradepill');
     if (pill) {
-      if (best) { var ql = best.quarter || best.label || best.key || ''; pill.textContent = '📊 Current grade: ' + Math.round(best.quarterGrade) + '%' + (ql ? (' · ' + ql) : ''); pill.style.display = ''; }
+      // §3.10: both quarters while one is closing or final.
+      var windowLine = (typeof _quarterWindowLine === 'function') ? _quarterWindowLine(g) : '';
+      if (windowLine) { pill.textContent = windowLine; pill.style.display = ''; }
+      else if (best) {
+        var ql = best.quarter || best.label || best.key || '';
+        // Review D4 (2026-11-08): 'Quarter 2', never 'Q2' (Q1 / Q3 are quartiles elsewhere).
+        if (/^Q[1-9]$/.test(ql)) ql = 'Quarter ' + ql.slice(1);
+        pill.textContent = '📊 Current grade: ' + Math.round(best.quarterGrade) + '%' + (ql ? (' · ' + ql) : '');
+        pill.style.display = '';
+      }
       else { pill.style.display = 'none'; }
     }
     if (repaint && _lastLessons.length) render(_lastLessons);
@@ -913,8 +1047,14 @@
       .then(function (g) {
         if (!g || !g.ok) return false;
         try { localStorage.setItem(GRADE_KEY, JSON.stringify({ lessons: g.lessons, quarters: g.quarters, owner: owner })); } catch (_) {}
+        // QUARTER_LINE_BY_DUE_DATE_SPEC §3.10: the quarter dates in their own key (the same for every
+        // student), so the two-quarter line also shows from the offline cache.
+        try { if (g.config && g.config.quarters) localStorage.setItem(GRADE_CONFIG_KEY, JSON.stringify({ quarters: g.config.quarters })); } catch (_) {}
         _gradeOwner = owner;
+        _lastGradePayload = g;
         _applyGradeData(g, true);
+        // Review D1: the ended quarter's official grade, for its "final" (fire-and-forget).
+        try { _loadEndedOfficial(base, token, owner, g); } catch (_) {}
         return true;
       })
       .catch(function () { return false; });
@@ -1905,6 +2045,11 @@
     if (_cg) {
       var _cgp = JSON.parse(_cg);
       _gradeOwner = (_cgp && typeof _cgp.owner === 'string') ? _cgp.owner : null;
+      // §3.10: the cached quarter dates, so the offline pill can name Quarter 1's close too.
+      try { var _cgc = JSON.parse(localStorage.getItem(GRADE_CONFIG_KEY) || 'null'); if (_cgp && _cgc && _cgc.quarters) _cgp.config = _cgc; } catch (_) {}
+      // Review D1: the cached official grade (owner-stamped; _endedOfficialGrade checks the owner).
+      try { var _cgo = JSON.parse(localStorage.getItem(OFFICIAL_KEY) || 'null'); if (_cgo && typeof _cgo.owner === 'string') _endedOfficial = _cgo; } catch (_) {}
+      _lastGradePayload = _cgp;
       _applyGradeData(_cgp, false);
     }
   } catch (_) {}

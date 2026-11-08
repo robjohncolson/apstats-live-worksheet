@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tools"))
-from schoology_components import component_columns
+from schoology_components import component_columns, filing_date_of
 from schoology_sync_section import build_scope, filter_scope_through
 from schoology_sync_lib import plan_assignment_work, compute_sync_actions
 from build_schoology_fixture import build_fixture
@@ -37,6 +37,9 @@ def test_two_follow_alongs_and_fixture_grades_round_trip(group, date):
     for topic in group:
         assert by_key["FA:" + topic]["due_date"] == date
         assert by_key["FA:" + topic]["topic_keys"] == [topic]
+        # QUARTER_LINE_BY_DUE_DATE_SPEC.md 4.2: filed where the 0 lands (class day + 14),
+        # so a shared day's columns always land in the same marking period.
+        assert by_key["FA:" + topic]["filing_date"] == filing_date_of(date)
     doc = {"students": [{"studentId": "fixture", "lessons": [
         {"topicKey": topic, "lessonGrade": 80 + i, "dueDate": date} for i, topic in enumerate(group)]}]}
     fixture = build_fixture(json.loads(json.dumps(doc)))

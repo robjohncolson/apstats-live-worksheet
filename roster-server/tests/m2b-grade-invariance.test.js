@@ -32,10 +32,19 @@ const UPDATE = process.env.UPDATE_M2B_GOLDEN === '1';
 // wins and this is a no-op.
 //   zeroFreezeAtQuarterEnd: QUARTER_ZERO_FREEZE_SPEC.md (teacher 2026-11-06). The
 //   goldens are as of 2026-10-20, inside Q1, so none of their grades may move.
-const SY2627_CONFIG_ADDED = { zeroFreezeAtQuarterEnd: true };
+//   zeroQuarterMembership + the display-only quarters.Q1 close / finalUntil:
+//   QUARTER_LINE_BY_DUE_DATE_SPEC.md (teacher 2026-11-07). These goldens run the Phase 6
+//   engine (useV3 false), which keeps taught-quarter membership, so no grade moves.
+const SY2627_CONFIG_ADDED = { zeroFreezeAtQuarterEnd: true, zeroQuarterMembership: true };
+const SY2627_QUARTER_KEYS_ADDED = { Q1: { close: '2026-11-12', finalUntil: '2026-11-19' } };
 
 function withSy2627ConfigAdded(golden) {
-  return { ...golden, frozenConfig: { ...SY2627_CONFIG_ADDED, ...golden.frozenConfig } };
+  const frozenConfig = { ...SY2627_CONFIG_ADDED, ...golden.frozenConfig };
+  const quarters = { ...frozenConfig.quarters };
+  for (const [quarterKey, added] of Object.entries(SY2627_QUARTER_KEYS_ADDED)) {
+    quarters[quarterKey] = { ...added, ...quarters[quarterKey] };   // the golden's own keys win
+  }
+  return { ...golden, frozenConfig: { ...frozenConfig, quarters } };
 }
 
 function loadAnswerKey() {

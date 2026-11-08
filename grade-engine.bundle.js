@@ -7,7 +7,7 @@
  *
  * Regenerate after any engine edit:  node scripts/build-grade-engine.mjs
  * Parity is pinned by tests/grade-engine-bundle-parity.test.js.
- * engine-version: b0f66d1efc95
+ * engine-version: b072a1ad559e
  */
 ;(function (root) {
   'use strict';
@@ -158,8 +158,14 @@
       // sy2627-calendar-intake.md §2 (Q1 44d · Q2 44d · Q3 52d · Q4 40d). The
       // `units` lists are the OLD-id fallback only — with a schedule present,
       // deriveQuarterBands() places each old unit by its latest scheduled date.
+      // Q1 `close` / `finalUntil` are display-only (QUARTER_LINE_BY_DUE_DATE_SPEC.md §3,
+      // teacher 2026-11-07): the day the teacher closes Quarter 1 (POST
+      // /class/quarter/close, Thu evening) and the last day the Desk shows "Quarter 1
+      // final". The engine never reads them; the Desk gets them from /grade
+      // config.quarters and the offline inputs.
       quarters: {
-        Q1: { units: [1, 2, 3], start: '2026-09-02', end: '2026-11-06', pcAnchor: { p85: 40, p100: 60 } },
+        Q1: { units: [1, 2, 3], start: '2026-09-02', end: '2026-11-06', pcAnchor: { p85: 40, p100: 60 },
+              close: '2026-11-12', finalUntil: '2026-11-19' },
         Q2: { units: [4, 5],    start: '2026-11-09', end: '2027-01-22', pcAnchor: { p85: 45, p100: 64 } },
         Q3: { units: [6, 7],    start: '2027-01-25', end: '2027-04-14', pcAnchor: { p85: 50, p100: 67 } },
         Q4: { units: [8, 9],    start: '2027-04-15', end: '2027-06-17', pcAnchor: { p85: 55, p100: 70 } },
@@ -244,11 +250,22 @@
       // SY2627 (teacher 2026-11-06): a lesson can only turn into a 0 while its quarter
       // is open. "Whatever is a zero on the quarter's last day counts as a zero;
       // anything that is merely late does not turn into a zero afterwards." Each
-      // quarter judges lesson due-ness as of min(today, quarter end), and /grade sends
-      // such a lesson with zeroDate null + neverZero true for that period. Late work
-      // still counts when it is finished. Absent in the frozen SY2526 config, so
-      // history does not move (QUARTER_ZERO_FREEZE_SPEC.md).
+      // quarter judges lesson due-ness as of min(today, quarter end), so a lesson
+      // merely late when its quarter ended is never a 0 THERE; its late work still
+      // counts, only where it helps. Absent in the frozen SY2526 config, so history
+      // does not move (QUARTER_ZERO_FREEZE_SPEC.md).
       zeroFreezeAtQuarterEnd: true,
+    
+      // SY2627 (teacher 2026-11-07): a lesson belongs to the quarter its ZERO DATE
+      // (class day + dueLagDays) falls in. It is a regular, zero-able member of the
+      // first quarter whose last day its zero date is due by (a zero date on a gap day
+      // or on a quarter's last day rolls to the next quarter: the 0 lands the next
+      // morning), and it stays a lift-only member of the earlier quarter it was taught
+      // in. /grade rows carry quarter {B,E} + liftQuarter {B,E}; zeroDate is null and
+      // neverZero true only for a zero date past the last quarter. Effective only with
+      // zeroFreezeAtQuarterEnd AND v3LessonsByDate; absent in the frozen SY2526 config
+      // and the golden fixture config, so neither moves (QUARTER_LINE_BY_DUE_DATE_SPEC.md §2).
+      zeroQuarterMembership: true,
     
       // SY2627 (teacher 2026-09-03): early-completion bonus — +perLesson points on
       // the quarter grade for each scheduled-due lesson whose worksheet work was all
@@ -1595,6 +1612,8 @@
     // Once Q has ended, such a lesson is "late": its scores join each Work track
     // only where they help (addLateScoresThatHelp), so doing late work can never
     // lower a grade. PC dates, posters and the early bonus keep the real today.
+    // With config.zeroQuarterMembership the same lesson is also a regular member of
+    // the quarter its zero date falls in (lessonQuarters, below), where it can be a 0.
     // QUARTER_ZERO_FREEZE_SPEC.md.
     
     // The last day of quarterKey while the freeze is on, else null (flag absent in
@@ -1621,6 +1640,69 @@
       const end = zeroFreezeEnd(quarterKey, config);
       if (!end || !zeroDate) return false;
       return !isDateDue(zeroDate, end, config);
+    }
+    
+    // ── Quarter membership by zero date (SY2627, teacher 2026-11-07) ────────────
+    //
+    // "A lesson belongs to the quarter its zero date falls in", not only the quarter
+    // it was taught in. With config.zeroQuarterMembership (effective only together
+    // with zeroFreezeAtQuarterEnd and v3LessonsByDate) a lesson is a REGULAR member
+    // of the first quarter whose last day its zero date is due by: due there, and a 0
+    // once that date has passed. When it was taught in an earlier quarter it stays a
+    // member of that one too, where it is late once that quarter ends, so it can only
+    // lift it (the freeze's late path, unchanged). A zero date on a gap day (the
+    // weekend between quarters) or on a quarter's last day rolls to the next quarter,
+    // because the 0 lands the next morning (isDateDue is strict under
+    // dueAfterLessonDay). QUARTER_LINE_BY_DUE_DATE_SPEC.md §1-§2.
+    
+    // The first quarter (config.quarters lists them in calendar order) whose last day
+    // zeroDate is due by, or null when it is due by none: a zero date after the last
+    // quarter ends (the year end).
+    function zeroQuarterOf(zeroDate, config) {
+      if (!zeroDate || !config || !config.quarters) return null;
+      for (const quarterKey of Object.keys(config.quarters)) {
+        const quarter = config.quarters[quarterKey];
+        if (quarter && quarter.end && isDateDue(zeroDate, quarter.end, config)) return quarterKey;
+      }
+      return null;
+    }
+    
+    // Membership by zero date needs all three flags. The frozen SY2526 config and the
+    // golden fixture config have no zeroFreezeAtQuarterEnd, so they keep taught-quarter
+    // membership and do not move.
+    function zeroQuarterMembershipOn(config) {
+      return !!(config && config.zeroQuarterMembership && config.zeroFreezeAtQuarterEnd && config.v3LessonsByDate);
+    }
+    
+    // True when quarterKey's first day comes after today: the quarter has not started.
+    function quarterNotStarted(quarterKey, todayDateStr, config) {
+      const quarter = config && config.quarters && config.quarters[quarterKey];
+      if (!quarter || !quarter.start || !todayDateStr) return false;
+      return quarter.start > todayDateStr;
+    }
+    
+    // True when quarter `later` comes after quarter `earlier` in config.quarters.
+    function isLaterQuarter(later, earlier, config) {
+      if (!later || !earlier) return false;
+      const keys = Object.keys(config.quarters);
+      return keys.indexOf(later) > keys.indexOf(earlier);
+    }
+    
+    // The quarters one lesson belongs to for one period:
+    //   taught  -- the quarter it was taught in (quarterOfLesson: class day, unit fallback)
+    //   quarter -- the quarter it is a regular (zero-able) member of: its zero date's
+    //              quarter when membership is on and that quarter is LATER than taught;
+    //              otherwise taught (flag off, undated, due inside the taught quarter,
+    //              or a zero date past the last quarter)
+    // period: 'B' | 'E' | null (null reads either period's date, like quarterOfLesson).
+    function lessonQuarters(entry, period, config) {
+      const taught = quarterOfLesson(entry, period, config);
+      if (!zeroQuarterMembershipOn(config)) return { quarter: taught, taught };
+      const periods = (entry && entry.periods) || {};
+      const classDay = period ? (periods[period] || null) : (periods.B || periods.E || null);
+      const zeroQuarter = zeroQuarterOf(lessonZeroDate(classDay, config), config);
+      if (!isLaterQuarter(zeroQuarter, taught, config)) return { quarter: taught, taught };
+      return { quarter: zeroQuarter, taught };
     }
     
     // Late work only helps. Start from a track's sum and count (due zeros included)
@@ -1918,6 +2000,9 @@
       // Codex MAJOR 3 fold (2026-05-20): defensive skip on malformed entries —
       // per-entry corruption must not crash this loop or the iteration that
       // follows. Treat any entry missing `unit` as if it weren't in the schedule.
+      // Phase 6 keeps taught-quarter membership on purpose: zeroQuarterMembership is a
+      // v3 rule (production runs v3), and the m2b goldens run this engine
+      // (QUARTER_LINE_BY_DUE_DATE_SPEC.md §2).
       const bandLessons = [];
       for (const [topicKey, entry] of Object.entries(schedule)) {
         if (!entry || typeof entry !== 'object' || typeof entry.unit !== 'number') continue;
@@ -2266,14 +2351,27 @@
       // Gated by config.v3LessonsByDate so the FROZEN SY2526 config (which lacks
       // the flag) keeps its original unit-band bucketing — historical grades must
       // not move. The live SY2627 grade-config sets it.
+      // SY2627 (teacher 2026-11-07, config.zeroQuarterMembership): the band is the
+      // lessons TAUGHT in this quarter plus the lessons whose ZERO DATE falls in it
+      // (lessonQuarters). One taught in an earlier quarter is a regular member here:
+      // due, and a 0 once its zero date has passed. In the quarter it was taught in it
+      // stays a member, late once that quarter ends, so it can only lift that quarter.
+      // Q1 comes first, so its band is exactly the lessons taught in it.
       const lessonsByDate = !!(config && config.v3LessonsByDate);
+      function bandQuartersOf(entry) {
+        if (lessonsByDate) return lessonQuarters(entry, period, config);
+        const unitQuarter = quarterOfUnit(entry.unit, config);
+        return { quarter: unitQuarter, taught: unitQuarter };
+      }
       const bandLessons = [];
+      const taughtEarlier = new Set(); // in this band by zero date only: no early bonus here
       for (const [topicKey, entry] of Object.entries(schedule)) {
         if (!entry || typeof entry !== 'object' || typeof entry.unit !== 'number') continue;
-        const q = lessonsByDate ? quarterOfLesson(entry, period, config) : quarterOfUnit(entry.unit, config);
-        if (q !== quarterKey) continue;
+        const { quarter, taught } = bandQuartersOf(entry);
+        if (taught !== quarterKey && quarter !== quarterKey) continue;
         if (!inWindow(entry)) continue;
         bandLessons.push(topicKey);
+        if (taught !== quarterKey) taughtEarlier.add(topicKey);
       }
       const lessonsTotal = bandLessons.length;
     
@@ -2615,7 +2713,9 @@
         effectiveWorkWeights = { ...workWeights, trainer: trainerWeight };
       }
       const workAvg = workAvgV3(tracks, effectiveWorkWeights);
-      const quarterGradeBase = to100(combineV3(pcAvg, workAvg, gates));
+      // A quarter that has not started has no grade yet (see "Not started" below).
+      const noGradeYet = zeroQuarterMembershipOn(config) && quarterNotStarted(quarterKey, todayDateStr, config);
+      const quarterGradeBase = noGradeYet ? null : to100(combineV3(pcAvg, workAvg, gates));
     
       // ── Early-completion bonus (SY2627, teacher 2026-09-03) ──
       // +config.v3EarlyBonus.perLesson points on the quarter grade for every
@@ -2626,6 +2726,19 @@
       // latest of its topics' due dates. Ahead-of-schedule worksheets (work
       // recorded, not yet due) are counted separately (aheadLessons) and earn
       // theirs once due. Absent config (the frozen SY2526 config) → no bonus.
+      // A lesson in this band only by its zero date (taughtEarlier) earns its bonus
+      // in the quarter it was taught in, never again here.
+      //
+      // Not started (teacher 2026-11-07, QUARTER_LINE_BY_DUE_DATE_SPEC.md §8.6: the
+      // Sunday pill reads "Quarter 2 · starts Mon Nov 9"): before a quarter's first day
+      // nothing in its band is due, so the Lessons track falls back to every band lesson
+      // with work (the "Degenerate" case above). With membership by zero date that band
+      // holds lessons taught in the quarter before, so Q1 work made a Q2 number on Sat/Sun
+      // 11/07-11/08 that then dropped on Monday. So quarterGradeBase and quarterGrade are
+      // null until the quarter starts (noGradeYet, above); every other field is still
+      // computed, and the ceiling follows quarterGrade (null when it is null). Gated on
+      // the membership flag: flag-off output, the frozen SY2526 config, the goldens and
+      // m2b never move. Quarter 1 started 09/02, so it is not affected from then on.
       const earlyCfg = (config && config.v3EarlyBonus) || null;
       const earlyPerLesson = earlyCfg && Number.isFinite(earlyCfg.perLesson) ? earlyCfg.perLesson : 0;
       const earlyCap = earlyCfg && Number.isFinite(earlyCfg.cap) ? earlyCfg.cap : Infinity;
@@ -2640,6 +2753,7 @@
           return period ? (periods[period] || null) : (periods.B || periods.E || null);
         };
         for (const topicKey of bandLessons) {
+          if (taughtEarlier.has(topicKey)) continue; // its quarter of teaching already credits it
           const r = lessonMap.get(topicKey);
           if (lessonTrackValue(r) == null) continue; // no worksheet work → nothing to credit
           const entry = schedule[topicKey];
@@ -2803,15 +2917,36 @@
       // Quarter-end zero freeze (QUARTER_ZERO_FREEZE_SPEC.md, teacher 2026-11-06): a
       // lesson whose zero date has not passed by the end of its quarter's last day can
       // never become a 0, so that period reports zeroDate null + neverZero true. The
-      // quarter is the one the v3 band loop files the lesson under for that period.
+      // quarter is the one the lesson is a regular member of for that period: its zero
+      // date's quarter under zeroQuarterMembership (so only a zero date past the last
+      // quarter is never a 0), else the quarter the v3 band loop files it under.
       // Flag off (the frozen SY2526 config): no neverZero field, rows byte-identical.
       const freezeConfig = config && config.zeroFreezeAtQuarterEnd && config.quarters ? config : null;
       function neverZeroFor(entry, period, zeroDate) {
         if (!freezeConfig || !zeroDate) return false;
         const quarterKey = freezeConfig.v3LessonsByDate
-          ? quarterOfLesson(entry, period, freezeConfig)
+          ? lessonQuarters(entry, period, freezeConfig).quarter
           : quarterOfUnit(entry.unit, /** @type {any} */ (freezeConfig));
         return lessonNeverZero(zeroDate, quarterKey, freezeConfig);
+      }
+    
+      // Quarter membership by zero date (QUARTER_LINE_BY_DUE_DATE_SPEC.md §2): per period,
+      //   quarter     -- the regular (zero-able) quarter; null when the lesson can never be
+      //                  a 0 (a zero date past the last quarter: neverZero)
+      //   liftQuarter -- the quarter it was taught in when that is earlier, where it only
+      //                  lifts the grade (for a never-zero lesson, the quarter it was taught
+      //                  in); else null
+      // Flag off: no quarter fields, rows byte-identical.
+      const membershipOn = !!freezeConfig && zeroQuarterMembershipOn(freezeConfig);
+      function quartersFor(entry, period, neverZero) {
+        const { quarter, taught } = lessonQuarters(entry, period, freezeConfig);
+        if (neverZero) return { quarter: null, liftQuarter: taught };
+        return { quarter, liftQuarter: taught !== quarter ? taught : null };
+      }
+      function quarterFields(entry, neverB, neverE) {
+        const b = quartersFor(entry, 'B', neverB);
+        const e = quartersFor(entry, 'E', neverE);
+        return { quarter: { B: b.quarter, E: e.quarter }, liftQuarter: { B: b.liftQuarter, E: e.liftQuarter } };
       }
     
       // Include every lesson from the schedule (not just those with data).
@@ -2853,9 +2988,10 @@
           topicName: (topicNames && topicNames[topicKey]) || null,
           due: { B: periods.B || null, E: periods.E || null },
           // SY2627: the date after which a missing worksheet is a 0 (due + config.dueLagDays);
-          // null for a period whose quarter closed before that date (it can never be a 0).
+          // null for a period where it can never be a 0 (neverZero).
           zeroDate: { B: neverB ? null : zeroB, E: neverE ? null : zeroE },
           ...(freezeConfig ? { neverZero: { B: neverB, E: neverE } } : {}),
+          ...(membershipOn ? quarterFields(entry, neverB, neverE) : {}),
           lessonGrade: lessonResult ? lessonResult.lessonGrade : null,
           // v3 Lessons-track value ({Cws, W} blend, quiz excluded) — the apples-to-apples
           // "Follow-Along" cell for the in-app/Schoology gradebook (worksheet blanks +
@@ -2902,7 +3038,7 @@
     
       return result;
     }
-    return { parseItemLesson: parseItemLesson, expandLessonKey: expandLessonKey, buildWorksheetBlankCounts: buildWorksheetBlankCounts, computeLessonGrades: computeLessonGrades, todayInTz: todayInTz, sectionToPeriod: sectionToPeriod, quarterOfLesson: quarterOfLesson, computeQuarterFromLessons: computeQuarterFromLessons, V3_WORK_WEIGHTS: V3_WORK_WEIGHTS, V3_GATES: V3_GATES, quarterGradeV3: quarterGradeV3, workAvgV3: workAvgV3, computeQuarterV3: computeQuarterV3, computeQuizTotals: computeQuizTotals, buildLessonsArray: buildLessonsArray, deriveQuarterBands: deriveQuarterBands, pcDatesFor: pcDatesFor, pcUnitsInQuarter: pcUnitsInQuarter, posterDatesFor: posterDatesFor, posterUnitsInQuarter: posterUnitsInQuarter, postersAvgV3: postersAvgV3, addDays: addDays, lessonZeroDate: lessonZeroDate, isLessonDue: isLessonDue, perDayDeckGroups: perDayDeckGroups };
+    return { parseItemLesson: parseItemLesson, expandLessonKey: expandLessonKey, buildWorksheetBlankCounts: buildWorksheetBlankCounts, computeLessonGrades: computeLessonGrades, todayInTz: todayInTz, sectionToPeriod: sectionToPeriod, quarterOfLesson: quarterOfLesson, computeQuarterFromLessons: computeQuarterFromLessons, V3_WORK_WEIGHTS: V3_WORK_WEIGHTS, V3_GATES: V3_GATES, quarterGradeV3: quarterGradeV3, workAvgV3: workAvgV3, computeQuarterV3: computeQuarterV3, computeQuizTotals: computeQuizTotals, buildLessonsArray: buildLessonsArray, deriveQuarterBands: deriveQuarterBands, pcDatesFor: pcDatesFor, pcUnitsInQuarter: pcUnitsInQuarter, posterDatesFor: posterDatesFor, posterUnitsInQuarter: posterUnitsInQuarter, postersAvgV3: postersAvgV3, addDays: addDays, lessonZeroDate: lessonZeroDate, isLessonDue: isLessonDue, perDayDeckGroups: perDayDeckGroups, zeroQuarterOf: zeroQuarterOf, lessonQuarters: lessonQuarters };
   })();
 
   // ── gradebook-grid.js ──────────────────────────────────────────────────────
@@ -3022,39 +3158,116 @@
       return earliest;
     }
     
-    // ── Column generator (schedule-driven; identical for every student) ────────────
+    // Which quarter's columns list a lesson row (QUARTER_LINE_BY_DUE_DATE_SPEC.md §3.5).
+    // When the engine files lessons by zero date (zeroQuarterMembership), each row names
+    // per period its regular quarter (`quarter`) and the earlier quarter it was taught in
+    // (`liftQuarter`). Returns 'regular' (it counts in quarterKey and can be a 0 there),
+    // 'lift' (taught in quarterKey but regular in a later quarter: it can only raise
+    // quarterKey), or null.
+    function lessonRole(L, quarterKey, period) {
+      if (L.quarter && L.quarter[period] === quarterKey) return 'regular';
+      if (L.liftQuarter && L.liftQuarter[period] === quarterKey) return 'lift';
+      return null;
+    }
+    
+    function hasQuarterFields(L) {
+      return !!(L && L.quarter && typeof L.quarter === 'object');
+    }
+    
+    // { liftOnly: true } on a lift-only column; {} keeps every other column's shape.
+    function liftOnlyField(liftOnly) {
+      return liftOnly ? { liftOnly: true } : {};
+    }
+    
+    // {group label: the quarter whose Schoology marking period holds that worksheet's
+    // Follow-Along and Blooket columns}. The Schoology tooling files and decides a group's
+    // column by its EARLIEST lesson for the period (tools/schoology_components.py
+    // group_deciders), so that lesson's regular quarter names it (its taught quarter for a
+    // year-end row, whose regular quarter is null). A lesson with no class day for the
+    // period sorts after every dated one. Period B's 4.1-2 (2.3 Follow-Along / 2.3 Blooket)
+    // is decided by 4.1, so it stays in MP1 (QUARTER_LINE_BY_DUE_DATE_SPEC.md decision 8.2).
+    function groupSchoologyQuarters(lessons, period) {
+      const deciders = new Map();
+      for (const L of lessons) {
+        if (!L || L.worksheetKey == null) continue;
+        const label = groupLabel(L.unit, L.worksheetKey);
+        const held = deciders.get(label);
+        const day = L.due ? L.due[period] : null;
+        const heldDay = held && held.due ? held.due[period] : null;
+        if (!held || (day && (!heldDay || day < heldDay))) deciders.set(label, L);
+      }
+      const quarters = new Map();
+      for (const [label, L] of deciders) {
+        const regular = L.quarter ? L.quarter[period] : null;
+        const taught = L.liftQuarter ? L.liftQuarter[period] : null;
+        quarters.set(label, regular || taught || null);
+      }
+      return quarters;
+    }
+    
+    // The flag on a worksheet group's Follow-Along / Blooket column in quarterKey's tab:
+    //   { liftOnly: true }          every topic here is lift-only: it can only raise this quarter
+    //   { schoologyQuarter: 'Qn' }  a topic is regular here, but Schoology keeps the column in
+    //                               quarter Qn's marking period (B's 2.3 Follow-Along in the Q2 tab)
+    //   {}                          a regular column (its shape stays as it was)
+    function groupColumnFlags(allLift, schoologyQuarter, quarterKey) {
+      if (allLift) return { liftOnly: true };
+      if (schoologyQuarter && schoologyQuarter !== quarterKey) return { schoologyQuarter };
+      return {};
+    }
+    
+    // ── Column generator (schedule-driven; identical for every student of a section) ──
     //
     // gradeObj: a computeGrade() result ({ lessons, units, quarters, ... }).
-    // quarterKey: 'Q1'..'Q4'. Columns cover the quarter's unit band.
+    // quarterKey: 'Q1'..'Q4'. Columns cover the quarter's lessons: by the rows' own
+    // quarter fields when the engine sends them (lessonRole), else the quarter's
+    // old-unit band (older payloads, the golden fixtures, an unknown section).
+    // With the rows' quarter fields a lesson column may carry ONE flag, and a flagged
+    // column stays out of the quarter's totals (buildGradebookRow):
+    //   liftOnly: true          taught here, regular in a later quarter: it can only raise this one
+    //   schoologyQuarter: 'Qn'  a worksheet whose Schoology column sits in quarter Qn's marking
+    //                           period (groupSchoologyQuarters: decided by its earliest lesson)
     // dueOpts (optional): { lessons, section, todayStr } — when given, each column is
     // stamped with a `due` boolean (its calendar date has arrived by todayStr). Omitted
     // → columns carry no `due` field, and date-gating clients show everything (degrade).
-    function buildGradebookColumns(gradeObj, quarterKey, dueOpts) {
+    // section (optional): picks the rows' per-period quarter fields; defaults to
+    // dueOpts.section.
+    function buildGradebookColumns(gradeObj, quarterKey, dueOpts, section = dueOpts ? dueOpts.section : null) {
       const quarter = gradeObj && gradeObj.quarters && gradeObj.quarters[quarterKey];
       const band = quarter && Array.isArray(quarter.units) ? quarter.units : [];
       const bandSet = new Set(band);
       const lessons = Array.isArray(gradeObj && gradeObj.lessons) ? gradeObj.lessons : [];
+      const period = sectionToPeriod(section);
+      const byRowQuarter = period != null && lessons.some(hasQuarterFields);
+      const schoologyQuarterOf = byRowQuarter ? groupSchoologyQuarters(lessons, period) : new Map();
     
       // Group lessons by unit.worksheetKey so a combined worksheet yields ONE
       // Follow-Along / Blooket column (quizzes stay per-topic).
       const groups = new Map();
       for (const L of lessons) {
-        if (!L || !bandSet.has(L.unit) || L.worksheetKey == null) continue;
+        if (!L || L.worksheetKey == null) continue;
+        const role = byRowQuarter ? lessonRole(L, quarterKey, period) : (bandSet.has(L.unit) ? 'regular' : null);
+        if (!role) continue;
         const label = groupLabel(L.unit, L.worksheetKey);
         let g = groups.get(label);
-        if (!g) { g = { unit: L.unit, worksheetKey: L.worksheetKey, topics: [] }; groups.set(label, g); }
+        if (!g) { g = { unit: L.unit, worksheetKey: L.worksheetKey, topics: [], liftKeys: new Set() }; groups.set(label, g); }
         g.topics.push(L);
+        if (role === 'lift') g.liftKeys.add(L.lessonKey);
       }
     
       const cols = [];
       for (const [label, g] of groups) {
         const topicKeys = g.topics.map((t) => t.lessonKey);
+        // A worksheet whose every topic is lift-only here can only raise this quarter; one
+        // whose Schoology column sits in another quarter's marking period is flagged with it.
+        const allLift = g.liftKeys.size === g.topics.length;
+        const groupFlags = groupColumnFlags(allLift, schoologyQuarterOf.get(label), quarterKey);
         cols.push({ key: `FA:${label}`, kind: 'followalong', category: 'Lesson',
-          title: `${label} Follow-Along`, unit: g.unit, topicKeys });
+          title: `${label} Follow-Along`, unit: g.unit, topicKeys, ...groupFlags });
         for (const t of g.topics) {
           if ((t.quizTotal || 0) > 0) {
             cols.push({ key: `QUIZ:${t.lessonKey}`, kind: 'quiz', category: 'Quizzes',
-              title: `${t.lessonKey} Quiz`, unit: g.unit, topicKeys: [t.lessonKey] });
+              title: `${t.lessonKey} Quiz`, unit: g.unit, topicKeys: [t.lessonKey], ...liftOnlyField(g.liftKeys.has(t.lessonKey)) });
           }
         }
         if (g.topics.some((t) => t.hasBlooket)) {
@@ -3071,6 +3284,7 @@
             unit: g.unit,
             topicKeys,
             blooketBonus: allBonus,
+            ...groupFlags,
           });
         }
       }
@@ -3157,7 +3371,13 @@
       var delta = (schoologyTotal != null && v3Total != null) ? round1(v3Total - schoologyTotal) : null;
     
       var branch, reason;
-      if (pcF == null && workF == null) {
+      if (v3Total == null && (pcF != null || workF != null)) {
+        // A quarter that has not started has no grade yet, though its tracks may already hold
+        // work (lesson-grade.js computeQuarterV3 "Not started", spec decision 8.6). Without
+        // this the reason would read "v3 = Work (85)" next to a blank grade.
+        branch = 'none';
+        reason = 'No grade yet: this quarter has not started.';
+      } else if (pcF == null && workF == null) {
         if (v3Total != null) {
           // A real grade exists but the two-track breakdown doesn't (Phase-6 fallback
           // or v3 off / schedule failed to load) — don't claim "nothing due yet".
@@ -3238,6 +3458,12 @@
         const v = cellValue(col, lessonsByKey, units);
         cells[col.key] = v;
         if (v == null) continue;
+        // A lift-only column (taught this quarter, regular in a later one) shows its cell
+        // but stays out of this quarter's totals: the engine counts it here only where it
+        // helps, and its Schoology column belongs to the later quarter. A schoologyQuarter
+        // column stays out too: its Schoology column sits in that other quarter's marking
+        // period, so this quarter's Schoology total never sees it.
+        if (col.liftOnly || col.schoologyQuarter) continue;
         if (col.due === false) {
           if (!LESSON_CATEGORIES.has(col.category)) continue;   // not-yet-due PC / Poster: neither total
           aheadCells += 1;
@@ -3290,7 +3516,7 @@
       const quartersOut = {};
       const quarterKeys = Object.keys((gradeObj && gradeObj.quarters) || {});
       for (const qk of quarterKeys) {
-        const columns = buildGradebookColumns(gradeObj, qk, dueOpts);
+        const columns = buildGradebookColumns(gradeObj, qk, dueOpts, section);
         const row = buildGradebookRow(gradeObj, columns, weights);
         var v3Total = gradeObj.quarters[qk].quarterGrade != null ? gradeObj.quarters[qk].quarterGrade : null;
         quartersOut[qk] = {
@@ -3922,7 +4148,7 @@
     normalizeResponse: __reg["scoring"].normalizeResponse,
     scoreAgainstKey: __reg["scoring"].scoreAgainstKey,
     pcPaperBlend: __reg["scoring"].pcPaperBlend,
-    _engineVersion: "b0f66d1efc95",
+    _engineVersion: "b072a1ad559e",
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = __api;

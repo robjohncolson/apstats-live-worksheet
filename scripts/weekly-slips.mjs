@@ -101,17 +101,40 @@ function lateRows(lesson, dueDate) {
   return rows;
 }
 
+// QUARTER_LINE_BY_DUE_DATE_SPEC.md decision 8.7 (fixer finding C7): from the day after a
+// quarter's close (config.quarters[Q].close, e.g. Quarter 1 Thu 11/12) its grade is frozen, so
+// its lessons leave the slip, as they leave the Desk. The quarters whose close is before `date`:
+export function closedQuarterKeys(quarters, date) {
+  const closed = new Set();
+  if (!quarters || !date) return closed;
+  for (const [key, window] of Object.entries(quarters)) {
+    if (window && window.close && window.close < date) closed.add(key);
+  }
+  return closed;
+}
+
+// The lessons that can still change a grade on `date`: every lesson except one whose regular
+// quarter for the period (lesson.quarter[period], from /class/grades) has closed. A row
+// without that field, or a doc without close dates, keeps every lesson (older payloads).
+export function openQuarterLessons(lessons, period, date, quarters) {
+  const list = Array.isArray(lessons) ? lessons : [];
+  const closed = closedQuarterKeys(quarters, date);
+  if (closed.size === 0) return list;
+  return list.filter(lesson => !closed.has(lesson?.quarter?.[period]));
+}
+
 // Dated rows by zero date; a late row (no zero date) after every dated row.
 function byZeroDate(a, b) {
   if (!a.zeroDate || !b.zeroDate) return Number(!a.zeroDate) - Number(!b.zeroDate);
   return a.zeroDate.localeCompare(b.zeroDate);
 }
 
-export function missingWork(lessons, period, date) {
+// quarters: the /class/grades doc's config.quarters; a closed quarter's lessons are dropped.
+export function missingWork(lessons, period, date, quarters = null) {
   if (!Array.isArray(lessons) || !period || !date) return [];
   const result = [];
   const late = [];
-  for (const lesson of lessons) {
+  for (const lesson of openQuarterLessons(lessons, period, date, quarters)) {
     if (!lesson?.lessonKey) continue;
     if (lesson.neverZero?.[period] === true) {
       const dueDate = lesson.due?.[period];
@@ -134,6 +157,8 @@ export function missingWork(lessons, period, date) {
   return result.concat(late);
 }
 
+// missing: missingWork's rows with the doc's config.quarters passed, so a closed quarter's 0s
+// never make a student a candidate (main does this).
 export function isCandidate(grade, missing, { all = false, min = 70 } = {}) {
   return all || (grade != null && grade < min) || missing.some(item => item.past);
 }
@@ -159,13 +184,14 @@ export function lowestDueScores(lessons, period, date) {
   return scored.sort((a, b) => a.score - b.score).slice(0, 3);
 }
 
-// The three "What to do first" lines: missing items first; otherwise the lowest due scores;
-// never three blank lines.
-export function planFor(lessons, missing, period, date) {
+// The three "What to do first" lines: missing items first; otherwise the lowest due scores
+// (never a closed quarter's: they can no longer change a grade); never three blank lines.
+// Students read the CED label, never the storage key (fixer finding C6: '4.2' is 2.3 Day 2).
+export function planFor(lessons, missing, period, date, quarters = null) {
   const first = doFirst(lessons, missing);
-  if (first.length) return first.map(item => `Finish ${item.lessonKey} ${KIND[item.kind]}.`);
-  const lowest = lowestDueScores(lessons, period, date);
-  if (lowest.length) return lowest.map(item => `Raise your ${item.lessonKey} ${item.kind} (now ${Math.round(item.score)}) - it is revisable.`);
+  if (first.length) return first.map(item => `Finish ${lessonLabel(item.lessonKey)} ${KIND[item.kind]}.`);
+  const lowest = lowestDueScores(openQuarterLessons(lessons, period, date, quarters), period, date);
+  if (lowest.length) return lowest.map(item => `Raise your ${lessonLabel(item.lessonKey)} ${item.kind} (now ${Math.round(item.score)}) - it is revisable.`);
   return ['Nothing is missing. Ask Mr. Colson which scores to revisit.'];
 }
 
@@ -549,15 +575,16 @@ export function effortTex(student, section, date, quarterKey, schedule = loadSch
   return out.length ? '\\smallskip\n' + out.join('\n') + '\n' : '';
 }
 
-export function renderSlip(student, section, date, summary, quarterKey, pool = null) {
+// quarters: the /class/grades doc's config.quarters (a closed quarter's lessons leave the slip).
+export function renderSlip(student, section, date, summary, quarterKey, pool = null, quarters = null) {
   const lessons = student.lessons || [];
-  const missing = missingWork(lessons, section.slice(-1), date);
+  const missing = missingWork(lessons, section.slice(-1), date, quarters);
   const grade = quarterGrade(student, quarterKey);
   const own = grade == null ? null : Math.round(grade);
   const quarterName = currentQuarterKey(student.quarters, quarterKey);
   const quarterLabel = officialGrade(student) != null ? `${quarterName} official`
     : schoologyGrade(student) != null ? `${quarterName} in Schoology` : quarterName;
-  const plan = [retakeStep(student), ...planFor(lessons, missing, section.slice(-1), date)].filter(Boolean);
+  const plan = [retakeStep(student), ...planFor(lessons, missing, section.slice(-1), date, quarters)].filter(Boolean);
   const steps = plan.map((line, index) => `${index + 1}. ${latexText(line)}\\par`).join('\n');
   const name = student.realName || student.name || student.username || 'Student';
   const header = headerLine(own, quarterLabel, summary);
@@ -588,11 +615,11 @@ ${steps}
 }`;
 }
 
-export function renderTex(students, candidates, section, date, quarterKey, pool = null) {
+export function renderTex(students, candidates, section, date, quarterKey, pool = null, quarters = null) {
   const summary = boxSummary(students, quarterKey);
   // One slip per Letter page (teacher 2026-09-27: "as legible as possible", no cutting): 12pt
   // body, the whole text height available, the density steps only for the very longest slips.
-  const pages = candidates.map(candidate => renderSlip(candidate, section, date, summary, quarterKey, pool));
+  const pages = candidates.map(candidate => renderSlip(candidate, section, date, summary, quarterKey, pool, quarters));
   return String.raw`\documentclass[12pt,letterpaper]{article}
 \usepackage[left=0.6in,right=0.6in,top=0.55in,bottom=0.55in]{geometry}
 \usepackage[T1]{fontenc}
@@ -755,21 +782,23 @@ export async function main(args = process.argv.slice(2)) {
       if (snapRes.ok) quarterKey = (await snapRes.json()).quarter || null;
     } catch (_) { quarterKey = null; }
     const students = realStudents(doc.students);
+    // The quarter windows with their close dates: a closed quarter's lessons leave the slips.
+    const quarters = doc.config && doc.config.quarters ? doc.config.quarters : null;
     if (schoology) for (const student of students) student.schoology = schoology[student.schoologyUid] || null;
     // The official grade each student sees on the Desk and in Schoology (published nightly).
     await Promise.all(students.map(async student => { student.official = await fetchOfficial(config, student.studentId, quarterKey); }));
     const candidates = students.filter(student => isCandidate(quarterGrade(student, quarterKey),
-      missingWork(student.lessons, section.slice(-1), options.date), options));
+      missingWork(student.lessons, section.slice(-1), options.date, quarters), options));
     counts.push({ section, count: candidates.length });
     if (options.dryRun) {
       console.log(`${section}: ${candidates.length} candidates`);
       for (const student of candidates) console.log(JSON.stringify({ name: student.realName || student.username,
-        quarterGrade: quarterGrade(student, quarterKey), missing: missingWork(student.lessons, section.slice(-1), options.date) }));
+        quarterGrade: quarterGrade(student, quarterKey), missing: missingWork(student.lessons, section.slice(-1), options.date, quarters) }));
       continue;
     }
     fs.mkdirSync(out, { recursive: true });
     const stem = `${options.date}-${section}-slips`;
-    fs.writeFileSync(path.join(out, stem + '.tex'), renderTex(students, candidates, section, options.date, quarterKey, pool));
+    fs.writeFileSync(path.join(out, stem + '.tex'), renderTex(students, candidates, section, options.date, quarterKey, pool, quarters));
     if (!options.noPdf) {
       for (let pass = 0; pass < 2; pass++) {
         const result = spawnSync('pdflatex', ['-interaction=nonstopmode', '-halt-on-error', stem + '.tex'], { cwd: out, encoding: 'utf8' });

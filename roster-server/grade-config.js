@@ -130,8 +130,14 @@ export const PHASE3_CONFIG = {
   // sy2627-calendar-intake.md §2 (Q1 44d · Q2 44d · Q3 52d · Q4 40d). The
   // `units` lists are the OLD-id fallback only — with a schedule present,
   // deriveQuarterBands() places each old unit by its latest scheduled date.
+  // Q1 `close` / `finalUntil` are display-only (QUARTER_LINE_BY_DUE_DATE_SPEC.md §3,
+  // teacher 2026-11-07): the day the teacher closes Quarter 1 (POST
+  // /class/quarter/close, Thu evening) and the last day the Desk shows "Quarter 1
+  // final". The engine never reads them; the Desk gets them from /grade
+  // config.quarters and the offline inputs.
   quarters: {
-    Q1: { units: [1, 2, 3], start: '2026-09-02', end: '2026-11-06', pcAnchor: { p85: 40, p100: 60 } },
+    Q1: { units: [1, 2, 3], start: '2026-09-02', end: '2026-11-06', pcAnchor: { p85: 40, p100: 60 },
+          close: '2026-11-12', finalUntil: '2026-11-19' },
     Q2: { units: [4, 5],    start: '2026-11-09', end: '2027-01-22', pcAnchor: { p85: 45, p100: 64 } },
     Q3: { units: [6, 7],    start: '2027-01-25', end: '2027-04-14', pcAnchor: { p85: 50, p100: 67 } },
     Q4: { units: [8, 9],    start: '2027-04-15', end: '2027-06-17', pcAnchor: { p85: 55, p100: 70 } },
@@ -216,11 +222,22 @@ export const PHASE3_CONFIG = {
   // SY2627 (teacher 2026-11-06): a lesson can only turn into a 0 while its quarter
   // is open. "Whatever is a zero on the quarter's last day counts as a zero;
   // anything that is merely late does not turn into a zero afterwards." Each
-  // quarter judges lesson due-ness as of min(today, quarter end), and /grade sends
-  // such a lesson with zeroDate null + neverZero true for that period. Late work
-  // still counts when it is finished. Absent in the frozen SY2526 config, so
-  // history does not move (QUARTER_ZERO_FREEZE_SPEC.md).
+  // quarter judges lesson due-ness as of min(today, quarter end), so a lesson
+  // merely late when its quarter ended is never a 0 THERE; its late work still
+  // counts, only where it helps. Absent in the frozen SY2526 config, so history
+  // does not move (QUARTER_ZERO_FREEZE_SPEC.md).
   zeroFreezeAtQuarterEnd: true,
+
+  // SY2627 (teacher 2026-11-07): a lesson belongs to the quarter its ZERO DATE
+  // (class day + dueLagDays) falls in. It is a regular, zero-able member of the
+  // first quarter whose last day its zero date is due by (a zero date on a gap day
+  // or on a quarter's last day rolls to the next quarter: the 0 lands the next
+  // morning), and it stays a lift-only member of the earlier quarter it was taught
+  // in. /grade rows carry quarter {B,E} + liftQuarter {B,E}; zeroDate is null and
+  // neverZero true only for a zero date past the last quarter. Effective only with
+  // zeroFreezeAtQuarterEnd AND v3LessonsByDate; absent in the frozen SY2526 config
+  // and the golden fixture config, so neither moves (QUARTER_LINE_BY_DUE_DATE_SPEC.md §2).
+  zeroQuarterMembership: true,
 
   // SY2627 (teacher 2026-09-03): early-completion bonus — +perLesson points on
   // the quarter grade for each scheduled-due lesson whose worksheet work was all

@@ -112,6 +112,40 @@ def test_rule_applies_to_every_component_column(key):
     assert state.get_last_synced("S0", key) == 100
 
 
+def test_best_wins_holds_inside_a_verified_quarter_pass(tmp_path):
+    # QUARTER_LINE_BY_DUE_DATE_SPEC.md 4.1: the pass switches the gradebook to its marking
+    # period first; best-wins (KEEP a higher hand entry) is unchanged inside it.
+    class PassOps(CellOps):
+        def __init__(self, values):
+            super().__init__(values)
+            self.selected = []
+
+        def select_grading_period(self, cdp, gp, mp_range=None):
+            self._require_page("gradebook", "select_grading_period")
+            self.selected.append(gp)
+            return {"ok": True, "view": {"gp": gp}}
+
+        # The push re-checks the shown period before every cell (finding B2).
+        def displayed_grading_period(self, cdp):
+            self.checks += 1
+            return {"gp": self.selected[-1] if self.selected else None}
+
+        def grading_period_view_matches(self, view, gp, mp_range=None):
+            return None if (view or {}).get("gp") == gp else "the filter holds another period"
+
+    path = tmp_path / "schedule.json"
+    path.write_text(json.dumps({"lessons": {"1.1": {"unit": 1, "periods": {"B": "2026-09-08"}}}}))
+    fake = PassOps([None, 95, 100, 40])
+    fake.checks = 0
+    summary = sync_section("PeriodB", "fixture-course", dry_run=False, state=FakeStateStore(),
+                           grades={(f"S{i}", "1.1"): 92 for i in range(4)}, ops=fake,
+                           schedule_path=str(path), quarter="Q1")
+    assert summary["errors"] == []
+    assert (summary["grades_pushed"], summary["grades_kept"]) == (2, 2)
+    assert fake.selected and set(fake.selected) == {"MP1"}
+    assert fake.checks == 4                      # one view check per cell, KEEP or PUSH
+
+
 def test_unsuccessful_write_is_not_recorded(tmp_path):
     summary, state, fake = run_sync(tmp_path, [40], cell_ops=CellOps([40], write_ok=False))
     assert summary["grades_pushed"] == 0
@@ -173,9 +207,11 @@ if (active !== dom.window.document.activeElement || input.value !== payload.raw)
 process.stdout.write(JSON.stringify(value));
 dom.window.close();
 """
+            # 90 s: loading the 2.3 MB capture in jsdom timed out at 30 s under a loaded
+            # full-suite run (Codex re-review, 2026-11-08).
             result = subprocess.run(["node", "-e", script], input=json.dumps({"raw": self.raw, "expr": expr}),
                                     text=True, encoding="utf-8", capture_output=True, check=True,
-                                    cwd=Path(__file__).resolve().parents[1], timeout=30)
+                                    cwd=Path(__file__).resolve().parents[1], timeout=90)
             return json.loads(result.stdout)
     fake = DomCDP(raw)
     assert ops.read_grade_from_cell(fake, "overall_override", 0) == expected

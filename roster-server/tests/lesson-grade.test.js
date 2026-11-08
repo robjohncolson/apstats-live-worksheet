@@ -24,6 +24,7 @@ import {
   addLateScoresThatHelp,
   isDateDue,
   perDayDeckGroups,
+  lessonZeroDate,
 } from '../lesson-grade.js';
 import { PHASE3_CONFIG, BLOOKET_PER_DAY_FROM, blooketPerDayFrom } from '../grade-config.js';
 import { resolveProductionGradeInputs } from '../grade-contexts.js';
@@ -1532,7 +1533,10 @@ describe('per-day flashcard decks (D3)', () => {
   describe('acceptance: DESK_DONE/game rows with no per-day group due move nothing', () => {
     // SAMPLE_SCHEDULE with dates. "ahead in Q2": the 4.1-2 worksheet is per-day and taught
     // in Q2 (zero dates B 11/29-11/30, E 11/26). "late in Q1": taught at the end of Q1 (zero
-    // dates 11/17-11/19), so after the close it is late, never due. 4.6, 1.1, 1.2 are due in Q1.
+    // dates 11/17-11/19), so after the close it is late in Q1, never due there. Its zero dates
+    // fall in Q2, where it is a regular lesson (zeroQuarterMembership, teacher 2026-11-07):
+    // from 11/18 its days are due in Q2 and each is its own slot (the test after this one),
+    // so Q2 is compared only before then (q2Before). 4.6, 1.1, 1.2 are due in Q1.
     const dated = (b41, e41, b42, e42) => ({
       ...SAMPLE_SCHEDULE,
       '4.1': { ...SAMPLE_SCHEDULE['4.1'], periods: { B: b41, E: e41 } },
@@ -1541,9 +1545,9 @@ describe('per-day flashcard decks (D3)', () => {
     });
     const CASES = [
       { label: 'ahead in Q2', schedule: dated('2026-11-16', '2026-11-13', '2026-11-17', '2026-11-13'),
-        days: ['2026-11-07', '2026-11-13', '2026-11-20', '2026-11-26'] },
+        days: ['2026-11-07', '2026-11-13', '2026-11-20', '2026-11-26'], q2Before: null },
       { label: 'late in Q1', schedule: dated('2026-11-04', '2026-11-05', '2026-11-05', '2026-11-06'),
-        days: ['2026-11-05', '2026-11-07', '2026-11-20', '2027-02-01'] },
+        days: ['2026-11-05', '2026-11-07', '2026-11-20', '2027-02-01'], q2Before: '2026-11-18' },
     ];
     const TOPICS = ['4.1', '4.2', '4.6', '1.1', '1.2'];
     // Every id a client records today for these lessons: solo and combined keys.
@@ -1578,7 +1582,7 @@ describe('per-day flashcard decks (D3)', () => {
       let bothDaysScored = 0;
       for (let trial = 0; trial < 400; trial++) {
         const rows = todaysRows();
-        for (const { schedule, days, label } of CASES) {
+        for (const { schedule, days, label, q2Before } of CASES) {
           for (const section of ['PeriodB', 'PeriodE', null]) {
             const perDayGroups = perDayDeckGroups({ schedule, deckSlices: SLICES, section, perDayFrom: BLOOKET_PER_DAY_FROM, config: LIVE });
             const oneScore = computeLessonGrades(rows, FRQ_BAND, {}, schedule, {});
@@ -1590,6 +1594,7 @@ describe('per-day flashcard decks (D3)', () => {
             if (blooketOf(perDay, '4.1') != null && blooketOf(perDay, '4.2') != null) bothDaysScored += 1;
             for (const today of days) {
               for (const quarterKey of ['Q1', 'Q2']) {
+                if (quarterKey === 'Q2' && q2Before && today >= q2Before) continue;   // its days are due in Q2
                 const quarter = (lessonMap, groups) => computeQuarterV3({
                   quarterKey, config: LIVE, lessonMap, schedule, todayDateStr: today, section,
                   unitPcData: {}, blooketLessons: TOPICS, perDayGroups: groups,
@@ -1604,6 +1609,21 @@ describe('per-day flashcard decks (D3)', () => {
       // The case that matters: both days of the per-day worksheet already carry a score.
       expect(bothDaysScored).toBeGreaterThan(100);
     });
+
+    it("'late in Q1' in Q2: taught in Q1, regular in Q2, so once due each day is its own Q2 slot", () => {
+      const { schedule } = CASES[1];
+      const groups = perDayDeckGroups({ schedule, deckSlices: SLICES, section: 'PeriodB', perDayFrom: BLOOKET_PER_DAY_FROM, config: LIVE });
+      const q2 = (lessonMap, today) => computeQuarterV3({
+        quarterKey: 'Q2', config: LIVE, lessonMap, schedule, todayDateStr: today, section: 'PeriodB',
+        unitPcData: {}, blooketLessons: TOPICS, perDayGroups: groups,
+      });
+      const blooketSlots = (r) => [r.blooketDue, r.blooketDone, r.blooketTodo, r.workTracks.blooket];
+      const played41 = mapOf({ '4.1': { blooket: 90 } });
+      // B zero dates 11/17 (4.1) and 11/18 (4.2). On 11/17 neither day is due: one shared slot.
+      expect(blooketSlots(q2(played41, '2026-11-17'))).toEqual([1, 1, [], 90]);
+      // On 11/20 both days are due in Q2: two slots, and 4.2's deck is owed.
+      expect(blooketSlots(q2(played41, '2026-11-20'))).toEqual([2, 1, ['4.2'], 45]);
+    });
   });
 });
 
@@ -1612,11 +1632,14 @@ describe('per-day flashcard decks (D3)', () => {
 // late does not turn into a zero afterwards. Late work still counts when it is finished."
 // Q1 ends Fri 2026-11-06. 4.1 (zero date 11-02/11-03) is a 0 inside Q1; 4.5 (zero date
 // 11-12/11-15) was merely late when Q1 closed; 5.1 is a Q2 lesson. From 11-07 on, 4.5 is
-// "late" in Q1: never a 0, and its scores join each track only where they help.
+// "late" in Q1: never a 0, and its scores join each track only where they help. Its zero
+// dates fall in Q2, so under zeroQuarterMembership (teacher 2026-11-07) it is also a regular
+// Q2 lesson: a 0 there once its zero date has passed (QUARTER_LINE_BY_DUE_DATE_SPEC.md).
 
 describe('quarter-end zero freeze', () => {
   const LIVE = { ...PHASE3_CONFIG, pcTrack: { enabled: false } };   // PC off: isolate the Work tracks
   const { zeroFreezeAtQuarterEnd: _flag, ...LEGACY } = LIVE;          // the same config without the freeze
+  const NO_MEMBERSHIP = { ...LIVE, zeroQuarterMembership: false };    // the freeze alone (the 11-06 rules)
   const SCHEDULE = {
     '4.1': { unit: 4, worksheetKey: '1', periods: { B: '2026-10-20', E: '2026-10-21' } },
     '4.5': { unit: 4, worksheetKey: '5', periods: { B: '2026-10-30', E: '2026-11-02' } },
@@ -1795,10 +1818,18 @@ describe('quarter-end zero freeze', () => {
       }
     });
 
-    it('(g) a Q2 lesson while Q2 is open is unaffected (it still zeroes after its zero date)', () => {
+    it('(g) zeroes in Q2: 4.5, taught in Q1 with its zero dates in Q2, is a regular Q2 lesson', () => {
       const live = v3(LIVE, mapOf({}), '2026-11-30', { quarterKey: 'Q2' });
-      expect(live).toEqual(v3(LEGACY, mapOf({}), '2026-11-30', { quarterKey: 'Q2' }));
-      expect(live.quizTodo).toEqual(['5.1']);
+      expect(live.lessonsTotal).toBe(2);
+      expect(live.quizTodo).toEqual(['4.5', '5.1']);
+      expect(live.blooketTodo).toEqual(['4.5', '5.1']);
+      expect(live.trainerTodo).toEqual(['4.5']);
+      // Without the freeze (LEGACY) or without the membership flag, Q2 holds 5.1 alone,
+      // and a Q2 lesson while Q2 is open still zeroes after its zero date.
+      const legacy = v3(LEGACY, mapOf({}), '2026-11-30', { quarterKey: 'Q2' });
+      expect(legacy.lessonsTotal).toBe(1);
+      expect(legacy.quizTodo).toEqual(['5.1']);
+      expect(v3(NO_MEMBERSHIP, mapOf({}), '2026-11-30', { quarterKey: 'Q2' })).toEqual(legacy);
     });
 
     it('Period E has its own dates: 4.5 (E zero date 11-15) is frozen out for E too', () => {
@@ -1848,11 +1879,12 @@ describe('quarter-end zero freeze', () => {
     const schedule = prod.lessonSchedule.lessons || prod.lessonSchedule;
     const rows = buildLessonsArray(new Map(), schedule, undefined, null, {}, prod.blooketPresence, [], prod.blooketBonusTopics, config);
     const taughtInQ1 = (row, p) => Boolean(row.due[p]) && row.due[p] <= '2026-11-06';
-    // A student at 80 on every feeder of every Q1 lesson that zeroed inside Q1; nothing on the late ones.
+    // A student at 80 on every feeder of every Q1 lesson that zeroed inside Q1 (taught and
+    // regular in Q1); nothing on the late ones (taught in Q1, regular in Q2).
     function q1(period, today, extra = {}) {
       const lessonMap = new Map();
       for (const row of rows) {
-        if (!taughtInQ1(row, period) || row.neverZero[period]) continue;
+        if (!taughtInQ1(row, period) || row.quarter[period] !== 'Q1') continue;
         lessonMap.set(row.lessonKey, { Cws: 80, W: 80, Q: 80, lessonGrade: 80, blooket: 80 });
       }
       for (const [key, value] of Object.entries(extra)) lessonMap.set(key, value);
@@ -1863,11 +1895,22 @@ describe('quarter-end zero freeze', () => {
     }
     const FINISHED = { Cws: 100, W: 100, Q: 100, lessonGrade: 100, blooket: 100 };
 
-    it('the never-zero set is exactly B 4.2-4.7 and E 2.3, 4.1-4.6 (old storage keys)', () => {
+    it('taught in Q1, regular in Q2: exactly B 4.2-4.7 and E 2.3, 4.1-4.6 (old storage keys)', () => {
       // E 4.7 moved from Fri 11/06 to Mon 11/09 (the 3-video pair cap, 2026-11-06): a Q2 lesson for E.
-      const late = (p) => rows.filter((row) => taughtInQ1(row, p) && row.neverZero[p]).map((row) => row.lessonKey);
+      const late = (p) => rows.filter((row) => taughtInQ1(row, p) && row.liftQuarter[p] === 'Q1').map((row) => row.lessonKey);
       expect(late('B')).toEqual(['4.2', '4.3', '4.4', '4.5', '4.6', '4.7']);
       expect(late('E')).toEqual(['2.3', '4.1', '4.2', '4.3', '4.4', '4.5', '4.6']);
+      // Each is a regular Q2 lesson with its real zero date (a 0 in Q2 once it passes).
+      for (const p of ['B', 'E']) {
+        for (const row of rows.filter((r) => r.liftQuarter[p] === 'Q1')) {
+          const where = row.lessonKey + ' ' + p;
+          expect(row.quarter[p], where).toBe('Q2');
+          expect(row.neverZero[p], where).toBe(false);
+          expect(row.zeroDate[p], where).toBe(lessonZeroDate(row.due[p], config));
+        }
+      }
+      // Every SY2627 zero date lands in a quarter, so no lesson is never a 0 any more.
+      expect(rows.filter((row) => row.neverZero.B || row.neverZero.E).map((row) => row.lessonKey)).toEqual([]);
     });
 
     it('a late lesson finished before the close counts in Q1 on the close day, in both sections', () => {
@@ -1914,31 +1957,50 @@ describe('quarter-end zero freeze', () => {
       new Map(), schedule, undefined, null, {}, [], [], [], config);
     const byKey = (rows) => Object.fromEntries(rows.map((row) => [row.lessonKey, row]));
 
-    it('(f) reports zeroDate null + neverZero true only for a period its quarter closed on', () => {
+    it('(f) zero dates stay; a lesson taught in Q1 with its zero dates in Q2 is regular in Q2, lift-only in Q1', () => {
       const rows = byKey(lessonsFor(LIVE));
-      expect(rows['4.5'].zeroDate).toEqual({ B: null, E: null });
-      expect(rows['4.5'].neverZero).toEqual({ B: true, E: true });
+      expect(rows['4.5'].zeroDate).toEqual({ B: '2026-11-12', E: '2026-11-15' });
+      expect(rows['4.5'].neverZero).toEqual({ B: false, E: false });
+      expect(rows['4.5'].quarter).toEqual({ B: 'Q2', E: 'Q2' });
+      expect(rows['4.5'].liftQuarter).toEqual({ B: 'Q1', E: 'Q1' });
       expect(rows['4.5'].due).toEqual({ B: '2026-10-30', E: '2026-11-02' });   // due dates stay
       expect(rows['4.1'].zeroDate).toEqual({ B: '2026-11-02', E: '2026-11-03' });
       expect(rows['4.1'].neverZero).toEqual({ B: false, E: false });
+      expect(rows['4.1'].quarter).toEqual({ B: 'Q1', E: 'Q1' });
+      expect(rows['4.1'].liftQuarter).toEqual({ B: null, E: null });
       expect(rows['5.1'].zeroDate).toEqual({ B: '2026-11-23', E: '2026-11-24' });
       expect(rows['5.1'].neverZero).toEqual({ B: false, E: false });
+      expect(rows['5.1'].quarter).toEqual({ B: 'Q2', E: 'Q2' });
+      expect(rows['5.1'].liftQuarter).toEqual({ B: null, E: null });
     });
 
-    it('(f) each period uses its own quarter: E taught in Q1, B taught in Q2', () => {
+    it('(f) each period uses its own dates: E taught in Q1, B taught in Q2, B undated', () => {
       const rows = byKey(lessonsFor(LIVE, {
         '4.6': { unit: 4, worksheetKey: '6', periods: { B: '2026-11-09', E: '2026-11-05' } },
         '4.9': { unit: 4, worksheetKey: '9', periods: { B: null, E: '2026-11-06' } },
       }));
-      expect(rows['4.6'].zeroDate).toEqual({ B: '2026-11-22', E: null });
-      expect(rows['4.6'].neverZero).toEqual({ B: false, E: true });
-      expect(rows['4.9'].zeroDate).toEqual({ B: null, E: null });
-      expect(rows['4.9'].neverZero).toEqual({ B: false, E: true });
+      expect(rows['4.6'].zeroDate).toEqual({ B: '2026-11-22', E: '2026-11-18' });
+      expect(rows['4.6'].neverZero).toEqual({ B: false, E: false });
+      expect(rows['4.6'].quarter).toEqual({ B: 'Q2', E: 'Q2' });
+      expect(rows['4.6'].liftQuarter).toEqual({ B: null, E: 'Q1' });
+      // Undated for B: no zero date, and the quarter of its old-unit band (4 → Q2).
+      expect(rows['4.9'].zeroDate).toEqual({ B: null, E: '2026-11-19' });
+      expect(rows['4.9'].neverZero).toEqual({ B: false, E: false });
+      expect(rows['4.9'].quarter).toEqual({ B: 'Q2', E: 'Q2' });
+      expect(rows['4.9'].liftQuarter).toEqual({ B: null, E: 'Q1' });
+    });
+
+    it('(f) the freeze without zeroQuarterMembership keeps the 11-06 rows: zeroDate null + neverZero true', () => {
+      const rows = lessonsFor(NO_MEMBERSHIP);
+      expect(byKey(rows)['4.5'].zeroDate).toEqual({ B: null, E: null });
+      expect(byKey(rows)['4.5'].neverZero).toEqual({ B: true, E: true });
+      expect(JSON.stringify(rows)).not.toContain('liftQuarter');
     });
 
     it('(f) without the flag there is no neverZero field and every zero date stays', () => {
       const rows = lessonsFor(LEGACY);
       expect(JSON.stringify(rows)).not.toContain('neverZero');
+      expect(JSON.stringify(rows)).not.toContain('liftQuarter');
       expect(byKey(rows)['4.5'].zeroDate).toEqual({ B: '2026-11-12', E: '2026-11-15' });
       expect(JSON.stringify(lessonsFor(null))).not.toContain('neverZero');
     });

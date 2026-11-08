@@ -56,7 +56,7 @@ const LESSONS = [
 // /grade rows carry unit + worksheetKey; solo lessons here have worksheetKey = the lesson number.
 for (const L of LESSONS) if (L.lessonKey.startsWith('3.')) { L.unit = 3; L.worksheetKey = L.lessonKey.slice(2); }
 
-const CARD_FNS = ['_zeroWarnings', '_zeroTodayIso', '_zeroCurrentWarnings', '_pastDueWork', '_pastDueCurrentWork',
+const CARD_FNS = ['_quarterName', '_zeroWarnings', '_zeroTodayIso', '_zeroCurrentWarnings', '_pastDueWork', '_pastDueCurrentWork',
   '_zeroSchoologyTitle', '_zeroLessonByKey', '_zeroSchoologyTag', '_pastDueWhenText', '_pastDueCardRow', '_zeroCardActionButton',
   '_zeroDayText', '_zeroWhenText', '_zeroLatestSoonDay', '_zeroStatusText', '_zeroCardStatus', '_zeroLateStatusText', '_zeroCardRow',
   '_walletPrependZeroCard', '_zeroPillText', '_donowApplyZeroState', '_updateDoNowMissingPill'];
@@ -202,7 +202,8 @@ describe('Missing-work card — grey past-due rows', () => {
       expect(card.classList.contains('wz-calm')).toBe(true);
       expect(card.classList.contains('wz-soon')).toBe(false);
       const status = card.querySelector('.wz-status').textContent;
-      expect(status).toBe('Q1 so far: 81%. 3 items below are past due. They are not counting yet — finishing them now keeps it that way.');
+      // Re-pinned 2026-11-08 (review D4): "Quarter 1 so far", never "Q1".
+      expect(status).toBe('Quarter 1 so far: 81%. 3 items below are past due. They are not counting yet — finishing them now keeps it that way.');
       expect(status).not.toMatch(/becomes? a 0|count as 0|0s now|is a 0/);
       expect(card.querySelectorAll('.wz-row:not(.wz-later)')).toHaveLength(0);
       expect(card.querySelectorAll('.wz-later')).toHaveLength(3);
@@ -253,7 +254,7 @@ describe('Missing-work card — grey past-due rows', () => {
       t.s._walletPrependZeroCard(t.host());
       t.s.grade = { pct: 85, q: 'Q1' };
       t.s._walletPrependZeroCard(t.host());
-      expect(t.card().querySelector('.wz-status').textContent).toMatch(/^Q1 so far: 85%\. 1 item below is past due\./);
+      expect(t.card().querySelector('.wz-status').textContent).toMatch(/^Quarter 1 so far: 85%\. 1 item below is past due\./);
     } finally { t.close(); }
   });
 });
@@ -411,12 +412,12 @@ describe('never-zero lessons (QUARTER_ZERO_FREEZE_SPEC, teacher 2026-11-06)', ()
       t.s._walletPrependZeroCard(t.host());
       const card = t.card();
       expect([...card.querySelectorAll('.wz-later-head')].map(h => h.textContent)).toEqual(['Late — never a 0']);
-      expect(card.querySelector('.wz-status').textContent).toBe('Q1 so far: 81%. 3 items below are late: never a 0, and finishing them still counts.');
+      expect(card.querySelector('.wz-status').textContent).toBe('Quarter 1 so far: 81%. 3 items below are late: never a 0, and finishing them still counts.');
     } finally { t.close(); }
     const one = sandbox({ lessons: [LATE[1]] });
     try {
       one.s._walletPrependZeroCard(one.host());
-      expect(one.card().querySelector('.wz-status').textContent).toBe('Q1 so far: 81%. 1 item below is late: never a 0, and finishing it still counts.');
+      expect(one.card().querySelector('.wz-status').textContent).toBe('Quarter 1 so far: 81%. 1 item below is late: never a 0, and finishing it still counts.');
     } finally { one.close(); }
   });
 
@@ -431,7 +432,7 @@ describe('never-zero lessons (QUARTER_ZERO_FREEZE_SPEC, teacher 2026-11-06)', ()
       expect([...card.querySelectorAll('.wz-later-head')].map(h => h.textContent)).toEqual(['Past due — not counting yet', 'Late — never a 0']);
       expect([...card.querySelectorAll('.wz-later .wz-when')].map(w => w.textContent)).toEqual([
         'due Wed 9/23 · not a 0 until after Tue 10/6', LATE_TEXT, LATE_TEXT, LATE_TEXT]);
-      expect(card.querySelector('.wz-status').textContent).toBe('Q1 so far: 81%. 1 item below is past due. It is not counting yet — finishing it now keeps it that way. 3 more are late: never a 0, and finishing them still counts.');
+      expect(card.querySelector('.wz-status').textContent).toBe('Quarter 1 so far: 81%. 1 item below is past due. It is not counting yet — finishing it now keeps it that way. 3 more are late: never a 0, and finishing them still counts.');
     } finally { t.close(); }
   });
 
@@ -439,7 +440,7 @@ describe('never-zero lessons (QUARTER_ZERO_FREEZE_SPEC, teacher 2026-11-06)', ()
     const t = sandbox({ lessons: [LESSONS[1]] });
     try {
       t.s._walletPrependZeroCard(t.host());
-      expect(t.card().querySelector('.wz-status').textContent).toBe('Q1 so far: 81%. 1 item below is past due. It is not counting yet — finishing it now keeps it that way.');
+      expect(t.card().querySelector('.wz-status').textContent).toBe('Quarter 1 so far: 81%. 1 item below is past due. It is not counting yet — finishing it now keeps it that way.');
       expect(t.card().querySelector('.wz-late-head')).toBeNull();
     } finally { t.close(); }
   });

@@ -311,6 +311,15 @@ describe('reconcileQuarter — explains the Schoology vs v3 gap', () => {
     expect(r.delta).toBe(null);
   });
 
+  it('a quarter that has not started: its tracks hold work but it has no grade yet (decision 8.6)', () => {
+    // The engine reports quarterGrade null before the quarter's first day (computeQuarterV3).
+    const r = reconcileQuarter({ quarters: { Q2: { pcAvg: null, workAvg: 85, pcAvgRaw: null, workAvgRaw: 0.85 } } }, 'Q2', 82.5, null);
+    expect(r.branch).toBe('none');
+    expect(r.reason).toBe('No grade yet: this quarter has not started.');
+    expect(r.delta).toBe(null);
+    expect(r.workAvg).toBe(85);   // the tracks are still reported
+  });
+
   it('non-v3 branch: a grade exists but no track breakdown (Phase-6 / v3-off)', () => {
     const r = reconcileQuarter({ quarters: { Q1: { pcAvg: null, workAvg: null } } }, 'Q1', 80, 75);
     expect(r.branch).toBe('non-v3'); // NOT 'none' — would self-contradict the shown grade
@@ -353,5 +362,176 @@ describe('buildGradebook', () => {
     expect(gb.quarters.Q1.schoologyTotal).toBeCloseTo(79.3, 1); // 6740 / 85 (pinned above)
     expect(gb.quarters.Q1.reconciliation.branch).toBe('max');
     expect(gb.quarters.Q1.reconciliation.delta).toBeCloseTo(10.7, 1); // 90 - 79.3
+  });
+});
+
+// ── Filing by the rows' quarter fields (QUARTER_LINE_BY_DUE_DATE_SPEC.md §3.5) ──
+// Rows as the engine sends them under zeroQuarterMembership. Period B: 4.1 is regular in Q1;
+// 4.2 and 4.3 were taught in Q1 but are regular in Q2 (lift-only in Q1); 4.8 is a Q2
+// lesson. Period E: 4.1 is taught in Q1 too, regular in Q2. The old-unit band puts unit 4
+// in Q1 alone, which the per-row filing must ignore. `due` holds the class days.
+function filedGrade() {
+  const row = (lessonKey, worksheetKey, quarter, liftQuarter, extra) => ({
+    lessonKey, unit: 4, worksheetKey, quarter, liftQuarter, due: CLASS_DAYS[lessonKey],
+    Cws: null, lessonGradeNoQuiz: null, Q: null, quizTotal: 0, blooket: null, hasBlooket: true, blooketBonus: false,
+    ...extra,
+  });
+  return {
+    units: {},
+    quarters: {
+      Q1: { units: [4], pcUnits: [], posterUnits: [], quarterGrade: 90 },
+      Q2: { units: [], pcUnits: [], posterUnits: [], quarterGrade: 80 },
+    },
+    lessons: [
+      row('4.1', '1-2', { B: 'Q1', E: 'Q2' }, { B: null, E: 'Q1' }, { lessonGradeNoQuiz: 90 }),
+      row('4.2', '1-2', { B: 'Q2', E: 'Q2' }, { B: 'Q1', E: 'Q1' }, { lessonGradeNoQuiz: 90, Q: 60, quizTotal: 3 }),
+      row('4.3', '3', { B: 'Q2', E: 'Q2' }, { B: 'Q1', E: 'Q1' }, { lessonGradeNoQuiz: 50, Q: 40, quizTotal: 3, blooket: 30 }),
+      row('4.8', '8', { B: 'Q2', E: 'Q2' }, { B: null, E: null }, { lessonGradeNoQuiz: 100 }),
+    ],
+  };
+}
+const CLASS_DAYS = {
+  '4.1': { B: '2026-10-23', E: '2026-10-26' },
+  '4.2': { B: '2026-10-26', E: '2026-10-28' },
+  '4.3': { B: '2026-10-27', E: '2026-10-28' },
+  '4.8': { B: '2026-11-09', E: '2026-11-09' },
+};
+const lessonColumns = (cols) => cols.map((c) => c.key
+  + (c.liftOnly ? ' (lift)' : '')
+  + (c.schoologyQuarter ? ` (Schoology ${c.schoologyQuarter})` : ''));
+
+describe('buildGradebookColumns — files lessons by the rows\' quarter fields', () => {
+  it('Period B: a lift-only lesson is listed in the quarter it was taught in, flagged liftOnly', () => {
+    expect(lessonColumns(buildGradebookColumns(filedGrade(), 'Q1', null, 'PeriodB'))).toEqual([
+      'FA:4.1-2', 'BL:4.1-2', 'QUIZ:4.2 (lift)', 'FA:4.3 (lift)', 'QUIZ:4.3 (lift)', 'BL:4.3 (lift)',
+    ]);
+    expect(lessonColumns(buildGradebookColumns(filedGrade(), 'Q2', null, 'PeriodB'))).toEqual([
+      'FA:4.1-2 (Schoology Q1)', 'QUIZ:4.2', 'BL:4.1-2 (Schoology Q1)', 'FA:4.3', 'QUIZ:4.3', 'BL:4.3', 'FA:4.8', 'BL:4.8',
+    ]);
+  });
+
+  it('a combined worksheet is regular while any topic is regular there; its topic keys are the quarter\'s', () => {
+    const q1 = buildGradebookColumns(filedGrade(), 'Q1', null, 'PeriodB');
+    const q2 = buildGradebookColumns(filedGrade(), 'Q2', null, 'PeriodB');
+    expect(q1.find((c) => c.key === 'FA:4.1-2').topicKeys).toEqual(['4.1', '4.2']);
+    expect(q2.find((c) => c.key === 'FA:4.1-2').topicKeys).toEqual(['4.2']);
+    // Period E: both topics are lift-only in Q1, so the whole worksheet is.
+    const e1 = buildGradebookColumns(filedGrade(), 'Q1', null, 'PeriodE');
+    expect(e1.find((c) => c.key === 'FA:4.1-2').liftOnly).toBe(true);
+    expect(e1.find((c) => c.key === 'BL:4.1-2').liftOnly).toBe(true);
+  });
+
+  it('the section comes from dueOpts when it is not passed', () => {
+    const viaDueOpts = buildGradebookColumns(filedGrade(), 'Q1', { lessons: null, section: 'PeriodB', todayStr: '2026-11-09' });
+    expect(lessonColumns(viaDueOpts)).toEqual(lessonColumns(buildGradebookColumns(filedGrade(), 'Q1', null, 'PeriodB')));
+  });
+
+  it('without a section, or with rows that carry no quarter fields, the old-unit band stays', () => {
+    const band = ['FA:4.1-2', 'BL:4.1-2', 'QUIZ:4.2', 'FA:4.3', 'QUIZ:4.3', 'BL:4.3', 'FA:4.8', 'BL:4.8'];
+    expect(lessonColumns(buildGradebookColumns(filedGrade(), 'Q1'))).toEqual(band);
+    expect(buildGradebookColumns(filedGrade(), 'Q2')).toEqual([]);
+    const plain = filedGrade();
+    plain.lessons = plain.lessons.map(({ quarter, liftQuarter, ...rest }) => rest);
+    expect(lessonColumns(buildGradebookColumns(plain, 'Q1', null, 'PeriodB'))).toEqual(band);
+  });
+
+  it('a regular column carries neither flag key at all (shapes stay as they were)', () => {
+    const q2 = buildGradebookColumns(filedGrade(), 'Q2', null, 'PeriodB');
+    const regular = q2.filter((c) => c.key !== 'FA:4.1-2' && c.key !== 'BL:4.1-2');
+    expect(regular.length).toBe(6);
+    expect(regular.every((c) => !('liftOnly' in c) && !('schoologyQuarter' in c))).toBe(true);
+  });
+});
+
+// Decision 8.2: Period B's straddling 2.3 Follow-Along / 2.3 Blooket (4.1-2: 4.1 regular in
+// Q1, 4.2 regular in Q2) stay in Schoology MP1. The tooling decides a worksheet's columns by
+// its EARLIEST lesson (tools/schoology_components.py group_deciders), so the Q2 tab, which
+// still lists the worksheet for 4.2, flags it with the quarter that holds the real column.
+describe('buildGradebookColumns: a worksheet column sits in its earliest lesson\'s Schoology quarter', () => {
+  const flags = (cols, key) => {
+    const c = cols.find((col) => col.key === key);
+    return { liftOnly: c.liftOnly, schoologyQuarter: c.schoologyQuarter };
+  };
+
+  it('Period B: regular and unflagged in the Q1 tab; flagged schoologyQuarter Q1 in the Q2 tab', () => {
+    const q1 = buildGradebookColumns(filedGrade(), 'Q1', null, 'PeriodB');
+    const q2 = buildGradebookColumns(filedGrade(), 'Q2', null, 'PeriodB');
+    for (const key of ['FA:4.1-2', 'BL:4.1-2']) {
+      expect(flags(q1, key), key).toEqual({ liftOnly: undefined, schoologyQuarter: undefined });
+      expect(flags(q2, key), key).toEqual({ liftOnly: undefined, schoologyQuarter: 'Q1' });
+    }
+    // The 2.3 Day 2 quiz is 4.2's own column: regular in Q2.
+    expect(flags(q2, 'QUIZ:4.2')).toEqual({ liftOnly: undefined, schoologyQuarter: undefined });
+  });
+
+  it('Period E (no straddle): lift-only in Q1, regular in Q2, never flagged schoologyQuarter', () => {
+    const e1 = buildGradebookColumns(filedGrade(), 'Q1', null, 'PeriodE');
+    const e2 = buildGradebookColumns(filedGrade(), 'Q2', null, 'PeriodE');
+    for (const key of ['FA:4.1-2', 'BL:4.1-2']) {
+      expect(flags(e1, key), key).toEqual({ liftOnly: true, schoologyQuarter: undefined });
+      expect(flags(e2, key), key).toEqual({ liftOnly: undefined, schoologyQuarter: undefined });
+    }
+    expect([...e1, ...e2].some((c) => 'schoologyQuarter' in c)).toBe(false);
+  });
+
+  it('the earliest class day decides, not the row order', () => {
+    const grade = filedGrade();
+    grade.lessons.reverse();
+    const q2 = buildGradebookColumns(grade, 'Q2', null, 'PeriodB');
+    expect(flags(q2, 'FA:4.1-2').schoologyQuarter).toBe('Q1');
+  });
+
+  it('without a section, or with rows that carry no quarter fields, no column is flagged', () => {
+    const plain = filedGrade();
+    plain.lessons = plain.lessons.map(({ quarter, liftQuarter, ...rest }) => rest);
+    for (const cols of [
+      buildGradebookColumns(filedGrade(), 'Q1'),
+      buildGradebookColumns(plain, 'Q1', null, 'PeriodB'),
+    ]) {
+      expect(cols.some((c) => 'schoologyQuarter' in c)).toBe(false);
+    }
+  });
+});
+
+describe('buildGradebookRow — a lift-only column never enters a total', () => {
+  it('Q1 for Period B: the lift-only cells show, the totals count FA:4.1-2 alone', () => {
+    const grade = filedGrade();
+    const row = buildGradebookRow(grade, buildGradebookColumns(grade, 'Q1', null, 'PeriodB'));
+    expect(row.cells).toEqual({
+      'FA:4.1-2': 90, 'QUIZ:4.2': 60, 'BL:4.1-2': null, 'FA:4.3': 50, 'QUIZ:4.3': 40, 'BL:4.3': 30,
+    });
+    expect(row.categoryAverages).toEqual({ Lesson: 90 });
+    expect(row.schoologyTotal).toBe(90);
+    expect(row.categoryAveragesProjected).toEqual({ Lesson: 90 });
+    expect(row.schoologyProjectedTotal).toBe(90);
+    expect(row.aheadCells).toBe(0);
+  });
+
+  it('Q2 for Period B: 4.2 and 4.3 count as regular cells; the 4.1-2 worksheet (Schoology MP1) shows but stays out', () => {
+    const grade = filedGrade();
+    const row = buildGradebookRow(grade, buildGradebookColumns(grade, 'Q2', null, 'PeriodB'));
+    expect(row.cells['FA:4.1-2']).toBe(90);
+    // Lesson = FA:4.3 50 and FA:4.8 100 (FA:4.1-2's 90 is MP1's); Quizzes = 4.2 60 and 4.3 40.
+    expect(row.categoryAverages).toEqual({ Lesson: 75, Quizzes: 50, Blooket: 30 });
+    expect(row.categoryAveragesProjected).toEqual({ Lesson: 75, Quizzes: 50, Blooket: 30 });
+  });
+
+  it('a schoologyQuarter column is never ahead work: out of the projection and aheadCells', () => {
+    const grade = filedGrade();
+    const columns = [
+      { key: 'FA:4.1-2', kind: 'followalong', category: 'Lesson', topicKeys: ['4.2'], due: false, schoologyQuarter: 'Q1' },
+      { key: 'FA:4.8', kind: 'followalong', category: 'Lesson', topicKeys: ['4.8'], due: false },
+    ];
+    const row = buildGradebookRow(grade, columns);
+    expect(row.cells).toEqual({ 'FA:4.1-2': 90, 'FA:4.8': 100 });
+    expect(row.schoologyTotal).toBeNull();
+    expect(row.categoryAveragesProjected).toEqual({ Lesson: 100 });
+    expect(row.aheadCells).toBe(1);
+  });
+
+  it('buildGradebook passes the section through', () => {
+    const gb = buildGradebook(filedGrade(), { section: 'PeriodB' });
+    expect(lessonColumns(gb.quarters.Q1.columns)).toContain('QUIZ:4.2 (lift)');
+    expect(gb.quarters.Q1.schoologyTotal).toBe(90);
   });
 });

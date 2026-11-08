@@ -271,6 +271,26 @@ class FakeOps:
         self.written_grades.append((column_key, row_index, value))
         return {"ok": True}
 
+    # -- marking-period evidence (finding R4b): every title this fake holds is on the grid --
+    def load_all_columns(self, cdp):
+        self._require_page("gradebook", "load_all_columns")
+        return True
+
+    def view_content_problem(self, cdp, view, here, elsewhere):
+        """schoology_ops.view_content_problem's rule, over the titles this fake shows."""
+        self._require_page("gradebook", "view_content_problem")
+        here, elsewhere = set(here or ()), set(elsewhere or ())
+        if not here and not elsewhere:
+            return None
+        shown = set(self._existing_titles)
+        foreign = sorted(shown & elsewhere)
+        if foreign:
+            return "the grid shows %d column(s) filed in another marking period (%s)" % (
+                len(foreign), ", ".join(foreign))
+        if here and not (shown & here):
+            return "none of the %d column(s) filed in this marking period is on the grid" % len(here)
+        return None
+
 
 # ---------------------------------------------------------------------------
 # Helper: build a tiny schedule file on disk for schedule-loading tests
@@ -549,6 +569,7 @@ class TestMissingMarkingPeriod(unittest.TestCase):
         self.schedule_path = _write_schedule(self.tmpdir)
 
     def test_missing_marking_period_skips_create(self):
+        # The filing date (2026-03-16: 6.1's 0 lands) is after every MP: no MP, no create.
         state = FakeStateStore()
         ops = FakeOps(marking_periods={
             "OLD": {"start": "2025-01-01", "end": "2025-06-30"},
@@ -565,6 +586,20 @@ class TestMissingMarkingPeriod(unittest.TestCase):
         self.assertEqual(summary["assignments_created"], 0)
         self.assertEqual(len(ops.created_assignments), 0)
         self.assertTrue(any("No grading_period_id" in e for e in summary["errors"]))
+        self.assertTrue(any("2026-03-16" in e for e in summary["errors"]))
+
+    def test_a_gap_day_files_into_the_next_marking_period(self):
+        # Spec 4.2: the filing date falls between two MPs -> the NEXT one (never "no MP").
+        state = FakeStateStore()
+        ops = FakeOps(marking_periods={
+            "MP_A": {"start": "2026-01-01", "end": "2026-03-13"},
+            "MP_B": {"start": "2026-03-17", "end": "2026-06-30"},
+        })
+        summary = sync_section("PeriodB", "7945275782", dry_run=False, state=state, grades={},
+                               ops=ops, schedule_path=self.schedule_path, limit=1)
+        self.assertEqual(summary["errors"], [])
+        self.assertEqual(ops.created_assignments[0]["grading_period_id"], "MP_B")
+        self.assertEqual(ops.created_assignments[0]["due_date"], "2026-03-02")   # the class day
 
 
 class TestBestEffortCreateConfirmation(unittest.TestCase):
@@ -691,6 +726,21 @@ class TestLocalJsonStateStore(unittest.TestCase):
         s2 = self._fresh_store()
         self.assertEqual(len(s2._data["runs"]), 2)
 
+    def test_reload_keeps_a_newer_save_from_another_run(self):
+        # Finding B1: every save writes the whole in-memory copy. Without reload() the
+        # first store's next save would drop what the second store saved meanwhile.
+        first = self._fresh_store()
+        first.upsert_assignment("PeriodB", "6.1", {"schoology_assignment_id": "X1"})
+        self._fresh_store().set_last_synced("S1", "6.1", 88.0)
+        first.reload()
+        first.upsert_assignment("PeriodB", "6.1", {"grading_period_id": "1173889"})
+        on_disk = self._fresh_store()
+        self.assertEqual(on_disk.get_last_synced("S1", "6.1"), 88.0)
+        self.assertEqual(on_disk.get_assignment("PeriodB", "6.1"),
+                         {"schoology_assignment_id": "X1", "grading_period_id": "1173889"})
+        # The fake store (and any store without a file) inherits a no-op reload.
+        FakeStateStore().reload()
+
     def test_upsert_merges_fields(self):
         s = self._fresh_store()
         s.upsert_assignment("PeriodB", "6.1", {"schoology_assignment_id": "X1"})
@@ -803,9 +853,10 @@ class TestForceMarkingPeriod(unittest.TestCase):
         d = SECTION_FORCE_MP_DATE["PeriodY"]
         self.assertTrue("2026-04-11" <= d <= "2026-06-30", f"force date {d!r} not in MP4")
 
-    def test_without_force_uses_the_due_date_marking_period(self):
-        # Baseline: a normal section files the Sept lesson into the FALL MP
-        # (proving the force test below actually changes behavior).
+    def test_without_force_uses_the_zero_date_marking_period(self):
+        # Baseline: a normal section files the Sept lesson by the day its 0 lands (09/15 +
+        # 13 + 1 = 09/29) into the FALL MP, dated on its class day (proving the force test
+        # below actually changes behavior). The state row records the MP id (spec 4.2).
         ops = FakeOps(marking_periods=MP_RANGES_FALL_AND_MP4)
         sync_section(
             "PeriodB", "7945275782",
@@ -815,6 +866,19 @@ class TestForceMarkingPeriod(unittest.TestCase):
         self.assertEqual(len(ops.created_assignments), 1)
         self.assertEqual(ops.created_assignments[0]["grading_period_id"], "GP_FALL")
         self.assertEqual(ops.created_assignments[0]["due_date"], "2026-09-15")
+        self.assertEqual(self.state.get_assignment("PeriodB", "1.2")["grading_period_id"], "GP_FALL")
+
+    def test_a_lesson_taught_before_the_line_files_where_its_zero_lands(self):
+        # Taught Fri 10/30 (MP1), its 0 lands 11/13 (MP2): the column goes to MP2, due 10/30.
+        schedule = json.loads(json.dumps(SUMMER_SCHEDULE))
+        schedule["lessons"]["1.2"]["periods"] = {"B": "2026-10-30", "E": "2026-11-02"}
+        path = _write_schedule(tempfile.mkdtemp(), schedule)
+        ops = FakeOps(marking_periods={"MP1": {"start": "2026-09-02", "end": "2026-11-06"},
+                                       "MP2": {"start": "2026-11-07", "end": "2027-01-22"}})
+        sync_section("PeriodB", "7945275782", dry_run=False, state=self.state, grades={},
+                     ops=ops, schedule_path=path)
+        self.assertEqual(ops.created_assignments[0]["grading_period_id"], "MP2")
+        self.assertEqual(ops.created_assignments[0]["due_date"], "2026-10-30")
 
     def test_force_routes_assignment_into_mp4(self):
         # The summer mock: force_mp_date overrides the Sept due-date, filing the

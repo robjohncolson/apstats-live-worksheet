@@ -37,17 +37,57 @@ function closeMyGradebook() {
 
 // Pick the quarter to show first: current quarter if it has data, else the first
 // quarter with data, else Q1. Shared by the student + teacher gradebook views.
+// QUARTER_LINE_BY_DUE_DATE_SPEC §3.5: while a quarter is closing (its 0s still fixable) it opens
+// first; on the gap days around a close the next quarter is the current one.
 function _firstGradebookQuarter(gb) {
     var qs = (gb && gb.quarters) || {};
     function _hasData(qk) {
         var q = qs[qk];
         return !!(q && Array.isArray(q.columns) && q.columns.length);
     }
+    var phase = null;
+    try { if (typeof _deskQuarterPhase === 'function') phase = _deskQuarterPhase(); } catch (_) {}
+    if (phase && phase.closing && _hasData(phase.closing)) return phase.closing;
     var curN = null;
-    try { if (typeof quarterOfDate === 'function') curN = quarterOfDate(new Date()); } catch (_) {}
+    try { if (typeof quarterOfDate === 'function') curN = quarterOfDate((typeof tdy === 'function') ? tdy() : new Date()); } catch (_) {}
     var cur = curN ? ('Q' + curN) : null;
+    if (phase && phase.current) cur = phase.current;
     if (!cur || !_hasData(cur)) cur = ['Q1', 'Q2', 'Q3', 'Q4'].filter(_hasData)[0] || 'Q1';
     return cur;
+}
+
+// A gradebook tab's words (§3.5): while a quarter is closing or final its tab and the next one
+// carry the rule ('Quarter 1 · closes Thu Nov 12', 'Quarter 2 · 0 dates after Nov 6'); every
+// other tab, and every tab without close dates, is just 'Quarter 1'..'Quarter 4' (review D4,
+// 2026-11-08: never "Q1"; Q1 / Q3 are quartiles elsewhere on the Desk).
+function _gradebookTabLabel(qk) {
+    var name = 'Quarter ' + qk.slice(1);
+    var phase = (typeof _deskQuarterPhase === 'function') ? _deskQuarterPhase() : null;
+    var side = phase ? (phase.closing || phase.final) : null;
+    if (!side || typeof _quarterConfig !== 'function') return name;
+    var cfg = _quarterConfig(side);
+    if (qk === side) return name + (phase.closing === side ? ' · closes ' + _quarterDayText(cfg.close) : ' · final');
+    if (Number(qk.slice(1)) === Number(side.slice(1)) + 1 && cfg.end) {
+        return name + ' · 0 dates after ' + _quarterDayText(cfg.end).split(' ').slice(1).join(' ');
+    }
+    return name;
+}
+
+// Review D5 (2026-11-08): does quarter qk have a quarter after it? From /grade's quarter dates
+// when the Desk has them, else Q1-Q3 do and Q4 does not.
+function _gradebookHasNextQuarter(qk) {
+    var n = Number(String(qk).slice(1));
+    var quarters = (typeof _deskGradeQuarters === 'function') ? _deskGradeQuarters() : null;
+    if (!quarters) return n < 4;
+    return Boolean(quarters['Q' + (n + 1)]);
+}
+
+// Review D7 (2026-11-08): a column listed in this tab whose real Schoology column sits in another
+// marking period (/grade stamps schoologyQuarter: 'Q1' on Period B's straddling 2.3 Follow-Along /
+// 2.3 Blooket in the Quarter 2 tab; they stay in MP1, decision 8.2). It is shown dimmed and is
+// never owed here. A column without the flag (or stamped with this tab's own quarter) is ordinary.
+function _gradebookElsewhere(col, qk) {
+    return Boolean(col && col.schoologyQuarter && col.schoologyQuarter !== qk);
 }
 
 function openMyGradebook() {
@@ -256,7 +296,9 @@ function renderMyGradebook(qk, bodyEl, tabsEl) {
         var b = document.createElement('button');
         b.className = 's7btn';
         b.style.cssText = 'font-size:9px;padding:1px 6px' + (k === qk ? ';font-weight:bold;background:#cde' : '');
-        b.textContent = k;
+        // QUARTER_LINE_BY_DUE_DATE_SPEC §3.5: the closing quarter's tab and the next one name the rule.
+        b.textContent = (typeof _gradebookTabLabel === 'function') ? _gradebookTabLabel(k) : 'Quarter ' + k.slice(1);
+        b.dataset.quarter = k;
         b.onclick = function () { renderMyGradebook(k, body, tabs); };
         tabs.appendChild(b);
     });
@@ -270,7 +312,7 @@ function renderMyGradebook(qk, bodyEl, tabsEl) {
     var weights = (gb && gb.weights) || {};
     if (!gq || !Array.isArray(gq.columns) || !gq.columns.length) {
         var empty = document.createElement('div');
-        empty.textContent = 'No gradebook for ' + qk + ' yet — it fills in as you do the work.';
+        empty.textContent = 'No gradebook for Quarter ' + qk.slice(1) + ' yet — it fills in as you do the work.';
         empty.style.cssText = 'color:#888;font-style:italic;padding:6px 0';
         body.appendChild(empty);
         return;
@@ -298,7 +340,11 @@ function renderMyGradebook(qk, bodyEl, tabsEl) {
         return d != null && d <= today;                          // due by today (client fallback)
     }
     var visibleCols = gq.columns.filter(_visible);
-    var oweCount = visibleCols.filter(function (c) { return cells[c.key] == null; }).length;
+    // §3.5: a lift-only column (taught here, regular in a later quarter) can only raise this
+    // quarter, so it is never "owed" here; nor is a column whose Schoology copy sits in another
+    // marking period (D7). Columns without either flag are ordinary columns.
+    var isElsewhere = function (c) { return (typeof _gradebookElsewhere === 'function') && _gradebookElsewhere(c, qk); };
+    var oweCount = visibleCols.filter(function (c) { return cells[c.key] == null && !c.liftOnly && !isElsewhere(c); }).length;
     // Schoology colour key (EFFORT_VISIBILITY_V2_SPEC §4): a scored cell whose column is DUE is
     // in Schoology now (blue-grey); a scored cell not yet due is recorded ahead (green). Only
     // when the server stamps `due` on the columns — an older cache shows no colours and no key.
@@ -307,9 +353,11 @@ function renderMyGradebook(qk, bodyEl, tabsEl) {
     // ── As-of caption (makes the date-scoping obvious — nothing "disappeared") ──
     var cap = document.createElement('div');
     cap.style.cssText = 'font-size:10px;color:#666;margin-bottom:6px';
+    // §3.5: the caption leads with the tab's rule while a quarter is closing or final.
+    var tabName = (typeof _gradebookTabLabel === 'function') ? _gradebookTabLabel(qk) : 'Quarter ' + qk.slice(1);
     cap.textContent = hasSchedule
-        ? (qk + ' — showing everything due through ' + _gbDateStr(today) + ', plus anything already started.')
-        : (qk + ' — full gradebook.');
+        ? (tabName + ' — showing everything due through ' + _gbDateStr(today) + ', plus anything already started.')
+        : (tabName + ' — full gradebook.');
     body.appendChild(cap);
 
     // ── "What you owe" badge: due, but not done yet ──
@@ -352,6 +400,15 @@ function renderMyGradebook(qk, bodyEl, tabsEl) {
     }
     body.appendChild(totals);
 
+    // §3.5: what a lift-only column's tag says in this tab: it can still raise a closing quarter;
+    // once that quarter closes it simply counts in the next one. Review D5: the last quarter has
+    // no next one (never 'Quarter 5'): its lift-only column can only raise it.
+    var liftPhase = (typeof _deskQuarterPhase === 'function') ? _deskQuarterPhase() : null;
+    var qn = Number(qk.slice(1));
+    var liftTag = 'counts in Quarter ' + (qn + 1);
+    if (liftPhase && liftPhase.closing === qk) liftTag = 'can raise Quarter ' + qn;
+    else if (typeof _gradebookHasNextQuarter === 'function' && !_gradebookHasNextQuarter(qk)) liftTag = 'can still raise Quarter ' + qn + ' (never a 0)';
+
     // ── Visible component cells grouped by Schoology category ──
     var byCat = {};
     visibleCols.forEach(function (c) { (byCat[c.category] || (byCat[c.category] = [])).push(c); });
@@ -386,10 +443,19 @@ function renderMyGradebook(qk, bodyEl, tabsEl) {
         cols.forEach(function (c) {
             var v = cells[c.key];
             var band = _gradeBand(v);
+            var elsewhere = isElsewhere(c);
             var row = document.createElement('div');
+            // A lift-only column is never owed here (§3.5), nor is a column whose Schoology copy is
+            // in another marking period (D7): no amber "due, not done" tint for either.
             row.style.cssText = 'position:relative;display:flex;justify-content:space-between;align-items:center;padding:2px 5px;margin:1px 0;border-radius:2px;overflow:hidden;'
-                + (band ? 'background:#fff;' : 'background:#fdf6e3;');   // amber tint = due, not done
-            var keyed = colourKey && band;
+                + ((band || c.liftOnly || elsewhere) ? 'background:#fff;' : 'background:#fdf6e3;');   // amber tint = due, not done
+            if (elsewhere) {
+                // D7: dimmed, and never the blue-grey "in Schoology" tint (it is not in this quarter's Schoology).
+                row.className = 'mgb-elsewhere';
+                row.style.opacity = '0.6';
+                row.title = 'This column is in Schoology MP' + String(c.schoologyQuarter).slice(1) + ', not in this quarter\'s Schoology gradebook.';
+            }
+            var keyed = colourKey && band && !elsewhere;
             if (keyed) {
                 // The tint replaces the score micro-bar, so blue-grey vs green is never
                 // confused with a green score band.
@@ -412,10 +478,29 @@ function renderMyGradebook(qk, bodyEl, tabsEl) {
             nm.textContent = Array.isArray(c.topicKeys) && c.topicKeys.length
                 ? c.topicKeys.map(function (key) { return cedLabel(key).text; }).join(' / ')
                 : cedDisplayText(c.title);
+            if (c.liftOnly) {
+                var tag = document.createElement('span');
+                tag.className = 'mgb-lift';
+                tag.style.cssText = 'margin-left:6px;font-size:9px;font-weight:normal;color:#1a5c2e';
+                tag.textContent = liftTag;
+                nm.appendChild(tag);
+            }
+            if (elsewhere) {
+                // D7: 'Schoology: 2.3 Follow-Along (MP1)' (MP number = the quarter number).
+                var mp = 'MP' + String(c.schoologyQuarter).slice(1);
+                var where = document.createElement('span');
+                where.className = 'mgb-elsewhere-tag';
+                where.style.cssText = 'margin-left:6px;font-size:9px;font-weight:normal;color:#555';
+                where.textContent = c.schoologyTitle ? 'Schoology: ' + c.schoologyTitle + ' (' + mp + ')' : 'Schoology ' + mp;
+                nm.appendChild(where);
+            }
             var vv = document.createElement('span');
             if (band) {
                 vv.style.cssText = 'position:relative;z-index:1;font-variant-numeric:tabular-nums;font-weight:bold;color:' + band.fg;
                 vv.textContent = _n(v);
+            } else if (c.liftOnly || elsewhere) {
+                vv.style.cssText = 'position:relative;z-index:1;font-size:10px;font-style:italic;color:#777';
+                vv.textContent = 'not done';
             } else {
                 vv.style.cssText = 'position:relative;z-index:1;font-size:10px;font-style:italic;color:#9a6a00';
                 vv.textContent = 'not done yet';

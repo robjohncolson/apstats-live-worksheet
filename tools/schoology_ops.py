@@ -7,6 +7,25 @@ the proven CDP mechanics.
 All functions take an EdgeCDP instance as their first argument and perform
 I/O against the live page. None of them navigate unless documented.
 
+MARKING-PERIOD FILTER (QUARTER_LINE_BY_DUE_DATE_SPEC.md 4.1): displayed_grading_period reads
+the gradebook's filter (read-only); select_grading_period switches it and proves it: the filter,
+the header and Drupal's period list must agree, and after a switch the grid itself must show
+other columns than before it (review finding A3: the old period's grid can outlive the switch).
+view_content_matches checks the grid's column titles against the marking period the sync state
+files them in. Read-only checks for the rig (never 16:25-17:05, the LIVE sync tasks run then):
+  CMD 4, the MP list and the view each gradebook opens on (Git Bash, from the repo root):
+python - <<'PY'
+import sys, time; sys.path.insert(0, 'tools')
+import schoology_ops as ops
+cdp = ops.connect(reuse=True)
+for sec, cid in (('PeriodB', '8537033028'), ('PeriodE', '8537033042')):
+    print(sec, ops.list_marking_periods(cdp, cid))
+    ops.navigate(cdp, ops.gradebook_url(cid)); ops.inject_helpers(cdp); time.sleep(4)
+    print(sec, ops.displayed_grading_period(cdp))
+PY
+  The one-shot SELECT check: python tools/schoology_move_columns.py --section PeriodB
+  (its dry run switches the view to MP1, then MP2, verifies each, reads titles + filled cells).
+
 ASCII only. LF line endings.
 """
 from __future__ import annotations
@@ -14,6 +33,7 @@ from __future__ import annotations
 import json
 import math
 import os
+import re
 import time
 from typing import Optional
 
@@ -669,6 +689,435 @@ def find_assignment_id_by_title(cdp: EdgeCDP, title: str) -> Optional[str]:
         "})()"
     )
     return found or None
+
+
+# --------------------------------------------------------------------------- #
+# Gradebook marking-period filter (QUARTER_LINE_BY_DUE_DATE_SPEC.md 4.1)       #
+# --------------------------------------------------------------------------- #
+#
+# The gradebook shows ONE marking period at a time, and every read or write the sync
+# does (find a column by title, read or write a cell, the gp / gp_override cells) sees
+# only that period. Its filter is an Angular select2 on a hidden input, preceded by the
+# select2 container whose .select2-chosen names the period; the marking-period column
+# header carries the same label; an inline script lists the periods
+# (tests/fixtures/schoology-gradebook-apstats-sec1.html, P0 capture):
+#   <input select2-change-event="sGraderFilterGradingPeriodChanged" type="hidden" value="1134332">
+#   <div role="columnheader" class="... grader-grid-col-header-gp ..."
+#        aria-label="Marking Period 4: 4/11/26 - 6/30/26">
+#   Drupal.available_grading_periods = ["1134333","1134331","1134334","1134332","all","final","none"]
+# Live read-only probe 2026-11-07 ~23:00: both courses open on MP2 (1173889,
+# 'Marking Period 2: 11/07/26 - 1/22/27'). The SELECT mechanics below are not verified live
+# yet (spec 4.1: the orchestrator's one-shot check on the rig); the VERIFY step is what
+# makes a pass safe: a pass that cannot prove its marking period writes nothing.
+
+GRADING_PERIOD_FILTER = 'input[select2-change-event="sGraderFilterGradingPeriodChanged"]'
+
+_GRADING_PERIOD_VIEW_JS = r"""(function(){
+  var input = document.querySelector('input[select2-change-event="sGraderFilterGradingPeriodChanged"]');
+  var header = document.querySelector('[role="columnheader"].grader-grid-col-header-gp') ||
+               document.querySelector('.grader-grid-col-header-gp[aria-label]');
+  var chosen = null;
+  var box = input ? input.previousElementSibling : null;
+  if (box && box.querySelector) {
+    var span = box.querySelector('.select2-chosen');
+    if (span) chosen = (span.getAttribute('aria-label') || span.textContent || '').trim();
+  }
+  var available = null;
+  try {
+    if (window.Drupal && window.Drupal.available_grading_periods) {
+      available = [].slice.call(window.Drupal.available_grading_periods).map(String);
+    }
+  } catch (e) { available = null; }
+  return JSON.stringify({gp: input ? String(input.value) : null,
+                         header: header ? header.getAttribute('aria-label') : null,
+                         chosen: chosen, available: available});
+})()"""
+
+# The filter's own link (the select2 container sits right before the hidden input).
+_OPEN_PERIOD_FILTER_JS = r"""(function(){
+  var input = document.querySelector('input[select2-change-event="sGraderFilterGradingPeriodChanged"]');
+  var box = input ? input.previousElementSibling : null;
+  var link = box && box.querySelector ? box.querySelector('a.select2-choice') : null;
+  if (!link) return null;
+  link.scrollIntoView({block: 'center', inline: 'center'});
+  var r = link.getBoundingClientRect();
+  return JSON.stringify([r.left + r.width / 2, r.top + r.height / 2]);
+})()"""
+
+_PERIOD_OPTIONS_JS = r"""(function(){
+  var drop = document.querySelector('.select2-drop-active') || document.getElementById('select2-drop');
+  if (!drop) return null;
+  var out = [];
+  drop.querySelectorAll('li.select2-result-selectable').forEach(function (li) {
+    var label = li.querySelector('.select2-result-label');
+    out.push(((label || li).textContent || '').replace(/\s+/g, ' ').trim());
+  });
+  return JSON.stringify(out);
+})()"""
+
+_PERIOD_OPTION_CENTER_JS = r"""(function(index){
+  var drop = document.querySelector('.select2-drop-active') || document.getElementById('select2-drop');
+  if (!drop) return null;
+  var li = drop.querySelectorAll('li.select2-result-selectable')[index];
+  if (!li) return null;
+  li.scrollIntoView({block: 'nearest'});
+  var r = li.getBoundingClientRect();
+  return JSON.stringify([r.left + r.width / 2, r.top + r.height / 2]);
+})(%d)"""
+
+_SELECT2_VAL_JS = r"""(function(id){
+  var input = document.querySelector('input[select2-change-event="sGraderFilterGradingPeriodChanged"]');
+  var jq = window.jQuery;
+  if (!input || !jq || !jq.fn || !jq.fn.select2) return 'select2 API not available';
+  try { jq(input).select2('val', id, true); return 'ok'; } catch (e) { return 'select2 error: ' + e.message; }
+})(%s)"""
+
+# Row 0's assignment IDENTITY, prefixed by the count of all row-0 cells (0 = no row yet).
+# Finding A3 (verifier): Schoology can switch the filter and the header before the new
+# period's grid data arrives, so after a switch the grid itself must show something else.
+# Finding R4a (Codex re-review): the identity of a cell is its data-x (the column index)
+# plus the TITLE part of its aria-label ('<student>, <title>[, <grade> out of <pts>
+# points]'), NEVER the score part: a score that changes on the OLD grid (a teacher typing,
+# a late save) must not pass for a new marking period. A cell without a title (Schoology's
+# empty placeholder cells, aria-label '') carries no identity. The five summary cells
+# (overall, gp, ...) sit in every marking period and are left out. Sorted, so the pairs
+# read as a set.
+_ASSIGNMENT_SIGNATURE_JS = r"""(function(){
+  var summary = {overall: 1, overall_override: 1, total_points_awarded: 1, gp: 1, gp_override: 1};
+  var cells = document.querySelectorAll('[role="gridcell"][data-y="0"]');
+  var parts = [];
+  for (var i = 0; i < cells.length; i++) {
+    var key = cells[i].getAttribute('data-x') || '';
+    if (summary[key]) continue;
+    var title = (cells[i].getAttribute('aria-label') || '').split(', ')[1];
+    if (!title) continue;
+    parts.push(key + '|' + title);
+  }
+  parts.sort();
+  return String(cells.length) + ':' + parts.join('\n');
+})()"""
+
+# Every assignment column title on the grid: the second part of a row-0 cell's aria-label
+# ('<student>, <title>[, <grade> out of <pts> points]'; titles never hold ', ').
+_VISIBLE_TITLES_JS = r"""(function(){
+  var summary = {overall: 1, overall_override: 1, total_points_awarded: 1, gp: 1, gp_override: 1};
+  var cells = document.querySelectorAll('[role="gridcell"][data-y="0"]');
+  var titles = [];
+  for (var i = 0; i < cells.length; i++) {
+    if (summary[cells[i].getAttribute('data-x') || '']) continue;
+    var title = (cells[i].getAttribute('aria-label') || '').split(', ')[1];
+    if (title) titles.push(title);
+  }
+  return JSON.stringify(titles);
+})()"""
+
+_MP_RANGE_RE = re.compile(r"(\d{1,2})/(\d{1,2})/(\d{2,4})\s*-\s*(\d{1,2})/(\d{1,2})/(\d{2,4})")
+
+
+def parse_mp_label_range(label) -> Optional[tuple]:
+    """'Marking Period 2: 11/07/26 - 1/22/27' -> ('2026-11-07', '2027-01-22'), else None."""
+    m = _MP_RANGE_RE.search(str(label or ""))
+    if not m:
+        return None
+
+    def iso(month, day, year):
+        y = int(year)
+        y = y + 2000 if y < 100 else y
+        return "%04d-%02d-%02d" % (y, int(month), int(day))
+
+    return iso(m.group(1), m.group(2), m.group(3)), iso(m.group(4), m.group(5), m.group(6))
+
+
+def displayed_grading_period(cdp) -> Optional[dict]:
+    """{'gp', 'header', 'chosen', 'available'} of the loaded gradebook (read-only), or None."""
+    raw = cdp.eval_js(_GRADING_PERIOD_VIEW_JS)
+    if not isinstance(raw, str):
+        return None
+    try:
+        view = json.loads(raw)
+    except ValueError:
+        return None
+    return view if isinstance(view, dict) else None
+
+
+def grading_period_view_matches(view, grading_period_id, mp_range: Optional[dict] = None) -> Optional[str]:
+    """None when the view PROVES the gradebook shows this marking period, else the reason.
+
+    Three independent signs must agree: the hidden filter input holds the id, Drupal lists
+    the id as one of the course's periods, and the marking-period column header shows the
+    period (its dates must equal mp_range when given).
+    """
+    want = str(grading_period_id)
+    if not isinstance(view, dict):
+        return "no marking-period filter on the page"
+    if str(view.get("gp")) != want:
+        return "the filter holds %r, not %r" % (view.get("gp"), want)
+    available = view.get("available")
+    if not isinstance(available, list) or want not in [str(a) for a in available]:
+        return "Drupal.available_grading_periods does not list %r" % want
+    header = view.get("header")
+    if not header:
+        return "no marking-period column header"
+    if mp_range:
+        shown = parse_mp_label_range(header)
+        if shown != (mp_range.get("start"), mp_range.get("end")):
+            return "the header reads %r, not %s - %s" % (header, mp_range.get("start"), mp_range.get("end"))
+    return None
+
+
+def _wait_for_view(cdp, timeout_s: float) -> Optional[dict]:
+    """Poll until the gradebook's filter is on the page (the grid renders after load)."""
+    deadline = time.time() + timeout_s
+    while True:
+        view = displayed_grading_period(cdp)
+        if view and view.get("gp") is not None:
+            return view
+        if time.time() >= deadline:
+            return view
+        time.sleep(0.5)
+
+
+def _poll_view(cdp, want: str, mp_range: Optional[dict], timeout_s: float) -> Optional[dict]:
+    deadline = time.time() + timeout_s
+    view = None
+    while True:
+        view = displayed_grading_period(cdp)
+        if grading_period_view_matches(view, want, mp_range) is None:
+            return view
+        if time.time() >= deadline:
+            return view
+        time.sleep(0.5)
+
+
+def _point(raw) -> Optional[tuple]:
+    """(x, y) from a JSON '[x, y]', else None."""
+    if not isinstance(raw, str):
+        return None
+    try:
+        point = json.loads(raw)
+    except ValueError:
+        return None
+    if not isinstance(point, list) or len(point) != 2:
+        return None
+    if not all(isinstance(n, (int, float)) and not isinstance(n, bool) for n in point):
+        return None
+    return point[0], point[1]
+
+
+def _pick_period_by_click(cdp, want: str, mp_range: Optional[dict]) -> Optional[str]:
+    """What a teacher does: open the filter, click the option with the period's dates."""
+    if not mp_range:
+        return "no date range to find the option by"
+    try:
+        cdp.send("Page.bringToFront", {})   # clicks need the rig's window in front
+    except Exception:  # noqa: BLE001 -- best effort; the verify step is the real check
+        pass
+    opener = _point(cdp.eval_js(_OPEN_PERIOD_FILTER_JS))
+    if opener is None:
+        return "the filter's link was not found"
+    cdp.click(int(opener[0]), int(opener[1]))
+    time.sleep(0.8)
+    raw = cdp.eval_js(_PERIOD_OPTIONS_JS)
+    try:
+        options = json.loads(raw) if isinstance(raw, str) else None
+    except ValueError:
+        options = None
+    if not isinstance(options, list):
+        return "the filter's options did not open"
+    wanted = (mp_range.get("start"), mp_range.get("end"))
+    matches = [i for i, text in enumerate(options) if parse_mp_label_range(text) == wanted]
+    if len(matches) != 1:
+        return "%d options show %s - %s" % (len(matches), wanted[0], wanted[1])
+    target = _point(cdp.eval_js(_PERIOD_OPTION_CENTER_JS % matches[0]))
+    if target is None:
+        return "the option was not on screen"
+    cdp.click(int(target[0]), int(target[1]))
+    return None
+
+
+def _pick_period_by_select2(cdp, want: str, mp_range: Optional[dict]) -> Optional[str]:
+    """The select2 API with triggerChange: the directive sees the same change event."""
+    outcome = cdp.eval_js(_SELECT2_VAL_JS % json.dumps(want))
+    return None if outcome == "ok" else str(outcome or "select2 API returned nothing")
+
+
+def select_grading_period(cdp, grading_period_id, mp_range: Optional[dict] = None,
+                          timeout_s: float = 12.0) -> dict:
+    """Show ONE marking period in the loaded gradebook and PROVE it.
+
+    Returns {'ok', 'view', 'method', 'error'}. 'ok' only when grading_period_view_matches
+    passes and the grid has settled. Tries a real click on the filter first (what a
+    teacher does), then the select2 API. Nothing here writes a grade. The gradebook
+    reopens on its default period after any navigation, so callers select after every
+    gradebook load.
+
+    After a switch the filter and the header are not enough (finding A3): Schoology may
+    switch both before the new period's grid data arrives, and the old period's grid
+    would pass. So row 0's assignment identity (column index + title, never a score:
+    finding R4a) is read (settled) BEFORE the switch, and after it the set of identities
+    must differ, and read the same twice, before 'ok'. A grid with columns turning into
+    an empty one is a real change (MP2 has no column before the move); two periods that
+    both have no assignment column cannot be told apart: that switch is not ok.
+
+    Already shown (no switch): the grid must still be RENDERED, a student row that reads
+    the same twice (finding R4d); a grid that never settles is not ok. Whether its
+    columns belong to the period is the caller's check (schoology_sync_section
+    PassEvidence, schoology_official read_gradebook: view_content_problem).
+    """
+    want = str(grading_period_id)
+    view = _wait_for_view(cdp, timeout_s)
+    if not view or view.get("gp") is None:
+        return {"ok": False, "view": view, "method": None,
+                "error": "the gradebook has no marking-period filter (page not loaded?)"}
+    if grading_period_view_matches(view, want, mp_range) is None:
+        return _already_shown(cdp, view)
+    available = view.get("available")
+    if isinstance(available, list) and want not in [str(a) for a in available]:
+        return {"ok": False, "view": view, "method": None,
+                "error": "marking period %s is not in Drupal.available_grading_periods" % want}
+    before = _settled_grid_signature(cdp)
+    if before is None:
+        return {"ok": False, "view": view, "method": None,
+                "error": "the grid did not show a settled student row before the switch"}
+    last_error = "unverified"
+    for method, pick in (("click", _pick_period_by_click), ("select2", _pick_period_by_select2)):
+        problem = pick(cdp, want, mp_range)
+        if problem:
+            last_error = "%s: %s" % (method, problem)
+            continue
+        view = _poll_view(cdp, want, mp_range, timeout_s)
+        reason = grading_period_view_matches(view, want, mp_range)
+        if reason is None:
+            return _settled_after_switch(cdp, view, method, before, want, mp_range)
+        last_error = "%s: %s" % (method, reason)
+    return {"ok": False, "view": view, "method": None, "error": last_error}
+
+
+def _already_shown(cdp, view: dict) -> dict:
+    """The period is on screen already: 'ok' only once its grid is RENDERED (finding R4d).
+
+    Before this, two reads of an empty page (no row at all, or a grid still loading)
+    counted as 'settled', and the caller read an empty marking period.
+    """
+    if _settled_grid_signature(cdp) is None:
+        return {"ok": False, "view": view, "method": "already shown",
+                "error": "the grid did not show a settled student row"}
+    return {"ok": True, "view": view, "method": "already shown", "error": None}
+
+
+def _grid_has_rows(signature) -> bool:
+    """True for an _ASSIGNMENT_SIGNATURE_JS result ('<row-0 cell count>:...') with cells."""
+    if not isinstance(signature, str) or ":" not in signature:
+        return False
+    count = signature.split(":", 1)[0]
+    return count.isdigit() and int(count) > 0
+
+
+def _grid_identity(signature) -> Optional[frozenset]:
+    """The set of 'index|title' pairs of an _ASSIGNMENT_SIGNATURE_JS result (finding R4a),
+    or None when the grid shows no student row yet. An empty set = no assignment column."""
+    if not _grid_has_rows(signature):
+        return None
+    pairs = signature.split(":", 1)[1]
+    return frozenset(pair for pair in pairs.splitlines() if pair)
+
+
+def _settled_grid_signature(cdp, rounds: int = 12, pause_s: float = 0.75) -> Optional[str]:
+    """Row 0's assignment signature once the grid shows a row and reads the same twice.
+
+    None when it never does. A grid that has not rendered yet must not be the 'before'
+    of a switch: the old period's rows arriving late would then look like a change.
+    """
+    last = None
+    for _ in range(rounds):
+        signature = cdp.eval_js(_ASSIGNMENT_SIGNATURE_JS)
+        if _grid_has_rows(signature):
+            if signature == last:
+                return signature
+            last = signature
+        else:
+            last = None
+        time.sleep(pause_s)
+    return None
+
+
+def _wait_for_new_grid(cdp, before: str, rounds: int = 12, pause_s: float = 0.75) -> bool:
+    """True once row 0's set of assignment identities differs from `before`'s and the grid
+    reads the same twice (finding R4a: a changed score is not a changed grid)."""
+    before_ids = _grid_identity(before)
+    last = None
+    for _ in range(rounds):
+        signature = cdp.eval_js(_ASSIGNMENT_SIGNATURE_JS)
+        ids = _grid_identity(signature)
+        if ids is not None and ids != before_ids:
+            if signature == last:
+                return True
+            last = signature
+        else:
+            last = None
+        time.sleep(pause_s)
+    return False
+
+
+def _settled_after_switch(cdp, view: dict, method: str, before: str, want: str,
+                          mp_range: Optional[dict]) -> dict:
+    """'ok' only when the grid changed after the switch, settled, and the filter and the
+    header still name the period once it has (finding A3)."""
+    if not _wait_for_new_grid(cdp, before):
+        return {"ok": False, "view": view, "method": method,
+                "error": "the filter and header switched but the grid still shows the previous "
+                         "marking period's columns"}
+    view = displayed_grading_period(cdp)
+    reason = grading_period_view_matches(view, want, mp_range)
+    if reason is not None:
+        return {"ok": False, "view": view, "method": method, "error": "after the grid settled: " + reason}
+    return {"ok": True, "view": view, "method": method, "error": None}
+
+
+def visible_column_titles(cdp) -> Optional[list]:
+    """The assignment column titles on the grid (load_all_columns first), or None."""
+    raw = cdp.eval_js(_VISIBLE_TITLES_JS)
+    if not isinstance(raw, str):
+        return None
+    try:
+        titles = json.loads(raw)
+    except ValueError:
+        return None
+    if not isinstance(titles, list):
+        return None
+    return [str(t) for t in titles]
+
+
+def view_content_problem(cdp, view: dict, expected_titles_here, titles_elsewhere) -> Optional[str]:
+    """None when the grid's columns agree with the marking period the view names, else why.
+
+    expected_titles_here / titles_elsewhere: column titles the sync state files in this
+    marking period / in another one (rows without a grading_period_id are left out by the
+    caller). Wrong when a title filed elsewhere is on the grid, or when none of the
+    titles filed here is (while there are some). Both empty: nothing to compare, and the
+    page is not read.
+    """
+    here = set(expected_titles_here or ())
+    elsewhere = set(titles_elsewhere or ())
+    if not here and not elsewhere:
+        return None
+    shown = visible_column_titles(cdp)
+    if shown is None:
+        return "the grid's column titles could not be read"
+    shown = set(shown)
+    period = (view or {}).get("grading_period_id")
+    foreign = sorted(shown & elsewhere)
+    if foreign:
+        return "the grid shows %d column(s) filed in another marking period (%s), not only %s" % (
+            len(foreign), ", ".join(foreign[:3]), period)
+    if here and not (shown & here):
+        return "none of the %d column(s) filed in marking period %s is on the grid" % (len(here), period)
+    return None
+
+
+def view_content_matches(cdp, view: dict, expected_titles_here, titles_elsewhere) -> bool:
+    """True when the grid's columns agree with the view's marking period (finding A3)."""
+    return view_content_problem(cdp, view, expected_titles_here, titles_elsewhere) is None
 
 
 # --------------------------------------------------------------------------- #

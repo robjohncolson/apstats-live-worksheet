@@ -460,6 +460,11 @@
         .wallet-zero-card .wz-row.wz-later { border-left: 3px solid #aaa; background: #eee; color: #555; }
         .wallet-zero-card .wz-row.wz-later .wz-when { color: #555; }
         .wallet-zero-card .wz-sgy { font-size: 9px; color: #777; white-space: nowrap; }
+        /* QUARTER_LINE_BY_DUE_DATE_SPEC §3.2 (2026-11-07): rows under the quarter they count in */
+        .wallet-zero-card .wz-quarter-head { margin: 8px 0 2px; padding-bottom: 1px; font: bold 11px Chicago, Geneva, sans-serif; color: #000; border-bottom: 1px solid #000; }
+        .wallet-zero-card .wz-row.wz-has-lift { flex-wrap: wrap; }
+        .wallet-zero-card .wz-lift { flex-basis: 100%; font-size: 10px; font-weight: normal; color: #1a5c2e; }
+        .wallet-grade-other { font-size: 11px; color: #333; margin-top: 4px; }
         .app-icon[data-app="wallet"] .wallet-readiness-dot {
             position: absolute;
             right: -1px;
@@ -980,6 +985,11 @@
             padding: 3px 8px; font-size: 10px; font-weight: bold;
             background: var(--black); color: var(--white);
             border-bottom: 1px solid var(--black); letter-spacing: 0.5px;
+        }
+        /* QUARTER_LINE_BY_DUE_DATE_SPEC §3.4: 'Quarter 1 ends' / 'Quarter 1 closes' on their days */
+        .dc .cal-qmark {
+            margin-top: 2px; padding: 0 3px; font-size: 8px; font-weight: bold; line-height: 1.3;
+            background: var(--black); color: var(--white); display: inline-block;
         }
         /* ☀️ Summer-prep weeks woven into the grid — amber wash so the summer
            stretch (Unit 1, weekly due dates → Sept 1) reads distinctly from the
@@ -2343,12 +2353,18 @@
               #donow-helper .wsl-msg.student{color:#0000aa}
               #donow-helper .wsl-msg.coach{color:#222;background:#fff;border:1px solid #ddd;padding:6px 8px}
               #donow-helper .wsl-note{color:var(--plat-lo);font-size:9px;margin-top:3px}
+              /* QUARTER_LINE_BY_DUE_DATE_SPEC §3.9: the one-time quarter notice (dismissable) */
+              #donow-notice{margin-top:6px;padding:4px 8px;border:1px solid #8a6d00;background:#fff9db;
+                font-family:'Geneva','Helvetica',sans-serif;font-size:11px;display:none;align-items:center;
+                gap:8px;box-shadow:1px 1px 0 var(--black)}
+              #donow-notice .s7btn{font-family:'Chicago','Courier New',monospace;font-size:9px;padding:1px 6px;margin-left:auto}
             </style>
             <div id="donow-card" class="donow-signin" style="display:none">
                 <span class="donow-ico">📌</span>
                 <div class="donow-body">
                     <div class="donow-ttl chicago">Do Now</div>
                     <div id="donow-msg" class="geneva">…</div>
+                    <div id="donow-notice" class="geneva" role="status" style="display:none"></div>
                     <div id="donow-grades" class="geneva" aria-label="Quarter grade outlook"></div>
                     <div id="donow-bonus" class="geneva" aria-label="Bonus banked" style="display:none;font-size:11px;margin-top:4px"></div>
                     <div id="donow-grade-status" class="geneva" role="status" style="display:none"></div>
@@ -2554,11 +2570,10 @@
             <p style="margin:0 0 4px">&#9312; <b>Your work</b> &mdash; worksheets <b>30%</b>, quizzes <b>30%</b>, the unit poster <b>30%</b>, Blookets <b>10%</b>. Your unit poster is scored <b>90 to 115</b>, so it can only help you unless the rest of your Work is above 90. A lesson's flashcard deck earns its Blooket credit.</p>
             <p style="margin:0 0 6px">&#9313; <b>Progress Checks</b> &mdash; one per unit, AP-exam-style, retakable until the quarter closes. Your <b>best score</b> counts.</p>
             <p style="margin:0 0 6px">Your grade starts as your <b>Work</b> track. Once Work (with bonus) is at least <b>40%</b>, your <b>Progress Check</b> score replaces it <b>if it's higher</b>. A low Progress Check <b>never lowers</b> you &mdash; either track can reach 100%.</p>
-            <p style="margin:0 0 6px"><b>Missing work becomes a 0</b> 13 days after its class day (worksheets and Blookets). The Desk warns you <b>3 days</b> before. Nothing locks &mdash; finish it later and the 0 goes away. <b>Unless its quarter ends first</b>: then it is <b>late, never a 0</b>, and finishing it still counts.</p>
+            <p style="margin:0 0 6px"><b>Missing work becomes a 0</b> 13 days after its class day (worksheets and Blookets). The Desk warns you <b>3 days</b> before. Nothing locks &mdash; finish it later and the 0 goes away. <b>A 0 counts in the quarter its 0 date lands in.</b> Quarter 1 ended Fri Nov 6: work whose 0 date was by Nov 6 counts for Quarter 1, and you can fix those 0s until it closes <b>Thu Nov 12</b>. Work with a 0 date after Nov 6 counts for Quarter 2 (Nov 9 – Jan 22) even if it was taught in Quarter 1; finishing it by Thu Nov 12 can also raise Quarter 1, never lower it. Progress Check retakes for Quarter 1 end at the close too.</p>
             <p style="margin:0 0 6px"><b>Worksheets stay open</b>: change an answer and Check again. <b>Grade with AI</b> only ever raises your score. <b>Quizzes</b>: miss a question and you get <b>one retry</b> with a short explanation &mdash; a correct retry earns <b>half credit</b>. Still wrong? <b>Talk it through</b> can earn back <b>half credit</b>.</p>
             <p style="margin:0 0 6px"><b>Bonus only goes up.</b> An exit ticket adds <b>+5 / +3 / +1</b> (E/P/I) to its lesson. DOK bonus sheets add <b>+7.5 / +4.5 / +1.5</b>, banked and added at the end of the quarter to whichever track helps you more. A worksheet finished by its class day adds <b>+1</b> (up to +5 a quarter). Quarters still top out at 100%.</p>
             <p style="margin:0 0 6px"><b>One official grade.</b> Every night your grade is written to Schoology, and the Desk shows that same number marked <b>official</b>. <b>Today's estimate</b> moves as you work, so it's <b>a step ahead of Schoology</b> until tonight's sync. It uses a slightly stricter formula (it also asks for 40% on the Progress Check side, and otherwise is capped at 70% of the better track), so it can differ from the official number until the nightly write. A score Mr. Colson types into Schoology by hand is never lowered by the sync.</p>
-            <p style="margin:0 0 6px">The <b>&uarr;</b> next to a quarter is your <b>ceiling</b> &mdash; the best grade you can still reach if you ace what's left.</p>
             <p style="margin:0 0 6px"><b>Practice never counts</b>: the Review deck, the TI-84 Trainer and Study Break. <b>Candy, keys and games never change your grade.</b></p>
             <p style="margin:6px 0 0"><a href="start-here.html#how-your-grade" target="_blank" rel="noopener" style="color:var(--accent-ink);text-decoration:underline">Full explanation &rarr;</a></p>
         </div>
@@ -2957,8 +2972,8 @@
 <!-- Teacher-only Class Log "Recording" fold on the day panel (track L): the summary
      lib copied from a2 + the Desk glue (a2 sign-in token, mount). Both fail soft. -->
 <script src="lib/class-log-summary.js" onerror=""></script>
-<script src="js/desk-class-log.js?v=2026-11-08-fljo" onerror=""></script>
-<script src="js/desk-missing-work.js?v=2026-11-08-fljo"></script>
+<script src="js/desk-class-log.js?v=2026-11-08-r0un" onerror=""></script>
+<script src="js/desk-missing-work.js?v=2026-11-08-r0un"></script>
 <script src="pwa-register.js"></script>
 <script src="js/wallet_logic.js"></script>
 <script type="module" src="js/student-wallet.js"></script>
@@ -2968,10 +2983,10 @@
 <script src="js/ced2026-crosswalk.js"></script>
 <script src="js/ced2026-labels.js"></script>
 <script src="lib/qrcode.min.js"></script>
-<script src="canvas_engine.js?v=2026-11-08-fljo"></script>
-<script src="sprite_sheet.js?v=2026-11-08-fljo"></script>
-<script src="classroom-board.js?v=2026-11-08-fljo"></script>
-<script src="pico-home.js?v=2026-11-08-fljo"></script>
+<script src="canvas_engine.js?v=2026-11-08-r0un"></script>
+<script src="sprite_sheet.js?v=2026-11-08-r0un"></script>
+<script src="classroom-board.js?v=2026-11-08-r0un"></script>
+<script src="pico-home.js?v=2026-11-08-r0un"></script>
 <script src="ti84-plot.js"></script>
 <script src="activity-bridge.js"></script>
 <script src="activity-colorbox.js"></script>
@@ -8499,8 +8514,12 @@ const QUARTER_BAND_LABEL = {
 // same real dates instead of unit boundaries. Months are 1-indexed
 // here (Sep = 9), matching the ISO dates in grade-config.js. Re-edit
 // both files together once per school year.
+// close / finalUntil (QUARTER_LINE_BY_DUE_DATE_SPEC §3, teacher 2026-11-07): Quarter 1's
+// 0s stay fixable until it closes; then it reads "final" for a week. Display only; the
+// calendar reads them here, every grade surface from /grade config.quarters. Pinned equal
+// to grade-config.js by tests/desk-quarter-line.test.js.
 const QUARTER_WINDOWS = [   // SY2627 real LEHS marking periods (2026-09-03)
-  { q: 1, start: [2026, 9, 2],   end: [2026, 11, 6]  },
+  { q: 1, start: [2026, 9, 2],   end: [2026, 11, 6], close: [2026, 11, 12], finalUntil: [2026, 11, 19] },
   { q: 2, start: [2026, 11, 9],  end: [2027, 1, 22]  },
   { q: 3, start: [2027, 1, 25],  end: [2027, 4, 14]  },
   { q: 4, start: [2027, 4, 15],  end: [2027, 6, 17]  },
@@ -8516,6 +8535,134 @@ function quarterOfDate(dt) {
     if (key >= lo && key <= hi) return w.q;
   }
   return 0;
+}
+
+// ── QUARTER LINE (QUARTER_LINE_BY_DUE_DATE_SPEC.md, teacher 2026-11-07) ─────────────────────
+// A lesson counts in the quarter its 0 date lands in (/grade lessons[].quarter[period]); a
+// lesson taught in the quarter before also carries liftQuarter[period]: finishing it can still
+// raise that quarter, never lower it. Quarter 1 ended Fri Nov 6, its 0s stay fixable until it
+// closes Thu Nov 12, then it reads "final" through Nov 19. The close dates come from the last
+// /grade (config.quarters). An older cached payload has none: every surface then keeps its
+// single-quarter view. Every date test goes through _zeroTodayIso() (tdy), so tests pin it.
+var _gradeConfigCache = null;   // latest /grade config { quarters, ... }; null before a load
+// Review D8 (2026-11-08): { Q1: true } for each quarter the latest /grade reports closed
+// (quarters[Q].closed: its first-close snapshot exists). Set together with _gradeConfigCache, so
+// every surface reads the same moment: a closed quarter is "final" at once, whatever the clock says.
+var _gradeClosedCache = null;
+
+// { Q1: true } for each quarter of a /grade quarters{} that carries a close snapshot; {} otherwise.
+function _gradeClosedQuarters(quarters) {
+  var out = {};
+  if (!quarters || typeof quarters !== 'object') return out;
+  Object.keys(quarters).forEach(function (q) {
+    if (quarters[q] && quarters[q].closed) out[q] = true;
+  });
+  return out;
+}
+
+// /grade config.quarters ({ Q1: { start, end, close?, finalUntil? }, ... }), or null. A quarter
+// /grade reports closed comes back with closed: true on a copy of its entry (D8), which
+// DeskMissingWork reads as final; the cached config itself is never changed.
+function _deskGradeQuarters() {
+  var config = (typeof _gradeConfigCache !== 'undefined') ? _gradeConfigCache : null;
+  var quarters = config && config.quarters;
+  if (!quarters || typeof quarters !== 'object') return null;
+  var closed = (typeof _gradeClosedCache !== 'undefined') ? _gradeClosedCache : null;
+  if (!closed || !Object.keys(closed).length) return quarters;
+  var out = {};
+  Object.keys(quarters).forEach(function (q) {
+    out[q] = closed[q] ? Object.assign({}, quarters[q], { closed: true }) : quarters[q];
+  });
+  return out;
+}
+
+// { current, closing, final } while a quarter is closing or final; null otherwise (no window,
+// no close dates, or the missing-work module failed to load) so callers keep today's logic.
+function _deskQuarterPhase() {
+  if (typeof DeskMissingWork === 'undefined' || typeof DeskMissingWork.quarterPhase !== 'function') return null;
+  var quarters = _deskGradeQuarters();
+  if (!quarters) return null;
+  var phase = DeskMissingWork.quarterPhase(quarters, _zeroTodayIso());
+  return (phase.closing || phase.final) ? phase : null;
+}
+
+// The config entry of a quarter ({ start, end, close?, finalUntil? }), or {}.
+function _quarterConfig(q) {
+  var quarters = _deskGradeQuarters();
+  return (quarters && quarters[q]) || {};
+}
+
+// 'Quarter 1' for 'Q1' (headings never say "Q1": Q1 / Q3 are quartiles on the same screens).
+function _quarterName(q) {
+  return 'Quarter ' + String(q || '').replace(/^Q/, '');
+}
+
+// 'Thu Nov 12' for an ISO date; '' when missing.
+function _quarterDayText(iso) {
+  if (!iso) return '';
+  var d = new Date(iso + 'T00:00:00');
+  var DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  return DAYS[d.getDay()] + ' ' + MONTHS[d.getMonth()] + ' ' + d.getDate();
+}
+
+// The heading over a quarter's rows (My Ledger, My Grade): 'Quarter 1 (closes Thu Nov 12)' for
+// the closing quarter, 'Quarter 2 (0 dates after Fri Nov 6)' for a quarter after another one.
+// "0 dates", never "due": on the Desk "due" means the class day.
+function _quarterHeadingText(q, phase) {
+  var cfg = _quarterConfig(q);
+  if (phase && phase.closing === q && cfg.close) return _quarterName(q) + ' (closes ' + _quarterDayText(cfg.close) + ')';
+  var prev = _quarterConfig('Q' + (Number(String(q).slice(1)) - 1));
+  if (prev.end) return _quarterName(q) + ' (0 dates after ' + _quarterDayText(prev.end) + ')';
+  if (cfg.end) return _quarterName(q) + ' (ends ' + _quarterDayText(cfg.end) + ')';
+  return _quarterName(q);
+}
+
+// How My Ledger and My Grade group the missing-work rows, or null for one plain list (an older
+// /grade without quarter fields, or every row in one quarter while none is closing). Rows are
+// listed once, under the quarter they count in; both windows read this one object.
+//   quarterOf(row) -> 'Q2' | null    heading(q) -> text    lift(row) -> '' | the lift note
+//   quarters -> the quarters present, in calendar order    sig -> rebuild key for the cards
+function _zeroQuarterView(rows) {
+  if (typeof DeskMissingWork === 'undefined' || typeof DeskMissingWork.lessonQuarters !== 'function') return null;
+  var lessons = (typeof _gradeLessonsCache !== 'undefined') ? _gradeLessonsCache : null;
+  var period = (typeof cP === 'string') ? cP : null;
+  var tags = DeskMissingWork.lessonQuarters(lessons, period);
+  var list = Array.isArray(rows) ? rows : [];
+  var seen = {};
+  for (var i = 0; i < list.length; i++) {
+    var tag = list[i] ? tags[list[i].lessonKey] : null;
+    if (!tag) return null;
+    seen[tag.quarter] = true;
+  }
+  var phase = _deskQuarterPhase();
+  var present = Object.keys(seen).sort();
+  if (!(phase && phase.closing) && present.length < 2) return null;
+  var close = (phase && phase.closing) ? _quarterConfig(phase.closing).close : null;
+  var liftText = close
+    ? 'finishing it by ' + _quarterDayText(close).split(' ')[0] + ' can also raise ' + _quarterName(phase.closing) + ' (never lower)'
+    : '';
+  var tagOf = function (row) { return (row && tags[row.lessonKey]) || null; };
+  return {
+    phase: phase,
+    quarters: present,
+    quarterOf: function (row) { var t = tagOf(row); return t ? t.quarter : null; },
+    heading: function (q) { return _quarterHeadingText(q, phase); },
+    lift: function (row) { var t = tagOf(row); return (liftText && t && t.lift === phase.closing) ? liftText : ''; },
+    sig: (phase ? (phase.closing || '-') + '/' + (phase.final || '-') : 'none') + ':'
+      + list.map(function (row) { var t = tagOf(row); return t.quarter + (t.lift ? '<' + t.lift : ''); }).join(','),
+  };
+}
+
+// The rows that count in quarter q: the balance card's number, colour and drop sentence speak
+// for the quarter shown, never another quarter's 0s. Rows of an older /grade all stay.
+function _zeroRowsInQuarter(rows, q) {
+  if (!q || !Array.isArray(rows)) return rows;
+  if (typeof DeskMissingWork === 'undefined' || typeof DeskMissingWork.lessonQuarters !== 'function') return rows;
+  var lessons = (typeof _gradeLessonsCache !== 'undefined') ? _gradeLessonsCache : null;
+  var tags = DeskMissingWork.lessonQuarters(lessons, (typeof cP === 'string') ? cP : null);
+  for (var i = 0; i < rows.length; i++) if (!rows[i] || !tags[rows[i].lessonKey]) return rows;
+  return rows.filter(function (row) { return tags[row.lessonKey].quarter === q; });
 }
 
 // Cache of the lessons[] array from the last /grade fetch.
@@ -8564,6 +8711,7 @@ function _resetGradeStateForIdentitySwitch() {
     _gradeGradebookCache = null;
     _gradeQuartersCache = null;
     _gradeUnitsCache = null;
+    _gradeClosedCache = null;   // D8: a close snapshot is per student
     _gradeLoadState = 'unknown';
     _gradeLoadError = null;
     _gradeLastRenderedState = 'unknown';
@@ -9207,6 +9355,85 @@ function _gradeMathToggle(host, ctx) {
 
 // Last official grade fetched by the Do Now (My Ledger's balance card reads it too).
 var _officialGradeCache = null;
+// QUARTER_LINE_BY_DUE_DATE_SPEC §3.1: one official grade PER QUARTER, filled by the Do Now for
+// every pill it shows (the closing / final quarter's pill has its own). A single slot would let
+// the Quarter 1 fetch overwrite the Quarter 2 headline. _officialGradeCache stays the current
+// pill's entry, the same object, for its older readers.
+var _officialGradeByQuarter = {};
+
+// The official grade published for quarter q, or null. Finding R6b (Codex re-review, finding 6):
+// null for a quarter that has not started, even if one is cached (no grade before its start date).
+function _officialGradeFor(q) {
+  if (typeof _quarterStartsText === 'function' && _quarterStartsText(q)) return null;
+  var current = (typeof _officialGradeCache !== 'undefined') ? _officialGradeCache : null;
+  if (current && current.quarter === q) return current;
+  var byQuarter = (typeof _officialGradeByQuarter !== 'undefined') ? _officialGradeByQuarter : null;
+  return (byQuarter && byQuarter[q]) || null;
+}
+
+// A closed quarter's final grade: /grade quarters[q].closed.grade (the frozen grade, with the
+// applied banked bonus when there is one), never below the official grade (the final written to
+// Schoology is never lower). null when neither is known.
+function _quarterFinalGrade(q, data, official) {
+  var closed = data && data.closed;
+  var frozen = (closed && typeof closed.grade === 'number') ? closed.grade : null;
+  var sent = (official && typeof official.grade === 'number') ? official.grade : null;
+  if (frozen == null) return sent;
+  if (sent == null) return frozen;
+  return Math.max(frozen, sent);
+}
+
+// The pill of the quarter that just ended, shown BEFORE the current quarter's pill (§3.1):
+//   closing (its 0s fixable until the close): 'Quarter 1 · 92 · closes Thu Nov 12' (official when published)
+//   final (a week after the close):          'Quarter 1 final · 92'
+// data-quarter / data-role let Pico and the missing pill find each pill by role, not by position.
+function _doNowSidePill(q, data, official, phase) {
+  var cfg = _quarterConfig(q);
+  var role = (phase && phase.closing === q) ? 'closing' : 'final';
+  var pill = document.createElement('span');
+  pill.className = 'qpill qpill-side';
+  pill.dataset.quarter = q;
+  pill.dataset.role = role;
+  var keySpan = document.createElement('span');
+  keySpan.className = 'qkey';
+  var gradeSpan = document.createElement('span');
+  gradeSpan.className = 'qgrade';
+  pill.appendChild(keySpan);
+  pill.appendChild(gradeSpan);
+  if (role === 'final') {
+    var finalGrade = _quarterFinalGrade(q, data, official);
+    keySpan.textContent = _quarterName(q) + ' final';
+    gradeSpan.textContent = finalGrade == null ? '—' : String(Math.round(finalGrade * 10) / 10);
+    pill.title = _quarterName(q) + ' closed ' + _quarterDayText(cfg.close) + '. This is its final grade; it no longer changes.';
+  } else {
+    var engine = (data && typeof data.quarterGrade === 'number') ? data.quarterGrade : null;
+    keySpan.textContent = _quarterName(q);
+    if (official) gradeSpan.textContent = String(Math.round(official.grade * 10) / 10);
+    else gradeSpan.textContent = engine == null ? '—' : String(Math.round(engine));
+    var rule = document.createElement('span');
+    rule.className = 'qrule';
+    rule.textContent = (official ? 'official · ' : '') + 'closes ' + _quarterDayText(cfg.close);
+    pill.appendChild(rule);
+    pill.title = _quarterName(q) + ' ended ' + _quarterDayText(cfg.end) + '. Its 0s are fixable until '
+      + _quarterDayText(cfg.close) + ', then this grade is final.'
+      + (official && typeof _officialGradeTitle === 'function' ? ' ' + _officialGradeTitle(official) : '');
+  }
+  if (gradeSpan.textContent === '—') pill.classList.add('empty');
+  pill.style.cursor = 'pointer';
+  pill.setAttribute('role', 'button'); pill.tabIndex = 0;
+  pill.onclick = function () { if (typeof openWallet === 'function') openWallet(); };
+  pill.onkeydown = function (event) { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); if (typeof openWallet === 'function') openWallet(); } };
+  return pill;
+}
+
+// The current pill's words while its quarter has no grade yet and has not started:
+// 'starts Mon Nov 9' (teacher 2026-11-07: two pills from Sunday). '' otherwise.
+function _quarterStartsText(q) {
+  var start = _quarterConfig(q).start;
+  var today = _zeroTodayIso();
+  if (!start || !today || today >= start) return '';
+  return 'starts ' + _quarterDayText(start);
+}
 // OFFICIAL_GRADE_SYNC_SPEC §4.4: the official quarter grade -- the number written into
 // Schoology each night (teacher 2026-10-02: the Desk and Schoology must agree). Returns
 // { quarter, grade, asOf, parts } or null (not published yet, offline, or server too old).
@@ -9238,13 +9465,33 @@ async function _fetchOfficialGrade(baseUrl, token, quarter) {
   }
 }
 
+// Review D3 (2026-11-08): the ended quarter's official grade only changes nightly, so the Do Now
+// asks for it once per school day and every later render reuses it (the current quarter's is still
+// asked for on every render). Keyed by who asks (the token, or the student a teacher views as), the
+// quarter and the day. A request in flight is shared; a missing official (not published yet, or a
+// failed request) is dropped from the cache, so the next render asks again.
+var _sideOfficialByDay = {};
+function _fetchSideOfficialGrade(baseUrl, token, quarter) {
+  var ctx = (typeof _viewAsContext === 'function') ? _viewAsContext() : null;
+  var who = ctx ? 'as:' + ctx.studentId : 'me:' + token;
+  var key = who + '|' + quarter + '|' + _zeroTodayIso();
+  if (_sideOfficialByDay[key]) return _sideOfficialByDay[key];
+  _sideOfficialByDay[key] = _fetchOfficialGrade(baseUrl, token, quarter).then(function (official) {
+    if (!official) delete _sideOfficialByDay[key];
+    return official;
+  });
+  return _sideOfficialByDay[key];
+}
+
 // One line explaining where the official number comes from (pill tooltip).
 function _officialGradeTitle(official) {
   var p = official.parts || {};
   var n = function (v) { return (typeof v === 'number') ? String(Math.round(v * 10) / 10) : '—'; };
   var day = '';
   try { day = new Date(official.asOf).toLocaleDateString(undefined, { weekday: 'short', month: 'numeric', day: 'numeric' }); } catch (_) { day = ''; }
-  var text = 'Official ' + official.quarter + ' grade' + (day ? ' as of ' + day : '') + ' — the same number Schoology shows. '
+  // Review D4 (2026-11-08): 'Official Quarter 1 grade', never "Q1" (Q1 / Q3 are quartiles elsewhere).
+  var quarterWords = (typeof _quarterName === 'function') ? _quarterName(official.quarter) : official.quarter;
+  var text = 'Official ' + quarterWords + ' grade' + (day ? ' as of ' + day : '') + ' — the same number Schoology shows. '
     + 'Work ' + n(p.work) + ' (from Schoology)';
   if (typeof p.pc === 'number') {
     text += (p.rule === 'PC')
@@ -9268,6 +9515,9 @@ async function renderDoNowGrades(baseUrl, token) {
   var _wslHost = document.getElementById('donow-helper');
   if (_wslHost && !_coachPanelOpen()) _wslHost.innerHTML = '';
   if (typeof _clearDoNowBonus === 'function') _clearDoNowBonus();
+  // QUARTER_LINE_BY_DUE_DATE_SPEC §3.9: the quarter notice is re-decided on every render.
+  var _qNotice = document.getElementById('donow-notice');
+  if (_qNotice) { _qNotice.style.display = 'none'; _qNotice.textContent = ''; }
   _gradeQuartersCache = null;
   _gradeUnitsCache = null;
   if (typeof updateWalletReadinessIcon === 'function') updateWalletReadinessIcon();
@@ -9350,6 +9600,11 @@ async function renderDoNowGrades(baseUrl, token) {
     // Capture the cold→warm transition BEFORE reassigning: the FIRST successful warm
     // must force a calendar window re-size (see the rCal escalation below).
     var _gradeCacheWasCold = (_gradeLessonsCache === null);
+    // QUARTER_LINE_BY_DUE_DATE_SPEC §3: the quarter dates (close / finalUntil included) travel
+    // with the lessons, so every repaint below already sees the same quarter line.
+    if (typeof _gradeConfigCache !== 'undefined') _gradeConfigCache = (data.config && typeof data.config === 'object') ? data.config : null;
+    // D8: the close snapshots travel with the dates (one moment for every surface).
+    if (typeof _gradeClosedCache !== 'undefined' && typeof _gradeClosedQuarters === 'function') _gradeClosedCache = _gradeClosedQuarters(data.quarters);
     _gradeLessonsCache = Array.isArray(data.lessons) ? data.lessons : null;
     // Auto-refresh an open resource panel so the quiz Done gate (which reads
     // _quizPerfFor → this cache) reflects a freshly-recorded quiz score without
@@ -9405,17 +9660,24 @@ async function renderDoNowGrades(baseUrl, token) {
     _gradeGradebookCache = data.gradebook || null; // cache for the "My Gradebook" modal
     _gradeUnitsCache = (data.units && typeof data.units === 'object') ? data.units : null; // a PC on file (EFFORT_VISIBILITY_SPEC §3)
     var order = ['Q1', 'Q2', 'Q3', 'Q4'];
-    // Show ONLY the current quarter (the relevant one). Current = the quarter
+    // Show the current quarter (the relevant one). Current = the quarter
     // containing today (quarterOfDate); if today is outside all bands (e.g. summer
     // / before the year starts), fall back to the first quarter that has a grade,
     // else Q1.
-    var curN = (typeof quarterOfDate === 'function') ? quarterOfDate(new Date()) : null;
+    var curN = (typeof quarterOfDate === 'function') ? quarterOfDate((typeof tdy === 'function') ? tdy() : new Date()) : null;
     var curQ = curN ? ('Q' + curN) : null;
+    // QUARTER_LINE_BY_DUE_DATE_SPEC §3.1: while a quarter is closing or final, the next quarter is
+    // the current one, gap days included, and the ended quarter gets its own pill FIRST (sideQ).
+    // No close dates in this payload (an older cache): phase is null and this is today's one pill.
+    var phase = (typeof _deskQuarterPhase === 'function') ? _deskQuarterPhase() : null;
+    if (phase && phase.current && quarters[phase.current]) curQ = phase.current;
     if (!curQ || !quarters[curQ]) {
       curQ = order.filter(function (k) {
         return quarters[k] && typeof quarters[k].quarterGrade === 'number';
       })[0] || 'Q1';
     }
+    var sideQ = phase ? (phase.closing || phase.final) : null;
+    if (sideQ === curQ || !quarters[sideQ]) sideQ = null;
     var q = quarters[curQ] || null;
     var gradeRaw = q && typeof q.quarterGrade === 'number' ? q.quarterGrade : null;
     var pcAvg    = q && typeof q.pcAvg === 'number' ? q.pcAvg : null;
@@ -9430,13 +9692,35 @@ async function renderDoNowGrades(baseUrl, token) {
     // is viewing as); a teacher's own /grade has no graded quarter, so it stays "Q1 —".
     // The official grade (OFFICIAL_GRADE_SYNC_SPEC §4.4), when one has been published, is the
     // headline number; the engine's live grade becomes "Today's estimate" beside it.
-    var official = (typeof _fetchOfficialGrade === 'function') ? await _fetchOfficialGrade(baseUrl, token, curQ) : null;
+    // D3: both quarters at once; the ended quarter's official comes from its per-day cache.
+    var officials = await Promise.all([
+      (typeof _fetchOfficialGrade === 'function') ? _fetchOfficialGrade(baseUrl, token, curQ) : null,
+      (sideQ && typeof _fetchSideOfficialGrade === 'function') ? _fetchSideOfficialGrade(baseUrl, token, sideQ) : null,
+    ]);
+    var official = officials[0];
+    // Finding R6b (Codex re-review, finding 6): a quarter that has not started has no grade yet (the
+    // engine reports none before its start date), so its pill reads "starts Mon Nov 9" with no number,
+    // even when an official grade for it was published (a nightly pass can run on the Sunday before
+    // the quarter starts). It is not cached either, so the balance card, My Ledger and Pico never
+    // show it. Once the quarter has started, the official grade leads exactly as before.
+    var startsText = (sideQ && typeof _quarterStartsText === 'function') ? _quarterStartsText(curQ) : '';
+    if (startsText) official = null;
     if (typeof _officialGradeCache !== 'undefined') _officialGradeCache = official;
+    // §3.1: the ended quarter's official grade has its own slot (a per-quarter cache).
+    var sideOfficial = officials[1];
+    if (typeof _officialGradeByQuarter !== 'undefined') {
+      _officialGradeByQuarter = {};
+      _officialGradeByQuarter[curQ] = official;
+      if (sideQ) _officialGradeByQuarter[sideQ] = sideOfficial;
+    }
     var pill = document.createElement('span');
     pill.className = 'qpill' + (gradeRaw == null && !official ? ' empty' : '');
+    pill.dataset.quarter = curQ;
+    pill.dataset.role = 'current';
     var keySpan = document.createElement('span');
     keySpan.className = 'qkey';
-    keySpan.textContent = curQ;
+    // Two pills say "Quarter 1" / "Quarter 2" (Q1 / Q3 are quartiles elsewhere); one pill keeps "Q1".
+    keySpan.textContent = sideQ ? 'Quarter ' + curQ.slice(1) : curQ;
     pill.appendChild(keySpan);
     var gradeSpan = document.createElement('span');
     gradeSpan.className = 'qgrade';
@@ -9466,8 +9750,17 @@ async function renderDoNowGrades(baseUrl, token) {
         });
         pill.appendChild(rule);
       }
+    } else if (startsText) {
+      // §3.1 (teacher 2026-11-07): from Sunday the new quarter's pill reads "starts Mon Nov 9"
+      // until it has a grade (Finding R6b: an official grade published early never replaces it).
+      var startsRule = document.createElement('span');
+      startsRule.className = 'qrule';
+      startsRule.textContent = startsText;
+      pill.appendChild(startsRule);
     }
-    var tip = curQ + ' covers ' + (QUARTER_BAND_LABEL[curQ] || '');
+    // Review D4: tooltips say "Quarter 2"; only the single pill's own label stays "Q2" (j1 pins it).
+    var curQWords = (typeof _quarterName === 'function') ? _quarterName(curQ) : curQ;
+    var tip = curQWords + ' covers ' + (QUARTER_BAND_LABEL[curQ] || '');
     if (lGraded != null && lTotal != null) {
       tip += ' — ' + lGraded + ' of ' + lTotal + ' lesson' + (lTotal === 1 ? '' : 's') + ' graded';
       if (lDue != null) tip += ' (' + lDue + ' due so far)';
@@ -9475,12 +9768,18 @@ async function renderDoNowGrades(baseUrl, token) {
     pill.title = official
       ? _officialGradeTitle(official) + ' Tap to see where you stand in the class.'
       : tip + '. Once both tracks are at least 40%, your grade is the higher one. Tap to see where you stand in the class.';
+    // Finding R6b: the pill of a quarter that has not started shows no number; its tooltip names the start.
+    if (startsText && gradeRaw == null) pill.title = curQWords + ' ' + startsText + '. It has no grade until then. ' + pill.title;
     pill.style.cursor = 'pointer';
     pill.setAttribute('role', 'button'); pill.tabIndex = 0;
     pill.onclick = function () { if (typeof openWallet === 'function') openWallet(); };
     pill.onkeydown = function (event) { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); if (typeof openWallet === 'function') openWallet(); } };
+    // §3.1: the ended quarter's pill (closing / final) comes first, then the current one.
+    if (sideQ && typeof _doNowSidePill === 'function') host.appendChild(_doNowSidePill(sideQ, quarters[sideQ], sideOfficial, phase));
     host.appendChild(pill);
     if (typeof _updateDoNowMissingPill === 'function') _updateDoNowMissingPill();
+    // §3.9: the one-time notice for work that just became Quarter 2 work with a 0 date now.
+    if (typeof _renderQuarterNotice === 'function') _renderQuarterNotice();
     // BONUS_DONOW_SPEC: the banked-bonus sentence under the pill (fire-and-forget; own fetch).
     if (typeof renderDoNowBonus === 'function') renderDoNowBonus();
 
@@ -9511,7 +9810,7 @@ async function renderDoNowGrades(baseUrl, token) {
       'Moves as you work today. Tonight, after the Schoology sync, your official grade is recalculated from Schoology.'));
     // AHEAD_WORK_PROJECTION_SPEC: the chip text stays "Schoology today"; the title adds the projection.
     else host.appendChild(_trackChip('Schoology today', schToday,
-      'What the Schoology gradebook shows for ' + curQ + ' as of today: only work that is due AND completed. ' +
+      'What the Schoology gradebook shows for ' + curQWords + ' as of today: only work that is due AND completed. ' +
       'Blanks are not zeros and work done ahead of schedule is not counted until it comes due.' +
       ((typeof _effortAheadProjectionSentence === 'function') ? _effortAheadProjectionSentence(curQ, _aheadCount) : '')));
     if (gradeRaw != null) {
@@ -9567,7 +9866,11 @@ async function renderDoNowGrades(baseUrl, token) {
 
     // "Why so low?" grade coach — render alongside the strip (q is in scope).
     // typeof-guarded so the existing renderDoNowGrades tests don't need it.
-    if (typeof renderWhySoLow === 'function') renderWhySoLow(curQ, q);
+    // §3.7: while the new quarter has no grade yet, the coach explains the closing quarter.
+    if (typeof renderWhySoLow === 'function') {
+      if (gradeRaw == null && sideQ && phase && phase.closing === sideQ) renderWhySoLow(sideQ, quarters[sideQ]);
+      else renderWhySoLow(curQ, q);
+    }
     if (typeof updateWalletReadinessIcon === 'function') updateWalletReadinessIcon();
     if (typeof _paintDoNowReadiness === 'function') _paintDoNowReadiness();
   } catch (_) {
@@ -9677,10 +9980,13 @@ function _buildCoachContext(curQ, q) {
     // is otherwise invisible to the coach. (Doing the flashcards completes/unlocks the
     // lesson; it does NOT change the grade — Blooket isn't a grade component yet.)
     if (Array.isArray(_gradeLessonsCache)) {
+      // Review D2 (2026-11-08): only the lessons of the quarter being explained (_coachLessonFilter).
+      var _fgIn = (typeof _coachLessonFilter === 'function') ? _coachLessonFilter(curQ) : null;
       var _fg = [];
       for (var _fi = 0; _fi < _gradeLessonsCache.length; _fi++) {
         var _fl = _gradeLessonsCache[_fi];
         if (!_fl || !_fl.hasBlooket) continue;
+        if (_fgIn && !_fgIn(_fl.lessonKey)) continue;
         var _fcws = (typeof _fl.Cws === 'number') ? _fl.Cws : null;
         var _fbl = (typeof _fl.blooket === 'number') ? _fl.blooket : null;
         if (_fcws != null && _fcws >= 60 && (_fbl == null || _fbl < 80)) {
@@ -9701,8 +10007,10 @@ function _buildCoachContext(curQ, q) {
   // it is counting yet (red) or still tentative (yellow). The coach must never call a yellow
   // item a 0 (teacher 2026-09-26: the coach was behind the zero-date rule).
   try {
-    ctx.missing = _coachMissingList();
+    ctx.missing = _coachMissingList(curQ);
   } catch (_) { ctx.missing = []; }
+  // QUARTER_LINE_BY_DUE_DATE_SPEC §3.7: one quarter at a time; a closing quarter gets its own line.
+  try { if (typeof _coachQuarterLine === 'function') _coachQuarterLine(ctx, curQ); } catch (_) {}
   // EFFORT_VISIBILITY_SPEC §3: a PC on file (it may not count yet) and the lessons done ahead of
   // the calendar, so the coach credits the effort before anything else.
   try {
@@ -9715,7 +10023,10 @@ function _buildCoachContext(curQ, q) {
   } catch (_) { ctx.pcOnFile = null; ctx.ahead = []; ctx.aheadCount = 0; ctx.aheadProjection = null; }
   try {
     if (Array.isArray(_gradeLessonsCache)) {
+      // Review D2: a closed or other quarter's lesson is never the "biggest win" here.
+      var _weakIn = (typeof _coachLessonFilter === 'function') ? _coachLessonFilter(curQ) : null;
       var weak = _gradeLessonsCache.filter(function (l) {
+        if (_weakIn && l && !_weakIn(l.lessonKey)) return false;
         return l && typeof l.lessonGrade === 'number' && l.lessonGrade < 75;
       }).sort(function (a, b) { return a.lessonGrade - b.lessonGrade; }).slice(0, 6);
       ctx.weakLessons = weak.map(function (l) {
@@ -9759,19 +10070,72 @@ function _buildCoachContext(curQ, q) {
   return ctx;
 }
 
-// Missing work for the coach: [{ lesson, kind, zeroDate, day, past }], oldest first, at most 12.
-function _coachMissingList() {
+// Missing work for the coach: [{ lesson, kind, zeroDate, day, past, quarter? }], oldest first, at
+// most 12. QUARTER_LINE_BY_DUE_DATE_SPEC §3.7: the coach explains ONE quarter, so with `quarter`
+// only that quarter's items are kept (another quarter's 0s never count toward it; untagged items
+// of an older /grade stay). Review D2 (2026-11-08): the quarter filter runs BEFORE the 12-item
+// cut, or twelve older Quarter 1 items would push every Quarter 2 item off the list.
+function _coachMissingList(quarter) {
     var warns = (typeof _zeroCurrentWarnings === 'function') ? _zeroCurrentWarnings() : [];
     if (!Array.isArray(warns)) return [];
-    return warns.slice(0, 12).map(function (w) {
-        return {
+    // Each item also names the quarter it counts in, when /grade says.
+    var tags = (typeof DeskMissingWork !== 'undefined' && typeof DeskMissingWork.lessonQuarters === 'function')
+        ? DeskMissingWork.lessonQuarters((typeof _gradeLessonsCache !== 'undefined') ? _gradeLessonsCache : null, (typeof cP === 'string') ? cP : null)
+        : {};
+    var items = warns.map(function (w) {
+        var item = {
             lesson: w.lessonKey,
             kind: w.kind,
             zeroDate: w.zeroDate,
             day: (typeof _zeroDayText === 'function') ? _zeroDayText(w.zeroDate) : w.zeroDate,
             past: Boolean(w.past),
         };
+        if (tags[w.lessonKey]) item.quarter = tags[w.lessonKey].quarter;
+        return item;
     });
+    if (quarter) items = items.filter(function (m) { return !m.quarter || m.quarter === quarter; });
+    return items.slice(0, 12);
+}
+// QUARTER_LINE_BY_DUE_DATE_SPEC §3.7: while another quarter is closing, ctx.quarterLine names its
+// fixable 0s, counted from the FULL warning list (never the coach's cut list):
+// 'Quarter 1 closes Thu Nov 12: 2 zeros still fixable.'
+function _coachQuarterLine(ctx, quarter) {
+    if (!quarter) return;
+    var phase = (typeof _deskQuarterPhase === 'function') ? _deskQuarterPhase() : null;
+    if (!phase || !phase.closing || phase.closing === quarter) return;
+    if (typeof DeskMissingWork === 'undefined' || typeof DeskMissingWork.lessonQuarters !== 'function') return;
+    var tags = DeskMissingWork.lessonQuarters(_gradeLessonsCache, cP);
+    var fixable = _zeroCurrentWarnings().filter(function (w) {
+        return w.past && tags[w.lessonKey] && tags[w.lessonKey].quarter === phase.closing;
+    }).length;
+    if (!fixable) return;
+    ctx.quarterLine = _quarterName(phase.closing) + ' closes ' + _quarterDayText(_quarterConfig(phase.closing).close) + ': '
+        + fixable + (fixable === 1 ? ' zero' : ' zeros') + ' still fixable.';
+}
+// Review D2 (2026-11-08): which lessons the coach may name while it explains quarter q, as a
+// predicate (lessonKey -> true / false), or null when nothing filters (no quarter, the missing-work
+// module failed to load, or an older /grade without quarter fields). A lesson stays when it counts
+// in q, or when it is lift-only into a quarter that is still closing (finishing it can still raise
+// that quarter). A lesson of another quarter goes, and so does every lesson whose quarter has closed
+// (the §3.3 choke point: its 0s are final). A lesson without a quarter tag always stays.
+function _coachLessonFilter(q) {
+    if (!q || typeof DeskMissingWork === 'undefined' || typeof DeskMissingWork.lessonQuarters !== 'function') return null;
+    var lessons = (typeof _gradeLessonsCache !== 'undefined') ? _gradeLessonsCache : null;
+    var period = (typeof cP === 'string') ? cP : null;
+    var tags = DeskMissingWork.lessonQuarters(lessons, period);
+    if (!Object.keys(tags).length) return null;
+    var phase = (typeof _deskQuarterPhase === 'function') ? _deskQuarterPhase() : null;
+    var closing = phase ? phase.closing : null;
+    var today = _zeroTodayIso();
+    var quarters = (typeof _deskGradeQuarters === 'function') ? _deskGradeQuarters() : null;
+    return function (lessonKey) {
+        var tag = tags[lessonKey];
+        if (!tag) return true;
+        var open = DeskMissingWork.openQuarterRows([{ lessonKey: lessonKey }], lessons, period, today, quarters);
+        if (!open.length) return false;
+        if (tag.quarter === q) return true;
+        return Boolean(closing && tag.lift === closing);
+    };
 }
 // "First:" — the missing work that matters most: everything counting as 0 now, else the group
 // that becomes a 0 soonest. Empty string when nothing is missing.
@@ -9823,7 +10187,8 @@ function _renderCoachPanel(panel, ctx) {
   var head = document.createElement('div');
   head.className = 'wsl-head';
   var gradeTxt = (ctx.grade != null) ? (Math.round(ctx.grade * 10) / 10) + '%' : '—';
-  head.textContent = 'Your ' + (ctx.quarter || 'current') + ' grade is ' + gradeTxt +
+  var quarterWords = !ctx.quarter ? 'current' : ((typeof _quarterName === 'function') ? _quarterName(ctx.quarter) : ctx.quarter);
+  head.textContent = 'Your ' + quarterWords + ' grade is ' + gradeTxt +
     (ctx.ceiling != null ? ' (the most it could still reach this quarter: ' + (Math.round(ctx.ceiling * 10) / 10) + '%).' : '.');
   facts.appendChild(head);
 
@@ -9866,6 +10231,14 @@ function _renderCoachPanel(panel, ctx) {
     first.style.cssText = 'font-weight:bold;margin-top:3px';
     first.textContent = firstLine;
     facts.appendChild(first);
+  }
+  // QUARTER_LINE_BY_DUE_DATE_SPEC §3.7: the closing quarter's fixable 0s, apart from this quarter's.
+  if (ctx.quarterLine) {
+    var qLine = document.createElement('div');
+    qLine.className = 'wsl-quarter-line';
+    qLine.style.cssText = 'font-weight:bold;margin-top:3px';
+    qLine.textContent = '⚠ ' + ctx.quarterLine;
+    facts.appendChild(qLine);
   }
   // The lowest-scoring RECORDED component — the biggest win once nothing is missing.
   if (ctx.biggestWin) {
@@ -16452,8 +16825,12 @@ function _walletPct(v) {
 function _walletCurrentQuarter() {
     try {
         var quarters = _gradeQuartersCache || {};
-        var curN = (typeof quarterOfDate === 'function') ? quarterOfDate(new Date()) : null;
+        var curN = (typeof quarterOfDate === 'function') ? quarterOfDate((typeof tdy === 'function') ? tdy() : new Date()) : null;
         var curQ = curN ? ('Q' + curN) : null;
+        // QUARTER_LINE_BY_DUE_DATE_SPEC §3.1: while a quarter is closing or final the next one is
+        // current (gap days too), exactly like the Do Now's current pill.
+        var phase = (typeof _deskQuarterPhase === 'function') ? _deskQuarterPhase() : null;
+        if (phase && phase.current) curQ = phase.current;
         var q = (curQ && quarters[curQ]) ? quarters[curQ] : null;
         if (!q || typeof q.quarterGrade !== 'number') {
             var order = ['Q1', 'Q2', 'Q3', 'Q4'];
@@ -16473,6 +16850,15 @@ function _walletCurrentGrade() {
     // OFFICIAL_GRADE_SYNC_SPEC §4.4: the official grade (the number in Schoology) leads when it has
     // been published for this quarter; the Desk's live grade becomes "Today's estimate".
     var official = (typeof _officialGradeCache !== 'undefined') ? _officialGradeCache : null;
+    // QUARTER_LINE_BY_DUE_DATE_SPEC §3.1: the per-quarter cache answers when the Do Now's current
+    // pill is another quarter (Sunday: the new quarter has no grade yet, so this card shows Quarter 1).
+    var byQuarter = (typeof _officialGradeByQuarter !== 'undefined') ? _officialGradeByQuarter : null;
+    if (current.quarter && (!official || official.quarter !== current.quarter) && byQuarter && byQuarter[current.quarter]) {
+        official = byQuarter[current.quarter];
+    }
+    // Finding R6b (Codex re-review, finding 6): never the official grade of a quarter that has not
+    // started, even if one is cached.
+    if (official && typeof _quarterStartsText === 'function' && _quarterStartsText(official.quarter)) official = null;
     if (official && typeof official.grade === 'number' && (!current.quarter || official.quarter === current.quarter)) {
         return {
             pct: Math.round(official.grade * 10) / 10,
@@ -16485,6 +16871,40 @@ function _walletCurrentGrade() {
         return { pct: _walletPct(q.quarterGrade), q: current.quarter };
     }
     return { pct: null, q: null };
+}
+
+// { pct, q, official?, estimate? } for ANY quarter (QUARTER_LINE_BY_DUE_DATE_SPEC §3.2): the
+// current one exactly as the balance card shows it; another from its own official grade, else
+// the Desk grade. pct null before the quarter has a grade.
+function _walletQuarterGrade(quarter) {
+    if (_walletCurrentQuarter().quarter === quarter) return _walletCurrentGrade();
+    var data = (_gradeQuartersCache || {})[quarter];
+    var estimate = (data && typeof data.quarterGrade === 'number') ? _walletPct(data.quarterGrade) : null;
+    var official = (typeof _officialGradeFor === 'function') ? _officialGradeFor(quarter) : null;
+    if (official && typeof official.grade === 'number') {
+        return { pct: Math.round(official.grade * 10) / 10, q: quarter, official: official, estimate: estimate };
+    }
+    return { pct: estimate, q: quarter };
+}
+
+// The balance card's line for the quarter that just ended (§3.2, decision 8.7), or '':
+//   closing: 'Quarter 1: 92% · closes Thu Nov 12. Its 0s can still be fixed until then.'
+//   final:   'Quarter 1 final: 92%' (read-only, for the week after the close)
+// When the card itself shows that quarter (the new one has no grade yet) only the close is named.
+function _walletOtherQuarterLine(shownQuarter) {
+    var phase = (typeof _deskQuarterPhase === 'function') ? _deskQuarterPhase() : null;
+    var side = phase ? (phase.closing || phase.final) : null;
+    if (!side) return '';
+    var cfg = _quarterConfig(side);
+    var closing = phase.closing === side;
+    if (shownQuarter === side) return closing ? _quarterName(side) + ' closes ' + _quarterDayText(cfg.close) + '. Its 0s can still be fixed until then.' : '';
+    if (!closing) {
+        var finalGrade = _quarterFinalGrade(side, (_gradeQuartersCache || {})[side], _officialGradeFor(side));
+        return finalGrade == null ? '' : _quarterName(side) + ' final: ' + (Math.round(finalGrade * 10) / 10) + '%';
+    }
+    var grade = _walletQuarterGrade(side);
+    var pct = grade.pct != null ? grade.pct + '%' + (grade.official ? ' official' : '') : '—';
+    return _quarterName(side) + ': ' + pct + ' · closes ' + _quarterDayText(cfg.close) + '. Its 0s can still be fixed until then.';
 }
 
 function _walletCurrentReadiness() {
@@ -16627,7 +17047,13 @@ function _zeroTodayIso() {
 function _zeroCurrentWarnings() {
     var lessons = (typeof _gradeLessonsCache !== 'undefined') ? _gradeLessonsCache : null;
     var period = (typeof cP === 'string') ? cP : null;
-    return _zeroWarnings(lessons, period, _zeroTodayIso());
+    var today = _zeroTodayIso();
+    var warns = _zeroWarnings(lessons, period, today);
+    // QUARTER_LINE_BY_DUE_DATE_SPEC §3.3, the one choke point: after a quarter closes its 0s are
+    // final, so they leave the tint, pill, badge, coach, calendar marks and Pico buckets here.
+    if (typeof DeskMissingWork === 'undefined' || typeof DeskMissingWork.openQuarterRows !== 'function') return warns;
+    var quarters = (typeof _deskGradeQuarters === 'function') ? _deskGradeQuarters() : null;
+    return DeskMissingWork.openQuarterRows(warns, lessons, period, today, quarters);
 }
 // ── PAST_DUE_WORK (teacher 2026-09-30) ─────────────────────────────────────
 // Schoology marks an item "missing" the day after its due date, but the Desk
@@ -16646,7 +17072,12 @@ function _pastDueWork(lessons, period, todayIso) {
 function _pastDueCurrentWork() {
     var lessons = (typeof _gradeLessonsCache !== 'undefined') ? _gradeLessonsCache : null;
     var period = (typeof cP === 'string') ? cP : null;
-    return _pastDueWork(lessons, period, _zeroTodayIso());
+    var today = _zeroTodayIso();
+    var rows = _pastDueWork(lessons, period, today);
+    // QUARTER_LINE_BY_DUE_DATE_SPEC §3.3: the same choke point as _zeroCurrentWarnings.
+    if (typeof DeskMissingWork === 'undefined' || typeof DeskMissingWork.openQuarterRows !== 'function') return rows;
+    var quarters = (typeof _deskGradeQuarters === 'function') ? _deskGradeQuarters() : null;
+    return DeskMissingWork.openQuarterRows(rows, lessons, period, today, quarters);
 }
 // Schoology still has the OLD column titles ("3.1 Blooket") until the teacher runs
 // tools/schoology_rename_columns.py --apply. Mirrors roster-server grade-config.js
@@ -16695,6 +17126,41 @@ function _gradebookSchoologyTitle(colKey) {
         }
     }
     return null;
+}
+// QUARTER_LINE_BY_DUE_DATE_SPEC §3.5: 'MP2' when one Schoology title sits in two quarters' tabs
+// (a lift-only copy in the earlier quarter, the regular column later): the marking period of the
+// earliest regular copy. null when the title is in one tab only, or no copy is lift-only (a
+// straddling worksheet column stays in its first marking period, decision 8.2).
+// Review D7 (2026-11-08): when /grade names the column's marking period itself (schoologyQuarter
+// on the copy listed in another quarter's tab), that wins: 'MP1' for Period B's 2.3 Follow-Along.
+function _gradebookSchoologyPeriod(title) {
+    var gb = (typeof _gradeGradebookCache !== 'undefined') ? _gradeGradebookCache : null;
+    var quarters = gb && gb.quarters;
+    if (!quarters || !title) return null;
+    var copies = 0, lift = false, regular = [], stamped = null;
+    Object.keys(quarters).sort().forEach(function (q) {
+        var cols = quarters[q] && quarters[q].columns;
+        if (!Array.isArray(cols)) return;
+        cols.forEach(function (col) {
+            if (!col || col.schoologyTitle !== title) return;
+            copies++;
+            if (col.schoologyQuarter && col.schoologyQuarter !== q && !stamped) stamped = col.schoologyQuarter;
+            if (col.liftOnly) lift = true;
+            else regular.push(q);
+        });
+    });
+    if (copies < 2) return null;
+    if (stamped) return 'MP' + String(stamped).slice(1);
+    if (!lift || !regular.length) return null;
+    return 'MP' + regular[0].slice(1);
+}
+// The words of a row's Schoology tag: 'Schoology: 2.4-2.6 Follow-Along', or 'Schoology MP2: …'
+// when that title sits in two marking periods' tabs (§3.5). null without a title.
+function _zeroSchoologyLabel(w) {
+    var title = _zeroSchoologyTitle(w);
+    if (!title) return null;
+    var mp = (typeof _gradebookSchoologyPeriod === 'function') ? _gradebookSchoologyPeriod(title) : null;
+    return 'Schoology' + (mp ? ' ' + mp : '') + ': ' + title;
 }
 // The /grade lesson for a lesson key (null when the cache or the lesson is missing).
 function _zeroLessonByKey(lessonKey) {
@@ -16745,6 +17211,17 @@ function _zeroPillText(warns) {
     if (!soon) return nowText;
     if (now) return nowText + ' \u00b7 ' + soon + ' more by ' + by;
     return soon + (soon === 1 ? ' becomes a 0 by ' : ' become a 0 by ') + by;
+}
+// QUARTER_LINE_BY_DUE_DATE_SPEC \u00a73.1: the missing pill per quarter while rows are grouped, e.g.
+// 'Quarter 1: 2 are 0s now, fix by Thu 11/12 \u00b7 Quarter 2: 1 becomes a 0 by Mon 11/9'. '' otherwise.
+function _zeroQuarterPillText(warns) {
+    var view = (typeof _zeroQuarterView === 'function') ? _zeroQuarterView(warns) : null;
+    if (!view) return '';
+    return view.quarters.map(function (q) {
+        var mine = warns.filter(function (w) { return view.quarterOf(w) === q; });
+        var close = (view.phase && view.phase.closing === q) ? _quarterConfig(q).close : null;
+        return _quarterName(q) + ': ' + _zeroPillText(mine) + (close ? ', fix by ' + _zeroDayText(close) : '');
+    }).join(' \u00b7 ');
 }
 // Tint the Do Now card: yellow while zeros are coming, red once any is counting. Additive
 // classes only \u2014 the base donow-<mode> class is never touched.
@@ -16826,7 +17303,10 @@ function _updateDoNowMissingPill() {
     var warns = _zeroCurrentWarnings();
     if (typeof _donowApplyZeroState === 'function') _donowApplyZeroState();
     if (!warns.length) { if (pill) pill.remove(); return; }
-    var quarter = host.querySelector('.qpill:not(.qpill-missing)');
+    // QUARTER_LINE_BY_DUE_DATE_SPEC §3.1: after the LAST quarter pill (a closing / final pill
+    // may come first).
+    var quarterPills = host.querySelectorAll('.qpill:not(.qpill-missing)');
+    var quarter = quarterPills[quarterPills.length - 1];
     if (!quarter) return;
     if (!pill) {
         pill = document.createElement('span');
@@ -16839,12 +17319,110 @@ function _updateDoNowMissingPill() {
             event.stopPropagation();
             openWallet();
         };
-        quarter.after(pill);
     }
+    if (pill.previousElementSibling !== quarter) quarter.after(pill);
     var anyPast = warns.some(function (w) { return w.past; });
     pill.className = 'qpill qpill-missing ' + (anyPast ? 'qpill-now' : 'qpill-soon');
-    pill.textContent = _zeroPillText(warns);
+    // §3.1: per quarter while the rows are grouped, else the one sentence.
+    pill.textContent = ((typeof _zeroQuarterPillText === 'function') ? _zeroQuarterPillText(warns) : '') || _zeroPillText(warns);
     pill.title = 'Tap to see what to finish';
+}
+// ── QUARTER_LINE_BY_DUE_DATE_SPEC §3.9: the one-time notice (teacher 2026-11-07) ──────────────
+// Work taught in the quarter that just ended but counting in the next one, whose 0 date falls by
+// the next quarter's first day (B 2.3 Day 2 and 2.4, E 2.2 and 2.3 Day 1 this year), went from
+// "late · no 0" to a 0 within a day of the change. A student missing such work sees ONE
+// dismissable line on the Do Now (and the Pico sign), through the day after that first day.
+
+// The ISO date `days` after an ISO date.
+function _isoAddDays(iso, days) {
+    var d = new Date(iso + 'T00:00:00');
+    d.setDate(d.getDate() + days);
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+// '2.3 Day 2' for a lesson key: the CED topic and its day (never the stored key).
+function _cedShortText(key) {
+    var label = (typeof cedLabel === 'function') ? cedLabel(key) : null;
+    if (!label) return 'Lesson';
+    if (!label.mapped || label.bonus || !label.id) return label.text;
+    return label.id + (label.day ? ' Day ' + label.day : '');
+}
+// The lessons the notice names: missing, regular in the current quarter, lift-only in the closing
+// one, 0 date by the current quarter's first day. Each once, in 0-date order. [] outside the window.
+function _quarterNoticeLessons() {
+    var phase = _deskQuarterPhase();
+    if (!phase || !phase.closing || !phase.current) return [];
+    var start = _quarterConfig(phase.current).start;
+    var today = _zeroTodayIso();
+    if (!start || !today || today > _isoAddDays(start, 1)) return [];   // gone after the day after
+    if (typeof DeskMissingWork === 'undefined' || typeof DeskMissingWork.lessonQuarters !== 'function') return [];
+    var tags = DeskMissingWork.lessonQuarters(_gradeLessonsCache, cP);
+    var keys = [];
+    _zeroCurrentWarnings().forEach(function (w) {
+        var tag = tags[w.lessonKey];
+        if (!tag || tag.quarter !== phase.current || tag.lift !== phase.closing) return;
+        if (!w.zeroDate || w.zeroDate > start) return;
+        if (keys.indexOf(w.lessonKey) < 0) keys.push(w.lessonKey);
+    });
+    return keys;
+}
+// 'Quarter 1 ended Friday. 2.3 Day 2 counts for Quarter 2 and its 0 date is today; finish it to clear it.'
+function _quarterNoticeText(keys) {
+    var phase = _deskQuarterPhase();
+    if (!phase || !keys || !keys.length) return '';
+    var WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    var end = _quarterConfig(phase.closing).end;
+    var lead = _quarterName(phase.closing) + ' ended ' + (end ? WEEKDAYS[new Date(end + 'T00:00:00').getDay()] : 'last week') + '. ';
+    var today = _zeroTodayIso();
+    var next = _quarterName(phase.current);
+    var items = keys.map(function (key) {
+        var L = _zeroLessonByKey(key);
+        var zd = (L && L.zeroDate) ? L.zeroDate[cP] : null;
+        return { name: _cedShortText(key), zd: zd, when: zd === today ? 'today' : _zeroDayText(zd) };
+    });
+    if (items.length === 1) {
+        var one = items[0];
+        var verb = (one.zd === today) ? 'is today' : (one.zd < today ? 'was ' : 'is ') + one.when;
+        return lead + one.name + ' counts for ' + next + ' and its 0 date ' + verb + '; finish it to clear it.';
+    }
+    var names = items.map(function (it) { return it.name + ' (0 date ' + it.when + ')'; });
+    var list = names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1];
+    return lead + list + ' count for ' + next + '; finish them to clear them.';
+}
+// One dismissal per student per closing quarter (a per-device convenience).
+function _quarterNoticeKey() {
+    var phase = _deskQuarterPhase();
+    var who = '';
+    try { var cur = window.rosterClient && window.rosterClient.current && window.rosterClient.current(); who = (cur && cur.username) || ''; } catch (_) {}
+    return 'apstats_quarter_notice_' + (phase ? phase.closing : '') + '_' + who;
+}
+// The notice the Do Now shows now, or '' (nothing missing, dismissed, or the window is over).
+function _quarterNoticeNow() {
+    try { if (localStorage.getItem(_quarterNoticeKey()) === '1') return ''; } catch (_) {}
+    return _quarterNoticeText(_quarterNoticeLessons());
+}
+function _dismissQuarterNotice() {
+    try { localStorage.setItem(_quarterNoticeKey(), '1'); } catch (_) {}
+    _renderQuarterNotice();
+}
+function _renderQuarterNotice() {
+    var host = document.getElementById('donow-notice');
+    if (!host) return;
+    var text = '';
+    try { text = _quarterNoticeNow(); } catch (_) { text = ''; }
+    host.textContent = '';
+    host.style.display = text ? 'flex' : 'none';
+    if (!text) return;
+    var words = document.createElement('span');
+    words.className = 'donow-notice-text';
+    words.textContent = text;
+    var ok = document.createElement('button');
+    ok.type = 'button';
+    ok.className = 's7btn';
+    ok.textContent = 'OK';
+    ok.setAttribute('aria-label', 'Dismiss this notice');
+    ok.onclick = function (event) { event.stopPropagation(); _dismissQuarterNotice(); };
+    host.appendChild(words);
+    host.appendChild(ok);
 }
 // ── CLASS SNAPSHOT — "Where you stand" (CLASS_SNAPSHOT_SPEC.md, teacher 2026-09-26) ──
 // Every signed-in student sees the class's current quarter grades drawn as the graph the class
@@ -17121,10 +17699,21 @@ function _snapNeverZeroFor(a, viewerSection, lessons) {
     var L = (lessons || []).find(function (l) { return l && l.lessonKey === a.lessonKey; });
     return Boolean(L && L.neverZero && L.neverZero[period] === true);
 }
+// QUARTER_LINE_BY_DUE_DATE_SPEC §3.11: the closed quarter this assignment counts in for the
+// viewer's section ('Q1'), or null. After a close nothing in that quarter can change any more.
+function _snapClosedQuarterFor(a, viewerSection, lessons) {
+    if (!a || !viewerSection) return null;
+    if (typeof DeskMissingWork === 'undefined' || typeof DeskMissingWork.closedQuarterOf !== 'function') return null;
+    var quarters = (typeof _deskGradeQuarters === 'function') ? _deskGradeQuarters() : null;
+    if (!quarters) return null;
+    var period = String(viewerSection).slice(-1);
+    return DeskMissingWork.closedQuarterOf(lessons, a.lessonKey, period, _zeroTodayIso(), quarters, a.track);
+}
 // What to do about this assignment, in one or two sentences, plus an optional action.
 // label: undefined = the viewer's own score; a name = a picked student; null = nobody placed.
 // neverZero: late for this student, never a 0 (_snapNeverZeroFor).
-function _snapAdvice(a, own, label, neverZero) {
+// finalQuarter: the closed quarter it counts in ('Q1', _snapClosedQuarterFor): no "Do this next".
+function _snapAdvice(a, own, label, neverZero, finalQuarter) {
     var values = Array.isArray(a.values) ? a.values : [];
     var fn = ClassSnapshot.fiveNumber(values);
     var n = values.length, zeros = typeof a.zeros === 'number' ? a.zeros : values.filter(function (v) { return v === 0; }).length;
@@ -17135,6 +17724,11 @@ function _snapAdvice(a, own, label, neverZero) {
     var who = label ? label + ' has' : 'You have';
     var track = a.track === 'quiz' ? 'quiz' : a.track === 'blooket' ? 'flashcards' : 'worksheet';
     var action = a.track === 'quiz' ? 'Take the quiz' : a.track === 'blooket' ? 'Run the flashcards' : 'Open the worksheet';
+    if (finalQuarter) {
+        var final = 'Quarter ' + String(finalQuarter).replace(/^Q/, '') + ' final';
+        if (own == null || own === 0) return { text: final + ' — ' + (label ? label + '’s' : 'this') + ' 0 no longer changes.' };
+        return { text: who + ' ' + own + ' here. ' + final + ' — it no longer changes.' };
+    }
     if (neverZero && own == null) {
         if (label) return { text: label + ' has nothing here yet \u2014 it is late, never a 0. Finishing it still counts.' };
         return { text: 'Late \u2014 this one is never a 0 for you. Finishing it still counts.', action: action, kind: a.track };
@@ -17164,27 +17758,32 @@ function _snapAdvice(a, own, label, neverZero) {
 //   3. else a late assignment with nothing turned in (never a 0, nevers[i], but still to do);
 //   4. else nothing needs fixing: the newest assignment, flagged `clear`.
 // Nobody placed (label null): the most overdue assignment.
-function _snapFocus(rows, owns, label, nevers) {
+// finals[i] (QUARTER_LINE_BY_DUE_DATE_SPEC §3.11): it counts in a closed quarter, so it is never
+// the thing to fix next.
+function _snapFocus(rows, owns, label, nevers, finals) {
     if (label === null) return { index: 0, clear: false };
     var late = function (i) { return owns[i] == null && Boolean(nevers && nevers[i]); };
+    var closed = function (i) { return Boolean(finals && finals[i]); };
     var best = -1, bestDate = null;
     rows.forEach(function (a, i) {
         var own = owns[i];
         if (own != null && own !== 0) return;
         if (late(i)) return;   // not a 0
+        if (closed(i)) return;   // a final 0: nothing to fix
         if (bestDate == null || a.zeroDate < bestDate) { best = i; bestDate = a.zeroDate; }
     });
     if (best >= 0) return { index: best, clear: false };
     var worst = -1, gap = 0;
     rows.forEach(function (a, i) {
         if (owns[i] == null) return;
+        if (closed(i)) return;
         var fn = ClassSnapshot.fiveNumber(a.values || []);
         if (fn.q1 == null || owns[i] >= fn.q1) return;
         var g = fn.median - owns[i];
         if (g > gap) { gap = g; worst = i; }
     });
     if (worst >= 0) return { index: worst, clear: false };
-    for (var i = 0; i < rows.length; i++) if (late(i)) return { index: i, clear: false };
+    for (var i = 0; i < rows.length; i++) if (late(i) && !closed(i)) return { index: i, clear: false };
     return { index: rows.length - 1, clear: true };
 }
 function _snapFocusIndex(rows, owns, label) { return _snapFocus(rows, owns, label).index; }
@@ -17264,9 +17863,11 @@ function _snapAssignmentPlot(row, a, ownForPlot, label, amode, tentative, ownTen
 }
 // opts.dataOnly (student "My work" tab): no plot, caption or legend; the score list is always open.
 // opts.neverZero: late for this student, never a 0 (_snapNeverZeroFor): their missing work is no 0 here.
+// opts.finalQuarter: it counts in a closed quarter ('Q1', _snapClosedQuarterFor): 'Quarter 1 final'.
 function _snapAssignmentRow(a, own, label, viewerSection, opts) {
     var dataOnly = Boolean(opts && opts.dataOnly);
     var neverZero = Boolean(opts && opts.neverZero) && label !== null;
+    var finalQuarter = (opts && opts.finalQuarter && label !== null) ? opts.finalQuarter : null;
     var row = document.createElement('div'); row.className = 'snap-arow'; row.dataset.key = a.key;
     var head = document.createElement('div'); head.className = 'snap-arow-head';
     var t = document.createElement('span'); t.className = 'snap-arow-title'; t.textContent = a.title; head.appendChild(t);
@@ -17282,7 +17883,7 @@ function _snapAssignmentRow(a, own, label, viewerSection, opts) {
     var ownTentative = own == null && label !== null && !neverZero && _snapOwnSectionNotCounting(a, viewerSection);
     var tentDay = tentative ? _snapTentativeDay(a, viewerSection) : '';
     if (!dataOnly) _snapAssignmentPlot(row, a, ownForPlot, label, amode, tentative, ownTentative, tentDay);
-    var advice = _snapAdvice(a, own, label, neverZero);
+    var advice = _snapAdvice(a, own, label, neverZero, finalQuarter);
     var adv = document.createElement('div'); adv.className = 'snap-advice geneva' + (advice.action ? ' snap-advice-act' : '');
     var advText = document.createElement('span'); advText.textContent = advice.text; adv.appendChild(advText);
     if (advice.action) {
@@ -17292,7 +17893,8 @@ function _snapAssignmentRow(a, own, label, viewerSection, opts) {
         adv.appendChild(go);
     }
     row.appendChild(adv);
-    var isZero = label !== null && (own === 0 || (own == null && !neverZero));
+    // A final 0 (§3.11) is not "a 0 to replace": its list stays closed and says nothing about replacing.
+    var isZero = label !== null && !finalQuarter && (own === 0 || (own == null && !neverZero));
     var built = _snapScoreList(a, ownForPlot, label, { tentative: tentative, ownTentative: ownTentative, tentDay: tentDay, isZero: isZero, sections: opts && opts.sections });
     var list = built.list, showList = built.shown;
     list.hidden = !isZero && !dataOnly;
@@ -17432,8 +18034,10 @@ function _renderAssignmentsView(host, teacher) {
             var owns = rows.map(function (a) { return lessons ? _snapOwnAssignmentScore(a, lessons) : null; });
             // Late for this student (their quarter closed before the zero date): never a 0 here.
             var nevers = rows.map(function (a) { return _snapNeverZeroFor(a, viewerSection, lessons); });
+            // QUARTER_LINE_BY_DUE_DATE_SPEC §3.11: counts in a closed quarter ('Quarter 1 final').
+            var finals = rows.map(function (a) { return (typeof _snapClosedQuarterFor === 'function') ? _snapClosedQuarterFor(a, viewerSection, lessons) : null; });
             if (_snapApp.aall) {
-                rows.forEach(function (a, i) { body.appendChild(_snapAssignmentRow(a, owns[i], label, viewerSection, { dataOnly: dataOnly, sections: data.sections, neverZero: nevers[i] })); });
+                rows.forEach(function (a, i) { body.appendChild(_snapAssignmentRow(a, owns[i], label, viewerSection, { dataOnly: dataOnly, sections: data.sections, neverZero: nevers[i], finalQuarter: finals[i] })); });
                 var all = document.createElement('button'); all.type = 'button'; all.className = 's7btn snap-pager-all'; all.style.cssText = 'font-size:10px;padding:1px 6px;margin-top:6px';
                 all.textContent = 'Focus on one';
                 all.onclick = function () { _snapApp.aall = false; _renderSnapshotApp(); };
@@ -17445,14 +18049,18 @@ function _renderAssignmentsView(host, teacher) {
                 var fk = rows.findIndex(function (a) { return a.key === _snapApp.focusKey; });
                 if (fk >= 0) idx = fk;
             }
-            var focus = _snapFocus(rows, owns, label, nevers);
+            var focus = _snapFocus(rows, owns, label, nevers, finals);
             if (typeof idx !== 'number' || idx < 0 || idx >= rows.length) idx = focus.index;
             _snapApp.aidx[section] = idx;
             if (focus.clear) {
                 // Nothing to fix anywhere: say so once, above the pager, so a "Nothing to fix here"
                 // row never reads as if it were chosen because something is wrong with it.
                 var clear = document.createElement('div'); clear.className = 'snap-clear geneva';
-                clear.textContent = (label ? label + ' has' : 'You have') + ' no 0s, nothing missing, and nothing below Q1 on any of the ' + rows.length + ' assignments so far. Showing the newest; use Prev to look back.';
+                // §3.11: final 0s are still 0s; say they are final instead of "no 0s".
+                var finalZeros = finals.some(function (f, i) { return f && (owns[i] == null || owns[i] === 0); });
+                clear.textContent = finalZeros
+                    ? (label ? label + ' has' : 'You have') + ' nothing left to fix: every 0 here counts in a closed quarter and is final. Showing the newest; use Prev to look back.'
+                    : (label ? label + ' has' : 'You have') + ' no 0s, nothing missing, and nothing below Q1 on any of the ' + rows.length + ' assignments so far. Showing the newest; use Prev to look back.';
                 body.appendChild(clear);
             }
             var pager = document.createElement('div'); pager.className = 'snap-pager';
@@ -17468,7 +18076,7 @@ function _renderAssignmentsView(host, teacher) {
             showAll.onclick = function () { _snapApp.aall = true; _renderSnapshotApp(); };
             pager.appendChild(prev); pager.appendChild(pos); pager.appendChild(next); pager.appendChild(showAll);
             body.appendChild(pager);
-            var focused = _snapAssignmentRow(rows[idx], owns[idx], label, viewerSection, { dataOnly: dataOnly, sections: data.sections, neverZero: nevers[idx] });
+            var focused = _snapAssignmentRow(rows[idx], owns[idx], label, viewerSection, { dataOnly: dataOnly, sections: data.sections, neverZero: nevers[idx], finalQuarter: finals[idx] });
             if (_snapApp.focusKey === rows[idx].key) focused.classList.add('snap-arow-focus');
             body.appendChild(focused);
             _snapApp.focusKey = null;
@@ -17507,10 +18115,14 @@ function _walletPrependZeroCard(host) {
         var later = (typeof _pastDueCurrentWork === 'function') ? _pastDueCurrentWork() : [];
         var notYet = later.filter(function (w) { return !w.late; });
         var late = later.filter(function (w) { return w.late; });
+        // QUARTER_LINE_BY_DUE_DATE_SPEC §3.2: each row listed ONCE, under the quarter it counts in
+        // (null = one plain list, today's card).
+        var view = (typeof _zeroQuarterView === 'function') ? _zeroQuarterView(warns.concat(later)) : null;
         // Same list as last paint → keep the card (a grade poll must not steal
         // focus from an Open button the student is tabbing through). A row turning late rebuilds it.
         var sig = warns.map(function (w) { return w.lessonKey + ':' + w.kind + ':' + (w.past ? 1 : 0); }).join('|');
         if (later.length) sig += '#later:' + later.map(function (w) { return w.lessonKey + ':' + w.kind + (w.late ? ':late' : ''); }).join('|');
+        if (view) sig += '#q:' + view.sig;   // crossing a close (or a regrouping) rebuilds the card
         if (old && old.dataset.sig === sig) {
             // Same rows, but the grade in the status line may have moved: refresh the text only.
             var oldStatus = old.querySelector('.wz-status');
@@ -17531,22 +18143,49 @@ function _walletPrependZeroCard(host) {
         status.className = 'wz-status geneva';
         status.textContent = _zeroCardStatus(warns, later);
         card.appendChild(status);
+        // §3.2: a quarter heading (its own class, never .wz-later-head) before the first row of each
+        // quarter. The rows keep today's one order (past, soon, past due, late); the quarters come
+        // out contiguous in it because a later quarter's 0 dates all come after an earlier one's.
+        var shownQuarter = null;
+        var quarterHead = function (w) {
+            var q = view ? view.quarterOf(w) : null;
+            if (!q || q === shownQuarter) return;
+            shownQuarter = q;
+            var qHead = document.createElement('div');
+            qHead.className = 'wz-quarter-head geneva';
+            qHead.textContent = view.heading(q);
+            card.appendChild(qHead);
+        };
+        // §3.2: a row taught in the closing quarter but counting in the next one says it can still help.
+        var addRow = function (w, row) {
+            var lift = view ? view.lift(w) : '';
+            if (lift) {
+                var note = document.createElement('span');
+                note.className = 'wz-lift';
+                note.textContent = lift;
+                row.classList.add('wz-has-lift');
+                row.appendChild(note);
+            }
+            card.appendChild(row);
+        };
         // Past first, then by date (warns are already date-ordered). Colour carries the meaning.
         var ordered = warns.filter(function (w) { return w.past; }).concat(warns.filter(function (w) { return !w.past; }));
-        ordered.forEach(function (w) { card.appendChild(_zeroCardRow(w)); });
+        ordered.forEach(function (w) { quarterHead(w); addRow(w, _zeroCardRow(w)); });
         if (notYet.length) {
+            quarterHead(notYet[0]);
             var head = document.createElement('div');
             head.className = 'wz-later-head geneva';
             head.textContent = 'Past due — not counting yet';
             card.appendChild(head);
-            notYet.forEach(function (w) { card.appendChild(_pastDueCardRow(w)); });
+            notYet.forEach(function (w) { quarterHead(w); addRow(w, _pastDueCardRow(w)); });
         }
         if (late.length) {
+            quarterHead(late[0]);
             var lateHead = document.createElement('div');
             lateHead.className = 'wz-later-head wz-late-head geneva';
             lateHead.textContent = 'Late — never a 0';
             card.appendChild(lateHead);
-            late.forEach(function (w) { card.appendChild(_pastDueCardRow(w)); });
+            late.forEach(function (w) { quarterHead(w); addRow(w, _pastDueCardRow(w)); });
         }
         host.insertBefore(card, host.firstChild);
         _zeroCardAttachScores(card, ordered);
@@ -17555,10 +18194,21 @@ function _walletPrependZeroCard(host) {
 // The status line: the zero wording when anything is close to a 0; calm wording
 // when the card holds only past-due rows (nothing is becoming a 0 soon). Late rows
 // (QUARTER_ZERO_FREEZE_SPEC) never become a 0, so they get their own sentence.
-function _zeroCardStatus(warns, later) {
-    if (warns.length) return _zeroStatusText(warns);
-    var grade = (typeof _walletCurrentGrade === 'function') ? _walletCurrentGrade() : null;
-    var lead = (grade && grade.pct != null && grade.q) ? grade.q + ' so far: ' + grade.pct + '%. ' : '';
+// QUARTER_LINE_BY_DUE_DATE_SPEC §3.2: lead (optional) replaces the current-quarter lead; the
+// grouped card passes each quarter's own ('Quarter 2 so far: 85%. ').
+function _zeroCardStatus(warns, later, lead) {
+    // §3.2: grouped rows get one sentence per quarter, each counting only its own rows.
+    if (lead === undefined && typeof _zeroQuarterStatus === 'function') {
+        var grouped = _zeroQuarterStatus(warns, later);
+        if (grouped) return grouped;
+    }
+    if (warns.length) return _zeroStatusText(warns, lead);
+    if (lead === undefined) {
+        var grade = (typeof _walletCurrentGrade === 'function') ? _walletCurrentGrade() : null;
+        // Review D4: 'Quarter 2 so far: 85%.', never "Q2" (the same card shows quartiles).
+        var quarterWords = (grade && grade.q && typeof _quarterName === 'function') ? _quarterName(grade.q) : (grade && grade.q);
+        lead = (grade && grade.pct != null && grade.q) ? quarterWords + ' so far: ' + grade.pct + '%. ' : '';
+    }
     var notYet = later.filter(function (w) { return !w.late; }).length;
     var late = later.length - notYet;
     var text = lead;
@@ -17566,6 +18216,25 @@ function _zeroCardStatus(warns, later) {
     else if (notYet) text += notYet + ' items below are past due. They are not counting yet — finishing them now keeps it that way.';
     if (late) text += (notYet ? ' ' : '') + _zeroLateStatusText(late, notYet > 0);
     return text;
+}
+// The grouped card's status (§3.2): one sentence per quarter, in calendar order, each led by that
+// quarter's own grade and counting only that quarter's rows. '' when the rows are not grouped.
+function _zeroQuarterStatus(warns, later) {
+    var view = (typeof _zeroQuarterView === 'function') ? _zeroQuarterView(warns.concat(later)) : null;
+    if (!view) return '';
+    return view.quarters.map(function (q) {
+        var mine = function (w) { return view.quarterOf(w) === q; };
+        return _zeroCardStatus(warns.filter(mine), later.filter(mine), _quarterStatusLead(q, view.phase));
+    }).join(' ');
+}
+// 'Quarter 2 so far: 85%. ', 'Quarter 1 so far: 92% (closes Thu Nov 12). ', or 'Quarter 2: '
+// before the quarter has a grade.
+function _quarterStatusLead(q, phase) {
+    var grade = (typeof _walletQuarterGrade === 'function') ? _walletQuarterGrade(q) : null;
+    var close = (phase && phase.closing === q) ? _quarterConfig(q).close : null;
+    var tail = close ? ' (closes ' + _quarterDayText(close) + ')' : '';
+    if (grade && grade.pct != null) return _quarterName(q) + ' so far: ' + grade.pct + '%' + tail + '. ';
+    return _quarterName(q) + tail + ': ';
 }
 // "2 items below are late: never a 0, and finishing them still counts." (more: after past-due rows.)
 function _zeroLateStatusText(n, more) {
@@ -17630,9 +18299,14 @@ function _zeroCardAttachScores(card, warns) {
 }
 // The one-line status at the top of the Missing-work card (LEDGER_CALM_SPEC §2.2). No projected
 // "up to X" number: the quarter engine is server-side (spec §6).
-function _zeroStatusText(warns) {
-    var grade = (typeof _walletCurrentGrade === 'function') ? _walletCurrentGrade() : null;
-    var lead = (grade && grade.pct != null && grade.q) ? grade.q + ' so far: ' + grade.pct + '%. ' : '';
+// lead (optional, QUARTER_LINE_BY_DUE_DATE_SPEC §3.2): a quarter's own lead from the grouped card.
+function _zeroStatusText(warns, lead) {
+    if (lead === undefined) {
+        var grade = (typeof _walletCurrentGrade === 'function') ? _walletCurrentGrade() : null;
+        // Review D4: 'Quarter 2 so far: 85%.', never "Q2" (the same card shows quartiles).
+        var quarterWords = (grade && grade.q && typeof _quarterName === 'function') ? _quarterName(grade.q) : (grade && grade.q);
+        lead = (grade && grade.pct != null && grade.q) ? quarterWords + ' so far: ' + grade.pct + '%. ' : '';
+    }
     var n = warns.length;
     var past = warns.filter(function (w) { return w.past; }).length;
     var soon = n - past;
@@ -17701,7 +18375,8 @@ function _zeroSchoologyTag(w) {
     if (!title) return null;
     var tag = document.createElement('span');
     tag.className = 'wz-sgy';
-    tag.textContent = 'Schoology: ' + title;
+    // QUARTER_LINE_BY_DUE_DATE_SPEC §3.5: names the marking period when two share the title.
+    tag.textContent = ((typeof _zeroSchoologyLabel === 'function') ? _zeroSchoologyLabel(w) : null) || ('Schoology: ' + title);
     return tag;
 }
 // "due Fri 9/25 · not a 0 until after Thu 10/8" (a 0 starts the day AFTER zeroDate, like _zeroWhenText).
@@ -19234,7 +19909,22 @@ function _walletBonusFooterText(applied) {
 // retroactive). Mirrors roster-server/grade-config.js BONUS_MULTIPLIER (pinned equal by a test).
 var DESK_BONUS_MULTIPLIER = 1.5;
 function _bonusSummary(receipts) {
-    var quarter = typeof quarterOfDate === 'function' ? 'Q' + quarterOfDate(new Date()) : _walletCurrentQuarter().quarter;
+    // QUARTER_LINE_BY_DUE_DATE_SPEC §3.8: the closing quarter while its 0s are still fixable (its
+    // banked bonus is added at the close), else the current quarter. Never 'Q0' on a gap day.
+    var phase = (typeof _deskQuarterPhase === 'function') ? _deskQuarterPhase() : null;
+    var quarter = phase ? (phase.closing || phase.current) : null;
+    if (!quarter && typeof quarterOfDate === 'function') {
+        var n = quarterOfDate((typeof tdy === 'function') ? tdy() : new Date());
+        if (n) quarter = 'Q' + n;
+    }
+    if (!quarter && typeof _walletCurrentQuarter === 'function') quarter = _walletCurrentQuarter().quarter;
+    if (!quarter) quarter = 'Q1';
+    // 'Thursday' while that quarter closes ahead of us: its bonus is added at Thursday's close.
+    var closeDay = null;
+    if (phase && phase.closing === quarter && typeof _quarterConfig === 'function') {
+        var close = _quarterConfig(quarter).close;
+        if (close) closeDay = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][new Date(close + 'T00:00:00').getDay()];
+    }
     var byItem = new Map();
     var applied = null;
     (receipts || []).forEach(function (r) {
@@ -19259,7 +19949,13 @@ function _bonusSummary(receipts) {
             points: points
         });
     });
-    return { quarter: quarter, sheets: sheets, total: total, applied: applied };
+    return { quarter: quarter, sheets: sheets, total: total, applied: applied, closeDay: closeDay };
+}
+// "Added at Thursday's close to whichever track helps you more." while the quarter is closing;
+// the ledger's usual footer otherwise (QUARTER_LINE_BY_DUE_DATE_SPEC §3.8).
+function _bonusPendingText(summary) {
+    if (summary && summary.closeDay && !summary.applied) return 'Added at ' + summary.closeDay + '\'s close to whichever track helps you more.';
+    return _walletBonusFooterText(summary ? summary.applied : null);
 }
 
 function _walletBonusBlock(receipts) {
@@ -19282,7 +19978,7 @@ function _walletBonusBlock(receipts) {
     });
     var footer = document.createElement('div');
     footer.style.marginTop = '6px';
-    footer.textContent = _walletBonusFooterText(applied);
+    footer.textContent = (typeof _bonusPendingText === 'function') ? _bonusPendingText(summary) : _walletBonusFooterText(applied);
     block.appendChild(footer);
     return block;
 }
@@ -19297,7 +19993,9 @@ function _doNowBonusText(summary) {
     var parts = summary.sheets.map(function (sheet) {
         return sheet.title + ' ' + sheet.grade + ' (+' + sheet.points + ')';
     });
-    return 'Bonus banked: ' + parts.join(' · ') + ' = +' + summary.total + ' at quarter end';
+    // §3.8: a closing quarter's bonus is added at its close ("added at Thursday's close").
+    var when = summary.closeDay ? ', added at ' + summary.closeDay + '\'s close' : ' at quarter end';
+    return 'Bonus banked: ' + parts.join(' · ') + ' = +' + summary.total + when;
 }
 
 function _clearDoNowBonus() {
@@ -19316,7 +20014,8 @@ async function renderDoNowBonus() {
     var text = _doNowBonusText(summary);
     if (!text) { _clearDoNowBonus(); return; }
     host.textContent = text;
-    host.title = summary.applied ? '' : _walletBonusFooterText(null);
+    if (summary.applied) host.title = '';
+    else host.title = (typeof _bonusPendingText === 'function') ? _bonusPendingText(summary) : _walletBonusFooterText(null);
     host.style.display = 'block';
 }
 
@@ -19489,8 +20188,10 @@ function _walletPaint(host, receipts, loading) {
     who.style.cssText = 'font-size:10px;color:#555;margin-bottom:6px;display:flex;justify-content:space-between';
     var name = '';
     try { if (window.rosterClient && rosterClient.username) { name = rosterClient.username() || ''; } } catch (_) {}
+    // Review D4 (2026-11-08): the card's corner names the quarter in words ('Quarter 2', never "Q2").
+    var quarterBadge = !grade.q ? '' : ((typeof _quarterName === 'function') ? _quarterName(grade.q) : grade.q);
     who.innerHTML = '<span>' + (name ? _walletEsc(name) : 'Your ledger') + '</span>'
-        + '<span>' + (grade.q ? grade.q : '') + '</span>';
+        + '<span>' + quarterBadge + '</span>';
     var seeClass = _walletSeeClassButton();
     if (seeClass) who.lastChild.appendChild(seeClass);
     card.appendChild(who);
@@ -19522,15 +20223,26 @@ function _walletPaint(host, receipts, loading) {
     }
 
     // LEDGER_GRADE_AGREEMENT_SPEC §3: while zeros are coming or counting, the number is not settled.
-    if (warns.length) {
-        var zerosNow = _zeroAnyPast(warns);
+    // QUARTER_LINE_BY_DUE_DATE_SPEC §3.2: the number, its colour and the drop sentence speak only for
+    // the quarter shown; the card tint above keeps every open 0 (the Do Now's zero state).
+    var shownWarns = (typeof _zeroRowsInQuarter === 'function') ? _zeroRowsInQuarter(warns, grade.q) : warns;
+    if (shownWarns.length) {
+        var zerosNow = _zeroAnyPast(shownWarns);
         gradeBig.style.color = zerosNow ? '#a30000' : '#7a5c00';
         if (!grade.official) gradeLbl.textContent = 'Grade today';
         var drop = document.createElement('div');
         drop.className = 'wallet-grade-drop geneva';
         drop.style.cssText = 'font-size:11px;line-height:1.35;margin-top:4px;color:#000;font-weight:bold';
-        drop.textContent = _walletGradeDropText(warns);
+        drop.textContent = _walletGradeDropText(shownWarns);
         card.appendChild(drop);
+    }
+    // §3.2, decision 8.7: the quarter that just ended, read-only ('Quarter 1 final: 92%').
+    var otherLine = (typeof _walletOtherQuarterLine === 'function') ? _walletOtherQuarterLine(grade.q) : '';
+    if (otherLine) {
+        var other = document.createElement('div');
+        other.className = 'wallet-grade-other geneva';
+        other.textContent = otherLine;
+        card.appendChild(other);
     }
 
     // EFFORT_VISIBILITY_SPEC §3: the PC on file + the work done ahead, under the grade row.
@@ -21282,7 +21994,7 @@ function _paintReviewByItem(host, data) {
 <!-- My Gradebook grid (openMyGradebook, renderMyGradebook, the teacher Class Gradebook picker, date-gating + colour helpers):
      Moved byte for byte to js/desk-gradebook-grid.js (FABLE_SPRINT_2026_10_22C_SPEC.md track C3). Same globals,
      same load position, versioned by scripts/bump-build.mjs like the other entry scripts. -->
-<script src="js/desk-gradebook-grid.js?v=2026-11-08-fljo"></script>
+<script src="js/desk-gradebook-grid.js?v=2026-11-08-r0un"></script>
 <script>
 
 // openDayGrade(dateStr) — opens the Day Grade modal for a calendar date.
@@ -21679,11 +22391,11 @@ function _pwaInstallHelp() {
 <!-- Study Break Tetris (studyBreak, openGame, closeGame):
      Moved byte for byte to js/desk-study-break.js (FABLE_SPRINT_2026_10_22C_SPEC.md track C3). Same globals,
      same load position, versioned by scripts/bump-build.mjs like the other entry scripts. -->
-<script src="js/desk-study-break.js?v=2026-11-08-fljo"></script>
+<script src="js/desk-study-break.js?v=2026-11-08-r0un"></script>
 <!-- My Progress app window (ProgressApp, openProgress, destroyProgress): moved byte for byte to
      js/desk-progress-app.js (FABLE_SPRINT_2026_10_22B_SPEC.md track H). Same globals, same load
      position, versioned by scripts/bump-build.mjs like the other entry scripts. -->
-<script src="js/desk-progress-app.js?v=2026-11-08-fljo"></script>
+<script src="js/desk-progress-app.js?v=2026-11-08-r0un"></script>
 <script>
 
 
@@ -21716,7 +22428,7 @@ function bumpUsage(id) {
 <!-- Desk <-> APStat Park calculator bridge (TI-84 skill button, calc-due chip, _openParkSolo, Calculator Skills progress modal):
      Moved byte for byte to js/desk-park-bridge.js (FABLE_SPRINT_2026_10_22C_SPEC.md track C3). Same globals,
      same load position, versioned by scripts/bump-build.mjs like the other entry scripts. -->
-<script src="js/desk-park-bridge.js?v=2026-11-08-fljo"></script>
+<script src="js/desk-park-bridge.js?v=2026-11-08-r0un"></script>
 <script>
 
 // The URL an app window opens (SOLO_DOOR_SPEC §5: the calculator is no longer an app window).
@@ -23160,7 +23872,7 @@ window.DogePresence = DogePresence;
 <!-- Completion calendar (cP/setP, cell helpers, paging, summer-prep weeks, rCal, rCD, rProg, uClock):
      Moved byte for byte to js/desk-calendar.js (FABLE_SPRINT_2026_10_22C_SPEC.md track C3). Same globals,
      same load position, versioned by scripts/bump-build.mjs like the other entry scripts. -->
-<script src="js/desk-calendar.js?v=2026-11-08-fljo"></script>
+<script src="js/desk-calendar.js?v=2026-11-08-r0un"></script>
 <script>
 
 /* ═══ TOOLTIP ═══ */
@@ -23727,7 +24439,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-11-08-fljo';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-11-08-r0un';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

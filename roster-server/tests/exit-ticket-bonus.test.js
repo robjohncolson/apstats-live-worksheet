@@ -91,9 +91,10 @@ describe('exit-ticket bonus', () => {
     }
   });
 
-  it('the live config (quarter-end zero freeze) changes only the frozen-out zero dates of these fixtures', () => {
-    // QUARTER_ZERO_FREEZE_SPEC.md: the golden is as of 2026-10-20, inside Q1, so no grade
-    // may move. Rows only gain neverZero, and a zero date its quarter closed on reads null.
+  it('the live config (zero freeze + zero-date quarters) only adds row fields to these fixtures', () => {
+    // QUARTER_ZERO_FREEZE_SPEC.md + QUARTER_LINE_BY_DUE_DATE_SPEC.md: the golden is as of
+    // 2026-10-20, inside Q1, so no grade may move. Rows gain neverZero, quarter and
+    // liftQuarter; a zero date reads null only where the lesson can never be a 0.
     const golden = JSON.parse(readFileSync(new URL('./fixtures/exit-ticket-without-golden.json', import.meta.url), 'utf8'));
     const prod = resolveProductionGradeInputs('SY2627');
     const keyDoc = JSON.parse(readFileSync(new URL('../data/answer-key.json', import.meta.url), 'utf8'));
@@ -105,7 +106,8 @@ describe('exit-ticket bonus', () => {
       expect(JSON.stringify(grades), sample.name).toBe(JSON.stringify(goldenGrades));
       expect(lessons.length).toBe(goldenLessons.length);
       lessons.forEach((lesson, i) => {
-        const { neverZero, ...rest } = lesson;
+        const { neverZero, quarter, liftQuarter, ...rest } = lesson;
+        expect(quarter && liftQuarter, lesson.lessonKey).toBeTruthy();
         const was = goldenLessons[i];
         for (const p of ['B', 'E']) {
           if (!neverZero[p]) continue;

@@ -14,6 +14,32 @@ can run headless in the daily scheduled batch (see the spec's delivery model).
 --inspect doubles as the P3 sanity check: it reports whether v3 is actually live
 (pcAvg/workAvg present) and how much real grade data exists, before any push.
 
+QUARTER PASSES (QUARTER_LINE_BY_DUE_DATE_SPEC.md section 4, component granularity):
+  --quarter Q1|Q2   only that quarter pass's targets (schoology_components routing: a
+                    lesson goes with the quarter its zero date falls in). The daily job
+                    builds one fixture per pass.
+  --no-zeros        scores only: leaves out the LAGGED zeros (missing work past its 0 date);
+                    an earned 0 (work done, scored 0) is a score and still goes. This file
+                    decides: the sync writes every target it holds.
+  --today DATE      the zero-date clock (default: today in New York); a Sunday preview of
+                    Monday's zeros: --today 2026-11-09.
+  --close DATE      the quarter's close date when /class/grades config has none. Once
+                    today is past the close, --quarter exits 4 and writes nothing (the
+                    daily job then skips that pass).
+  --passes          print the quarter passes to run today, space-separated ("Q1 Q2"), or
+                    "none"; writes nothing. From config.quarters: the quarter holding
+                    today (on a gap day, the next one) plus each earlier quarter that has
+                    ended but is still open for fixes (today <= its close). The daily job
+                    runs exactly these passes (schoology_components.quarter_passes).
+                    --q1-close DATE: Quarter 1's close when the config has none.
+
+READ-ONLY (roster only, no Schoology; the secret stays in the environment):
+  python tools/build_schoology_fixture.py --section PeriodB --inspect
+  python tools/build_schoology_fixture.py --section PeriodB --passes --today 2026-11-09
+  python tools/build_schoology_fixture.py --section PeriodB --granularity component --quarter Q2 --today 2026-11-09 --out tools/.schoology-sync-logs/preview-PeriodB-Q2-20261109.json
+  python tools/build_schoology_fixture.py --section PeriodB --granularity component --quarter Q1 --today 2026-11-09 --out tools/.schoology-sync-logs/preview-PeriodB-Q1-20261109.json
+  (repeat with PeriodE; --out writes only that local preview file)
+
 The Schoology push keys on the SCHOOLOGY uid. Once the durable roster.schoology_uid
 bridge (P4b) is populated, /class/grades surfaces each student's schoologyUid and the
 fixture is keyed by it automatically -- so --uid-map is now OPTIONAL. Pass --uid-map
@@ -244,6 +270,9 @@ def inspect_summary(doc: dict) -> dict:
     )
     lessons = [lesson for s in students for lesson in (s.get("lessons") or [])]
     graded = [lesson for lesson in lessons if lesson.get("lessonGrade") is not None]
+    # The engine's quarter{B,E} row field (zeroQuarterMembership): 0 = the sync derives
+    # each lesson's quarter from its zero date instead.
+    quarter_rows = sum(1 for lesson in lessons if isinstance(lesson.get("quarter"), dict))
     quiz_signal = sum(
         1 for s in students for u in (s.get("units") or {}).values()
         if isinstance(u, dict) and u.get("Q") is not None
@@ -265,6 +294,9 @@ def inspect_summary(doc: dict) -> dict:
         "units_with_quiz_data": quiz_signal,
         "units_with_pc_data": pc_signal,
         "uid_bridge_covered": uid_bridge_covered,
+        "lessons_with_quarter_field": quarter_rows,
+        "quarter_windows": {q: [w.get("start"), w.get("end"), w.get("close")]
+                            for q, w in components.doc_quarters(doc).items()},
     }
 
 
@@ -286,6 +318,19 @@ def fetch_class_grades(base: str, section: str | None, secret: str,
 # CLI                                                                          #
 # --------------------------------------------------------------------------- #
 
+# Exit code for "this quarter has closed, its pass is skipped" (daily_schoology_sync.ps1).
+QUARTER_CLOSED_EXIT = 4
+
+
+def _iso_date(text: str) -> str:
+    """argparse type: a real YYYY-MM-DD date."""
+    from datetime import date as _date
+    try:
+        return _date.fromisoformat(str(text).strip()).isoformat()
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"not a YYYY-MM-DD date: {text!r}")
+
+
 def main(argv=None) -> int:
     p = argparse.ArgumentParser(description="Build the Schoology grades-fixture from /class/grades.")
     p.add_argument("--base", default=os.environ.get("ROSTER_BASE", DEFAULT_BASE))
@@ -296,7 +341,22 @@ def main(argv=None) -> int:
                    help="component: fine-grained Follow-Along / Quiz / Blooket per lesson "
                         "(the full rollout; pair with --granularity component on the sync side).")
     p.add_argument("--inspect", action="store_true", help="Print pipeline state, write nothing.")
+    p.add_argument("--quarter", choices=["Q1", "Q2", "Q3", "Q4"], default=None,
+                   help="component: only this quarter pass's targets (exit 4 once it has closed).")
+    p.add_argument("--no-zeros", action="store_true",
+                   help="component: leave out the lagged zeros; an earned 0 still goes (the sync "
+                        "writes every target this fixture holds).")
+    p.add_argument("--today", type=_iso_date, default=None, metavar="YYYY-MM-DD",
+                   help="The zero-date clock (default: today in New York). For previews.")
+    p.add_argument("--close", type=_iso_date, default=None, metavar="YYYY-MM-DD",
+                   help="The quarter's close date when /class/grades config has none.")
+    p.add_argument("--passes", action="store_true",
+                   help="Print the quarter passes to run today, space-separated (e.g. 'Q1 Q2'), "
+                        "or 'none'. Writes nothing (daily_schoology_sync.ps1 runs these).")
+    p.add_argument("--q1-close", type=_iso_date, default=None, metavar="YYYY-MM-DD",
+                   help="--passes: Quarter 1's close date when /class/grades config has none.")
     args = p.parse_args(argv)
+    today = args.today or _today_eastern()
 
     secret = os.environ.get("ROSTER_TEACHER_SECRET")
     if not secret:
@@ -316,6 +376,12 @@ def main(argv=None) -> int:
         print(f"ERROR: /class/grades returned not-ok: {doc.get('error')}", file=sys.stderr)
         return 1
 
+    # One line on stdout and nothing else: the daily job parses it (finding B3).
+    if args.passes:
+        passes = components.quarter_passes(doc, today, q1_close=args.q1_close)
+        print(" ".join(passes) if passes else "none")
+        return 0
+
     if args.inspect:
         summary = inspect_summary(doc)
         print(json.dumps(summary, indent=2))
@@ -332,17 +398,28 @@ def main(argv=None) -> int:
                   "else pass --uid-map to key the fixture by Schoology uid.", file=sys.stderr)
         return 0
 
+    # A closed quarter's pass stops (the final is written once by schoology_official --final).
+    if args.quarter:
+        close = components.quarter_close_date(doc, args.quarter, args.close)
+        if components.quarter_is_closed(today, close):
+            print(f"Quarter {args.quarter[1]} closed on {close}: no fixture (the pass is skipped).")
+            return QUARTER_CLOSED_EXIT
+
     uid_map = None
     if args.uid_map:
         with open(args.uid_map, "r", encoding="utf-8") as f:
             uid_map = json.load(f)
 
     if args.granularity == "component":
+        if args.quarter and not components.rows_carry_quarter(doc):
+            print("NOTE: /class/grades rows carry no 'quarter' field yet: each lesson's quarter is "
+                  "derived from its zero date (class day + 13) with the engine's rule.", file=sys.stderr)
         poster_grades = fetch_poster_grades(args.base, doc, secret)
         fixture = components.component_grades_from_class_doc(
-            doc, uid_map=uid_map, today=_today_eastern(), poster_grades=poster_grades)
+            doc, uid_map=uid_map, today=today, poster_grades=poster_grades,
+            quarter=args.quarter, zeros=not args.no_zeros)
     else:
-        fixture = build_fixture(doc, uid_map=uid_map, granularity=args.granularity, today=_today_eastern())
+        fixture = build_fixture(doc, uid_map=uid_map, granularity=args.granularity, today=today)
     payload = json.dumps(fixture, indent=2)
     if args.out:
         with open(args.out, "w", encoding="utf-8") as f:

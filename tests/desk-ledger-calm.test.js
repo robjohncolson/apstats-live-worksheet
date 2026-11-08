@@ -52,7 +52,7 @@ function sandbox({ warns = [], grade = { pct: 78, q: 'Q1' }, teacher = false } =
     _snapModes() { return { available: ['dot', 'stem', 'hist'], default: 'stem', tabs: true }; },
   };
   createContext(s);
-  runInContext(['_zeroDayText', '_zeroWhenText', '_zeroLatestSoonDay', '_zeroStatusText', '_zeroCardStatus', '_zeroCardActionButton', '_zeroCardRow', '_walletPrependZeroCard', '_walletSeeClassButton', '_zeroCardAttachScores', '_zeroCardToggleGraph', '_snapScoreList', '_snapListKey', '_snapAssignmentPlot', '_snapTentativeLegend']
+  runInContext(['_quarterName', '_zeroDayText', '_zeroWhenText', '_zeroLatestSoonDay', '_zeroStatusText', '_zeroCardStatus', '_zeroCardActionButton', '_zeroCardRow', '_walletPrependZeroCard', '_walletSeeClassButton', '_zeroCardAttachScores', '_zeroCardToggleGraph', '_snapScoreList', '_snapListKey', '_snapAssignmentPlot', '_snapTentativeLegend']
     .map(fnSrc).join('\n'), s);
   const host = () => dom.window.document.getElementById('wallet-content');
   const card = () => host().querySelector('.wallet-zero-card');
@@ -60,14 +60,15 @@ function sandbox({ warns = [], grade = { pct: 78, q: 'Q1' }, teacher = false } =
 }
 
 describe('Missing-work card — a status line, no paragraph, no headings (§2.1, §2.2)', () => {
-  it('mixed list: "Q1 so far: 78%. 2 items below are 0s now, 1 more becomes a 0 by Sun 9/27 — …" (Codex review: tentative items are not zeros yet)', () => {
+  it('mixed list: "Quarter 1 so far: 78%. 2 items below are 0s now, 1 more becomes a 0 by Sun 9/27 — …" (Codex review: tentative items are not zeros yet)', () => {
     const t = sandbox({ warns: [PAST_WS, PAST_QZ, SOON_WS] });
     try {
       t.s._walletPrependZeroCard(t.host());
       const card = t.card();
       expect(t.host().firstChild).toBe(card);
       expect(card.children[0].className).toBe('wz-status geneva');
-      expect(card.children[0].textContent).toBe('Q1 so far: 78%. 2 items below are 0s now, 1 more becomes a 0 by Sun 9/27 — finishing them is the fastest way up.');
+      // Re-pinned 2026-11-08 (review D4): "Quarter 1 so far", never "Q1" (the same card shows quartiles).
+      expect(card.children[0].textContent).toBe('Quarter 1 so far: 78%. 2 items below are 0s now, 1 more becomes a 0 by Sun 9/27 — finishing them is the fastest way up.');
       expect(card.classList.contains('wz-soon')).toBe(false);   // red frame: something is a 0
       expect(card.querySelector('h4')).toBeNull();
       expect(card.querySelector('h5')).toBeNull();
@@ -80,7 +81,7 @@ describe('Missing-work card — a status line, no paragraph, no headings (§2.1,
     const t = sandbox({ warns: [SOON_BL, SOON_WS] });
     try {
       t.s._walletPrependZeroCard(t.host());
-      expect(t.card().querySelector('.wz-status').textContent).toBe('Q1 so far: 78%. 2 items below become a 0 by Sun 9/27 — finish them first.');
+      expect(t.card().querySelector('.wz-status').textContent).toBe('Quarter 1 so far: 78%. 2 items below become a 0 by Sun 9/27 — finish them first.');
     } finally { t.close(); }
   });
   it('singular wording, and no grade clause before a grade exists', () => {
@@ -198,7 +199,7 @@ describe('Missing-work card — review fixes (Codex 2026-09-26)', () => {
     const past = sandbox({ warns: [PAST_WS, PAST_QZ] });
     try {
       past.s._walletPrependZeroCard(past.host());
-      expect(past.card().querySelector('.wz-status').textContent).toBe('Q1 so far: 78%. The 2 items below count as 0 — finishing them is the fastest way up.');
+      expect(past.card().querySelector('.wz-status').textContent).toBe('Quarter 1 so far: 78%. The 2 items below count as 0 — finishing them is the fastest way up.');
       expect(past.card().classList.contains('wz-soon')).toBe(false);
     } finally { past.close(); }
     const soon = sandbox({ warns: [SOON_BL, SOON_WS] });
@@ -213,12 +214,12 @@ describe('Missing-work card — review fixes (Codex 2026-09-26)', () => {
       t.s._walletPrependZeroCard(t.host());
       const first = t.card();
       const firstButton = first.querySelector('button');
-      expect(first.querySelector('.wz-status').textContent).toMatch(/^Q1 so far: 78%\. 1 item below is a 0 now, 1 more becomes a 0 by Sun 9\/27/);
+      expect(first.querySelector('.wz-status').textContent).toMatch(/^Quarter 1 so far: 78%\. 1 item below is a 0 now, 1 more becomes a 0 by Sun 9\/27/);
       t.s.grade = { pct: 85, q: 'Q1' };
       t.s._walletPrependZeroCard(t.host());
       expect(t.card()).toBe(first);                                   // same node, no repaint
       expect(t.card().querySelector('button')).toBe(firstButton);
-      expect(t.card().querySelector('.wz-status').textContent).toMatch(/^Q1 so far: 85%\./);
+      expect(t.card().querySelector('.wz-status').textContent).toMatch(/^Quarter 1 so far: 85%\./);
     } finally { t.close(); }
   });
 });
