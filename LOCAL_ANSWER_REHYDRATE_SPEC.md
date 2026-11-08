@@ -5,7 +5,7 @@ Owner: CC main session.
 
 ## 0. The incident this fixes
 
-Angie (Period B, `banana_seal`) types into a worksheet, leaves, comes back, and the boxes are empty.
+A Period B student types into a worksheet, leaves, comes back, and the boxes are empty.
 The Desk says she is signed in. Her ledger has had zero rows since Aug 21.
 
 Root cause chain (all verified 2026-09-17):
@@ -224,8 +224,8 @@ verified on the public URL; it touches `roster-server/` (grade-adjacent, Railway
    row appears in `--view`.
 5. Phase C after the smoke passes.
 
-Angie today, independent of this spec: sign out + sign in on the Desk (`banana_seal` / 3321). Her
-queued rows drain on the next worksheet load; nothing else is needed for her grade.
+A named student's sign-in instruction, with her login and PIN, stood here until 2026-11-08; it was
+removed because credentials never belong in a published document (the PIN is to be rotated).
 
 ## 6. Open questions for the teacher
 
