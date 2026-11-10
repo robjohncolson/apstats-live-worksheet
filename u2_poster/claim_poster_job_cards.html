@@ -78,6 +78,21 @@
   .sketch span { position: absolute; top: 0.2rem; left: 0.4rem; font-size: 0.75rem; color: #777; }
   .myth { font-style: italic; color: #b71c1c; }
 
+  /* Student pages: 12 pt body and 11 pt tables, so a sheet shared by three reads at arm's length. */
+  .card p, .card li { font-size: 1rem; color: #111; }
+  .card .dok li { font-size: 1rem; margin-bottom: 0.5rem; }
+  .card .must li { font-size: 1rem; margin-bottom: 0.3rem; }
+  .card .claim .q { font-size: 1.1rem; }
+  .card .data { font-size: 0.95rem; }
+  .card .data table { font-size: 0.92rem; }
+  .card .role, .card .frame, .card .bank, .card .small { font-size: 0.92rem; color: #222; }
+  .card .answer { font-size: 0.82rem; }
+  .card .head .num { max-width: 30%; }
+  .checklist { margin-bottom: 0.4rem; }
+  .verdictline { margin-top: 0.6rem; }
+  section.walk p, section.walk li { font-size: 0.98rem; }
+  section.walk ol { margin: 0.2rem 0 0.3rem 1.4rem; }
+
   /* Answers: teacher edition only */
   .answer { display: none; background: #e8f5e9; border-left: 4px solid #2e7d32; padding: 0.3rem 0.55rem; margin: 0.2rem 0 0.35rem; font-size: 0.82rem; }
   .answer b:first-child { color: #2e7d32; }
@@ -152,12 +167,12 @@
     <tr><th>#</th><th>Topics</th><th>The claim being judged</th><th>The mistake it busts (Period B evidence)</th><th>Data</th></tr>
     <tr><td>1</td><td>2.1, 2.2</td><td>"Freeze Time people want to be rich: 26 chose Rich, more than any other power."</td><td>"The bigger count wins" <span class="badge persist">PERSISTENT B</span>: Period B's Unit 1 error, and 3 students read a relative-frequency bar chart as counts on quiz 2.1 (10/29).</td><td>Super Status table, 433 students</td></tr>
     <tr><td>2</td><td>2.6</td><td>"Most students who want to be Famous chose Fly, so most students who chose Fly want to be Famous."</td><td>P(A | B) read as P(B | A). Asked in class 10/30: "why do the two conditional probabilities differ?"</td><td>Super Status table</td></tr>
-    <tr><td>3</td><td>2.5, 2.7</td><td>"Nobody who chose Telepathy wants to be Famous (0 of 68), so Telepathy and Famous are independent."</td><td>Mutually exclusive confused with independent. Asked 10/29; you promised the class an example of mutually exclusive events that are not independent. <span class="badge persist">PERSISTENT B</span></td><td>Super Status table + two 2x2 tables the group designs</td></tr>
-    <tr><td>4</td><td>2.4, 2.7</td><td>"P(college grad or internet news) = 693/2500 + 687/2500 = 55.2%, and grads are no more likely than anyone else to get news online."</td><td>Addition rule without the subtraction; independence checked one way. 2.7 is B's least-finished lesson (worksheet mean 46; 8 of 14 not done).</td><td>2010 AP exam table, 2,500 adults (2.7 follow-along)</td></tr>
+    <tr><td>3</td><td>2.5, 2.7</td><td>"Nobody who chose Telepathy wants to be Famous (0 of 68), so Telepathy and Famous are independent."</td><td>Mutually exclusive confused with independent. Asked 10/29; you promised the class an example of mutually exclusive events that are not independent. <span class="badge persist">PERSISTENT B</span></td><td>Super Status table + a 2x2 table the group designs</td></tr>
+    <tr><td>4</td><td>2.4, 2.7</td><td>"P(college grad or internet news) = 693/2500 + 687/2500 = 55.2%, and grads are no more likely than anyone else to get news online: only 9.8% are grads who read news online."</td><td>Addition rule without the subtraction; a joint probability used where a conditional belongs. 2.7 is B's least-finished lesson (worksheet mean 46; 8 of 14 not done).</td><td>2010 AP exam table, 2,500 adults (2.7 follow-along)</td></tr>
     <tr><td>5</td><td>2.3, 2.8, 2.9</td><td>"A fair game! You win on 2 of every 6 rolls."</td><td>Expected value read as "every game"; winnings used instead of net; "fair" without asking for whom (2.8 exit-ticket traps). Also the 10/30 TI-84 promise.</td><td>Carnival die game (2.8 follow-along exit ticket)</td></tr>
     <tr><td>6 spare</td><td>2.3</td><td>"6 heads in a row in 20 flips is impossible for a fair coin. It's rigged."</td><td>A simulation estimates; it never proves one outcome impossible (10/26: "was the simulated coin fair?").</td><td>randInt(0,1,20) on the TI-84</td></tr>
   </table>
-  <p class="small">Coverage: 2.1 and 2.2 on card 1; 2.3 on cards 5 and 6; 2.4 everywhere (probabilities as relative frequencies, the complement region on card 4); 2.5 on card 3; 2.6 on cards 1, 2 and 4; 2.7 on cards 3 and 4; 2.8 and 2.9 on card 5. The walk sheet makes every student compute one number at every other poster, so everyone meets every topic.</p>
+  <p class="small">Coverage: 2.1 and 2.2 on card 1; 2.3 on cards 5 and 6; 2.4 everywhere (probabilities as relative frequencies, the complement region on card 4); 2.5 on card 3; 2.6 on cards 1, 2 and 4; 2.7 on cards 3 and 4; 2.8 and 2.9 on card 5. The walk sheet makes every student compute one number at each poster except their own, so everyone meets every topic.</p>
 
 </section>
 
@@ -175,7 +190,7 @@
   <p>The whole group judges the claim together <b>first</b>, on scratch paper and whiteboards, before anyone touches the poster. Then:</p>
   <ul>
     <li><b>Table Keeper</b> — every fraction and percent on the poster, with the arithmetic shown and the denominator named.</li>
-    <li><b>Visual</b> — the diagram the card asks for (segmented bar chart, tree, Venn, probability table and histogram, dotplot): title, labels, a key or scale.</li>
+    <li><b>Visual</b> — the diagram the card asks for (segmented bar chart, shaded tables, Venn, 2x2 table, dotplot): title, labels, a key or scale.</li>
     <li><b>Writer</b> — the verdict sentence, the repaired claim and the explanation sentences, in context, using the words from the language objective; checks the must-have list before the walk.</li>
   </ul>
   <p>In a pair, the Table Keeper also draws the visual.</p>
@@ -185,7 +200,7 @@
     <tr><th>Tue 11/10 · 65 min · build</th><th>Thu 11/12 · 65 min · observed: defend, repair, finish</th><th>Fri 11/13 · 55 min · gallery walk</th></tr>
     <tr>
       <td>Do Now on boards. Objectives + EQ posted. Three Reads on the shared table. Example board. Cards out. Solve verdict + proof on scratch paper first, then start the poster. Exit ticket 1.</td>
-      <td>Do Now on boards. Defend round with question cards (groups 1-2, 3-4, 5 with you). Repair part of each card. Finish against the checklist. Five minutes on the 10/29 promise. Exit ticket 2, alone, on paper.</td>
+      <td>Do Now on boards. Defend round with question cards (poster 1 with 2, 3 with 4; poster 5 presents to you). Repair part of each card. Finish against the checklist. Five minutes on the 10/29 promise. Exit ticket 2, alone, on paper.</td>
       <td>Final touches, posters up. Walk sheet at every other poster. Debrief on the two persistent ones. Score with the grid.</td>
     </tr>
   </table>
@@ -199,30 +214,30 @@
 <!-- ============================================================ -->
 <section class="sheet teacher board teacher-sheet big">
   <h1>AP Statistics · Period B · Unit 2 Poster</h1>
-  <p class="sub">Tue 11/10 · Thu 11/12 · Fri 11/13 &nbsp; <span class="badge dok3">DOK 3</span> &nbsp; CED 2026 topics 2.1-2.9 · skills 3.A, 3.B, 4.B</p>
+  <p class="sub">Tue 11/10 · Thu 11/12 · Fri 11/13 &nbsp; <span class="badge dok3">DOK 3</span> &nbsp; judge it · prove it · repair it</p>
 
-  <h2>Learning objective</h2>
-  <p>I can decide whether a claim about chance is supported by the data: find the probability the claim actually depends on (a conditional, a joint, a union, or an expected value), compare it to the claim, and justify my verdict in context.</p>
+  <h2>Content objective</h2>
+  <p>I can judge a claim about chance: find the number it really depends on, prove my verdict with it, and repair the claim so it is true.</p>
 
   <h2>Language objective</h2>
-  <p>I can explain to my group and in writing on the poster why a probability claim is right or wrong, using the words <b>given, conditional, joint, union, mutually exclusive, independent</b> and <b>expected value</b> in complete sentences.</p>
+  <p>I can defend my verdict out loud and in writing, in complete sentences, using the word my claim needs: <b>given, union, independent, mutually exclusive</b> or <b>expected value</b>.</p>
 
   <h2>Essential question</h2>
-  <p>When someone says "the odds are...", how do we know whether to believe them?</p>
+  <p>What makes a claim about chance worth believing?</p>
 
   <h2>Frames</h2>
   <div class="frame">
-    <p><b>Verdict:</b> "The claim says ______. The number it really depends on is ______ (a conditional P(___ | ___), a joint, a union, an expected value, or a simulated probability) = ______, not ______, so the claim is (supported / not supported / partly supported) because ______."</p>
-    <p><b>Partner talk:</b> "I agree / disagree with ______ because ______." &nbsp; "Can you say that with the word <i>given</i>?"</p>
-    <p><b>Random variables:</b> "In the long run, ______ per ______."</p>
+    <p><b>Verdict:</b> "The claim says ______. The number it really depends on is ______ = ______. So the claim is (supported / partly supported / not supported) because ______."</p>
+    <p><b>Partner talk:</b> "I agree / disagree with ______ because ______." &nbsp; "Say it again with your key word."</p>
+    <p><b>Poster 5:</b> "In the long run, ______ per ______."</p>
   </div>
-  <div class="bank"><b>Word bank:</b> <span>given</span><span>conditional</span><span>joint</span><span>union</span><span>mutually exclusive</span><span>independent</span><span>expected value</span><span>long run</span><span>denominator</span><span>relative frequency</span><span>association</span></div>
+  <div class="bank"><b>Key words:</b> <span>given</span><span>union</span><span>independent</span><span>mutually exclusive</span><span>expected value</span> &nbsp; <b>Helpers:</b> <span>denominator</span><span>long run</span></div>
 
-  <h2>Today's job</h2>
+  <h2>This week</h2>
   <ul>
     <li><b>Tuesday:</b> verdict and proof on scratch paper first. Then the poster.</li>
     <li><b>Thursday:</b> defend your verdict to another group. Repair the claim. Finish against the checklist.</li>
-    <li><b>Friday:</b> gallery walk. One number at every poster.</li>
+    <li><b>Friday:</b> gallery walk. One number at each poster.</li>
   </ul>
 </section>
 
@@ -230,11 +245,10 @@
 <!-- CARD 1 — Who wants to be rich?                                -->
 <!-- ============================================================ -->
 <section class="sheet card student teacher">
-  <div class="head"><h1>Poster 1 — Who wants to be rich?</h1><span class="num">Topics 2.1-2.2 · Two-way tables, conditional relative frequencies, association<br><span class="badge dok3">DOK 3</span></span></div>
-  <div class="show"><b>Your poster must show:</b> the five "Rich" percents, a segmented bar chart (one 100% bar per superpower), your verdict, the repaired claim, and one association sentence.</div>
+  <div class="head"><h1>Poster 1 — Who wants to be rich?</h1><span class="num"><span class="badge dok3">DOK 3</span></span></div>
 
-  <h3>Data (printed in the 2.4-2.6 follow-along)</h3>
-  <div class="data">Super Status! 433 high school students answered two questions: "What superpower would you choose?" and "What status would you prefer?"
+  <h3>Data</h3>
+  <div class="data">Super Status! 433 high school students answered two questions: "What superpower would you choose?" and "What status would you prefer?" One of these 433 students is picked at random.
     <table>
       <tr><th>Superpower</th><th>Famous</th><th>Happy</th><th>Healthy</th><th>Rich</th><th class="t">Total</th></tr>
       <tr><td>Fly</td><td>5</td><td>48</td><td>14</td><td>22</td><td class="t">89</td></tr>
@@ -249,49 +263,46 @@
   <div class="claim"><h3>The claim you are judging</h3><p class="q">The student newsletter wrote: "Freeze Time people are the ones who want to be rich. 26 of them chose Rich, more than any other superpower."</p></div>
 
   <div class="dok">
-    <h3>DOK-3 — solve together before you build</h3>
+    <h3>Solve together first. Scratch paper and whiteboards, no poster yet.</h3>
     <ol type="a">
-      <li>For each superpower, find the percent of its fans who chose Rich. Write each as a fraction and a percent. Which total is the denominator each time, and why?
+      <li>For each superpower, what percent of its fans chose Rich? Write a fraction and a percent. Which total is the denominator, and why?
         <div class="answer"><b>Answer.</b> Fly 22/89 = 24.7% · Freeze Time 26/101 = 25.7% · Invisibility 22/98 = 22.4% · Super Strength 13/77 = 16.9% · Telepathy 19/68 = 27.9%. The denominator is the row total: "given Fly" means only the 89 Fly students count. Overall, P(Rich) = 102/433 = 23.6%.</div></li>
-      <li>Draw a segmented bar chart: one bar per superpower, each bar 100% tall, split into Famous / Happy / Healthy / Rich. Add a key and a percent axis.
+      <li>Draw a segmented bar chart: one 100% bar per superpower, split into Famous / Happy / Healthy / Rich. Whole percents are fine. Add a key and a percent axis.
         <div class="answer"><b>Answer</b> (percents within each superpower: Famous / Happy / Healthy / Rich). Fly 5.6 / 53.9 / 15.7 / 24.7 · Freeze Time 3.0 / 62.4 / 8.9 / 25.7 · Invisibility 3.1 / 63.3 / 11.2 / 22.4 · Super Strength 5.2 / 55.8 / 22.1 / 16.9 · Telepathy 0.0 / 72.1 / 0.0 / 27.9. Overall 3.5 / 61.2 / 11.8 / 23.6.</div></li>
-      <li>Verdict. Is the newsletter right about Freeze Time? Which superpower's fans are most likely to want to be rich, and by how many percentage points?
-        <div class="answer"><b>Answer.</b> The count is right (26 is the largest Rich count) but the reasoning is wrong: Freeze Time is the largest group (101 fans), so a large count is expected. By percent, Telepathy leads at 27.9%; Freeze Time is second at 25.7%, 2.2 points behind. Partly supported at best: wrong reason, wrong leader.</div></li>
+      <li>Verdict. Do Freeze Time fans stand out for wanting to be rich? Compare their percent with the other four groups and with all 433 students.
+        <div class="answer"><b>Answer.</b> No. The count is right (26 is the largest Rich count), but Freeze Time is also the largest group (101 fans), so a large count is expected. By percent Freeze Time is 25.7%, close to the 23.6% of all students. Telepathy is highest at 27.9% (Freeze Time is second, 2.2 points behind), and every group sits between 17% and 28%. No group stands out: not supported. Also accept the true reading of the count: of the 102 students who want Rich, 26 (25.5%) chose Freeze Time, more than any other power. That is P(Freeze Time | Rich), not the claim's P(Rich | Freeze Time).</div></li>
       <li>Repair. Rewrite the claim so it is true. Use a percent, not a count.
-        <div class="answer"><b>Answer</b> (any true version). "Among students who chose Telepathy, 27.9% want to be rich, the highest share of any superpower; Freeze Time fans are close at 25.7%."</div></li>
+        <div class="answer"><b>Answer</b> (any true version). "About 1 in 4 students in every superpower group wants to be rich (17% to 28%); Freeze Time fans, at 25.7%, are close to the 23.6% of all students." Also true: "Among students who chose Telepathy, 27.9% want to be rich, the highest share; Freeze Time is second at 25.7%."</div></li>
       <li>Is there an association between superpower and status? Compare two bars that look different (try Telepathy and Fly) and explain in one sentence.
         <div class="answer"><b>Answer.</b> Yes: the conditional distributions differ. Telepathy fans: 0% Famous, 0% Healthy, 72% Happy. Fly fans: 5.6% Famous, 15.7% Healthy, 54% Happy. With no association every bar would be split the same way.</div></li>
     </ol>
   </div>
-  <div class="room"></div><div class="room"></div><div class="room"></div>
+  <p class="verdictline"><b>Our verdict in one sentence</b> (show your teacher before it goes on the poster):</p>
+  <div class="room"></div><div class="room"></div>
 </section>
 
 <section class="sheet card student teacher">
   <div class="head"><h1>Poster 1 — checklist, roles, sketch</h1><span class="num">Who wants to be rich?</span></div>
-  <div class="grid2">
+  <div class="checklist">
     <div class="box">
-      <h3>Poster must-haves (= the rubric)</h3>
+      <h3>Poster checklist (this is the rubric)</h3>
       <ul class="must">
-        <li>Five "Rich" percents, each with its fraction and the row total as the denominator</li>
+        <li>Five "Rich" percents, each with its fraction</li>
         <li>Segmented bar chart: five bars, each 100%, four segments, a key, a percent axis</li>
-        <li>A verdict sentence that names the count AND the percent for Freeze Time and for the leader</li>
+        <li>A verdict that compares Freeze Time's percent with the other groups and with all 433 students</li>
         <li>The repaired claim, true, with a percent</li>
         <li>One association sentence comparing two superpowers' bars</li>
       </ul>
       <p class="small">All five = E · three or four = P · fewer = I</p>
     </div>
-    <div class="box">
-      <h3>The mistake this busts</h3>
-      <p class="small">In Unit 1 this class kept comparing counts from groups of different sizes: "the bigger count wins." Freeze Time has the most fans of any power (101), so of course it has a big Rich count. Percents <i>inside each row</i> are the fair comparison. On quiz 2.1, three of you also read a relative-frequency bar chart as if it showed counts.</p>
-    </div>
   </div>
   <div class="roles">
-    <div class="role"><b>Table Keeper</b>The five Rich fractions and percents, then all 20 percents for the bars. Show the arithmetic.</div>
+    <div class="role"><b>Table Keeper</b>The five Rich fractions and percents, then the percents for the bars.</div>
     <div class="role"><b>Visual</b>The segmented bar chart: five 100% bars, four segments, key, percent axis, title.</div>
-    <div class="role"><b>Writer</b>The verdict, the repaired claim, the association sentence. Use <i>given, conditional, association</i>.</div>
+    <div class="role"><b>Writer</b>The verdict, the repaired claim, the association sentence.</div>
   </div>
-  <div class="frame"><b>Frame:</b> "The claim compares ______ (counts). The probability it depends on is P(Rich | ______). Freeze Time: ______%. The leader is ______ at ______%. So the claim is ______ because ______."
-    <div class="bank"><span>given</span><span>conditional</span><span>relative frequency</span><span>association</span><span>denominator</span></div></div>
+  <div class="frame"><b>Verdict frame:</b> "The claim says ______. The number it really depends on is ______ = ______. So the claim is (supported / partly supported / not supported) because ______."
+    <div class="bank"><b>Your words:</b> <span>given</span><span>denominator</span><span>association</span></div></div>
   <div class="sketch"><span>Sketch the segmented bar chart here first (five bars, percent axis, key).</span></div>
   <p><b>Draft the poster sentences here.</b> Every sentence names the context and uses a number from the table.</p>
   <div class="room"></div><div class="room"></div><div class="room"></div>
@@ -301,11 +312,10 @@
 <!-- CARD 2 — The flipped headline                                 -->
 <!-- ============================================================ -->
 <section class="sheet card student teacher">
-  <div class="head"><h1>Poster 2 — The flipped headline</h1><span class="num">Topic 2.6 · Conditional probability: order matters<br><span class="badge dok3">DOK 3</span></span></div>
-  <div class="show"><b>Your poster must show:</b> both conditional probabilities with their denominators, a tree diagram or two shaded tables, the verdict on each half of the headline, the repaired headline, and a second flipped pair.</div>
+  <div class="head"><h1>Poster 2 — The flipped headline</h1><span class="num"><span class="badge dok3">DOK 3</span></span></div>
 
-  <h3>Data (printed in the 2.4-2.6 follow-along)</h3>
-  <div class="data">Super Status! 433 high school students answered: "What superpower would you choose?" and "What status would you prefer?"
+  <h3>Data</h3>
+  <div class="data">Super Status! 433 high school students answered: "What superpower would you choose?" and "What status would you prefer?" One of these 433 students is picked at random.
     <table>
       <tr><th>Superpower</th><th>Famous</th><th>Happy</th><th>Healthy</th><th>Rich</th><th class="t">Total</th></tr>
       <tr><td>Fly</td><td>5</td><td>48</td><td>14</td><td>22</td><td class="t">89</td></tr>
@@ -320,13 +330,13 @@
   <div class="claim"><h3>The claim you are judging</h3><p class="q">A headline in the school paper: "Most students who want to be Famous chose Fly. So most students who chose Fly want to be Famous."</p></div>
 
   <div class="dok">
-    <h3>DOK-3 — solve together before you build</h3>
+    <h3>Solve together first. Scratch paper and whiteboards, no poster yet.</h3>
     <ol type="a">
-      <li>Find P(Fly | Famous) and P(Famous | Fly). Write each as a fraction with the correct denominator, then as a percent. Which total is the denominator each time?
+      <li>Find P(Fly | Famous) and P(Famous | Fly) as fractions and percents. Which total is the denominator each time, and why?
         <div class="answer"><b>Answer.</b> P(Fly | Famous) = 5/15 = 33.3%: the 15 students who want to be Famous (a column total). P(Famous | Fly) = 5/89 = 5.6%: the 89 students who chose Fly (a row total). Same numerator, different "given" group.</div></li>
-      <li>Draw a tree diagram (first split Famous / not Famous, then Fly / not Fly) OR shade the "given" group on two copies of the table, to show why the denominators are 15 and 89.
-        <div class="answer"><b>Answer</b> (tree). Famous 15/433 = 3.5% → Fly 5/15; not Famous 418/433 → Fly 84/418 = 20.1%. Either visual earns the must-have if the two given groups are visibly different.</div></li>
-      <li>Verdict on each half. Is "most" right for the first sentence? (How big is 5 out of 15?) Does the second sentence follow from the first?
+      <li>Shade the "given" group on two copies of the table, one for each probability. Circle the cell the two share.
+        <div class="answer"><b>Answer.</b> Copy 1: the Famous column shaded (total 15) for P(Fly | Famous). Copy 2: the Fly row shaded (total 89) for P(Famous | Fly). The shared cell is 5: same numerator, different given group.</div></li>
+      <li>Verdict on each half. Is "most" right in the first sentence? Does the second sentence follow from the first?
         <div class="answer"><b>Answer.</b> First half: Fly is the top pick among the 15 Famous students (5; next is Super Strength with 4), but 33% is not "most": a plurality, not a majority. Second half: it does not follow; the condition is flipped. Only 5.6% of Fly-choosers want to be Famous.</div></li>
       <li>Repair. Rewrite the headline as two true sentences, each with its probability.
         <div class="answer"><b>Answer.</b> "Among the 15 students who want to be Famous, Fly was the most popular power (5, or 33%). Among the 89 who chose Fly, only 5.6% want to be Famous."</div></li>
@@ -334,36 +344,33 @@
         <div class="answer"><b>Answer</b> (any correct pair). P(Happy | Super Strength) = 43/77 = 55.8% vs P(Super Strength | Happy) = 43/265 = 16.2%. P(Happy | Freeze Time) = 63/101 = 62.4% vs P(Freeze Time | Happy) = 63/265 = 23.8%. P(Rich | Telepathy) = 19/68 = 27.9% vs P(Telepathy | Rich) = 19/102 = 18.6%. Why: the numerator is the same cell; the denominator is the size of the given group.</div></li>
     </ol>
   </div>
-  <div class="room"></div><div class="room"></div><div class="room"></div>
+  <p class="verdictline"><b>Our verdict in one sentence</b> (show your teacher before it goes on the poster):</p>
+  <div class="room"></div><div class="room"></div>
 </section>
 
 <section class="sheet card student teacher">
   <div class="head"><h1>Poster 2 — checklist, roles, sketch</h1><span class="num">The flipped headline</span></div>
-  <div class="grid2">
+  <div class="checklist">
     <div class="box">
-      <h3>Poster must-haves (= the rubric)</h3>
+      <h3>Poster checklist (this is the rubric)</h3>
       <ul class="must">
-        <li>Both conditionals as fractions with the right denominators (15 and 89) and as percents</li>
-        <li>A tree diagram or two shaded tables that show the two "given" groups</li>
-        <li>A verdict on each half: "most" judged against 50%, and the flip named</li>
+        <li>Both conditional probabilities as fractions and percents</li>
+        <li>Two copies of the table, each with its "given" group shaded</li>
+        <li>A verdict on each half of the headline, each with its number</li>
         <li>The repaired headline: two true sentences with their numbers</li>
         <li>A second flipped pair from the table with both probabilities and a one-sentence why</li>
       </ul>
       <p class="small">All five = E · three or four = P · fewer = I</p>
     </div>
-    <div class="box">
-      <h3>The mistake this busts</h3>
-      <p class="small">On 10/30 someone asked why P(B | A) and P(A | B) come out different. The word after "given" names the group you are standing inside; that group's total is the denominator. Flip the given, flip the denominator, and the answer changes. Your teacher's chocolate example: P(17 | likes chocolate) = 20/23 but P(likes chocolate | 17) = 20/25.</p>
-    </div>
   </div>
   <div class="roles">
     <div class="role"><b>Table Keeper</b>The two fractions and percents, and the second flipped pair. Name each denominator.</div>
-    <div class="role"><b>Visual</b>The tree (two levels, probabilities on every branch) or the two shaded tables.</div>
-    <div class="role"><b>Writer</b>The verdict on each half, the repaired headline, the why sentence. Use <i>given, conditional</i>.</div>
+    <div class="role"><b>Visual</b>The two shaded tables, with the shared cell circled.</div>
+    <div class="role"><b>Writer</b>The verdict on each half, the repaired headline, the why sentence.</div>
   </div>
-  <div class="frame"><b>Frame:</b> "P(Fly | Famous) means: of the ______ students who want to be Famous, ______ chose Fly = ______%. P(Famous | Fly) means: of the ______ students who chose Fly, ______ want to be Famous = ______%. The headline flips ______, so ______."
-    <div class="bank"><span>given</span><span>conditional</span><span>denominator</span><span>plurality</span><span>majority</span></div></div>
-  <div class="sketch"><span>Sketch the tree or the two shaded tables here first.</span></div>
+  <div class="frame"><b>Verdict frame:</b> "The claim says ______. The number it really depends on is ______ = ______. So the claim is (supported / partly supported / not supported) because ______."
+    <div class="bank"><b>Your words:</b> <span>given</span><span>denominator</span></div></div>
+  <div class="sketch"><span>Sketch the two shaded tables here first.</span></div>
   <p><b>Draft the poster sentences here.</b></p>
   <div class="room"></div><div class="room"></div><div class="room"></div>
 </section>
@@ -372,11 +379,10 @@
 <!-- CARD 3 — Can't happen together, so unrelated?                 -->
 <!-- ============================================================ -->
 <section class="sheet card student teacher">
-  <div class="head"><h1>Poster 3 — Can't happen together, so unrelated?</h1><span class="num">Topics 2.5 + 2.7 · Mutually exclusive vs independent<br><span class="badge dok3">DOK 3</span></span></div>
-  <div class="show"><b>Your poster must show:</b> the joint probability, two independence tests, a verdict that uses both words, the general argument, and two 2x2 tables you designed.</div>
+  <div class="head"><h1>Poster 3 — Can't happen together, so unrelated?</h1><span class="num"><span class="badge dok3">DOK 3</span></span></div>
 
-  <h3>Data (printed in the 2.4-2.6 follow-along)</h3>
-  <div class="data">Super Status! 433 high school students answered: "What superpower would you choose?" and "What status would you prefer?"
+  <h3>Data</h3>
+  <div class="data">Super Status! 433 high school students answered: "What superpower would you choose?" and "What status would you prefer?" One of these 433 students is picked at random.
     <table>
       <tr><th>Superpower</th><th>Famous</th><th>Happy</th><th>Healthy</th><th>Rich</th><th class="t">Total</th></tr>
       <tr><td>Fly</td><td>5</td><td>48</td><td>14</td><td>22</td><td class="t">89</td></tr>
@@ -391,50 +397,47 @@
   <div class="claim"><h3>The claim you are judging</h3><p class="q">"Nobody who chose Telepathy wants to be Famous: 0 of 68. Since the two never happen together, Telepathy and Famous are independent. One has nothing to do with the other."</p></div>
 
   <div class="dok">
-    <h3>DOK-3 — solve together before you build</h3>
+    <h3>Solve together first. Scratch paper and whiteboards, no poster yet.</h3>
     <ol type="a">
       <li>Are "chose Telepathy" and "wants to be Famous" mutually exclusive? Show the joint probability P(Telepathy and Famous).
-        <div class="answer"><b>Answer.</b> P(Telepathy and Famous) = 0/433 = 0. They cannot both happen: mutually exclusive.</div></li>
-      <li>Are they independent? Test two ways: compare P(Famous) with P(Famous | Telepathy); compare P(Famous) × P(Telepathy) with P(Famous and Telepathy).
-        <div class="answer"><b>Answer.</b> P(Famous) = 15/433 = 3.5% but P(Famous | Telepathy) = 0/68 = 0%: not equal, so not independent. P(Famous) × P(Telepathy) = (15/433)(68/433) = 0.0054 but P(Famous and Telepathy) = 0: not equal, so not independent.</div></li>
+        <div class="answer"><b>Answer.</b> P(Telepathy and Famous) = 0/433 = 0. No student in this table did both, so for a student picked from this table the two events are mutually exclusive. (The 0 shows it did not happen among these 433, not that it never could.)</div></li>
+      <li>Are they independent? Compare P(Famous) with P(Famous | Telepathy).
+        <div class="answer"><b>Answer.</b> P(Famous) = 15/433 = 3.5% but P(Famous | Telepathy) = 0/68 = 0%: not equal, so not independent. (The product check agrees: P(Famous) × P(Telepathy) = (15/433)(68/433) = 0.0054, but P(Famous and Telepathy) = 0.)</div></li>
       <li>Verdict, in one sentence that uses both terms correctly. What does knowing "Telepathy" do to the chance of "Famous"?
         <div class="answer"><b>Answer.</b> "Telepathy and Famous are mutually exclusive but not independent: knowing a student chose Telepathy drops the chance they want to be Famous from 3.5% to 0." Seeing one rules the other out, which changes its probability: that is dependence, not independence.</div></li>
-      <li>Prove it in general. Two events can each happen (each has probability above 0) and they are mutually exclusive. Explain why they can never be independent. (Hint: what does independence say P(A and B) must equal?)
+      <li>Prove it in general. Two events can each happen, and they are mutually exclusive. Explain why they can never be independent. (What does independence say P(A and B) must equal?)
         <div class="answer"><b>Answer.</b> Independent means P(A and B) = P(A) × P(B). If both events are possible, that product is above 0. Mutually exclusive means P(A and B) = 0. Both cannot be true at once, so mutually exclusive events with positive probabilities are never independent.</div></li>
-      <li>Build. Make a 2x2 table of 100 students for "plays a sport" and "plays an instrument" where the two events are independent but NOT mutually exclusive (show the check). Then make a second table where they are mutually exclusive, run the independence check again, and say what you find.
-        <div class="answer"><b>Answer</b> (one of many). Independent: sport 60, instrument 50, both 30 → sport only 30, instrument only 20, neither 20. Check: P(instrument | sport) = 30/60 = 50% = P(instrument) = 50/100. Any table with both = P(S) × P(I) × 100 works. Mutually exclusive: sport 50, instrument 50, both 0, neither 0. Check: P(instrument | sport) = 0/50 = 0% but P(instrument) = 50%: not independent.</div></li>
+      <li>Build. Make a 2x2 table of 100 students for "plays a sport" and "plays an instrument" where the two events are independent but NOT mutually exclusive. Write the check under it.
+        <div class="answer"><b>Answer</b> (one of many). Independent: sport 60, instrument 50, both 30 → sport only 30, instrument only 20, neither 20. Check: P(instrument | sport) = 30/60 = 50% = P(instrument) = 50/100. Any table with both = P(S) × P(I) × 100 works. Extension for a fast group: a second table where the events ARE mutually exclusive (sport 50, instrument 50, both 0, neither 0); the same check fails, 0/50 = 0% against P(instrument) = 50%.</div></li>
     </ol>
   </div>
-  <div class="room"></div><div class="room"></div><div class="room"></div>
+  <p class="verdictline"><b>Our verdict in one sentence</b> (show your teacher before it goes on the poster):</p>
+  <div class="room"></div><div class="room"></div>
 </section>
 
 <section class="sheet card student teacher">
   <div class="head"><h1>Poster 3 — checklist, roles, sketch</h1><span class="num">Can't happen together, so unrelated?</span></div>
-  <div class="grid2">
+  <div class="checklist">
     <div class="box">
-      <h3>Poster must-haves (= the rubric)</h3>
+      <h3>Poster checklist (this is the rubric)</h3>
       <ul class="must">
-        <li>P(Telepathy and Famous) = 0 shown from the table, with the words <i>mutually exclusive</i></li>
-        <li>Independence tested two ways with the numbers (P(Famous) vs P(Famous | Telepathy); product vs joint)</li>
+        <li>The joint probability P(Telepathy and Famous) from the table, and what it tells you</li>
+        <li>The independence test, with its two numbers</li>
         <li>One verdict sentence that uses <i>mutually exclusive</i> AND <i>independent</i> correctly</li>
-        <li>The general argument from part (d), written as a short proof that starts from what independence says P(A and B) must equal</li>
-        <li>Two 2x2 tables (100 students each) with the independence check written under each</li>
+        <li>The proof from part (d), in two or three sentences</li>
+        <li>Your 2x2 table (100 students) with the independence check written under it</li>
       </ul>
       <p class="small">All five = E · three or four = P · fewer = I</p>
     </div>
-    <div class="box">
-      <h3>The mistake this busts</h3>
-      <p class="small">On 10/29 the class asked for the difference between mutually exclusive and independent, and your teacher promised the class an example that settles it. Is "can't happen together" the same as "unrelated"? Your table decides, with numbers: test what knowing one event does to the probability of the other.</p>
-    </div>
   </div>
   <div class="roles">
-    <div class="role"><b>Table Keeper</b>The four probabilities, the product, and the numbers in both 2x2 tables.</div>
-    <div class="role"><b>Visual</b>The two 2x2 tables (must-have 5), each with its check written underneath; add a Venn diagram of the two events if there is room.</div>
-    <div class="role"><b>Writer</b>The verdict sentence and the general argument. Use <i>mutually exclusive, independent, joint</i>.</div>
+    <div class="role"><b>Table Keeper</b>The probabilities, and the numbers in your 2x2 table.</div>
+    <div class="role"><b>Visual</b>The big table with the Telepathy row and the Famous column shaded, and your 2x2 table with its check underneath.</div>
+    <div class="role"><b>Writer</b>The verdict sentence and the proof.</div>
   </div>
-  <div class="frame"><b>Frame:</b> "P(Telepathy and Famous) = ______, so they are ______. But P(Famous) = ______ and P(Famous | Telepathy) = ______, which are (equal / not equal), so they (are / are not) ______. Knowing a student chose Telepathy ______ the chance they want to be Famous."
-    <div class="bank"><span>mutually exclusive</span><span>independent</span><span>joint</span><span>given</span><span>product</span></div></div>
-  <div class="sketch"><span>Sketch the Venn diagram and the two 2x2 tables here first.</span></div>
+  <div class="frame"><b>Verdict frame:</b> "The claim says ______. The number it really depends on is ______ = ______. So the claim is (supported / partly supported / not supported) because ______."
+    <div class="bank"><b>Your words:</b> <span>mutually exclusive</span><span>independent</span><span>given</span></div></div>
+  <div class="sketch"><span>Sketch your 2x2 table here first.</span></div>
   <p><b>Draft the poster sentences here.</b></p>
   <div class="room"></div><div class="room"></div><div class="room"></div>
 </section>
@@ -443,11 +446,10 @@
 <!-- CARD 4 — Double counted                                       -->
 <!-- ============================================================ -->
 <section class="sheet card student teacher">
-  <div class="head"><h1>Poster 4 — Double counted</h1><span class="num">Topics 2.4 + 2.7 · Unions, complements, independence<br><span class="badge dok3">DOK 3</span></span></div>
-  <div class="show"><b>Your poster must show:</b> a Venn diagram (or two-way table) with all four regions, the corrected union, two independence tests, the sentence on why the two tests agree, and the "exact independence" number.</div>
+  <div class="head"><h1>Poster 4 — Double counted</h1><span class="num"><span class="badge dok3">DOK 3</span></span></div>
 
-  <h3>Data (printed in the 2.7 follow-along, from the 2010 AP exam)</h3>
-  <div class="data">A survey of 2,500 adults asked about education level and where they get their news.
+  <h3>Data</h3>
+  <div class="data">A survey of 2,500 adults asked about education level and where they get their news. One of these 2,500 adults is picked at random.
     <table>
       <tr><th>Group</th><th>Count</th></tr>
       <tr><td>College graduates</td><td>693</td></tr>
@@ -457,52 +459,49 @@
     </table>
   </div>
 
-  <div class="claim"><h3>The claim you are judging</h3><p class="q">A blog wrote: "P(college grad or internet news) = 693/2500 + 687/2500 = 55.2%. And college grads are no more likely than anyone else to get their news online."</p></div>
+  <div class="claim"><h3>The claim you are judging</h3><p class="q">A blog wrote: "P(college grad or internet news) = 693/2500 + 687/2500 = 55.2%. And college grads are no more likely than anyone else to get their news online: only 245/2500 = 9.8% of adults are grads who read news online."</p><p><b>Two mistakes are hiding in this claim. Find both.</b></p></div>
 
   <div class="dok">
-    <h3>DOK-3 — solve together before you build</h3>
+    <h3>Solve together first. Scratch paper and whiteboards, no poster yet.</h3>
     <ol type="a">
       <li>Draw a Venn diagram (or a two-way table) and fill in all four regions: both, grad only, internet only, neither. Check that they add to 2,500.
         <div class="answer"><b>Answer.</b> Both 245 · grad only 693 − 245 = 448 · internet only 687 − 245 = 442 · neither 2,500 − 1,135 = 1,365. Sum 2,500.</div></li>
       <li>Find the mistake in the 55.2%. Compute the correct P(grad or internet). Which people were counted twice?
         <div class="answer"><b>Answer.</b> The 245 adults who are both were counted in 693 and again in 687. P(grad or internet) = (693 + 687 − 245)/2500 = 1135/2500 = 45.4%. (The blog's 1380/2500 = 55.2% is a union with double counting.)</div></li>
-      <li>Test the second claim two ways: compare P(internet | grad) with P(internet); compare P(grad) × P(internet) with P(grad and internet). Verdict: are the events independent? Who is more likely to read news online?
-        <div class="answer"><b>Answer.</b> P(internet | grad) = 245/693 = 35.4% vs P(internet) = 687/2500 = 27.5%: not equal, not independent. P(grad) × P(internet) = 0.2772 × 0.2748 = 0.0762 vs P(both) = 245/2500 = 0.098: not equal, not independent. Grads are MORE likely to read news online (35.4% vs 27.5% overall, and vs 442/1807 = 24.5% of non-grads). The blog's second sentence is false.</div></li>
-      <li>Explain in one sentence why the two tests in (c) must always agree. (Hint: start from P(A and B) = P(A) × P(B) and divide both sides by P(A).)
-        <div class="answer"><b>Answer.</b> P(A and B) = P(A)P(B) is the same statement as P(A and B)/P(A) = P(B), which is P(B | A) = P(B): one equation rearranged, so one test fails exactly when the other does.</div></li>
-      <li>Build. Keep 693 college grads and 687 internet readers. What number in "both" would make the two events exactly independent? Is it possible with real people? What does that tell you?
-        <div class="answer"><b>Answer.</b> both = 693 × 687 / 2500 = 190.44 people: not a whole number, so no survey of these sizes is exactly independent; 190 or 191 would be as close as real people get. The observed 245 is far above 190.44, so the dependence is real, not rounding.</div></li>
+      <li>The blog backs its second sentence with 9.8%. Is 9.8% a joint or a conditional probability? Which probability does "no more likely than anyone else" really depend on?
+        <div class="answer"><b>Answer.</b> 9.8% = 245/2500 = P(grad and internet), a joint probability out of all 2,500 adults. "No more likely than anyone else" compares grads with everyone, so it depends on the conditional P(internet | grad), set beside P(internet).</div></li>
+      <li>Test the second sentence with the right probability. Are the two events independent? Who is more likely to read news online?
+        <div class="answer"><b>Answer.</b> P(internet | grad) = 245/693 = 35.4% vs P(internet) = 687/2500 = 27.5%: not equal, not independent. Grads are MORE likely to read news online (35.4% vs 27.5% overall, and vs 442/1807 = 24.5% of non-grads). The blog's second sentence is false. (The product check agrees: P(grad) × P(internet) = 0.2772 × 0.2748 = 0.0762 vs P(both) = 245/2500 = 0.098.)</div></li>
+      <li>Build. Keep 693 college grads and 687 internet readers. How many people in "both" would independence predict? Compare that with 245. What does the gap tell you?
+        <div class="answer"><b>Answer.</b> both = 693 × 687 / 2500 = 190.44 people, about 190. The survey found 245, about 55 more than independence predicts, so the dependence is large, not rounding. (190.44 is not a whole number, so tables of these sizes can never be exactly independent.)</div></li>
     </ol>
   </div>
-  <div class="room"></div><div class="room"></div><div class="room"></div>
+  <p class="verdictline"><b>Our verdict in one sentence</b> (show your teacher before it goes on the poster):</p>
+  <div class="room"></div><div class="room"></div>
 </section>
 
 <section class="sheet card student teacher">
   <div class="head"><h1>Poster 4 — checklist, roles, sketch</h1><span class="num">Double counted</span></div>
-  <div class="grid2">
+  <div class="checklist">
     <div class="box">
-      <h3>Poster must-haves (= the rubric)</h3>
+      <h3>Poster checklist (this is the rubric)</h3>
       <ul class="must">
         <li>Four regions filled and summing to 2,500 (both / grad only / internet only / neither)</li>
-        <li>The group that was counted twice named, and the corrected union as a fraction of 2,500 and a percent</li>
-        <li>Both independence tests with numbers, and a verdict naming who is more likely</li>
-        <li>One sentence on why the two tests always agree</li>
-        <li>The "both" count that would make the two events exactly independent, and what it tells you</li>
+        <li>The people counted twice, named, and the corrected union as a fraction and a percent</li>
+        <li>The blog's 9.8% named (joint or conditional?) and the probability it should have used</li>
+        <li>The independence test with its two numbers, and a verdict naming who is more likely</li>
+        <li>The "both" count independence would predict, compared with 245</li>
       </ul>
       <p class="small">All five = E · three or four = P · fewer = I</p>
     </div>
-    <div class="box">
-      <h3>The mistake this busts</h3>
-      <p class="small">2.7 (Independent Events and Unions) is the lesson this class finished least. Its exit ticket set two traps, and both are hiding in this claim: one in the first sentence's arithmetic, one in how the second sentence was checked. Find both.</p>
-    </div>
   </div>
   <div class="roles">
-    <div class="role"><b>Table Keeper</b>The four regions, the union, both tests, the exact-independence count. Show every subtraction.</div>
+    <div class="role"><b>Table Keeper</b>The four regions, the union, the test, the predicted "both" count. Show every subtraction.</div>
     <div class="role"><b>Visual</b>The Venn diagram with the overlap shaded (or the 2x2 table), every region labeled with its count.</div>
-    <div class="role"><b>Writer</b>The double-count sentence, the verdict, the why-the-tests-agree sentence. Use <i>union, joint, independent</i>.</div>
+    <div class="role"><b>Writer</b>The double-count sentence, the sentence about the 9.8%, the verdict.</div>
   </div>
-  <div class="frame"><b>Frame:</b> "The 55.2% went wrong because ______. The correct P(grad or internet) = ______. P(internet | grad) = ______ and P(internet) = ______, so the events are ______, and ______ are more likely to read news online."
-    <div class="bank"><span>union</span><span>joint</span><span>independent</span><span>given</span><span>complement</span></div></div>
+  <div class="frame"><b>Verdict frame:</b> "The claim says ______. The number it really depends on is ______ = ______. So the claim is (supported / partly supported / not supported) because ______."
+    <div class="bank"><b>Your words:</b> <span>union</span><span>given</span><span>independent</span></div></div>
   <div class="sketch"><span>Sketch the Venn diagram here first (two circles, four regions, counts).</span></div>
   <p><b>Draft the poster sentences here.</b></p>
   <div class="room"></div><div class="room"></div><div class="room"></div>
@@ -512,60 +511,57 @@
 <!-- CARD 5 — Is the game fair?                                    -->
 <!-- ============================================================ -->
 <section class="sheet card student teacher">
-  <div class="head"><h1>Poster 5 — Is the game fair?</h1><span class="num">Topics 2.8, 2.9 + 2.3 · Random variables, mean and SD, simulation<br><span class="badge dok3">DOK 3</span></span></div>
-  <div class="show"><b>Your poster must show:</b> the probability distribution of net profit, the mean and standard deviation with work, both interpretations, your verdict, the fair fix, and your simulation average.</div>
+  <div class="head"><h1>Poster 5 — Is the game fair?</h1><span class="num"><span class="badge dok3">DOK 3</span></span></div>
 
-  <h3>Data (the 2.8 follow-along exit ticket)</h3>
+  <h3>Data</h3>
   <div class="data">A carnival game costs $2 to play. You roll a fair six-sided die. Roll a 6: you win $10. Roll a 1: you win $3. Otherwise: you win nothing.</div>
 
   <div class="claim"><h3>The claim you are judging</h3><p class="q">The sign on the booth: "A FAIR GAME! You win on 2 of every 6 rolls."</p></div>
 
   <div class="dok">
-    <h3>DOK-3 — solve together before you build</h3>
+    <h3>Solve together first. Scratch paper and whiteboards, no poster yet.</h3>
     <ol type="a">
       <li>Let X = the player's net profit for one game (winnings minus the $2). List every value of X with its probability in a table. Check that the probabilities add to 1.
         <div class="answer"><b>Answer.</b> X = +8 (roll 6) with 1/6 · +1 (roll 1) with 1/6 · −2 (roll 2, 3, 4, 5) with 4/6. Sum 6/6 = 1. Using $10, $3, $0 instead of net is the first trap.</div></li>
-      <li>Compute the mean μ<sub>X</sub> and the standard deviation σ<sub>X</sub>. Show the formula, the substitution, and the arithmetic.
+      <li>Compute the mean μ<sub>X</sub> and the standard deviation σ<sub>X</sub>. Show the formula and the substitution; a calculator may do the arithmetic.
         <div class="answer"><b>Answer.</b> μ<sub>X</sub> = 8(1/6) + 1(1/6) + (−2)(4/6) = (8 + 1 − 8)/6 = 1/6 ≈ $0.17. σ<sub>X</sub>² = (8 − 1/6)²(1/6) + (1 − 1/6)²(1/6) + (−2 − 1/6)²(4/6) = 485/36 ≈ 13.47, so σ<sub>X</sub> ≈ $3.67. Shortcut: E(X²) = (64 + 1 + 16)/6 = 13.5, minus μ² = 1/36.</div></li>
       <li>Interpret μ<sub>X</sub> and σ<sub>X</sub> in context. Use "in the long run" and say "per game".
         <div class="answer"><b>Answer.</b> In the long run, over many games, a player gains about 17 cents per game on average. A single game's net typically differs from that average by about $3.67.</div></li>
-      <li>Verdict. Is the game fair? For whom? The sign's "2 of every 6 rolls" is really a 2/6 chance on each roll, not a promise: why is it still the wrong number to look at? Who does the sign fool, and who does the game actually favor?
-        <div class="answer"><b>Answer.</b> A fair game has μ<sub>X</sub> = 0. Here μ<sub>X</sub> = +$0.17, so the game favors the PLAYER; the carnival loses about 17 cents per game on average. "2 of 6" is the chance of winning anything on one roll (not a guarantee of two wins in six), and it is not the expected net: it ignores the sizes of the payouts. The sign fools a player into thinking "only 2 of 6, the house must win", and it fools the carnival owner too.</div></li>
+      <li>Verdict. Is the game fair? Who does it favor? Why is "win on 2 of every 6 rolls" the wrong number for judging fairness?
+        <div class="answer"><b>Answer.</b> A fair game has μ<sub>X</sub> = 0, for both sides. Here μ<sub>X</sub> = +$0.17, so the game favors the PLAYER: the booth loses about 17 cents per game in the long run. "2 of 6" is the chance of winning something on one roll (not a promise of two wins in six). It counts how OFTEN you win, not how MUCH: the $10 prize outweighs the four $2 losses.</div></li>
       <li>Repair. Change ONE payout so that μ<sub>X</sub> = 0 exactly. Show the new table and the new mean.
         <div class="answer"><b>Answer</b> (either). The 6 pays $9 (net +7): μ = (7 + 1 − 8)/6 = 0. Or the 1 pays $2 (net 0): μ = (8 + 0 − 8)/6 = 0. Raising the price to $13/6 ≈ $2.17 also balances it (exactly only at $13/6) but is not a payout change.</div></li>
-      <li>Simulate. On the TI-84, randInt(1,6) is one game. Play 20 games, record the net each time, and find your average. Write it next to μ<sub>X</sub>. Why do they differ, and what would happen with 1,000 games?
+      <li>Simulate 20 games. On the TI-84: randInt(1,6,20) STO→ L1, then read the 20 rolls in STAT → EDIT. Use your table to turn each roll into its net, and find the average. Why does it differ from μ<sub>X</sub>? What would 1,000 games do?
         <div class="answer"><b>Answer.</b> Twenty-game averages vary a lot (their standard deviation is about 3.67/√20 ≈ $0.82), so most groups land somewhere between about −$1.50 and +$1.80. With 1,000 games the average settles near $0.17: the law of large numbers.</div></li>
     </ol>
   </div>
+  <p class="verdictline"><b>Our verdict in one sentence</b> (show your teacher before it goes on the poster):</p>
+  <div class="room"></div><div class="room"></div>
 </section>
 
 <section class="sheet card student teacher">
   <div class="head"><h1>Poster 5 — checklist, roles, sketch</h1><span class="num">Is the game fair?</span></div>
-  <div class="grid2">
+  <div class="checklist">
     <div class="box">
-      <h3>Poster must-haves (= the rubric)</h3>
+      <h3>Poster checklist (this is the rubric)</h3>
       <ul class="must">
-        <li>Distribution table of X = net profit (not winnings) with probabilities that sum to 1, plus a probability histogram of X</li>
-        <li>μ<sub>X</sub> and σ<sub>X</sub> with the formula, the substitution and the arithmetic shown</li>
+        <li>The distribution table of X = net profit, with probabilities that sum to 1</li>
+        <li>μ<sub>X</sub> and σ<sub>X</sub>, each with its formula and substitution</li>
         <li>Both interpretations in context, with "in the long run" and "per game"</li>
         <li>A verdict naming who the game favors and why "2 of 6" is the wrong number</li>
-        <li>The one-payout fix with the new mean shown, and the dotplot of your 20 simulated games with its average marked next to μ<sub>X</sub></li>
+        <li>The one-payout fix (new mean shown), and a dotplot of your 20 simulated games with their average marked</li>
       </ul>
       <p class="small">All five = E · three or four = P · fewer = I</p>
-    </div>
-    <div class="box">
-      <h3>The mistake this busts</h3>
-      <p class="small">Three traps from the 2.8 exit ticket: using the winnings instead of the NET (winnings minus the $2 you paid); reading the mean as what happens in every single game; and calling a game "fair" without asking fair to whom. And from 10/26: a simulation estimates; it does not give the exact answer.</p>
     </div>
   </div>
   <div class="roles">
     <div class="role"><b>Table Keeper</b>The table, μ, σ, the fix. Show the formula before the numbers.</div>
-    <div class="role"><b>Visual</b>A probability histogram of X, and a dotplot of your 20 simulated nets with their average marked.</div>
-    <div class="role"><b>Writer</b>The interpretations and the verdict. Use <i>expected value, long run</i>.</div>
+    <div class="role"><b>Visual</b>Runs the 20 games on the TI-84. The dotplot of the 20 nets, with their average and μ<sub>X</sub> both marked.</div>
+    <div class="role"><b>Writer</b>The two interpretations and the verdict.</div>
   </div>
-  <div class="frame"><b>Frame:</b> "X = ______ with probabilities ______. μ<sub>X</sub> = ______, which means in the long run the player ______ about $______ per game. σ<sub>X</sub> = ______, so a single game typically ends about $______ from the mean. The game favors the ______ because ______."
-    <div class="bank"><span>expected value</span><span>long run</span><span>net</span><span>fair</span><span>simulation</span></div></div>
-  <div class="sketch"><span>Sketch the probability histogram and the simulation dotplot here first. TI-84: MATH → PROB → randInt(1,6).</span></div>
+  <div class="frame"><b>Verdict frame:</b> "The claim says ______. The number it really depends on is ______ = ______. So the claim is (supported / partly supported / not supported) because ______." &nbsp; <b>Also:</b> "In the long run, ______ per ______."
+    <div class="bank"><b>Your words:</b> <span>expected value</span><span>long run</span><span>net</span></div></div>
+  <div class="sketch"><span>Sketch the dotplot of your 20 simulated games here first. (randInt is under MATH → PROB.)</span></div>
   <p><b>Draft the poster sentences here.</b></p>
   <div class="room"></div><div class="room"></div><div class="room"></div>
 </section>
@@ -574,37 +570,37 @@
 <!-- CARD 6 (spare) — Rigged coin?                                 -->
 <!-- ============================================================ -->
 <section class="sheet card student teacher">
-  <div class="head"><h1>Poster 6 (spare) — Rigged coin?</h1><span class="num">Topic 2.3 · Estimating probabilities using simulation<br><span class="badge dok3">DOK 3</span></span></div>
-  <div class="show"><b>Your poster must show:</b> the simulation design, 25 recorded trials, a dotplot of the longest runs, the estimated probability, and your verdict.</div>
+  <div class="head"><h1>Poster 6 (spare) — Rigged coin?</h1><span class="num"><span class="badge dok3">DOK 3</span></span></div>
 
   <h3>Data</h3>
-  <div class="data">You make the data: 20 flips of a fair coin, simulated on the TI-84 with randInt(0,1,20), where 1 = heads. (MATH → PROB → randInt. ENTER repeats it.)</div>
+  <div class="data">You make the data: 20 flips of a fair coin on the TI-84, where 1 = heads. randInt(0,1,20) STO→ L1, then read the flips down L1 in STAT → EDIT. (randInt is under MATH → PROB.)</div>
 
   <div class="claim"><h3>The claim you are judging</h3><p class="q">"I flipped a coin 20 times and got 6 heads in a row. That can't happen with a fair coin. It's rigged."</p></div>
 
   <div class="dok">
-    <h3>DOK-3 — solve together before you build</h3>
+    <h3>Solve together first. Scratch paper and whiteboards, no poster yet.</h3>
     <ol type="a">
       <li>Design. Write the simulation in three sentences: how one flip is modeled, what one trial is, and what you record from each trial (the longest run of heads in the 20 flips).
         <div class="answer"><b>Answer.</b> One flip: a random digit 0 or 1, 1 = heads, each equally likely. One trial: 20 such digits, randInt(0,1,20). Record: the longest string of consecutive 1s in the trial.</div></li>
       <li>Run 25 trials. Record the longest run each time. Draw a dotplot of the 25 values.
         <div class="answer"><b>Answer.</b> Typical values 3 to 5; a 6 or more appears in roughly 3 of 25 trials.</div></li>
       <li>Estimate P(longest run is 6 or more) from your dotplot.
-        <div class="answer"><b>Answer.</b> (number of trials with a run of 6 or more)/25. Expect something near 0.12; anything from 0.04 to 0.24 is normal variation for 25 trials.</div></li>
-      <li>Verdict. Is 6 in a row evidence of a rigged coin? Use your estimate.
-        <div class="answer"><b>Answer.</b> No. A run of 6 or more heads happens in about 12% of sets of 20 fair flips, roughly one set in eight: unusual, not impossible, not evidence of rigging.</div></li>
+        <div class="answer"><b>Answer.</b> (number of trials with a run of 6 or more)/25. Expect something near 0.12; anything from 0 to 0.24 is normal variation for 25 trials. If a group gets 0, pool the class's trials before the verdict.</div></li>
+      <li>Verdict. First decide: how rare would 6 in a row have to be before you believed the coin was rigged? Then compare your estimate with that bar. Is 6 in a row convincing evidence?
+        <div class="answer"><b>Answer.</b> No. A fair coin gives a run of 6 or more heads in about 12% of sets of 20 flips, roughly one set in eight. That is not rare, so it is not convincing evidence of rigging. It does not prove the coin is fair, either.</div></li>
       <li>Your estimate is not the exact answer. Why not? What would 1,000 trials do? (Your teacher has the exact value.)
         <div class="answer"><b>Answer.</b> A simulation gives a relative frequency, which varies from run to run; more trials make it settle closer to the exact value 0.1223 (law of large numbers). For reference: a run of 5 or more, 0.250; 7 or more, 0.058; 8 or more, 0.027.</div></li>
     </ol>
   </div>
-  <div class="room"></div><div class="room"></div><div class="room"></div>
+  <p class="verdictline"><b>Our verdict in one sentence</b> (show your teacher before it goes on the poster):</p>
+  <div class="room"></div><div class="room"></div>
 </section>
 
 <section class="sheet card student teacher">
   <div class="head"><h1>Poster 6 — checklist, roles, sketch</h1><span class="num">Rigged coin?</span></div>
-  <div class="grid2">
+  <div class="checklist">
     <div class="box">
-      <h3>Poster must-haves (= the rubric)</h3>
+      <h3>Poster checklist (this is the rubric)</h3>
       <ul class="must">
         <li>The design in three sentences (flip, trial, what is recorded)</li>
         <li>25 trials recorded in a table</li>
@@ -614,18 +610,14 @@
       </ul>
       <p class="small">All five = E · three or four = P · fewer = I</p>
     </div>
-    <div class="box">
-      <h3>The mistake this busts</h3>
-      <p class="small">On 10/26 someone asked whether the simulated coin was fair. A simulation estimates a probability from many trials; it never proves a single outcome impossible. Rare is not impossible, and one surprising result is not proof of rigging.</p>
-    </div>
   </div>
   <div class="roles">
     <div class="role"><b>Table Keeper</b>Runs the calculator, records the 25 longest runs, computes the fraction.</div>
-    <div class="role"><b>Visual</b>The dotplot with a scale that covers every value you got (expect 2 to 8; 0 and 20 are possible) and the "6 or more" region shaded.</div>
-    <div class="role"><b>Writer</b>The design sentences and the verdict. Use <i>simulation, relative frequency, long run</i>.</div>
+    <div class="role"><b>Visual</b>The dotplot, with a scale that covers every value you got and the "6 or more" region shaded.</div>
+    <div class="role"><b>Writer</b>The design sentences and the verdict.</div>
   </div>
-  <div class="frame"><b>Frame:</b> "One trial is ______. We recorded ______. In ______ of 25 trials the longest run was 6 or more, so we estimate P(run of 6 or more) ≈ ______. A run of 6 is ______, not ______, so the coin ______."
-    <div class="bank"><span>simulation</span><span>trial</span><span>relative frequency</span><span>long run</span><span>estimate</span></div></div>
+  <div class="frame"><b>Verdict frame:</b> "The claim says ______. The number it really depends on is ______ = ______. So the claim is (supported / partly supported / not supported) because ______."
+    <div class="bank"><b>Your words:</b> <span>simulation</span><span>trial</span><span>estimate</span></div></div>
   <div class="sketch"><span>Record the 25 trials and sketch the dotplot here first.</span></div>
   <p><b>Draft the poster sentences here.</b></p>
   <div class="room"></div><div class="room"></div><div class="room"></div>
@@ -636,7 +628,7 @@
 <!-- ============================================================ -->
 <section class="sheet example">
   <h1>Example board — project this first</h1>
-  <p class="sub">A claim no card uses, so nothing is given away. Every poster has these seven parts.</p>
+  <p class="sub">A claim no card uses, so nothing is given away. Every poster has a title, the claim and the data, then the five things on its checklist.</p>
   <div class="board">
     <p class="callout">1 · Title</p>
     <h1>"Healthy people hate flying"?</h1>
@@ -650,7 +642,7 @@
     <div class="bars"><div class="bar" style="height:100px">27.5%</div><div class="bar grey" style="height:75px">20.6%</div></div>
     <div><span class="barlabel">Fly, among Healthy</span><span class="barlabel">Fly, everyone</span></div>
     <p class="callout">6 · Verdict (the frame)</p>
-    <p>The claim says Healthy people hate flying. The probability it depends on is P(Fly | Healthy) = 27.5%, not the count 14, so the claim is <b>not supported</b>, because 14 is small only because the Healthy group is small (51), and among them Fly is chosen MORE often than in the whole class (27.5% vs 20.6%).</p>
+    <p>The claim says Healthy people hate flying. The number it really depends on is P(Fly | Healthy) = 27.5%, not the count 14. So the claim is <b>not supported</b>, because the Healthy group is small (51), and they chose Fly MORE often than students overall (27.5% vs 20.6%).</p>
     <p class="callout">7 · Repair</p>
     <p>"Students who want to be Healthy chose Fly more often than the class overall: 27.5% vs 20.6%."</p>
     <p class="small" style="margin-top:0.4rem">Names and roles: Table Keeper ___ · Visual ___ · Writer ___ &nbsp;&nbsp; Must-haves ticked: ☑ ☑ ☑ ☑ ☑</p>
@@ -659,7 +651,7 @@
   <ol>
     <li>"Read the claim. Which word names a group? <i>Healthy people.</i> That group's total goes in the denominator: 51, not 433."</li>
     <li>"Now compare: inside the group, 27.5%; everyone, 20.6%. The claim is backwards. That is the verdict, and the proof is the two numbers."</li>
-    <li>"The repair is a true sentence with the percent in it. Your poster needs all seven parts; the checklist on your card is the rubric."</li>
+    <li>"The repair is a true sentence with the percent in it. Your poster needs a title, the claim and the data, then the five things on your checklist. The checklist is the rubric."</li>
   </ol>
 </section>
 
@@ -669,21 +661,27 @@
 <section class="sheet walk">
   <h1>Gallery walk — Unit 2 claim posters</h1>
   <p class="sub">Name ________________________ &nbsp; Period B &nbsp; Fri 11/13 &nbsp; My poster: #____</p>
-  <p>Visit every poster except your own. At each one, write the claim in five words, circle the verdict, work out the ONE number that decides it yourself (a fraction and percent, or dollars) and check it against the poster, and name the word from the language objective the poster needed.</p>
+  <p>Visit each poster except your own. At each one:</p>
+  <ol>
+    <li>Write the claim in five words.</li>
+    <li>Circle the verdict.</li>
+    <li>Work out the one number that decides it yourself (a fraction and percent, or dollars). Then check it against the poster.</li>
+    <li>Write the key word the poster used: given · union · independent · mutually exclusive · expected value.</li>
+  </ol>
   <table class="walk">
-    <tr><th>Poster</th><th>The claim in five words</th><th>Verdict</th><th>The one number that decides it (your own work)</th><th>The word it needed</th></tr>
-    <tr><td>#1 Who wants to be rich?</td><td></td><td>supported · not · partly</td><td></td><td>given · joint · union · mutually exclusive · independent · expected value</td></tr>
-    <tr><td>#2 The flipped headline</td><td></td><td>supported · not · partly</td><td></td><td>given · joint · union · mutually exclusive · independent · expected value</td></tr>
-    <tr><td>#3 Can't happen together, so unrelated?</td><td></td><td>supported · not · partly</td><td></td><td>given · joint · union · mutually exclusive · independent · expected value</td></tr>
-    <tr><td>#4 Double counted</td><td></td><td>supported · not · partly</td><td></td><td>given · joint · union · mutually exclusive · independent · expected value</td></tr>
-    <tr><td>#5 Is the game fair?</td><td></td><td>supported · not · partly</td><td></td><td>given · joint · union · mutually exclusive · independent · expected value</td></tr>
-    <tr><td>#6 Rigged coin? (if posted)</td><td></td><td>supported · not · partly</td><td></td><td>given · joint · union · mutually exclusive · independent · expected value</td></tr>
+    <tr><th>Poster</th><th>The claim in five words</th><th>Verdict</th><th>The one number that decides it (your own work)</th><th>Key word</th></tr>
+    <tr><td>#1 Who wants to be rich?</td><td></td><td>supported · not · partly</td><td></td><td></td></tr>
+    <tr><td>#2 The flipped headline</td><td></td><td>supported · not · partly</td><td></td><td></td></tr>
+    <tr><td>#3 Can't happen together, so unrelated?</td><td></td><td>supported · not · partly</td><td></td><td></td></tr>
+    <tr><td>#4 Double counted</td><td></td><td>supported · not · partly</td><td></td><td></td></tr>
+    <tr><td>#5 Is the game fair?</td><td></td><td>supported · not · partly</td><td></td><td></td></tr>
+    <tr><td>#6 Rigged coin? (if posted)</td><td></td><td>supported · not · partly</td><td></td><td></td></tr>
   </table>
-  <h3>Which claim would have fooled you on Monday? Why?</h3>
+  <h3>Which claim would have fooled you before this week? Why?</h3>
   <div class="lines"></div><div class="lines"></div><div class="lines"></div>
   <h3>One thing I would add to poster #____:</h3>
   <div class="lines"></div><div class="lines"></div>
-  <h3>Finish the sentence: A probability claim is trustworthy when ...</h3>
+  <h3>What makes a claim about chance worth believing? Use one poster as your example.</h3>
   <div class="lines"></div><div class="lines"></div>
 </section>
 
@@ -693,25 +691,25 @@
 <section class="sheet teacher teacher-sheet">
   <h1>Exit ticket 1 — Tuesday (two per page, cut)</h1>
   <div class="ticket">
-    <h2>Exit ticket 1 · Tue 11/10 &nbsp; Name ______________________ &nbsp; Card #____</h2>
+    <h2>Exit ticket 1 · Tue 11/10 &nbsp; Name ______________________ &nbsp; Poster #____</h2>
     <p>In your own words, no copying from the poster:</p>
     <p>Our claim says ____________________________________________________________________.</p>
     <div class="lines"></div>
-    <p>The number it really depends on is ____________________ (write it as P(...), P(... | ...), P(... or ...), μ, or estimated P(...)) = ____________ (fraction, percent, or dollars).</p>
+    <p>The number it really depends on is ____________________ = ____________ (fraction, percent, or dollars).</p>
     <p>So the claim is (supported / not supported / partly supported) because</p>
     <div class="lines"></div><div class="lines"></div><div class="lines"></div>
-    <p class="small">Use at least one of: given · joint · union · mutually exclusive · independent · expected value.</p>
+    <p class="small">Use at least one of: given · union · independent · mutually exclusive · expected value.</p>
   </div>
   <p class="cut">- - - - - - - - - - - - - - - - - - - - - cut here - - - - - - - - - - - - - - - - - - - - -</p>
   <div class="ticket">
-    <h2>Exit ticket 1 · Tue 11/10 &nbsp; Name ______________________ &nbsp; Card #____</h2>
+    <h2>Exit ticket 1 · Tue 11/10 &nbsp; Name ______________________ &nbsp; Poster #____</h2>
     <p>In your own words, no copying from the poster:</p>
     <p>Our claim says ____________________________________________________________________.</p>
     <div class="lines"></div>
-    <p>The number it really depends on is ____________________ (write it as P(...), P(... | ...), P(... or ...), μ, or estimated P(...)) = ____________ (fraction, percent, or dollars).</p>
+    <p>The number it really depends on is ____________________ = ____________ (fraction, percent, or dollars).</p>
     <p>So the claim is (supported / not supported / partly supported) because</p>
     <div class="lines"></div><div class="lines"></div><div class="lines"></div>
-    <p class="small">Use at least one of: given · joint · union · mutually exclusive · independent · expected value.</p>
+    <p class="small">Use at least one of: given · union · independent · mutually exclusive · expected value.</p>
   </div>
 </section>
 
@@ -721,7 +719,7 @@
     <h2>Exit ticket 2 · Thu 11/12 &nbsp; Name ______________________ &nbsp; Alone, on paper.</h2>
     <p><b>1.</b> In the Super Status table, nobody who chose Telepathy wants to be Healthy (0 of 68). A classmate says: "So Healthy and Telepathy are independent." True or false? One sentence why, with a number. (P(Healthy) = 51/433.)</p>
     <div class="lines"></div><div class="lines"></div>
-    <p><b>2.</b> Which is bigger, P(Happy | Super Strength) or P(Super Strength | Happy)? Compute both as fractions and percents. (Happy and Super Strength: 43. Super Strength total: 77. Happy total: 265.)</p>
+    <p><b>2.</b> A classmate says: "P(Happy | Super Strength) and P(Super Strength | Happy) are equal, because both use the same 43 students." Is the classmate right? Show both as fractions and percents, and say why. (Super Strength total: 77. Happy total: 265.)</p>
     <div class="lines"></div><div class="lines"></div><div class="lines"></div>
   </div>
   <p class="cut">- - - - - - - - - - - - - - - - - - - - - cut here - - - - - - - - - - - - - - - - - - - - -</p>
@@ -729,7 +727,7 @@
     <h2>Exit ticket 2 · Thu 11/12 &nbsp; Name ______________________ &nbsp; Alone, on paper.</h2>
     <p><b>1.</b> In the Super Status table, nobody who chose Telepathy wants to be Healthy (0 of 68). A classmate says: "So Healthy and Telepathy are independent." True or false? One sentence why, with a number. (P(Healthy) = 51/433.)</p>
     <div class="lines"></div><div class="lines"></div>
-    <p><b>2.</b> Which is bigger, P(Happy | Super Strength) or P(Super Strength | Happy)? Compute both as fractions and percents. (Happy and Super Strength: 43. Super Strength total: 77. Happy total: 265.)</p>
+    <p><b>2.</b> A classmate says: "P(Happy | Super Strength) and P(Super Strength | Happy) are equal, because both use the same 43 students." Is the classmate right? Show both as fractions and percents, and say why. (Super Strength total: 77. Happy total: 265.)</p>
     <div class="lines"></div><div class="lines"></div><div class="lines"></div>
   </div>
 </section>
@@ -743,22 +741,22 @@
   <table>
     <tr><th>Min</th><th>Students</th><th>Teacher</th></tr>
     <tr><td>0-5</td><td>Do Now on whiteboards: "From the table, P(Rich | Fly)?" Boards up on the cue.</td><td>Scan. Ask one board: "Why 89 and not 433?" (22/89 = 24.7%.)</td></tr>
-    <tr><td>5-13</td><td>Three Reads on the projected table. Read 1: what is the story (no numbers). Read 2: list the quantities on your board. Read 3: what claims could someone make from this table?</td><td>Post the objectives, the EQ, the frames and the word bank. Collect three claims from boards; do not judge them yet.</td></tr>
+    <tr><td>5-13</td><td>Three Reads on the projected table. Read 1: what is the story (no numbers). Read 2: list the quantities on your board. Read 3: what claims could someone make from this table?</td><td>The objectives, the EQ and the frame are already up on poster paper: point to them before Read 1. Collect three claims from boards; do not judge them yet.</td></tr>
     <tr><td>13-17</td><td>Watch the example board.</td><td>Talk-track (3 min): the word that names the group, the denominator, verdict, repair, seven parts.</td></tr>
-    <tr><td>17-20</td><td>Groups form; cards and materials out; roles chosen and written on the card.</td><td>Hand each group its card and a question card for Thursday.</td></tr>
+    <tr><td>17-20</td><td>Groups form; cards and materials out; roles chosen and written on the card.</td><td>Hand each group its card. (Question cards go out Thursday.)</td></tr>
     <tr><td>20-38</td><td>Solve parts (a)-(c) on scratch paper and whiteboards. No poster yet.</td><td>Circulate with the why questions. At minute 28, tier-1 hint card to any blank board; tier-2 only after that.</td></tr>
-    <tr><td>38-60</td><td>Build: title, the claim, the data, the probability, the visual. Draft (d) and (e).</td><td>Check each group's verdict sentence before it goes on the board. Posters stay in the room.</td></tr>
+    <tr><td>38-60</td><td>Build: title, the claim, the data, the probability, the visual. Draft (d) and (e). Poster 5: the calculator student runs the 20 simulated games now.</td><td>Check each group's verdict sentence before it goes on the board. Posters stay in the room.</td></tr>
     <tr><td>60-65</td><td>Exit ticket 1, alone.</td><td>Collect. Sort by card for Thursday's defend round.</td></tr>
   </table>
 
   <h2>Thu 11/12 · 09:55-11:00 · observed: defend, repair, finish (65 min)</h2>
   <table>
     <tr><th>Min</th><th>Students</th><th>Teacher</th></tr>
-    <tr><td>0-6</td><td>Do Now on whiteboards: "True or false: P(Happy or Fly) = 265/433 + 89/433." Boards up.</td><td>Two why questions: "Who got counted twice?" "What is the correct number?" (False: (265 + 89 − 48)/433 = 306/433 = 70.7%.)</td></tr>
+    <tr><td>0-6</td><td>Do Now on whiteboards: "True or false: P(Happy or Fly) = 265/433 + 89/433." Boards up.</td><td>Two why questions: "Who got counted twice, and how do you know?" "What would make the statement true?" (False: (265 + 89 − 48)/433 = 306/433 = 70.7%.)</td></tr>
     <tr><td>6-8</td><td>Read today's job on the board.</td><td>Objectives and language objective re-read aloud; today's goal: defend, repair, finish.</td></tr>
-    <tr><td>8-26</td><td>Defend round, partner groups 1-2, 3-4, 5 with the teacher. 4 min: group A presents its verdict with the frame; group B asks from the question card. 2 min: A revises its verdict sentence. Swap.</td><td>Time the rounds. Listen for the frame and the word bank. Ask one open why question per group.</td></tr>
-    <tr><td>26-50</td><td>Repair part of the card (d), (e) and card 5's (f) on the TI-84. Finish the poster against the must-have checklist; each must-have initialed by the role that owns it.</td><td>Circulate. Tier-2 hints only where a group is stuck on the repair. Check the checklist with each group.</td></tr>
-    <tr><td>50-56</td><td>Whole class at card 3's poster.</td><td>The 10/29 promise: Telepathy and Famous are mutually exclusive AND not independent, with the numbers (0 vs 3.5%). "Can't happen together rules the other one out, which changes its probability: dependence, not independence."</td></tr>
+    <tr><td>8-26</td><td>Defend round: poster 1 with poster 2, poster 3 with poster 4; poster 5 presents to the teacher in round 1, then revises. 4 min: one group presents its verdict with the frame while the other asks from the question card. 2 min: the presenters revise their verdict sentence. Swap.</td><td>Time the rounds. Listen for the frame and the key words. Ask one open why question per group, then wait five seconds.</td></tr>
+    <tr><td>26-50</td><td>Repair and build parts of the card: (d) and (e). Finish the poster against the five-item checklist.</td><td>Circulate. Tier-2 hints only where a group is stuck on the repair. Check the checklist with each group.</td></tr>
+    <tr><td>50-56</td><td>Whole class at poster 3, on whiteboards: "Nobody who chose Telepathy wants to be Famous. Does knowing someone chose Telepathy change the chance they want to be Famous? Yes or no, plus one number." Boards up.</td><td>Wait five seconds, then boards up. The poster 3 group shows 0/68 against 15/433 = 3.5%. Then name the rule (the 10/29 promise): "Can't happen together rules the other one out, which changes its probability: dependence, not independence."</td></tr>
     <tr><td>56-65</td><td>Exit ticket 2, alone, on paper.</td><td>Collect. These two items are the independent evidence for the day.</td></tr>
   </table>
 
@@ -770,7 +768,7 @@
   <table>
     <tr><th>Min</th><th>Students</th><th>Teacher</th></tr>
     <tr><td>0-10</td><td>Final touches; posters up around the room.</td><td>Hand out walk sheets.</td></tr>
-    <tr><td>10-30</td><td>Walk: four rotations of 5 min, no docents; the poster must speak for itself (that is what the Writer's sentences are for). Start at the poster to your group's right. Work out the one number at every other poster on the walk sheet.</td><td>Signal rotations. Listen at the two persistent posters (2 and 3).</td></tr>
+    <tr><td>10-30</td><td>Walk: four rotations of 5 min, no docents; the poster must speak for itself (that is what the Writer's sentences are for). Start at the poster to your group's right. At each poster except your own, work out the one number on the walk sheet.</td><td>Signal rotations. Listen at the two persistent posters (2 and 3).</td></tr>
     <tr><td>30-45</td><td>Debrief: hands for "which claim would have fooled you?"; two students read their sentence for posters 2 and 3.</td><td>Name the two rules: the given group is the denominator; mutually exclusive is not independent.</td></tr>
     <tr><td>45-55</td><td>Hand in walk sheets; a fifth rotation for anyone who wants to revisit a poster.</td><td>Score with the grid (or after class); photos of the posters.</td></tr>
   </table>
@@ -781,17 +779,16 @@
 <!-- ============================================================ -->
 <section class="sheet teacher teacher-sheet tight">
   <h1>Observer card — Thursday 11/12</h1>
-  <p class="small">The Algebra 2 day-log format: title, body (Preparing / Interacting / Extending), frame, mode, minutes.</p>
   <table>
-    <tr><th style="width:18%">title</th><td>Unit 2 claim posters, day 2 of 3: defend, repair, finish (DOK 3)</td></tr>
-    <tr><th>body</th><td>
-      <b>Preparing (8 min).</b> Do Now on whiteboards, a packet problem: true or false, P(Happy or Fly) = 265/433 + 89/433. Boards up. Two open questions ("Who got counted twice?" "What makes it right?"). Objectives and the language objective re-read.<br>
-      <b>Interacting (42 min).</b> Defend round in partner groups: four minutes to present the verdict with the frame while the listening group asks from the question card (why that denominator, what would make the claim true, say it with "given"), two minutes to revise the verdict sentence, swap. Then the repair part of each card: fix the headline, the one-payout fair game, the two 2x2 tables, the 190.4; card 5 simulates 20 games on the TI-84. Finish the poster against the five must-haves. Tiered hint cards go only to a stuck group.<br>
-      <b>Extending (15 min).</b> Whole class at poster 3: the promised example of events that are mutually exclusive but not independent, with the numbers. Exit ticket 2 alone on paper: a true-or-false on independence with a number, and two conditional probabilities compared.
+    <tr><th style="width:18%">Lesson</th><td>Unit 2 claim posters, day 2 of 3: defend, repair, finish (DOK 3)</td></tr>
+    <tr><th>Plan</th><td>
+      <b>Preparing (8 min).</b> Do Now on whiteboards, a packet problem: true or false, P(Happy or Fly) = 265/433 + 89/433. Boards up. Two open questions ("Who got counted twice, and how do you know?" "What would make the statement true?"). Objectives and the language objective re-read.<br>
+      <b>Interacting (42 min).</b> Defend round in partner groups: four minutes to present the verdict with the frame while the listening group asks from the question card (why that denominator, what would make the claim true, say it with "given"), two minutes to revise the verdict sentence, swap. Then the repair and build parts of each card: the repaired headline, the one-payout fair game, the designed 2x2 table, the count independence would predict. Finish the poster against the five must-haves. Tiered hint cards go only to a stuck group.<br>
+      <b>Extending (15 min).</b> Whole class at poster 3, on whiteboards: does knowing "Telepathy" change the chance of "Famous"? The promised example of events that are mutually exclusive but not independent, with the numbers. Exit ticket 2 alone on paper: a true-or-false on independence with a number, and a classmate's claim about two conditional probabilities to judge.
     </td></tr>
-    <tr><th>frame</th><td>"The claim says ___. The number it really depends on is ___ (a conditional, a joint, a union, an expected value, or a simulated probability) = ___, not ___, so the claim is (supported / not supported / partly supported) because ___."</td></tr>
-    <tr><th>mode</th><td>groups of three (one pair); partner groups for the defend round; alone for the exit ticket</td></tr>
-    <tr><th>minutes</th><td>65</td></tr>
+    <tr><th>Sentence frame</th><td>"The claim says ___. The number it really depends on is ___ = ___. So the claim is (supported / partly supported / not supported) because ___."</td></tr>
+    <tr><th>Grouping</th><td>groups of three (one pair); partner groups for the defend round; alone for the exit ticket</td></tr>
+    <tr><th>Minutes</th><td>65</td></tr>
   </table>
   <p><b>What the observer should count:</b> open why questions asked; boards up at each cue; students who speak in the defend round; exit tickets collected.</p>
 
@@ -840,12 +837,12 @@
   <h1>Question cards (defend round) — one per group, cut</h1>
   <p class="small">The listening group asks from its card. The presenting group answers with the frame. Nobody says "you're wrong"; you ask a question instead.</p>
   <div class="qcards">
-    <div class="qcard"><h3>Question card</h3><ul><li>Why that denominator?</li><li>Which word in the claim did you test?</li><li>What would make the claim true?</li><li>Can you say it with the word "given"?</li><li>Who does the number favor?</li><li>Show me the one number that decides it.</li></ul></div>
-    <div class="qcard"><h3>Question card</h3><ul><li>Why that denominator?</li><li>Which word in the claim did you test?</li><li>What would make the claim true?</li><li>Can you say it with the word "given"?</li><li>Who does the number favor?</li><li>Show me the one number that decides it.</li></ul></div>
-    <div class="qcard"><h3>Question card</h3><ul><li>Why that denominator?</li><li>Which word in the claim did you test?</li><li>What would make the claim true?</li><li>Can you say it with the word "given"?</li><li>Who does the number favor?</li><li>Show me the one number that decides it.</li></ul></div>
-    <div class="qcard"><h3>Question card</h3><ul><li>Why that denominator?</li><li>Which word in the claim did you test?</li><li>What would make the claim true?</li><li>Can you say it with the word "given"?</li><li>Who does the number favor?</li><li>Show me the one number that decides it.</li></ul></div>
-    <div class="qcard"><h3>Question card</h3><ul><li>Why that denominator?</li><li>Which word in the claim did you test?</li><li>What would make the claim true?</li><li>Can you say it with the word "given"?</li><li>Who does the number favor?</li><li>Show me the one number that decides it.</li></ul></div>
-    <div class="qcard"><h3>Question card</h3><ul><li>Why that denominator?</li><li>Which word in the claim did you test?</li><li>What would make the claim true?</li><li>Can you say it with the word "given"?</li><li>Who does the number favor?</li><li>Show me the one number that decides it.</li></ul></div>
+    <div class="qcard"><h3>Question card</h3><ul><li>Which word in the claim did you test?</li><li>Show me the one number that decides it. Why that denominator?</li><li>What would make the claim true?</li><li>Say your verdict again with your key word.</li></ul></div>
+    <div class="qcard"><h3>Question card</h3><ul><li>Which word in the claim did you test?</li><li>Show me the one number that decides it. Why that denominator?</li><li>What would make the claim true?</li><li>Say your verdict again with your key word.</li></ul></div>
+    <div class="qcard"><h3>Question card</h3><ul><li>Which word in the claim did you test?</li><li>Show me the one number that decides it. Why that denominator?</li><li>What would make the claim true?</li><li>Say your verdict again with your key word.</li></ul></div>
+    <div class="qcard"><h3>Question card</h3><ul><li>Which word in the claim did you test?</li><li>Show me the one number that decides it. Why that denominator?</li><li>What would make the claim true?</li><li>Say your verdict again with your key word.</li></ul></div>
+    <div class="qcard"><h3>Question card</h3><ul><li>Which word in the claim did you test?</li><li>Show me the one number that decides it. Why that denominator?</li><li>What would make the claim true?</li><li>Say your verdict again with your key word.</li></ul></div>
+    <div class="qcard"><h3>Question card</h3><ul><li>Which word in the claim did you test?</li><li>Show me the one number that decides it. Why that denominator?</li><li>What would make the claim true?</li><li>Say your verdict again with your key word.</li></ul></div>
   </div>
 </section>
 
@@ -858,7 +855,7 @@
   <div class="hint"><h3>Tier 2 · Card 3</h3><p>Mutually exclusive asks: can both happen? (Look at the cell.) Independent asks: does knowing one CHANGE the chance of the other? Compare P(Famous) = 15/433 with P(Famous | Telepathy) = 0/68.</p></div>
   <div class="hint"><h3>Tier 2 · Card 4</h3><p>Draw two overlapping circles. Put 245 in the overlap FIRST. Grad-only = 693 − 245. Internet-only = 687 − 245. Neither = 2,500 minus everything inside the circles.</p></div>
   <div class="hint"><h3>Tier 2 · Card 5</h3><p>Net = winnings − 2. Rolls 2, 3, 4 and 5 all give the same net, so group them: probability 4/6. Mean = each net times its probability, added up.</p></div>
-  <div class="hint"><h3>Tier 2 · Card 6</h3><p>MATH → PROB → randInt(0,1,20) ENTER gives 20 flips. Count the longest string of 1s. Press ENTER again for the next trial.</p></div>
+  <div class="hint"><h3>Tier 2 · Card 6</h3><p>MATH → PROB → randInt(0,1,20) STO→ L1 puts 20 flips in L1. Read down L1 in STAT → EDIT and count the longest string of 1s. Run it again for the next trial.</p></div>
 </section>
 
 <!-- ============================================================ -->
@@ -879,11 +876,11 @@
   <h3>Must-haves by card (M1 to M5)</h3>
   <table>
     <tr><th>Card</th><th>M1</th><th>M2</th><th>M3</th><th>M4</th><th>M5</th></tr>
-    <tr><td>1</td><td>Five Rich percents with fractions, row totals as denominators</td><td>Segmented bar chart: five 100% bars, four segments, key, percent axis</td><td>Verdict names count AND percent for Freeze Time and the leader</td><td>Repaired claim, true, with a percent</td><td>Association sentence comparing two bars</td></tr>
-    <tr><td>2</td><td>Both conditionals, denominators 15 and 89, percents</td><td>Tree or two shaded tables showing the given groups</td><td>Verdict on each half; "most" vs 50%; the flip named</td><td>Repaired headline, two true sentences with numbers</td><td>Second flipped pair with both numbers and a why</td></tr>
-    <tr><td>3</td><td>Joint probability 0, "mutually exclusive"</td><td>Two independence tests with numbers</td><td>Verdict using both terms correctly</td><td>General argument (ME + possible means not independent)</td><td>Two 2x2 tables with checks</td></tr>
-    <tr><td>4</td><td>Four regions summing to 2,500</td><td>Double count named; corrected union as fraction and percent</td><td>Both tests, verdict, who is more likely</td><td>Why the tests agree</td><td>Exact-independence count and what it means</td></tr>
-    <tr><td>5</td><td>Net distribution table + probability histogram, probabilities sum to 1</td><td>μ and σ with formula, substitution, arithmetic</td><td>Both interpretations, "long run", "per game"</td><td>Verdict: who it favors, why 2 of 6 is the wrong number</td><td>One-payout fix with μ = 0, and the 20-game dotplot with its average beside μ</td></tr>
+    <tr><td>1</td><td>Five Rich percents with fractions, row totals as denominators</td><td>Segmented bar chart: five 100% bars, four segments, key, percent axis</td><td>Verdict compares Freeze Time's percent with the other groups and the overall 23.6%</td><td>Repaired claim, true, with a percent</td><td>Association sentence comparing two bars</td></tr>
+    <tr><td>2</td><td>Both conditionals, denominators 15 and 89, percents</td><td>Two shaded tables showing the given groups</td><td>Verdict on each half; "most" vs 50%; the flip named</td><td>Repaired headline, two true sentences with numbers</td><td>Second flipped pair with both numbers and a why</td></tr>
+    <tr><td>3</td><td>Joint probability 0, "mutually exclusive"</td><td>Independence test with numbers (3.5% vs 0)</td><td>Verdict using both terms correctly</td><td>General argument (ME + possible means not independent)</td><td>A 2x2 table, independent but not mutually exclusive, with its check</td></tr>
+    <tr><td>4</td><td>Four regions summing to 2,500</td><td>Double count named; corrected union as fraction and percent</td><td>The 9.8% named as a joint; the conditional it should have used</td><td>Independence test, verdict, who is more likely</td><td>Predicted "both" count (about 190) against 245</td></tr>
+    <tr><td>5</td><td>Net distribution table, probabilities sum to 1</td><td>μ and σ with formula and substitution</td><td>Both interpretations, "long run", "per game"</td><td>Verdict: who it favors, why 2 of 6 is the wrong number</td><td>One-payout fix with μ = 0, and the 20-game dotplot with its average beside μ</td></tr>
     <tr><td>6</td><td>Design in three sentences</td><td>25 trials recorded</td><td>Dotplot with scale and title</td><td>Estimate as a fraction of 25 and a decimal</td><td>Verdict plus the more-trials sentence</td></tr>
   </table>
 </section>
@@ -920,15 +917,15 @@
   <h2>Exit ticket 2 (Thu)</h2>
   <ol>
     <li>False. Healthy and Telepathy are mutually exclusive (0 of 68), not independent: P(Healthy) = 51/433 = 11.8% but P(Healthy | Telepathy) = 0/68 = 0%. Knowing Telepathy changes the chance.</li>
-    <li>P(Happy | Super Strength) = 43/77 = 55.8% is bigger than P(Super Strength | Happy) = 43/265 = 16.2%. Same cell (43), different given group (77 vs 265).</li>
+    <li>No. P(Happy | Super Strength) = 43/77 = 55.8% is far bigger than P(Super Strength | Happy) = 43/265 = 16.2%. Same cell (43), different given group (77 vs 265).</li>
   </ol>
   <h2>The numbers, card by card</h2>
   <table>
     <tr><th>Card</th><th>Key values</th></tr>
-    <tr><td>1</td><td>P(Rich | power): Fly 22/89 = 24.7%, Freeze Time 26/101 = 25.7%, Invisibility 22/98 = 22.4%, Super Strength 13/77 = 16.9%, Telepathy 19/68 = 27.9%; P(Rich) = 102/433 = 23.6%. Leader Telepathy by 2.2 points over Freeze Time. Segmented bars (Famous / Happy / Healthy / Rich, %): Fly 5.6 / 53.9 / 15.7 / 24.7 · Freeze Time 3.0 / 62.4 / 8.9 / 25.7 · Invisibility 3.1 / 63.3 / 11.2 / 22.4 · Super Strength 5.2 / 55.8 / 22.1 / 16.9 · Telepathy 0.0 / 72.1 / 0.0 / 27.9.</td></tr>
+    <tr><td>1</td><td>P(Rich | power): Fly 22/89 = 24.7%, Freeze Time 26/101 = 25.7%, Invisibility 22/98 = 22.4%, Super Strength 13/77 = 16.9%, Telepathy 19/68 = 27.9%; P(Rich) = 102/433 = 23.6%. All five groups sit between 17% and 28%: Telepathy is highest, 2.2 points over Freeze Time, and no group stands out. Segmented bars (Famous / Happy / Healthy / Rich, %): Fly 5.6 / 53.9 / 15.7 / 24.7 · Freeze Time 3.0 / 62.4 / 8.9 / 25.7 · Invisibility 3.1 / 63.3 / 11.2 / 22.4 · Super Strength 5.2 / 55.8 / 22.1 / 16.9 · Telepathy 0.0 / 72.1 / 0.0 / 27.9.</td></tr>
     <tr><td>2</td><td>P(Fly | Famous) = 5/15 = 33.3% (plurality, not majority); P(Famous | Fly) = 5/89 = 5.6%. Spare pairs: 43/77 = 55.8% vs 43/265 = 16.2%; 63/101 = 62.4% vs 63/265 = 23.8%; 19/68 = 27.9% vs 19/102 = 18.6%.</td></tr>
     <tr><td>3</td><td>P(Telepathy and Famous) = 0; P(Famous) = 15/433 = 3.5% vs P(Famous | Telepathy) = 0; P(F) × P(T) = 0.0054 vs 0. Independent 2x2: 60 sport, 50 instrument, 30 both (check 30/60 = 50/100). Mutually exclusive 2x2: 50 / 50 / 0 both (check 0/50 ≠ 50/100).</td></tr>
-    <tr><td>4</td><td>Regions 245 / 448 / 442 / 1,365. Union 1135/2500 = 45.4% (not 55.2%). P(internet | grad) = 245/693 = 35.4% vs P(internet) = 27.5% vs non-grads 442/1807 = 24.5%. Product 0.0762 vs joint 0.098. Exact independence needs 190.44 in both.</td></tr>
+    <tr><td>4</td><td>Regions 245 / 448 / 442 / 1,365. Union 1135/2500 = 45.4% (not 55.2%). P(internet | grad) = 245/693 = 35.4% vs P(internet) = 27.5% vs non-grads 442/1807 = 24.5%. The blog's 9.8% = 245/2500 is the joint. Product 0.0762 vs joint 0.098. Independence would predict 190.44 in both.</td></tr>
     <tr><td>5</td><td>X: +8 (1/6), +1 (1/6), −2 (4/6). μ = 1/6 ≈ $0.17 for the player; σ² = 485/36 ≈ 13.47, σ ≈ $3.67. Fixes: 6 pays $9, or 1 pays $2. SD of a 20-game average ≈ $0.82.</td></tr>
     <tr><td>6</td><td>P(run of 6+ heads in 20 fair flips) = 0.1223 (exact value, by computer); 5+: 0.250; 7+: 0.058; 8+: 0.027.</td></tr>
   </table>
@@ -938,8 +935,8 @@
   <h1>Debrief notes</h1>
   <ul>
     <li><b>The two persistent rules:</b> the word after "given" names the group whose total is the denominator (posters 1, 2, 4); mutually exclusive is the opposite of unrelated (poster 3, the 10/29 promise).</li>
-    <li><b>Card 1 nuance:</b> the newsletter's number is right and its reasoning is wrong; that is why the verdict frame has "partly supported".</li>
-    <li><b>Card 5 nuance:</b> fair means μ<sub>X</sub> = 0; "fair to whom" is the point. The 20-game averages will scatter; put them on one class dotplot and the law of large numbers teaches itself.</li>
+    <li><b>Card 1 nuance:</b> the newsletter's number is right and its reasoning is wrong. Accept "not supported" or "partly supported" when the sentence says the count is true and the percent does not stand out.</li>
+    <li><b>Card 5 nuance:</b> fair means μ<sub>X</sub> = 0, for both sides; the question is who an unfair game favors. The 20-game averages will scatter; put them on one class dotplot and the law of large numbers teaches itself.</li>
     <li><b>Worksheet note (not for students):</b> the 2.7 follow-along's union examples print Super Status numbers (265 + 29 − 15; 115/433 + 29/433) that do not match the printed table (Super Strength is 77, Freeze Time 101, Happy and Super Strength 43). Every number in this kit uses the printed table; the worksheet blanks need a fix in a later pass.</li>
   </ul>
 </section>

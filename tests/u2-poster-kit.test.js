@@ -151,7 +151,9 @@ describe('Unit 2 claim-poster kit', () => {
     for (const leak of ['45.4%', '190.4', '$0.17', '0.1223', '5/15', '5/89']) expect(example, leak).not.toContain(leak);
     // Exit ticket 1 and the frames accept any kind of number, not only a conditional.
     expect(html).toContain('(fraction, percent, or dollars)');
-    expect(html).toContain('a conditional P(___ | ___), a joint, a union, an expected value, or a simulated probability');
+    expect(html).toContain('The number it really depends on is ______ = ______. So the claim is (supported / partly supported / not supported) because ______.');
+    // The sheets never hand over the denominators, the method or the reasoning.
+    for (const leak of ['15 and 89', 'row total as the denominator', 'The mistake this busts', 'so of course']) expect(studentText, leak).not.toContain(leak);
     // Friday: four rotations, no docents.
     expect(html).toContain('four rotations of 5 min, no docents');
     expect(html).not.toContain('docent for two rotations');
@@ -167,7 +169,7 @@ describe('Unit 2 claim-poster kit', () => {
   it('the four PDFs the Desk links are printed and non-trivial', () => {
     for (const [name, minBytes] of [
       ['u2_poster_group_sheets_student.pdf', 150000],
-      ['u2_poster_teacher_key.pdf', 300000],
+      ['u2_poster_teacher_key.pdf', 200000],   // rewritten without link annotations (they carried local file paths)
       ['u2_poster_example_board_demo.pdf', 30000],
       ['u2_poster_walk_sheet.pdf', 30000],
     ]) {
