@@ -35,7 +35,7 @@ describe('Unit 2 claim-poster kit', () => {
       'Example board — project this first',
       'Gallery walk — Unit 2 claim posters',
     ]) expect(html).toContain(title);
-    for (const edition of ['student', 'teacher', 'example', 'walk', 'board']) {
+    for (const edition of ['student', 'teacher', 'example', 'walk', 'board', 'check', 'screen']) {
       expect(html).toContain(`body[data-print="${edition}"] .sheet.${edition} { display: block; }`);
     }
     // Answers print only in the teacher edition.
@@ -154,9 +154,94 @@ describe('Unit 2 claim-poster kit', () => {
     expect(html).toContain('The number it really depends on is ______ = ______. So the claim is (supported / partly supported / not supported) because ______.');
     // The sheets never hand over the denominators, the method or the reasoning.
     for (const leak of ['15 and 89', 'row total as the denominator', 'The mistake this busts', 'so of course']) expect(studentText, leak).not.toContain(leak);
-    // Friday: four rotations, no docents.
-    expect(html).toContain('four rotations of 5 min, no docents');
+    // Friday: one rotation per other poster (Period B has four posters), no docents.
+    expect(html).toContain('three rotations of 6 min, no docents');
     expect(html).not.toContain('docent for two rotations');
+  });
+
+  it('Thursday: the partner check sits between the sketch and the big paper, and its sheet gives nothing away', () => {
+    // Period B as it ran on 11/10: posters 1, 2, 3 and 6; partner groups 2 with 3 and 1 with 6.
+    expect(html).toContain('<b>Partner groups for Thursday:</b> poster 2 with poster 3, poster 1 with poster 6.');
+    expect(html).toContain('Thu 11/12 · 09:55-11:00 · observed: sketch, check, build (65 min)');
+    // The run of show fills the 65-minute block with no gap and no overlap.
+    const thu = html.match(/<h2>Thu 11\/12[\s\S]*?<\/table>/)[0];
+    const spans = [...thu.matchAll(/<tr><td>(\d+)-(\d+)<\/td>/g)].map((m) => [Number(m[1]), Number(m[2])]);
+    expect(spans.length).toBeGreaterThan(5);
+    expect(spans[0][0]).toBe(0);
+    expect(spans[spans.length - 1][1]).toBe(65);
+    for (let i = 1; i < spans.length; i += 1) expect(spans[i][0]).toBe(spans[i - 1][1]);
+    // Sketch, then the check, then the build: nothing is lettered before another group has tested it.
+    expect(thu.indexOf('<b>Partner check</b>')).toBeGreaterThan(thu.indexOf('<b>Sketch.</b>'));
+    expect(thu.indexOf('<b>Build.</b>')).toBeGreaterThan(thu.indexOf('<b>Partner check</b>'));
+    // Work first, look second: mockups go face down before the partner's page is handed out,
+    // and none is turned over until the checkers have had their nine minutes with a clean copy.
+    const hidden = thu.indexOf('Minute 17: "Mockups face down."');
+    expect(hidden).toBeGreaterThan(-1);
+    expect(thu.indexOf('the partner\'s clean page 1 to each group')).toBeGreaterThan(hidden);
+    expect(thu).toContain('no mockup is turned over before minute 26');
+
+    // The one sheet students hold on Thursday: three steps, four frames, and no number, percent or verdict.
+    const sheet = html.match(/<section class="sheet teacher check">([\s\S]*?)<\/section>/)[1];
+    for (const step of ['<b>WORK</b>', '<b>LOOK</b>', '<b>FIX</b>']) expect(sheet).toContain(step);
+    expect(sheet.indexOf('<b>LOOK</b>')).toBeGreaterThan(sheet.indexOf('<b>WORK</b>'));
+    expect(sheet.indexOf('<b>FIX</b>')).toBeGreaterThan(sheet.indexOf('<b>LOOK</b>'));
+    expect(sheet).toContain('Your mockup stays face down.');
+    expect(sheet).toContain('from the clean copy');
+    expect(sheet).toContain('<b>Authors:</b> the group whose claim it is. <b>Checkers:</b> the other group.');
+    expect(sheet).toContain('Checkers ask. Authors decide.');
+    expect(sheet).toContain('"We got ______ out of ______. You got ______ out of ______."');
+    expect(sheet).toContain('"Your checklist still needs ______."');
+    expect(sheet).toContain('"A reader on Friday would ask: ______?"');
+    // Authors may defend a sound verdict: the frame never forces a change.
+    expect(sheet).toContain('"We will change / keep ______ because ______."');
+    // The authors' sheet stays on the authors' table, so the feedback lands on the right poster.
+    expect(sheet).toContain('Leave your card and this sheet on your table; bring your work.');
+    expect(sheet).toContain("One checker writes on the bottom half of the authors' sheet, the one on their table.");
+    const sheetText = sheet.replace('Thu 11/12', '');
+    expect(sheetText).not.toMatch(/\d\s*\/\s*\d/);
+    expect(sheetText).not.toMatch(/\d\s*%/);
+    for (const leak of ['supported', 'mutually exclusive', 'independent', 'denominator', 'row total', 'column total', 'cannot', 'can calculate']) expect(sheetText, leak).not.toContain(leak);
+
+    // The shared page (screen or table copy): the table and the four claims, word for word as on the cards.
+    const shared = html.match(/<section class="sheet teacher screen">([\s\S]*?)<\/section>/)[1];
+    const claimOf = (title) => html.slice(html.indexOf(`<h1>${title}</h1>`)).match(/<p class="q">([\s\S]*?)<\/p>/)[1];
+    for (const [n, title] of [[1, 'Poster 1 — Who wants to be rich?'], [2, 'Poster 2 — The flipped headline'], [3, 'Poster 3 — Can\'t happen together, so unrelated?'], [6, 'Poster 6 (spare) — Rigged coin?']]) {
+      expect(shared).toContain(`<h3>Poster ${n}</h3><p class="q">${claimOf(title)}</p>`);
+    }
+    expect(shared).toContain('<tr><td>Telepathy</td><td>0</td><td>49</td><td>0</td><td>19</td><td class="t">68</td></tr>');
+    expect(shared).not.toContain('class="answer"');
+    expect(shared).not.toMatch(/\d\s*%/);
+
+    // What the key tells the teacher the checkers should find.
+    expect(html).toContain(`26/101 = ${(100 * 26 / 101).toFixed(1)}% of Freeze Time fans chose Rich, against 102/433 = ${(100 * 102 / 433).toFixed(1)}% of all students`);
+    expect(html).toContain(`26/433 = ${(100 * 26 / 433).toFixed(1)}% and 26/102 = ${(100 * 26 / 102).toFixed(1)}% are the two traps`);
+    expect(html).toContain(`(Telepathy is 19/68 = ${(100 * 19 / 68).toFixed(1)}%.)`);
+    expect(html).toContain(`P(Telepathy | Famous) = 0/15 = 0 against P(Telepathy) = 68/433 = ${(100 * 68 / 433).toFixed(1)}%`);
+    // Six checker trials at p = 0.1223 (the card 6 test proves that value): none with a run of 6+, or exactly one.
+    const p = 0.1223;
+    expect(Math.round(100 * (1 - p) ** 6)).toBe(46);
+    expect(Math.round(100 * 6 * p * (1 - p) ** 5)).toBe(38);
+    expect(html).toContain('no run of 6 or more about 46% of the time, and exactly one about 38%');
+    // The two tempting wrong answers: six chosen flips (1/64), then 15 overlapping starts added up (15/64).
+    expect((100 / 64).toFixed(1)).toBe('1.6');
+    expect(20 - 6 + 1).toBe(15);
+    expect(Math.round(100 * 15 / 64)).toBe(23);
+    expect(html).toContain('15 × 1/64 = 23%');
+    // The observer card's three parts add up to the block.
+    const plan = html.match(/<h1>Observer card[\s\S]*?<\/table>/)[0];
+    const parts = [...plan.matchAll(/<b>(?:Preparing|Interacting|Extending) \((\d+) min\)\.<\/b>/g)].map((m) => Number(m[1]));
+    expect(parts).toEqual([6, 31, 28]);
+    expect(parts.reduce((a, b) => a + b, 0)).toBe(65);
+  });
+
+  it('Friday walk sheet lists the four posters Period B made', () => {
+    const walk = html.match(/<section class="sheet walk">([\s\S]*?)<\/section>/)[1];
+    for (const row of ['#1 Who wants to be rich?', '#2 The flipped headline', '#3 Can\'t happen together, so unrelated?', '#6 Rigged coin?']) {
+      expect(walk).toContain(`<tr><td>${row}</td>`);
+    }
+    expect(walk).not.toContain('#4');
+    expect(walk).not.toContain('#5');
+    expect(walk).toContain('given · independent · mutually exclusive · simulation');
   });
 
   it('the Do Nows and the example board', () => {
@@ -166,12 +251,15 @@ describe('Unit 2 claim-poster kit', () => {
     expect(html).toContain(`P(Fly) = ${pct(rowTotal('Fly'), 433)}`);
   });
 
-  it('the four PDFs the Desk links are printed and non-trivial', () => {
+  it('the four PDFs the Desk links, and the three Thursday files, are printed and non-trivial', () => {
     for (const [name, minBytes] of [
       ['u2_poster_group_sheets_student.pdf', 150000],
       ['u2_poster_teacher_key.pdf', 200000],   // rewritten without link annotations (they carried local file paths)
       ['u2_poster_example_board_demo.pdf', 30000],
       ['u2_poster_walk_sheet.pdf', 30000],
+      ['u2_poster_partner_check.pdf', 25000],       // Thursday: one per group
+      ['u2_poster_partner_worksheets.pdf', 50000],  // Thursday: page 1 of cards 1, 2, 3 and 6, clean, for the checkers
+      ['u2_poster_thursday_screen.pdf', 25000],     // Thursday: the table and the four claims, for the projector
     ]) {
       const size = statSync(resolve(ROOT, 'u2_poster/pdf', name)).size;
       expect(size, name).toBeGreaterThan(minBytes);

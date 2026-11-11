@@ -8,7 +8,9 @@ Algebra 2 lesson-prep format (learning objective, language objective, essential 
 **Graded as the Q2 poster** (POSTER_WORK_TRACK_SPEC.md: 30% of Q2 Work, scored 90-115).
 "Poster execution needs to be flawless and comprehensive."
 
-Status: spec. Part A (the kit) is authored by the main session. Part B (schedule, Desk, server
+Status: spec. **Part A changed twice on 2026-11-10 (the sheets in the morning, Thursday's plan
+after the first day): section A6 lists both, and wins wherever A1 to A5 differ.** Part A (the
+kit) is authored by the main session. Part B (schedule, Desk, server
 data, tests) is implemented from this spec. Grade-affecting: `data/lesson-schedule.json` is bundled
 to Railway (roster-server auto-deploys on push); the U2 Progress Check moves.
 
@@ -111,6 +113,86 @@ its Q2 posters track stays absent, never 0.
   `u2_poster/pdf/u2_poster_example_board_demo.pdf`, `u2_poster/pdf/u2_poster_walk_sheet.pdf`,
   `u2_poster/pdf/u2_poster_teacher_key.pdf`. Printed from the source with headless Chrome.
 - Desk `POSTER_LINKS['U2-Poster']` (Part B) links the three student PDFs and the teacher key.
+
+### A6. As revised and as run (2026-11-10). Where A1 to A5 differ, this section wins.
+
+**Morning revision, before the first day (9e2d90cd).** The teacher asked for legible instructions,
+less complexity, DOK 3 kept, sound ideas.
+
+- Posted texts. Content objective: "I can judge a claim about chance: find the number it really
+  depends on, prove my verdict with it, and repair the claim so it is true." Language objective: "I
+  can defend my verdict out loud and in writing, in complete sentences, using the word my claim
+  needs: given, union, independent, mutually exclusive, expected value or simulation."
+  ("simulation" was added the same afternoon for the card 6 group.) Essential question: "What makes
+  a claim about chance worth believing?" One verdict frame everywhere: "The claim says ___. The
+  number it really depends on is ___ = ___. So the claim is (supported / partly supported / not
+  supported) because ___."
+- Student sheets: 12 pt; no topic codes; no "must show" box and no "mistake this busts" box (it
+  handed over the verdict); one checklist, which is the rubric; one frame plus a short word bank per
+  card instead of card-specific frames; every answer leak removed from the checklists.
+- Cards: 1 asks whether Freeze Time stands out (no group does), not who leads; 2 uses two shaded
+  tables, no tree; 3 has one independence test and one built 2x2 table; 4's claim now cites
+  245/2500 = 9.8% and has two mistakes to find; 5 has one verdict question and no histogram; 6 has
+  students set their own bar for "rare" first.
+
+**As it ran, Tue 11/10.** 13 students in four groups: cards 1, 2, 3 and 6 (the group of four has
+card 3). Nobody took cards 4 or 5. The groups solved page 1; no sketch and no big paper yet.
+
+**Thursday re-planned the same day: sketch, check, build.** The teacher wanted two groups to pair
+up and improve each other's poster. Three independent designs agreed on the one change that makes
+that work: the pair-up sits between the page-2 sketch (the mockup) and the big paper, and the
+checkers have their own answer before they see the mockup. A first version ran it face to face
+(read, test, tell, fix). At 12:30 the teacher chose a plainer shape, and the kit follows it: each
+group works its partner's worksheet, then goes to the partner's mockup, writes suggestions, comes
+home, fixes, and only then commits to the poster.
+
+- 0-5 Do Now (unchanged). 5-6 the language objective read aloud. 6-17 sketch on page 2. 17-37
+  partner check. 37-42 the 10/29 promise, whole class on whiteboards. 42-56 build on big paper from
+  the checked mockup. 56-57 clean up. 57-65 exit ticket 2 (unchanged).
+- Partner groups, at neighboring tables: poster 2 with poster 3 (the two questions the class asked
+  out loud on 10/30 and 10/29; both turn on the Famous column and "given"), poster 1 with poster 6
+  (both ask "compared with what?").
+- The partner check is one sheet per group (`#check`, `u2_poster/pdf/u2_poster_partner_check.pdf`),
+  three steps. WORK (9 min): at its own table, mockup face down, each group solves its partner
+  group's page 1 from a clean copy and writes its verdict there, not for the teacher (cards 1 and
+  2: parts a and c; card 3: a, b, c; card 6: a, two trials each on three TI-84s seeded with
+  different numbers, then c from those 6 trials, and d). LOOK (7 min): the groups swap tables,
+  leaving card and sheet behind and bringing their work, turn the partner's mockup over, compare it
+  with their own work (fractions, verdict, checklist), and one checker writes on the bottom half of
+  the partner's sheet.
+  FIX (4 min): back home, the authors decide to change or keep, write a second-draft verdict and
+  tell their partners the answer out loud. Checkers ask, authors decide. Frames: "We got ___ out of
+  ___. You got ___ out of ___." "Your checklist still needs ___." "A reader on Friday would ask:
+  ___?" "We will change / keep ___ because ___." The sheet prints no number, percent or verdict.
+- Work first, look second: mockups go face down at minute 17, before the partner's clean page is
+  handed out, and none is turned over before minute 26. The clean copies are
+  `u2_poster/pdf/u2_poster_partner_worksheets.pdf`: page 1 of cards 1, 2, 3 and 6, taken unchanged
+  from the student PDF. Tier-2 hint cards stay with the teacher until the check is over.
+- `#screen` (`u2_poster/pdf/u2_poster_thursday_screen.pdf`, landscape) holds the table and the four
+  claims for the projector: useful for the Do Now and the promise, not required by the check. Its
+  claim texts are compared with the cards by the test, so they cannot drift.
+- Gone: the defend round and the question cards. The teacher key gains a page of what the checkers
+  should find at each table and the likeliest wrong feedback (26/102 looking like 26/101 in
+  percents; "most" read as "biggest"; 1/64 and then 15/64 for the run of six).
+- Observer card: Preparing 6, Interacting 31 (sketch, partner check), Extending 28 (the promise,
+  build, clean-up, exit ticket 2). The routine is named as a one-round form of Stronger and Clearer,
+  not as the full routine.
+- Friday: 20 minutes to finish (partner groups confirm the change at minute 15), three rotations of
+  6 minutes, a 10-minute debrief, the essential question alone. The walk sheet lists cards 1, 2, 3
+  and 6 only and uses the posted words ("the number it really depends on").
+- Not covered by a poster in Period B: unions (only Thursday's Do Now) and expected value. Cards 4
+  and 5 are Friday's early-finisher task.
+
+How it was checked: three independent designs (language, observer, statistics lenses), four
+independent reviews of the first version (8 must-fix findings), a cold walk-through and a recount
+(3 more), all folded; then the same two final checks again on the teacher's version (three one-line
+gaps, folded).
+
+Guard: `tests/u2-poster-kit.test.js` pins the pairs; the order sketch, check, build; a run of show
+that fills 65 minutes with no gap; mockups face down before the clean copies go out, and none
+turned over before minute 26; WORK before LOOK before FIX on a sheet with no number on it and a
+frame that lets authors keep a sound verdict; the screen page's claims equal to the cards'; the
+observer card's parts adding to 65; the walk sheet's four rows.
 
 ## Part B — schedule, Desk, server data, tests
 

@@ -9,10 +9,12 @@
   Print editions are selected by the URL hash, read by the script at the end of <body>:
     #student  the six group sheets (two pages each), no answers
     #teacher  everything a teacher needs: guide, board, cards WITH answers, exit tickets,
-              run of show, observer card, question + hint cards, rubric, answer key
+              run of show, observer card, partner check, hint cards, rubric, answer key
     #example  the example board (project this first)
     #walk     the gallery-walk sheet (one per student)
     #board    the objectives board, large print
+    #check    the Thursday partner-check sheet (one per group)
+    #screen   the data and the four claims Period B is judging (project it Thursday)
   With no hash the page shows the student-safe set (cards, example board, walk sheet, objectives
   board) with answers hidden; #teacher shows everything, answers included.
   Every number here was computed, never typed from memory; the Super Status table is the one
@@ -92,6 +94,7 @@
   .verdictline { margin-top: 0.6rem; }
   section.walk p, section.walk li { font-size: 0.98rem; }
   section.walk ol { margin: 0.2rem 0 0.3rem 1.4rem; }
+  section.walk .lines { height: 2.1rem; }
 
   /* Answers: teacher edition only */
   .answer { display: none; background: #e8f5e9; border-left: 4px solid #2e7d32; padding: 0.3rem 0.55rem; margin: 0.2rem 0 0.35rem; font-size: 0.82rem; }
@@ -110,7 +113,7 @@
   .barlabel { font-size: 0.72rem; text-align: center; width: 70px; margin-right: 1.2rem; display: inline-block; }
 
   /* Walk sheet, tickets, grids */
-  .walk td { height: 3.1rem; }
+  .walk td { height: 5rem; }
   .walk td:first-child { width: 20%; font-weight: 600; height: auto; }
   .lines { border-bottom: 1px solid #999; height: 1.5rem; }
   .ticket { border: 2px dashed #777; padding: 0.5rem 0.7rem; margin-bottom: 0.6rem; min-height: 4.3in; }
@@ -126,6 +129,36 @@
   .big h2 { font-size: 1.25rem; }
   .big .frame { font-size: 1.05rem; }
 
+  /* Partner check (Thursday): one page per group, 12 pt; the bottom half is taped to the poster. */
+  .check { border: 3px solid #333; }
+  .check .head { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid #333; padding-bottom: 0.25rem; margin-bottom: 0.45rem; gap: 0.5rem; }
+  .check .head .num { font-size: 0.8rem; color: #666; text-align: right; }
+  .check h1 { font-size: 1.3rem; text-align: left; flex: 1; }
+  .check p, .check li { font-size: 1rem; color: #111; }
+  .check .dok ol { list-style: none; margin-left: 0; }
+  .check .dok li { font-size: 1rem; margin-bottom: 0.45rem; }
+  .check .dok li:last-child { margin-bottom: 0; }
+  .check .dok li b { color: #e65100; letter-spacing: 0.04em; }
+  .check .frame { font-size: 1rem; }
+  .check .cut { margin: 0.55rem 0 0.35rem; }
+  .check h2 { font-size: 1.1rem; margin-top: 0.2rem; }
+  .check .lines { height: 1.62rem; }
+  .check .dok li i { display: block; margin-top: 0.15rem; }
+  .check .lead { margin-top: 0.42rem; }
+
+  /* Thursday's shared page: the data and the four claims, wide, large type, for the projector. */
+  @page wide { size: letter landscape; margin: 0.45in; }
+  .screen { page: wide; max-width: 10.4in; border: 3px solid #333; }
+  .screen h1 { font-size: 1.45rem; }
+  .screen .cols { display: grid; grid-template-columns: 1.12fr 1fr; gap: 0.8rem; align-items: start; }
+  .screen .data { font-size: 1.14rem; color: #111; margin-bottom: 0.6rem; }
+  .screen .data table { font-size: 1.14rem; margin: 0.4rem 0 0.1rem; }
+  .screen .data th, .screen .data td { padding: 0.4rem 0.55rem; }
+  .screen .data td:first-child { white-space: nowrap; }
+  .screen .claim { margin: 0 0 0.6rem; }
+  .screen .claim h3 { font-size: 1.08rem; }
+  .screen .claim .q { font-size: 1.18rem; color: #111; }
+
   /* Edition switcher (screen only) */
   .switch { max-width: 8.5in; margin: 0 auto 0.6rem; font-size: 0.8rem; color: #555; }
   .switch a { margin-right: 0.7rem; }
@@ -137,8 +170,10 @@
   body[data-print="example"] .sheet.example { display: block; }
   body[data-print="walk"] .sheet.walk { display: block; }
   body[data-print="board"] .sheet.board { display: block; }
-  /* No hash: the student-safe set only (cards, example board, walk sheet, objectives board). */
-  body[data-print="default"] .sheet.student, body[data-print="default"] .sheet.example, body[data-print="default"] .sheet.walk, body[data-print="default"] .sheet.board { display: block; }
+  body[data-print="check"] .sheet.check { display: block; }
+  body[data-print="screen"] .sheet.screen { display: block; }
+  /* No hash: the student-safe set only (cards, example board, walk sheet, objectives board, partner check, shared page). */
+  body[data-print="default"] .sheet.student, body[data-print="default"] .sheet.example, body[data-print="default"] .sheet.walk, body[data-print="default"] .sheet.board, body[data-print="default"] .sheet.check, body[data-print="default"] .sheet.screen { display: block; }
   @media print {
     body { background: #fff; padding: 0; }
     .sheet { border-radius: 0; margin: 0; max-width: none; min-height: 0; box-shadow: none; }
@@ -149,7 +184,7 @@
 </head>
 <body>
 
-<div class="switch">View: <a href="#">student-safe set (default)</a> <a href="#student">student sheets</a> <a href="#teacher">teacher key (answers)</a> <a href="#example">example board</a> <a href="#walk">walk sheet</a> <a href="#board">objectives board</a></div>
+<div class="switch">View: <a href="#">student-safe set (default)</a> <a href="#student">student sheets</a> <a href="#teacher">teacher key (answers)</a> <a href="#example">example board</a> <a href="#walk">walk sheet</a> <a href="#board">objectives board</a> <a href="#check">partner check</a> <a href="#screen">data and claims (screen)</a></div>
 
 <!-- ============================================================ -->
 <!-- TEACHER GUIDE                                                 -->
@@ -158,7 +193,7 @@
   <h1>Unit 2 Poster — Claim, Proof, Repair</h1>
   <p class="sub">Period B · Tue 11/10 + Thu 11/12 build, Fri 11/13 gallery walk · CED topics 2.1 to 2.9 (nothing binomial) · one DOK-3 claim per group</p>
 
-  <div class="note"><b>Printables (PDF):</b> <a href="pdf/u2_poster_group_sheets_student.pdf">group sheets</a> (six cards, two pages each; print one per group) &middot; <a href="pdf/u2_poster_example_board_demo.pdf">example board</a> (project this first) &middot; <a href="pdf/u2_poster_walk_sheet.pdf">gallery-walk sheet</a> (one per student, Friday) &middot; <a href="pdf/u2_poster_teacher_key.pdf">teacher key</a> (this guide, the board, the cards with answers, exit tickets, run of show, observer card, question and hint cards, rubric and scoring grid, answer key).</div>
+  <div class="note"><b>Printables (PDF):</b> <a href="pdf/u2_poster_group_sheets_student.pdf">group sheets</a> (six cards, two pages each; print one per group) &middot; <a href="pdf/u2_poster_example_board_demo.pdf">example board</a> (project this first) &middot; <a href="pdf/u2_poster_walk_sheet.pdf">gallery-walk sheet</a> (one per student, Friday) &middot; <a href="pdf/u2_poster_partner_check.pdf">partner-check sheet</a> (one per group, Thursday) &middot; <a href="pdf/u2_poster_partner_worksheets.pdf">partner worksheets</a> (each group gets a clean page 1 of its partner's card) &middot; <a href="pdf/u2_poster_thursday_screen.pdf">the table and the four claims</a> (for the screen) &middot; <a href="pdf/u2_poster_teacher_key.pdf">teacher key</a> (everything here, with the answers).</div>
 
   <div class="note"><b>The hook for students:</b> "Every claim on these cards is one somebody could really make about data we have already used. Three of them come straight from questions this class asked in the last two weeks. Your group's job is a verdict, the proof, and a repair. Then your poster teaches the room."</div>
 
@@ -168,11 +203,11 @@
     <tr><td>1</td><td>2.1, 2.2</td><td>"Freeze Time people want to be rich: 26 chose Rich, more than any other power."</td><td>"The bigger count wins" <span class="badge persist">PERSISTENT B</span>: Period B's Unit 1 error, and 3 students read a relative-frequency bar chart as counts on quiz 2.1 (10/29).</td><td>Super Status table, 433 students</td></tr>
     <tr><td>2</td><td>2.6</td><td>"Most students who want to be Famous chose Fly, so most students who chose Fly want to be Famous."</td><td>P(A | B) read as P(B | A). Asked in class 10/30: "why do the two conditional probabilities differ?"</td><td>Super Status table</td></tr>
     <tr><td>3</td><td>2.5, 2.7</td><td>"Nobody who chose Telepathy wants to be Famous (0 of 68), so Telepathy and Famous are independent."</td><td>Mutually exclusive confused with independent. Asked 10/29; you promised the class an example of mutually exclusive events that are not independent. <span class="badge persist">PERSISTENT B</span></td><td>Super Status table + a 2x2 table the group designs</td></tr>
-    <tr><td>4</td><td>2.4, 2.7</td><td>"P(college grad or internet news) = 693/2500 + 687/2500 = 55.2%, and grads are no more likely than anyone else to get news online: only 9.8% are grads who read news online."</td><td>Addition rule without the subtraction; a joint probability used where a conditional belongs. 2.7 is B's least-finished lesson (worksheet mean 46; 8 of 14 not done).</td><td>2010 AP exam table, 2,500 adults (2.7 follow-along)</td></tr>
+    <tr><td>4</td><td>2.4, 2.7</td><td>"P(college grad or internet news) = 693/2500 + 687/2500 = 55.2%, and grads are no more likely than anyone else to get news online: only 9.8% are grads who read news online."</td><td>Addition rule without the subtraction; a joint probability used where a conditional belongs. 2.7 is B's least-finished lesson (worksheet mean 46; 8 students not done).</td><td>2010 AP exam table, 2,500 adults (2.7 follow-along)</td></tr>
     <tr><td>5</td><td>2.3, 2.8, 2.9</td><td>"A fair game! You win on 2 of every 6 rolls."</td><td>Expected value read as "every game"; winnings used instead of net; "fair" without asking for whom (2.8 exit-ticket traps). Also the 10/30 TI-84 promise.</td><td>Carnival die game (2.8 follow-along exit ticket)</td></tr>
     <tr><td>6 spare</td><td>2.3</td><td>"6 heads in a row in 20 flips is impossible for a fair coin. It's rigged."</td><td>A simulation estimates; it never proves one outcome impossible (10/26: "was the simulated coin fair?").</td><td>randInt(0,1,20) on the TI-84</td></tr>
   </table>
-  <p class="small">Coverage: 2.1 and 2.2 on card 1; 2.3 on cards 5 and 6; 2.4 everywhere (probabilities as relative frequencies, the complement region on card 4); 2.5 on card 3; 2.6 on cards 1, 2 and 4; 2.7 on cards 3 and 4; 2.8 and 2.9 on card 5. The walk sheet makes every student compute one number at each poster except their own, so everyone meets every topic.</p>
+  <p class="small">Coverage: 2.1 and 2.2 on card 1; 2.3 on cards 5 and 6; 2.4 everywhere (probabilities as relative frequencies, the complement region on card 4); 2.5 on card 3; 2.6 on cards 1, 2 and 4; 2.7 on cards 3 and 4; 2.8 and 2.9 on card 5. The walk sheet makes every student find one number at each poster except their own. <b>Period B ran cards 1, 2, 3 and 6.</b> Unions (the double count) appear only in Thursday's Do Now and expected value not at all: cards 4 and 5 hold both, for Friday's early finishers or for review.</p>
 
 </section>
 
@@ -180,11 +215,10 @@
   <h1>Unit 2 Poster — groups, roles, days, materials</h1>
   <h2>Groups</h2>
   <table>
-    <tr><th>Class size</th><th>Groups</th><th>Who gets what</th></tr>
-    <tr><td>14 (Period B)</td><td>4 trios + 1 pair</td><td>The pair takes card 2 (two probabilities, the lightest build). A strong trio takes card 4 (the lesson most of the class has not finished) and another takes card 3 (the proof). Card 5 wants one calculator-confident student. Card 6 is the spare for a sixth group or early finishers.</td></tr>
-    <tr><td>12-13</td><td>4 groups</td><td>Drop card 1; its segmented bar chart becomes the Friday debrief demo.</td></tr>
-    <tr><td>15-18</td><td>6 groups</td><td>Card 6 goes to the sixth group.</td></tr>
+    <tr><th>Class size</th><th>Groups</th><th>Who has what</th></tr>
+    <tr><td>13 (Period B, as it ran 11/10)</td><td>three trios and one group of four</td><td>Cards 1, 2, 3 and 6; the group of four has card 3. Nobody took cards 4 and 5: they are Friday's early-finisher task.</td></tr>
   </table>
+  <p><b>Partner groups for Thursday:</b> poster 2 with poster 3, poster 1 with poster 6.</p>
 
   <h2>Roles inside a trio</h2>
   <p>The whole group judges the claim together <b>first</b>, on scratch paper and whiteboards, before anyone touches the poster. Then:</p>
@@ -193,20 +227,20 @@
     <li><b>Visual</b> — the diagram the card asks for (segmented bar chart, shaded tables, Venn, 2x2 table, dotplot): title, labels, a key or scale.</li>
     <li><b>Writer</b> — the verdict sentence, the repaired claim and the explanation sentences, in context, using the words from the language objective; checks the must-have list before the walk.</li>
   </ul>
-  <p>In a pair, the Table Keeper also draws the visual.</p>
+  <p>In the group of four there are two Visuals: one draws the shaded table, one the 2x2 table.</p>
 
   <h2>The three days (details on the run-of-show pages)</h2>
   <table>
-    <tr><th>Tue 11/10 · 65 min · build</th><th>Thu 11/12 · 65 min · observed: defend, repair, finish</th><th>Fri 11/13 · 55 min · gallery walk</th></tr>
+    <tr><th>Tue 11/10 · 65 min · solve</th><th>Thu 11/12 · 65 min · observed: sketch, check, build</th><th>Fri 11/13 · 55 min · finish, gallery walk</th></tr>
     <tr>
-      <td>Do Now on boards. Objectives + EQ posted. Three Reads on the shared table. Example board. Cards out. Solve verdict + proof on scratch paper first, then start the poster. Exit ticket 1.</td>
-      <td>Do Now on boards. Defend round with question cards (poster 1 with 2, 3 with 4; poster 5 presents to you). Repair part of each card. Finish against the checklist. Five minutes on the 10/29 promise. Exit ticket 2, alone, on paper.</td>
-      <td>Final touches, posters up. Walk sheet at every other poster. Debrief on the two persistent ones. Score with the grid.</td>
+      <td>Do Now on boards. Objectives + EQ posted. Three Reads on the shared table. Example board. Cards out. Solve the card on scratch paper and whiteboards; write a one-sentence verdict. Exit ticket 1.</td>
+      <td>Do Now on boards. Sketch on page 2: the mockup. Partner check (poster 2 with 3, poster 1 with 6): work their page 1, look at their mockup, fix your own. Five minutes on the 10/29 promise. Only checked work goes on the big paper. Exit ticket 2, alone, on paper.</td>
+      <td>Finish against the checklist; partner groups confirm the change. Posters up. Walk sheet at the three other posters. Debrief. Score with the grid.</td>
     </tr>
   </table>
 
   <h2>Materials and grading</h2>
-  <p>Six poster boards (one spare), markers (four colors per group), rulers, tape, scratch paper, a whiteboard + marker + eraser for every student, TI-84s (at least two for card 5, ideally one per group), the printed cards (two pages, one per group), 14 walk sheets, 14 of each exit ticket, one question card per group, the hint cards, the board page (projected or printed large), the example board (projected). Each card's five must-haves are the rubric: all five = E, three or four = P, fewer = I. Scores E 115 / P 100 / I 90, any integer 90 to 115 per sheet; enter them with <code>node scripts/enter-poster.mjs</code> (format on the rubric page). Posters are 30% of Q2 Work for Period B.</p>
+  <p>Four poster boards and a spare, markers (four colors per group), rulers, tape, scratch paper, a whiteboard + marker + eraser for every student, a TI-84 at every table and three at the poster 1 table (it runs poster 6's simulation), the printed cards (two pages, one per group), a clean page 1 of its partner's card for each group, one partner-check sheet per group (four), 13 walk sheets, 13 of each exit ticket, the hint cards, the objectives on poster paper, the Super Status table on the screen. Each card's five must-haves are the rubric: all five = E, three or four = P, fewer = I. Scores E 115 / P 100 / I 90, any integer 90 to 115 per sheet; enter them with <code>node scripts/enter-poster.mjs</code> (format on the rubric page). Posters are 30% of Q2 Work for Period B.</p>
 </section>
 
 <!-- ============================================================ -->
@@ -220,7 +254,7 @@
   <p>I can judge a claim about chance: find the number it really depends on, prove my verdict with it, and repair the claim so it is true.</p>
 
   <h2>Language objective</h2>
-  <p>I can defend my verdict out loud and in writing, in complete sentences, using the word my claim needs: <b>given, union, independent, mutually exclusive</b> or <b>expected value</b>.</p>
+  <p>I can defend my verdict out loud and in writing, in complete sentences, using the word my claim needs: <b>given, union, independent, mutually exclusive, expected value</b> or <b>simulation</b>.</p>
 
   <h2>Essential question</h2>
   <p>What makes a claim about chance worth believing?</p>
@@ -228,16 +262,15 @@
   <h2>Frames</h2>
   <div class="frame">
     <p><b>Verdict:</b> "The claim says ______. The number it really depends on is ______ = ______. So the claim is (supported / partly supported / not supported) because ______."</p>
-    <p><b>Partner talk:</b> "I agree / disagree with ______ because ______." &nbsp; "Say it again with your key word."</p>
-    <p><b>Poster 5:</b> "In the long run, ______ per ______."</p>
+    <p><b>Partner check.</b> Checkers write: "We got ______ out of ______. You got ______ out of ______." &nbsp; "Your checklist still needs ______." &nbsp; "A reader on Friday would ask: ______?"<br>Authors answer: "We will change / keep ______ because ______."</p>
   </div>
-  <div class="bank"><b>Key words:</b> <span>given</span><span>union</span><span>independent</span><span>mutually exclusive</span><span>expected value</span> &nbsp; <b>Helpers:</b> <span>denominator</span><span>long run</span></div>
+  <div class="bank"><b>Key words:</b> <span>given</span><span>union</span><span>independent</span><span>mutually exclusive</span><span>expected value</span><span>simulation</span> &nbsp; <b>Helpers:</b> <span>denominator</span><span>estimate</span><span>long run</span></div>
 
   <h2>This week</h2>
   <ul>
-    <li><b>Tuesday:</b> verdict and proof on scratch paper first. Then the poster.</li>
-    <li><b>Thursday:</b> defend your verdict to another group. Repair the claim. Finish against the checklist.</li>
-    <li><b>Friday:</b> gallery walk. One number at each poster.</li>
+    <li><b>Tuesday:</b> verdict and proof on scratch paper and whiteboards.</li>
+    <li><b>Thursday:</b> sketch it. Check it with your partner group. Build it.</li>
+    <li><b>Friday:</b> finish. Gallery walk: one number at each poster.</li>
   </ul>
 </section>
 
@@ -665,19 +698,17 @@
   <ol>
     <li>Write the claim in five words.</li>
     <li>Circle the verdict.</li>
-    <li>Work out the one number that decides it yourself (a fraction and percent, or dollars). Then check it against the poster.</li>
-    <li>Write the key word the poster used: given · union · independent · mutually exclusive · expected value.</li>
+    <li>Find the number the claim really depends on, on your own: a fraction and a percent. Is the poster's number the same? At poster 6: count the dots at 6 or more, then divide by all the dots.</li>
+    <li>Write the key word the poster used: given · independent · mutually exclusive · simulation.</li>
   </ol>
   <table class="walk">
-    <tr><th>Poster</th><th>The claim in five words</th><th>Verdict</th><th>The one number that decides it (your own work)</th><th>Key word</th></tr>
-    <tr><td>#1 Who wants to be rich?</td><td></td><td>supported · not · partly</td><td></td><td></td></tr>
-    <tr><td>#2 The flipped headline</td><td></td><td>supported · not · partly</td><td></td><td></td></tr>
-    <tr><td>#3 Can't happen together, so unrelated?</td><td></td><td>supported · not · partly</td><td></td><td></td></tr>
-    <tr><td>#4 Double counted</td><td></td><td>supported · not · partly</td><td></td><td></td></tr>
-    <tr><td>#5 Is the game fair?</td><td></td><td>supported · not · partly</td><td></td><td></td></tr>
-    <tr><td>#6 Rigged coin? (if posted)</td><td></td><td>supported · not · partly</td><td></td><td></td></tr>
+    <tr><th>Poster</th><th>The claim in five words</th><th>Verdict</th><th>The number it really depends on (your work)</th><th>Key word</th></tr>
+    <tr><td>#1 Who wants to be rich?</td><td></td><td>supported · partly supported · not supported</td><td></td><td></td></tr>
+    <tr><td>#2 The flipped headline</td><td></td><td>supported · partly supported · not supported</td><td></td><td></td></tr>
+    <tr><td>#3 Can't happen together, so unrelated?</td><td></td><td>supported · partly supported · not supported</td><td></td><td></td></tr>
+    <tr><td>#6 Rigged coin?</td><td></td><td>supported · partly supported · not supported</td><td></td><td></td></tr>
   </table>
-  <h3>Which claim would have fooled you before this week? Why?</h3>
+  <h3>Which claim seemed true to you at first? Why?</h3>
   <div class="lines"></div><div class="lines"></div><div class="lines"></div>
   <h3>One thing I would add to poster #____:</h3>
   <div class="lines"></div><div class="lines"></div>
@@ -736,41 +767,48 @@
 <!-- RUN OF SHOW                                                   -->
 <!-- ============================================================ -->
 <section class="sheet teacher teacher-sheet tight">
-  <h1>Run of show</h1>
-  <h2>Tue 11/10 · 09:55-11:00 · build (65 min)</h2>
+  <h1>Run of show, Tuesday</h1>
+  <h2>Tue 11/10 · 09:55-11:00 · solve (65 min)</h2>
+  <p class="small">As it ran: 13 students in four groups (posters 1, 2, 3 and 6) solved page 1 of their cards. The sketch and the big paper moved to Thursday.</p>
   <table>
     <tr><th>Min</th><th>Students</th><th>Teacher</th></tr>
     <tr><td>0-5</td><td>Do Now on whiteboards: "From the table, P(Rich | Fly)?" Boards up on the cue.</td><td>Scan. Ask one board: "Why 89 and not 433?" (22/89 = 24.7%.)</td></tr>
     <tr><td>5-13</td><td>Three Reads on the projected table. Read 1: what is the story (no numbers). Read 2: list the quantities on your board. Read 3: what claims could someone make from this table?</td><td>The objectives, the EQ and the frame are already up on poster paper: point to them before Read 1. Collect three claims from boards; do not judge them yet.</td></tr>
     <tr><td>13-17</td><td>Watch the example board.</td><td>Talk-track (3 min): the word that names the group, the denominator, verdict, repair, seven parts.</td></tr>
-    <tr><td>17-20</td><td>Groups form; cards and materials out; roles chosen and written on the card.</td><td>Hand each group its card. (Question cards go out Thursday.)</td></tr>
+    <tr><td>17-20</td><td>Groups form; cards and materials out; roles chosen and written on the card.</td><td>Hand each group its card.</td></tr>
     <tr><td>20-38</td><td>Solve parts (a)-(c) on scratch paper and whiteboards. No poster yet.</td><td>Circulate with the why questions. At minute 28, tier-1 hint card to any blank board; tier-2 only after that.</td></tr>
-    <tr><td>38-60</td><td>Build: title, the claim, the data, the probability, the visual. Draft (d) and (e). Poster 5: the calculator student runs the 20 simulated games now.</td><td>Check each group's verdict sentence before it goes on the board. Posters stay in the room.</td></tr>
-    <tr><td>60-65</td><td>Exit ticket 1, alone.</td><td>Collect. Sort by card for Thursday's defend round.</td></tr>
+    <tr><td>38-60</td><td>Finish (d) and (e) and the one-sentence verdict on page 1. (Planned: start the build. It moved to Thursday.)</td><td>Check each group's verdict sentence. Cards stay in the room.</td></tr>
+    <tr><td>60-65</td><td>Exit ticket 1, alone.</td><td>Collect. Sort by card for Thursday's partner check.</td></tr>
   </table>
+</section>
 
-  <h2>Thu 11/12 · 09:55-11:00 · observed: defend, repair, finish (65 min)</h2>
+<section class="sheet teacher teacher-sheet tight">
+  <h1>Run of show, Thursday</h1>
+  <h2>Thu 11/12 · 09:55-11:00 · observed: sketch, check, build (65 min)</h2>
+  <p class="small"><b>Partner groups</b> sit at neighboring tables: poster 2 with poster 3, poster 1 with poster 6. Each group gets a clean page 1 of its partner's card: poster 3's page to the poster 2 group, poster 2's to the poster 3 group, poster 6's to the poster 1 group, poster 1's to the poster 6 group. Tier-2 hint cards stay in your hand until the check is over. <b>If the clock runs over:</b> exit ticket 2 starts at minute 57 no matter what; the build shrinks first (posters finish Friday). Never cut Work or Look.</p>
   <table>
     <tr><th>Min</th><th>Students</th><th>Teacher</th></tr>
-    <tr><td>0-6</td><td>Do Now on whiteboards: "True or false: P(Happy or Fly) = 265/433 + 89/433." Boards up.</td><td>Two why questions: "Who got counted twice, and how do you know?" "What would make the statement true?" (False: (265 + 89 − 48)/433 = 306/433 = 70.7%.)</td></tr>
-    <tr><td>6-8</td><td>Read today's job on the board.</td><td>Objectives and language objective re-read aloud; today's goal: defend, repair, finish.</td></tr>
-    <tr><td>8-26</td><td>Defend round: poster 1 with poster 2, poster 3 with poster 4; poster 5 presents to the teacher in round 1, then revises. 4 min: one group presents its verdict with the frame while the other asks from the question card. 2 min: the presenters revise their verdict sentence. Swap.</td><td>Time the rounds. Listen for the frame and the key words. Ask one open why question per group, then wait five seconds.</td></tr>
-    <tr><td>26-50</td><td>Repair and build parts of the card: (d) and (e). Finish the poster against the five-item checklist.</td><td>Circulate. Tier-2 hints only where a group is stuck on the repair. Check the checklist with each group.</td></tr>
-    <tr><td>50-56</td><td>Whole class at poster 3, on whiteboards: "Nobody who chose Telepathy wants to be Famous. Does knowing someone chose Telepathy change the chance they want to be Famous? Yes or no, plus one number." Boards up.</td><td>Wait five seconds, then boards up. The poster 3 group shows 0/68 against 15/433 = 3.5%. Then name the rule (the 10/29 promise): "Can't happen together rules the other one out, which changes its probability: dependence, not independence."</td></tr>
-    <tr><td>56-65</td><td>Exit ticket 2, alone, on paper.</td><td>Collect. These two items are the independent evidence for the day.</td></tr>
+    <tr><td>0-5</td><td>Do Now on whiteboards, alone: "True or false: P(Happy or Fly) = 265/433 + 89/433." T or F and one reason. Boards up.</td><td>Two why questions, five seconds of wait after each: "Who got counted twice, and how do you know?" "What would make the statement true?" (False: (265 + 89 − 48)/433 = 306/433 = 70.7%.)</td></tr>
+    <tr><td>5-6</td><td>One student reads the language objective aloud.</td><td>On the board: Sketch · Check · Build. "On Friday nobody stands beside your poster. Its reader will ask something. Today your partner group is that reader."</td></tr>
+    <tr><td>6-17</td><td><b>Sketch.</b> Page 2, in pencil: the visual in the box, the poster sentences on the lines, the verdict with the frame. This page is your mockup. Poster 6 finishes its trials first and stops at minute 14 wherever it is.</td><td>Poster 6 first: a different seed on each calculator (type a number, STO→ rand). One why question at each table, then wait. Minute 14: "Three minutes." Minute 17: "Mockups face down." Then one partner-check sheet and the partner's clean page 1 to each group.</td></tr>
+    <tr><td>17-37</td><td><b>Partner check</b>, the three steps on the sheet. <b>Work</b> (9 min): at your own table, solve your partner group's page 1 from the clean copy. <b>Look</b> (7 min): swap tables, turn their mockup over, compare it with your work, write on their sheet. <b>Fix</b> (4 min): back home; change or keep; the verdict again; tell your partner group your answer.</td><td>Call the three steps by the clock. Work first, look second: no mockup is turned over before minute 26. Three TI-84s at the poster 1 table for Work, each seeded first with a different number (type a number, STO→ rand). In Look, stand where posters 2 and 3 are being checked. One why question at a table, then wait; never say a number. A group with no mockup yet: its checkers read the verdict on its page 1.</td></tr>
+    <tr><td>37-42</td><td>Whole class, on whiteboards, alone: "Nobody who chose Telepathy wants to be Famous. Does knowing someone chose Telepathy change the chance they want to be Famous? Yes or no, plus one number." Boards up.</td><td>Wait five seconds. One of poster 3's checkers says what they first thought. The poster 3 group gives the numbers: 0/68 against 15/433 = 3.5%. Name the rule (the 10/29 promise): "Can't happen together rules the other one out, which changes its probability: dependence, not independence." No Healthy numbers: that is the exit ticket.</td></tr>
+    <tr><td>42-56</td><td><b>Build.</b> Big paper, by role, from the checked mockup. First pencil a box for each part, so all the roles work at once. Then the second-draft verdict, the numbers with their fractions, the visual, the repair. Title and color last.</td><td>Read each second-draft verdict before it is lettered and ask one why question about it, then wait. Say-it check: a student who is not the Writer tells you the verdict with the frame and the key word. Posters are finished Friday.</td></tr>
+    <tr><td>56-57</td><td>Posters and partner-check sheets to the side table; markers capped; desks cleared to a pencil.</td><td>Exit ticket 2 goes out face down.</td></tr>
+    <tr><td>57-65</td><td>Exit ticket 2, alone, on paper.</td><td>Collect at 11:00: the independent evidence for the day.</td></tr>
   </table>
 
 </section>
 
 <section class="sheet teacher teacher-sheet tight">
   <h1>Run of show, Friday</h1>
-  <h2>Fri 11/13 · 08:55-09:50 · gallery walk (55 min)</h2>
+  <h2>Fri 11/13 · 08:55-09:50 · finish, gallery walk (55 min)</h2>
   <table>
     <tr><th>Min</th><th>Students</th><th>Teacher</th></tr>
-    <tr><td>0-10</td><td>Final touches; posters up around the room.</td><td>Hand out walk sheets.</td></tr>
-    <tr><td>10-30</td><td>Walk: four rotations of 5 min, no docents; the poster must speak for itself (that is what the Writer's sentences are for). Start at the poster to your group's right. At each poster except your own, work out the one number on the walk sheet.</td><td>Signal rotations. Listen at the two persistent posters (2 and 3).</td></tr>
-    <tr><td>30-45</td><td>Debrief: hands for "which claim would have fooled you?"; two students read their sentence for posters 2 and 3.</td><td>Name the two rules: the given group is the denominator; mutually exclusive is not independent.</td></tr>
-    <tr><td>45-55</td><td>Hand in walk sheets; a fifth rotation for anyone who wants to revisit a poster.</td><td>Score with the grid (or after class); photos of the posters.</td></tr>
+    <tr><td>0-20</td><td>Finish the poster against the checklist. At minute 15 partner groups trade places for three minutes: is Thursday's change on the poster? The bottom half of the partner-check sheet is taped to the poster. Posters up around the room.</td><td>Hand out walk sheets. A group that finishes early takes card 4 or card 5 and judges the claim on whiteboards: the number and the verdict, no poster.</td></tr>
+    <tr><td>20-38</td><td>Walk: three rotations of 6 min, no docents; the poster must speak for itself (that is what the Writer's sentences are for). Start at the poster to your group's right. At each poster except your own, find the number on the walk sheet. At poster 6, count the dots.</td><td>Signal rotations. Listen at posters 2 and 3 (the flipped given; the 10/29 promise).</td></tr>
+    <tr><td>38-48</td><td>Debrief: hands for "which claim seemed true at first?"; two students read their sentence for posters 2 and 3; the poster 6 group says what its checkers' six trials showed.</td><td>Name the two rules: the given group is the denominator; mutually exclusive is not independent. Then a third, from poster 6: a small simulation wobbles, and "not rare" is not proof of "fair". Only now give the exact 0.1223.</td></tr>
+    <tr><td>48-55</td><td>The last walk-sheet question, alone: what makes a claim about chance worth believing? Hand in walk sheets.</td><td>Score with the grid (or after class); photos of the posters.</td></tr>
   </table>
 </section>
 
@@ -780,35 +818,35 @@
 <section class="sheet teacher teacher-sheet tight">
   <h1>Observer card — Thursday 11/12</h1>
   <table>
-    <tr><th style="width:18%">Lesson</th><td>Unit 2 claim posters, day 2 of 3: defend, repair, finish (DOK 3)</td></tr>
+    <tr><th style="width:18%">Lesson</th><td>Unit 2 claim posters, day 2 of 3: sketch, check, build (DOK 3)</td></tr>
     <tr><th>Plan</th><td>
-      <b>Preparing (8 min).</b> Do Now on whiteboards, a packet problem: true or false, P(Happy or Fly) = 265/433 + 89/433. Boards up. Two open questions ("Who got counted twice, and how do you know?" "What would make the statement true?"). Objectives and the language objective re-read.<br>
-      <b>Interacting (42 min).</b> Defend round in partner groups: four minutes to present the verdict with the frame while the listening group asks from the question card (why that denominator, what would make the claim true, say it with "given"), two minutes to revise the verdict sentence, swap. Then the repair and build parts of each card: the repaired headline, the one-payout fair game, the designed 2x2 table, the count independence would predict. Finish the poster against the five must-haves. Tiered hint cards go only to a stuck group.<br>
-      <b>Extending (15 min).</b> Whole class at poster 3, on whiteboards: does knowing "Telepathy" change the chance of "Famous"? The promised example of events that are mutually exclusive but not independent, with the numbers. Exit ticket 2 alone on paper: a true-or-false on independence with a number, and a classmate's claim about two conditional probabilities to judge.
+      <b>Preparing (6 min).</b> Do Now on whiteboards, a packet problem: true or false, P(Happy or Fly) = 265/433 + 89/433. Boards up. Two open questions ("Who got counted twice, and how do you know?" "What would make the statement true?"). A student reads the language objective aloud.<br>
+      <b>Interacting (31 min).</b> Sketch (11 min): each group drafts its poster and its verdict on the second page of its card. That page is its mockup. Partner check (20 min): poster 2 with poster 3, poster 1 with poster 6. Each group first solves its partner group's claim from a clean copy of that group's card. The groups then swap tables, set the partner's mockup beside their own work, and write what differs, what its checklist still needs and what a reader would ask. Back at their own table the authors decide what to change or keep, write a second draft, and tell their partners why (a one-round form of Stronger and Clearer: first draft, structured feedback, second draft).<br>
+      <b>Extending (28 min).</b> Whole class on whiteboards (5 min): does knowing "Telepathy" change the chance of "Famous"? The promised example of events that are mutually exclusive but not independent, with the numbers. Build (14 min): only checked work goes on the big paper, with the second-draft verdict. Clean-up (1 min). Exit ticket 2 alone on paper (8 min): a true-or-false on independence with a number, and a classmate's claim about two conditional probabilities to judge.
     </td></tr>
-    <tr><th>Sentence frame</th><td>"The claim says ___. The number it really depends on is ___ = ___. So the claim is (supported / partly supported / not supported) because ___."</td></tr>
-    <tr><th>Grouping</th><td>groups of three (one pair); partner groups for the defend round; alone for the exit ticket</td></tr>
+    <tr><th>Sentence frame</th><td>Verdict: "The claim says ___. The number it really depends on is ___ = ___. So the claim is (supported / partly supported / not supported) because ___."<br>Partner check: "We got ___ out of ___. You got ___ out of ___." "Your checklist still needs ___." "A reader on Friday would ask: ___?" "We will change / keep ___ because ___."</td></tr>
+    <tr><th>Grouping</th><td>alone on whiteboards; four groups (three of three, one of four); partner groups for the check; alone for the exit ticket</td></tr>
     <tr><th>Minutes</th><td>65</td></tr>
   </table>
-  <p><b>What the observer should count:</b> open why questions asked; boards up at each cue; students who speak in the defend round; exit tickets collected.</p>
+  <p><b>What the observer should count:</b> open why questions asked; boards up at each cue; groups whose written feedback names a number or a missing checklist item; verdicts that changed between the first draft and the second; exit tickets collected.</p>
 
   <h2>Why questions (open; aim for more than half of all questions)</h2>
   <div class="grid2">
     <ul>
       <li>Why is the denominator 89 and not 433?</li>
       <li>What would the claim need to say for your number to support it?</li>
-      <li>Where did the 245 get counted twice?</li>
+      <li>Who got counted twice, and how do you know?</li>
       <li>Why can't these two events be independent if they never happen together?</li>
-      <li>What does +$0.17 promise a player, and what doesn't it promise?</li>
+      <li>How rare is rare enough to call a coin rigged? Who decides?</li>
       <li>Which is the bigger group here, and why does that matter?</li>
     </ul>
     <ul>
       <li>If you only had the percents, could you still tell who is right?</li>
       <li>How would you convince someone who only looks at counts?</li>
-      <li>What number in "both" would make these independent? Could that happen?</li>
-      <li>Why does your simulation average differ from the mean?</li>
+      <li>What does the 0 in the table show, and what does it not show?</li>
+      <li>Their 6 trials say one thing and your 25 say another. Which do you trust more, and why?</li>
       <li>Can you say that again with the word "given"?</li>
-      <li>Who does that sign fool, and who does it help?</li>
+      <li>Which piece of their feedback did you not take, and why?</li>
     </ul>
   </div>
 
@@ -818,37 +856,92 @@
   <h1>Where each look-for lives on Thursday</h1>
   <table>
     <tr><th>Form item</th><th>Where</th></tr>
-    <tr><td>Objectives posted, content and language</td><td>The board page, up at 09:55; re-read at minute 6.</td></tr>
-    <tr><td>DOK level</td><td>DOK 3 on every card header and on the board: judge a claim, prove it, repair it.</td></tr>
-    <tr><td>Open questions, wait time</td><td>The why list; five seconds after each; boards up before anyone answers.</td></tr>
-    <tr><td>Language routine with frames</td><td>The verdict frame and the question cards in the defend round; word bank on the board.</td></tr>
-    <tr><td>Student-to-student discourse</td><td>Defend round, four minutes each way, every group speaks.</td></tr>
-    <tr><td>Whiteboards used</td><td>Do Now, repair scratch work, boards up at cues.</td></tr>
+    <tr><td>Objectives posted, content and language</td><td>The poster paper, up at 09:55; the language objective read aloud at minute 5.</td></tr>
+    <tr><td>DOK level</td><td>DOK 3 on every card header and on the board: judge a claim, prove it, repair it. In the partner check each group judges a second claim from a clean card, then judges another group's draft against its own work and says what would make it convincing.</td></tr>
+    <tr><td>Open questions, wait time</td><td>The why list; five seconds after each; boards up before anyone answers. In the build, one why question about each second-draft verdict.</td></tr>
+    <tr><td>Language routine with frames</td><td>The partner check: a first draft, one round of structured written feedback from another group, then a second draft (a one-round form of Stronger and Clearer). Frames: the verdict frame, then "We got ___ out of ___. You got ___ out of ___." "Your checklist still needs ___." "A reader on Friday would ask: ___?" "We will change / keep ___ because ___."</td></tr>
+    <tr><td>Student-to-student discourse</td><td>Partner check: nine minutes solving another group's claim together (minutes 17-26), seven minutes judging that group's mockup together and agreeing what to write (26-33), then each group decides what to change or keep and tells its partner group why (33-37).</td></tr>
+    <tr><td>Whiteboards used</td><td>Do Now; the scratch work in the partner check; the Telepathy question.</td></tr>
     <tr><td>Visible independent work at the end</td><td>Exit ticket 2, alone, on paper, collected.</td></tr>
-    <tr><td>Scaffolds for multilingual learners</td><td>Word bank, sentence frames, tiered hint cards, the data table reprinted on every card, roles that give every student a job.</td></tr>
-    <tr><td>Evidence for feedback and adjustment</td><td>Exit tickets 1 and 2, the walk sheets and the scored posters, sorted by card.</td></tr>
+    <tr><td>Scaffolds for multilingual learners</td><td>Word bank, sentence frames for the verdict and for feedback, feedback written before it is spoken, tiered hint cards, the data table on every card, roles that give every student a job.</td></tr>
+    <tr><td>Evidence for feedback and adjustment</td><td>The partner-check sheets (the feedback and the second drafts), exit tickets 1 and 2, the walk sheets and the scored posters, sorted by card.</td></tr>
   </table>
 </section>
 
 <!-- ============================================================ -->
-<!-- QUESTION CARDS + HINT CARDS                                   -->
+<!-- PARTNER CHECK + HINT CARDS                                    -->
 <!-- ============================================================ -->
-<section class="sheet teacher teacher-sheet">
-  <h1>Question cards (defend round) — one per group, cut</h1>
-  <p class="small">The listening group asks from its card. The presenting group answers with the frame. Nobody says "you're wrong"; you ask a question instead.</p>
-  <div class="qcards">
-    <div class="qcard"><h3>Question card</h3><ul><li>Which word in the claim did you test?</li><li>Show me the one number that decides it. Why that denominator?</li><li>What would make the claim true?</li><li>Say your verdict again with your key word.</li></ul></div>
-    <div class="qcard"><h3>Question card</h3><ul><li>Which word in the claim did you test?</li><li>Show me the one number that decides it. Why that denominator?</li><li>What would make the claim true?</li><li>Say your verdict again with your key word.</li></ul></div>
-    <div class="qcard"><h3>Question card</h3><ul><li>Which word in the claim did you test?</li><li>Show me the one number that decides it. Why that denominator?</li><li>What would make the claim true?</li><li>Say your verdict again with your key word.</li></ul></div>
-    <div class="qcard"><h3>Question card</h3><ul><li>Which word in the claim did you test?</li><li>Show me the one number that decides it. Why that denominator?</li><li>What would make the claim true?</li><li>Say your verdict again with your key word.</li></ul></div>
-    <div class="qcard"><h3>Question card</h3><ul><li>Which word in the claim did you test?</li><li>Show me the one number that decides it. Why that denominator?</li><li>What would make the claim true?</li><li>Say your verdict again with your key word.</li></ul></div>
-    <div class="qcard"><h3>Question card</h3><ul><li>Which word in the claim did you test?</li><li>Show me the one number that decides it. Why that denominator?</li><li>What would make the claim true?</li><li>Say your verdict again with your key word.</li></ul></div>
+<section class="sheet teacher screen">
+  <h1>The data and the four claims</h1>
+  <p class="sub">For the screen on Thursday: the table for the Do Now and the Telepathy question, and the four claims. Nothing on this page is an answer.</p>
+  <div class="cols">
+    <div>
+      <div class="data">Super Status! 433 high school students answered: "What superpower would you choose?" and "What status would you prefer?" One of these 433 students is picked at random.
+    <table>
+      <tr><th>Superpower</th><th>Famous</th><th>Happy</th><th>Healthy</th><th>Rich</th><th class="t">Total</th></tr>
+      <tr><td>Fly</td><td>5</td><td>48</td><td>14</td><td>22</td><td class="t">89</td></tr>
+      <tr><td>Freeze Time</td><td>3</td><td>63</td><td>9</td><td>26</td><td class="t">101</td></tr>
+      <tr><td>Invisibility</td><td>3</td><td>62</td><td>11</td><td>22</td><td class="t">98</td></tr>
+      <tr><td>Super Strength</td><td>4</td><td>43</td><td>17</td><td>13</td><td class="t">77</td></tr>
+      <tr><td>Telepathy</td><td>0</td><td>49</td><td>0</td><td>19</td><td class="t">68</td></tr>
+      <tr><td class="t">Total</td><td class="t">15</td><td class="t">265</td><td class="t">51</td><td class="t">102</td><td class="t">433</td></tr>
+    </table>
+      </div>
+      <div class="data"><b>Poster 6 makes its own data:</b> 20 flips of a fair coin on the TI-84, where 1 = heads. randInt(0,1,20) STO→ L1, then read the flips down L1 in STAT → EDIT. (randInt is under MATH → PROB.)</div>
+    </div>
+    <div>
+      <div class="claim"><h3>Poster 1</h3><p class="q">The student newsletter wrote: "Freeze Time people are the ones who want to be rich. 26 of them chose Rich, more than any other superpower."</p></div>
+      <div class="claim"><h3>Poster 2</h3><p class="q">A headline in the school paper: "Most students who want to be Famous chose Fly. So most students who chose Fly want to be Famous."</p></div>
+      <div class="claim"><h3>Poster 3</h3><p class="q">"Nobody who chose Telepathy wants to be Famous: 0 of 68. Since the two never happen together, Telepathy and Famous are independent. One has nothing to do with the other."</p></div>
+      <div class="claim"><h3>Poster 6</h3><p class="q">"I flipped a coin 20 times and got 6 heads in a row. That can't happen with a fair coin. It's rigged."</p></div>
+    </div>
   </div>
+</section>
+
+<section class="sheet teacher check">
+  <div class="head"><h1>Partner check — before the big paper</h1><span class="num">Thu 11/12 · one sheet per group</span></div>
+  <p><b>Authors:</b> the group whose claim it is. <b>Checkers:</b> the other group. <b>Checkers ask. Authors decide.</b> Checkers never write on the authors' card or poster.</p>
+  <div class="dok">
+    <ol>
+      <li><b>WORK</b> &nbsp;(9 min) At your own table. Your mockup stays face down. Solve your partner group's page 1 together, from the clean copy: the number as a fraction, and your verdict. Write the verdict on the clean copy; you do not show it to your teacher. <i>Checking poster 1 or 2? Do parts (a) and (c). Checking poster 3? Do (a), (b) and (c). Checking poster 6? Do (a), run 2 trials each (6 in all), then (c) from your 6 trials, and (d).</i></li>
+      <li><b>LOOK</b> &nbsp;(7 min) Swap tables. Leave your card and this sheet on your table; bring your work. Turn their mockup over and compare it with your work: the fractions, the verdict, their checklist. One checker writes on the bottom half of the authors' sheet, the one on their table.</li>
+      <li><b>FIX</b> &nbsp;(4 min) Go back to your own table. Read what your checkers wrote. Decide: change or keep? Writer: write your verdict again below, stronger and clearer. Then tell your partner group your answer out loud.</li>
+    </ol>
+  </div>
+  <div class="frame"><b>Checkers write:</b> "We got ______ out of ______. You got ______ out of ______."<br><b>Checkers write:</b> "Your checklist still needs ______." &nbsp; "A reader on Friday would ask: ______?"<br><b>Authors answer:</b> "We will change / keep ______ because ______."</div>
+  <p class="cut">- - - - - - - - - - - - cut here: tape the bottom half to your poster - - - - - - - - - - - -</p>
+  <h2>Our poster #____ &nbsp;·&nbsp; checked by the poster #____ group</h2>
+  <p class="lead"><b>Checkers write:</b> We got ________ out of ________. You got ________ out of ________.</p>
+  <p class="lead">A second number, if needed: We got ________ out of ________. You got ________ out of ________.</p>
+  <p class="lead"><b>Checkers write:</b> Your checklist still needs</p>
+  <div class="lines"></div>
+  <p class="lead"><b>Checkers write:</b> A reader on Friday would ask:</p>
+  <div class="lines"></div>
+  <p class="lead"><b>Authors write:</b> We will change / keep (circle one)</p>
+  <div class="lines"></div>
+  <p class="lead">because</p>
+  <div class="lines"></div>
+  <p class="lead"><b>Our verdict, second draft:</b></p>
+  <div class="lines"></div><div class="lines"></div><div class="lines"></div>
+</section>
+
+<section class="sheet teacher teacher-sheet tight">
+  <h1>Partner check — what the checkers should find</h1>
+  <p><b>Why these pairs.</b> Posters 2 and 3 answer the two questions this class asked out loud (10/30 and 10/29). Both turn on the Famous column and the word <i>given</i>, so each group already holds the tool the other card needs. Posters 1 and 6 ask the same question, "compared with what?": does 25.7% stand out, is six in a row rare.</p>
+  <p><b>Your part.</b> One rule: work first, look second. No group turns a mockup over before it has its own number and verdict. One why question at a table, then wait; never a number. A verdict the checkers dispute changes only after you have heard both groups; otherwise the authors decide in Fix, and you read the second draft in the build.</p>
+  <table>
+    <tr><th>Poster</th><th>Checked by</th><th>Their work should show</th><th>If it differs from the mockup</th></tr>
+    <tr><td>1</td><td>the poster 6 group: parts (a) and (c)</td><td>26/101 = 25.7% of Freeze Time fans chose Rich, against 102/433 = 23.6% of all students; the other rows run from 16.9% to 27.9%.</td><td>26/433 = 6.0% and 26/102 = 25.5% are the two traps. 26/102 looks like a match in percents; in fractions it is not. Ask: "Which words in the claim name the group?" A third trap: "25.7% beats 23.6%, so supported." Ask: "Did you check all five rows?" (Telepathy is 19/68 = 27.9%.)</td></tr>
+    <tr><td>2</td><td>the poster 3 group: parts (a) and (c)</td><td>First sentence: P(Fly | Famous) = 5/15 = 33.3%. Second sentence: P(Famous | Fly) = 5/89 = 5.6%.</td><td>"Fly is the biggest number in the Famous column, so most is right": ask "Most means more than what?" and wait. 5/433 for both sentences: ask "Out of how many, each time?"</td></tr>
+    <tr><td>3</td><td>the poster 2 group: parts (a), (b) and (c)</td><td>P(Telepathy and Famous) = 0/433 = 0. P(Famous | Telepathy) = 0/68 = 0 against P(Famous) = 15/433 = 3.5%. The flipped test decides it too: P(Telepathy | Famous) = 0/15 = 0 against P(Telepathy) = 68/433 = 15.7%.</td><td>"0 of 68 means no connection, so independent" is the claim itself. Ask: "Does knowing Telepathy change the chance of Famous?" If the two groups still disagree after Fix, that opens the whole-class moment.</td></tr>
+    <tr><td>6</td><td>the poster 1 group: part (a), two trials each, then (c) and (d)</td><td>Their own three design sentences (how one flip is modeled, what one trial is, what is recorded) and six trials in all. Six trials show no run of 6 or more about 46% of the time, and exactly one about 38%. In Look they set their design and their six beside the authors' design and 25.</td><td>"(1/2)^6 = 1/64, so it is rare": that is six heads on six chosen flips, not a run anywhere in 20. Ask: "Where in 20 flips could a run of 6 start?" If they then say 15 × 1/64 = 23%: the 15 runs overlap, so some sets of flips are counted twice (the Do Now's mistake). Ask: "Can two of those runs happen in the same 20 flips?" "We got 0 of 6, so it can't happen": ask "Your 6 trials or their 25: which do you trust more, and why?"</td></tr>
+  </table>
+  <p class="small"><b>Calculators.</b> Calculators that were reset together give every student the same flips. Before the first randInt, each student types a different number, then STO→ rand (rand is under MATH → PROB). <b>Clean copies.</b> The partner worksheets are page 1 of cards 1, 2, 3 and 6, unmarked: one or two copies for each checking group.</p>
 </section>
 
 <section class="sheet teacher teacher-sheet">
   <h1>Hint cards — tiered, hand out, never post</h1>
-  <p class="small">Tier 1 goes to a blank board at minute 28 on Tuesday. Tier 2 goes only to a group still stuck after tier 1, and only on the part they are stuck on. Frames come after thinking, not before.</p>
+  <p class="small">Tier 1 goes to a blank board at minute 28 on Tuesday. Tier 2 goes only to a group still stuck after tier 1, and only on the part they are stuck on. Frames come after thinking, not before. On Thursday the tier-2 cards stay in your hand until the partner check is over: they print numbers another group could read.</p>
   <div class="hint"><h3>Tier 1 (any card)</h3><p>Find the word in the claim that names a group: <i>given, of, among, who, people</i>. Circle that group's TOTAL in the table. That total is your denominator. Now find the cell the claim is about and write the fraction.</p></div>
   <div class="hint"><h3>Tier 2 · Card 1</h3><p>Freeze Time row: 26 out of 101. Telepathy row: 19 out of 68. Which is bigger as a percent? Do all five rows the same way.</p></div>
   <div class="hint"><h3>Tier 2 · Card 2</h3><p>First sentence: you are inside the Famous COLUMN (15 people). Second sentence: inside the Fly ROW (89 people). Same cell, 5, on top of both.</p></div>
@@ -881,7 +974,7 @@
     <tr><td>3</td><td>Joint probability 0, "mutually exclusive"</td><td>Independence test with numbers (3.5% vs 0)</td><td>Verdict using both terms correctly</td><td>General argument (ME + possible means not independent)</td><td>A 2x2 table, independent but not mutually exclusive, with its check</td></tr>
     <tr><td>4</td><td>Four regions summing to 2,500</td><td>Double count named; corrected union as fraction and percent</td><td>The 9.8% named as a joint; the conditional it should have used</td><td>Independence test, verdict, who is more likely</td><td>Predicted "both" count (about 190) against 245</td></tr>
     <tr><td>5</td><td>Net distribution table, probabilities sum to 1</td><td>μ and σ with formula and substitution</td><td>Both interpretations, "long run", "per game"</td><td>Verdict: who it favors, why 2 of 6 is the wrong number</td><td>One-payout fix with μ = 0, and the 20-game dotplot with its average beside μ</td></tr>
-    <tr><td>6</td><td>Design in three sentences</td><td>25 trials recorded</td><td>Dotplot with scale and title</td><td>Estimate as a fraction of 25 and a decimal</td><td>Verdict plus the more-trials sentence</td></tr>
+    <tr><td>6</td><td>Design in three sentences</td><td>25 trials recorded (the checkers' six are a separate, smaller run)</td><td>Dotplot with scale and title</td><td>Estimate as a fraction of the trials run and a decimal</td><td>Verdict plus the more-trials sentence</td></tr>
   </table>
 </section>
 
@@ -891,14 +984,13 @@
   <div class="data">File outside the repo (student names), then <code>node scripts/enter-poster.mjs &lt;file&gt;</code> to preview and <code>--apply</code> to write:<br>
   <code>unit=2 quarter=Q2 title=Unit 2 Poster (Claim, Proof, Repair) section=PeriodB</code><br>
   <code>Real Name|115</code> &nbsp; or &nbsp; <code>Real Name|E</code> (E 115 / P 100 / I 90), one line per student.</div>
-  <h3>Grouping grid (fill in before Tuesday)</h3>
+  <h3>Grouping grid (Period B, as it ran)</h3>
   <table class="grid">
     <tr><th>Group</th><th>Card</th><th>Table Keeper</th><th>Visual</th><th>Writer</th></tr>
-    <tr><td>A</td><td></td><td></td><td></td><td></td></tr>
-    <tr><td>B</td><td></td><td></td><td></td><td></td></tr>
-    <tr><td>C</td><td></td><td></td><td></td><td></td></tr>
-    <tr><td>D</td><td></td><td></td><td></td><td></td></tr>
-    <tr><td>E (pair)</td><td>2</td><td></td><td>(Table Keeper)</td><td></td></tr>
+    <tr><td>A</td><td>1</td><td></td><td></td><td></td></tr>
+    <tr><td>B</td><td>2</td><td></td><td></td><td></td></tr>
+    <tr><td>C (four)</td><td>3</td><td></td><td>(two Visuals)</td><td></td></tr>
+    <tr><td>D</td><td>6</td><td></td><td></td><td></td></tr>
   </table>
 </section>
 
@@ -913,11 +1005,11 @@
     <li><b>Thu:</b> False. P(Happy or Fly) = (265 + 89 − 48)/433 = 306/433 = 70.7%. The 48 students who are Happy AND Fly were counted twice in 354/433 = 81.8%.</li>
   </ul>
   <h2>Exit ticket 1 (Tue)</h2>
-  <p>Full credit: the claim restated, the right number for that card (a conditional with the right denominator on cards 1-3, the corrected union and the conditional on card 4, the expected net in dollars on card 5, the estimated run probability on card 6), a verdict that matches the card's answer, one word from the bank used correctly. Sort by card; a group whose tickets disagree with each other gets the first visit Thursday.</p>
+  <p>Full credit: the claim restated, the right number for that card (a conditional with the right denominator on cards 1-3, the corrected union and the conditional on card 4, the expected net in dollars on card 5, the estimated run probability on card 6), a verdict that matches the card's answer, one word from the bank used correctly. Sort by card; a group whose tickets disagree with each other gets your visit right after poster 6 on Thursday.</p>
   <h2>Exit ticket 2 (Thu)</h2>
   <ol>
     <li>False. Healthy and Telepathy are mutually exclusive (0 of 68), not independent: P(Healthy) = 51/433 = 11.8% but P(Healthy | Telepathy) = 0/68 = 0%. Knowing Telepathy changes the chance.</li>
-    <li>No. P(Happy | Super Strength) = 43/77 = 55.8% is far bigger than P(Super Strength | Happy) = 43/265 = 16.2%. Same cell (43), different given group (77 vs 265).</li>
+    <li>No. P(Happy | Super Strength) = 43/77 = 55.8% is far bigger than P(Super Strength | Happy) = 43/265 = 16.2%. Same cell (43), different given group (77 vs 265). If the poster 2 group chose this pair as its second example, read their "why" sentence, not their numbers.</li>
   </ol>
   <h2>The numbers, card by card</h2>
   <table>
@@ -934,9 +1026,12 @@
 <section class="sheet teacher teacher-sheet tight">
   <h1>Debrief notes</h1>
   <ul>
-    <li><b>The two persistent rules:</b> the word after "given" names the group whose total is the denominator (posters 1, 2, 4); mutually exclusive is the opposite of unrelated (poster 3, the 10/29 promise).</li>
+    <li><b>The two persistent rules:</b> the word after "given" names the group whose total is the denominator (posters 1 and 2); two events that can each happen and are mutually exclusive are never independent, because ruling one out changes the other's chance (poster 3, the 10/29 promise).</li>
     <li><b>Card 1 nuance:</b> the newsletter's number is right and its reasoning is wrong. Accept "not supported" or "partly supported" when the sentence says the count is true and the percent does not stand out.</li>
-    <li><b>Card 5 nuance:</b> fair means μ<sub>X</sub> = 0, for both sides; the question is who an unfair game favors. The 20-game averages will scatter; put them on one class dotplot and the law of large numbers teaches itself.</li>
+    <li><b>Card 5 nuance (only if an early finisher takes it):</b> fair means μ<sub>X</sub> = 0, for both sides; the question is who an unfair game favors. The 20-game averages will scatter; put them on one class dotplot and the law of large numbers teaches itself.</li>
+    <li><b>Cards 1 and 2, side by side:</b> 26/101 = 25.7% and 26/102 = 25.5% are nearly equal because the two given groups are nearly the same size. Flipping the given changes the answer a lot only when the two totals differ a lot: 5/15 against 5/89.</li>
+    <li><b>Card 6, Thursday and Friday:</b> the checkers' six trials are a second, smaller simulation. Accept the estimate as a fraction of 25, or of 31 if the six followed the same design and the group adds them in a second color. When the two estimates disagree, that shows a small simulation wobbles; it does not show which one is closer to the truth. That is the poster's sentence about what more trials do. The exact 0.1223 stays with you until Friday's debrief.</li>
+    <li><b>Not on the walls in Period B:</b> cards 4 and 5 (the double count, the fair game). Thursday's Do Now carries the double count; expected value waits for Friday's early finishers or for review.</li>
     <li><b>Worksheet note (not for students):</b> the 2.7 follow-along's union examples print Super Status numbers (265 + 29 − 15; 115/433 + 29/433) that do not match the printed table (Super Strength is 77, Freeze Time 101, Happy and Super Strength 43). Every number in this kit uses the printed table; the worksheet blanks need a fix in a later pass.</li>
   </ul>
 </section>
@@ -945,7 +1040,7 @@
   (function () {
     function apply() {
       var h = location.hash.replace('#', '');
-      var editions = { student: 1, teacher: 1, example: 1, walk: 1, board: 1 };
+      var editions = { student: 1, teacher: 1, example: 1, walk: 1, board: 1, check: 1, screen: 1 };
       document.body.dataset.print = editions[h] ? h : 'default';
     }
     apply();
