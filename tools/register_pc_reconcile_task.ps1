@@ -10,6 +10,8 @@
 # Defaults register DRY-RUN jobs; pass -Apply to post. -PrintOnly prints the exact lines and exits.
 # The task account needs ROSTER_TEACHER_SECRET in its environment (setx); the Edge rig profile
 # must be signed into AP Classroom once.
+# After registering, run tools/set_tasks_hidden.ps1 -Apply: the job then starts with no console
+# window (tools/run_hidden.vbs). A visible window can be closed or sent Ctrl+C (2026-11-11).
 #
 # Usage:
 #   powershell -NoProfile -File tools/register_pc_reconcile_task.ps1 -PrintOnly

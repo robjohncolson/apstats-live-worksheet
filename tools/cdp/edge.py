@@ -118,7 +118,17 @@ class EdgeCDP:
                 "--remote-allow-origins=*",
                 "--no-first-run",
                 "--no-default-browser-check",
-                "--disable-features=msEdgeIdentityWebSignin",   # no MS sign-in nag
+                # 2026-11-11: when another window covered this one, Chromium marked the
+                # gradebook page hidden, so its grid never rendered and key events were
+                # dropped (the 07:00 Q1 close and one 11/11 PeriodE override failed so).
+                # Keep rendering while covered: no native occlusion check, and no
+                # backgrounding of covered windows, their renderers or their timers.
+                # msEdgeIdentityWebSignin: no MS sign-in nag. Chromium honours only the
+                # LAST --disable-features switch, so both features stay in this one.
+                "--disable-features=msEdgeIdentityWebSignin,CalculateNativeWinOcclusion",
+                "--disable-backgrounding-occluded-windows",
+                "--disable-renderer-backgrounding",
+                "--disable-background-timer-throttling",
                 url,
             ]
             # DETACHED_PROCESS = 0x00000008; CREATE_NEW_PROCESS_GROUP = 0x00000200

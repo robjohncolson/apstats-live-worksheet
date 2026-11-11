@@ -10,6 +10,10 @@
 # environment (e.g. `setx ROSTER_TEACHER_SECRET <secret>`); the batch reads it
 # from there and never from the CLI.
 #
+# After registering, run tools/set_tasks_hidden.ps1 -Apply: the job then starts
+# with no console window (tools/run_hidden.vbs). A visible window can be closed
+# or sent Ctrl+C; the 16:30 PeriodB sync died that way twice (2026-11-10/11).
+#
 # Usage:
 #   powershell -NoProfile -File tools/register_schoology_sync_task.ps1
 #   powershell -NoProfile -File tools/register_schoology_sync_task.ps1 -Section PeriodE -Time 16:45
