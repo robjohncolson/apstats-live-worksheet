@@ -11048,12 +11048,12 @@ var POSTER_LINKS = {
             { label: 'Teacher key — answers, finished graphs, scoring grid', url: 'u1_poster/pdf/u1_poster_teacher_key.pdf' }
         ]
     },
-    // Period B only (posterDays in SCHEDULE_DEFS; U2_CLAIM_POSTER_SPEC.md B2).
+    // Periods B and E, each on its own poster days (posterDays in SCHEDULE_DEFS; U2_CLAIM_POSTER_SPEC.md B2).
     'U2-Poster': {
         student: [
             { label: 'Group sheets — one per group, two pages each', url: 'u2_poster/pdf/u2_poster_group_sheets_student.pdf' },
             { label: 'Example poster — the board demo (Claim, Proof, Repair)', url: 'u2_poster/pdf/u2_poster_example_board_demo.pdf' },
-            { label: 'Gallery walk sheet — one per student, Friday', url: 'u2_poster/pdf/u2_poster_walk_sheet.pdf' }
+            { label: 'Gallery walk sheet — one per student, last poster day', url: 'u2_poster/pdf/u2_poster_walk_sheet.pdf' }
         ],
         teacher: [
             { label: 'Teacher key — answers, run of show, scoring grid, exit tickets', url: 'u2_poster/pdf/u2_poster_teacher_key.pdf' }
@@ -11326,7 +11326,10 @@ const SCHEDULE_DEFS = {
            // date on, so every earlier pair keeps its date (E_PAIRING_V2_SPEC.md §4).
            maxVideosPerDay:3, maxVideosFrom:[2026,10,6],
            // SAT Day Wed 2026-10-21 (teacher 2026-09-22): E does not meet for a lesson; pacing shifts one meeting later.
-           breakDays:[[2026,9,21]] }
+           breakDays:[[2026,9,21]],
+           // Section-only poster days, the same rule as B's above. Teacher 2026-11-13: the Unit 2 claim posters
+           // start for Period E today and finish Wed 11/18; 2.10 resumes Fri 11/20.
+           posterDays:{2:[[2026,10,13],[2026,10,16],[2026,10,18]]} }
     },
     daysOff: [
       [[2026,8,4]],                    // School Closed (Fri Sep 4)
@@ -24744,7 +24747,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-11-08-c2ix';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-11-13-x58p';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

@@ -187,8 +187,9 @@ describe('Grade Check-in — periods derived from the real SY26-27 calendar', ()
   it('the final period stops before the AP Exam (May 11, 2027) — no exam/post rows leak in', () => {
     const last = realPeriods[realPeriods.length - 1];
     // Lag-targeted pairs + only Unit 1 keeping a poster (POSTER_UNITS, 2026-10-10) brought E's final review day to March 19;
-    // the 3-video pair cap (2026-11-06) un-pairs 2.4+2.5 in March, so it is March 22.
-    expect(last.dueISO).toBe('2027-03-22');
+    // the 3-video pair cap (2026-11-06) un-pairs 2.4+2.5 in March, so it is March 22; E's three Unit 2 poster days
+    // (2026-11-13) move it one week later, to March 29.
+    expect(last.dueISO).toBe('2027-03-29');
     expect(last.dueISO < '2027-05-11').toBe(true);
     for (const p of realPeriods) {
       expect(p.dueISO < '2027-05-11').toBe(true); // nothing on/after exam day

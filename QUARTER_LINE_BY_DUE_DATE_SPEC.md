@@ -59,6 +59,9 @@ A lesson is a band member of `regularQuarter` (zero-able) and, when `taughtQuart
 | Taught in Q2, regular in Q3 (same rule, January) | `5.7 8.4 8.5 8.6` | `8.1 8.4 8.5 8.6` |
 | `lessonsTotal` Q1 / Q2 / Q3 / Q4 (before → after) | 27→27 / 28→34 / 15→19 / 7→7 | 26→26 / 28→35 / 16→20 / 7→7 |
 
+Since E's Unit 2 poster days (2026-11-13, U2_CLAIM_POSTER_SPEC.md B7), E's "taught in Q2, regular in Q3" set is
+`6.10 6.11 8.1 8.4 8.5 8.6` and its Q3 `lessonsTotal` after the flag is 22.
+
 These sets match the teacher's lists exactly (computed with the engine's own functions on the live schedule).
 
 ## 2. Engine — `roster-server/` (grade-affecting)

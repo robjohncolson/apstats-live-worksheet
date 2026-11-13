@@ -47,10 +47,10 @@ describe('B Work Day generator',()=>{
   expect(work).toEqual({t:'B-Work',n:'Work Day',u:0,kind:'work',due:'',as:''});
  });
  it('counts no pacing item on work days, never displaces events, and respects the weekly limit',()=>{
-  // The lead is measured against the E column of a run WITHOUT E's own breaks:
-  // B's Work Days are generated from that reference (an E break never moves B),
-  // so E's catch-up pairs after its SAT-Day break can briefly narrow the real gap.
-  const periodsNoE={};for(const pid in actual.def.periods){periodsNoE[pid]={...actual.def.periods[pid]};if(pid==='E')delete periodsNoE[pid].breakDays;}
+  // The lead is measured against the E column of a run WITHOUT E's own section-only adjustments (breaks,
+  // poster days, the video-count cap), exactly as generateSchedule's without('E') builds it: B's Work Days are
+  // generated from that reference (nothing E-only ever moves B), so E's catch-up pairs can briefly narrow the real gap.
+  const periodsNoE={};for(const pid in actual.def.periods){periodsNoE[pid]={...actual.def.periods[pid]};if(pid==='E'){delete periodsNoE[pid].breakDays;delete periodsNoE[pid].posterDays;delete periodsNoE[pid].maxVideosPerDay;delete periodsNoE[pid].maxVideosFrom;}}
   const refE=actual.generateSchedule({...actual.def,periods:periodsNoE});
   let b=0,e=0;const weeks=new Set();
   const placed=[];
@@ -86,7 +86,8 @@ describe('B Work Day generator',()=>{
  });
  it('emits corrected unit ends, review ends and additive JSON workDays with no lesson entry',()=>{
   // E 03-15: the 3-video pair cap un-pairs 2.4+2.5 (2026-11-06). B 12-01: the three Unit 2 poster days move B's U2 PC (2026-11-06).
-  const ends={B:['2026-10-15','2026-12-01','2027-01-19','2027-02-22','2027-03-09'],E:['2026-10-19','2026-11-25','2027-01-22','2027-02-26','2027-03-15']};
+  // E 12-04 / 01-27 / 03-03 / 03-19: E's three Unit 2 poster days (Fri 11/13, Mon 11/16, Wed 11/18, teacher 2026-11-13).
+  const ends={B:['2026-10-15','2026-12-01','2027-01-19','2027-02-22','2027-03-09'],E:['2026-10-19','2026-12-04','2027-01-27','2027-03-03','2027-03-19']};
   for(const path of ['data/lesson-schedule.json','roster-server/data/lesson-schedule.json']){
    const json=JSON.parse(readFileSync(path,'utf8'));
    expect(json.schemaVersion).toBe(2);expect(json.calendar.workDays).toEqual({B:fixture.map(r=>r[0]),E:[]});
@@ -97,7 +98,7 @@ describe('B Work Day generator',()=>{
    for(const [p,col] of [['B',3],['E',4]]){
     expect(S.filter(r=>r[col]?.kind==='pc'&&r[col].admin===2).map(iso)).toEqual(ends[p]);
     expect(Object.values(json.progressChecks).map(pc=>pc.adminDay2[p])).toEqual(ends[p]);
-    expect(S.filter(r=>r[col]?.t==='review').map(iso).at(-1)).toBe(p==='B'?'2027-03-16':'2027-03-22');
+    expect(S.filter(r=>r[col]?.t==='review').map(iso).at(-1)).toBe(p==='B'?'2027-03-16':'2027-03-29');
    }
   }
  });
@@ -190,18 +191,21 @@ describe('B Unit 2 poster days (section-only posterDays, U2_CLAIM_POSTER_SPEC.md
  const {posterDays:livePosterDays,...bNoPoster}=actual.def.periods.B;
  const noPoster=withPeriods(bNoPoster,actual.def.periods.E);   // the live definition without B's posterDays
  const posterCell=(t,n,admin)=>({t,n,u:2,kind:'poster',admin,days:3,sectionOnly:true,due:'',as:''});
- it('the live definition gives B three Unit 2 poster days: Tue 11/10, Thu 11/12, Fri 11/13',()=>{
+ it('the live definition gives B three Unit 2 poster days (Tue 11/10, Thu 11/12, Fri 11/13) and E three (Fri 11/13, Mon 11/16, Wed 11/18)',()=>{
   expect(livePosterDays).toEqual({2:[[2026,10,10],[2026,10,12],[2026,10,13]]});
-  expect(actual.def.periods.E.posterDays).toBeUndefined();
+  expect(actual.def.periods.E.posterDays).toEqual({2:[[2026,10,13],[2026,10,16],[2026,10,18]]});   // teacher 2026-11-13
  });
- it('places exactly the three poster cells, in JSON key order, and none for E',()=>{
+ it('places exactly three poster cells per period, in JSON key order',()=>{
   const cells=S.filter(r=>r[3]?.sectionOnly).map(r=>[iso(r),r[3]]);
   expect(cells).toEqual([
    ['2026-11-10',posterCell('U2-Poster','Unit 2 Poster',1)],
    ['2026-11-12',posterCell('U2-Poster2','Unit 2 Poster (Day 2)',2)],
    ['2026-11-13',posterCell('U2-Poster3','Unit 2 Poster (Day 3)',3)]]);
   for(const [,cell] of cells)expect(Object.keys(cell)).toEqual(['t','n','u','kind','admin','days','sectionOnly','due','as']);
-  expect(S.some(r=>r[4]?.sectionOnly||r[4]?.t?.startsWith('U2-Poster'))).toBe(false);
+  expect(S.filter(r=>r[4]?.sectionOnly).map(r=>[iso(r),r[4]])).toEqual([
+   ['2026-11-13',posterCell('U2-Poster','Unit 2 Poster',1)],
+   ['2026-11-16',posterCell('U2-Poster2','Unit 2 Poster (Day 2)',2)],
+   ['2026-11-18',posterCell('U2-Poster3','Unit 2 Poster (Day 3)',3)]]);
   expect(S.find(r=>iso(r)==='2026-11-13')[3].kind).toBe('poster');   // poster day 3, not a Work Day
  });
  it('consumes no pacing item: the lesson due on 11/10 is the next lesson after the poster days',()=>{

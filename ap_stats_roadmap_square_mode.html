@@ -2972,8 +2972,8 @@
 <!-- Teacher-only Class Log "Recording" fold on the day panel (track L): the summary
      lib copied from a2 + the Desk glue (a2 sign-in token, mount). Both fail soft. -->
 <script src="lib/class-log-summary.js" onerror=""></script>
-<script src="js/desk-class-log.js?v=2026-11-08-c2ix" onerror=""></script>
-<script src="js/desk-missing-work.js?v=2026-11-08-c2ix"></script>
+<script src="js/desk-class-log.js?v=2026-11-13-x58p" onerror=""></script>
+<script src="js/desk-missing-work.js?v=2026-11-13-x58p"></script>
 <script src="pwa-register.js"></script>
 <script src="js/wallet_logic.js"></script>
 <script type="module" src="js/student-wallet.js"></script>
@@ -2983,10 +2983,10 @@
 <script src="js/ced2026-crosswalk.js"></script>
 <script src="js/ced2026-labels.js"></script>
 <script src="lib/qrcode.min.js"></script>
-<script src="canvas_engine.js?v=2026-11-08-c2ix"></script>
-<script src="sprite_sheet.js?v=2026-11-08-c2ix"></script>
-<script src="classroom-board.js?v=2026-11-08-c2ix"></script>
-<script src="pico-home.js?v=2026-11-08-c2ix"></script>
+<script src="canvas_engine.js?v=2026-11-13-x58p"></script>
+<script src="sprite_sheet.js?v=2026-11-13-x58p"></script>
+<script src="classroom-board.js?v=2026-11-13-x58p"></script>
+<script src="pico-home.js?v=2026-11-13-x58p"></script>
 <script src="ti84-plot.js"></script>
 <script src="activity-bridge.js"></script>
 <script src="activity-colorbox.js"></script>
@@ -11048,12 +11048,12 @@ var POSTER_LINKS = {
             { label: 'Teacher key — answers, finished graphs, scoring grid', url: 'u1_poster/pdf/u1_poster_teacher_key.pdf' }
         ]
     },
-    // Period B only (posterDays in SCHEDULE_DEFS; U2_CLAIM_POSTER_SPEC.md B2).
+    // Periods B and E, each on its own poster days (posterDays in SCHEDULE_DEFS; U2_CLAIM_POSTER_SPEC.md B2).
     'U2-Poster': {
         student: [
             { label: 'Group sheets — one per group, two pages each', url: 'u2_poster/pdf/u2_poster_group_sheets_student.pdf' },
             { label: 'Example poster — the board demo (Claim, Proof, Repair)', url: 'u2_poster/pdf/u2_poster_example_board_demo.pdf' },
-            { label: 'Gallery walk sheet — one per student, Friday', url: 'u2_poster/pdf/u2_poster_walk_sheet.pdf' }
+            { label: 'Gallery walk sheet — one per student, last poster day', url: 'u2_poster/pdf/u2_poster_walk_sheet.pdf' }
         ],
         teacher: [
             { label: 'Teacher key — answers, run of show, scoring grid, exit tickets', url: 'u2_poster/pdf/u2_poster_teacher_key.pdf' }
@@ -11326,7 +11326,10 @@ const SCHEDULE_DEFS = {
            // date on, so every earlier pair keeps its date (E_PAIRING_V2_SPEC.md §4).
            maxVideosPerDay:3, maxVideosFrom:[2026,10,6],
            // SAT Day Wed 2026-10-21 (teacher 2026-09-22): E does not meet for a lesson; pacing shifts one meeting later.
-           breakDays:[[2026,9,21]] }
+           breakDays:[[2026,9,21]],
+           // Section-only poster days, the same rule as B's above. Teacher 2026-11-13: the Unit 2 claim posters
+           // start for Period E today and finish Wed 11/18; 2.10 resumes Fri 11/20.
+           posterDays:{2:[[2026,10,13],[2026,10,16],[2026,10,18]]} }
     },
     daysOff: [
       [[2026,8,4]],                    // School Closed (Fri Sep 4)
@@ -22283,7 +22286,7 @@ function _paintReviewByItem(host, data) {
 <!-- My Gradebook grid (openMyGradebook, renderMyGradebook, the teacher Class Gradebook picker, date-gating + colour helpers):
      Moved byte for byte to js/desk-gradebook-grid.js (FABLE_SPRINT_2026_10_22C_SPEC.md track C3). Same globals,
      same load position, versioned by scripts/bump-build.mjs like the other entry scripts. -->
-<script src="js/desk-gradebook-grid.js?v=2026-11-08-c2ix"></script>
+<script src="js/desk-gradebook-grid.js?v=2026-11-13-x58p"></script>
 <script>
 
 // openDayGrade(dateStr) — opens the Day Grade modal for a calendar date.
@@ -22680,11 +22683,11 @@ function _pwaInstallHelp() {
 <!-- Study Break Tetris (studyBreak, openGame, closeGame):
      Moved byte for byte to js/desk-study-break.js (FABLE_SPRINT_2026_10_22C_SPEC.md track C3). Same globals,
      same load position, versioned by scripts/bump-build.mjs like the other entry scripts. -->
-<script src="js/desk-study-break.js?v=2026-11-08-c2ix"></script>
+<script src="js/desk-study-break.js?v=2026-11-13-x58p"></script>
 <!-- My Progress app window (ProgressApp, openProgress, destroyProgress): moved byte for byte to
      js/desk-progress-app.js (FABLE_SPRINT_2026_10_22B_SPEC.md track H). Same globals, same load
      position, versioned by scripts/bump-build.mjs like the other entry scripts. -->
-<script src="js/desk-progress-app.js?v=2026-11-08-c2ix"></script>
+<script src="js/desk-progress-app.js?v=2026-11-13-x58p"></script>
 <script>
 
 
@@ -22717,7 +22720,7 @@ function bumpUsage(id) {
 <!-- Desk <-> APStat Park calculator bridge (TI-84 skill button, calc-due chip, _openParkSolo, Calculator Skills progress modal):
      Moved byte for byte to js/desk-park-bridge.js (FABLE_SPRINT_2026_10_22C_SPEC.md track C3). Same globals,
      same load position, versioned by scripts/bump-build.mjs like the other entry scripts. -->
-<script src="js/desk-park-bridge.js?v=2026-11-08-c2ix"></script>
+<script src="js/desk-park-bridge.js?v=2026-11-13-x58p"></script>
 <script>
 
 // The URL an app window opens (SOLO_DOOR_SPEC §5: the calculator is no longer an app window).
@@ -24161,7 +24164,7 @@ window.DogePresence = DogePresence;
 <!-- Completion calendar (cP/setP, cell helpers, paging, summer-prep weeks, rCal, rCD, rProg, uClock):
      Moved byte for byte to js/desk-calendar.js (FABLE_SPRINT_2026_10_22C_SPEC.md track C3). Same globals,
      same load position, versioned by scripts/bump-build.mjs like the other entry scripts. -->
-<script src="js/desk-calendar.js?v=2026-11-08-c2ix"></script>
+<script src="js/desk-calendar.js?v=2026-11-13-x58p"></script>
 <script>
 
 /* ═══ TOOLTIP ═══ */
@@ -24744,7 +24747,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-11-08-c2ix';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-11-13-x58p';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

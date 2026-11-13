@@ -401,7 +401,8 @@ describe('lesson-schedule.json — SY26-27 date sanity', () => {
   it('progress checks + posters are keyed by the NEW CED unit (1-5) with per-period dates', () => {
     expect(Object.keys(doc.progressChecks)).toEqual(['1', '2', '3', '4', '5']);
     // Posters are sparse: one per quarter, unit chosen later (POSTER_BONUS_SPEC.md section 4).
-    // Unit 2's claim poster is Period B only (Desk posterDays, U2_CLAIM_POSTER_SPEC.md B3).
+    // Unit 2's claim poster is section-only: B and E each have their own three days (Desk posterDays,
+    // U2_CLAIM_POSTER_SPEC.md B3 + B7).
     expect(Object.keys(doc.posters)).toEqual(['1', '2']);
     for (const u of ['1', '2', '3', '4', '5']) {
       const pc = doc.progressChecks[u];
@@ -411,21 +412,23 @@ describe('lesson-schedule.json — SY26-27 date sanity', () => {
       const poster = doc.posters[u];
       if (!poster) continue;
       expect(poster.periods.B < pc.periods.B, `U${u} poster before PC (B)`).toBe(true);
-      if (poster.periods.E === null) continue;   // a section-only poster has no E date
+      if (poster.periods.E === null) continue;   // a section-only poster may have no E date
       expect(poster.periods.E < pc.periods.E, `U${u} poster before PC (E)`).toBe(true);
     }
   });
 
-  it('the Unit 2 poster is section-only: three Period B days before its PC, nothing for Period E', () => {
+  it('the Unit 2 poster is section-only: three days per period, each before its own PC', () => {
     const poster = doc.posters['2'];
     expect(poster).toEqual({
       unit: 2, title: 'Unit 2 Poster', kind: 'poster', duration: { days: 3 },
-      periods: { B: '2026-11-10', E: null },
-      days: { B: ['2026-11-10', '2026-11-12', '2026-11-13'], E: null },
+      periods: { B: '2026-11-10', E: '2026-11-13' },
+      days: { B: ['2026-11-10', '2026-11-12', '2026-11-13'], E: ['2026-11-13', '2026-11-16', '2026-11-18'] },
       sectionOnly: true,
     });
     expect(poster.days.B).toHaveLength(3);
+    expect(poster.days.E).toHaveLength(3);
     expect(poster.periods.B < doc.progressChecks['2'].periods.B).toBe(true);
+    expect(poster.days.E[2] < doc.progressChecks['2'].periods.E).toBe(true);
     expect(doc.posters['1'].sectionOnly).toBeUndefined();   // Unit 1 is a pacing poster, both periods
   });
 });

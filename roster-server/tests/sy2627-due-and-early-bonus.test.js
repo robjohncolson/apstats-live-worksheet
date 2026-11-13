@@ -400,7 +400,8 @@ describe('event schedule reaches the production grade inputs', () => {
     const ev = loadEventScheduleWithPriority();
     expect(ev).toBeTruthy();
     expect(Object.keys(ev.progressChecks)).toEqual(['1', '2', '3', '4', '5']);
-    // Sparse: one poster per quarter (POSTER_BONUS_SPEC.md section 4); Unit 2 is Period B only (U2_CLAIM_POSTER_SPEC.md).
+    // Sparse: one poster per quarter (POSTER_BONUS_SPEC.md section 4); Unit 2 is section-only, B and E each on
+    // their own days (U2_CLAIM_POSTER_SPEC.md B7).
     expect(Object.keys(ev.posters)).toEqual(['1', '2']);
     expect(ev.progressChecks['1'].periods.B).toMatch(/^2026-10-/);
     expect(ev.progressChecks['1'].adminDay2.B > ev.progressChecks['1'].periods.B).toBe(true);

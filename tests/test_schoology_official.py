@@ -622,7 +622,7 @@ class TestPcFromDay2(unittest.TestCase):
             schedule = json.load(fh)
         b = so.pc_day2_dates(schedule, "B")
         self.assertEqual((b[1], b[2]), ("2026-10-15", "2026-12-01"))
-        self.assertEqual(so.pc_day2_dates(schedule, "E")[2], "2026-11-25")
+        self.assertEqual(so.pc_day2_dates(schedule, "E")[2], "2026-12-04")   # E's Unit 2 poster days (2026-11-13)
         self.assertEqual(so.pc_day2_dates({"progressChecks": {"7": {"periods": {"B": "2027-05-01"}}}}, "B"),
                          {7: "2027-05-01"})
 

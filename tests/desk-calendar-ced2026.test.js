@@ -301,7 +301,7 @@ describe('student calendar CED labels', () => {
         expect(visible.get('U' + unit + '-PC1').text).toContain('U' + unit + ' PC 1/2');
       }
       // One poster per quarter (POSTER_UNITS): Unit 1 is the only pacing poster. Unit 2's claim poster is
-      // Period B only (posterDays, U2_CLAIM_POSTER_SPEC.md): three tiles, day N of 3.
+      // section-only (posterDays, U2_CLAIM_POSTER_SPEC.md): three tiles per period, day N of 3.
       expect(visible.get('U1-Poster').text).toContain('U1 Poster');
       expect(visible.get('U2-Poster').text).toContain('U2 Poster 1/3');
       expect(visible.get('U2-Poster2').text).toContain('U2 Poster 2/3');
@@ -313,13 +313,15 @@ describe('student calendar CED labels', () => {
     } finally { win.close(); }
   });
 
-  it('Period E has no Unit 2 poster tile (the claim poster is Period B only)', () => {
+  it('Period E shows its own three Unit 2 poster tiles (posterDays Fri 11/13, Mon 11/16, Wed 11/18)', () => {
     const dom = createDesk({ period: 'E' });
     try {
       const visible = collectCalendar(dom.window);
       expect(visible.get('U1-Poster').text).toContain('U1 Poster');
-      for (let unit = 2; unit <= 5; unit += 1) expect(visible.has('U' + unit + '-Poster')).toBe(false);
-      expect([...visible.keys()].some(topic => /^U2-Poster/.test(topic))).toBe(false);
+      expect(visible.get('U2-Poster').text).toContain('U2 Poster 1/3');
+      expect(visible.get('U2-Poster2').text).toContain('U2 Poster 2/3');
+      expect(visible.get('U2-Poster3').text).toContain('U2 Poster 3/3');
+      for (let unit = 3; unit <= 5; unit += 1) expect(visible.has('U' + unit + '-Poster')).toBe(false);
     } finally { dom.window.close(); }
   });
 

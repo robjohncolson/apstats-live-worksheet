@@ -42,7 +42,9 @@
         "pcAnchor": {
           "p85": 40,
           "p100": 60
-        }
+        },
+        "close": "2026-11-10",
+        "finalUntil": "2026-11-19"
       },
       "Q2": {
         "units": [
@@ -103,6 +105,7 @@
     "dueAfterLessonDay": true,
     "dueLagDays": 13,
     "zeroFreezeAtQuarterEnd": true,
+    "zeroQuarterMembership": true,
     "v3EarlyBonus": {
       "perLesson": 1,
       "cap": 5,
@@ -116,7 +119,7 @@
       "enabled": false
     }
   },
-  "artHash": "275e82feb594dc18d59ca493dca3c9b2eea18280ddd8ed617dbf78b40ec942af",
+  "artHash": "bd938a64726abad181093d7ce89abba8a8d560871d1109da2af5c01cb805cf9d",
   "grade": {
     "units": {
       "U1": {

@@ -100,8 +100,9 @@ Each card's five must-haves are the rubric: all five = E, three or four = P, few
 `node scripts/enter-poster.mjs <file> --apply` (file outside the repo: header
 `unit=2 quarter=Q2 title=Unit 2 Poster (Claim, Proof, Repair) section=PeriodB`, then
 `Real Name|115`). Rows are `POSTER-U2`; the engine files them in Q2 for B through
-`posters['2'].periods.B = 2026-11-10` (Part B). Period E has no Unit 2 poster (periods.E null):
-its Q2 posters track stays absent, never 0.
+`posters['2'].periods.B = 2026-11-10` (Part B). Since 2026-11-13 Period E runs the activity too
+(B7): its rows are filed in Q2 through `posters['2'].periods.E = 2026-11-13` (`section=PeriodE`). A
+student without a score has an absent posters track, never 0.
 
 ### A5. Files
 
@@ -297,3 +298,23 @@ Dry run (2026-11-06, simulated as three B break days; the implementation must re
 `node scripts/bump-build.mjs` before the commit (Desk + `js/desk-calendar.js` changed); GitNexus
 `detect_changes` before committing. Push outside the B and E blocks; roster-server redeploys with
 the new schedule. Land it before Tue 11/10's 16:30 Schoology sync (the first old date).
+
+### B7. Period E (teacher 2026-11-13)
+
+"Poster Activity starts for Period E today ... I project we'll finish on next Wednesday (2.10 resumes
+on next friday for period E)." Same mechanism as B1: `SCHEDULE_DEFS["SY26-27"].periods.E.posterDays =
+{2:[[2026,10,13],[2026,10,16],[2026,10,18]]}` (Fri 11/13, Mon 11/16, Wed 11/18). The B4 and B5 statements
+that E has no Unit 2 poster are superseded.
+
+- Period B is byte-identical. E's own run absorbs the three days; its lag-targeted pairing wins one
+  meeting back (new pair 5.4+5.5 on Mon 12/07), so E ends one week later (last review 03/22 -> 03/29,
+  slack before the exam 17 -> 15 meetings).
+- E dates: 2.10 (4.10+4.11) 11/13 -> Fri 11/20; 1.10 -> 11/23; 5.2 -> 11/25; 5.1+5.3 -> 11/30; Unit 2 PC
+  11/23+11/25 -> 12/02+12/04.
+- `posters['2']` = `periods {B:'2026-11-10', E:'2026-11-13'}`, `days` for both, `sectionOnly:true`;
+  `posterUnitsInQuarter(live, 'E', cfg, 'Q2')` = [2]. Schoology: E's `POSTER:U2` is dated 11/13 (MP2),
+  `PC:U2` 12/02 filed 12/04; the per-day "2.10 Day 1/Day 2 Blooket" columns are created on 11/20.
+- January (open for the teacher): E's Unit 3 PC moves 01/20+01/22 -> 01/25+01/27, past the Q2 end
+  (01/22), and E 6.10/6.11 (01/11, 01/13) become Q3 lessons (lift-only in Q2). B's Unit 3 PC stays in Q2.
+- The walk-sheet link label on the Desk says "last poster day" instead of "Friday". The kit's printed
+  pages still name Period B and B's dates.

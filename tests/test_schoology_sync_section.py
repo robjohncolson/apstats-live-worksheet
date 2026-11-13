@@ -1509,9 +1509,10 @@ class TestPerDayBlooketSync(unittest.TestCase):
             self.assertNotIn("Beyond the Exam: Geometric distribution Blooket", created)   # 4.12: no class day
             self.assertIn("2.8 Blooket", created)
             self.assertIn("2.9 Blooket", created)
-        _, ops, _ = self._run("PeriodE", "2026-11-12")
+        # E's three Unit 2 poster days (Fri 11/13, Mon 11/16, Wed 11/18, teacher 2026-11-13) move 2.10 to Fri 11/20.
+        _, ops, _ = self._run("PeriodE", "2026-11-19")
         self.assertNotIn("2.10 Day 1 Blooket", self._blooket_created(ops))
-        _, ops, _ = self._run("PeriodE", "2026-11-13")
+        _, ops, _ = self._run("PeriodE", "2026-11-20")
         created = self._blooket_created(ops)
         for title in ("2.10 Day 1 Blooket", "2.10 Day 2 Blooket"):
             self.assertEqual(created[title]["grading_period_id"], "1173889", title)

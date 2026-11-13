@@ -119,7 +119,8 @@ amendment each is a regular Q2 lesson with its real zero date and a lift-only Q1
 - PeriodB: 4.2 4.3 4.4 4.5 4.6 4.7
 - PeriodE: 2.3 4.1 4.2 4.3 4.4 4.5 4.6 (4.7 moved to Mon 11/09 on 2026-11-06: a Q2 lesson for E)
 
-The same rule moves the last two weeks of Q2 into Q3 (B 5.7 8.4 8.5 8.6, E 8.1 8.4 8.5 8.6, zero
+The same rule moves the last two weeks of Q2 into Q3 (B 5.7 8.4 8.5 8.6, E 8.1 8.4 8.5 8.6; since E's Unit 2
+poster days on 2026-11-13, E 6.10 6.11 8.1 8.4 8.5 8.6, U2_CLAIM_POSTER_SPEC.md B7; zero
 dates after 2027-01-22): regular in Q3, lift-only in Q2. Their class days are in January, so
 nothing changes for them before then.
 

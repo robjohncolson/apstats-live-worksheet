@@ -36,7 +36,9 @@
         "pcAnchor": {
           "p85": 40,
           "p100": 60
-        }
+        },
+        "close": "2026-11-10",
+        "finalUntil": "2026-11-19"
       },
       "Q2": {
         "units": [
@@ -97,6 +99,7 @@
     "dueAfterLessonDay": true,
     "dueLagDays": 13,
     "zeroFreezeAtQuarterEnd": true,
+    "zeroQuarterMembership": true,
     "v3EarlyBonus": {
       "perLesson": 1,
       "cap": 5,

@@ -221,25 +221,26 @@ describe('computeGrade reads POSTER-U{n} rows as the posters track', () => {
   });
 });
 
-// U2_CLAIM_POSTER_SPEC.md B4: Period B's section-only Unit 2 poster (Desk posterDays) is B's Q2 poster;
-// Period E has no Unit 2 poster, so its Q2 posters track stays absent, never 0. Read from the bundled
+// U2_CLAIM_POSTER_SPEC.md B4 + B7: B and E each have their own section-only Unit 2 poster days (Desk
+// posterDays: B 11/10, 11/12, 11/13; E 11/13, 11/16, 11/18), so the Unit 2 poster is each period's Q2
+// poster; unscored, the posters track stays absent, never 0. Read from the bundled
 // data/lesson-schedule.json, exactly as production does.
-describe('the live SY2627 schedule files the Unit 2 poster in Q2 for Period B only', () => {
+describe('the live SY2627 schedule files the Unit 2 poster in Q2 for both periods', () => {
   const live = loadEventScheduleWithPriority();
 
-  it('posterDatesFor: Unit 2 is dated for B (2026-11-10) and null for E', () => {
+  it('posterDatesFor: Unit 2 is dated for B (2026-11-10) and for E (2026-11-13, teacher 2026-11-13)', () => {
     expect(posterDatesFor(live, 'B')).toEqual({ 1: '2026-10-08', 2: '2026-11-10' });
-    expect(posterDatesFor(live, 'E')).toEqual({ 1: '2026-10-09', 2: null });
+    expect(posterDatesFor(live, 'E')).toEqual({ 1: '2026-10-09', 2: '2026-11-13' });
   });
 
-  it('posterUnitsInQuarter: B Q2 = [2], E Q2 = [], Q1 = [1] for both', () => {
+  it('posterUnitsInQuarter: Q2 = [2] and Q1 = [1] for both', () => {
     expect(posterUnitsInQuarter(live, 'B', PHASE3_CONFIG, 'Q2')).toEqual([2]);
-    expect(posterUnitsInQuarter(live, 'E', PHASE3_CONFIG, 'Q2')).toEqual([]);
+    expect(posterUnitsInQuarter(live, 'E', PHASE3_CONFIG, 'Q2')).toEqual([2]);
     expect(posterUnitsInQuarter(live, 'B', PHASE3_CONFIG, 'Q1')).toEqual([1]);
     expect(posterUnitsInQuarter(live, 'E', PHASE3_CONFIG, 'Q1')).toEqual([1]);
   });
 
-  it('a POSTER-U2 row is the B Q2 posters track; the same row never counts for E', () => {
+  it('a POSTER-U2 row is the Q2 posters track for both periods', () => {
     const prod = resolveProductionGradeInputs('SY2627');
     const row = { student_id: 's1', source: 'poster', item_id: 'POSTER-U2', score: 115, attempt: 1,
       recorded_at: '2026-11-13T15:00:00Z', response: JSON.stringify({ grade: 'E', quarter: 'Q2', unit: 2 }) };
@@ -252,7 +253,7 @@ describe('the live SY2627 schedule files the Unit 2 poster in Q2 for Period B on
     const b = q2('PeriodB'), e = q2('PeriodE');
     expect(b.posterUnits).toEqual([2]);
     expect(b.workTracks.posters).toBe(115);
-    expect(e.posterUnits).toEqual([]);
-    expect(e.workTracks ? e.workTracks.posters : null).toBe(null);
+    expect(e.posterUnits).toEqual([2]);
+    expect(e.workTracks.posters).toBe(115);
   });
 });

@@ -209,9 +209,8 @@ class TestComponentColumns(unittest.TestCase):
 class TestLiveScheduleUnit2Poster(unittest.TestCase):
     """U2_CLAIM_POSTER_SPEC.md B4, read from the live data/lesson-schedule.json.
 
-    Period B's section-only Unit 2 poster dates its POSTER:U2 column on poster
-    day 1 (MP2). Period E has no Unit 2 poster (posters['2'].periods.E is null),
-    so its POSTER:U2 column keeps the PC Day 1 fallback.
+    Each period's section-only Unit 2 poster dates its POSTER:U2 column on its own
+    poster day 1 (MP2): Period B Tue 11/10, Period E Fri 11/13 (teacher 2026-11-13).
     """
 
     def _by_key(self, period):
@@ -227,8 +226,9 @@ class TestLiveScheduleUnit2Poster(unittest.TestCase):
     def test_period_b_poster_u2_is_due_on_poster_day_1(self):
         self.assertEqual(self._by_key("B")["POSTER:U2"]["due_date"], "2026-11-10")
 
-    def test_period_e_poster_u2_keeps_the_pc_day_1_date(self):
-        self.assertEqual(self._by_key("E")["POSTER:U2"]["due_date"], "2026-11-23")
+    def test_period_e_poster_u2_is_due_on_its_own_poster_day_1(self):
+        self.assertEqual(self._by_key("E")["POSTER:U2"]["due_date"], "2026-11-13")
+        self.assertEqual(self._by_key("E")["POSTER:U2"]["filing_date"], "2026-11-13")
 
     def test_unit_1_poster_dates_are_unchanged(self):
         self.assertEqual(self._by_key("B")["POSTER:U1"]["due_date"], "2026-10-08")
@@ -241,7 +241,7 @@ class TestLiveScheduleUnit2Poster(unittest.TestCase):
         self.assertEqual((b["PC:U2"]["due_date"], b["PC:U2"]["filing_date"]), ("2026-11-30", "2026-12-01"))
         self.assertEqual((b["PC:U1"]["due_date"], b["PC:U1"]["filing_date"]), ("2026-10-13", "2026-10-15"))
         self.assertEqual(b["POSTER:U2"]["filing_date"], "2026-11-10")
-        self.assertEqual(self._by_key("E")["PC:U2"]["filing_date"], "2026-11-25")
+        self.assertEqual(self._by_key("E")["PC:U2"]["filing_date"], "2026-12-04")
 
     def test_b_2_3_columns_straddle_the_line_and_file_in_mp1(self):
         # B 4.1 (10/23, zero 11/05) and 4.2 (10/26, zero 11/08) share the 4.1-2 worksheet:
@@ -983,7 +983,7 @@ PER_DAY_DATES = {    # (class day, filing date = zero date + 1) per section, spe
     "B": {"BL:4.7": ("2026-11-06", "2026-11-20"), "BL:4.8": ("2026-11-09", "2026-11-23"),
           "BL:4.10": ("2026-11-16", "2026-11-30"), "BL:4.11": ("2026-11-17", "2026-12-01")},
     "E": {"BL:4.7": ("2026-11-09", "2026-11-23"), "BL:4.8": ("2026-11-09", "2026-11-23"),
-          "BL:4.10": ("2026-11-13", "2026-11-27"), "BL:4.11": ("2026-11-13", "2026-11-27")},
+          "BL:4.10": ("2026-11-20", "2026-12-04"), "BL:4.11": ("2026-11-20", "2026-12-04")},
 }
 
 

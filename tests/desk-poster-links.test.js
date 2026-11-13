@@ -66,7 +66,7 @@ describe('Poster-day links',()=>{
   const {s}=page(u2Day(1));
   const links=s.POSTER_LINKS['U2-Poster'];
   expect(links.student.map(l=>l.url)).toEqual(U2_STUDENT);
-  expect(links.student.map(l=>l.label)).toEqual(['Group sheets — one per group, two pages each','Example poster — the board demo (Claim, Proof, Repair)','Gallery walk sheet — one per student, Friday']);
+  expect(links.student.map(l=>l.label)).toEqual(['Group sheets — one per group, two pages each','Example poster — the board demo (Claim, Proof, Repair)','Gallery walk sheet — one per student, last poster day']);
   expect(links.teacher.map(l=>l.url)).toEqual([U2_KEY]);
   expect(links.teacher.map(l=>l.label)).toEqual(['Teacher key — answers, run of show, scoring grid, exit tickets']);
   expect(links.blurb).toBe(U2_BLURB);
