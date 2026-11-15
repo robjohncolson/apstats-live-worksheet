@@ -241,6 +241,29 @@ It creates only the `item_ledger` table — it never alters or touches any exist
 2. Paste the entire contents of `roster-server/migrations/0002_item_ledger.sql` and click **Run**.
 3. Verify in Table Editor that `item_ledger` was created and that no pre-existing table changed.
 
+### Migration `0045_item_ledger_history.sql` (append-only history, hand-run)
+
+`item_ledger` stays the current-state table. 0045 adds `item_ledger_history` and an
+`AFTER UPDATE` trigger that copies the OLD row there whenever a write changes its
+`response`, `score` or `evidence_tier`. No route, reader or API call changes, and a
+history failure can never fail the ledger write. Run it in the Supabase SQL editor
+off-hours (creating the trigger briefly locks `item_ledger`); deploy order does not
+matter. Undo with `drop trigger if exists item_ledger_history_on_update on item_ledger;`.
+
+Nothing reads the history yet. To see every version of one item, newest last:
+
+```sql
+select superseded_at, response, score, evidence_tier, receipt_id
+from item_ledger_history
+where student_id = '<student uuid>' and item_id = '<item id>'
+order by superseded_at;
+-- the current version is the item_ledger row for the same key
+```
+
+The table is outside the nightly snapshot and `/admin/restore`. Measure its growth
+for a week before deciding on any prune (none is built). Tested on real SQL in
+`tests/item-ledger-history-pg.test.js` (PGlite).
+
 ### `ROSTER_PROCTOR_SECRET` environment variable
 
 `ROSTER_PROCTOR_SECRET` controls proctored-tier evidence writes (decision L-C). You must set it on
