@@ -1117,14 +1117,29 @@ describe('gradebook-client.js — offline capture', () => {
     expect(fetchFn.mock.calls[0][1].keepalive).toBe(true);
   });
 
-  it('keeps a non-FRQ retryable 503 as a server error with no outbox capture', async () => {
+  // Simplify plan SH-1 (2026-11): a worksheet answer is written to the outbox first,
+  // so a 503 (e.g. during a redeploy) keeps it for the drain instead of dropping it.
+  it('SH-1: a worksheet 503 keeps the pre-written row for retry and reports queued', async () => {
     const { win, gradebookClient, OfflineQueue } = makeWindowWithQueue();
     setToken(win, 'tok');
     mockFetch(win, { retryable: true }, { ok: false, status: 503 });
 
     const result = await gradebookClient.record({ source: 'worksheet', itemId: 'Q503', response: 'x' });
 
+    expect(result).toEqual({ ok: false, reason: 'server', queued: true });
+    expect(await OfflineQueue.all()).toHaveLength(1);
+  });
+
+  it('kill switch: with write-first off, a worksheet 503 is a server error with no capture (old rule)', async () => {
+    const { win, gradebookClient, OfflineQueue } = makeWindowWithQueue();
+    setToken(win, 'tok');
+    win.__GB_WRITE_FIRST__ = false;
+    mockFetch(win, { retryable: true }, { ok: false, status: 503 });
+
+    const result = await gradebookClient.record({ source: 'worksheet', itemId: 'Q503', response: 'x' });
+
     expect(result.reason).toBe('server');
+    expect(result.queued).toBeUndefined();
     expect(await OfflineQueue.all()).toHaveLength(0);
   });
 
@@ -1187,15 +1202,19 @@ describe('gradebook-client.js — offline capture', () => {
     expect(await OfflineQueue.all()).toHaveLength(1);
   });
 
-  it('does NOT enqueue on a server 500 (server reachable — surface the error)', async () => {
+  it('SH-1: a worksheet 500 keeps the row; a definitive 4xx deletes it (no poison rows)', async () => {
     const { win, gradebookClient, OfflineQueue } = makeWindowWithQueue();
     setToken(win, 'tok');
     mockFetch(win, { ok: false }, { ok: false, status: 500 });
+    const kept = await gradebookClient.record({ source: 'worksheet', itemId: 'Q4', response: 'x' });
+    expect(kept).toEqual({ ok: false, reason: 'server', queued: true });
+    expect(await OfflineQueue.all()).toHaveLength(1);
 
-    const result = await gradebookClient.record({ source: 'worksheet', itemId: 'Q4', response: 'x' });
-
-    expect(result.reason).toBe('server');
-    expect(await OfflineQueue.all()).toHaveLength(0);
+    mockFetch(win, { ok: false, error: 'bad item' }, { ok: false, status: 400 });
+    const rejected = await gradebookClient.record({ source: 'worksheet', itemId: 'Q4b', response: 'x' });
+    expect(rejected.reason).toBe('server');
+    expect(rejected.queued).toBeUndefined();
+    expect((await OfflineQueue.all()).map((r) => r.itemId)).toEqual(['Q4']);
   });
 
   it('syncOfflineQueue drains queued records via a real POST and clears them on success', async () => {

@@ -331,6 +331,80 @@
     } catch (_) { return Promise.resolve(false); }
   }
 
+
+  // ── SH-1 write-first outbox (simplify plan §5.4) ────────────────────────────
+  // A worksheet answer is written to the IndexedDB outbox BEFORE its POST, so a
+  // tab that dies or a phone that drops mid-request cannot lose it. Same request,
+  // same body, same success result. The row is deleted when the POST lands, kept
+  // for the existing drain on a retryable failure (network, timeout, 401, 408,
+  // 429, any 5xx), and deleted on any other 4xx so nothing retries forever.
+  // Kill switch: window.__GB_WRITE_FIRST__ = false (read at call time).
+  var WRITE_FIRST_WAIT_MS = 250;
+  var _inFlight = {};   // record key -> transportSequence of the POST in flight (this tab)
+  function _writeFirstEligible(opts) {
+    if (/** @type {any} */ (window).__GB_WRITE_FIRST__ === false) return false;
+    if (!_hasQueue() || !opts.studentId) return false;
+    if (opts.source !== 'worksheet' || opts.requestGrade === true) return false;
+    if (typeof opts.response !== 'string' || !opts.response) return false;
+    return String(opts.itemId).indexOf('DESK_') !== 0;
+  }
+  // Never let a slow or hung IndexedDB open delay the POST.
+  function _boundedWait(promise, ms) {
+    return new Promise(function (resolve) {
+      var t = setTimeout(function () { resolve(false); }, ms);
+      Promise.resolve(promise).then(function (v) { clearTimeout(t); resolve(v); },
+        function () { clearTimeout(t); resolve(false); });
+    });
+  }
+  // The outbox key has no student id (offline-queue.js is frozen). On a shared
+  // device, skip the pre-write when another student's unsent row holds the key,
+  // so write-first never overwrites it; that save then behaves exactly as before.
+  // Resolves true (row stored), false (store failed) or 'foreign' (skipped).
+  function _preWriteOutbox(opts) {
+    var q = /** @type {any} */ (window.OfflineQueue);
+    if (!q || typeof q.all !== 'function' || typeof q.keyOf !== 'function') return _enqueueOffline(opts);
+    var key = q.keyOf(opts);
+    return Promise.resolve(q.all()).then(function (rows) {
+      var foreign = (rows || []).some(function (row) {
+        return row && q.keyOf(row) === key && row.studentId && String(row.studentId) !== String(opts.studentId);
+      });
+      return foreign ? /** @type {any} */ ('foreign') : _enqueueOffline(opts);
+    }, function () { return false; });
+  }
+  // The row under this key, if any (the outbox key has no student id).
+  function _queuedRowFor(opts) {
+    var q = /** @type {any} */ (window.OfflineQueue);
+    if (!q || typeof q.all !== 'function' || typeof q.keyOf !== 'function') return Promise.resolve(undefined);
+    var key = q.keyOf(opts);
+    return Promise.resolve(q.all()).then(function (rows) {
+      return (rows || []).filter(function (row) { return row && q.keyOf(row) === key; })[0] || null;
+    }, function () { return undefined; });
+  }
+  // After a successful send, delete the key's row only if it is this student's:
+  // another student's unsent row on a shared device must survive.
+  function _supersedeOwn(opts) {
+    return _queuedRowFor(opts).then(function (row) {
+      if (row && row.studentId && String(row.studentId) !== String(opts.studentId)) return false;
+      return _supersedeOffline(opts);
+    });
+  }
+  // After a retryable failure, confirm the pre-written row is still ours and
+  // current before reporting it queued; store it again if it went missing.
+  function _confirmOwnRow(opts, preResult) {
+    return _queuedRowFor(opts).then(function (row) {
+      if (row === undefined) return preResult === true && !_isSuperseded(opts);   // queue cannot list rows
+      if (row && String(row.studentId) === String(opts.studentId)
+        && (row.transportSequence || 0) >= (opts.transportSequence || 0)) return !_isSuperseded(opts);
+      return _enqueueOffline(opts);
+    });
+  }
+  function _isRetryableFailure(r) {
+    if (!r) return false;
+    if (r.reason === 'network' || r.reason === 'auth') return true;
+    var st = /** @type {any} */ (r).status;
+    return r.reason === 'server' && typeof st === 'number' && (st >= 500 || st === 408 || st === 429);
+  }
+
   function _supersedeOffline(opts) {
     var queue = window.OfflineQueue;
     if (!queue || typeof queue.supersede !== 'function') return Promise.resolve(false);
@@ -540,17 +614,44 @@
           return { ok: false, reason: 'no-identity' };
         }
 
-        var r = await _sendRecord(opts);
-        if (r.ok) {
-          var key = _recordKey(opts);
-          _successfulSequence[key] = Math.max(_successfulSequence[key] || 0, /** @type {number} */ (opts.transportSequence));
-          await _supersedeOffline(opts);
-          _scheduleOfflineDrain(0);
-          return r;
+        // SH-1: pre-write the row, then send exactly as before. The in-flight mark
+        // stops this tab's drain from re-POSTing the row while the POST is out.
+        var writeFirst = _writeFirstEligible(opts);
+        var flightKey = _recordKey(opts);
+        /** @type {Promise<any> | null} */
+        var pre = null;
+        if (writeFirst) {
+          _inFlight[flightKey] = opts.transportSequence;
+          pre = _preWriteOutbox(opts);
+          if (opts.keepalive !== true) await _boundedWait(pre, WRITE_FIRST_WAIT_MS);
         }
+        try {
+          var r = await _sendRecord(opts);
+          if (r.ok) {
+            var key = _recordKey(opts);
+            _successfulSequence[key] = Math.max(_successfulSequence[key] || 0, /** @type {number} */ (opts.transportSequence));
+            await _supersedeOwn(opts);
+            _scheduleOfflineDrain(0);
+            return r;
+          }
 
-        // HTTP status is internal drain metadata; preserve the public record result shape.
-        delete r.status;
+          // SH-1 failure rules. A landed pre-write IS the capture: keep it for a
+          // retryable failure (including a 5xx, e.g. during a redeploy), delete it
+          // for any other 4xx. A skipped pre-write (shared device) or an ineligible
+          // row follows the old path below exactly.
+          var preResult = writeFirst ? await pre : null;
+          var oldPath = preResult === null || preResult === 'foreign';
+          var preLanded = !oldPath && preResult === true && (_isRetryableFailure(r) ? await _confirmOwnRow(opts, preResult) : true);
+          if (!oldPath && r.reason === 'server') {
+            if (preLanded && _isRetryableFailure(r)) {
+              _scheduleOfflineDrain(30000);
+              return { ok: false, reason: 'server', queued: true };
+            }
+            if (preResult === true) await _supersedeOwn(opts);
+          }
+
+          // HTTP status is internal drain metadata; preserve the public record result shape.
+          delete r.status;
 
         // Reachability failure → capture for later instead of dropping the grade.
         // reason stays 'network' (the frozen whitelist); the additive `queued`
@@ -560,7 +661,7 @@
         // 2026-09-09: an expired session (401 → 'auth') is captured too — the row carries the
         // owner's studentId and the ownership-gated drain replays it once they sign in again.
         if ((r.reason === 'network' || r.reason === 'auth') && _hasQueue() && opts.studentId) {
-          if (await _enqueueOffline(opts)) {
+          if (oldPath ? await _enqueueOffline(opts) : preLanded) {
             if (r.reason === 'auth' && _isCurrentAuthFailure(opts)) _showNoIdentityNudge('expired');
             _scheduleOfflineDrain(30000);
             return { ok: false, reason: r.reason, queued: true };
@@ -571,6 +672,9 @@
         if (r.reason === 'no-identity') _showNoIdentityNudge();
         if (r.reason === 'auth' && _isCurrentAuthFailure(opts)) _showNoIdentityNudge('expired-lost');   // nothing was captured on this page
         return r;
+        } finally {
+          if (writeFirst && _inFlight[flightKey] === opts.transportSequence) delete _inFlight[flightKey];
+        }
 
       } catch (err) {
         console.warn('gradebook-client: record failed —', err && err.message);
@@ -612,6 +716,8 @@
             return { ok: false, reason: 'no-identity' };
           }
           if (_isSuperseded(r)) return { ok: true, superseded: true };
+          var flying = _inFlight[_recordKey(r)];
+          if (typeof flying === 'number' && flying >= (r.transportSequence || 0)) return { ok: false, reason: 'in-flight' };
           return _sendRecord(r).then(function (result) {
             if (result && result.ok && typeof r.transportSequence === 'number') {
               var key = _recordKey(r);
