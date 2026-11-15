@@ -894,6 +894,53 @@ class ServerPagesTests(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertIn("posted before its scores finished loading", out)
 
+    def u2_pages_without_table(self, u2):
+        pages = u1_served()
+        for part in ("B", "C", "FRQ"):
+            pages[u2["parts"][part]["id"]] = served("Assignment details\nNo submissions yet\n")
+        return pages
+
+    def test_a_future_check_with_no_table_is_not_open_yet_and_does_not_fail(self):
+        u2 = dict(self.u2_entry(), dueDate="2026-11-23")              # today is 2026-10-24
+        self.write_registry(u2, ENTRY)
+        api = PagesApi(self.u2_pages_without_table(u2))
+        code, out = self.run_main(["--apply"], api)
+        self.assertEqual(code, 0)
+        self.assertIn("NOT OPEN YET: U2 B page %s has no table header (due 2026-11-23)" % u2["parts"]["B"]["id"], out)
+        self.assertNotIn("PAGE NOT READY", out)
+        grades = [b for p, b in api.posts if p == "/pc/grade"]
+        self.assertTrue(grades)                                        # U1 still reconciles
+        self.assertEqual({b["unit"] for b in grades}, {1})
+
+    def test_no_table_on_or_after_the_due_date_still_fails(self):
+        for due in ("2026-10-24", "2026-10-01"):                       # due today, overdue
+            u2 = dict(self.u2_entry(), dueDate=due)
+            self.write_registry(u2, ENTRY)
+            code, out = self.run_main(["--apply"], PagesApi(self.u2_pages_without_table(u2)))
+            self.assertEqual(code, 1, due)
+            self.assertIn("PAGE NOT READY: U2 B page %s has no table header" % u2["parts"]["B"]["id"], out)
+            self.assertNotIn("NOT OPEN YET", out)
+
+    def test_a_future_check_with_a_missing_or_half_loaded_page_still_fails(self):
+        u2 = dict(self.u2_entry(), dueDate="2026-11-23")
+        self.write_registry(u2, ENTRY)
+        pages = u1_served()                                            # U2 pages never posted
+        code, out = self.run_main(["--apply"], PagesApi(pages))
+        self.assertEqual(code, 1)
+        self.assertIn("PAGE NOT READY: U2 B page %s is not on the server" % u2["parts"]["B"]["id"], out)
+
+        pages = u1_served()
+        pages[u2["parts"]["B"]["id"]] = served(read_fixture("B"), hours_old=31)   # stale, not "no table"
+        code, out = self.run_main(["--apply"], PagesApi(pages))
+        self.assertEqual(code, 1)
+        self.assertNotIn("NOT OPEN YET", out)
+
+    def test_not_open_yet_needs_a_due_date_after_today(self):
+        self.assertTrue(rec.not_open_yet({"dueDate": "2026-11-23"}, "2026-11-14"))
+        self.assertFalse(rec.not_open_yet({"dueDate": "2026-11-14"}, "2026-11-14"))
+        self.assertFalse(rec.not_open_yet({"dueDate": None}, "2026-11-14"))
+        self.assertFalse(rec.not_open_yet({}, "2026-11-14"))
+
     def test_a_failed_page_read_exits_1_and_fixture_is_exclusive(self):
         self.write_registry(ENTRY)
 

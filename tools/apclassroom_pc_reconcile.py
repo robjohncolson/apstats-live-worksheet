@@ -34,7 +34,9 @@ server (POST /admin/apclassroom-page/<id>, read back with GET
 The texts are the same innerText the rig reads, so they go through the same
 parsers. In server mode a part whose page is missing, older than
 --max-page-age-hours (default 30) or not fully painted is PAGE NOT READY (its
-entry is skipped, exit 1), and SIGN IN NEEDED never happens. Each page used is
+entry is skipped, exit 1), and SIGN IN NEEDED never happens. Exception: a page
+with no score table at all, for a check whose dueDate is after today, is NOT OPEN
+YET (the entry is skipped and the run does not fail). Each page used is
 logged by id and age (no names). --fixture is a third source and cannot be
 combined with --pages server.
 
@@ -119,6 +121,17 @@ PC_PART_POINTS = {1: {"A": 18, "B": 14, "C": 12, "FRQ": 16}}
 
 class PageNotReady(Exception):
     """The AP Classroom table rendered its header but never filled in its numbers."""
+
+
+class PageNoTable(PageNotReady):
+    """The page has no score table at all. For a check whose due date is still ahead,
+    that is a check nobody can have taken yet (NOT OPEN YET), not a failure."""
+
+
+def not_open_yet(entry: dict, today: str) -> bool:
+    """True when the entry's due date is after today (both YYYY-MM-DD)."""
+    due = entry.get("dueDate")
+    return bool(due) and str(due) > str(today)
 
 
 class SignInNeeded(Exception):
@@ -766,7 +779,7 @@ def fetch_live_pages(class_id: str, entry: dict, dump_dir=None) -> dict:
         if needs_sign_in(url, text, header):
             raise SignInNeeded()
         if header not in text:
-            raise PageNotReady("%s table never showed its header" % part)
+            raise PageNoTable("%s table never showed its header" % part)
         if not settled:
             raise PageNotReady("%s table never finished loading its scores" % part)
         pages[part] = text
@@ -821,7 +834,7 @@ def server_entry_pages(entry: dict, server_pages: dict, now: datetime, max_age_h
         text = page.get("text") or ""
         header = "Date Submitted" if part == "FRQ" else "Points Earned"
         if header not in text:
-            raise PageNotReady("%s page %s has no table header" % (part, assignment))
+            raise PageNoTable("%s page %s has no table header" % (part, assignment))
         if not page_ready(part, text, header):
             raise PageNotReady("%s page %s was posted before its scores finished loading" % (part, assignment))
         rep.out("PAGE U%s %s id %s age %.1f h (server)" % (entry["unit"], part, assignment, age))
@@ -1042,6 +1055,11 @@ def main(argv=None, api=None) -> int:
                 open_sign_in_issue()
             return 2
         except PageNotReady as err:
+            if isinstance(err, PageNoTable) and not_open_yet(entry, today):
+                # A future check with no score table yet: nothing to reconcile, nothing wrong.
+                rep.out("NOT OPEN YET: U%s %s (due %s); skipped, not a failure" % (entry["unit"], err, entry["dueDate"]))
+                pages_by_entry.append(None)
+                continue
             rep.out("PAGE NOT READY: U%s %s; nothing of this entry posted" % (entry["unit"], err))
             pages_by_entry.append(None)
             ok = False
