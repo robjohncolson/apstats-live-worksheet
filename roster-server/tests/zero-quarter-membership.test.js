@@ -206,16 +206,17 @@ describe('(2) the §1 membership on the real schedule', () => {
     expect(keys((r) => r.liftQuarter.E === 'Q1' && r.quarter.E === 'Q2')).toEqual(['2.3', '4.1', '4.2', '4.3', '4.4', '4.5', '4.6']);
   });
 
-  it('taught in Q2, regular in Q3 (the same rule in January): B 5.7 8.4 8.5 8.6, E 6.10 6.11 8.1 8.4 8.5 8.6', () => {
+  it('taught in Q2, regular in Q3 (the same rule in January): B 5.7 8.4 8.5 8.6, E 6.9 6.10 6.11 8.1 8.4 8.5', () => {
     // E 6.10 + 6.11: E's three Unit 2 poster days (teacher 2026-11-13) move them to Mon 1/11 + Wed 1/13, so their
-    // zero dates (1/24, 1/26) fall in Q3.
+    // zero dates (1/24, 1/26) fall in Q3. The Fri 11/13 E free day (2026-11-14) shifts E one more meeting: 6.9 is now
+    // taught Mon 1/11 (zero 1/24, Q3), and 8.6 is taught Mon 1/25, wholly in Q3 (no lift quarter).
     expect(keys((r) => r.liftQuarter.B === 'Q2' && r.quarter.B === 'Q3')).toEqual(['5.7', '8.4', '8.5', '8.6']);
-    expect(keys((r) => r.liftQuarter.E === 'Q2' && r.quarter.E === 'Q3')).toEqual(['6.10', '6.11', '8.1', '8.4', '8.5', '8.6']);
+    expect(keys((r) => r.liftQuarter.E === 'Q2' && r.quarter.E === 'Q3')).toEqual(['6.9', '6.10', '6.11', '8.1', '8.4', '8.5']);
   });
 
   it('no other lesson has a lift quarter, and no SY2627 lesson is never a 0', () => {
     expect(keys((r) => r.liftQuarter.B != null)).toEqual(['4.2', '4.3', '4.4', '4.5', '4.6', '4.7', '5.7', '8.4', '8.5', '8.6']);
-    expect(keys((r) => r.liftQuarter.E != null)).toEqual(['2.3', '4.1', '4.2', '4.3', '4.4', '4.5', '4.6', '6.10', '6.11', '8.1', '8.4', '8.5', '8.6']);
+    expect(keys((r) => r.liftQuarter.E != null)).toEqual(['2.3', '4.1', '4.2', '4.3', '4.4', '4.5', '4.6', '6.9', '6.10', '6.11', '8.1', '8.4', '8.5']);
     expect(keys((r) => r.neverZero.B || r.neverZero.E)).toEqual([]);
   });
 
@@ -244,15 +245,16 @@ describe('(2) the §1 membership on the real schedule', () => {
     }
   });
 
-  it('lessonsTotal per quarter, flag off -> on: B 27/28/15/7 -> 27/34/19/7, E 26/28/16/7 -> 26/35/22/7', () => {
+  it('lessonsTotal per quarter, flag off -> on: B 27/28/15/7 -> 27/34/19/7, E 26/27/17/7 -> 26/34/23/7', () => {
+    // E: the Fri 11/13 free day (2026-11-14) moves 6.9 into Q3 (teacher-confirmed 26/27/17/7 with the flag off).
     const totals = (config, section) => {
       const quarters = grade([], config, section, '2026-11-09').quarters;
       return ['Q1', 'Q2', 'Q3', 'Q4'].map((q) => quarters[q].lessonsTotal);
     };
     expect(totals(OFF, 'PeriodB')).toEqual([27, 28, 15, 7]);
     expect(totals(LIVE, 'PeriodB')).toEqual([27, 34, 19, 7]);
-    expect(totals(OFF, 'PeriodE')).toEqual([26, 28, 16, 7]);
-    expect(totals(LIVE, 'PeriodE')).toEqual([26, 35, 22, 7]);
+    expect(totals(OFF, 'PeriodE')).toEqual([26, 27, 17, 7]);
+    expect(totals(LIVE, 'PeriodE')).toEqual([26, 34, 23, 7]);
   });
 });
 

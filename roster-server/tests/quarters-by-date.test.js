@@ -421,8 +421,9 @@ describe('lesson-schedule.json — SY26-27 date sanity', () => {
     const poster = doc.posters['2'];
     expect(poster).toEqual({
       unit: 2, title: 'Unit 2 Poster', kind: 'poster', duration: { days: 3 },
-      periods: { B: '2026-11-10', E: '2026-11-13' },
-      days: { B: ['2026-11-10', '2026-11-12', '2026-11-13'], E: ['2026-11-13', '2026-11-16', '2026-11-18'] },
+      // E: the Fri 11/13 free day (2026-11-14) shifts E's three poster days one meeting later.
+      periods: { B: '2026-11-10', E: '2026-11-16' },
+      days: { B: ['2026-11-10', '2026-11-12', '2026-11-13'], E: ['2026-11-16', '2026-11-18', '2026-11-20'] },
       sectionOnly: true,
     });
     expect(poster.days.B).toHaveLength(3);

@@ -222,15 +222,15 @@ describe('computeGrade reads POSTER-U{n} rows as the posters track', () => {
 });
 
 // U2_CLAIM_POSTER_SPEC.md B4 + B7: B and E each have their own section-only Unit 2 poster days (Desk
-// posterDays: B 11/10, 11/12, 11/13; E 11/13, 11/16, 11/18), so the Unit 2 poster is each period's Q2
+// posterDays: B 11/10, 11/12, 11/13; E 11/16, 11/18, 11/20 after the Fri 11/13 E free day), so the Unit 2 poster is each period's Q2
 // poster; unscored, the posters track stays absent, never 0. Read from the bundled
 // data/lesson-schedule.json, exactly as production does.
 describe('the live SY2627 schedule files the Unit 2 poster in Q2 for both periods', () => {
   const live = loadEventScheduleWithPriority();
 
-  it('posterDatesFor: Unit 2 is dated for B (2026-11-10) and for E (2026-11-13, teacher 2026-11-13)', () => {
+  it('posterDatesFor: Unit 2 is dated for B (2026-11-10) and for E (2026-11-16, after the Fri 11/13 E free day)', () => {
     expect(posterDatesFor(live, 'B')).toEqual({ 1: '2026-10-08', 2: '2026-11-10' });
-    expect(posterDatesFor(live, 'E')).toEqual({ 1: '2026-10-09', 2: '2026-11-13' });
+    expect(posterDatesFor(live, 'E')).toEqual({ 1: '2026-10-09', 2: '2026-11-16' });
   });
 
   it('posterUnitsInQuarter: Q2 = [2] and Q1 = [1] for both', () => {
