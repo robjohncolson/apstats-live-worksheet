@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { JSDOM, VirtualConsole } from 'jsdom';
 import { readFileSync } from 'node:fs';
 import { deskSource } from './helpers/desk-source.js';
+import { CED_SOURCE } from './fixtures/ced2026-labels.js';
 const html = readFileSync(new URL('../teacher-dashboard.html', import.meta.url), 'utf8');
 const workspace = readFileSync(new URL('../teacher-workspace.js', import.meta.url), 'utf8');
 const desk = deskSource();
@@ -11,22 +12,25 @@ const tick = () => new Promise(r => setTimeout(r, 20));
 const response = data => ({ ok: true, status: 200, json: async () => data });
 const saved = { itemId: 'WS-U1L1-Q1', source: 'worksheet', recordedAt: '2026-09-10T14:00:00Z', score: 1, response: '<img src=x onerror=alert(1)>' };
 const student = { studentId: 's1', username: 'apple_cat', realName: 'Same Name', section: 'PeriodB', schoologyUid: '123', savedWork: { available: true, recent: [saved], pendingGrading: 0 }, gradebook: { quarters: {} } };
-async function make(url = 'https://example.test/teacher-dashboard.html') {
+async function make(url = 'https://example.test/teacher-dashboard.html', options = {}) {
   const errors = [];
   const virtualConsole = new VirtualConsole(); virtualConsole.on('jsdomError', e => errors.push(e.message));
   const dom = new JSDOM(html.replace(/<script[^>]*src=[\s\S]*?<\/script>/g, ''), { url, runScripts: 'dangerously', pretendToBeVisual: true, virtualConsole });
   doms.push(dom);
   const w = dom.window;
+  const manifest = options.manifest || { units: [{ lessons: [{ lesson: '1.1', activities: [{ activity: 'worksheet', itemIds: [saved.itemId] }] }] }] };
+  const people = options.students || [student, { ...student, studentId: 's2', username: 'pear_cat' }];
   w.fetch = vi.fn(async url => {
-    if (url === 'data/work-manifest.json') return response({ units: [{ lessons: [{ lesson: '1.1', activities: [{ activity: 'worksheet', itemIds: [saved.itemId] }] }] }] });
+    if (url === 'data/work-manifest.json') return response(manifest);
     if (url.includes('/recent?')) return response({ ok: true, submissions: [saved] });
     if (url.includes('/grade')) return response({ ok: true, quarters: {}, units: {}, students: [student] });
     if (url.includes('/roster/list')) return response({ ok: true, students: [{ ...student, currentPassword: 'private-fixture' }] });
     return response({ ok: true, rows: [], messages: [], heatmap: {} });
   });
   w.rosterClient = { token: () => null, current: () => ({ role: 'teacher' }) };
+  w.eval(CED_SOURCE);
   await tick(); w.eval(workspace); await tick();
-  w.teacherWorkspace.loaded({ ok: true, students: [student, { ...student, studentId: 's2', username: 'pear_cat' }] });
+  w.teacherWorkspace.loaded({ ok: true, students: people });
   return { w, doc: w.document, errors };
 }
 afterEach(() => { doms.splice(0).forEach(d => d.window.close()); });
@@ -120,6 +124,36 @@ describe('integrated teacher workspace', { timeout: 20_000 }, () => {
     w.teacherWorkspace.failed();
     expect(doc.getElementById('workspace-feed').textContent).toContain('unavailable');
     expect(doc.getElementById('workspace-feed').textContent).not.toContain('No saved submissions');
+  });
+  it('labels a saved quiz with this year\'s topic, not last year\'s lesson id', async () => {
+    const quiz = { itemId: 'U4-L8-Q01', source: 'curriculum_quiz', recordedAt: '2026-11-15T21:00:00Z', score: 1, response: 'A' };
+    const { w, doc } = await make(undefined, {
+      manifest: { units: [{ lessons: [
+        { lesson: '4.8', activities: [{ activity: 'quiz', itemIds: ['U4-L8-Q01'] }] },
+        { lesson: '4.10', activities: [{ activity: 'quiz', itemIds: ['U4-L10-Q01'] }] },
+        { lesson: '4.11', activities: [{ activity: 'quiz', itemIds: ['U4-L11-Q01'] }] },
+        { lesson: '4.10-12', activities: [{ activity: 'worksheet', itemIds: ['WS-U4L10-12-Q1'] }] },
+        { lesson: '99.1', activities: [{ activity: 'quiz', itemIds: ['UNMAPPED'] }] },
+      ] }] },
+      students: [{ ...student, username: 'joshabeth', savedWork: { available: true, recent: [quiz], pendingGrading: 0 } }],
+    });
+    const roster = doc.querySelector('#workspace-roster .workspace-row').textContent;
+    expect(roster).toContain('2.9 · Parameters of Random Variables · quiz');
+    expect(roster).toContain('Last saved');
+    expect(roster).not.toContain('4.8');
+    expect(roster).not.toContain('Lesson 4');
+    w.teacherWorkspace.recent({ ok: true, submissions: [
+      { itemId: 'U4-L10-Q01', recordedAt: quiz.recordedAt, source: 'curriculum_quiz' },
+      { itemId: 'U4-L11-Q01', recordedAt: quiz.recordedAt, source: 'curriculum_quiz' },
+      { itemId: 'WS-U4L10-12-Q1', recordedAt: quiz.recordedAt, source: 'worksheet' },
+      { itemId: 'UNMAPPED', recordedAt: quiz.recordedAt, source: 'curriculum_quiz' },
+    ] });
+    const recent = doc.getElementById('tsc-recent-list').textContent;
+    expect(recent).toContain('2.10 · The Binomial Distribution · Day 1 · quiz');
+    expect(recent).toContain('2.10 · The Binomial Distribution · Day 2 · quiz');
+    expect(recent).toContain('2.10 · The Binomial Distribution · Day 1 / 2.10 · The Binomial Distribution · Day 2 / ★ Beyond the Exam · Geometric distribution · worksheet');
+    expect(recent).toContain('Lesson 99.1 · quiz');
+    expect(doc.querySelector('#workspace-worksheet button').textContent).toBe('2.10 · The Binomial Distribution · Day 1 / 2.10 · The Binomial Distribution · Day 2 / ★ Beyond the Exam · Geometric distribution');
   });
   it('shows safe saved responses and opens a read-only worksheet separately from the student app', async () => {
     const { w, doc } = await make();

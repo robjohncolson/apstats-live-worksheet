@@ -27,8 +27,22 @@
     var date = new Date(value);
     return value && !isNaN(date.getTime()) ? date.toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'Time unavailable';
   }
+  // lesson.lesson is last year's storage id ("4.8"). Print this year's topic, same helper as the Desk.
+  function topicText(lesson) {
+    var key = lesson && lesson.lesson;
+    if (typeof window.cedLabel === 'function') {
+      var mapped = window.cedLabel(key);
+      if (mapped && mapped.mapped && mapped.text) return mapped.text;
+    }
+    return 'Lesson ' + key;
+  }
   function label(row) {
     return itemLabels[row.itemId] || row.itemId || 'Saved work';
+  }
+  // The activity word is always the last segment. Everything before it is the topic.
+  function topicOf(text) {
+    var parts = String(text || '').split(' · ');
+    return parts.length > 1 ? parts.slice(0, -1).join(' · ') : text;
   }
   function status(row) {
     if (row.pendingGrading || (row.pendingGrading == null && row.source === 'frq' && row.score == null && row.response != null && String(row.response).trim())) return 'Awaiting grading';
@@ -214,7 +228,7 @@
     recentRows.forEach(function (r) {
       var path = worksheetPaths[r.itemId];
       if (!path || seen[path]) return;
-      seen[path] = true; picker.appendChild(button(label(r).split(' · ')[0], function () { worksheet(r); }));
+      seen[path] = true; picker.appendChild(button(topicOf(label(r)), function () { worksheet(r); }));
     });
     if (!Object.keys(seen).length) message(picker, 'No worksheet among the most recent 100 submissions. View the student app to choose an older lesson.');
   }
@@ -531,7 +545,7 @@
     fetch('data/work-manifest.json').then(function (res) { if (!res.ok) throw new Error(); return res.json(); }).then(function (manifest) {
       (manifest.units || []).forEach(function (unit) { (unit.lessons || []).forEach(function (lesson) { (lesson.activities || []).forEach(function (activity) {
         (activity.itemIds || []).forEach(function (id) {
-          itemLabels[id] = 'Lesson ' + lesson.lesson + ' · ' + activity.activity;
+          itemLabels[id] = topicText(lesson) + ' · ' + activity.activity;
           var match = /^WS-U(\d+)L(\d+(?:-\d+)?)-/.exec(id);
           if (match) worksheetPaths[id] = 'u' + match[1] + '_lesson' + match[2] + '_live.html';
         });
