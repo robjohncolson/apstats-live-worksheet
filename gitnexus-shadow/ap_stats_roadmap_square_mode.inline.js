@@ -5834,7 +5834,9 @@ async function _sendNudgeReply() {
 // direction='student' + parent_nudge_id=NULL.
 
 var STUDENT_NUDGE_LAST_SEEN_KEY = 'apstats_nudge_last_seen';
-var STUDENT_NUDGE_POLL_MS = 30 * 1000;
+// 2 min, visible tabs only: the badge is a backstop. Live nudges arrive instantly
+// over the presence socket, and refocus/boot/DM-open/nudge_notify force a poll.
+var STUDENT_NUDGE_POLL_MS = 120 * 1000;
 var _studentNudgePollTimer = null;
 var _studentNudgePollInFlight = false;
 var _studentNudgeUnreadCount = 0;
@@ -6027,6 +6029,7 @@ function _startStudentNudgePolling() {
   try { if (_studentNudgePollTimer) clearInterval(_studentNudgePollTimer); } catch (_) {}
   _pollStudentNudgeHistory(true);
   _studentNudgePollTimer = setInterval(function () {
+    if (typeof document !== 'undefined' && document.hidden) return;   // refocus polls on return
     _pollStudentNudgeHistory(false);
   }, STUDENT_NUDGE_POLL_MS);
 }
