@@ -1649,3 +1649,34 @@ describe('createLedgerDb insertLedgerRow reasoning', () => {
     expect(client.upserts[1].response).toBe('B');
   });
 });
+
+// ── Simplify plan WP2: a student's own ledger read skips the role lookup ──────
+describe('GET /ledger/student/:id role lookup (one fewer Supabase call per worksheet load)', () => {
+  it('a student reading their OWN ledger does not look up a role', async () => {
+    const spy = vi.spyOn(rosterDb, 'getRoleByStudentId');
+    try {
+      const { status, body } = await srv.request('GET', `/ledger/student/${validStudentId}`, {
+        headers: { Authorization: `Bearer ${validToken}` }
+      });
+      expect(status).toBe(200);
+      expect(body.ok).toBe(true);
+      expect(spy).not.toHaveBeenCalled();
+    } finally { spy.mockRestore(); }
+  });
+
+  it('reading ANOTHER student still checks the role (teacher view-as allowed, student blocked)', async () => {
+    const spy = vi.spyOn(rosterDb, 'getRoleByStudentId');
+    try {
+      const asTeacher = await srv.request('GET', `/ledger/student/${validStudentId}`, {
+        headers: { Authorization: `Bearer ${teacherToken}` }
+      });
+      expect(asTeacher.status).toBe(200);
+      const otherStudentToken = signToken(`uuid-student-other-${randomBytes(4).toString('hex')}`);
+      const asStudent = await srv.request('GET', `/ledger/student/${validStudentId}`, {
+        headers: { Authorization: `Bearer ${otherStudentToken}` }
+      });
+      expect(asStudent.status).toBe(403);
+      expect(spy).toHaveBeenCalledTimes(2);
+    } finally { spy.mockRestore(); }
+  });
+});

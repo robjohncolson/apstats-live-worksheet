@@ -85,6 +85,7 @@
     window.addEventListener('online', _recoverPrior);
     window.addEventListener('focus', _recoverPrior);
     window.addEventListener('roster-session-changed', function () {
+      _bumpPriorGen();
       _priorRetries = 0;
       _recoverPrior();
     });
@@ -228,6 +229,57 @@
     } catch (_) { return false; }
   }
 
+
+  // ── Shared prior read (simplify plan WP2.1) ─────────────────────────────────
+  // A worksheet load asks for the same prior rows several times (hydrate, heal and
+  // two AI readers). One GET serves them all: concurrent callers share the request,
+  // and a success is reused for 10 s. Any write, successful send or identity change
+  // bumps the generation, so a read that started before newer work is never reused.
+  // Failures are never cached. Each caller still builds its own Map and applies its
+  // own restore side effects, so callers cannot affect each other.
+  var PRIOR_SHARE_MS = 10000;
+  var _priorGen = 0;
+  var _priorShared = {};
+  function _bumpPriorGen() { _priorGen++; _priorShared = {}; }
+  function _readPriorOnce(url, token) {
+    var timeout;
+    var controller = typeof AbortController === 'function' ? new AbortController() : null;
+    return Promise.race([
+      (async function () {
+        var res = await fetch(url, {
+          method: 'GET',
+          headers: { 'Authorization': 'Bearer ' + token },
+          signal: controller ? controller.signal : undefined
+        });
+        return { res: res, data: res && res.ok ? await res.json() : null };
+      })(),
+      new Promise(function (_, reject) {
+        timeout = setTimeout(function () {
+          if (controller) controller.abort();
+          reject(new Error('Answer load timed out'));
+        }, 10000);
+      })
+    ]).then(function (v) { clearTimeout(timeout); return v; },
+      function (e) { clearTimeout(timeout); throw e; });
+  }
+  function _readPriorShared(url, token) {
+    var key = token + ' ' + url;
+    var hit = _priorShared[key];
+    if (hit && hit.gen === _priorGen && (!hit.doneAt || Date.now() - hit.doneAt < PRIOR_SHARE_MS)) return hit.promise;
+    var entry = { gen: _priorGen, doneAt: 0, promise: /** @type {Promise<any>} */ (Promise.resolve(null)) };
+    entry.promise = _readPriorOnce(url, token).then(function (result) {
+      var good = result && result.res && result.res.ok && result.data && result.data.ok;
+      if (good && _priorShared[key] === entry && entry.gen === _priorGen) entry.doneAt = Date.now();
+      else if (_priorShared[key] === entry) delete _priorShared[key];
+      return result;
+    }, function (err) {
+      if (_priorShared[key] === entry) delete _priorShared[key];
+      throw err;
+    });
+    _priorShared[key] = entry;
+    return entry.promise;
+  }
+
   var _transportSequence = 0;
   var _latestStartedSequence = {};
   var _successfulSequence = {};
@@ -248,6 +300,7 @@
     _transportSequence = Math.max(_transportSequence + 1, now);
     stamped.transportSequence = _transportSequence;
     _latestStartedSequence[_recordKey(stamped)] = stamped.transportSequence;
+    _bumpPriorGen();
     return stamped;
   }
   function _isSuperseded(opts) {
@@ -362,7 +415,8 @@
   function _sendRecord(opts) {
     var key = _recordKey(opts);
     var previous = _sendChains[key] || Promise.resolve();
-    var run = previous.catch(function () {}).then(function () { return _postRecord(opts); });
+    var run = previous.catch(function () {}).then(function () { return _postRecord(opts); })
+      .then(function (value) { if (value && value.ok) _bumpPriorGen(); return value; });
     var tail = run.then(function () {}, function () {});
     _sendChains[key] = tail;
     return run.then(function (value) {
@@ -626,28 +680,9 @@
         var url = baseUrl + '/ledger/student/' + encodeURIComponent(sid)
                 + '?prefix=' + encodeURIComponent(prefix);
 
-        // Bound both the connection and response-body wait.
-        var timeout;
-        var controller = typeof AbortController === 'function' ? new AbortController() : null;
-        var result;
-        try {
-          result = await Promise.race([
-            (async function () {
-              var res = await fetch(url, {
-                method: 'GET',
-                headers: { 'Authorization': 'Bearer ' + token },
-                signal: controller ? controller.signal : undefined
-              });
-              return { res: res, data: res && res.ok ? await res.json() : null };
-            })(),
-            new Promise(function (_, reject) {
-              timeout = setTimeout(function () {
-                if (controller) controller.abort();
-                reject(new Error('Answer load timed out'));
-              }, 10000);
-            })
-          ]);
-        } finally { clearTimeout(timeout); }
+        // Bound both the connection and response-body wait (10 s). Concurrent and
+        // back-to-back callers on one page share a single GET (see _readPriorShared).
+        var result = await _readPriorShared(url, token);
         // An old session's response must never populate a new student's page.
         var currentSid = window.__VIEW_AS_STUDENT_ID__ || /** @type {RosterClientApi} */ (window.rosterClient).studentId();
         if (sid !== currentSid || token !== /** @type {RosterClientApi} */ (window.rosterClient).token()) {

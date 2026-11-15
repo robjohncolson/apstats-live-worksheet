@@ -1278,13 +1278,20 @@ export function mountLedger(app, {
         // or when rosterDb isn't wired, so a DB hiccup never widens access.
         // Anyone else reading a different student is a genuine cross-student
         // attempt.
+        //
+        // A student reading their OWN ledger skips the role lookup (simplify plan
+        // WP2): it is the hot path on every worksheet load, and the role only widens
+        // access to other students. Side effect: a teacher reading their own ledger
+        // is treated as a student there (bonus_applied rows stay hidden).
         let role = 'student';
-        try {
-          if (rosterDb && typeof rosterDb.getRoleByStudentId === 'function') {
-            role = await rosterDb.getRoleByStudentId(tokenSid);
+        if (tokenSid !== studentId) {
+          try {
+            if (rosterDb && typeof rosterDb.getRoleByStudentId === 'function') {
+              role = await rosterDb.getRoleByStudentId(tokenSid);
+            }
+          } catch (_) {
+            role = 'student';
           }
-        } catch (_) {
-          role = 'student';
         }
         teacherOk = role === 'teacher';
         if (!teacherOk && tokenSid !== studentId) {

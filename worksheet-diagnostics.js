@@ -24,6 +24,24 @@
     if (Array.isArray(saved)) pending = saved.slice(-20).filter(function (r) { return r && r.observedAt > Date.now() - 7 * 86400000; });
   } catch (_) {}
   function persist() { try { localStorage.setItem(KEY, JSON.stringify(pending)); } catch (_) {} }
+  // Gate (simplify plan WP2.2): a healthy load (answers loaded or the ledger is empty,
+  // and every saved answer landed in its field) is reported once per student and
+  // worksheet per day on this device. Failures and mismatches are always reported.
+  var OK_KEY = 'apstats_worksheet_diagnostics_ok.v1';
+  function healthyAlreadyReported(row) {
+    if (!(row.outcome === 'loaded' || row.outcome === 'empty') || row.saved !== row.matched) return false;
+    var day = new Date(row.observedAt).toISOString().slice(0, 10);
+    var mark = row.studentId + '|' + row.worksheet;
+    try {
+      var seen = JSON.parse(localStorage.getItem(OK_KEY) || '{}');
+      if (!seen || typeof seen !== 'object') seen = {};
+      if (seen[mark] === day) return true;
+      Object.keys(seen).forEach(function (k) { if (seen[k] !== day) delete seen[k]; });
+      seen[mark] = day;
+      localStorage.setItem(OK_KEY, JSON.stringify(seen));
+    } catch (_) {}
+    return false;
+  }
   function owner() {
     try { return window.rosterClient && window.rosterClient.studentId(); } catch (_) { return null; }
   }
@@ -111,6 +129,7 @@
           }
         }
       });
+      if (healthyAlreadyReported(row)) return;
       pending.push(row);
       pending = pending.slice(-20);
       persist();
