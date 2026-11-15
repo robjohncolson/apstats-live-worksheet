@@ -11241,10 +11241,11 @@ const SCHEDULE_DEFS = {
            // date on, so every earlier pair keeps its date (E_PAIRING_V2_SPEC.md §4).
            maxVideosPerDay:3, maxVideosFrom:[2026,10,6],
            // SAT Day Wed 2026-10-21 (teacher 2026-09-22): E does not meet for a lesson; pacing shifts one meeting later.
-           breakDays:[[2026,9,21]],
-           // Section-only poster days, the same rule as B's above. Teacher 2026-11-13: the Unit 2 claim posters
-           // start for Period E today and finish Wed 11/18; 2.10 resumes Fri 11/20.
-           posterDays:{2:[[2026,10,13],[2026,10,16],[2026,10,18]]} }
+           // Fri 2026-11-13 (teacher 2026-11-14): a free day for E, no lesson; pacing shifts one meeting later.
+           breakDays:[[2026,9,21],[2026,10,13]],
+           // Section-only poster days, the same rule as B's above. Teacher 2026-11-14: the Unit 2 claim posters
+           // start for Period E Mon 11/16 (11/13 was a free day) and finish Fri 11/20; 2.10 resumes Mon 11/23.
+           posterDays:{2:[[2026,10,16],[2026,10,18],[2026,10,20]]} }
     },
     daysOff: [
       [[2026,8,4]],                    // School Closed (Fri Sep 4)

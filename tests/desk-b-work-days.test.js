@@ -86,19 +86,19 @@ describe('B Work Day generator',()=>{
  });
  it('emits corrected unit ends, review ends and additive JSON workDays with no lesson entry',()=>{
   // E 03-15: the 3-video pair cap un-pairs 2.4+2.5 (2026-11-06). B 12-01: the three Unit 2 poster days move B's U2 PC (2026-11-06).
-  // E 12-04 / 01-27 / 03-03 / 03-19: E's three Unit 2 poster days (Fri 11/13, Mon 11/16, Wed 11/18, teacher 2026-11-13).
-  const ends={B:['2026-10-15','2026-12-01','2027-01-19','2027-02-22','2027-03-09'],E:['2026-10-19','2026-12-04','2027-01-27','2027-03-03','2027-03-19']};
+  // E 12-07 / 01-29 / 03-05 / 03-22: E's three Unit 2 poster days (Mon 11/16, Wed 11/18, Fri 11/20) after the Fri 11/13 E free day (teacher 2026-11-14).
+  const ends={B:['2026-10-15','2026-12-01','2027-01-19','2027-02-22','2027-03-09'],E:['2026-10-19','2026-12-07','2027-01-29','2027-03-05','2027-03-22']};
   for(const path of ['data/lesson-schedule.json','roster-server/data/lesson-schedule.json']){
    const json=JSON.parse(readFileSync(path,'utf8'));
    expect(json.schemaVersion).toBe(2);expect(json.calendar.workDays).toEqual({B:fixture.map(r=>r[0]),E:[]});
-   expect(json.calendar.breakDays).toEqual({B:['2026-09-18'],E:['2026-10-21']});expect(json.lessons['B-Break']).toBeUndefined();
+   expect(json.calendar.breakDays).toEqual({B:['2026-09-18'],E:['2026-10-21','2026-11-13']});expect(json.lessons['B-Break']).toBeUndefined();
    expect(json.progressChecks[1].mcqPartA).toEqual({B:'2026-09-21',E:'2026-09-21'});
    expect(json.lessons['B-Work']).toBeUndefined();expect(json.dayGroups.B).toEqual([]);
    expect(json.dayGroups.E).toEqual(S.filter(r=>r[4]?.group).map(r=>r[4].group.map(m=>m.t)));
    for(const [p,col] of [['B',3],['E',4]]){
     expect(S.filter(r=>r[col]?.kind==='pc'&&r[col].admin===2).map(iso)).toEqual(ends[p]);
     expect(Object.values(json.progressChecks).map(pc=>pc.adminDay2[p])).toEqual(ends[p]);
-    expect(S.filter(r=>r[col]?.t==='review').map(iso).at(-1)).toBe(p==='B'?'2027-03-16':'2027-03-29');
+    expect(S.filter(r=>r[col]?.t==='review').map(iso).at(-1)).toBe(p==='B'?'2027-03-16':'2027-03-31');
    }
   }
  });
@@ -191,9 +191,9 @@ describe('B Unit 2 poster days (section-only posterDays, U2_CLAIM_POSTER_SPEC.md
  const {posterDays:livePosterDays,...bNoPoster}=actual.def.periods.B;
  const noPoster=withPeriods(bNoPoster,actual.def.periods.E);   // the live definition without B's posterDays
  const posterCell=(t,n,admin)=>({t,n,u:2,kind:'poster',admin,days:3,sectionOnly:true,due:'',as:''});
- it('the live definition gives B three Unit 2 poster days (Tue 11/10, Thu 11/12, Fri 11/13) and E three (Fri 11/13, Mon 11/16, Wed 11/18)',()=>{
+ it('the live definition gives B three Unit 2 poster days (Tue 11/10, Thu 11/12, Fri 11/13) and E three (Mon 11/16, Wed 11/18, Fri 11/20)',()=>{
   expect(livePosterDays).toEqual({2:[[2026,10,10],[2026,10,12],[2026,10,13]]});
-  expect(actual.def.periods.E.posterDays).toEqual({2:[[2026,10,13],[2026,10,16],[2026,10,18]]});   // teacher 2026-11-13
+  expect(actual.def.periods.E.posterDays).toEqual({2:[[2026,10,16],[2026,10,18],[2026,10,20]]});   // teacher 2026-11-14 (Fri 11/13: E free day)
  });
  it('places exactly three poster cells per period, in JSON key order',()=>{
   const cells=S.filter(r=>r[3]?.sectionOnly).map(r=>[iso(r),r[3]]);
@@ -203,9 +203,9 @@ describe('B Unit 2 poster days (section-only posterDays, U2_CLAIM_POSTER_SPEC.md
    ['2026-11-13',posterCell('U2-Poster3','Unit 2 Poster (Day 3)',3)]]);
   for(const [,cell] of cells)expect(Object.keys(cell)).toEqual(['t','n','u','kind','admin','days','sectionOnly','due','as']);
   expect(S.filter(r=>r[4]?.sectionOnly).map(r=>[iso(r),r[4]])).toEqual([
-   ['2026-11-13',posterCell('U2-Poster','Unit 2 Poster',1)],
-   ['2026-11-16',posterCell('U2-Poster2','Unit 2 Poster (Day 2)',2)],
-   ['2026-11-18',posterCell('U2-Poster3','Unit 2 Poster (Day 3)',3)]]);
+   ['2026-11-16',posterCell('U2-Poster','Unit 2 Poster',1)],
+   ['2026-11-18',posterCell('U2-Poster2','Unit 2 Poster (Day 2)',2)],
+   ['2026-11-20',posterCell('U2-Poster3','Unit 2 Poster (Day 3)',3)]]);
   expect(S.find(r=>iso(r)==='2026-11-13')[3].kind).toBe('poster');   // poster day 3, not a Work Day
  });
  it('consumes no pacing item: the lesson due on 11/10 is the next lesson after the poster days',()=>{
@@ -223,11 +223,11 @@ describe('B Unit 2 poster days (section-only posterDays, U2_CLAIM_POSTER_SPEC.md
   expect(S.map(r=>[iso(r),r[4]])).toEqual(noPoster.map(r=>[iso(r),r[4]]));
  });
  it('without() and the reference run strip posterDays: E poster days never move B',()=>{
-  const ePoster={...actual.def.periods.E,posterDays:{2:[[2026,10,9],[2026,10,13]]}};   // two E meeting days (Mon, Fri)
+  const ePoster={...actual.def.periods.E,posterDays:{2:[[2026,10,9],[2026,10,16]]}};   // two E meeting days (Mon 11/09, Mon 11/16; Fri 11/13 is an E free day)
   // Both sections have section-only days (B breakDays, E breakDays + posterDays): B comes from without('E').
   const both=withPeriods(bNoPoster,ePoster);
   expect(both.map(r=>[iso(r),r[3]])).toEqual(noPoster.map(r=>[iso(r),r[3]]));
-  expect(both.filter(r=>r[4]?.sectionOnly).map(r=>[iso(r),r[4].t])).toEqual([['2026-11-09','U2-Poster'],['2026-11-13','U2-Poster2']]);
+  expect(both.filter(r=>r[4]?.sectionOnly).map(r=>[iso(r),r[4].t])).toEqual([['2026-11-09','U2-Poster'],['2026-11-16','U2-Poster2']]);
   // Only E has section-only days: B comes from the reference run.
   const {breakDays:_breaks,...bPlain}=bNoPoster;
   const eOnly=withPeriods(bPlain,ePoster),eBreaksOnly=withPeriods(bPlain,actual.def.periods.E);
