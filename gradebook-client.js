@@ -630,6 +630,9 @@
           if (r.ok) {
             var key = _recordKey(opts);
             _successfulSequence[key] = Math.max(_successfulSequence[key] || 0, /** @type {number} */ (opts.transportSequence));
+            // A pre-write slower than the POST must land before the delete, or it
+            // would be left behind as an orphan the drain re-sends later.
+            if (pre) await _boundedWait(pre, 2000);
             await _supersedeOwn(opts);
             _scheduleOfflineDrain(0);
             return r;
@@ -639,7 +642,7 @@
           // retryable failure (including a 5xx, e.g. during a redeploy), delete it
           // for any other 4xx. A skipped pre-write (shared device) or an ineligible
           // row follows the old path below exactly.
-          var preResult = writeFirst ? await pre : null;
+          var preResult = writeFirst ? await _boundedWait(pre, 2000) : null;
           var oldPath = preResult === null || preResult === 'foreign';
           var preLanded = !oldPath && preResult === true && (_isRetryableFailure(r) ? await _confirmOwnRow(opts, preResult) : true);
           if (!oldPath && r.reason === 'server') {

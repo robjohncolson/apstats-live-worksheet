@@ -102,6 +102,9 @@ describe('SH-1 write-first', () => {
     expect(win.fetch).not.toHaveBeenCalled();
     await vi.advanceTimersByTimeAsync(200);
     expect(win.fetch).toHaveBeenCalledTimes(1);
+    // The success path then waits at most 2 s for the hung pre-write before its
+    // delete; record() still resolves (late), the POST was never held back.
+    await vi.advanceTimersByTimeAsync(2000);
     vi.useRealTimers();
     expect((await call).ok).toBe(true);
   });
@@ -174,5 +177,19 @@ describe('SH-1 golden session: write-first on and off produce the same requests 
     expect(on.server).toEqual([
       ['worksheet|WS-U1L1-Q1|1', 'median'], ['worksheet|WS-U1L1-Q2|1', 'IQR'], ['worksheet|WS-U1L1-Q3|1', 'skewed'],
     ]);
+  });
+});
+
+describe('SH-1 ordering: a pre-write slower than the POST leaves no orphan row', () => {
+  it('the delete waits for the late pre-write, so the outbox ends empty', async () => {
+    const { win, gc, Q } = makeWindow();
+    const realEnqueue = Q.enqueue.bind(Q);
+    Q.enqueue = (row) => new Promise((resolve) => setTimeout(() => resolve(realEnqueue(row)), 400));
+    win.fetch = vi.fn(async () => okResponse());
+    const result = await gc.record({ source: 'worksheet', itemId: 'WS-U1L1-Q9', response: 'late' });
+    expect(result.ok).toBe(true);
+    await new Promise((r) => setTimeout(r, 500));
+    expect(await Q.all()).toHaveLength(0);
+    expect(win.fetch).toHaveBeenCalledTimes(1);
   });
 });
