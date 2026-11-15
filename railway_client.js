@@ -6,6 +6,17 @@
   const RAILWAY_SERVER_URL = window.RAILWAY_SERVER_URL || 'https://your-app.up.railway.app';
   const USE_RAILWAY = window.USE_RAILWAY || false;
 
+  // Simplify plan D3: with the answer-server leg off there are no class answer
+  // stats, so hide each blank's "Class" button and the drawer it opens.
+  if (!USE_RAILWAY && typeof document !== 'undefined') {
+      try {
+          const hideClassChart = document.createElement('style');
+          hideClassChart.id = 'railway-off-hide-class-chart';
+          hideClassChart.textContent = '.aggregate-trigger, .aggregate-drawer, #aggregateDrawer { display: none !important; }';
+          (document.head || document.documentElement).appendChild(hideClassChart);
+      } catch (_) { /* cosmetic only */ }
+  }
+
   // WebSocket connection
   let ws = null;
   let wsReconnectTimer = null;
