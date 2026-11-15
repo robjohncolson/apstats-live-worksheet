@@ -243,7 +243,10 @@ export function createFrqWorker({
   const claimLimit = configuredNumber(config, 'claimLimit', 'FRQ_GRADE_CLAIM_LIMIT', 8, 1, 100);
   const maxInFlight = configuredNumber(config, 'maxInFlight', 'FRQ_GRADE_MAX_IN_FLIGHT', 4, 1, 32);
   const maxRpm = configuredNumber(config, 'maxRpm', 'FRQ_GRADE_MAX_RPM', 20, 1, 600);
-  const pollMs = configuredNumber(config, 'pollMs', 'FRQ_GRADE_POLL_MS', 2_000, 1_000, 300_000);
+  // Idle poll: 60 s (was 2 s = 43,200 claim RPCs a day). A grade request does not
+  // wait for it: the ledger route calls kick() so the ticket is claimed as soon as it
+  // is ready. FRQ_GRADE_POLL_MS still overrides (1 s to 300 s).
+  const pollMs = configuredNumber(config, 'pollMs', 'FRQ_GRADE_POLL_MS', 60_000, 1_000, 300_000);
   const leaseMs = configuredNumber(config, 'leaseMs', 'FRQ_GRADE_LEASE_MS', 120_000, 5_000, 600_000);
   const timeoutMs = configuredNumber(config, 'timeoutMs', 'FRQ_GRADE_TIMEOUT_MS', 90_000, 100, 600_000);
   const shadowSample = configuredNumber(config, 'shadowSample', 'FRQ_SHADOW_SAMPLE', 4, 1, 100);
@@ -254,6 +257,11 @@ export function createFrqWorker({
   let requestStarts = [];
   let running = false;
   let timer = null;
+  // Submit-triggered claims (see kick below).
+  let kickTimer = null;
+  let kickDueAt = 0;
+  let kickLatestDue = 0;
+  let kickRerun = false;
 
   const initialMode = resolvedMode(mode);
   const counters = {
@@ -284,6 +292,8 @@ export function createFrqWorker({
     tickErrors: 0,
     lastTickAt: null,
     rateLimitedTicks: 0,
+    kicks: 0,
+    kickReruns: 0,
   };
 
   function pruneRequestStarts() {
@@ -641,14 +651,54 @@ export function createFrqWorker({
         counters.mode = 'degraded';
       }
       running = false;
+      // A kick that landed while this tick ran gets one fresh tick now, so a ticket
+      // that became ready mid-tick is never left waiting for the idle poll.
+      if (kickRerun) {
+        kickRerun = false;
+        counters.kickReruns += 1;
+        setTimeoutImpl(() => {
+          Promise.resolve(tick()).catch(() => { counters.tickErrors += 1; });
+        }, 0);
+      }
     }
     return counters;
   }
 
+  function timersAllowed() {
+    return config.allowTimer === true || process.env.NODE_ENV !== 'test';
+  }
+
+  // kick(delayMs): run one claim tick once a just-accepted ticket is ready
+  // (readyAt = now + delayMs). Kicks coalesce into one pending timer; when it fires
+  // it re-arms once for the latest kick that arrived meanwhile. Ticks never overlap:
+  // a kick that fires during a running tick (from the poll or another kick) does not
+  // start a second one, it reruns once after it (see tick's finally). So the same
+  // ticket can never be claimed twice by this worker, and no kick is lost.
+  function fireKick() {
+    kickTimer = null;
+    counters.kicks += 1;
+    if (running) kickRerun = true;
+    else Promise.resolve(tick()).catch(() => { counters.tickErrors += 1; });
+    if (kickLatestDue > kickDueAt) armKick(kickLatestDue);
+  }
+
+  function armKick(due) {
+    kickDueAt = due;
+    kickTimer = setTimeoutImpl(fireKick, Math.max(0, due - now()));
+    if (kickTimer && typeof kickTimer.unref === 'function') kickTimer.unref();
+  }
+
+  function kick(delayMs = 0) {
+    if (resolvedMode(mode) === 'off' || !timersAllowed() || typeof setTimeoutImpl !== 'function') return false;
+    const due = now() + Math.max(0, Number(delayMs) || 0);
+    kickLatestDue = Math.max(kickLatestDue, due);
+    if (!kickTimer) armKick(due);
+    return true;
+  }
+
   function start() {
     if (timer || resolvedMode(mode) === 'off') return false;
-    const timerAllowed = config.allowTimer === true || process.env.NODE_ENV !== 'test';
-    if (!timerAllowed || typeof setIntervalImpl !== 'function') return false;
+    if (!timersAllowed() || typeof setIntervalImpl !== 'function') return false;
     timer = setIntervalImpl(() => {
       Promise.resolve(tick()).catch(() => {
         counters.tickErrors += 1;
@@ -659,11 +709,12 @@ export function createFrqWorker({
   }
 
   function stop() {
+    if (kickTimer) { clearTimeoutImpl(kickTimer); kickTimer = null; }
     if (!timer) return false;
     clearIntervalImpl(timer);
     timer = null;
     return true;
   }
 
-  return { tick, start, stop, counters };
+  return { tick, start, stop, kick, counters, pollMs };
 }

@@ -299,7 +299,7 @@ Environment:
 | Variable | Default | Contract |
 |---|---:|---|
 | `FRQ_GRADE_MODE` | `off` | `off`, `shadow`, or `authoritative`; unknown value fails to `off`. |
-| `FRQ_GRADE_POLL_MS` | `2000` | Minimum 1,000; interval between claim ticks. |
+| `FRQ_GRADE_POLL_MS` | `60000` | Minimum 1,000; idle interval between claim ticks. An accepted grade request also kicks one claim when its ticket is ready (2 s), so it does not wait for this poll. |
 | `FRQ_GRADE_LEASE_MS` | `120000` | Must exceed grader timeout + queue allowance; expired leases are recoverable. |
 | `FRQ_GRADE_CLAIM_LIMIT` | `8` | Matches curriculum batch maximum. |
 | `FRQ_GRADE_MAX_IN_FLIGHT` | `4` | Never exceed the grader primary pool. |

@@ -92,6 +92,7 @@ let mode;
 let legacyDb;
 let frqDb;
 let server;
+let kicks;
 
 function auth() {
   return { Authorization: 'Bearer token-a' };
@@ -116,6 +117,7 @@ beforeEach(async () => {
   mode = 'off';
   legacyDb = createLegacyDb();
   frqDb = createFrqDb();
+  kicks = [];
   const app = express();
   app.use(express.json({ limit: '32kb' }));
   mountLedger(app, {
@@ -125,6 +127,7 @@ beforeEach(async () => {
     frqDb,
     frqBundle: bundle,
     frqMode: () => mode,
+    frqWorker: { kick: (delayMs) => { kicks.push(delayMs); return true; } },
   });
   server = new TestServer(app);
   await server.start();
@@ -845,5 +848,35 @@ describe('POST /ledger/frq-regrade mode matrix', () => {
     expect(result.body).toMatchObject({ ok: true, applied: true, score: 0.5 });
     expect(legacyDb.writes.at(-1).score).toBe(0.5);
     expect(frqDb.applies).toHaveLength(0);
+  });
+});
+
+describe('submit-triggered claim (the worker no longer polls every 2 s)', () => {
+  it('an accepted grade request kicks one claim for when the ticket is ready (2 s)', async () => {
+    mode = 'authoritative';
+    const result = await record({ requestGrade: true });
+    expect(result.status).toBe(200);
+    expect(frqDb.drafts).toHaveLength(1);
+    expect(kicks).toEqual([2250]);
+  });
+
+  it('a routine draft (still typing) does not kick; the idle poll picks it up', async () => {
+    mode = 'authoritative';
+    const result = await record({});
+    expect(result.status).toBe(200);
+    expect(frqDb.drafts).toHaveLength(1);
+    expect(kicks).toEqual([]);
+  });
+
+  it.each(['off', 'shadow'])('%s mode never kicks', async (selectedMode) => {
+    mode = selectedMode;
+    await record({ requestGrade: true });
+    expect(kicks).toEqual([]);
+  });
+
+  it('a rejected request (unknown item) does not kick', async () => {
+    mode = 'authoritative';
+    expect((await record({ itemId: 'WS-U1L1-nope', requestGrade: true })).status).toBe(400);
+    expect(kicks).toEqual([]);
   });
 });

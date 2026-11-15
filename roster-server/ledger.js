@@ -293,6 +293,7 @@ export function mountLedger(app, {
   frqBundle,
   frqMode,
   loadAnswerKey,
+  frqWorker,
 }) {
   const allowFrqRecord = createStudentSlidingWindow(
     () => positiveInteger(process.env.FRQ_RECORD_MAX_PER_MINUTE, 30),
@@ -525,6 +526,12 @@ export function mountLedger(app, {
       const ticket = rpcFirst(draftResult);
       if (!ticket) return res.status(500).json({ ok: false, error: 'Database error' });
       await persistFrqDraftReceipt(ticket, { studentId, itemId, response: canonicalResponse });
+      // A grade request (Grade with AI, leaving the box, or a legacy scored save) is
+      // ready in 2 s: kick one claim for then instead of waiting for the 60 s idle
+      // poll. Routine drafts (still typing) do not kick; the poll picks them up.
+      if (readyDelayMs <= 2_000 && frqWorker && typeof frqWorker.kick === 'function') {
+        try { frqWorker.kick(readyDelayMs + 250); } catch (_) { /* the poll still claims it */ }
+      }
       return res.json({
         ok: true,
         applied: false,

@@ -1087,6 +1087,8 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
       frqMode: _frqMode,
       // Quiz retry rule (spec v2): the server-side key decides whether a first answer was wrong.
       loadAnswerKey: _gradingLoadAnswerKey,
+      // Submit-triggered claim: an accepted grade request is claimed when ready.
+      frqWorker: _frqWorker,
     });
     // OFFLINE_MODE_SPEC §4.D — teacher-gated batch import of offline-captured work.
     mountLedgerImport(app, { db, ledgerDb, resolveUsername: resolveReceiptUsername });
