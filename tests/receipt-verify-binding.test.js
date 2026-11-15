@@ -7,7 +7,7 @@
 // UNSIGNED top-level row.score/item_id). ReceiptVerify.verifyLedgerRow() closes that:
 // the signature must cover THIS row's grade-bearing fields + its content-address id.
 //
-// Signs with a real device WebCrypto key (like receipt-sign-interop.test.js) registered
+// Signs with a real WebCrypto Ed25519 key (tests/helpers/test-signer.js) registered
 // as a PRODUCTION issuer, so it exercises the true verifyReceipt path.
 //
 // @vitest-environment node
@@ -17,11 +17,11 @@ import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createContext, runInContext } from 'vm';
+import { TestSigner } from './helpers/test-signer.js';
 import { webcrypto } from 'node:crypto';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const VERIFY_SRC = readFileSync(resolve(repo, 'receipt-verify.js'), 'utf8');
-const SIGN_SRC = readFileSync(resolve(repo, 'receipt-sign.js'), 'utf8');
 
 function load() {
   const win = { crypto: webcrypto };
@@ -32,8 +32,7 @@ function load() {
     URLSearchParams, location: { search: '', hash: '' },
   });
   runInContext(VERIFY_SRC, ctx);
-  runInContext(SIGN_SRC, ctx);
-  return { RV: win.ReceiptVerify, RS: win.ReceiptSign };
+  return { RV: win.ReceiptVerify, RS: TestSigner };
 }
 
 describe('verifyLedgerRow — payload binding (§0)', () => {

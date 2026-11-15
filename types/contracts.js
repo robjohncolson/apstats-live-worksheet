@@ -27,8 +27,7 @@
 
 /**
  * Grade-lane receipt payload — issuer-signed (teacher/server key), `t:'ledger'`.
- * Minted by roster-server/receipts.js::issueLedgerReceipt and, on-device, by
- * receipt-sign.js::signLedgerReceipt (byte-identical canonicalization).
+ * Minted by roster-server/receipts.js::issueLedgerReceipt.
  * @typedef {Object} LedgerReceiptPayload
  * @property {1} v
  * @property {'ledger'} t
@@ -79,45 +78,9 @@
  */
 
 /**
- * Daily epoch anchor payload — desk/device-signed seal over all commit heads,
- * `t:'epoch'` (ledger-seal.js, byte-compatible with roster-server admin-snapshot.js).
- * @typedef {Object} EpochReceiptPayload
- * @property {1} v
- * @property {'epoch'} t
- * @property {'desk'} iss
- * @property {string} d - NY calendar date sealed
- * @property {number} cnt - number of heads sealed
- * @property {string} root - epochRoot hex
- * @property {number} ts
- * @property {string} n
- * @property {string} [prev] - previous epoch's root (chain link)
- */
-
-/**
  * THE domain-tagged receipt union (§0.1a). Discriminate on `t` — never on which
  * key verified, never on field presence alone.
- * @typedef {LedgerReceiptPayload | SubmissionReceiptPayload | ReviewReceiptPayload | EpochReceiptPayload} Receipt
- */
-
-/**
- * The UNSIGNED inputs for a grade receipt — the shared seam between
- * submission-grader.js::buildGradeFields (which constructs it from a verified
- * submission) and receipt-sign.js::signLedgerReceipt (which signs it into a
- * LedgerReceiptPayload). One shape, enforced at both ends.
- * @typedef {Object} LedgerGradeFields
- * @property {string} sid
- * @property {string} [u]
- * @property {string} src
- * @property {string} i
- * @property {number} [a] - teacher-ASSIGNED attempt (§0.4/§0.9), never the submission's claim
- * @property {string} [e] - defaults to 'practice' at signing
- * @property {*} response - hashed into `ah`; never signed raw
- * @property {number | string | null} [sc]
- * @property {string} [g]
- * @property {number} [ts] - deterministic-from-submission for auto grades (§0.8)
- * @property {string} [n]
- * @property {string | null} [sub] - covered submission's receipt_id (§0.7)
- * @property {string | null} [kv] - answer-key version (§0.10)
+ * @typedef {LedgerReceiptPayload | SubmissionReceiptPayload | ReviewReceiptPayload} Receipt
  */
 
 // ── Stored rows (G-Set members; server row shape + gossip cargo) ───────────────
@@ -226,27 +189,6 @@
  * @property {Issuer|null} issuer
  * @property {Receipt} payload
  * @property {string} receiptId - sha256 hex of the payload bytes
- */
-
-// ── Gossip engine (ledger-gossip.js) ───────────────────────────────────────────
-
-/**
- * Row verifier used at the ingest trust boundary. MUST fail closed.
- * @typedef {(row: LedgerRow | SubmissionRow) => (boolean | Promise<boolean>)} RowVerifier
- */
-
-/**
- * Minimal durable-store surface gossip ingests into (LedgerStore / SubmissionStore).
- * @typedef {Object} GossipStore
- * @property {(row: any) => Promise<any>} put
- */
-
-/**
- * Transport driving a gossip round (Nearby plugin, mock in tests).
- * @typedef {Object} GossipTransport
- * @property {(handlers: {onPeer: (id: string) => void, onMessage: (id: string, msg: string) => void, onLost: (id: string) => void}) => void} start
- * @property {(peerId: string, msg: string) => void} send
- * @property {() => void} stop
  */
 
 // This file intentionally declares no runtime values.

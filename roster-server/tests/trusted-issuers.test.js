@@ -1,9 +1,8 @@
-// trusted-issuers.test.js — persisted issuer trust set + register endpoint
-// (ANDROID Phase 4 §3B). A teacher registers a DEVICE pubkey; it persists, seeds the
-// trust-set cache, and a receipt that device signs then verifies everywhere.
+// trusted-issuers.test.js — the persisted issuer trust set (migration 0026): boot
+// seeding into the cache, and a receipt a trusted key signs verifies everywhere.
+// (The register/revoke routes left with the retired teacher device app.)
 
 import { describe, it, expect, beforeEach, afterAll, beforeAll } from 'vitest';
-import http from 'http';
 import express from 'express';
 import crypto from 'node:crypto';
 import {
@@ -57,90 +56,22 @@ describe('setPersistedTrustedPubkeys / getTrustedIssuerPubkeys', () => {
   });
 });
 
-describe('POST /receipts/trusted-issuers', () => {
-  let server, baseUrl, store;
-
-  beforeAll(async () => {
+describe('boot seeding of the persisted trust set', () => {
+  it('mountReceipts loads non-revoked issuer keys from the table into the trust set', async () => {
+    const dev = makeDeviceKey();
     const app = express();
-    app.use(express.json());
-    store = [];
-    const db = {
-      addTrustedIssuer: async ({ pubkey, label }) => { store.push({ pubkey, label, revoked: false }); return { data: { pubkey }, error: null }; },
-      listTrustedIssuers: async () => ({ data: store.filter((s) => !s.revoked).map((s) => ({ pubkey: s.pubkey })), error: null }),
-      revokeTrustedIssuer: async ({ pubkey }) => { store.forEach((s) => { if (s.pubkey === pubkey) s.revoked = true; }); return { data: { pubkey }, error: null }; },
-    };
-    const requireTeacher = (req) => Promise.resolve(req.headers['x-teacher-secret'] === 'ok');
-    mountReceipts(app, { db, requireTeacher });
-    server = http.createServer(app);
-    await new Promise((r) => server.listen(0, '127.0.0.1', r));
-    baseUrl = `http://127.0.0.1:${server.address().port}`;
-  });
-  afterAll(() => new Promise((r) => server.close(r)));
-
-  async function post(body, headers = {}) {
-    const res = await fetch(`${baseUrl}/receipts/trusted-issuers`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json', ...headers }, body: JSON.stringify(body),
-    });
-    let json = null; try { json = await res.json(); } catch (_) {}
-    return { status: res.status, body: json };
-  }
-
-  it('401 without teacher auth', async () => {
-    expect((await post({ pubkey: makeDeviceKey().x })).status).toBe(401);
-  });
-  it('400 on an invalid pubkey', async () => {
-    expect((await post({ pubkey: 'garbage' }, { 'x-teacher-secret': 'ok' })).status).toBe(400);
-  });
-  it('200 registers a device key + returns the trust set, cache refreshed', async () => {
-    const dev = makeDeviceKey();
-    const res = await post({ pubkey: dev.x, label: 'Pixel 8' }, { 'x-teacher-secret': 'ok' });
-    expect(res.status).toBe(200);
-    expect(res.body.ok).toBe(true);
-    expect(res.body.pubkeys).toContain(dev.x);
-    expect(getTrustedIssuerPubkeys()).toContain(dev.x);          // in-process cache updated
-    expect(store.map((s) => s.pubkey)).toContain(dev.x);          // persisted
-  });
-
-  async function postRevoke(body, headers = {}) {
-    const res = await fetch(`${baseUrl}/receipts/trusted-issuers/revoke`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json', ...headers }, body: JSON.stringify(body),
-    });
-    let json = null; try { json = await res.json(); } catch (_) {}
-    return { status: res.status, body: json };
-  }
-
-  it('revoke evicts the key from the LIVE trust set immediately (review fix)', async () => {
-    const dev = makeDeviceKey();
-    await post({ pubkey: dev.x }, { 'x-teacher-secret': 'ok' });
+    mountReceipts(app, { db: { listTrustedIssuers: async () => ({ data: [{ pubkey: dev.x }], error: null }) } });
+    await new Promise((r) => setTimeout(r, 0));
+    await new Promise((r) => setTimeout(r, 0));
     expect(getTrustedIssuerPubkeys()).toContain(dev.x);
-    const res = await postRevoke({ pubkey: dev.x }, { 'x-teacher-secret': 'ok' });
-    expect(res.status).toBe(200);
-    expect(res.body.pubkeys).not.toContain(dev.x);              // gone from the returned set
-    expect(getTrustedIssuerPubkeys()).not.toContain(dev.x);     // gone from the live cache (no restart needed)
   });
 
-  it('revoke is teacher-gated', async () => {
-    expect((await postRevoke({ pubkey: makeDeviceKey().x })).status).toBe(401);
-  });
-});
-
-describe('503 when trusted_issuers is unprovisioned', () => {
-  let server, baseUrl;
-  beforeAll(async () => {
+  it('a missing table leaves the trust set unchanged (pre-migration 0026)', async () => {
     const app = express();
-    app.use(express.json());
-    mountReceipts(app, { db: {}, requireTeacher: () => Promise.resolve(true) }); // db has no DAO
-    server = http.createServer(app);
-    await new Promise((r) => server.listen(0, '127.0.0.1', r));
-    baseUrl = `http://127.0.0.1:${server.address().port}`;
-  });
-  afterAll(() => new Promise((r) => server.close(r)));
-
-  it('returns 503 (run migration 0026)', async () => {
-    const res = await fetch(`${baseUrl}/receipts/trusted-issuers`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pubkey: makeDeviceKey().x }),
-    });
-    expect(res.status).toBe(503);
+    const before = getTrustedIssuerPubkeys().slice();
+    mountReceipts(app, { db: { listTrustedIssuers: async () => { throw Object.assign(new Error('relation does not exist'), { code: '42P01' }); } } });
+    await new Promise((r) => setTimeout(r, 0));
+    expect(getTrustedIssuerPubkeys()).toEqual(before);
   });
 });
 

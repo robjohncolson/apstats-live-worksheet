@@ -114,11 +114,10 @@
 </head>
 <body>
 <header>
-  <h1>📊 AP Statistics <a href="teacher-app.html" style="float:right;color:#E5E3D2;opacity:.85;font-size:12px;font-weight:400;text-decoration:none;margin-top:3px">🔑 Teacher</a></h1>
+  <h1>📊 AP Statistics</h1>
   <div class="who" id="who">Not signed in.</div>
   <div class="hdr-row">
     <button id="signin-btn" class="hdr-btn" onclick="openNameFinder()">👤 Sign in</button>
-    <button id="sync-nearby" class="hdr-btn" onclick="syncNearby()">📡 Sync Nearby</button>
   </div>
   <div id="gradepill" style="display:none"></div>
   <div class="who" id="vhint"></div>
@@ -140,31 +139,14 @@
   <div class="fc-body" id="fc-body"><!-- mode picker / cards / result injected here --></div>
 </div>
 
-<!-- offline-config.js is GENERATED into the pack; it sets window.OFFLINE_MODE and,
-     in a --play build, window.PLAY_BUILD + window.MEDIA_BASE_URL. mobile-home isn't in
-     ROOT_FILES (build-android copies it in separately), so it must load this itself.
-     Must be FIRST. On the web it 404s harmlessly (mobile-home is the APK home). -->
+<!-- offline-config.js is GENERATED into an offline pack; it sets window.OFFLINE_MODE.
+     Must be FIRST. On the web it 404s harmlessly. -->
 <script src="offline-config.js" onerror=""></script>
 <script src="roster_config.js" onerror=""></script>
 <script src="roster-client.js" onerror=""></script>
-<!-- ANDROID Phase 5 — Google Play on-demand video (inert unless window.PLAY_BUILD,
-     which offline-config.js sets for a --play build). -->
-<script src="video-ondemand.js" onerror=""></script>
-<script src="video-store.js" onerror=""></script>
-<!-- ANDROID Phase 3 — P2P gossip ("Sync Nearby" on the phone home). Inert on the web
-     (nearby-transport.js only registers window.GossipTransport inside the APK). -->
+<!-- receipt-verify + ledger-store: the post-sign-in ledger pull (offline grade view). -->
 <script src="receipt-verify.js" onerror=""></script>
 <script src="ledger-store.js" onerror=""></script>
-<script src="ledger-gossip.js" onerror=""></script>
-<script src="nearby-transport.js" onerror=""></script>
-<!-- OFFLINE GRADING MESH Phase 1-2 — the student's device signing key + the
-     submissions lane (self-sign raw work, gossip it beside grades). Inert on the
-     web: SecureKeyStore only exists inside the APK. -->
-<script src="receipt-sign.js" onerror=""></script>
-<script src="secure-key.js" onerror=""></script>
-<script src="student-key.js" onerror=""></script>
-<script src="submission-store.js" onerror=""></script>
-<script src="submission-capture.js" onerror=""></script>
 <!-- FLASHCARDS (native) — the shared pure Blooket-flashcard engine + the gradebook
      ledger feeder, so the launcher runs flashcards IN-APP instead of deep-linking to
      the Desk. flashcards.js is byte-pinned to the Desk's inline engine by
@@ -225,9 +207,7 @@
   };
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeVideo(); });
 
-  // ANDROID Phase 5 — Play build: video isn't bundled; resolve via VideoOnDemand and
-  // download-on-demand the first time. Sideload build (no PLAY_BUILD) plays the bundled
-  // file directly, unchanged.
+  // Bottom message bar: sign-in toasts and other short notices.
   var _dlbar = null;
   function dlMsg(msg) {
     if (!_dlbar) {
@@ -239,152 +219,15 @@
   }
   function dlHide() { if (_dlbar) _dlbar.style.display = 'none'; }
 
-  function playVideo(ref, label) {
-    if (!window.PLAY_BUILD || !window.VideoOnDemand) { openVideo(ref, label); return; }
-    window.VideoOnDemand.resolve(ref).then(function (r) {
-      if (r && r.playUri) { openVideo(r.playUri, label); return; }
-      if (r && r.state === 'remote') {
-        if (!r.downloadUrl) { dlMsg('Video host not set yet — worksheets + quiz still work.'); setTimeout(dlHide, 2500); return; }
-        var mb = r.bytes ? ' (' + Math.round(r.bytes / 1e6) + ' MB)' : '';
-        dlMsg('⬇ Downloading ' + (label || 'video') + mb + '…');
-        window.VideoOnDemand.download(ref, function (loaded, total) {
-          if (total) dlMsg('⬇ ' + (label || 'video') + ' — ' + Math.round(100 * loaded / total) + '%');
-        }).then(function (uri) { dlHide(); openVideo(uri, label); })
-          .catch(function (e) { dlMsg('Download failed: ' + (e && e.message || e)); setTimeout(dlHide, 3000); });
-        return;
-      }
-      dlMsg('Video not available.'); setTimeout(dlHide, 2000);
-    }).catch(function () { openVideo(ref, label); });
-  }
+  function playVideo(ref, label) { openVideo(ref, label); }
 
-  // Load the on-demand catalog (Play build only; inert otherwise).
-  if (window.PLAY_BUILD && window.VideoOnDemand) {
-    try { window.VideoOnDemand.loadCatalog('video-catalog.json'); } catch (e) {}
-    // Its own line — must NOT clobber #who (the identity line), which was the bug that
-    // hid the signed-in student's name on the launcher.
-    try { var vh = document.getElementById('vhint'); if (vh) vh.textContent = 'Videos download on first tap. Worksheets + quiz work offline.'; } catch (e) {}
-  }
-
-  // ── ANDROID Phase 3 — Sync Nearby (P2P ledger gossip) ─────────────────────────
+  // Roster service base URL (the post-sign-in ledger pull and other calls).
   function svcUrl() {
     var u = (typeof window.ROSTER_SERVICE_URL === 'string' && window.ROSTER_SERVICE_URL)
       || (typeof window.RAILWAY_ROSTER_URL === 'string' && window.RAILWAY_ROSTER_URL)
       || (typeof window.ROSTER_SERVER_URL === 'string' && window.ROSTER_SERVER_URL) || '';
     return String(u).replace(/\/$/, '');
   }
-  function verifyRow(row) {
-    // Verify-on-ingest for gossiped/QR'd rows: the shared BINDING verifier
-    // (receipt-verify.js) — the signature must cover THIS row's grade fields, not just
-    // "some bytes", or a harvested signature could be re-stapled to a forged score.
-    try {
-      if (!window.ReceiptVerify || typeof ReceiptVerify.verifyLedgerRow !== 'function') return Promise.resolve(false);
-      return Promise.resolve(ReceiptVerify.verifyLedgerRow(row)).catch(function () { return false; });
-    } catch (_) { return Promise.resolve(false); }
-  }
-  var _issuerReg = false;
-  function registerIssuer(base) {
-    if (_issuerReg || !window.ReceiptVerify || !Array.isArray(ReceiptVerify.ISSUERS) || !base || typeof fetch !== 'function') return Promise.resolve();
-    return fetch(base + '/receipts/issuer').then(function (r) { return r && r.ok ? r.json() : null; }).then(function (j) {
-      if (!j || !j.enabled) return;
-      var keys = (j.pubkeys && j.pubkeys.length) ? j.pubkeys : (j.pubkey ? [j.pubkey] : []);
-      // registerIssuerKeys refuses any pubkey already bound to a student (§0.1c
-      // disjointness) — falls back to a raw push if the guarded API isn't present.
-      if (typeof ReceiptVerify.registerIssuerKeys === 'function') {
-        ReceiptVerify.registerIssuerKeys(keys, { name: 'Roster', kind: 'roster' });
-      } else {
-        keys.forEach(function (pk) { if (pk && !ReceiptVerify.ISSUERS.some(function (i) { return i.pubkey === pk; })) ReceiptVerify.ISSUERS.push({ name: 'Roster', pubkey: pk, kind: 'roster' }); });
-      }
-      _issuerReg = true;
-    }).catch(function () {});
-  }
-
-  // OFFLINE GRADING MESH Phase 1 — get-or-generate this student's device key,
-  // register it (authenticated), and sync the class student trust set so gossiped
-  // submissions can be verified. Inert on the web (StudentKey.available()===false).
-  // Fire-and-forget; never blocks navigation or sign-in.
-  function meshKeyBoot() {
-    if (!window.StudentKey || !window.rosterClient) return Promise.resolve();
-    var base = svcUrl();
-    var token = null;
-    try { token = rosterClient.token && rosterClient.token(); } catch (_) {}
-    var p = StudentKey.available() ? StudentKey.ensure(window.rosterClient, base) : Promise.resolve();
-    return p.then(function () { return token ? StudentKey.syncTrustSet(base, token) : null; }).catch(function () {});
-  }
-  window.meshKeyBoot = meshKeyBoot;
-
-  // The submissions-lane verifier (student trust set). Fail-closed like verifyRow.
-  function verifySubRow(row) {
-    try {
-      if (!window.ReceiptVerify || typeof ReceiptVerify.verifySubmissionRow !== 'function') return Promise.resolve(false);
-      return Promise.resolve(ReceiptVerify.verifySubmissionRow(row)).catch(function () { return false; });
-    } catch (_) { return Promise.resolve(false); }
-  }
-  // The submissions lane is live only when the whole mesh-P2 stack is present
-  // (APK: SubmissionStore + verifySubmissionRow + at least one student key synced).
-  function subsLaneReady() {
-    return !!(window.SubmissionStore && window.ReceiptVerify
-      && typeof ReceiptVerify.verifySubmissionRow === 'function'
-      && typeof LedgerGossip.runLanes === 'function');
-  }
-
-  window.syncNearby = function () {
-    if (!window.GossipTransport || !window.LedgerGossip || !window.LedgerStore) {
-      dlMsg('📡 Nearby sync needs the app + Bluetooth on.'); setTimeout(dlHide, 3000); return;
-    }
-    dlMsg('📡 Looking for nearby devices…');
-    var base = svcUrl();
-    registerIssuer(base)
-      .then(function () { return meshKeyBoot(); })
-      .then(function () { return (window.rosterClient && LedgerStore.pull) ? LedgerStore.pull(window.rosterClient, { serverUrl: base }).catch(function () {}) : null; })
-      // Snapshot the grades G-Set ONCE for §0.7 suppression (monotone → a snapshot
-      // is safe). Used for BOTH the offer side (exclude covered) and the ingest
-      // side (reject covered) so the two never disagree within a round.
-      .then(function () { return subsLaneReady() ? LedgerStore.all().catch(function () { return []; }) : Promise.resolve(null); })
-      .then(function (gradesSnapshot) {
-        var gradesLane = {
-          lane: 'grades',
-          getRows: function () { return LedgerStore.all(); },
-          verify: verifyRow,
-          store: LedgerStore
-        };
-        // Two lanes over one Nearby discovery when the submissions stack is live;
-        // else the byte-identical grades-only round (unchanged behavior).
-        if (gradesSnapshot !== null) {
-          var covered = SubmissionStore.coveredKeys(gradesSnapshot);
-          return LedgerGossip.runLanes(window.GossipTransport, {
-            lanes: [gradesLane, {
-              lane: 'subs',
-              getRows: function () {
-                return SubmissionStore.all().then(function (rows) {
-                  return rows.filter(function (r) { return !SubmissionStore.isCovered(r, covered); });
-                });
-              },
-              // §0.7 suppression + §0.4/§5 flood cap, composed per round (one stateful
-              // budget instance): reject covered submissions, bound per-student/-item/-total.
-              verify: SubmissionStore.floodCapVerify(SubmissionStore.suppressingVerify(verifySubRow, covered)),
-              store: SubmissionStore
-            }],
-            durationMs: 45000,
-            onPeer: function () { dlMsg('📡 Connected — syncing…'); }
-          });
-        }
-        return LedgerGossip.runRound(window.GossipTransport, {
-          getRows: gradesLane.getRows,
-          verify: verifyRow,
-          store: LedgerStore,
-          durationMs: 45000,
-          onPeer: function () { dlMsg('📡 Connected — syncing…'); }
-        });
-      })
-      .then(function (r) {
-        if (!r || !r.available) dlMsg('📡 Nearby sync unavailable on this device.');
-        else if (!r.peers) dlMsg('No nearby devices found. Tap Sync on both phones + allow Bluetooth/Nearby.');
-        else dlMsg('✅ Synced with ' + r.peers + ' device' + (r.peers === 1 ? '' : 's') + ' · +' + r.received + ' record' + (r.received === 1 ? '' : 's'));
-        setTimeout(dlHide, 6000);
-      })
-      .catch(function (e) { dlMsg('Sync failed: ' + (e && e.message || e)); setTimeout(dlHide, 4000); });
-  };
-
   // ── Sign-in: diamond-dial name finder (ported from the Desk) ──────────────────
   // Same 4-way narrowing pick as ap_stats_roadmap_square_mode.html's _nf* wall: fetch
   // the class roster (section PeriodX), sort by name, and let the student "turn the
@@ -607,10 +450,8 @@
         try { if (typeof _fcSyncPull === 'function') _fcSyncPull({ force: true }); } catch (_) {}
         closeNameFinder();
         refreshIdentity();
-        // Pull this student's signed ledger so their grades are on-device to gossip.
+        // Pull this student's signed ledger so their grades are on-device (offline grade view).
         try { if (window.LedgerStore && LedgerStore.pull) LedgerStore.pull(window.rosterClient, { serverUrl: svcUrl() }).catch(function () {}); } catch (_) {}
-        // Get-or-generate + register this device's mesh signing key (APK only; inert on web).
-        try { if (window.meshKeyBoot) meshKeyBoot(); } catch (_) {}
         try { loadGrade(); } catch (_) {}   // fetch + show the current grade for the just-signed-in student
         var msg = result.mustChangePassword
           ? '✅ Signed in as ' + (who.realName || r.username) + ' — change your password in the full app.'
@@ -740,10 +581,8 @@
         try { if (typeof _fcSyncPull === 'function') _fcSyncPull({ force: true }); } catch (_) {}
         closeNameFinder();
         refreshIdentity();
-        // Same post-sign-in flow as the password path: pull the ledger, boot the mesh
-        // key (silent, §2.5), show the grade.
+        // Same post-sign-in flow as the password path: pull the ledger, show the grade.
         try { if (window.LedgerStore && LedgerStore.pull) LedgerStore.pull(window.rosterClient, { serverUrl: svcUrl() }).catch(function () {}); } catch (_) {}
-        try { if (window.meshKeyBoot) meshKeyBoot(); } catch (_) {}
         try { loadGrade(); } catch (_) {}
         dlMsg('✅ Welcome, ' + (who.realName || realName) + '! You\'re signed in as ' + (who.username || _suUsername) + '.');
         setTimeout(dlHide, 5000);

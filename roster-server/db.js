@@ -31,7 +31,7 @@ export function createLiveDb() {
 // ── Thin wrapper (accepts any Supabase-compatible client) ─────────────────────
 
 export function createDb(client) {
-  return { insertRoster, findByUsername, findByStudentId, findTeacherUsername, getRoleByStudentId, getSpriteHueByStudentId, getSchoologyUidMap, updatePassword, updateStudent, setRosterStatus, deleteRoster, deletePeerAnswers, updateSpriteHue, updateSchoologyUid, listRoster, getDogeAccount, listDogeAccounts, upsertDogeAccount, ensureDogeAccount, updateDogeField, setDogeAddressProposal, listDogeAddressProposals, approveDogeAddressProposal, rejectDogeAddressProposal, storeWalletCustody, getWalletCustody, auditWalletKeyReveal, deleteWalletCustody, listWalletCustody, insertDogeLedger, listDogeLedger, dogeSpend, updateDogeChain, dogeGift, dogeMark, dogeGiveBack, dogeSell, dogeCoinFlows, dogeGiftedSince, parkKeyBuy, parkKeyGranted, parkKeyRefund, getKeyPurchase, listKeyPurchases, listPendingKeyPurchases, tetrisBetOpen, tetrisBetResolve, tetrisBetRefund, listStaleBets, listSettledBets, upsertReviewMark, listReviewMarksByStudents, listReviewMarksByStudent, reviewAward, snapshotQuarter, listQuarterSnapshot, listQuarterSnapshotsByStudent, addTrustedIssuer, listTrustedIssuers, revokeTrustedIssuer, findStudentKey, insertStudentKey, listStudentKeys, listStudentKeysByStudent, revokeStudentKey, insertSubmissionArchive, listSubmissionArchive };
+  return { insertRoster, findByUsername, findByStudentId, findTeacherUsername, getRoleByStudentId, getSpriteHueByStudentId, getSchoologyUidMap, updatePassword, updateStudent, setRosterStatus, deleteRoster, deletePeerAnswers, updateSpriteHue, updateSchoologyUid, listRoster, getDogeAccount, listDogeAccounts, upsertDogeAccount, ensureDogeAccount, updateDogeField, setDogeAddressProposal, listDogeAddressProposals, approveDogeAddressProposal, rejectDogeAddressProposal, storeWalletCustody, getWalletCustody, auditWalletKeyReveal, deleteWalletCustody, listWalletCustody, insertDogeLedger, listDogeLedger, dogeSpend, updateDogeChain, dogeGift, dogeMark, dogeGiveBack, dogeSell, dogeCoinFlows, dogeGiftedSince, parkKeyBuy, parkKeyGranted, parkKeyRefund, getKeyPurchase, listKeyPurchases, listPendingKeyPurchases, tetrisBetOpen, tetrisBetResolve, tetrisBetRefund, listStaleBets, listSettledBets, upsertReviewMark, listReviewMarksByStudents, listReviewMarksByStudent, reviewAward, snapshotQuarter, listQuarterSnapshot, listQuarterSnapshotsByStudent, listTrustedIssuers };
 
   // Phase 6: look up a single roster row by student_id -- used by /grade to
   // resolve the student's section, and by the Console routes (P3 nudges,
@@ -616,82 +616,8 @@ export function createDb(client) {
   }
 
   // ── Trusted issuers (migration 0026) ──────────────────────────────────────────
-  // A teacher device's registered Ed25519 public key (Phase 4 §3B). Upsert is
-  // idempotent on pubkey (re-registering the same key just refreshes the label).
-  async function addTrustedIssuer({ pubkey, label }) {
-    return client.from('trusted_issuers').upsert([{
-      pubkey,
-      label: label ?? null,
-      revoked: false
-    }], { onConflict: 'pubkey' }).select('*').maybeSingle();
-  }
-
-  // The non-revoked trust set, seeded into receipts.js's cache at boot + on add.
+  // The non-revoked issuer trust set, seeded into receipts.js's cache at boot.
   async function listTrustedIssuers() {
     return client.from('trusted_issuers').select('pubkey').eq('revoked', false);
-  }
-
-  // Revoke a device key (lost/stolen phone). The revoke endpoint re-lists + refreshes
-  // the in-process cache so the key loses authority IMMEDIATELY, not just at restart.
-  async function revokeTrustedIssuer({ pubkey }) {
-    return client.from('trusted_issuers').update({ revoked: true }).eq('pubkey', pubkey).select('*').maybeSingle();
-  }
-
-  // ── Student keys (migration 0027 — the offline-grading mesh's SUBMISSION trust set) ──
-  // Deliberately NOT an upsert (unlike addTrustedIssuer): a pubkey binds to ONE
-  // student forever, and revocation is terminal — re-registering must neither
-  // re-bind nor un-revoke (OFFLINE_GRADING_MESH_SPEC §0.2-0.3, §0.5). The route
-  // layer reads findStudentKey first and only inserts genuinely new keys.
-  async function findStudentKey(pubkey) {
-    return client.from('student_keys').select('*').eq('pubkey', pubkey).maybeSingle();
-  }
-
-  async function insertStudentKey({ pubkey, studentId, label }) {
-    return client.from('student_keys').insert([{
-      pubkey,
-      student_id: studentId,
-      label: label ?? null,
-      revoked: false
-    }]).select('*').maybeSingle();
-  }
-
-  // The full set INCLUDING revoked rows — verifiers need the revoked flag to
-  // reject a stolen key's rows, not just an absence they can't distinguish
-  // from "key not yet synced".
-  async function listStudentKeys() {
-    return client.from('student_keys').select('pubkey, student_id, revoked');
-  }
-
-  async function listStudentKeysByStudent(studentId) {
-    return client.from('student_keys').select('*').eq('student_id', studentId);
-  }
-
-  async function revokeStudentKey({ pubkey }) {
-    return client.from('student_keys')
-      .update({ revoked: true, revoked_at: new Date().toISOString() })
-      .eq('pubkey', pubkey)
-      .select('*')
-      .maybeSingle();
-  }
-
-  // ── Submission archive (migration 0028 — the offline-grading mesh hub reconcile) ──
-  // Append-only, content-addressed by receipt_id. Upsert-do-nothing so re-uploading a
-  // submission is idempotent — the archive NEVER writes a score (§0.10 decoupled).
-  async function insertSubmissionArchive({ receiptId, studentId, source, itemId, response, attempt, recordedAt, receiptCompact }) {
-    return client.from('submission_archive').upsert([{
-      receipt_id:      receiptId,
-      student_id:      studentId,
-      source:          source,
-      item_id:         itemId,
-      response:        response ?? null,
-      attempt:         attempt ?? 1,
-      recorded_at:     recordedAt ?? null,
-      receipt_compact: receiptCompact
-    }], { onConflict: 'receipt_id', ignoreDuplicates: true }).select('receipt_id').maybeSingle();
-  }
-
-  async function listSubmissionArchive(studentIds) {
-    if (!Array.isArray(studentIds) || !studentIds.length) return { data: [], error: null };
-    return client.from('submission_archive').select('*').in('student_id', studentIds);
   }
 }

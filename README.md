@@ -13,7 +13,6 @@ This repository serves The Desk, lesson worksheets, student study tools, teacher
 | Teacher workspace | [teacher-dashboard.html](teacher-dashboard.html), [teacher-classroom.html](teacher-classroom.html), [teacher-roster-console.html](teacher-roster-console.html) |
 | Authentication, ledger, grades and class APIs | [roster-server/server.js](roster-server/server.js), [roster-server/](roster-server/) |
 | Calculator room and multiplayer park | [apstat-park/README.md](apstat-park/README.md) |
-| Offline Android app | [android-app/](android-app/), [ANDROID_PACKET_APP_SPEC.md](ANDROID_PACKET_APP_SPEC.md) |
 
 The public filenames are existing links used by students and other services. Keep those URLs stable while moving implementation into smaller modules.
 

@@ -20,7 +20,7 @@ import {
   loadAnswerKeySy2627,
 } from '../grade-contexts.js';
 import { PHASE3_CONFIG } from '../grade-config.js';
-import { keyVersionHash } from '../grade-answer-key.js';
+import { keyVersionHash } from '../key-version.js';
 import { bootGoldenApp } from './golden/boot.js';
 
 const here = dirname(fileURLToPath(import.meta.url));

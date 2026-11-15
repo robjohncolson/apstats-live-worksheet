@@ -24,7 +24,6 @@
 import { readdirSync, readFileSync, writeFileSync, existsSync, mkdirSync, cpSync, statSync, rmSync } from 'node:fs';
 import { resolve, dirname, join, relative } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { buildCatalog } from './build-video-catalog.mjs';
 
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -34,19 +33,9 @@ const ROOT_FILES = [
   'index.html', 'TOC.html', 'calendar.html', 'start-here.html',
   'ap_stats_roadmap_square_mode.html', 'study_guide_diagnostic.html', 'offline.html',
   'roster_config.js', 'roster-client.js', 'offline-queue.js', 'offline-video.js', 'gradebook-client.js',
-  // ANDROID Phase 2 — on-device ledger merge: the verifier, the shared grade engine
-  // bundle, and the local signed-ledger store (offline grade re-derivation).
+  // On-device ledger merge: the verifier, the shared grade engine bundle, and the
+  // local signed-ledger store (offline grade re-derivation).
   'receipt-verify.js', 'grade-engine.bundle.js', 'ledger-store.js',
-  // ANDROID Phase 3 — P2P gossip: the anti-entropy engine + the native transport bridge.
-  'ledger-gossip.js', 'nearby-transport.js',
-  // ANDROID Phase 4 — on-device teacher app: signing + epoch seal + the key-store bridge.
-  'teacher-app.html', 'receipt-sign.js', 'ledger-seal.js', 'secure-key.js',
-  // OFFLINE GRADING MESH Phase 1-3 — the student's device signing key + the
-  // submissions lane (self-sign raw work, gossip it beside grades) + the teacher
-  // device's grade-from-submission core. Inert on web.
-  'student-key.js', 'submission-store.js', 'submission-capture.js', 'submission-grader.js',
-  // ANDROID Phase 5 — Google Play on-demand video (inert unless window.PLAY_BUILD).
-  'video-ondemand.js', 'video-store.js',
   'railway_client.js', 'railway_config.js', 'roadmap-data.json', 'flashcards.js',
   'sw.js', 'pwa-register.js', 'manifest.webmanifest', 'icon.svg', 'version.json',
 ];
@@ -234,8 +223,7 @@ function main() {
   // The FULL answer key is a cheating surface — it must NEVER ship to a student
   // device. The offline grade re-derivation uses the REDACTED key from
   // /grade/offline-inputs (cached), never these files, and no client page reads them,
-  // so excluding them from data/ closes the leak with no functional loss. The TEACHER
-  // device fetches the full key from the teacher-gated GET /grade/answer-key instead.
+  // so excluding them from data/ closes the leak with no functional loss.
   const KEY_LEAK_FILES = new Set(['answer-key.json', 'worksheet-key.json']);
   const copyInto = (rel) => {
     const src = resolve(REPO, rel);
@@ -248,21 +236,6 @@ function main() {
   // 1. config + launcher first (so injection can reference it)
   writeFileSync(resolve(out, 'offline-config.js'), genOfflineConfig(identity, { now: Date.parse('2026-06-22'), playBuild, mediaBaseUrl }));
 
-  // Phase 5: the on-demand video catalog (what VideoOnDemand downloads per-unit).
-  if (playBuild) {
-    // A Play pack must NOT bundle video (>150 MB cap). Strip any media dir a prior
-    // --keep-media / sideload build left in the output, so the AAB stays the app shell.
-    try { rmSync(resolve(out, 'media'), { recursive: true, force: true }); } catch (_) {}
-    try {
-      const manifestPath = resolve(REPO, 'media/media-manifest.json');
-      const manifest = existsSync(manifestPath) ? JSON.parse(readFileSync(manifestPath, 'utf8')) : { byUrl: {} };
-      const compressed = resolve(REPO, 'media-compressed');
-      const sizeOf = (file) => { const p = resolve(compressed, file); try { return existsSync(p) ? statSync(p).size : null; } catch (_) { return null; } };
-      const videos = buildCatalog(manifest, sizeOf);
-      writeFileSync(resolve(out, 'video-catalog.json'), JSON.stringify({ schema: 'apstats-video-catalog/v1', generatedAt: 0, videos }, null, 0));
-      console.log(`  + video-catalog.json (${videos.length} videos — Play on-demand; host media-compressed/ at --media-base)`);
-    } catch (e) { console.warn('  ⚠ video-catalog gen failed:', e.message); }
-  }
   writeFileSync(resolve(out, 'Start-Offline.cmd'), CMD_LAUNCHER);
   writeFileSync(resolve(out, 'start-offline.sh'), SH_LAUNCHER);
   writeFileSync(resolve(out, 'serve.mjs'), NODE_SERVER);

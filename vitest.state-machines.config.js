@@ -21,7 +21,6 @@ export default defineConfig({
       'tests/desk-progress-lifecycle.test.js',
       'tests/desk-progress-app-module.test.js',
       'tests/activity-level.test.js',
-      'tests/video-ondemand.test.js',
     ],
     minWorkers: 1,
     maxWorkers: 2,

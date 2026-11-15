@@ -48,7 +48,7 @@
       "description": "Live answer-key copy bundled into the roster-server deployment.",
       "inputs": ["curriculum-bank"],
       "regenerate": "node scripts/build-answer-key.mjs",
-      "pinnedBy": ["tests/answer-key.test.js", "roster-server/tests/grade-answer-key.test.js"],
+      "pinnedBy": ["tests/answer-key.test.js"],
       "notes": "Client-facing answer-key routes serve the live document; yearly grading does not."
     },
     {
@@ -60,16 +60,6 @@
       "regenerate": null,
       "pinnedBy": ["golden-master", "manual", "roster-server/tests/grade-contexts.test.js"],
       "notes": "FROZEN. Historical yearly copies are manual and must never be regenerated or overwritten."
-    },
-    {
-      "id": "answer-key-route",
-      "path": "/grade/answer-key",
-      "kind": "external",
-      "description": "Runtime route that serves the live client document rather than the yearly grading freeze.",
-      "inputs": ["answer-key-live-server"],
-      "regenerate": null,
-      "pinnedBy": ["roster-server/tests/grade-answer-key.test.js"],
-      "notes": "Runtime surface implemented by roster-server/grade-answer-key.js."
     },
     {
       "id": "agent-topic-schedule",

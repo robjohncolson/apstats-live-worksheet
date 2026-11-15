@@ -241,7 +241,7 @@
     return { added: added, conflicts: conflicts };
   }
 
-  // stringifyResponse — MUST byte-match receipt-sign.js / roster-server receipts.js
+  // stringifyResponse — MUST byte-match roster-server receipts.js
   // so the submission's `ah` binds the same bytes everywhere.
   /** @param {unknown} value @returns {string} */
   function stringifyResponse(value) {

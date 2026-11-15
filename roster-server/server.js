@@ -25,7 +25,6 @@ import { mountRollup } from './rollup.js';
 import { mountGrade } from './grade.js';
 import { cedRetitleGradebook } from './ced-titles.js';
 import { mountOfflineInputs } from './grade-offline-inputs.js';
-import { mountAnswerKey } from './grade-answer-key.js';
 import { mountTranscript } from './transcript.js';
 import { mountCommits } from './commits.js';
 import { mountMastery } from './mastery.js';
@@ -61,8 +60,6 @@ import { requireTeacher, getTeacherKey } from './teacher-auth.js';
 import { getOpenSections, isOpenSection } from './signup-config.js';
 import { createRateLimiter, createLoginThrottle } from './rate-limit.js';
 import { getReceiptHealth, initReceipts, issueLedgerReceipt, mountReceipts } from './receipts.js';
-import { mountStudentKeys } from './student-keys.js';
-import { mountSubmissions } from './submissions.js';
 import { readFile } from 'fs/promises';
 import { existsSync, readFileSync } from 'fs';
 import { resolve, dirname } from 'path';
@@ -198,16 +195,8 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
   // changes, log req.ip for a known client and set the smallest matching value.
   app.set('trust proxy', 1);
   initReceipts();
-  mountReceipts(app, { db, requireTeacher });
-  // OFFLINE_GRADING_MESH_SPEC §0.1-0.3 — the student SUBMISSION trust set
-  // (authenticated pubkey→sid binding + terminal revocation). 503 until
-  // migration 0027 runs. Disjoint from the issuer trust set by construction.
-  mountStudentKeys(app, { db });
+  mountReceipts(app, { db });
   mountWorksheetDiagnostics(app, { db, store: createLiveDiagnosticsStore() });
-  // OFFLINE_GRADING_MESH_SPEC §4/§0.10 — the hub reconcile: verify + archive raw
-  // student submissions (decoupled from grading, so no competing score). 503 until
-  // migration 0028 runs. Teacher grades reach the ledger via /admin/restore.
-  mountSubmissions(app, { db });
 
   // Per-IP throttle for the un-authed self-signup claim. Generous on purpose: a
   // whole class shares one school NAT, so a low cap would block real students.
@@ -1166,13 +1155,6 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
       verifyToken, ledgerDb, loadAnswerKey: _gradingLoadAnswerKey, lessonSchedule: _sched, eventSchedule: _events, db,
       config: gradeConfig, worksheetBlankCounts: worksheetBlankCounts || null,
       ..._blooketBundle,
-    });
-    // OFFLINE_GRADING_MESH Phase 3b — TEACHER-gated full (unredacted) key so the
-    // teacher device auto-grades gossiped submissions offline (§7.1). Students never
-    // hit this — they get the REDACTED key from /grade/offline-inputs.
-    mountAnswerKey(app, {
-      db, worksheetKey, loadAnswerKey, lessonSchedule: _sched, eventSchedule: _events, config: gradeConfig,
-      worksheetBlankCounts: worksheetBlankCounts || null, ..._blooketBundle,
     });
     mountTranscript(app, {
       verifyToken, ledgerDb, loadAnswerKey: _gradingLoadAnswerKey, lessonSchedule: _sched, eventSchedule: _events, db,

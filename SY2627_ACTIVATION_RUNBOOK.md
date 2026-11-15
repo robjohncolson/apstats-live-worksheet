@@ -30,7 +30,7 @@ Base URL used throughout: `https://roster-production-12c1.up.railway.app` (roste
 
 | # | Step | WHO | Depends on |
 |---|---|---|---|
-| 1 | Migration `0028_submission_archive.sql` | teacher-Supabase | nothing |
+| 1 | ~~Migration `0028_submission_archive.sql`~~ retired with the Android mesh (2026-11); skip | — | — |
 | 2 | Migration `0029_pc_makeup.sql` | teacher-Supabase | nothing |
 | 3 | Migration `0030_quarter_grade_snapshot.sql` | teacher-Supabase | nothing |
 | 4 | Load the PC26 item banks (`load-pc-bank.mjs`) | teacher-local | Step 2 (needs `pc_bank` table) |
@@ -47,40 +47,10 @@ marking-period setup) that has nothing to do with this repo's code.
 
 ---
 
-## Step 1 — Migration `0028_submission_archive.sql`
+## Step 1 — retired
 
-**WHO:** teacher-Supabase
-**File:** `roster-server/migrations/0028_submission_archive.sql`
-
-**What it creates:** the `submission_archive` table — append-only, content-addressed by `receipt_id`
-(re-uploading the same submission is a no-op). Holds the raw, self-signed student SUBMISSIONS that a
-device gossips over the offline mesh, once that device reaches the internet. Two indexes
-(`student_id`, `item_id`) for the teacher audit query. RLS enabled, no policies (service-role only).
-
-**Why it matters:** this is purely a durability/audit record. Per the migration's own header comment,
-archiving is **decoupled from grading** — this table never writes a score and the server can never
-re-grade a submission that already carries a teacher grade. Until this migration runs,
-`POST`/`GET /submissions/archive` both return `503`. `teacher-app.html` already calls
-`POST /submissions/archive` every time a mesh device comes online — today that call silently fails
-(wrapped in a `try/catch`), so nothing breaks by leaving this off, but nothing gets archived either.
-
-**Do this:**
-1. Supabase dashboard → the `curriculum_render` project (`https://bzqbhtrurzzavhqbgqrs.supabase.co` —
-   the same project already used for `ROSTER_SUPABASE_URL`, per `roster-server/README.md` Step 1) →
-   **SQL Editor** → **New query**.
-2. *(Optional sanity check first)* `select to_regclass('public.submission_archive');` — `NULL` means
-   not yet applied. The migration itself is `create table if not exists`, so re-running it is harmless
-   even if you're not sure.
-3. Paste the entire contents of `roster-server/migrations/0028_submission_archive.sql` and click **Run**.
-
-**VERIFY:**
-```bash
-curl -s -H "x-teacher-secret: <TEACHER_KEY>" \
-  "https://roster-production-12c1.up.railway.app/submissions/archive"
-```
-- Before the migration: `{"ok":false,"error":"submission archive not provisioned (run migration 0028)"}` (503)
-- After the migration: `{"ok":true,"submissions":[...]}` (200) — an empty array is fine, it just proves
-  the table and route are live.
+Migration `0028_submission_archive.sql` and its `/submissions/archive` route were removed with the
+Android offline-grading mesh (2026-11). Nothing to run. Do not create the table.
 
 ---
 

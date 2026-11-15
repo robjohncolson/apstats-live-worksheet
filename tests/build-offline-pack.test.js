@@ -67,9 +67,9 @@ describe('build (real, into a temp dir)', () => {
     // identity baked
     expect(readFileSync(resolve(out, 'offline-config.js'), 'utf8')).toContain('offline-abc');
 
-    // the offline-grading-mesh scripts the mobile launcher references are bundled
-    // (else the APK 404s on them) — the deployment-checklist gotcha, guarded here.
-    for (const f of ['student-key.js', 'submission-store.js', 'submission-capture.js', 'submission-grader.js', 'receipt-sign.js', 'secure-key.js']) {
+    // the ledger scripts the mobile launcher references are bundled (else the pack
+    // 404s on them) — the deployment-checklist gotcha, guarded here.
+    for (const f of ['receipt-verify.js', 'ledger-store.js', 'grade-engine.bundle.js']) {
       expect(existsSync(resolve(out, f)), `${f} must be in the pack`).toBe(true);
     }
     // SECURITY: the FULL answer key must NEVER ship to a student device (mesh Phase 3b).

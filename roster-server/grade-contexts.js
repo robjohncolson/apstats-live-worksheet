@@ -14,7 +14,7 @@ import { readFileSync, existsSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { PHASE3_CONFIG } from './grade-config.js';
-import { keyVersionHash } from './grade-answer-key.js';
+import { keyVersionHash } from './key-version.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, '..');

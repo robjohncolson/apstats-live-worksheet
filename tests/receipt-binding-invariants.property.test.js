@@ -16,6 +16,7 @@ import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createContext, runInContext } from 'vm';
+import { TestSigner } from './helpers/test-signer.js';
 import { webcrypto } from 'node:crypto';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -27,8 +28,7 @@ function load() {
     URLSearchParams, location: { search: '', hash: '' },
   });
   runInContext(readFileSync(resolve(repo, 'receipt-verify.js'), 'utf8'), ctx);
-  runInContext(readFileSync(resolve(repo, 'receipt-sign.js'), 'utf8'), ctx);
-  return { RV: win.ReceiptVerify, RS: win.ReceiptSign };
+  return { RV: win.ReceiptVerify, RS: TestSigner };
 }
 
 let RV, RS, privateKey;
