@@ -17,7 +17,7 @@ const day1={t:'U1-Poster',n:'Unit 1 Poster',u:1,kind:'poster'};
 const day2={t:'U1-Poster2',n:'Unit 1 Poster (Day 2)',u:1,kind:'poster',admin:2};
 const unlinked={t:'U5-Poster',n:'Unit 5 Poster',u:5,kind:'poster'};
 // Period B's section-only Unit 2 claim poster (posterDays, U2_CLAIM_POSTER_SPEC.md B1): the generator's cell shape.
-const u2Day=(admin)=>({t:'U2-Poster'+(admin>1?admin:''),n:'Unit 2 Poster'+(admin>1?' (Day '+admin+')':''),u:2,kind:'poster',admin,days:3,sectionOnly:true,due:'',as:''});
+const u2Day=(admin)=>({t:'U2-Poster'+(admin>1?admin:''),n:'Unit 2 Poster'+(admin>1?' (Day '+admin+')':''),u:2,kind:'poster',admin,days:5,sectionOnly:true,due:'',as:''});
 const U2_STUDENT=['u2_poster/pdf/u2_poster_group_sheets_student.pdf','u2_poster/pdf/u2_poster_example_board_demo.pdf','u2_poster/pdf/u2_poster_layouts.pdf','u2_poster/pdf/u2_poster_walk_sheet.pdf'];
 const U2_KEY='u2_poster/pdf/u2_poster_teacher_key.pdf';
 const U2_BLURB='Groups of three. Judge your claim together first: verdict, proof, repair. Then build the poster.';
@@ -62,7 +62,7 @@ describe('Poster-day links',()=>{
    expect(d.querySelector('.poster-teacher-only').textContent).toBe('Teacher only');
   }finally{dom.window.close();}
  });
- it('U2 has four student PDFs, one teacher PDF and its own blurb; days 2 and 3 share the entry',()=>{
+ it('U2 has four student PDFs, one teacher PDF and its own blurb; days 2 to 5 share the entry',()=>{
   const {s}=page(u2Day(1));
   const links=s.POSTER_LINKS['U2-Poster'];
   expect(links.student.map(l=>l.url)).toEqual(U2_STUDENT);
@@ -72,6 +72,8 @@ describe('Poster-day links',()=>{
   expect(links.blurb).toBe(U2_BLURB);
   expect(s.posterLinksFor('U2-Poster2')).toBe(links);
   expect(s.posterLinksFor('U2-Poster3')).toBe(links);
+  expect(s.posterLinksFor('U2-Poster4')).toBe(links);   // Period B's fourth day, Mon 11/16
+  expect(s.posterLinksFor('U2-Poster5')).toBe(links);   // Period B's fifth day, Tue 11/17
   expect(s.posterLinksFor('U1-Poster2')).toBe(s.POSTER_LINKS['U1-Poster']);   // the Unit 1 day-2 tile still maps to Unit 1
   expect(s.POSTER_LINKS['U1-Poster'].blurb).toBeUndefined();
  });

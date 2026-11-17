@@ -25,8 +25,9 @@
 //   posters[newUnit]      = { unit(NEW CED), title, kind:'poster', periods:{B,E} }
 //                            SPARSE: only units with poster tiles (Desk POSTER_UNITS)
 //                            A section-only poster (Desk posterDays) also carries
-//                            days:{B,E} and sectionOnly:true; the period without
-//                            it is null in periods and days.
+//                            days:{B,E} and sectionOnly:true, and its duration is
+//                            {days:{B,E}}, the count per period; the period without
+//                            it is null in periods, days and duration.days.
 //   calendar              = { schoolYear, firstDay, examDate, breaks[],
 //                            meetingDays, quarters, events }
 //
@@ -284,13 +285,17 @@ for (const u of newUnits) {
   if (sectionOnly) {
     const pacingPoster = ['B', 'E'].some((period) => placed[period].some((x) => x.kind === 'poster' && x.u === u && !x.sectionOnly));
     if (pacingPoster) fail(`U${u} poster is both a pacing poster (POSTER_UNITS) and a section-only poster (posterDays)`);
-    const length = [...sectionOnlyCells('B'), ...sectionOnlyCells('E')][0].days;
+    // Each period has its own number of poster days (teacher 2026-11-13: B four, E three).
+    const length = { B: null, E: null };
     const days = { B: null, E: null };
     for (const period of ['B', 'E']) {
       const cells = sectionOnlyCells(period);
       if (!cells.length) continue;
-      // A posterDays date that is a closure or not a meeting day never becomes a tile.
-      if (cells.length !== length) fail(`U${u} section-only poster: ${period} has ${cells.length} of ${length} poster days on the calendar`);
+      // Every cell carries its period's configured count; a posterDays date that is a closure
+      // or not a meeting day never becomes a tile, so the counts differ.
+      const configured = cells[0].days;
+      if (cells.length !== configured) fail(`U${u} section-only poster: ${period} has ${cells.length} of ${configured} poster days on the calendar`);
+      length[period] = configured;
       days[period] = cells.map((x) => x.date);
     }
     posters[String(u)] = {

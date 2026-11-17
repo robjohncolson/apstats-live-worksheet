@@ -1483,6 +1483,18 @@ class TestPerDayBlooketSync(unittest.TestCase):
             self.assertEqual(created[title]["grading_period_id"], "1173889", title)   # MP2
             self.assertEqual(created[title]["category_id"], "CAT_BLOOKET", title)
         self.assertFalse(GROUP_TITLES & set(created))
+        # B's fourth and fifth Unit 2 poster days (Mon 11/16, Tue 11/17, teacher 2026-11-13 and 2026-11-17)
+        # move 2.10 Day 1 to Thu 11/19 and Day 2 to Fri 11/20: Tuesday's sync creates neither.
+        _, ops, _ = self._run("PeriodB", "2026-11-17")
+        created = self._blooket_created(ops)
+        self.assertNotIn("2.10 Day 1 Blooket", created)
+        self.assertNotIn("2.10 Day 2 Blooket", created)
+        _, ops, _ = self._run("PeriodB", "2026-11-19")
+        created = self._blooket_created(ops)
+        self.assertEqual(created["2.10 Day 1 Blooket"]["grading_period_id"], "1173889")
+        self.assertNotIn("2.10 Day 2 Blooket", created)
+        _, ops, _ = self._run("PeriodB", "2026-11-20")
+        self.assertIn("2.10 Day 2 Blooket", self._blooket_created(ops))
 
     def test_b_never_writes_the_retired_group_column(self):
         state = FakeStateStore()
@@ -1509,10 +1521,10 @@ class TestPerDayBlooketSync(unittest.TestCase):
             self.assertNotIn("Beyond the Exam: Geometric distribution Blooket", created)   # 4.12: no class day
             self.assertIn("2.8 Blooket", created)
             self.assertIn("2.9 Blooket", created)
-        # E's three Unit 2 poster days (Fri 11/13, Mon 11/16, Wed 11/18, teacher 2026-11-13) move 2.10 to Fri 11/20.
-        _, ops, _ = self._run("PeriodE", "2026-11-19")
-        self.assertNotIn("2.10 Day 1 Blooket", self._blooket_created(ops))
+        # E's three Unit 2 poster days (Mon 11/16, Wed 11/18, Fri 11/20, after the Fri 11/13 E free day) move 2.10 to Mon 11/23.
         _, ops, _ = self._run("PeriodE", "2026-11-20")
+        self.assertNotIn("2.10 Day 1 Blooket", self._blooket_created(ops))
+        _, ops, _ = self._run("PeriodE", "2026-11-23")
         created = self._blooket_created(ops)
         for title in ("2.10 Day 1 Blooket", "2.10 Day 2 Blooket"):
             self.assertEqual(created[title]["grading_period_id"], "1173889", title)

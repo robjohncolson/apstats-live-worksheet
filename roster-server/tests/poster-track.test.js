@@ -221,8 +221,8 @@ describe('computeGrade reads POSTER-U{n} rows as the posters track', () => {
   });
 });
 
-// U2_CLAIM_POSTER_SPEC.md B4 + B7: B and E each have their own section-only Unit 2 poster days (Desk
-// posterDays: B 11/10, 11/12, 11/13; E 11/16, 11/18, 11/20 after the Fri 11/13 E free day), so the Unit 2 poster is each period's Q2
+// U2_CLAIM_POSTER_SPEC.md B4, B7 + B8: B and E each have their own section-only Unit 2 poster days (Desk
+// posterDays: B 11/10, 11/12, 11/13, 11/16, 11/17; E 11/16, 11/18, 11/20 after the Fri 11/13 E free day), so the Unit 2 poster is each period's Q2
 // poster; unscored, the posters track stays absent, never 0. Read from the bundled
 // data/lesson-schedule.json, exactly as production does.
 describe('the live SY2627 schedule files the Unit 2 poster in Q2 for both periods', () => {

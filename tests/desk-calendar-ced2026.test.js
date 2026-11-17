@@ -15,8 +15,9 @@ const schedulePaths = [
   'roster-server/data/lesson-schedule.json'
 ];
 // Date-column fixture after B_WORK_DAYS_SPEC.md + the 2026-09-18 B Break Day + the two-day Unit 1 Poster (2026-10-07, POSTER_DAYS) + only Unit 1 keeps a poster (2026-10-10, POSTER_UNITS)
-// + B's three section-only Unit 2 poster days 11/10, 11/12, 11/13 (2026-11-06, posterDays, U2_CLAIM_POSTER_SPEC.md); CED labels keep grade identities.
-const scheduleSha256 = '002726792b43b5689a170ffe119a6dfc672e298f73d78c8e6cdb614f0ba52578';
+// + B's three section-only Unit 2 poster days 11/10, 11/12, 11/13 (2026-11-06, posterDays, U2_CLAIM_POSTER_SPEC.md)
+// + B's fourth poster day Mon 11/16 (teacher 2026-11-13) + fifth, Tue 11/17 (teacher 2026-11-17); CED labels keep grade identities.
+const scheduleSha256 = '02732a7c02ac446357a8efc658b60e5ff780074517d7538772c2acdcd599923d';
 function bColumn(bytes) {
   return bytes.toString('utf8').split(/\r?\n/).filter(line => /^\s*"B":/.test(line) && !/^\s*"B": \[\]/.test(line)).join('\n');
 }
@@ -301,11 +302,13 @@ describe('student calendar CED labels', () => {
         expect(visible.get('U' + unit + '-PC1').text).toContain('U' + unit + ' PC 1/2');
       }
       // One poster per quarter (POSTER_UNITS): Unit 1 is the only pacing poster. Unit 2's claim poster is
-      // section-only (posterDays, U2_CLAIM_POSTER_SPEC.md): three tiles per period, day N of 3.
+      // section-only (posterDays, U2_CLAIM_POSTER_SPEC.md): Period B has five tiles, day N of 5 (Mon 11/16 + Tue 11/17, teacher 2026-11-13 and 2026-11-17).
       expect(visible.get('U1-Poster').text).toContain('U1 Poster');
-      expect(visible.get('U2-Poster').text).toContain('U2 Poster 1/3');
-      expect(visible.get('U2-Poster2').text).toContain('U2 Poster 2/3');
-      expect(visible.get('U2-Poster3').text).toContain('U2 Poster 3/3');
+      expect(visible.get('U2-Poster').text).toContain('U2 Poster 1/5');
+      expect(visible.get('U2-Poster2').text).toContain('U2 Poster 2/5');
+      expect(visible.get('U2-Poster3').text).toContain('U2 Poster 3/5');
+      expect(visible.get('U2-Poster4').text).toContain('U2 Poster 4/5');
+      expect(visible.get('U2-Poster5').text).toContain('U2 Poster 5/5');
       for (let unit = 3; unit <= 5; unit += 1) expect(visible.has('U' + unit + '-Poster')).toBe(false);
       expect([...visible.values()].some(cell => /Unit [6-9]|U[6-9]\b/.test(cell.text))).toBe(false);
       const baked = declarationSource('BAKED_REGISTRY', '{', '}');
@@ -321,6 +324,8 @@ describe('student calendar CED labels', () => {
       expect(visible.get('U2-Poster').text).toContain('U2 Poster 1/3');
       expect(visible.get('U2-Poster2').text).toContain('U2 Poster 2/3');
       expect(visible.get('U2-Poster3').text).toContain('U2 Poster 3/3');
+      expect(visible.has('U2-Poster4')).toBe(false);   // B's fourth and fifth days are B's alone
+      expect(visible.has('U2-Poster5')).toBe(false);
       for (let unit = 3; unit <= 5; unit += 1) expect(visible.has('U' + unit + '-Poster')).toBe(false);
     } finally { dom.window.close(); }
   });

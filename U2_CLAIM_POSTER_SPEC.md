@@ -318,3 +318,35 @@ that E has no Unit 2 poster are superseded.
   (01/22), and E 6.10/6.11 (01/11, 01/13) become Q3 lessons (lift-only in Q2). B's Unit 3 PC stays in Q2.
 - The walk-sheet link label on the Desk says "last poster day" instead of "Friday". The kit's printed
   pages still name Period B and B's dates.
+
+### B8. Period B's fourth day (teacher 2026-11-13)
+
+"Monday for B, students will finish the poster ... so it seems these take 4 days (instead of 3)." B's
+`posterDays` gains Mon 11/16: `{2:[[2026,10,10],[2026,10,12],[2026,10,13],[2026,10,16]]}`. Where A3, A6
+and B1 to B7 say three B days or put B's finish and gallery walk on Fri 11/13, this section wins: B
+finishes the posters on Mon 11/16. The Desk labels a poster's last day "Gallery walk", so Monday's tile
+does; whether the walk also runs Monday is the teacher's call (the printed walk sheet says Fri 11/13). Period E keeps its three days (B7) until the teacher
+says otherwise: E's blocks are longer (Mon/Fri 75 min) than B's (55 to 65 min), but Wed 11/18 is an
+early-release day.
+
+- Period E's dates are unchanged. B dates move one meeting: 2.10 Day 1 (4.10) 11/16 -> Tue 11/17, Day 2
+  (4.11) 11/17 -> Thu 11/19, and so on through 8.1 (01/07 -> 01/08). B's Fri 01/08 Work Day absorbs the
+  day, so from Mon 01/11 on B is back on its old dates (Work Days now 10/16, 01/22, 02/05, 02/23, 03/01,
+  03/12). B's Unit 2 PC 11/30+12/01 -> Tue 12/01+Thu 12/03; Units 3 to 5 PCs and B's last review (03/16)
+  are unchanged; nothing changes quarter.
+- Builder: a section-only poster's `duration` is now per period, `{days:{B:4, E:3}}` (no reader
+  outside the tests). Each cell's `days` is its own period's count, so B's tiles read 1/4 to 4/4 and
+  E's 1/3 to 3/3.
+- Schoology: B's "2.10 Day 1 Blooket" column is created on 11/17 and "Day 2" on 11/19 (the Monday
+  11/16 sync creates neither); `PC:U2` is dated 12/01, filed 12/03.
+- AP Classroom (teacher): B's Unit 2 MCQ B and C still open 11/23 and the FRQ 11/24. Nothing grades
+  off those dates (no close date, so the reconcile never zeroes).
+
+### B9. Period B's fifth day (teacher 2026-11-17)
+
+"We're not doing the lesson today, just finishing up the poster instead. 2.10 starts on Thursday." B's
+`posterDays` gains Tue 11/17: `{2:[[2026,10,10],[2026,10,12],[2026,10,13],[2026,10,16],[2026,10,17]]}`.
+B 2.10 Day 1 moves to Thu 11/19 and Day 2 to Fri 11/20; B's Unit 2 PC to Thu 12/03 + Fri 12/04 (the AP
+Classroom registry due date follows to 12/04); B's Unit 3 PC Day 2 to Thu 1/21; B 8.1 (3.14) is taught Mon
+1/11, so its zero date (1/24) falls in Q3. The Jan 22 Work Day absorbs the day; from Jan 25 B is on its old
+dates. Period E is byte-identical.

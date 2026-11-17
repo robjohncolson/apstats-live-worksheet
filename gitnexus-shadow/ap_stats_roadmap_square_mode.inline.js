@@ -11235,7 +11235,10 @@ const SCHEDULE_DEFS = {
            // Section-only poster days, keyed by unit: the same rule as breakDays under a poster tile (nothing placed
            // from pacing, pacing shifts later, E untouched; U2_CLAIM_POSTER_SPEC.md B1). Teacher 2026-11-06, the Unit 2
            // claim posters: "Tuesday, Thursday & then gallery walk on Friday" (BPE walkthrough Thu 11/12).
-           posterDays:{2:[[2026,10,10],[2026,10,12],[2026,10,13]]} },
+           // Teacher 2026-11-13: "Monday for B, students will finish the poster", so a fourth day, Mon 11/16.
+           // Teacher 2026-11-17: "we're not doing the lesson today, just finishing up the poster instead.
+           // 2.10 starts on Thursday", so a fifth day, Tue 11/17; 2.10 starts Thu 11/19.
+           posterDays:{2:[[2026,10,10],[2026,10,12],[2026,10,13],[2026,10,16],[2026,10,17]]} },
       E: { label:"Period E", meetsDays:[1,3,5], doubleDay:3, doubleFrom:[2026,8,16], maxPairsPerWeek:2, videoCapMin:30, videoCapEarlyReleaseMin:20, schoologyCourse:null,
            // A pair day lists at most 3 videos (teacher 2026-11-06: 2.7 + 2.8 put 5 videos on one Friday,
            // "not enough time, or attention span"). Counted from the Desk's RESOURCES list, from this
@@ -24664,7 +24667,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-11-17-8gmz';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-11-17-yywn';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

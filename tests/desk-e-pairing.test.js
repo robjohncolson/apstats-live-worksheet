@@ -8,7 +8,9 @@ describe('E lag-targeted pairing',()=>{
     for(const path of ['data/lesson-schedule.json','roster-server/data/lesson-schedule.json']){
       const column=readFileSync(path,'utf8').split(/\r?\n/).filter(line=>/^\s*"B":/.test(line)&&!/^\s*"B": \[\]/.test(line)).join('\n');
       // 2026-11-06: B's three section-only Unit 2 poster days (posterDays) move B dates only; E is unchanged.
-      expect(createHash('sha256').update(column).digest('hex')).toBe('002726792b43b5689a170ffe119a6dfc672e298f73d78c8e6cdb614f0ba52578');
+      // 2026-11-13: B's fourth poster day (Mon 11/16) moves B's dates once more, through Jan 8; E is unchanged.
+      // 2026-11-17: B's fifth poster day (Tue 11/17) moves them once more, through Jan 22; E is unchanged.
+      expect(createHash('sha256').update(column).digest('hex')).toBe('02732a7c02ac446357a8efc658b60e5ff780074517d7538772c2acdcd599923d');
     }
   });
 });
