@@ -18,7 +18,7 @@ const day2={t:'U1-Poster2',n:'Unit 1 Poster (Day 2)',u:1,kind:'poster',admin:2};
 const unlinked={t:'U5-Poster',n:'Unit 5 Poster',u:5,kind:'poster'};
 // Period B's section-only Unit 2 claim poster (posterDays, U2_CLAIM_POSTER_SPEC.md B1): the generator's cell shape.
 const u2Day=(admin)=>({t:'U2-Poster'+(admin>1?admin:''),n:'Unit 2 Poster'+(admin>1?' (Day '+admin+')':''),u:2,kind:'poster',admin,days:3,sectionOnly:true,due:'',as:''});
-const U2_STUDENT=['u2_poster/pdf/u2_poster_group_sheets_student.pdf','u2_poster/pdf/u2_poster_example_board_demo.pdf','u2_poster/pdf/u2_poster_walk_sheet.pdf'];
+const U2_STUDENT=['u2_poster/pdf/u2_poster_group_sheets_student.pdf','u2_poster/pdf/u2_poster_example_board_demo.pdf','u2_poster/pdf/u2_poster_layouts.pdf','u2_poster/pdf/u2_poster_walk_sheet.pdf'];
 const U2_KEY='u2_poster/pdf/u2_poster_teacher_key.pdf';
 const U2_BLURB='Groups of three. Judge your claim together first: verdict, proof, repair. Then build the poster.';
 function page(today,teacher){
@@ -62,11 +62,11 @@ describe('Poster-day links',()=>{
    expect(d.querySelector('.poster-teacher-only').textContent).toBe('Teacher only');
   }finally{dom.window.close();}
  });
- it('U2 has three student PDFs, one teacher PDF and its own blurb; days 2 and 3 share the entry',()=>{
+ it('U2 has four student PDFs, one teacher PDF and its own blurb; days 2 and 3 share the entry',()=>{
   const {s}=page(u2Day(1));
   const links=s.POSTER_LINKS['U2-Poster'];
   expect(links.student.map(l=>l.url)).toEqual(U2_STUDENT);
-  expect(links.student.map(l=>l.label)).toEqual(['Group sheets — one per group, two pages each','Example poster — the board demo (Claim, Proof, Repair)','Gallery walk sheet — one per student, last poster day']);
+  expect(links.student.map(l=>l.label)).toEqual(['Group sheets — one per group, two pages each','Example poster — the board demo (Claim, Proof, Repair)','Poster layouts — where each part goes, with sentence frames (one page per poster)','Gallery walk sheet — one per student, last poster day']);
   expect(links.teacher.map(l=>l.url)).toEqual([U2_KEY]);
   expect(links.teacher.map(l=>l.label)).toEqual(['Teacher key — answers, run of show, scoring grid, exit tickets']);
   expect(links.blurb).toBe(U2_BLURB);

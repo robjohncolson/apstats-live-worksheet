@@ -10968,6 +10968,7 @@ var POSTER_LINKS = {
         student: [
             { label: 'Group sheets — one per group, two pages each', url: 'u2_poster/pdf/u2_poster_group_sheets_student.pdf' },
             { label: 'Example poster — the board demo (Claim, Proof, Repair)', url: 'u2_poster/pdf/u2_poster_example_board_demo.pdf' },
+            { label: 'Poster layouts — where each part goes, with sentence frames (one page per poster)', url: 'u2_poster/pdf/u2_poster_layouts.pdf' },
             { label: 'Gallery walk sheet — one per student, last poster day', url: 'u2_poster/pdf/u2_poster_walk_sheet.pdf' }
         ],
         teacher: [
@@ -24663,7 +24664,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-11-16-zprn';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-11-17-8gmz';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

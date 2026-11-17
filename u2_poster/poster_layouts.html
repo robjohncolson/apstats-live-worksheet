@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unit 2 Poster Layouts</title>
+<!--
+  Unit 2 claim posters: one layout page per poster (1-6).
+  Shows WHERE each checklist item goes on the big paper, WHO letters it, and a sentence
+  frame for it. Student-safe: no computed value from the answer key appears anywhere,
+  and every judgement is left as a choice "(is / is not)". Only numbers printed on the
+  card itself (the data) appear here.
+  Print: one sheet per poster, letter portrait. pdf/u2_poster_layouts.pdf is printed from this file.
+-->
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  @page { size: letter; margin: 0.4in; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f5f5f5; padding: 0.5rem; color: #111; }
+  .sheet { max-width: 8.5in; margin: 0 auto 0.75rem; background: #fff; border-radius: 8px; padding: 0.6rem 0.75rem; page-break-after: always; break-after: page; }
+  .sheet:last-child { page-break-after: auto; }
+  .top { display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem; margin-bottom: 0.15rem; }
+  .top h1 { font-size: 1.25rem; }
+  .top .tag { font-size: 0.78rem; color: #555; text-align: right; }
+  .lead { font-size: 0.86rem; color: #333; margin-bottom: 0.4rem; }
+  .lead b { color: #c62828; }
+
+  /* The miniature poster */
+  .poster { border: 3px solid #333; border-radius: 6px; padding: 0.45rem; background: #fffdf5; display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; }
+  .zone { border: 2px dashed #888; border-radius: 6px; padding: 0.35rem 0.5rem; background: #fff; break-inside: avoid; }
+  .zone.wide { grid-column: 1 / -1; }
+  .zone h3 { font-size: 0.85rem; display: flex; justify-content: space-between; gap: 0.4rem; margin-bottom: 0.2rem; }
+  .zone p, .zone li { font-size: 0.86rem; line-height: 1.45; }
+  .zone .say { font-size: 0.74rem; color: #555; font-style: italic; margin-top: 0.15rem; }
+  .zone.title { border-style: solid; border-color: #333; text-align: center; }
+  .zone.title p.big { font-size: 1.15rem; font-weight: bold; }
+  .zone.claim { border-color: #c62828; background: #fdecea; }
+  .zone.verdict { border-color: #5e35b1; background: #ede7f6; }
+  .role { font-size: 0.68rem; font-weight: bold; color: #fff; border-radius: 4px; padding: 0.05rem 0.4rem; white-space: nowrap; }
+  .r-tk { background: #1565c0; } .r-vi { background: #2e7d32; } .r-wr { background: #5e35b1; } .r-all { background: #555; }
+  .ck { color: #e65100; font-weight: bold; }
+  .b { display: inline-block; min-width: 2.6em; border-bottom: 1.5px solid #333; }
+  .bw { display: inline-block; min-width: 7em; border-bottom: 1.5px solid #333; }
+  .ch { color: #5e35b1; font-weight: 600; white-space: nowrap; }
+  table.mini { border-collapse: collapse; font-size: 0.78rem; margin: 0.15rem 0; width: 100%; }
+  table.mini th, table.mini td { border: 1px solid #999; padding: 0.12rem 0.3rem; text-align: center; height: 1.25rem; }
+  table.mini th { background: #eee; }
+  table.mini td.l { text-align: left; font-weight: 600; background: #f7f7f7; }
+  .shade { background: #fff3c4 !important; }
+  svg { display: block; margin: 0.15rem auto; max-width: 100%; }
+  .bank { font-size: 0.78rem; margin-top: 0.2rem; }
+  .bank span { display: inline-block; border: 1px solid #5e35b1; border-radius: 10px; padding: 0 0.4rem; margin-right: 0.2rem; }
+  .foot { display: flex; justify-content: space-between; font-size: 0.78rem; color: #333; margin-top: 0.35rem; gap: 0.5rem; }
+  .tips { font-size: 0.78rem; color: #333; margin-top: 0.25rem; }
+  .tips li { margin-left: 1.1rem; }
+  @media print {
+    body { background: #fff; padding: 0; }
+    .sheet { border-radius: 0; margin: 0; max-width: none; padding: 0; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================================================ -->
+<!-- POSTER 1                                                      -->
+<!-- ============================================================ -->
+<section class="sheet">
+  <div class="top"><h1>Poster 1 layout: Who wants to be rich?</h1><span class="tag">Layout + sentence frames · no answers</span></div>
+  <p class="lead">Lay out your big paper like this. Each box is one checklist item (<span class="ck">✓1 to ✓5</span>), and its tag says who letters it. <b>Every blank comes from your own work.</b> Where you see (is / is not), pick one.</p>
+  <div class="poster">
+    <div class="zone title wide"><h3><span>Title</span><span class="role r-all">anyone</span></h3>
+      <p class="big">"Freeze Time people want to be rich"?</p>
+      <p class="say">Turn the claim into a question. Big letters, top of the paper.</p></div>
+    <div class="zone claim wide"><h3><span>The claim, word for word</span><span class="role r-wr">Writer</span></h3>
+      <p>"Freeze Time people are the ones who want to be rich. 26 of them chose Rich, more than any other superpower." · Data: Super Status, 433 students.</p></div>
+
+    <div class="zone"><h3><span><span class="ck">✓1</span> Five "Rich" percents</span><span class="role r-tk">Table Keeper</span></h3>
+      <table class="mini">
+        <tr><th>Superpower</th><th>Rich ÷ row total</th><th>%</th></tr>
+        <tr><td class="l">Fly</td><td><span class="b"></span>/<span class="b"></span></td><td></td></tr>
+        <tr><td class="l">Freeze Time</td><td><span class="b"></span>/<span class="b"></span></td><td></td></tr>
+        <tr><td class="l">Invisibility</td><td><span class="b"></span>/<span class="b"></span></td><td></td></tr>
+        <tr><td class="l">Super Strength</td><td><span class="b"></span>/<span class="b"></span></td><td></td></tr>
+        <tr><td class="l">Telepathy</td><td><span class="b"></span>/<span class="b"></span></td><td></td></tr>
+        <tr><td class="l">All 433 students</td><td><span class="b"></span>/<span class="b"></span></td><td></td></tr>
+      </table>
+      <p>We divide by <span class="bw"></span> because the claim is about <span class="bw"></span> (the given group).</p></div>
+
+    <div class="zone"><h3><span><span class="ck">✓2</span> Segmented bar chart</span><span class="role r-vi">Visual</span></h3>
+      <svg width="300" height="150" viewBox="0 0 300 150" aria-label="Empty segmented bar chart frame">
+        <text x="4" y="12" font-size="9" fill="#555">100%</text><text x="12" y="132" font-size="9" fill="#555">0%</text>
+        <line x1="34" y1="8" x2="34" y2="128" stroke="#333"/><line x1="34" y1="128" x2="230" y2="128" stroke="#333"/>
+        <g fill="none" stroke="#999" stroke-dasharray="3 2">
+          <rect x="42" y="8" width="28" height="120"/><rect x="80" y="8" width="28" height="120"/><rect x="118" y="8" width="28" height="120"/><rect x="156" y="8" width="28" height="120"/><rect x="194" y="8" width="28" height="120"/>
+        </g>
+        <g font-size="8" fill="#555" text-anchor="middle"><text x="56" y="140">Fly</text><text x="94" y="140">Freeze</text><text x="132" y="140">Invis.</text><text x="170" y="140">Strength</text><text x="208" y="140">Telep.</text></g>
+        <g font-size="8" fill="#333"><rect x="240" y="20" width="9" height="9" fill="none" stroke="#333"/><text x="253" y="28">Famous</text>
+          <rect x="240" y="36" width="9" height="9" fill="none" stroke="#333"/><text x="253" y="44">Happy</text>
+          <rect x="240" y="52" width="9" height="9" fill="none" stroke="#333"/><text x="253" y="60">Healthy</text>
+          <rect x="240" y="68" width="9" height="9" fill="none" stroke="#333"/><text x="253" y="76">Rich</text></g>
+      </svg>
+      <p class="say">Every bar reaches 100%. Four segments, the same order in every bar. Percent axis, key, title: "<span class="bw"></span> by superpower".</p></div>
+
+    <div class="zone"><h3><span><span class="ck">✓3</span> Verdict</span><span class="role r-wr">Writer</span></h3>
+      <p>Freeze Time fans chose Rich <span class="b"></span>% of the time. The other four superpowers range from <span class="b"></span>% to <span class="b"></span>%, and all 433 students: <span class="b"></span>%.</p>
+      <p>So Freeze Time fans (do / do not) stand out, because <span class="bw"></span><span class="bw"></span>.</p></div>
+
+    <div class="zone"><h3><span><span class="ck">✓4</span> Repaired claim</span><span class="role r-wr">Writer</span></h3>
+      <p>"Among students who chose <span class="bw"></span>, <span class="b"></span>% want to be Rich, compared with <span class="b"></span>% of <span class="bw"></span>."</p>
+      <p class="say">True, and it uses a percent, never a count.</p></div>
+
+    <div class="zone wide"><h3><span><span class="ck">✓5</span> Association sentence</span><span class="role r-wr">Writer</span></h3>
+      <p>There (is / is not) an association between superpower and status: among <span class="bw"></span> fans, <span class="b"></span>% chose <span class="bw"></span>, but among <span class="bw"></span> fans, <span class="b"></span>% did.</p></div>
+
+    <div class="zone verdict wide"><h3><span>One-sentence verdict (the frame)</span><span class="role r-wr">Writer</span></h3>
+      <p>The claim says <span class="bw"></span>. The number it really depends on is <span class="bw"></span> = <span class="b"></span>. So the claim is (supported / partly supported / not supported) because <span class="bw"></span><span class="bw"></span>.</p>
+      <p class="bank">Use one: <span>given</span><span>denominator</span><span>association</span></p></div>
+  </div>
+  <div class="foot"><span>Names: Table Keeper <span class="bw"></span> · Visual <span class="bw"></span> · Writer <span class="bw"></span></span><span>☐ ☐ ☐ ☐ ☐ all five = E</span></div>
+</section>
+
+<!-- ============================================================ -->
+<!-- POSTER 2                                                      -->
+<!-- ============================================================ -->
+<section class="sheet">
+  <div class="top"><h1>Poster 2 layout: The flipped headline</h1><span class="tag">Layout + sentence frames · no answers</span></div>
+  <p class="lead">Lay out your big paper like this. Each box is one checklist item (<span class="ck">✓1 to ✓5</span>), and its tag says who letters it. <b>Every blank comes from your own work.</b> Where you see (is / is not), pick one.</p>
+  <div class="poster">
+    <div class="zone title wide"><h3><span>Title</span><span class="role r-all">anyone</span></h3>
+      <p class="big">"Fly fans want to be Famous"?</p>
+      <p class="say">Turn the claim into a question. Big letters, top of the paper.</p></div>
+    <div class="zone claim wide"><h3><span>The claim, word for word</span><span class="role r-wr">Writer</span></h3>
+      <p>"Most students who want to be Famous chose Fly. So most students who chose Fly want to be Famous." · Data: Super Status, 433 students.</p></div>
+
+    <div class="zone wide"><h3><span><span class="ck">✓1</span> Both conditional probabilities</span><span class="role r-tk">Table Keeper</span></h3>
+      <p>P(Fly | Famous) = <span class="b"></span>/<span class="b"></span> = <span class="b"></span>%. The given group is <span class="bw"></span>, so the denominator is <span class="b"></span>.</p>
+      <p>P(Famous | Fly) = <span class="b"></span>/<span class="b"></span> = <span class="b"></span>%. The given group is <span class="bw"></span>, so the denominator is <span class="b"></span>.</p></div>
+
+    <div class="zone wide"><h3><span><span class="ck">✓2</span> Two shaded tables</span><span class="role r-vi">Visual</span></h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
+        <div><p class="say" style="font-style:normal"><b>Table A: for P(Fly | Famous)</b>: shade the given group.</p>
+          <table class="mini"><tr><th></th><th>Famous</th><th>Happy</th><th>Healthy</th><th>Rich</th><th>Total</th></tr>
+            <tr><td class="l">Fly</td><td></td><td></td><td></td><td></td><td></td></tr><tr><td class="l">Freeze</td><td></td><td></td><td></td><td></td><td></td></tr><tr><td class="l">Invis.</td><td></td><td></td><td></td><td></td><td></td></tr><tr><td class="l">Strength</td><td></td><td></td><td></td><td></td><td></td></tr><tr><td class="l">Telep.</td><td></td><td></td><td></td><td></td><td></td></tr><tr><td class="l">Total</td><td></td><td></td><td></td><td></td><td></td></tr></table></div>
+        <div><p class="say" style="font-style:normal"><b>Table B: for P(Famous | Fly)</b>: shade the given group.</p>
+          <table class="mini"><tr><th></th><th>Famous</th><th>Happy</th><th>Healthy</th><th>Rich</th><th>Total</th></tr>
+            <tr><td class="l">Fly</td><td></td><td></td><td></td><td></td><td></td></tr><tr><td class="l">Freeze</td><td></td><td></td><td></td><td></td><td></td></tr><tr><td class="l">Invis.</td><td></td><td></td><td></td><td></td><td></td></tr><tr><td class="l">Strength</td><td></td><td></td><td></td><td></td><td></td></tr><tr><td class="l">Telep.</td><td></td><td></td><td></td><td></td><td></td></tr><tr><td class="l">Total</td><td></td><td></td><td></td><td></td><td></td></tr></table></div>
+      </div>
+      <p class="say">Copy the counts from your card. Shade a different group in each table, circle the one cell they share, and label each table with its probability.</p></div>
+
+    <div class="zone"><h3><span><span class="ck">✓3</span> Verdict on each half</span><span class="role r-wr">Writer</span></h3>
+      <p><b>Sentence 1</b> says most Famous students chose Fly. P(Fly | Famous) = <span class="b"></span>%, so "most" is (right / wrong).</p>
+      <p><b>Sentence 2</b> says most Fly students want to be Famous. P(Famous | Fly) = <span class="b"></span>%, so it (does / does not) follow, because <span class="bw"></span>.</p></div>
+
+    <div class="zone"><h3><span><span class="ck">✓4</span> Repaired headline</span><span class="role r-wr">Writer</span></h3>
+      <p>"Of the <span class="b"></span> students who want to be Famous, <span class="b"></span>% chose Fly."</p>
+      <p>"Of the <span class="b"></span> students who chose Fly, <span class="b"></span>% want to be Famous."</p></div>
+
+    <div class="zone wide"><h3><span><span class="ck">✓5</span> A second flipped pair</span><span class="role r-tk">Table Keeper</span> <span class="role r-wr">Writer</span></h3>
+      <p>P(<span class="bw"></span> | <span class="bw"></span>) = <span class="b"></span>/<span class="b"></span> = <span class="b"></span>%, but P(<span class="bw"></span> | <span class="bw"></span>) = <span class="b"></span>/<span class="b"></span> = <span class="b"></span>%.</p>
+      <p>They differ because <span class="bw"></span><span class="bw"></span>. <span class="say">(Look at the two denominators.)</span></p></div>
+
+    <div class="zone verdict wide"><h3><span>One-sentence verdict (the frame)</span><span class="role r-wr">Writer</span></h3>
+      <p>The claim says <span class="bw"></span>. The number it really depends on is <span class="bw"></span> = <span class="b"></span>. So the claim is (supported / partly supported / not supported) because <span class="bw"></span><span class="bw"></span>.</p>
+      <p class="bank">Use one: <span>given</span><span>denominator</span></p></div>
+  </div>
+  <div class="foot"><span>Names: Table Keeper <span class="bw"></span> · Visual <span class="bw"></span> · Writer <span class="bw"></span></span><span>☐ ☐ ☐ ☐ ☐ all five = E</span></div>
+</section>
+
+<!-- ============================================================ -->
+<!-- POSTER 3                                                      -->
+<!-- ============================================================ -->
+<section class="sheet">
+  <div class="top"><h1>Poster 3 layout: Can't happen together, so unrelated?</h1><span class="tag">Layout + sentence frames · no answers</span></div>
+  <p class="lead">Lay out your big paper like this. Each box is one checklist item (<span class="ck">✓1 to ✓5</span>), and its tag says who letters it. <b>Every blank comes from your own work.</b> Where you see (are / are not), pick one.</p>
+  <div class="poster">
+    <div class="zone title wide"><h3><span>Title</span><span class="role r-all">anyone</span></h3>
+      <p class="big">"Never together, so independent"?</p>
+      <p class="say">Turn the claim into a question. Big letters, top of the paper.</p></div>
+    <div class="zone claim wide"><h3><span>The claim, word for word</span><span class="role r-wr">Writer</span></h3>
+      <p>"Nobody who chose Telepathy wants to be Famous: 0 of 68. Since the two never happen together, Telepathy and Famous are independent. One has nothing to do with the other." · Data: Super Status, 433 students.</p></div>
+
+    <div class="zone"><h3><span><span class="ck">✓1</span> The joint probability</span><span class="role r-tk">Table Keeper</span></h3>
+      <p>P(Telepathy and Famous) = <span class="b"></span>/<span class="b"></span> = <span class="b"></span>.</p>
+      <p>This tells us <span class="bw"></span><span class="bw"></span>, so the two events (are / are not) mutually exclusive.</p>
+      <p class="say">Visual: on the big table, shade the Telepathy row and the Famous column; the cell where they cross is this joint.</p></div>
+
+    <div class="zone"><h3><span><span class="ck">✓2</span> The independence test</span><span class="role r-tk">Table Keeper</span></h3>
+      <p>P(Famous) = <span class="b"></span>/<span class="b"></span> = <span class="b"></span>%</p>
+      <p>P(Famous | Telepathy) = <span class="b"></span>/<span class="b"></span> = <span class="b"></span>%</p>
+      <p>These are (equal / not equal), so the events (are / are not) independent.</p></div>
+
+    <div class="zone wide"><h3><span><span class="ck">✓3</span> Verdict with BOTH terms</span><span class="role r-wr">Writer</span></h3>
+      <p>Telepathy and Famous (are / are not) <b>mutually exclusive</b> and (are / are not) <b>independent</b>: knowing a student chose Telepathy (changes / does not change) the chance they want to be Famous, from <span class="b"></span>% to <span class="b"></span>%.</p></div>
+
+    <div class="zone"><h3><span><span class="ck">✓4</span> The proof (2 or 3 sentences)</span><span class="role r-wr">Writer</span></h3>
+      <p>Independence says P(A and B) must equal <span class="bw"></span>.</p>
+      <p>Mutually exclusive says P(A and B) = <span class="b"></span>.</p>
+      <p>When both events can happen, these (can / cannot) both be true, because <span class="bw"></span><span class="bw"></span>.</p></div>
+
+    <div class="zone"><h3><span><span class="ck">✓5</span> Your 2x2 table of 100</span><span class="role r-vi">Visual</span> <span class="role r-tk">TK</span></h3>
+      <table class="mini"><tr><th></th><th>Instrument</th><th>No instrument</th><th>Total</th></tr>
+        <tr><td class="l">Sport</td><td></td><td></td><td></td></tr>
+        <tr><td class="l">No sport</td><td></td><td></td><td></td></tr>
+        <tr><td class="l">Total</td><td></td><td></td><td>100</td></tr></table>
+      <p><b>Check, written under it:</b> P(instrument | sport) = <span class="b"></span>/<span class="b"></span> = <span class="b"></span>% and P(instrument) = <span class="b"></span>/100 = <span class="b"></span>%, so <span class="bw"></span>. "Both" = <span class="b"></span>, so <span class="bw"></span>.</p></div>
+
+    <div class="zone verdict wide"><h3><span>One-sentence verdict (the frame)</span><span class="role r-wr">Writer</span></h3>
+      <p>The claim says <span class="bw"></span>. The number it really depends on is <span class="bw"></span> = <span class="b"></span>. So the claim is (supported / partly supported / not supported) because <span class="bw"></span><span class="bw"></span>.</p>
+      <p class="bank">Use one: <span>mutually exclusive</span><span>independent</span><span>given</span></p></div>
+  </div>
+  <div class="foot"><span>Names: Table Keeper <span class="bw"></span> · Visual <span class="bw"></span> · Writer <span class="bw"></span></span><span>☐ ☐ ☐ ☐ ☐ all five = E</span></div>
+</section>
+
+<!-- ============================================================ -->
+<!-- POSTER 4                                                      -->
+<!-- ============================================================ -->
+<section class="sheet">
+  <div class="top"><h1>Poster 4 layout: Double counted</h1><span class="tag">Layout + sentence frames · no answers</span></div>
+  <p class="lead">Lay out your big paper like this. Each box is one checklist item (<span class="ck">✓1 to ✓5</span>), and its tag says who letters it. <b>Every blank comes from your own work.</b> Where you see (are / are not), pick one.</p>
+  <div class="poster">
+    <div class="zone title wide"><h3><span>Title</span><span class="role r-all">anyone</span></h3>
+      <p class="big">"55.2% read news online or went to college"?</p>
+      <p class="say">Turn the claim into a question. Big letters, top of the paper.</p></div>
+    <div class="zone claim wide"><h3><span>The claim, word for word</span><span class="role r-wr">Writer</span></h3>
+      <p>"P(college grad or internet news) = 693/2500 + 687/2500 = 55.2%. And college grads are no more likely than anyone else to get their news online: only 245/2500 = 9.8% of adults are grads who read news online." · Data: 2,500 adults surveyed.</p></div>
+
+    <div class="zone"><h3><span><span class="ck">✓1</span> Four regions</span><span class="role r-vi">Visual</span></h3>
+      <svg width="290" height="150" viewBox="0 0 290 150" aria-label="Empty Venn diagram frame">
+        <rect x="4" y="4" width="282" height="142" fill="none" stroke="#333"/>
+        <text x="10" y="18" font-size="9" fill="#333">All 2,500 adults</text>
+        <circle cx="112" cy="80" r="52" fill="none" stroke="#1565c0" stroke-width="2"/>
+        <circle cx="178" cy="80" r="52" fill="none" stroke="#2e7d32" stroke-width="2"/>
+        <text x="74" y="36" font-size="9" fill="#1565c0">College grads</text><text x="178" y="36" font-size="9" fill="#2e7d32">Internet news</text>
+        <g font-size="10" fill="#333" text-anchor="middle"><text x="88" y="84">____</text><text x="145" y="84">____</text><text x="202" y="84">____</text><text x="256" y="138">____</text></g>
+        <g font-size="7.5" fill="#777" text-anchor="middle"><text x="88" y="96">grad only</text><text x="145" y="96">both</text><text x="202" y="96">internet only</text><text x="256" y="126">neither</text></g>
+      </svg>
+      <p>Check: <span class="b"></span> + <span class="b"></span> + <span class="b"></span> + <span class="b"></span> = 2,500 ✓</p>
+      <p class="say">Shade the overlap. Show every subtraction next to its region.</p></div>
+
+    <div class="zone"><h3><span><span class="ck">✓2</span> The double count</span><span class="role r-wr">Writer</span> <span class="role r-tk">TK</span></h3>
+      <p>The blog added <span class="b"></span> + <span class="b"></span>. The <span class="b"></span> adults who are <span class="bw"></span> got counted twice, once in each group.</p>
+      <p>Corrected: P(grad or internet) = <span class="bw"></span> = <span class="b"></span>/2,500 = <span class="b"></span>%.</p>
+      <p class="say">Show how you got the corrected count.</p></div>
+
+    <div class="zone wide"><h3><span><span class="ck">✓3</span> The blog's 9.8%</span><span class="role r-wr">Writer</span></h3>
+      <p>The 9.8% is a (joint / conditional) probability: P(<span class="bw"></span>), out of <span class="bw"></span>.</p>
+      <p>"No more likely than anyone else" compares grads with everyone, so it needs P(<span class="bw"></span> | <span class="bw"></span>) set beside P(<span class="bw"></span>).</p></div>
+
+    <div class="zone"><h3><span><span class="ck">✓4</span> The independence test</span><span class="role r-tk">Table Keeper</span> <span class="role r-wr">Writer</span></h3>
+      <p>P(internet | grad) = <span class="b"></span>/<span class="b"></span> = <span class="b"></span>%</p>
+      <p>P(internet) = <span class="b"></span>/<span class="b"></span> = <span class="b"></span>%</p>
+      <p>These are (equal / not equal), so the events (are / are not) independent. <span class="bw"></span> are more likely to get news online.</p></div>
+
+    <div class="zone"><h3><span><span class="ck">✓5</span> What independence predicts</span><span class="role r-tk">Table Keeper</span></h3>
+      <p>Keep 693 grads and 687 internet readers. If the events were independent:</p>
+      <p>"both" = <span class="bw"></span> ≈ <span class="b"></span> people.</p>
+      <p>The survey found 245, about <span class="b"></span> (more / fewer). The gap tells us <span class="bw"></span><span class="bw"></span>.</p></div>
+
+    <div class="zone verdict wide"><h3><span>One-sentence verdict (the frame)</span><span class="role r-wr">Writer</span></h3>
+      <p>The claim says <span class="bw"></span>. The number it really depends on is <span class="bw"></span> = <span class="b"></span>. So the claim is (supported / partly supported / not supported) because <span class="bw"></span><span class="bw"></span>.</p>
+      <p class="bank">Use one: <span>union</span><span>given</span><span>independent</span></p></div>
+  </div>
+  <div class="foot"><span>Names: Table Keeper <span class="bw"></span> · Visual <span class="bw"></span> · Writer <span class="bw"></span></span><span>☐ ☐ ☐ ☐ ☐ all five = E</span></div>
+</section>
+
+<!-- ============================================================ -->
+<!-- POSTER 5                                                      -->
+<!-- ============================================================ -->
+<section class="sheet">
+  <div class="top"><h1>Poster 5 layout: Is the game fair?</h1><span class="tag">Layout + sentence frames · no answers</span></div>
+  <p class="lead">Lay out your big paper like this. Each box is one checklist item (<span class="ck">✓1 to ✓5</span>), and its tag says who letters it. <b>Every blank comes from your own work.</b> Where you see (fair / not fair), pick one.</p>
+  <div class="poster">
+    <div class="zone title wide"><h3><span>Title</span><span class="role r-all">anyone</span></h3>
+      <p class="big">"A FAIR GAME"?</p>
+      <p class="say">Turn the claim into a question. Big letters, top of the paper.</p></div>
+    <div class="zone claim wide"><h3><span>The claim, word for word, and the rules</span><span class="role r-wr">Writer</span></h3>
+      <p>"A FAIR GAME! You win on 2 of every 6 rolls." · Costs $2. Roll a fair die: 6 wins $10, 1 wins $3, anything else wins nothing.</p></div>
+
+    <div class="zone"><h3><span><span class="ck">✓1</span> Distribution of X = net profit</span><span class="role r-tk">Table Keeper</span></h3>
+      <table class="mini">
+        <tr><th>Roll</th><th>6</th><th>1</th><th>2, 3, 4 or 5</th></tr>
+        <tr><td class="l">x (net $)</td><td></td><td></td><td></td></tr>
+        <tr><td class="l">P(x)</td><td></td><td></td><td></td></tr>
+      </table>
+      <p>Sum of P(x) = <span class="b"></span> + <span class="b"></span> + <span class="b"></span> = 1 ✓</p>
+      <p class="say">Net = winnings minus the $2.</p></div>
+
+    <div class="zone"><h3><span><span class="ck">✓2</span> Mean and SD</span><span class="role r-tk">Table Keeper</span></h3>
+      <p>μ<sub>X</sub> = Σ x·P(x) = (<span class="b"></span>)(<span class="b"></span>) + (<span class="b"></span>)(<span class="b"></span>) + (<span class="b"></span>)(<span class="b"></span>) = <span class="b"></span></p>
+      <p>σ<sub>X</sub> = √[ Σ (x − μ<sub>X</sub>)²·P(x) ] = √[ <span class="bw"></span> ] = <span class="b"></span></p>
+      <p class="say">Formula first, then the numbers in it, then the answer.</p></div>
+
+    <div class="zone wide"><h3><span><span class="ck">✓3</span> Both interpretations</span><span class="role r-wr">Writer</span></h3>
+      <p><b>μ:</b> In the long run, a player (wins / loses) about $<span class="b"></span> per game.</p>
+      <p><b>σ:</b> A player's net profit for one game typically varies by about $<span class="b"></span> from the mean of $<span class="b"></span>.</p></div>
+
+    <div class="zone"><h3><span><span class="ck">✓4</span> Verdict</span><span class="role r-wr">Writer</span></h3>
+      <p>The game is (fair / not fair). It favors <span class="bw"></span>, because μ<sub>X</sub> = <span class="b"></span>.</p>
+      <p>"2 of 6 rolls" is the wrong number because it counts <span class="bw"></span>, not <span class="bw"></span>.</p></div>
+
+    <div class="zone"><h3><span><span class="ck">✓5</span> The fix + 20 simulated games</span><span class="role r-tk">TK</span> <span class="role r-vi">Visual</span></h3>
+      <p>Change ONE payout: roll a <span class="b"></span> pays $<span class="b"></span>. New μ<sub>X</sub> = <span class="bw"></span> = 0 ✓</p>
+      <svg width="270" height="58" viewBox="0 0 270 58" aria-label="Empty dotplot axis">
+        <line x1="10" y1="34" x2="260" y2="34" stroke="#333"/>
+        <g stroke="#333"><line x1="10" y1="30" x2="10" y2="38"/><line x1="60" y1="30" x2="60" y2="38"/><line x1="110" y1="30" x2="110" y2="38"/><line x1="160" y1="30" x2="160" y2="38"/><line x1="210" y1="30" x2="210" y2="38"/><line x1="260" y1="30" x2="260" y2="38"/></g>
+        <text x="135" y="52" font-size="9" text-anchor="middle" fill="#333">Net profit per game ($) · your scale</text>
+        <text x="10" y="12" font-size="8.5" fill="#c62828">▼ our average of 20 = ___</text><text x="150" y="12" font-size="8.5" fill="#1565c0">▼ μ<tspan font-size="6">X</tspan> = ___</text>
+      </svg>
+      <p class="say">One dot per game, 20 dots. Mark both averages. They differ because <span class="bw"></span>; with 1,000 games, <span class="bw"></span>.</p></div>
+
+    <div class="zone verdict wide"><h3><span>One-sentence verdict (the frame)</span><span class="role r-wr">Writer</span></h3>
+      <p>The claim says <span class="bw"></span>. The number it really depends on is <span class="bw"></span> = <span class="b"></span>. So the claim is (supported / partly supported / not supported) because <span class="bw"></span><span class="bw"></span>.</p>
+      <p class="bank">Use one: <span>expected value</span><span>long run</span><span>net</span></p></div>
+  </div>
+  <div class="foot"><span>Names: Table Keeper <span class="bw"></span> · Visual <span class="bw"></span> · Writer <span class="bw"></span></span><span>☐ ☐ ☐ ☐ ☐ all five = E</span></div>
+</section>
+
+<!-- ============================================================ -->
+<!-- POSTER 6                                                      -->
+<!-- ============================================================ -->
+<section class="sheet">
+  <div class="top"><h1>Poster 6 layout: Rigged coin?</h1><span class="tag">Layout + sentence frames · no answers</span></div>
+  <p class="lead">Lay out your big paper like this. Each box is one checklist item (<span class="ck">✓1 to ✓5</span>), and its tag says who letters it. <b>Every blank comes from your own work.</b> Where you see (is / is not), pick one.</p>
+  <div class="poster">
+    <div class="zone title wide"><h3><span>Title</span><span class="role r-all">anyone</span></h3>
+      <p class="big">"6 heads in a row means rigged"?</p>
+      <p class="say">Turn the claim into a question. Big letters, top of the paper.</p></div>
+    <div class="zone claim wide"><h3><span>The claim, word for word</span><span class="role r-wr">Writer</span></h3>
+      <p>"I flipped a coin 20 times and got 6 heads in a row. That can't happen with a fair coin. It's rigged."</p></div>
+
+    <div class="zone"><h3><span><span class="ck">✓1</span> The design, 3 sentences</span><span class="role r-wr">Writer</span></h3>
+      <p><b>One flip:</b> randInt(0,1), where <span class="b"></span> = heads and <span class="b"></span> = tails.</p>
+      <p><b>One trial:</b> <span class="bw"></span><span class="bw"></span>.</p>
+      <p><b>We record:</b> <span class="bw"></span><span class="bw"></span>.</p></div>
+
+    <div class="zone"><h3><span><span class="ck">✓2</span> 25 trials</span><span class="role r-tk">Table Keeper</span></h3>
+      <table class="mini">
+        <tr><th>Trial</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th></tr>
+        <tr><td class="l">Longest</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr><th>Trial</th><th>10</th><th>11</th><th>12</th><th>13</th><th>14</th><th>15</th><th>16</th><th>17</th><th>18</th></tr>
+        <tr><td class="l">Longest</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr><th>Trial</th><th>19</th><th>20</th><th>21</th><th>22</th><th>23</th><th>24</th><th>25</th><th></th><th></th></tr>
+        <tr><td class="l">Longest</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      </table></div>
+
+    <div class="zone"><h3><span><span class="ck">✓3</span> Dotplot of the 25</span><span class="role r-vi">Visual</span></h3>
+      <svg width="290" height="70" viewBox="0 0 290 70" aria-label="Empty dotplot axis">
+        <line x1="10" y1="44" x2="280" y2="44" stroke="#333"/>
+        <g stroke="#333"><line x1="10" y1="40" x2="10" y2="48"/><line x1="40" y1="40" x2="40" y2="48"/><line x1="70" y1="40" x2="70" y2="48"/><line x1="100" y1="40" x2="100" y2="48"/><line x1="130" y1="40" x2="130" y2="48"/><line x1="160" y1="40" x2="160" y2="48"/><line x1="190" y1="40" x2="190" y2="48"/><line x1="220" y1="40" x2="220" y2="48"/><line x1="250" y1="40" x2="250" y2="48"/><line x1="280" y1="40" x2="280" y2="48"/></g>
+        <rect x="190" y="6" width="90" height="36" fill="#fff3c4" stroke="#e65100" stroke-dasharray="3 2"/>
+        <text x="235" y="18" font-size="8.5" text-anchor="middle" fill="#e65100">"6 or more"</text>
+        <text x="145" y="62" font-size="9" text-anchor="middle" fill="#333">Longest run of heads in 20 flips · scale covers every value you got</text>
+      </svg>
+      <p class="say">Title it. One dot per trial, 25 dots.</p></div>
+
+    <div class="zone"><h3><span><span class="ck">✓4</span> The estimate</span><span class="role r-tk">Table Keeper</span></h3>
+      <p>P(longest run is 6 or more) ≈ <span class="b"></span>/25 = <span class="b"></span></p>
+      <p class="say">Count the dots in the shaded region.</p></div>
+
+    <div class="zone wide"><h3><span><span class="ck">✓5</span> Verdict + more trials</span><span class="role r-wr">Writer</span></h3>
+      <p>We would believe the coin is rigged only if this happened less than <span class="b"></span>% of the time. Our estimate is <span class="b"></span>, so 6 in a row (is / is not) convincing evidence that the coin is rigged.</p>
+      <p>Our estimate is not exact because <span class="bw"></span>. With 1,000 trials, the estimate would <span class="bw"></span>.</p></div>
+
+    <div class="zone verdict wide"><h3><span>One-sentence verdict (the frame)</span><span class="role r-wr">Writer</span></h3>
+      <p>The claim says <span class="bw"></span>. The number it really depends on is <span class="bw"></span> = <span class="b"></span>. So the claim is (supported / partly supported / not supported) because <span class="bw"></span><span class="bw"></span>.</p>
+      <p class="bank">Use one: <span>simulation</span><span>trial</span><span>estimate</span></p></div>
+  </div>
+  <div class="foot"><span>Names: Table Keeper <span class="bw"></span> · Visual <span class="bw"></span> · Writer <span class="bw"></span></span><span>☐ ☐ ☐ ☐ ☐ all five = E</span></div>
+</section>
+
+</body>
+</html>

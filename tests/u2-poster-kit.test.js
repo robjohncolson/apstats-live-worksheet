@@ -251,7 +251,7 @@ describe('Unit 2 claim-poster kit', () => {
     expect(html).toContain(`P(Fly) = ${pct(rowTotal('Fly'), 433)}`);
   });
 
-  it('the four PDFs the Desk links, and the three Thursday files, are printed and non-trivial', () => {
+  it('the five PDFs the Desk links, and the three Thursday files, are printed and non-trivial', () => {
     for (const [name, minBytes] of [
       ['u2_poster_group_sheets_student.pdf', 150000],
       ['u2_poster_teacher_key.pdf', 200000],   // rewritten without link annotations (they carried local file paths)
@@ -260,10 +260,36 @@ describe('Unit 2 claim-poster kit', () => {
       ['u2_poster_partner_check.pdf', 25000],       // Thursday: one per group
       ['u2_poster_partner_worksheets.pdf', 50000],  // Thursday: page 1 of cards 1, 2, 3 and 6, clean, for the checkers
       ['u2_poster_thursday_screen.pdf', 25000],     // Thursday: the table and the four claims, for the projector
+      ['u2_poster_layouts.pdf', 100000],            // one layout page per poster: zones, roles, sentence frames, no answers
     ]) {
       const size = statSync(resolve(ROOT, 'u2_poster/pdf', name)).size;
       expect(size, name).toBeGreaterThan(minBytes);
       expect(readFileSync(resolve(ROOT, 'u2_poster/pdf', name)).subarray(0, 5).toString()).toBe('%PDF-');
     }
+  });
+});
+
+// u2_poster/poster_layouts.html: the student layout sheets (one per poster). Frames only: no value
+// from the answer key may appear, and every judgement stays a choice the group circles.
+describe('poster layout sheets (no answers)', () => {
+  const layouts = readFileSync(resolve(ROOT, 'u2_poster/poster_layouts.html'), 'utf8');
+  const text = layouts.replace(/<!--[\s\S]*?-->/g, '').replace(/<[^>]+>/g, ' ');
+  it('has one sheet per poster, 1 to 6', () => {
+    for (let n = 1; n <= 6; n++) expect(text).toContain(`Poster ${n} layout:`);
+    expect((layouts.match(/<section class="sheet">/g) || []).length).toBe(6);
+  });
+  it('prints no answer-key value', () => {
+    const answers = [
+      '24.7', '25.7', '22.4', '16.9', '27.9', '23.6',   // card 1: Rich percents
+      '33.3', '5.6',                                    // card 2: the two conditionals
+      '3.5%',                                           // card 3: P(Famous)
+      '448', '442', '1365', '1,365', '1135', '1,135', '45.4', '35.4', '27.5', '24.5', '190', // card 4
+      '0.17', '0.167', '3.67', '13.47', '1/6', '4/6', '2/3', // card 5: distribution, mean, SD
+    ];
+    for (const a of answers) expect(text, a).not.toContain(a);
+  });
+  it('leaves every judgement as a choice', () => {
+    for (const choice of ['(are / are not)', '(equal / not equal)', '(fair / not fair)', '(is / is not)', '(supported / partly supported / not supported)'])
+      expect(text).toContain(choice);
   });
 });
