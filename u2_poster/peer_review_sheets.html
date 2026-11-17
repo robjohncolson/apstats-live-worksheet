@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unit 2 Poster Peer Review</title>
+<!--
+  Peer review for the Unit 2 claim posters, cards 1 to 6, then a teacher tally page.
+  One page per poster: a student gets the page for the poster they review.
+  Three questions, each rated E / P / I (AP scoring words; gradebook map E 115 / P 100 / I 90).
+  The look-fors are the card checklists (the ✓1 to ✓5 boxes on poster_layouts.html), sorted
+  under the three questions as tick boxes.
+  No solved values are printed: other sections are still building these posters.
+  pdf/u2_poster_peer_review.pdf is printed from this file.
+-->
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  @page { size: letter; margin: 0.4in; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f5f5f5; padding: 0.5rem; color: #111; }
+  .sheet { max-width: 8.5in; margin: 0 auto 0.75rem; background: #fff; border: 3px solid #333; border-radius: 8px; padding: 0.4rem 0.75rem; page-break-after: always; break-after: page; }
+  .sheet:last-child { page-break-after: auto; break-after: auto; }
+  .head { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid #333; padding-bottom: 0.2rem; margin-bottom: 0.3rem; gap: 0.5rem; }
+  h1 { font-size: 1.25rem; }
+  .head .num { font-size: 0.9rem; color: #333; text-align: right; }
+  p, li { font-size: 0.93rem; line-height: 1.25; }
+  .who { display: flex; gap: 1.2rem; font-size: 0.93rem; margin: 0.2rem 0 0.3rem; }
+  .who span { flex: 1; border-bottom: 1px solid #555; padding-bottom: 0.1rem; }
+  .claim { background: #fdecea; border: 2px solid #c62828; padding: 0.25rem 0.55rem; margin: 0.25rem 0; }
+  .claim .q { font-style: italic; font-size: 0.95rem; }
+  .rules { border-left: 4px solid #f9a825; padding: 0.15rem 0.6rem; margin: 0.3rem 0 0.15rem; font-size: 0.88rem; }
+  .key { font-size: 0.85rem; margin: 0 0 0.2rem 0.75rem; color: #222; }
+  .q3 { border: 2px solid #1565c0; border-radius: 6px; padding: 0.25rem 0.55rem; margin: 0.25rem 0; page-break-inside: avoid; break-inside: avoid; }
+  .q3 h2 { font-size: 1.02rem; color: #1565c0; display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem; }
+  .rate { font-size: 0.93rem; color: #111; font-weight: 600; white-space: nowrap; }
+  .rate b { display: inline-block; border: 2px solid #333; border-radius: 50%; width: 1.55rem; height: 1.55rem; line-height: 1.3rem; text-align: center; margin-left: 0.25rem; }
+  .ask { font-size: 0.88rem; color: #222; margin: 0.1rem 0; }
+  ul.look { list-style: none; margin: 0.05rem 0 0.15rem 0.2rem; }
+  ul.look li { font-size: 0.86rem; line-height: 1.3; }
+  ul.look li::before { content: '\2610  '; }
+  .levels { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.3rem; margin: 0.15rem 0; }
+  .levels div { font-size: 0.8rem; background: #f3f3f3; border-radius: 4px; padding: 0.18rem 0.35rem; line-height: 1.22; }
+  .levels b { display: block; }
+  .fill { font-size: 0.92rem; margin-top: 0.2rem; }
+  .line { border-bottom: 1px solid #999; height: 1.3rem; }
+  .teacher-strip { margin-top: 0.2rem; border-top: 2px dashed #999; padding-top: 0.2rem; font-size: 0.8rem; color: #555; display: flex; gap: 1rem; }
+  .teacher-strip span { flex: 1; }
+  /* Teacher tally page */
+  .tally h1 { color: #1565c0; }
+  table { width: 100%; border-collapse: collapse; margin: 0.25rem 0 0.4rem; }
+  th, td { border: 1px solid #999; padding: 0.1rem 0.35rem; font-size: 0.8rem; text-align: center; }
+  th { background: #1565c0; color: #fff; }
+  td.l { text-align: left; width: 14%; }
+  td { height: 1.18rem; }
+  .small { font-size: 0.82rem; color: #333; margin-bottom: 0.15rem; }
+  @media print {
+    body { background: #fff; padding: 0; }
+    .sheet { margin: 0; max-width: none; border-radius: 0; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ================= POSTER 1 ================= -->
+<section class="sheet">
+  <div class="head"><h1>Peer review: Poster 1</h1><span class="num">Who wants to be rich?</span></div>
+  <div class="who"><span>Name</span><span>Poster I made: #</span></div>
+  <div class="claim"><p class="q">"Freeze Time people are the ones who want to be rich. 26 of them chose Rich, more than any other superpower."</p></div>
+  <div class="rules"><b>You are the expert on this poster.</b> Before you look at it, fill in the "from my own work" line in question 1 from the data on the card. Then work alone, no talking. Grade the poster, not the people. Every rating needs evidence: a number or a spot on the poster.</div>
+  <p class="key"><b>E</b> = Essentially correct · <b>P</b> = Partially correct · <b>I</b> = Incorrect</p>
+
+  <div class="q3">
+    <h2>1 · The number <span class="rate">Circle: <b>E</b> <b>P</b> <b>I</b></span></h2>
+    <p class="ask">Does the poster find the number the claim really depends on, with the right denominator? Look for:</p>
+    <ul class="look"><li>five "Rich" percents, each with its fraction</li></ul>
+    <div class="levels"><div><b>E</b>All five, fractions and percents, right denominators.</div><div><b>P</b>Right idea, one slip or a missing fraction.</div><div><b>I</b>Counts instead of percents, or wrong denominators.</div></div>
+    <p class="fill">Freeze Time's Rich fraction, <b>from my own work</b>: _____ / _____ = _____ %</p>
+    <p class="fill">The same fraction <b>on the poster</b>: _____ / _____ = _____ % &nbsp; Same? yes / no</p>
+  </div>
+
+  <div class="q3">
+    <h2>2 · The verdict and its proof <span class="rate">Circle: <b>E</b> <b>P</b> <b>I</b></span></h2>
+    <p class="ask">Is the verdict right, and does a full sentence prove it with the number? Look for:</p>
+    <ul class="look"><li>a verdict comparing Freeze Time's percent with the other four groups</li><li>... and with all 433 students</li></ul>
+    <div class="levels"><div><b>E</b>Right verdict, proved with both comparisons, full sentence.</div><div><b>P</b>Right verdict, but only one comparison or no number.</div><div><b>I</b>Wrong verdict, or no verdict.</div></div>
+    <p class="fill">The poster's verdict (circle): supported / partly supported / not supported</p>
+    <p class="fill">I agree / disagree because:</p>
+    <div class="line"></div><div class="line"></div>
+  </div>
+
+  <div class="q3">
+    <h2>3 · The repair and the picture <span class="rate">Circle: <b>E</b> <b>P</b> <b>I</b></span></h2>
+    <p class="ask">Could a classmate who never saw the card learn it from this poster? Look for:</p>
+    <ul class="look"><li>the repaired claim: true, and it uses a percent</li><li>segmented bar chart: five bars, each 100%, four segments, a key, a percent axis</li><li>one association sentence comparing two superpowers' bars</li></ul>
+    <div class="levels"><div><b>E</b>True repair with a percent, chart complete, association sentence.</div><div><b>P</b>Two of the three, or the chart is missing parts.</div><div><b>I</b>No true repair, and the chart is missing or wrong.</div></div>
+    <p class="fill">Where I looked (which part of the poster):</p>
+    <div class="line"></div><div class="line"></div>
+  </div>
+
+  <p class="fill"><b>One thing that would move this poster up a level:</b></p>
+  <div class="line"></div><div class="line"></div>
+  <div class="teacher-strip"><span>Teacher use only: 1 ___ 2 ___ 3 ___</span><span>Photo check: ___</span><span>Final: ___</span></div>
+</section>
+
+<!-- ================= POSTER 2 ================= -->
+<section class="sheet">
+  <div class="head"><h1>Peer review: Poster 2</h1><span class="num">The flipped headline</span></div>
+  <div class="who"><span>Name</span><span>Poster I made: #</span></div>
+  <div class="claim"><p class="q">"Most students who want to be Famous chose Fly. So most students who chose Fly want to be Famous."</p></div>
+  <div class="rules"><b>You are the expert on this poster.</b> Before you look at it, fill in the "from my own work" line in question 1 from the data on the card. Then work alone, no talking. Grade the poster, not the people. Every rating needs evidence: a number or a spot on the poster.</div>
+  <p class="key"><b>E</b> = Essentially correct · <b>P</b> = Partially correct · <b>I</b> = Incorrect</p>
+
+  <div class="q3">
+    <h2>1 · The numbers <span class="rate">Circle: <b>E</b> <b>P</b> <b>I</b></span></h2>
+    <p class="ask">Does the poster find the numbers the claim really depends on, with the right denominators? Look for:</p>
+    <ul class="look"><li>P(Fly | Famous) as a fraction and a percent</li><li>P(Famous | Fly) as a fraction and a percent</li></ul>
+    <div class="levels"><div><b>E</b>Both, fractions and percents, each "given" total as the denominator.</div><div><b>P</b>One right, or both right with a slip.</div><div><b>I</b>Same denominator for both, or the grand total used.</div></div>
+    <p class="fill"><b>From my own work:</b> P(Fly | Famous) = _____ / _____ &nbsp; P(Famous | Fly) = _____ / _____</p>
+    <p class="fill"><b>On the poster:</b> P(Fly | Famous) = _____ / _____ &nbsp; P(Famous | Fly) = _____ / _____ &nbsp; Same? yes / no</p>
+  </div>
+
+  <div class="q3">
+    <h2>2 · The verdict and its proof <span class="rate">Circle: <b>E</b> <b>P</b> <b>I</b></span></h2>
+    <p class="ask">Is each verdict right, and is each proved with its number? Look for:</p>
+    <ul class="look"><li>a verdict on the first half of the headline, with its number</li><li>a verdict on the second half, with its number</li></ul>
+    <div class="levels"><div><b>E</b>Both halves judged right, each with its number, uses "given".</div><div><b>P</b>One half judged well, the other thin.</div><div><b>I</b>Wrong verdict, or no numbers.</div></div>
+    <p class="fill">The poster says (circle): first half is <b>right / wrong</b> · second half <b>follows / doesn't follow</b></p>
+    <p class="fill">I agree / disagree because:</p>
+    <div class="line"></div><div class="line"></div>
+  </div>
+
+  <div class="q3">
+    <h2>3 · The repair and the picture <span class="rate">Circle: <b>E</b> <b>P</b> <b>I</b></span></h2>
+    <p class="ask">Could a classmate who never saw the card learn it from this poster? Look for:</p>
+    <ul class="look"><li>the repaired headline: two true sentences with their numbers</li><li>two copies of the table, each with its "given" group shaded</li><li>a second flipped pair: both probabilities and a one-sentence why</li></ul>
+    <div class="levels"><div><b>E</b>True two-sentence repair, both tables shaded right, second pair.</div><div><b>P</b>Two of the three, or shading unclear.</div><div><b>I</b>No true repair, and no shaded tables.</div></div>
+    <p class="fill">Where I looked (which part of the poster):</p>
+    <div class="line"></div><div class="line"></div>
+  </div>
+
+  <p class="fill"><b>One thing that would move this poster up a level:</b></p>
+  <div class="line"></div><div class="line"></div>
+  <div class="teacher-strip"><span>Teacher use only: 1 ___ 2 ___ 3 ___</span><span>Photo check: ___</span><span>Final: ___</span></div>
+</section>
+
+<!-- ================= POSTER 3 ================= -->
+<section class="sheet">
+  <div class="head"><h1>Peer review: Poster 3</h1><span class="num">Can't happen together, so unrelated?</span></div>
+  <div class="who"><span>Name</span><span>Poster I made: #</span></div>
+  <div class="claim"><p class="q">"Nobody who chose Telepathy wants to be Famous: 0 of 68. Since the two never happen together, Telepathy and Famous are independent. One has nothing to do with the other."</p></div>
+  <div class="rules"><b>You are the expert on this poster.</b> Before you look at it, fill in the "from my own work" line in question 1 from the data on the card. Then work alone, no talking. Grade the poster, not the people. Every rating needs evidence: a number or a spot on the poster.</div>
+  <p class="key"><b>E</b> = Essentially correct · <b>P</b> = Partially correct · <b>I</b> = Incorrect</p>
+
+  <div class="q3">
+    <h2>1 · The numbers <span class="rate">Circle: <b>E</b> <b>P</b> <b>I</b></span></h2>
+    <p class="ask">Does the poster find the numbers the claim really depends on? Look for:</p>
+    <ul class="look"><li>the joint probability P(Telepathy and Famous), and what it tells you</li><li>the independence test, with its two numbers</li></ul>
+    <div class="levels"><div><b>E</b>Joint probability and both test numbers, right denominators.</div><div><b>P</b>The joint is right, the test has a slip or one number.</div><div><b>I</b>No test, or the wrong two numbers compared.</div></div>
+    <p class="fill"><b>From my own work:</b> P(Famous) = _____ / _____ &nbsp; P(Famous | Telepathy) = _____ / _____</p>
+    <p class="fill"><b>On the poster:</b> P(Famous) = _____ / _____ &nbsp; P(Famous | Telepathy) = _____ / _____ &nbsp; Same? yes / no</p>
+  </div>
+
+  <div class="q3">
+    <h2>2 · The verdict and its proof <span class="rate">Circle: <b>E</b> <b>P</b> <b>I</b></span></h2>
+    <p class="ask">Is the verdict right, and is it proved? Look for:</p>
+    <ul class="look"><li>one verdict sentence that uses mutually exclusive AND independent correctly</li><li>the proof (✓4), in two or three sentences</li></ul>
+    <div class="levels"><div><b>E</b>Both words used right in one sentence, and the general proof.</div><div><b>P</b>Right verdict, but one word misused or no proof.</div><div><b>I</b>Wrong verdict, or the two words mixed up.</div></div>
+    <p class="fill">The poster says the events are: mutually exclusive? <b>yes / no</b> &nbsp;&nbsp; independent? <b>yes / no</b></p>
+    <p class="fill">I agree / disagree because:</p>
+    <div class="line"></div><div class="line"></div>
+  </div>
+
+  <div class="q3">
+    <h2>3 · The built table <span class="rate">Circle: <b>E</b> <b>P</b> <b>I</b></span></h2>
+    <p class="ask">Could a classmate learn from it? Many tables are correct, so do not compare it with yours: <b>redo their check</b> with their numbers. Look for:</p>
+    <ul class="look"><li>a 2x2 table of 100 students (Sport, Instrument) that adds up</li><li>"both" is not 0, so the events are not mutually exclusive</li><li>the independence check written under it</li></ul>
+    <div class="levels"><div><b>E</b>Adds to 100, not mutually exclusive, the check works.</div><div><b>P</b>Table fine, check missing or has a slip.</div><div><b>I</b>No table, or the events are not independent.</div></div>
+    <p class="fill">Their check, redone by me: P(instrument | sport) = _____ &nbsp; P(instrument) = _____ &nbsp; Equal? yes / no</p>
+  </div>
+
+  <p class="fill"><b>One thing that would move this poster up a level:</b></p>
+  <div class="line"></div><div class="line"></div>
+  <div class="teacher-strip"><span>Teacher use only: 1 ___ 2 ___ 3 ___</span><span>Photo check: ___</span><span>Final: ___</span></div>
+</section>
+
+<!-- ================= POSTER 4 ================= -->
+<section class="sheet">
+  <div class="head"><h1>Peer review: Poster 4</h1><span class="num">Double counted</span></div>
+  <div class="who"><span>Name</span><span>Poster I made: #</span></div>
+  <div class="claim"><p class="q">"P(college grad or internet news) = 693/2500 + 687/2500 = 55.2%. And college grads are no more likely than anyone else to get their news online: only 245/2500 = 9.8% of adults are grads who read news online."</p></div>
+  <div class="rules"><b>You are the expert on this poster.</b> First fill in "from my own work" in question 1. Work alone, no talking. Grade the poster, not the people. Every rating needs evidence: a number or a spot on the poster.</div>
+  <p class="key"><b>E</b> = Essentially correct · <b>P</b> = Partially correct · <b>I</b> = Incorrect</p>
+
+  <div class="q3">
+    <h2>1 · The numbers <span class="rate">Circle: <b>E</b> <b>P</b> <b>I</b></span></h2>
+    <p class="ask">Does the poster fix the double count? Look for:</p>
+    <ul class="look"><li>four regions (both, grad only, internet only, neither) that add to 2,500</li><li>the people counted twice, named, and the corrected union as a fraction and a percent</li></ul>
+    <div class="levels"><div><b>E</b>Four regions right, and the corrected union as a fraction and a percent.</div><div><b>P</b>One slip: in a region, or in the union.</div><div><b>I</b>The union still adds 693 and 687, or no regions.</div></div>
+    <p class="fill"><b>From my own work:</b> P(grad or internet) = _____ / 2,500 = _____ %</p>
+    <p class="fill"><b>On the poster:</b> P(grad or internet) = _____ / 2,500 = _____ % &nbsp; Same? yes / no</p>
+  </div>
+
+  <div class="q3">
+    <h2>2 · The verdict and its proof <span class="rate">Circle: <b>E</b> <b>P</b> <b>I</b></span></h2>
+    <p class="ask">Is the second sentence judged with the right probability? Look for:</p>
+    <ul class="look"><li>the blog's 9.8% named (joint or conditional?) and the probability it should have used</li><li>the independence test with its two numbers, and a verdict naming who is more likely</li></ul>
+    <div class="levels"><div><b>E</b>Names what 9.8% is, compares the right two numbers, right verdict.</div><div><b>P</b>Right verdict, but the 9.8% point or one number is missing.</div><div><b>I</b>Wrong verdict, or 9.8% used as the test.</div></div>
+    <p class="fill">The poster says the 9.8% is (circle) <b>joint / conditional</b>, and the events <b>are / are not</b> independent.</p>
+    <p class="fill">I agree / disagree because:</p>
+    <div class="line"></div><div class="line"></div>
+  </div>
+
+  <div class="q3">
+    <h2>3 · The picture and the prediction <span class="rate">Circle: <b>E</b> <b>P</b> <b>I</b></span></h2>
+    <p class="ask">Could a classmate who never saw the card learn it from this poster? Look for:</p>
+    <ul class="look"><li>a Venn diagram (or 2x2 table) with the overlap shaded and every region labeled with its count</li><li>the "both" count independence would predict, compared with 245</li></ul>
+    <div class="levels"><div><b>E</b>Picture labeled in full, prediction shown and compared with 245.</div><div><b>P</b>Picture or prediction missing a part.</div><div><b>I</b>No picture, and no prediction.</div></div>
+    <p class="fill">Where I looked (which part of the poster):</p>
+    <div class="line"></div><div class="line"></div>
+  </div>
+
+  <p class="fill"><b>One thing that would move this poster up a level:</b></p>
+  <div class="line"></div><div class="line"></div>
+  <div class="teacher-strip"><span>Teacher use only: 1 ___ 2 ___ 3 ___</span><span>Photo check: ___</span><span>Final: ___</span></div>
+</section>
+
+<!-- ================= POSTER 5 ================= -->
+<section class="sheet">
+  <div class="head"><h1>Peer review: Poster 5</h1><span class="num">Is the game fair?</span></div>
+  <div class="who"><span>Name</span><span>Poster I made: #</span></div>
+  <div class="claim"><p class="q">"A FAIR GAME! You win on 2 of every 6 rolls." &nbsp;(Costs $2. Roll a fair die: 6 wins $10, 1 wins $3, anything else wins nothing.)</p></div>
+  <div class="rules"><b>You are the expert on this poster.</b> Before you look at it, fill in the "from my own work" line in question 1 from the rules on the card. Then work alone, no talking. Grade the poster, not the people. Every rating needs evidence: a number or a spot on the poster.</div>
+  <p class="key"><b>E</b> = Essentially correct · <b>P</b> = Partially correct · <b>I</b> = Incorrect</p>
+
+  <div class="q3">
+    <h2>1 · The numbers <span class="rate">Circle: <b>E</b> <b>P</b> <b>I</b></span></h2>
+    <p class="ask">Does the poster find the number fairness really depends on? Look for:</p>
+    <ul class="look"><li>a table of X = net profit (winnings minus $2), with probabilities that add to 1</li><li>μ<sub>X</sub> and σ<sub>X</sub>, each with its formula and the numbers put in</li></ul>
+    <div class="levels"><div><b>E</b>Right table of net profit, μ and σ right, formulas shown.</div><div><b>P</b>Table right, but a slip in μ or σ, or no formula.</div><div><b>I</b>X is the winnings, not the net, or no μ.</div></div>
+    <p class="fill"><b>From my own work:</b> μ<sub>X</sub> = _______</p>
+    <p class="fill"><b>On the poster:</b> μ<sub>X</sub> = _______ &nbsp; σ<sub>X</sub> = _______ &nbsp; Same μ? yes / no</p>
+  </div>
+
+  <div class="q3">
+    <h2>2 · The verdict and its proof <span class="rate">Circle: <b>E</b> <b>P</b> <b>I</b></span></h2>
+    <p class="ask">Is the verdict right, and is it proved with the mean? Look for:</p>
+    <ul class="look"><li>both interpretations, with "in the long run" and "per game"</li><li>a verdict naming who the game favors, and why "2 of 6" is the wrong number</li></ul>
+    <div class="levels"><div><b>E</b>Right verdict from μ, both interpretations in context, the "2 of 6" point.</div><div><b>P</b>Right verdict, but an interpretation or the "2 of 6" point is missing.</div><div><b>I</b>Wrong verdict, or judged by "2 of 6" alone.</div></div>
+    <p class="fill">The poster says the game (circle): <b>is fair / favors the player / favors the booth</b></p>
+    <p class="fill">I agree / disagree because:</p>
+    <div class="line"></div><div class="line"></div>
+  </div>
+
+  <div class="q3">
+    <h2>3 · The repair and the picture <span class="rate">Circle: <b>E</b> <b>P</b> <b>I</b></span></h2>
+    <p class="ask">Could a classmate learn from it? Many fixes work, so do not compare it with yours: <b>redo their new mean</b> with their payout. Look for:</p>
+    <ul class="look"><li>ONE payout changed, with the new table and the new mean shown</li><li>a dotplot of the 20 simulated games, with their average and μ<sub>X</sub> marked</li></ul>
+    <div class="levels"><div><b>E</b>Fix makes the mean exactly 0, dotplot complete.</div><div><b>P</b>Fix or dotplot missing a part, or a small slip.</div><div><b>I</b>No fix that works, and no dotplot.</div></div>
+    <p class="fill">Their new mean, redone by me: _______ &nbsp; Is it 0? yes / no</p>
+  </div>
+
+  <p class="fill"><b>One thing that would move this poster up a level:</b></p>
+  <div class="line"></div><div class="line"></div>
+  <div class="teacher-strip"><span>Teacher use only: 1 ___ 2 ___ 3 ___</span><span>Photo check: ___</span><span>Final: ___</span></div>
+</section>
+
+<!-- ================= POSTER 6 ================= -->
+<section class="sheet">
+  <div class="head"><h1>Peer review: Poster 6</h1><span class="num">Rigged coin?</span></div>
+  <div class="who"><span>Name</span><span>Poster I made: #</span></div>
+  <div class="claim"><p class="q">"I flipped a coin 20 times and got 6 heads in a row. That can't happen with a fair coin. It's rigged."</p></div>
+  <div class="rules"><b>You are the expert on this poster.</b> Simulations differ, so you will not check their number against yours: you will count their dots. Work alone, no talking. Grade the poster, not the people. Every rating needs evidence: a number or a spot on the poster.</div>
+  <p class="key"><b>E</b> = Essentially correct · <b>P</b> = Partially correct · <b>I</b> = Incorrect</p>
+
+  <div class="q3">
+    <h2>1 · The number <span class="rate">Circle: <b>E</b> <b>P</b> <b>I</b></span></h2>
+    <p class="ask">Does the poster's estimate come from its own data? Look for:</p>
+    <ul class="look"><li>25 trials recorded in a table</li><li>the estimated probability as a fraction of 25 and a decimal</li></ul>
+    <div class="levels"><div><b>E</b>25 trials, and the fraction matches their own dotplot.</div><div><b>P</b>Estimate shown, but a miscount or no decimal.</div><div><b>I</b>No estimate, or it does not come from their trials.</div></div>
+    <p class="fill">Dots at 6 or more on their dotplot, <b>counted by me</b>: _____ / 25 = _____</p>
+    <p class="fill"><b>On the poster:</b> _____ &nbsp; Does the poster's number match their dots? yes / no</p>
+  </div>
+
+  <div class="q3">
+    <h2>2 · The verdict and its proof <span class="rate">Circle: <b>E</b> <b>P</b> <b>I</b></span></h2>
+    <p class="ask">Is the verdict right, and does it use the estimate? Look for:</p>
+    <ul class="look"><li>a stated cutoff for "rare" (like 5%), compared with the estimate</li><li>the verdict, plus one sentence on what more trials would do</li></ul>
+    <div class="levels"><div><b>E</b>Verdict compares the estimate with a stated cutoff for "rare", plus the more-trials sentence.</div><div><b>P</b>Verdict with the estimate, but no cutoff or no more-trials sentence.</div><div><b>I</b>No verdict, or one that ignores the simulation.</div></div>
+    <p class="fill">The poster's verdict (circle): rigged / not convincing evidence</p>
+    <p class="fill">I agree / disagree because:</p>
+    <div class="line"></div><div class="line"></div>
+  </div>
+
+  <div class="q3">
+    <h2>3 · The design and the picture <span class="rate">Circle: <b>E</b> <b>P</b> <b>I</b></span></h2>
+    <p class="ask">Could a classmate repeat this simulation from the poster? Look for:</p>
+    <ul class="look"><li>the design in three sentences: one flip, one trial, what is recorded</li><li>a dotplot of the 25 longest runs, with a scale and a title</li></ul>
+    <div class="levels"><div><b>E</b>All three design parts, and a full dotplot.</div><div><b>P</b>Design or dotplot missing a part.</div><div><b>I</b>No design, and the dotplot is missing or unreadable.</div></div>
+    <p class="fill">Where I looked (which part of the poster):</p>
+    <div class="line"></div><div class="line"></div>
+  </div>
+
+  <p class="fill"><b>One thing that would move this poster up a level:</b></p>
+  <div class="line"></div><div class="line"></div>
+  <div class="teacher-strip"><span>Teacher use only: 1 ___ 2 ___ 3 ___</span><span>Photo check: ___</span><span>Final: ___</span></div>
+</section>
+
+<!-- ================= TEACHER TALLY ================= -->
+<section class="sheet tally">
+  <div class="head"><h1>Teacher tally: peer reviews</h1><span class="num">Points: E = 115 · P = 100 · I = 90</span></div>
+  <p class="small">Copy each checker's three ratings. A rating with no evidence written does not count. <b>Peer rating per question</b> = the middle rating (median) of the checkers; with an even number of checkers, take the lower of the middle two. <b>Final per poster</b> = the three question grades, each 90 to 115, averaged.</p>
+  <table>
+    <tr><th>Poster</th><th>Checker</th><th>1 Numbers</th><th>2 Verdict</th><th>3 Repair / picture</th></tr>
+    <tr><td class="l" rowspan="6"><b>Poster 1</b></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td></tr>
+    <tr><td><i>Peer (median)</i></td><td></td><td></td><td></td></tr><tr><td><i>Teacher / Claude</i></td><td></td><td></td><td></td></tr>
+    <tr><td class="l" rowspan="6"><b>Poster 2</b></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td></tr>
+    <tr><td><i>Peer (median)</i></td><td></td><td></td><td></td></tr><tr><td><i>Teacher / Claude</i></td><td></td><td></td><td></td></tr>
+    <tr><td class="l" rowspan="6"><b>Poster 3</b></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td></tr>
+    <tr><td><i>Peer (median)</i></td><td></td><td></td><td></td></tr><tr><td><i>Teacher / Claude</i></td><td></td><td></td><td></td></tr>
+    <tr><td class="l" rowspan="6"><b>Poster 4</b></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td></tr>
+    <tr><td><i>Peer (median)</i></td><td></td><td></td><td></td></tr><tr><td><i>Teacher / Claude</i></td><td></td><td></td><td></td></tr>
+    <tr><td class="l" rowspan="6"><b>Poster 5</b></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td></tr>
+    <tr><td><i>Peer (median)</i></td><td></td><td></td><td></td></tr><tr><td><i>Teacher / Claude</i></td><td></td><td></td><td></td></tr>
+    <tr><td class="l" rowspan="6"><b>Poster 6</b></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td></tr>
+    <tr><td><i>Peer (median)</i></td><td></td><td></td><td></td></tr><tr><td><i>Teacher / Claude</i></td><td></td><td></td><td></td></tr>
+  </table>
+</section>
+
+</body>
+</html>
