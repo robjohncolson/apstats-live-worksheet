@@ -31,7 +31,7 @@ describe('Unit 2 claim-poster kit', () => {
       'Poster 3 — Can\'t happen together, so unrelated?',
       'Poster 4 — Double counted',
       'Poster 5 — Is the game fair?',
-      'Poster 6 (spare) — Rigged coin?',
+      'Poster 6 — Rigged coin?',
       'Example board — project this first',
       'Gallery walk — Unit 2 claim posters',
     ]) expect(html).toContain(title);
@@ -205,7 +205,7 @@ describe('Unit 2 claim-poster kit', () => {
     // The shared page (screen or table copy): the table and the four claims, word for word as on the cards.
     const shared = html.match(/<section class="sheet teacher screen">([\s\S]*?)<\/section>/)[1];
     const claimOf = (title) => html.slice(html.indexOf(`<h1>${title}</h1>`)).match(/<p class="q">([\s\S]*?)<\/p>/)[1];
-    for (const [n, title] of [[1, 'Poster 1 — Who wants to be rich?'], [2, 'Poster 2 — The flipped headline'], [3, 'Poster 3 — Can\'t happen together, so unrelated?'], [6, 'Poster 6 (spare) — Rigged coin?']]) {
+    for (const [n, title] of [[1, 'Poster 1 — Who wants to be rich?'], [2, 'Poster 2 — The flipped headline'], [3, 'Poster 3 — Can\'t happen together, so unrelated?'], [6, 'Poster 6 — Rigged coin?']]) {
       expect(shared).toContain(`<h3>Poster ${n}</h3><p class="q">${claimOf(title)}</p>`);
     }
     expect(shared).toContain('<tr><td>Telepathy</td><td>0</td><td>49</td><td>0</td><td>19</td><td class="t">68</td></tr>');
