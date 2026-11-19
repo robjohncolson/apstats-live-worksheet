@@ -185,6 +185,80 @@ describe('status.html render (stubbed fetch)', () => {
   });
 });
 
+describe('status.html roster deploy vs CI head (watch path aware)', () => {
+  const DEPLOYED = 'a1b2c3d4e5f60718293a4b5c6d7e8f9012345678';
+  const COMPARE = `https://api.github.com/repos/robjohncolson/apstats-live-worksheet/compare/${DEPLOYED}...${SHA}`;
+  const rosterOf = (tiles) => tiles.find((t) => t.id === 'roster');
+
+  function behind(compareBody) {
+    const bodies = healthy();
+    bodies[URLS.roster].commit = DEPLOYED;
+    if (compareBody !== undefined) bodies[COMPARE] = compareBody;
+    return bodies;
+  }
+
+  it('amber when a roster-server file changed since the deployed commit', async () => {
+    const { tiles, calls } = await boot(behind({ status: 'ahead', ahead_by: 2, files: [{ filename: 'roster-server/server.js' }] }));
+    expect(rosterOf(tiles).state).toBe('amber');
+    expect(rosterOf(tiles).detail).toContain('roster-server/ changed');
+    expect(rosterOf(tiles).detail).toContain('deploy behind CI head c935058');
+    expect(calls).toContain(COMPARE);
+  });
+
+  it('amber when a file was renamed out of roster-server/', async () => {
+    const files = [{ filename: 'lib/x.js', previous_filename: 'roster-server/x.js' }];
+    const { tiles } = await boot(behind({ status: 'ahead', ahead_by: 1, files }));
+    expect(rosterOf(tiles).state).toBe('amber');
+  });
+
+  it('stays green with an info note when only docs changed', async () => {
+    const { tiles } = await boot(behind({ status: 'ahead', ahead_by: 3, files: [{ filename: 'u2_poster/x.md' }] }));
+    expect(rosterOf(tiles).state).toBe('green');
+    expect(rosterOf(tiles).detail).toContain('3 later commit(s), none touch roster-server/');
+  });
+
+  it('fails soft to amber when the compare call is rate limited (404 / thrown)', async () => {
+    for (const body of [undefined, new Error('HTTP 403')]) {
+      const { tiles } = await boot(behind(body));
+      expect(rosterOf(tiles).state).toBe('amber');
+      expect(rosterOf(tiles).detail).toContain('deploy behind CI head c935058');
+    }
+  });
+
+  it('fails soft to amber when the file list is truncated at 300', async () => {
+    const files = Array.from({ length: 300 }, (_, i) => ({ filename: `docs/f${i}.md` }));
+    const { tiles } = await boot(behind({ status: 'ahead', ahead_by: 40, files }));
+    expect(rosterOf(tiles).state).toBe('amber');
+    expect(rosterOf(tiles).detail).toContain('could not check');
+  });
+
+  it('fails soft to amber when the status is not ahead (diverged) or files is missing', async () => {
+    const diverged = await boot(behind({ status: 'diverged', files: [{ filename: 'docs/a.md' }] }));
+    expect(rosterOf(diverged.tiles).state).toBe('amber');
+    const noFiles = await boot(behind({ status: 'ahead', ahead_by: 1 }));
+    expect(rosterOf(noFiles.tiles).state).toBe('amber');
+  });
+
+  it('makes exactly one extra call when commits differ, none when equal', async () => {
+    const differ = await boot(behind({ status: 'ahead', ahead_by: 1, files: [] }));
+    expect(differ.calls.length).toBe(Object.keys(URLS).length + 1);
+    expect(differ.calls.filter((u) => u.includes('/compare/')).length).toBe(1);
+    const equal = await boot(healthy());
+    expect(equal.calls.length).toBe(Object.keys(URLS).length);
+  });
+
+  it('compareUrl rejects non-hex input and makes no fetch', async () => {
+    const bodies = healthy();
+    bodies[URLS.roster].commit = 'abc/../x';
+    const { dom, tiles, calls } = await boot(bodies);
+    expect(dom.window.StatusPage.compareUrl('abc/../x', SHA)).toBeNull();
+    expect(dom.window.StatusPage.compareUrl(SHA, 'zz')).toBeNull();
+    expect(dom.window.StatusPage.compareUrl(DEPLOYED, SHA)).toBe(COMPARE);
+    expect(calls.length).toBe(Object.keys(URLS).length);
+    expect(rosterOf(tiles).state).toBe('amber');
+  });
+});
+
 describe('status.html nightly-job tiles (roster /health jobs)', () => {
   const byId = (tiles) => Object.fromEntries(tiles.map((t) => [t.id, t]));
 

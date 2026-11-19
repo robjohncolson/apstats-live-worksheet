@@ -121,7 +121,7 @@
       <summary>How the colours are decided</summary>
       <ul>
         <li><strong>Green</strong>: the endpoint answered, reports itself healthy, and nothing is lagging.</li>
-        <li><strong>Amber</strong>: it answered, but something needs a look (persist failures, degraded storage, CI still running, a mirror behind GH Pages, a deploy behind the last green CI).</li>
+        <li><strong>Amber</strong>: it answered, but something needs a look (persist failures, degraded storage, CI still running, a mirror behind GH Pages, a roster-server deploy behind the last green CI). roster-server only redeploys when a push changes <code>roster-server/</code>, so a deployed commit behind CI head is amber only if a commit since then touched <code>roster-server/</code> (or GitHub's compare API could not be read); docs-only pushes leave it green.</li>
         <li><strong>Red</strong>: it did not answer, answered an error, or CI failed.</li>
         <li><strong>Ledger snapshot</strong> and <strong>PC reconcile</strong> are nightly jobs on the teacher's machine. Each one reports its last run to roster-server, which keeps it in memory only: right after a roster deploy they read "unknown" (amber) until the job runs again.</li>
         <li>Hover a tile's light for the exact rule. "Age" is how old the service's own timestamp is; "checked" is when this page fetched it.</li>
@@ -152,6 +152,42 @@
   }
   function githubLink(url) { return String(url || '').indexOf('https://github.com/') === 0 ? esc(url) : null; }
 
+  // ── Did a commit since the deployed one touch roster-server/? ──────────────
+  // Railway only redeploys roster-server when a push changes roster-server/, so a deployed
+  // commit behind CI head is normal after a docs-only push. One compare call tells them apart.
+  var COMPARE_BASE = 'https://api.github.com/repos/robjohncolson/apstats-live-worksheet/compare/';
+  var SHA_PATTERN = /^[0-9a-f]{7,40}$/i;
+  var COMPARE_FILE_CAP = 300; // GitHub truncates the compare file list here
+
+  // Returns null unless both SHAs are plain hex, so nothing odd ever reaches the URL.
+  function compareUrl(base, head) {
+    if (!SHA_PATTERN.test(String(base))) return null;
+    if (!SHA_PATTERN.test(String(head))) return null;
+    return COMPARE_BASE + base + '...' + head;
+  }
+
+  function touchesRoster(file) {
+    if (!file) return false;
+    return String(file.filename || '').indexOf('roster-server/') === 0 ||
+      String(file.previous_filename || '').indexOf('roster-server/') === 0;
+  }
+
+  // { known, touched, files, commits }. known:false = fail soft (could not tell).
+  function rosterChangeSince(compare) {
+    var unknown = { known: false, touched: false, files: 0, commits: 0 };
+    if (!compare || !compare.ok || !compare.data) return unknown;
+    var data = compare.data;
+    if (data.status !== 'ahead') return unknown;
+    if (!Array.isArray(data.files)) return unknown;
+    if (data.files.length >= COMPARE_FILE_CAP) return unknown;
+    return {
+      known: true,
+      touched: data.files.some(touchesRoster),
+      files: data.files.length,
+      commits: num(data.ahead_by) !== null ? data.ahead_by : (num(data.total_commits) !== null ? data.total_commits : 0)
+    };
+  }
+
   // ── Colour rules: each returns { state, rule, value, detail, at } ──────────
   // `rule` is the human sentence shown in the light's title attribute.
 
@@ -161,14 +197,28 @@
     var worker = frq.worker || {};
     var storage = frq.storage || {};
     var rule = 'Green: ok:true, persistFailures 0, FRQ storage not degraded' +
-      (ctx.ciSha ? ', deployed commit = last CI head' : '') +
-      '. Amber: persistFailures > 0, degraded storage, or commit behind CI. Red: no answer or ok:false.';
+      (ctx.ciSha ? ', and the deployed commit = last CI head or the commits since it touch no roster-server/ file' : '') +
+      '. Amber: persistFailures > 0, degraded storage' +
+      (ctx.ciSha ? ', or a commit since the deployed one changed roster-server/ (or the GitHub compare API could not be read and the commit is behind CI)' : ', or commit behind CI') +
+      '. Red: no answer or ok:false.';
     var state = 'green';
     var notes = [];
     if (data.ok !== true) { state = 'red'; notes.push('ok is not true'); }
     if (pf === null || pf > 0) { state = (state === 'red') ? 'red' : 'amber'; notes.push('persistFailures ' + (pf === null ? 'missing' : pf)); }
     if (storage.degraded) { state = (state === 'red') ? 'red' : 'amber'; notes.push('FRQ storage degraded' + (storage.errorCode ? ' (' + esc(storage.errorCode) + ')' : '')); }
-    if (ctx.ciSha && data.commit && ctx.ciSha !== data.commit) { state = (state === 'red') ? 'red' : 'amber'; notes.push('deploy behind CI head ' + esc(shortSha(ctx.ciSha))); }
+    if (ctx.ciSha && data.commit && ctx.ciSha !== data.commit) {
+      var change = rosterChangeSince(ctx.compare);
+      var head = esc(shortSha(ctx.ciSha));
+      if (!change.known) {
+        state = (state === 'red') ? 'red' : 'amber';
+        notes.push('deploy behind CI head ' + head + ' (could not check which files changed)');
+      } else if (change.touched) {
+        state = (state === 'red') ? 'red' : 'amber';
+        notes.push('roster-server/ changed since the deployed commit; deploy behind CI head ' + head);
+      } else {
+        notes.push(change.commits + ' later commit(s), none touch roster-server/ (watch path skipped the deploy)');
+      }
+    }
     return {
       state: state, rule: rule,
       value: 'commit ' + esc(shortSha(data.commit)),
@@ -385,6 +435,14 @@
     return Promise.all(TILES.map(function (t) {
       return fetchSafe(t.url).then(function (r) { results[t.id] = r; });
     })).then(function () {
+      // Deployed commit differs from CI head: ONE extra call to see whether roster-server/ changed.
+      var ciHead = results.ci.ok ? judgeCi(results.ci.data).headSha : null;
+      var deployed = (results.roster.ok && results.roster.data) ? results.roster.data.commit : null;
+      if (!ciHead || !deployed || ciHead === deployed) return null;
+      var url = compareUrl(deployed, ciHead);
+      if (!url) return null;
+      return fetchSafe(url).then(function (r) { results.compare = r; });
+    }).then(function () {
       now = Date.now();
       var ci = results.ci.ok ? judgeCi(results.ci.data) : null;
       var ciSha = ci ? ci.headSha : null;
@@ -405,7 +463,7 @@
       }
 
       var tiles = [
-        build(TILES[0], results.roster.ok ? judgeHealthServer('roster', results.roster.data, { ciSha: ciSha }) : null),
+        build(TILES[0], results.roster.ok ? judgeHealthServer('roster', results.roster.data, { ciSha: ciSha, compare: results.compare || null }) : null),
         build(TILES[1], results.cr.ok ? judgeCr(results.cr.data) : null),
         build(TILES[2], results.a2.ok ? judgeHealthServer('a2', results.a2.data, {}) : null),
         build(TILES[3], results.pages.ok ? judgePages(results.pages.data) : null),
@@ -423,6 +481,7 @@
     URLS: { roster: ROSTER_URL, cr: CR_URL, a2: A2_URL, pages: PAGES_URL, vercel: VERCEL_URL, ci: CI_URL },
     judgeHealthServer: judgeHealthServer, judgeCr: judgeCr, judgePages: judgePages, judgeVercel: judgeVercel, judgeCi: judgeCi,
     judgeSnapshot: judgeSnapshot, judgePcReconcile: judgePcReconcile,
+    compareUrl: compareUrl, rosterChangeSince: rosterChangeSince,
     ageText: ageText, load: load
   };
 
