@@ -581,19 +581,37 @@ def resolve_points_of(part: str, cfg: dict, text: str, rows: dict, warnings: lis
 
 
 # "Unit 1 Progress Check: MCQ Part B" / "Unit 1 Progress Check: FRQ" (the page title line)
-PAGE_TITLE_RE = re.compile(r"Unit\s+(\d+)\s+Progress Check:\s*(?:MCQ\s+Part\s+([A-Z])\b|(FRQ)\b)")
+# Every captured page carries it as line 4, after "RESOURCES & ASSIGNMENTS". Tolerant of case,
+# a missing colon, "Personal" and a missing "MCQ"; searched in the page head only, so a list of
+# other assignments further down can never be read as this page's title.
+PAGE_TITLE_RE = re.compile(r"Unit\s+(\d+)\s+(?:Personal\s+)?Progress\s+Check\s*:?\s*(?:MCQ\s*)?"
+                           r"(?:(FRQ)\b|Part\s+([A-Z])\b)", re.IGNORECASE)
+PAGE_TITLE_HEAD_LINES = 40
 
 
-def page_mismatch(entry: dict, part: str, text: str):
+def page_title(text: str):
+    """(unit, part) from the "Unit N Progress Check: MCQ Part X" / "...: FRQ" title, or None."""
+    head = "\n".join((text or "").splitlines()[:PAGE_TITLE_HEAD_LINES])
+    title = PAGE_TITLE_RE.search(head)
+    if not title:
+        return None
+    part = "FRQ" if title.group(2) else title.group(3).upper()
+    return int(title.group(1)), part
+
+
+def page_mismatch(entry: dict, part: str, text: str, require_title: bool = False):
     """Why this page text cannot be the entry's part, or None.
 
-    Two independent checks: the page's own title names another unit or part, or the
-    page's total disagrees with the registry total for this part."""
+    Two independent checks: the page's own title names another unit or part (or, with
+    require_title, there is no recognisable title at all), or the page's total disagrees
+    with the registry total for this part. Posted pages (server mode) require the title:
+    it is the only guard for a part with no registry total (Unit 2 B, C and FRQ)."""
     unit = int(entry["unit"])
-    title = PAGE_TITLE_RE.search(text or "")
+    title = page_title(text)
+    if title is None and require_title:
+        return "U%d %s page has no recognisable Progress Check title" % (unit, part)
     if title:
-        title_unit = int(title.group(1))
-        title_part = title.group(2) or "FRQ"
+        title_unit, title_part = title
         if (title_unit, title_part) != (unit, part):
             return "U%d %s page is titled Unit %d %s" % (unit, part, title_unit, title_part)
     registry_of = _positive_int(entry["parts"][part].get("of"))
@@ -1303,6 +1321,12 @@ def _run(args, rep: Reporter, api, prev):
             rep.out("ERROR: could not read the posted pages: %s" % err)
             return 1, Outcome("failed", "failed", REASON_READ_FAILED)
     now = datetime.now(timezone.utc)
+    # "No fresh page at all" (none posted today, or a restart erased them) is the reader not
+    # having run yet: nothing to do. Some fresh and some missing/stale is a real gap: failed.
+    any_fresh = server_pages is not None and any(
+        is_fresh(server_pages.get(entry["parts"][part]["id"]), now, args.max_page_age_hours)
+        for entry in entries for part in online_parts(entry))
+    future_gone = []        # (entry, err): a missing/stale page of a check whose due date is ahead
     pages_by_entry = []
     for entry in entries:
         try:
@@ -1325,17 +1349,31 @@ def _run(args, rep: Reporter, api, prev):
                 rep.out("NOT OPEN YET: U%s %s (due %s); skipped, not a failure" % (entry["unit"], err, entry["dueDate"]))
                 not_open += 1
                 continue
+            if isinstance(err, (PageMissing, PageStale)) and not_open_yet(entry, today):
+                future_gone.append((entry, err))
+                continue
             rep.out("PAGE NOT READY: U%s %s; nothing of this entry posted" % (entry["unit"], err))
             if isinstance(err, (PageMissing, PageStale)):
                 gone += 1
             else:
                 other_not_ready += 1
 
+    # A future check (due date ahead) whose page is missing or old is NOT OPEN YET when the
+    # reader did post fresh pages today. With no fresh page at all it stays "gone", so a
+    # reader outage still reads "no pages" (and then reader-down) instead of "ok".
+    for entry, err in future_gone:
+        if any_fresh:
+            rep.out("NOT OPEN YET: U%s %s (due %s); skipped, not a failure" % (entry["unit"], err, entry["dueDate"]))
+            not_open += 1
+        else:
+            rep.out("PAGE NOT READY: U%s %s; nothing of this entry posted" % (entry["unit"], err))
+            gone += 1
+
     # A page filed under the wrong id (its title or its total names another part) skips its
     # WHOLE entry: no posts and no snapshot (a snapshot without that part would blank it).
     mismatches = []
     for index, (entry, pages) in enumerate(zip(entries, pages_by_entry)):
-        wrong = [page_mismatch(entry, part, pages[part]) for part in (pages or {}) if part in entry["parts"]]
+        wrong = [page_mismatch(entry, part, pages[part], server_pages is not None) for part in (pages or {}) if part in entry["parts"]]
         wrong = [why for why in wrong if why]
         if not wrong:
             continue
@@ -1357,11 +1395,6 @@ def _run(args, rep: Reporter, api, prev):
             post_failed = True
 
     reader_day = is_reader_day(today, schedule)
-    # "No fresh page at all" (none posted today, or a restart erased them) is the reader not
-    # having run yet: nothing to do. Some fresh and some missing/stale is a real gap: failed.
-    any_fresh = server_pages is not None and any(
-        is_fresh(server_pages.get(entry["parts"][part]["id"]), now, args.max_page_age_hours)
-        for entry in entries for part in online_parts(entry))
     outcome = classify(post_failed, other_not_ready, gone, reader_day, any_fresh, prev,
                        args.no_pages_limit, not_open, mismatches)
     return exit_code_for(outcome), outcome

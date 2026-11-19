@@ -18,10 +18,11 @@ Deploy notes
     "unknown" until its first report afterwards.
   - status.html has no dark theme today, so only light-theme tokens (--st-idle, --st-idle-bg) were added.
 
-Check: git apply --check tools/_proposals/job-result-three-state.patch   (lines before the first
-"diff --git" are ignored by git apply)
+Check: git apply --check tools/_proposals/job-result-three-state.patch
+(regenerated 2026-11-18 against master 244ff830; lines before the first "diff --git" are ignored)
 
 diff --git a/roster-server/job-results.js b/roster-server/job-results.js
+index ab6d78c..6c608ee 100644
 --- a/roster-server/job-results.js
 +++ b/roster-server/job-results.js
 @@ -2,9 +2,17 @@
@@ -54,7 +55,7 @@ diff --git a/roster-server/job-results.js b/roster-server/job-results.js
  
  import { requireTeacher } from './teacher-auth.js';
  
-@@ -28,11 +36,14 @@
+@@ -28,11 +36,14 @@ const PC_RECONCILE_CODES = {
    'ok': { ok: true, message: 'reconciled' },
    'sign-in-needed': { ok: false, message: 'SIGN IN NEEDED' },
    'page-not-ready': { ok: false, message: 'AP Classroom page not ready' },
@@ -70,7 +71,7 @@ diff --git a/roster-server/job-results.js b/roster-server/job-results.js
  export const JOB_CODES = {
    snapshot: {
      'verified': { ok: true, message: 'verified' },
-@@ -41,6 +52,12 @@
+@@ -41,6 +52,12 @@ export const JOB_CODES = {
    },
    pcReconcileB: PC_RECONCILE_CODES,
    pcReconcileE: PC_RECONCILE_CODES,
@@ -83,7 +84,7 @@ diff --git a/roster-server/job-results.js b/roster-server/job-results.js
  };
  
  export const KNOWN_JOBS = Object.keys(JOB_CODES);
-@@ -72,6 +89,7 @@
+@@ -72,6 +89,7 @@ export function parseJobResult(body, now = new Date().toISOString()) {
      job: body.job,
      result: {
        ok: outcome.ok,
@@ -91,7 +92,7 @@ diff --git a/roster-server/job-results.js b/roster-server/job-results.js
        code: body.code,
        message: outcome.message,
        breaks: cleanBreaks(body.breaks),
-@@ -86,7 +104,7 @@
+@@ -86,7 +104,7 @@ export function createJobResults() {
    const latest = new Map();
    return {
      record(job, result) { latest.set(job, result); },
@@ -101,9 +102,10 @@ diff --git a/roster-server/job-results.js b/roster-server/job-results.js
        const out = {};
        for (const job of KNOWN_JOBS) out[job] = latest.has(job) ? { ...latest.get(job) } : null;
 diff --git a/roster-server/tests/job-results.test.js b/roster-server/tests/job-results.test.js
+index 561e05c..2b0701a 100644
 --- a/roster-server/tests/job-results.test.js
 +++ b/roster-server/tests/job-results.test.js
-@@ -88,22 +88,41 @@
+@@ -88,22 +88,41 @@ describe('parseJobResult', () => {
      const body = { job: 'snapshot', code: 'breaks', breaks: 3, at: '2026-11-05T03:00:00Z' };
      expect(parseJobResult(body, NOW)).toEqual({
        job: 'snapshot',
@@ -147,7 +149,7 @@ diff --git a/roster-server/tests/job-results.test.js b/roster-server/tests/job-r
    it('rejects an unknown job, a code from another job, a missing code and a non-object body', () => {
      expect(parseJobResult({ job: 'nope', code: 'ok' }).error).toMatch(/unknown job/);
      expect(parseJobResult({ job: 'snapshot', code: 'ok' }).error).toMatch(/unknown code for snapshot/);
-@@ -121,7 +140,7 @@
+@@ -121,7 +140,7 @@ describe('parseJobResult', () => {
    it('free text in the body (detail, names) is never stored', () => {
      const parsed = parseJobResult({ job: 'snapshot', code: 'verified', detail: 'Alice Smith score 4/16', name: 'Bob' }, NOW);
      expect(JSON.stringify(parsed)).not.toMatch(/Alice|Smith|Bob|4\/16/);
@@ -156,7 +158,7 @@ diff --git a/roster-server/tests/job-results.test.js b/roster-server/tests/job-r
    });
  });
  
-@@ -158,6 +177,18 @@
+@@ -158,6 +177,18 @@ describe('POST /admin/job-result + GET /health jobs', () => {
      expect(jobs.snapshot).toMatchObject({ ok: false, code: 'breaks', message: 'verification found breaks', breaks: 2, at: '2026-11-05T04:00:00.000Z' });
      expect(jobs.pcReconcileE).toMatchObject({ ok: false, code: 'sign-in-needed', message: 'SIGN IN NEEDED' });
      expect(jobs.pcReconcileB).toBe(null);
@@ -176,6 +178,7 @@ diff --git a/roster-server/tests/job-results.test.js b/roster-server/tests/job-r
  
    it('a student name or a secret sent in `detail` never appears in /health', async () => {
 diff --git a/status.html b/status.html
+index 428f0cc..d0b1558 100644
 --- a/status.html
 +++ b/status.html
 @@ -36,6 +36,8 @@
@@ -198,7 +201,7 @@ diff --git a/status.html b/status.html
    .rules summary { cursor: pointer; font-weight: 600; }
 @@ -123,7 +127,8 @@
          <li><strong>Green</strong>: the endpoint answered, reports itself healthy, and nothing is lagging.</li>
-         <li><strong>Amber</strong>: it answered, but something needs a look (persist failures, degraded storage, CI still running, a mirror behind GH Pages, a deploy behind the last green CI).</li>
+         <li><strong>Amber</strong>: it answered, but something needs a look (persist failures, degraded storage, CI still running, a mirror behind GH Pages, a roster-server deploy behind the last green CI). roster-server only redeploys when a push changes <code>roster-server/</code>, so a deployed commit behind CI head is amber only if a commit since then touched <code>roster-server/</code> (or GitHub's compare API could not be read); docs-only pushes leave it green.</li>
          <li><strong>Red</strong>: it did not answer, answered an error, or CI failed.</li>
 -        <li><strong>Ledger snapshot</strong> and <strong>PC reconcile</strong> are nightly jobs on the teacher's machine. Each one reports its last run to roster-server, which keeps it in memory only: right after a roster deploy they read "unknown" (amber) until the job runs again.</li>
 +        <li><strong>Ledger snapshot</strong> and <strong>PC reconcile</strong> are nightly jobs on the teacher's machine, and <strong>Weekly DOK</strong> runs once a week. Each one reports its last run to roster-server, which keeps it in memory only: right after a roster deploy they read "unknown" (amber) until the job runs again.</li>
@@ -206,7 +209,7 @@ diff --git a/status.html b/status.html
          <li>Hover a tile's light for the exact rule. "Age" is how old the service's own timestamp is; "checked" is when this page fetched it.</li>
        </ul>
      </details>
-@@ -232,24 +237,29 @@
+@@ -282,24 +287,29 @@
    // of a run; the server keeps the latest in memory, so after a deploy it is null
    // ("unknown") until the job runs again.
    var JOB_STALE_MS = 36 * 3600 * 1000;
@@ -239,7 +242,7 @@ diff --git a/status.html b/status.html
      return 'green';
    }
  
-@@ -274,24 +284,44 @@
+@@ -324,24 +334,44 @@
    function pcLine(section, r, now) {
      if (!r) return section + ': no report';
      var age = jobAgeMs(r, now) > JOB_STALE_MS ? ' (stale)' : '';
@@ -286,7 +289,7 @@ diff --git a/status.html b/status.html
    // A job tile when the roster server itself did not answer: its own tile is already red.
    function jobUnknown(rule) {
      return { state: 'amber', rule: rule, value: 'unknown', detail: 'roster-server did not answer', at: null };
-@@ -355,7 +385,8 @@
+@@ -405,7 +435,8 @@
    // Read from the roster /health answer above (no extra fetch).
    var JOB_TILES = [
      { id: 'snapshot', label: 'Ledger snapshot', url: ROSTER_URL },
@@ -296,7 +299,7 @@ diff --git a/status.html b/status.html
    ];
  
    function pending(t) {
-@@ -369,12 +400,13 @@
+@@ -419,12 +450,13 @@
    function render(tiles, now) {
      var el = document.getElementById('tiles');
      el.innerHTML = tiles.map(function (t) { return tileHtml(t, now); }).join('');
@@ -311,7 +314,7 @@ diff --git a/status.html b/status.html
      else sum.innerHTML = '<strong>Everything is up.</strong>';
    }
  
-@@ -412,7 +444,8 @@
+@@ -470,7 +502,8 @@
          build(TILES[4], results.vercel.ok ? judgeVercel(results.vercel.data, { pagesBuild: pagesBuild }) : null),
          build(TILES[5], ci),
          jobTile(JOB_TILES[0], judgeSnapshot),
@@ -321,19 +324,20 @@ diff --git a/status.html b/status.html
        ];
        render(tiles, now);
        return tiles;
-@@ -422,7 +455,7 @@
+@@ -480,7 +513,7 @@
    window.StatusPage = {
      URLS: { roster: ROSTER_URL, cr: CR_URL, a2: A2_URL, pages: PAGES_URL, vercel: VERCEL_URL, ci: CI_URL },
      judgeHealthServer: judgeHealthServer, judgeCr: judgeCr, judgePages: judgePages, judgeVercel: judgeVercel, judgeCi: judgeCi,
 -    judgeSnapshot: judgeSnapshot, judgePcReconcile: judgePcReconcile,
 +    judgeSnapshot: judgeSnapshot, judgePcReconcile: judgePcReconcile, judgeWeeklyDok: judgeWeeklyDok,
+     compareUrl: compareUrl, rosterChangeSince: rosterChangeSince,
      ageText: ageText, load: load
    };
- 
 diff --git a/tests/status-page.test.js b/tests/status-page.test.js
+index ca6ca9f..1bd5162 100644
 --- a/tests/status-page.test.js
 +++ b/tests/status-page.test.js
-@@ -33,6 +33,7 @@
+@@ -33,6 +33,7 @@ function freshJobs() {
      snapshot: { ok: true, code: 'verified', message: 'verified', breaks: 0, at: HOURS_AGO(12) },
      pcReconcileB: { ok: true, code: 'ok', message: 'reconciled', breaks: null, at: HOURS_AGO(23) },
      pcReconcileE: { ok: true, code: 'ok', message: 'reconciled', breaks: null, at: HOURS_AGO(23) },
@@ -341,7 +345,7 @@ diff --git a/tests/status-page.test.js b/tests/status-page.test.js
    };
  }
  
-@@ -112,7 +113,7 @@
+@@ -112,7 +113,7 @@ describe('status.html render (stubbed fetch)', () => {
  
    it('paints every tile green with value + age + rule when all sources are healthy', async () => {
      const { doc, tiles } = await boot(healthy());
@@ -350,7 +354,7 @@ diff --git a/tests/status-page.test.js b/tests/status-page.test.js
      const roster = doc.getElementById('tile-roster');
      expect(roster.getAttribute('data-state')).toBe('green');
      expect(roster.querySelector('.value').textContent).toBe('commit c935058');
-@@ -123,7 +124,7 @@
+@@ -123,7 +124,7 @@ describe('status.html render (stubbed fetch)', () => {
      expect(doc.getElementById('tile-cr').querySelector('.detail').textContent).toContain('connections: 10');
      expect(doc.getElementById('tile-ci').querySelector('.value').textContent).toBe('success');
      expect(doc.getElementById('summary').textContent).toBe('Everything is up.');
@@ -359,7 +363,7 @@ diff --git a/tests/status-page.test.js b/tests/status-page.test.js
      expect(doc.getElementById('tile-snapshot').querySelector('.value').textContent).toBe('verified');
      expect(doc.getElementById('tile-pcreconcile').querySelector('.detail').textContent).toBe('B: ok; E: ok');
    });
-@@ -136,7 +137,7 @@
+@@ -136,7 +137,7 @@ describe('status.html render (stubbed fetch)', () => {
      expect(cr.getAttribute('data-state')).toBe('red');
      expect(cr.querySelector('.value').textContent).toBe('no answer');
      expect(cr.querySelector('.detail').textContent).toBe('Failed to fetch');
@@ -368,7 +372,7 @@ diff --git a/tests/status-page.test.js b/tests/status-page.test.js
      expect(doc.getElementById('summary').textContent).toContain('1 down');
    });
  
-@@ -195,7 +196,7 @@
+@@ -269,7 +270,7 @@ describe('status.html nightly-job tiles (roster /health jobs)', () => {
  
    it('every job tile light carries its Green/Amber/Red rule', async () => {
      const { doc } = await boot(healthy());
@@ -377,7 +381,7 @@ diff --git a/tests/status-page.test.js b/tests/status-page.test.js
        expect(doc.getElementById(id).querySelector('.light').getAttribute('title')).toMatch(/^Green: .*Amber: .*Red: /);
      }
    });
-@@ -237,6 +238,67 @@
+@@ -311,6 +312,67 @@ describe('status.html nightly-job tiles (roster /health jobs)', () => {
      expect(by.roster.state).toBe('red');
      expect(by.snapshot).toMatchObject({ state: 'amber', value: 'unknown' });
      expect(by.pcreconcile).toMatchObject({ state: 'amber', value: 'unknown' });

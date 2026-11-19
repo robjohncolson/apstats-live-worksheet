@@ -921,18 +921,28 @@ class ServerPagesTests(unittest.TestCase):
             self.assertIn("PAGE NOT READY: U2 B page %s has no table header" % u2["parts"]["B"]["id"], out)
             self.assertNotIn("NOT OPEN YET", out)
 
-    def test_a_future_check_with_a_missing_or_stale_page_is_not_not_open_yet(self):
+    def test_a_future_check_with_a_missing_or_stale_page_is_not_open_yet(self):
+        # Units 3-5 (due Jan-Mar) must not turn a day with fresh pages into a failure.
         u2 = dict(self.u2_entry(), dueDate="2026-11-23")
         self.write_registry(u2, ENTRY)
         pages = u1_served()                                            # U2 pages never posted
         code, out = self.run_main(["--apply"], PagesApi(pages))
-        self.assertEqual(code, 3)                                      # Saturday: missing only, nothing to do
-        self.assertIn("PAGE NOT READY: U2 B page %s is not on the server" % u2["parts"]["B"]["id"], out)
+        self.assertEqual(code, 0)
+        self.assertIn("NOT OPEN YET: U2 B page %s is not on the server" % u2["parts"]["B"]["id"], out)
 
         pages = u1_served()
         pages[u2["parts"]["B"]["id"]] = served(read_fixture("B"), hours_old=31)   # stale, not "no table"
         code, out = self.run_main(["--apply"], PagesApi(pages))
-        self.assertEqual(code, 3)
+        self.assertEqual(code, 0)
+        self.assertIn("NOT OPEN YET: U2 B page %s is 31.0 h old" % u2["parts"]["B"]["id"], out)
+
+    def test_a_future_check_with_no_fresh_page_anywhere_is_still_no_pages(self):
+        # A reader outage must not hide behind "not open yet".
+        u2 = dict(self.u2_entry(), dueDate="2026-11-23")
+        self.write_registry(u2, ENTRY)
+        code, out = self.run_main(["--apply"], PagesApi({}))
+        self.assertEqual(code, 3)                                      # Saturday: nothing to do
+        self.assertIn("PAGE NOT READY: U2 B page %s is not on the server" % u2["parts"]["B"]["id"], out)
         self.assertNotIn("NOT OPEN YET", out)
 
     def test_not_open_yet_needs_a_due_date_after_today(self):
@@ -1064,6 +1074,29 @@ class JobOutcomeTests(unittest.TestCase):
         self.assertEqual(rec.page_mismatch(ENTRY, "C", untitled), "U1 C page total is 14 but the registry total is 12")
         other_unit = read_fixture("C").replace("Unit 1 Progress", "Unit 2 Progress")
         self.assertEqual(rec.page_mismatch(ENTRY, "C", other_unit), "U1 C page is titled Unit 2 C")
+
+    def test_a_posted_page_without_a_title_is_a_wrong_page(self):
+        pages = u1_served()
+        untitled = read_fixture("C").replace("Unit 1 Progress Check: MCQ Part C", "")
+        pages[ENTRY["parts"]["C"]["id"]] = served(untitled)
+        api = PagesApi(pages)
+        code, out = self.run_main(api)
+        self.assertEqual(code, 1)
+        self.assertEqual(api.posts, [])
+        self.assertIn("WRONG PAGE: U1 C page has no recognisable Progress Check title", out)
+
+    def test_the_title_matcher_is_tolerant_and_reads_the_page_head_only(self):
+        self.assertEqual(rec.page_title("x\nUnit 1 Progress Check: MCQ Part B\n"), (1, "B"))
+        self.assertEqual(rec.page_title("Unit 1 Progress Check: FRQ"), (1, "FRQ"))
+        self.assertEqual(rec.page_title("UNIT 3 PROGRESS CHECK MCQ PART D"), (3, "D"))
+        self.assertEqual(rec.page_title("Unit 2 Personal Progress Check: Part a"), (2, "A"))
+        self.assertEqual(rec.page_title("Unit 4 Progress Check:  FRQ Part A"), (4, "FRQ"))
+        self.assertIsNone(rec.page_title("Resources & Assignments\nAssignment Overview"))
+        late = "\n" * 50 + "Unit 1 Progress Check: MCQ Part C"     # a list further down is not the title
+        self.assertIsNone(rec.page_title(late))
+        for name in ("B", "C", "FRQ"):                               # every captured page has one
+            self.assertEqual(rec.page_title(read_fixture(name)), (1, name))
+        self.assertIsNone(rec.page_mismatch(ENTRY, "C", read_fixture("C"), require_title=True))
 
     def test_a_check_closed_before_this_quarter_is_skipped(self):
         with open(self.schedule, "w", encoding="utf-8") as f:
