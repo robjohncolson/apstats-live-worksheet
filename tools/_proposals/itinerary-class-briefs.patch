@@ -1,0 +1,69 @@
+# PROPOSAL (UNAPPLIED): adds a "## Class briefs" block to itinerary.py.
+# New load_briefs() reads roster-local/brief/latest.json from follow-alongs and algebra2-live-worksheet (read-only, fail-soft).
+# One line per section meeting today or later; flags a failed AP Stats pull and briefs older than 36 hours.
+# Lines pass through ok_line(); no model call.  Apply: cd C:/Users/rober/daily-itinerary && git apply <this file>  (or patch -p1)
+# Not applied: itinerary.py was not edited.  Made 2026-11-18.
+diff --git a/itinerary.py b/itinerary.py
+index 5d331a1..2b5cd36 100644
+--- a/itinerary.py
++++ b/itinerary.py
+@@ -471,6 +471,41 @@ def load_day_events(target: date) -> list:
+         return []
+ 
+ 
++def load_briefs(target: date) -> list:
++    """One line per class section from the nightly brief index files (read-only, fail-soft:
++    a missing or malformed file is skipped silently).  Sections that meet before `target` are left out."""
++    files = [("AP Stats", Path(DEFAULTS["ap_repo"]) / "roster-local" / "brief" / "latest.json"),
++             ("Algebra 2", Path(DEFAULTS["a2_repo"]) / "roster-local" / "brief" / "latest.json")]
++    lines = []
++    for course, path in files:
++        try:
++            data = read_json(path)
++            if not isinstance(data, dict):
++                continue
++            stale = ""
++            written = datetime.fromisoformat(str(data.get("generatedAt")).replace("Z", "+00:00"))
++            if datetime.now(written.tzinfo) - written > timedelta(hours=36):
++                stale = f" (Brief is stale: written {written:%Y-%m-%d})"
++            pull = data.get("pull")
++            if isinstance(pull, dict) and pull.get("ok") is False:
++                lines.append(f"{course} summary pull FAILED last night: {clean(pull.get('reason') or 'no reason given', 120)}")
++            for sec in data.get("sections") or []:
++                nxt = date.fromisoformat(str(sec.get("nextMeeting")))
++                if nxt < target:
++                    continue
++                recent = sec.get("recentPromises")
++                line = f"{sec['section']} {nxt:%a} {nxt.month}/{nxt.day}: {sec.get('openPromises')} open promises"
++                line += f" ({recent} recent)" if recent is not None else ""
++                last = sec.get("lastRecording")
++                if last:
++                    last = date.fromisoformat(str(last))
++                    line += f", last recording {last.month}/{last.day}"
++                lines.append(line + stale)
++        except Exception:  # noqa: BLE001
++            log("brief read failed:\n" + traceback.format_exc())
++    return lines
++
++
+ def build_facts(target: date, cfg: dict) -> dict:
+     sch = Schedule(cfg["schedule_file"], load_bell(target))
+     a2, ap = A2(cfg["a2_repo"]), AP(cfg["ap_repo"], cfg["ap_worksheet_base"])
+@@ -481,6 +516,7 @@ def build_facts(target: date, cfg: dict) -> dict:
+              "school_day": sch.is_school_day(target),
+              "early_release": target.isoformat() in sch.early,
+              "day_events": load_day_events(target),
++             "briefs": load_briefs(target),
+              "next_school_day": sch.next_school_day(target, include=False).isoformat(),
+              "class_log_source": cl.source, "class_log_error": cl.err, "classes": [],
+              "repo_notes": {"Algebra 2 (algebra2-live-worksheet)": git_recent(cfg["a2_repo"]),
+@@ -592,6 +628,9 @@ def render(facts: dict, glance: list[str] | None, model_note: str) -> str:
+         L.append("")
+     if facts.get("prep_relay"):
+         L += facts["prep_relay"] + [""]
++    briefs = [x for x in facts.get("briefs") or [] if ok_line(x)]
++    if briefs:
++        L += ["## Class briefs", ""] + [f"- {x}" for x in briefs] + [""]
+     L += ["## Other calendar events", ""]
+     if facts.get("calendar"):
+         L += [f"- {clean(e.get('time', 'all day'), 20)} {clean(e.get('title'), 120)}" for e in facts["calendar"]]
