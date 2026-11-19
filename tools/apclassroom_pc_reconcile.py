@@ -13,9 +13,16 @@ Parts:
     Part A) is never touched here.
   * Only A, B, C and FRQ are posted (the parts POST /pc/grade takes). Any other
     part in the registry (Unit 3 "D") is reported and skipped.
-  * Points total (`of`): the registry `of` wins when it is there; otherwise the
-    page's "Points Earned (of N)" header (FRQ: the "13/16" scores). A registry
-    `of` that disagrees with the page is printed as a WARN. A part with no known
+  * Points total (`of`): the registry `of` when it is there; otherwise the
+    page's "Points Earned (of N)" header (FRQ: the "13/16" scores).
+  * WRONG PAGE: a page whose title names another unit/part, or whose total
+    disagrees with the registry `of`, was filed under the wrong id (11/17: Part
+    B's page under Part C's id). Its whole entry posts nothing (no rows, no
+    snapshot) and the run fails.
+  * CLOSED: an entry whose closeDate is before the current quarter's start
+    (data/lesson-schedule.json calendar.quarters) is skipped: no reads, no posts,
+    no snapshot, not a failure.
+  * A part with no known
     total posts nothing (WARN), but its statuses still feed needs-scoring, the
     reminder drafts and the snapshot.
   * `closeDate: null` means the check never closes: nothing is ever zeroed.
@@ -66,10 +73,18 @@ Privacy: the repo is public. Real names live only in the private roster map
 (the log dir is gitignored). stdout shows usernames only unless --names.
 
 Secrets: ROSTER_TEACHER_SECRET from the environment only. Never printed.
-Exit codes: 0 ok, 1 an HTTP/post failure or a table that never loaded (or, with
---pages server, a page missing/stale), 2 SIGN IN NEEDED (rig and fixture only).
-A table that never loads (no header, never settles) skips ITS entry only (nothing
-of that entry is posted); the other entries still run, and the exit code is 1.
+Exit codes: 0 ok, 1 failed (an HTTP/post failure, a table that never loaded, a page
+half-painted, or a missing/stale page on a school day when some pages are there),
+2 SIGN IN NEEDED (failed; rig and fixture only), 3 nothing to do (--pages server
+only: every not-ready entry is a missing/stale page AND either today is not a reader
+day -- a weekday outside data/lesson-schedule.json calendar.breaks -- or no FRESH page of
+the section is on the server at all; the second case becomes a failure, code
+reader-down, after --no-pages-limit runs in a row, counted through --status-file;
+a no-school run in between resets that count).
+Entries that have their pages still run and post as before; only the classification
+differs. A table that never loads skips ITS entry only (nothing of that entry is posted).
+--status-file PATH (opt-in) writes {job, ranAt, state, reason, streak} after every run.
+The LAST line of every run is "JOB-RESULT code=<code> state=<state>" for the wrapper.
 SIGN IN NEEDED (exit 2, nothing posted) needs affirmative evidence: a sign-in page
 or a URL off AP Classroom.
 
@@ -89,7 +104,8 @@ import unicodedata
 import urllib.error
 import urllib.parse
 import urllib.request
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
+from typing import NamedTuple
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.dirname(SCRIPT_DIR)
@@ -100,6 +116,7 @@ from schoology_sync_section import today_school_date  # noqa: E402
 DEFAULT_BASE = "https://roster-production-12c1.up.railway.app"
 DEFAULT_REGISTRY = os.path.join(REPO_ROOT, "data", "apclassroom-assignments.json")
 DEFAULT_ROSTER_MAP = os.path.join(os.path.expanduser("~"), "grade-backups", "apclassroom", "roster-map.json")
+DEFAULT_SCHEDULE = os.path.join(REPO_ROOT, "data", "lesson-schedule.json")
 DEFAULT_LOG_DIR = os.path.join(SCRIPT_DIR, ".pc-reconcile-logs")
 AP_BASE = "https://apclassroom.collegeboard.org"
 GH_REPO = "robjohncolson/apstats-live-worksheet"
@@ -108,6 +125,15 @@ SIGN_IN_LINE = "SIGN IN NEEDED: open AP Classroom in the Edge rig profile"
 SIGN_IN_GRACE_S = 8  # a sign-in page must persist this long before it counts (IdP bounce)
 PAGE_TIMEOUT_S = 45  # a table that is not ready by then skips its entry
 DEFAULT_MAX_PAGE_AGE_H = 30.0  # --pages server: an older posted page is not ready
+REASON_POST_FAILED = "a post to the roster server failed (see the log)"
+REASON_READ_FAILED = "could not read the posted pages from the roster server"
+REASON_NO_SECRET = "ROSTER_TEACHER_SECRET is not set"
+REASON_NOT_READY = "an AP Classroom page is not ready (see the log)"
+REASON_NO_SCHOOL = "no school today: no new AP Classroom pages expected"
+REASON_NO_PAGES = ("AP Classroom pages are not on the server yet (the reader has not posted, "
+                   "or a server restart erased them)")
+REASON_READER_DOWN = ("no AP Classroom pages for several school-day runs in a row: "
+                      "check the Grok Bot reader and roster server restarts")
 SERVER_IDS_PER_GET = 50        # ids per GET /admin/apclassroom-pages (the server caps at 100)
 
 ONLINE_PARTS = ("B", "C", "FRQ")   # the per-part rows of the blend (mirror of scoring.js)
@@ -121,6 +147,14 @@ PC_PART_POINTS = {1: {"A": 18, "B": 14, "C": 12, "FRQ": 16}}
 
 class PageNotReady(Exception):
     """The AP Classroom table rendered its header but never filled in its numbers."""
+
+
+class PageMissing(PageNotReady):
+    """A part's page is not on the server at all (server mode)."""
+
+
+class PageStale(PageNotReady):
+    """A part's posted page is older than --max-page-age-hours (server mode)."""
 
 
 class PageNoTable(PageNotReady):
@@ -533,13 +567,56 @@ def page_points_of(part: str, text: str, rows: dict):
 
 
 def resolve_points_of(part: str, cfg: dict, text: str, rows: dict, warnings: list):
-    """The part's points total: the registry `of` (override) else the page's."""
+    """The part's points total: the registry `of`, else the page's.
+
+    A page whose total disagrees with the registry is the wrong page for this part
+    (11/17: Part B's page was filed under Part C's id). Returns None: nothing is posted."""
     registry_of = _positive_int(cfg.get("of"))
     page_of = page_points_of(part, text, rows)
     if registry_of and page_of and registry_of != page_of:
-        warnings.append("part %s: registry of %d disagrees with the page (of %d); using the registry"
-                        % (part, registry_of, page_of))
+        warnings.append("part %s: page total %d disagrees with the registry total %d; nothing posted for this part"
+                        % (part, page_of, registry_of))
+        return None
     return registry_of or page_of
+
+
+# "Unit 1 Progress Check: MCQ Part B" / "Unit 1 Progress Check: FRQ" (the page title line)
+PAGE_TITLE_RE = re.compile(r"Unit\s+(\d+)\s+Progress Check:\s*(?:MCQ\s+Part\s+([A-Z])\b|(FRQ)\b)")
+
+
+def page_mismatch(entry: dict, part: str, text: str):
+    """Why this page text cannot be the entry's part, or None.
+
+    Two independent checks: the page's own title names another unit or part, or the
+    page's total disagrees with the registry total for this part."""
+    unit = int(entry["unit"])
+    title = PAGE_TITLE_RE.search(text or "")
+    if title:
+        title_unit = int(title.group(1))
+        title_part = title.group(2) or "FRQ"
+        if (title_unit, title_part) != (unit, part):
+            return "U%d %s page is titled Unit %d %s" % (unit, part, title_unit, title_part)
+    registry_of = _positive_int(entry["parts"][part].get("of"))
+    rows = parse_progress(text) if part == "FRQ" else parse_results_students(text)
+    page_of = page_points_of(part, text, rows)
+    if registry_of and page_of and registry_of != page_of:
+        return "U%d %s page total is %d but the registry total is %d" % (unit, part, page_of, registry_of)
+    return None
+
+
+def current_quarter_start(today: str, schedule):
+    """The start date of the quarter `today` is in (calendar.quarters), else the latest one
+    that started on or before today, else None."""
+    quarters = ((schedule or {}).get("calendar") or {}).get("quarters") or {}
+    starts = sorted(q.get("start") for q in quarters.values()
+                    if isinstance(q, dict) and isinstance(q.get("start"), str) and q["start"] <= today)
+    return starts[-1] if starts else None
+
+
+def closed_before_this_quarter(entry: dict, quarter_start) -> bool:
+    """A check that closed before this quarter began: its quarter is final, never touch it."""
+    close = entry.get("closeDate")
+    return bool(quarter_start and isinstance(close, str) and close < quarter_start)
 
 
 def build_plan(entry: dict, pages: dict, students: list, stored: dict, roster_map: dict, today: str) -> dict:
@@ -825,12 +902,12 @@ def server_entry_pages(entry: dict, server_pages: dict, now: datetime, max_age_h
         assignment = entry["parts"][part]["id"]
         page = server_pages.get(assignment)
         if not page:
-            raise PageNotReady("%s page %s is not on the server" % (part, assignment))
+            raise PageMissing("%s page %s is not on the server" % (part, assignment))
         age = page_age_hours(page.get("receivedAt"), now)
         if age is None:
             raise PageNotReady("%s page %s has no readable receive time" % (part, assignment))
         if age > max_age_hours:
-            raise PageNotReady("%s page %s is %.1f h old (max %g h)" % (part, assignment, age, max_age_hours))
+            raise PageStale("%s page %s is %.1f h old (max %g h)" % (part, assignment, age, max_age_hours))
         text = page.get("text") or ""
         header = "Date Submitted" if part == "FRQ" else "Points Earned"
         if header not in text:
@@ -982,7 +1059,159 @@ def run_entry(entry: dict, pages: dict, api, roster_map: dict, today: str, apply
     return ok
 
 
-def main(argv=None, api=None) -> int:
+# --------------------------------------------------------------------------- #
+# Run outcome, job status record                                               #
+# --------------------------------------------------------------------------- #
+
+class Outcome(NamedTuple):
+    state: str    # "ok" | "nothing" | "failed"
+    code: str     # the JOB-RESULT code the PowerShell wrapper reports
+    reason: str   # a constant sentence (never a name)
+
+
+def exit_code_for(outcome: Outcome) -> int:
+    if outcome.state == "ok":
+        return 0
+    if outcome.state == "nothing":
+        return 3
+    if outcome.code == "sign-in-needed":
+        return 2
+    return 1
+
+
+def read_schedule(path):
+    """data/lesson-schedule.json as a dict, or None when it cannot be read."""
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except (OSError, ValueError):
+        return None
+    return data if isinstance(data, dict) else None
+
+
+def is_reader_day(today: str, schedule) -> bool:
+    """A weekday outside every calendar.breaks range. Unreadable schedule: every weekday counts."""
+    try:
+        if date.fromisoformat(today).weekday() >= 5:
+            return False
+    except ValueError:
+        return True
+    breaks = ((schedule or {}).get("calendar") or {}).get("breaks") or []
+    for span in breaks:
+        if not isinstance(span, dict):
+            continue
+        start, end = span.get("from"), span.get("to")
+        if isinstance(start, str) and isinstance(end, str) and start <= today <= end:
+            return False
+    return True
+
+
+def read_status(path):
+    """The previous status record, or None (no path, no file, or it does not parse)."""
+    if not path:
+        return None
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except (OSError, ValueError):
+        return None
+    return data if isinstance(data, dict) else None
+
+
+def _streak_of(prev) -> int:
+    streak = (prev or {}).get("streak")
+    return streak if isinstance(streak, int) and streak >= 1 else 1
+
+
+def next_streak(prev, state: str, reason: str) -> int:
+    if not prev or prev.get("state") != state or prev.get("reason") != reason:
+        return 1
+    return _streak_of(prev) + 1
+
+
+def job_name(section: str) -> str:
+    if section in ("PeriodB", "PeriodE"):
+        return "pcReconcile" + section[-1]
+    return "pcReconcile-" + section
+
+
+def write_status(path: str, record: dict) -> None:
+    """Temp file in the same directory, then os.replace. UTF-8, no BOM, LF."""
+    os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
+    tmp = path + ".tmp"
+    with open(tmp, "w", encoding="utf-8", newline="\n") as f:
+        f.write(json.dumps(record, indent=2) + "\n")
+    os.replace(tmp, path)
+
+
+def save_status(args, outcome: Outcome, prev, rep: Reporter) -> None:
+    """Opt-in (--status-file). A write failure is one log line and never changes the exit code."""
+    if not args.status_file:
+        return
+    record = {
+        "job": job_name(args.section),
+        "ranAt": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "state": outcome.state,
+        "reason": outcome.reason,
+        "streak": next_streak(prev, outcome.state, outcome.reason),
+    }
+    try:
+        write_status(args.status_file, record)
+    except Exception as err:  # noqa: BLE001 - reporting must never break the run
+        rep.out("job status not written: %s" % type(err).__name__)
+
+
+def no_pages_outcome(prev, limit: int) -> Outcome:
+    """Nothing is posted: fine once, a down reader when it repeats (limit runs in a row)."""
+    down = Outcome("failed", "reader-down", REASON_READER_DOWN)
+    prev = prev or {}
+    if prev.get("state") == "failed" and prev.get("reason") == REASON_READER_DOWN:
+        return down
+    count = 1
+    if prev.get("state") == "nothing" and prev.get("reason") == REASON_NO_PAGES:
+        count = _streak_of(prev) + 1
+    if count >= limit:
+        return down
+    return Outcome("nothing", "nothing-no-pages", REASON_NO_PAGES)
+
+
+def is_fresh(page, now: datetime, max_age_hours: float) -> bool:
+    """A posted page that is younger than the age limit."""
+    if not page:
+        return False
+    age = page_age_hours(page.get("receivedAt"), now)
+    return age is not None and age <= max_age_hours
+
+
+def classify(post_failed: bool, other: int, gone: int, reader_day: bool, any_page_on_server: bool,
+             prev, no_pages_limit: int, not_open: int, mismatches=()) -> Outcome:
+    """The outcome of a run that read its pages (the early exits are in _run).
+
+    other = not-ready entries that are not just missing/stale; gone = missing or stale entries.
+    Entries that have their pages still ran and posted before this; only the label differs."""
+    if post_failed:
+        return Outcome("failed", "post-failed", REASON_POST_FAILED)
+    if mismatches:
+        return Outcome("failed", "page-not-ready", "wrong page, nothing posted for it: " + "; ".join(mismatches))
+    if other:
+        return Outcome("failed", "page-not-ready", REASON_NOT_READY)
+    if gone:
+        if not reader_day:
+            return Outcome("nothing", "nothing-no-school", REASON_NO_SCHOOL)
+        if not any_page_on_server:
+            return no_pages_outcome(prev, no_pages_limit)
+        return Outcome("failed", "page-not-ready", REASON_NOT_READY)
+    reason = "reconciled"
+    if not_open:
+        reason += " (%d checks not open yet)" % not_open
+    return Outcome("ok", "ok", reason)
+
+
+# --------------------------------------------------------------------------- #
+# Main                                                                         #
+# --------------------------------------------------------------------------- #
+
+def build_parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(description="AP Classroom -> roster Progress Check reconcile (dry run by default).")
     ap.add_argument("--section", required=True)
     ap.add_argument("--unit", type=int, default=None)
@@ -1000,44 +1229,79 @@ def main(argv=None, api=None) -> int:
                     help="where the page texts come from: the Edge rig (default) or the roster server")
     ap.add_argument("--max-page-age-hours", type=float, default=DEFAULT_MAX_PAGE_AGE_H,
                     help="--pages server: an older posted page is PAGE NOT READY (default 30)")
-    args = ap.parse_args(argv)
+    ap.add_argument("--schedule", default=DEFAULT_SCHEDULE,
+                    help="lesson-schedule.json; its calendar.breaks decide which weekdays the reader runs")
+    ap.add_argument("--status-file", default=None,
+                    help="write a small JSON status record here after every run (default: write nothing)")
+    ap.add_argument("--no-pages-limit", type=int, default=2,
+                    help="--pages server: this many school-day runs in a row with no pages on the server is a failure")
+    return ap
 
+
+def main(argv=None, api=None) -> int:
+    args = build_parser().parse_args(argv)
     rep = Reporter(args.log, args.names)
+    prev = read_status(args.status_file)
+    try:
+        exit_code, outcome = _run(args, rep, api, prev)
+    except Exception as err:
+        outcome = Outcome("failed", "failed", "crashed: %s" % type(err).__name__)
+        save_status(args, outcome, prev, rep)
+        rep.out("JOB-RESULT code=%s state=%s" % (outcome.code, outcome.state))
+        raise
+    save_status(args, outcome, prev, rep)
+    rep.out("JOB-RESULT code=%s state=%s" % (outcome.code, outcome.state))
+    return exit_code
+
+
+def _run(args, rep: Reporter, api, prev):
+    """The whole run. Returns (exit code, Outcome)."""
     if api is None:
         secret = os.environ.get("ROSTER_TEACHER_SECRET", "")
         if not secret:
             rep.out("ERROR: ROSTER_TEACHER_SECRET is not set in the environment.")
-            return 1
+            return 1, Outcome("failed", "failed", REASON_NO_SECRET)
         api = RosterApi(args.base, secret)
 
     if args.fixture and args.pages == "server":
         rep.out("ERROR: --fixture and --pages server are two page sources; pick one.")
-        return 2
+        return 2, Outcome("failed", "failed", "bad arguments")
 
     registry = load_registry(args.registry)
     entries = active_entries(registry, args.section, args.unit)
     if (args.fixture or args.dump) and (args.unit is None or len(entries) != 1):
         # One directory holds ONE unit's pages: never apply it to (or dump over) another unit.
         rep.out("ERROR: --fixture/--dump need --unit N matching exactly one registry entry (found %d)." % len(entries))
-        return 2
-    if not entries:
-        rep.out("No Progress Check with an AP Classroom id for %s in the registry." % args.section)
-        return 0
-    roster_map = load_roster_map(args.roster_map)
+        return 2, Outcome("failed", "failed", "bad arguments")
     today = args.today or today_school_date()
+    schedule = read_schedule(args.schedule)
+
+    # A check that closed before this quarter began belongs to a closed quarter: no posts,
+    # no snapshot, and it never counts as a failure or a page not ready.
+    quarter_start = current_quarter_start(today, schedule)
+    for entry in [e for e in entries if closed_before_this_quarter(e, quarter_start)]:
+        rep.out("CLOSED, skipped: U%s (closed %s, before this quarter's start %s)"
+                % (entry["unit"], entry["closeDate"], quarter_start))
+    entries = [e for e in entries if not closed_before_this_quarter(e, quarter_start)]
+    if not entries:
+        rep.out("No open Progress Check with an AP Classroom id for %s in the registry." % args.section)
+        return 0, Outcome("ok", "ok", "reconciled")
+    roster_map = load_roster_map(args.roster_map)
 
     # Read and validate EVERY entry's pages before writing anything: a sign-in
     # failure on a later entry must not leave an earlier one half applied.
     # A table that never loads skips its own entry (nothing of it is posted); the
-    # other entries still run and the exit code is 1.
-    ok = True
+    # other entries still run and the exit code is 1 (or 3, see classify).
+    other_not_ready = 0     # half-painted, no readable time, no table on a check already due
+    gone = 0                # a page missing from the server, or too old (server mode only)
+    not_open = 0
     server_pages = None
     if args.pages == "server":
         try:
             server_pages = fetch_server_texts(api, entries)
         except RuntimeError as err:
             rep.out("ERROR: could not read the posted pages: %s" % err)
-            return 1
+            return 1, Outcome("failed", "failed", REASON_READ_FAILED)
     now = datetime.now(timezone.utc)
     pages_by_entry = []
     for entry in entries:
@@ -1053,27 +1317,54 @@ def main(argv=None, api=None) -> int:
             rep.out(SIGN_IN_LINE)
             if args.apply:
                 open_sign_in_issue()
-            return 2
+            return 2, Outcome("failed", "sign-in-needed", "SIGN IN NEEDED")
         except PageNotReady as err:
+            pages_by_entry.append(None)
             if isinstance(err, PageNoTable) and not_open_yet(entry, today):
                 # A future check with no score table yet: nothing to reconcile, nothing wrong.
                 rep.out("NOT OPEN YET: U%s %s (due %s); skipped, not a failure" % (entry["unit"], err, entry["dueDate"]))
-                pages_by_entry.append(None)
+                not_open += 1
                 continue
             rep.out("PAGE NOT READY: U%s %s; nothing of this entry posted" % (entry["unit"], err))
-            pages_by_entry.append(None)
-            ok = False
+            if isinstance(err, (PageMissing, PageStale)):
+                gone += 1
+            else:
+                other_not_ready += 1
 
+    # A page filed under the wrong id (its title or its total names another part) skips its
+    # WHOLE entry: no posts and no snapshot (a snapshot without that part would blank it).
+    mismatches = []
+    for index, (entry, pages) in enumerate(zip(entries, pages_by_entry)):
+        wrong = [page_mismatch(entry, part, pages[part]) for part in (pages or {}) if part in entry["parts"]]
+        wrong = [why for why in wrong if why]
+        if not wrong:
+            continue
+        for why in wrong:
+            rep.out("WRONG PAGE: %s; nothing of this entry posted" % why)
+        mismatches.extend(wrong)
+        pages_by_entry[index] = None
+
+    post_failed = False
     for entry, pages in zip(entries, pages_by_entry):
         if pages is None:
             continue
         try:
             drafts_dir = os.path.dirname(args.log) if args.log else DEFAULT_LOG_DIR
-            ok = run_entry(entry, pages, api, roster_map, today, args.apply, rep, args.remind, drafts_dir) and ok
+            if not run_entry(entry, pages, api, roster_map, today, args.apply, rep, args.remind, drafts_dir):
+                post_failed = True
         except RuntimeError as err:
             rep.out("ERROR: %s" % err)
-            ok = False
-    return 0 if ok else 1
+            post_failed = True
+
+    reader_day = is_reader_day(today, schedule)
+    # "No fresh page at all" (none posted today, or a restart erased them) is the reader not
+    # having run yet: nothing to do. Some fresh and some missing/stale is a real gap: failed.
+    any_fresh = server_pages is not None and any(
+        is_fresh(server_pages.get(entry["parts"][part]["id"]), now, args.max_page_age_hours)
+        for entry in entries for part in online_parts(entry))
+    outcome = classify(post_failed, other_not_ready, gone, reader_day, any_fresh, prev,
+                       args.no_pages_limit, not_open, mismatches)
+    return exit_code_for(outcome), outcome
 
 
 if __name__ == "__main__":

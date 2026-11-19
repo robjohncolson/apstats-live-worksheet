@@ -343,13 +343,13 @@ class OnlinePartATests(unittest.TestCase):
         plan = self.plan()
         self.assertEqual({p["of"] for p in plan["posts"] if p["part"] == "B"}, {15})
 
-    def test_registry_total_wins_and_a_disagreement_warns(self):
+    def test_a_total_disagreement_posts_nothing_for_that_part(self):
         entry = json.loads(json.dumps(U2_ENTRY))
         entry["parts"]["A"]["of"] = 20
         plan = self.plan(entry)
-        self.assertEqual({p["of"] for p in plan["posts"] if p["part"] == "A"}, {20})
-        self.assertEqual(plan["warnings"],
-                         ["part A: registry of 20 disagrees with the page (of 19); using the registry"])
+        self.assertEqual([p for p in plan["posts"] if p["part"] == "A"], [])     # wrong page: nothing posted
+        self.assertIn("part A: page total 19 disagrees with the registry total 20; nothing posted for this part",
+                      plan["warnings"])
 
     def test_no_total_anywhere_posts_nothing_but_keeps_statuses(self):
         headless = read_u2_fixture("B").replace("(of 15)", "(of )")
@@ -831,7 +831,7 @@ class ServerPagesTests(unittest.TestCase):
         pages[u2["parts"]["C"]["id"]] = served(read_fixture("C"))    # U2 FRQ never posted
         api = PagesApi(pages)
         code, out = self.run_main(["--apply"], api)
-        self.assertEqual(code, 1)
+        self.assertEqual(code, 3)                                    # 2026-10-24 is a Saturday: nothing to do
         self.assertEqual(len(api.page_gets), 1)                      # one GET for every id
         self.assertIn("PAGE NOT READY: U2 FRQ page %s is not on the server" % u2["parts"]["FRQ"]["id"], out)
         self.assertNotIn(rec.SIGN_IN_LINE, out)
@@ -867,7 +867,7 @@ class ServerPagesTests(unittest.TestCase):
         pages[ENTRY["parts"]["C"]["id"]] = served(read_fixture("C"), hours_old=31)
         api = PagesApi(pages)
         code, out = self.run_main(["--apply"], api)
-        self.assertEqual(code, 1)
+        self.assertEqual(code, 3)                                    # Saturday: stale only, nothing to do
         self.assertEqual(api.posts, [])
         self.assertIn("PAGE NOT READY: U1 C page %s is 31.0 h old (max 30 h)" % ENTRY["parts"]["C"]["id"], out)
 
@@ -921,18 +921,18 @@ class ServerPagesTests(unittest.TestCase):
             self.assertIn("PAGE NOT READY: U2 B page %s has no table header" % u2["parts"]["B"]["id"], out)
             self.assertNotIn("NOT OPEN YET", out)
 
-    def test_a_future_check_with_a_missing_or_half_loaded_page_still_fails(self):
+    def test_a_future_check_with_a_missing_or_stale_page_is_not_not_open_yet(self):
         u2 = dict(self.u2_entry(), dueDate="2026-11-23")
         self.write_registry(u2, ENTRY)
         pages = u1_served()                                            # U2 pages never posted
         code, out = self.run_main(["--apply"], PagesApi(pages))
-        self.assertEqual(code, 1)
+        self.assertEqual(code, 3)                                      # Saturday: missing only, nothing to do
         self.assertIn("PAGE NOT READY: U2 B page %s is not on the server" % u2["parts"]["B"]["id"], out)
 
         pages = u1_served()
         pages[u2["parts"]["B"]["id"]] = served(read_fixture("B"), hours_old=31)   # stale, not "no table"
         code, out = self.run_main(["--apply"], PagesApi(pages))
-        self.assertEqual(code, 1)
+        self.assertEqual(code, 3)
         self.assertNotIn("NOT OPEN YET", out)
 
     def test_not_open_yet_needs_a_due_date_after_today(self):
@@ -959,6 +959,211 @@ class ServerPagesTests(unittest.TestCase):
         code, out = self.run_main(["--fixture", FIXTURE_DIR], PagesApi({}), unit="1")
         self.assertEqual(code, 2)
         self.assertIn("pick one", out)
+
+
+class JobOutcomeTests(unittest.TestCase):
+    """Exit code 3 (nothing to do), the status record and the JOB-RESULT line."""
+
+    WED = "2026-11-18"
+    SAT = "2026-11-21"
+    SCHEDULE = {"calendar": {"breaks": [{"from": "2026-11-25", "to": "2026-11-27"}]}}
+
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp(prefix="pc-reconcile-outcome-test-")
+        self.registry = os.path.join(self.tmp, "registry.json")
+        with open(self.registry, "w", encoding="utf-8") as f:
+            json.dump({"classId": "33", "progressChecks": [ENTRY]}, f)
+        self.roster_map = os.path.join(self.tmp, "roster-map.json")
+        with open(self.roster_map, "w", encoding="utf-8") as f:
+            json.dump(ROSTER_MAP, f)
+        self.schedule = os.path.join(self.tmp, "schedule.json")
+        with open(self.schedule, "w", encoding="utf-8") as f:
+            json.dump(self.SCHEDULE, f)
+        self.status = os.path.join(self.tmp, "status", "job.json")
+
+    def run_main(self, api, today=None, status=True, extra=()):
+        argv = ["--section", "PeriodE", "--registry", self.registry, "--roster-map", self.roster_map,
+                "--today", today or self.WED, "--schedule", self.schedule, "--pages", "server", "--apply"]
+        if status:
+            argv += ["--status-file", self.status]
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            code = rec.main(argv + list(extra), api=api)
+        return code, buf.getvalue()
+
+    def record(self):
+        with open(self.status, "r", encoding="utf-8") as f:
+            return json.load(f)
+
+    def test_is_reader_day(self):
+        self.assertTrue(rec.is_reader_day("2026-11-18", self.SCHEDULE))
+        self.assertFalse(rec.is_reader_day("2026-11-21", self.SCHEDULE))       # Saturday
+        self.assertFalse(rec.is_reader_day("2026-11-22", self.SCHEDULE))       # Sunday
+        self.assertFalse(rec.is_reader_day("2026-11-25", self.SCHEDULE))       # first day of a break
+        self.assertFalse(rec.is_reader_day("2026-11-26", self.SCHEDULE))       # inside
+        self.assertFalse(rec.is_reader_day("2026-11-27", self.SCHEDULE))       # last day, inclusive
+        self.assertTrue(rec.is_reader_day("2026-11-30", self.SCHEDULE))
+        self.assertTrue(rec.is_reader_day("2026-11-25", None))                 # unreadable: weekdays count
+        self.assertFalse(rec.is_reader_day("2026-11-21", None))
+
+    def test_no_pages_on_a_school_day_is_nothing_then_reader_down(self):
+        code, out = self.run_main(PagesApi({}))
+        self.assertEqual(code, 3)
+        record = self.record()
+        self.assertEqual((record["state"], record["reason"], record["streak"]),
+                         ("nothing", rec.REASON_NO_PAGES, 1))
+        self.assertEqual(out.splitlines()[-1], "JOB-RESULT code=nothing-no-pages state=nothing")
+
+        code, out = self.run_main(PagesApi({}))                                # second run in a row
+        self.assertEqual(code, 1)
+        record = self.record()
+        self.assertEqual((record["state"], record["reason"]), ("failed", rec.REASON_READER_DOWN))
+        self.assertEqual(out.splitlines()[-1], "JOB-RESULT code=reader-down state=failed")
+
+        code, _out = self.run_main(PagesApi({}))                               # stays failed
+        self.assertEqual(code, 1)
+        self.assertEqual(self.record()["streak"], 2)
+
+    def test_no_pages_limit_is_adjustable(self):
+        for expected in (3, 3, 1):
+            code, _out = self.run_main(PagesApi({}), extra=["--no-pages-limit", "3"])
+            self.assertEqual(code, expected)
+
+    def test_a_weekend_with_no_pages_is_no_school(self):
+        code, out = self.run_main(PagesApi({}), today=self.SAT)
+        self.assertEqual(code, 3)
+        self.assertEqual(self.record()["reason"], rec.REASON_NO_SCHOOL)
+        self.assertEqual(out.splitlines()[-1], "JOB-RESULT code=nothing-no-school state=nothing")
+
+    def test_a_half_painted_page_on_a_school_day_fails(self):
+        pages = u1_served()
+        early = read_fixture("FRQ") + "\nScored\n0/0\n"
+        pages[ENTRY["parts"]["FRQ"]["id"]] = served(early)
+        code, out = self.run_main(PagesApi(pages))
+        self.assertEqual(code, 1)
+        self.assertEqual(self.record()["reason"], rec.REASON_NOT_READY)
+        self.assertEqual(out.splitlines()[-1], "JOB-RESULT code=page-not-ready state=failed")
+
+    def test_part_b_page_filed_under_part_c_posts_nothing(self):
+        # 11/17: the reader filed Part B's page (of 14) under Part C's id.
+        pages = u1_served()
+        pages[ENTRY["parts"]["C"]["id"]] = served(read_fixture("B"))
+        api = PagesApi(pages)
+        code, out = self.run_main(api)
+        self.assertEqual(code, 1)
+        self.assertEqual(api.posts, [])                                        # no rows, no snapshot
+        self.assertIn("WRONG PAGE: U1 C page is titled Unit 1 B", out)
+        self.assertIn("U1 C page", self.record()["reason"])
+        self.assertEqual(out.splitlines()[-1], "JOB-RESULT code=page-not-ready state=failed")
+
+    def test_page_mismatch_checks_are_independent(self):
+        b_text = read_fixture("B")
+        untitled = b_text.replace("Unit 1 Progress Check: MCQ Part B", "")
+        self.assertIsNone(rec.page_mismatch(ENTRY, "B", b_text))
+        self.assertIn("titled Unit 1 B", rec.page_mismatch(ENTRY, "C", b_text))
+        self.assertEqual(rec.page_mismatch(ENTRY, "C", untitled), "U1 C page total is 14 but the registry total is 12")
+        other_unit = read_fixture("C").replace("Unit 1 Progress", "Unit 2 Progress")
+        self.assertEqual(rec.page_mismatch(ENTRY, "C", other_unit), "U1 C page is titled Unit 2 C")
+
+    def test_a_check_closed_before_this_quarter_is_skipped(self):
+        with open(self.schedule, "w", encoding="utf-8") as f:
+            json.dump(dict(self.SCHEDULE, calendar=dict(self.SCHEDULE["calendar"], quarters={
+                "Q1": {"start": "2026-09-02", "end": "2026-11-06"},
+                "Q2": {"start": "2026-11-09", "end": "2027-01-22"}})), f)
+        api = PagesApi(u1_served())
+        code, out = self.run_main(api)                                         # ENTRY closed 2026-10-24
+        self.assertEqual(code, 0)
+        self.assertEqual(api.posts, [])
+        self.assertEqual(api.page_gets, [])
+        self.assertIn("CLOSED, skipped: U1 (closed 2026-10-24, before this quarter's start 2026-11-09)", out)
+        self.assertEqual(self.record()["state"], "ok")
+
+    def test_quarter_start(self):
+        sched = {"calendar": {"quarters": {"Q1": {"start": "2026-09-02"}, "Q2": {"start": "2026-11-09"}}}}
+        self.assertEqual(rec.current_quarter_start("2026-11-18", sched), "2026-11-09")
+        self.assertEqual(rec.current_quarter_start("2026-11-07", sched), "2026-09-02")   # between quarters
+        self.assertIsNone(rec.current_quarter_start("2026-08-01", sched))
+        self.assertFalse(rec.closed_before_this_quarter({"closeDate": None}, "2026-11-09"))
+        self.assertFalse(rec.closed_before_this_quarter({"closeDate": "2026-12-01"}, "2026-11-09"))
+
+    def test_only_old_pages_on_a_school_day_is_no_pages(self):
+        # Monday 16:00 with Friday's pages still on the server: the reader has not run yet today.
+        code, out = self.run_main(PagesApi(u1_served(hours_old=72)))
+        self.assertEqual(code, 3)
+        self.assertEqual(out.splitlines()[-1], "JOB-RESULT code=nothing-no-pages state=nothing")
+
+    def test_some_fresh_and_one_stale_on_a_school_day_fails(self):
+        pages = u1_served()
+        pages[ENTRY["parts"]["C"]["id"]] = served(read_fixture("C"), 72)
+        code, out = self.run_main(PagesApi(pages))
+        self.assertEqual(code, 1)
+        self.assertEqual(out.splitlines()[-1], "JOB-RESULT code=page-not-ready state=failed")
+
+    def test_some_pages_present_and_one_missing_on_a_school_day_fails(self):
+        pages = u1_served()
+        del pages[ENTRY["parts"]["C"]["id"]]
+        code, out = self.run_main(PagesApi(pages))
+        self.assertEqual(code, 1)
+        self.assertEqual(out.splitlines()[-1], "JOB-RESULT code=page-not-ready state=failed")
+
+    def test_a_post_failure_is_post_failed(self):
+        class BrokenApi(PagesApi):
+            def post(self, path, body):
+                if path == "/pc/grade":
+                    raise RuntimeError("POST /pc/grade -> HTTP 400")
+                return super().post(path, body)
+
+        code, out = self.run_main(BrokenApi(u1_served()))
+        self.assertEqual(code, 1)
+        self.assertEqual(self.record()["reason"], rec.REASON_POST_FAILED)
+        self.assertEqual(out.splitlines()[-1], "JOB-RESULT code=post-failed state=failed")
+
+    def test_all_ready_is_ok_and_the_streak_counts(self):
+        code, out = self.run_main(PagesApi(u1_served()))
+        self.assertEqual(code, 0)
+        self.assertEqual(out.splitlines()[-1], "JOB-RESULT code=ok state=ok")
+        first = self.record()
+        self.assertEqual((first["state"], first["reason"], first["streak"]), ("ok", "reconciled", 1))
+        self.run_main(PagesApi(u1_served()))
+        self.assertEqual(self.record()["streak"], 2)
+
+    def test_status_record_shape(self):
+        self.run_main(PagesApi(u1_served()))
+        record = self.record()
+        self.assertEqual(sorted(record), ["job", "ranAt", "reason", "state", "streak"])
+        self.assertEqual(record["job"], "pcReconcileE")
+        self.assertRegex(record["ranAt"], r"^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$")
+        with open(self.status, "rb") as f:
+            raw = f.read()
+        self.assertFalse(raw.startswith(b"\xef\xbb\xbf"))
+        self.assertNotIn(b"\r", raw)
+        self.assertEqual(rec.job_name("PeriodB"), "pcReconcileB")
+        self.assertEqual(rec.job_name("Other"), "pcReconcile-Other")
+
+    def test_no_status_file_means_nothing_is_written(self):
+        code, out = self.run_main(PagesApi(u1_served()), status=False)
+        self.assertEqual(code, 0)
+        self.assertNotIn("status", os.listdir(self.tmp))
+        self.assertEqual(out.splitlines()[-1], "JOB-RESULT code=ok state=ok")
+
+    def test_a_status_write_failure_keeps_the_exit_code(self):
+        os.makedirs(self.status)                                               # the path is a directory
+        code, out = self.run_main(PagesApi(u1_served()))
+        self.assertEqual(code, 0)
+        self.assertIn("job status not written:", out)
+        self.assertEqual(out.splitlines()[-1], "JOB-RESULT code=ok state=ok")
+
+    def test_a_crash_writes_failed_and_reraises(self):
+        class CrashApi(PagesApi):
+            def get(self, path):
+                if path.startswith("/admin/apclassroom-pages"):
+                    raise ValueError("boom")
+                return super().get(path)
+
+        with self.assertRaises(ValueError):
+            self.run_main(CrashApi({}))
+        record = self.record()
+        self.assertEqual((record["state"], record["reason"]), ("failed", "crashed: ValueError"))
 
 
 if __name__ == "__main__":

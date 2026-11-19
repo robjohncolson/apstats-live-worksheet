@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
@@ -171,6 +172,17 @@ async function publish(io, commit) {
   }
 }
 
+// Name the failing step in the error message; the error object (and its originMoved flag) is kept.
+async function step(name, fn) {
+  try {
+    return await fn();
+  } catch (error) {
+    const failure = error instanceof Error ? error : new Error(String(error));
+    failure.message = `${name}: ${failure.message}`;
+    throw failure;
+  }
+}
+
 async function runPipeline(options, io) {
   const mode = options.mode || 'dry-run';
   const date = io.date();
@@ -180,8 +192,8 @@ async function runPipeline(options, io) {
     io.log('Already ran this week; nothing to do');
     return { status: 'already ran' };
   }
-  const payloads = await io.fetchSections();
-  const triage = await io.backfill(structuredClone(originalTriage));
+  const payloads = await step('fetchSections', () => io.fetchSections());
+  const triage = await step('backfill', () => io.backfill(structuredClone(originalTriage)));
   const rows = mergeSections(payloads);
   const recurring = recordWeeklyRun(triage, payloads, date);
   for (const row of rows) row.recurringAfterTriage ||= recurring.has(row.key);
@@ -193,39 +205,39 @@ async function runPipeline(options, io) {
     // The worktree is disposable, so a quiet week's observation must be published too:
     // recurrence needs consecutive weekly runs, and the catch-up trigger needs "already ran".
     if (JSON.stringify(triage) === JSON.stringify(originalTriage)) return { status: 'below floor', brief };
-    await io.writeTriage(triage);
-    await io.stage([TRIAGE_PATH]);
-    const historyCommit = await io.commit(`Weekly DOK: no sheet ${date} (below floor)`);
-    return { status: 'below floor', brief, commit: await publish(io, historyCommit) };
+    await step('writeTriage', () => io.writeTriage(triage));
+    await step('stage', () => io.stage([TRIAGE_PATH]));
+    const historyCommit = await step('commit', () => io.commit(`Weekly DOK: no sheet ${date} (below floor)`));
+    return { status: 'below floor', brief, commit: await step('publish', () => publish(io, historyCommit)) };
   }
   const key = union(selected.flatMap(row => row.lessons)).sort(topicOrder).join('+');
   const paths = publicationPaths(key, date);
   let commit = null;
   try {
-    await io.checkCollisions(paths);
-    await io.writeBrief(paths.at(-1), brief);
-    await io.author({ key, date, selected, brief });
-    await io.validate();
-    await io.compile(key.replaceAll('+', '_'));
-    await io.tests();
-    const title = await io.audit({ key, date, selected, paths });
+    await step('checkCollisions', () => io.checkCollisions(paths));
+    await step('writeBrief', () => io.writeBrief(paths.at(-1), brief));
+    await step('author', () => io.author({ key, date, selected, brief }));
+    await step('validate', () => io.validate());
+    await step('compile', () => io.compile(key.replaceAll('+', '_')));
+    await step('tests', () => io.tests());
+    const title = await step('audit', () => io.audit({ key, date, selected, paths }));
     for (const row of selected) triage.entries[row.key] = {
       label: row.label, sheet: key, sheetTitle: title, triagedAt: date,
       students: row.students, sections: row.sections,
     };
-    await io.writeTriage(triage);
-    await io.normalize(paths);
-    await io.stage(paths);
+    await step('writeTriage', () => io.writeTriage(triage));
+    await step('normalize', () => io.normalize(paths));
+    await step('stage', () => io.stage(paths));
     try { await io.detectChanges(); }
     catch { io.log('change detection skipped'); }
-    commit = await io.commit(`Weekly DOK sheet ${date}: ${title} — targets ${selected.map(row => row.key).join(', ')}`);
+    commit = await step('commit', () => io.commit(`Weekly DOK sheet ${date}: ${title} — targets ${selected.map(row => row.key).join(', ')}`));
   } catch (error) {
     try { await io.unstage(paths); }
     finally { await io.writeTriage(originalTriage); }
     throw error;
   }
-  commit = await publish(io, commit);
-  await io.verifyClean(paths);
+  commit = await step('publish', () => publish(io, commit));
+  await step('verifyClean', () => io.verifyClean(paths));
   io.log(`Published commit: ${commit}`);
   return { status: 'published', commit, brief };
 }
@@ -254,6 +266,103 @@ export function validateAuthoredWordBank(item, lesson) {
   if (bank.length - needed.length < 2) throw new Error('Authored word_bank needs at least 2 distractors');
 }
 
+// Subprocess stderr stays in a private, gitignored file; the console never sees it.
+function saveStderrTail(home, program, error) {
+  try {
+    const name = `${new Date().toISOString().slice(0, 10)}-${path.basename(program)}-stderr.txt`;
+    const folder = path.join(home, 'tools/.weekly-dok-logs');
+    fs.mkdirSync(folder, { recursive: true });
+    fs.appendFileSync(path.join(folder, name), String(error.stderr || '').slice(-4000) + '\n');
+    console.log(`stderr saved to tools/.weekly-dok-logs/${name}`);
+  } catch { /* Logging must never mask the real failure. */ }
+}
+
+export function teacherSecret(home) {
+  const lines = fs.readFileSync(path.join(home, 'roster-server/.env'), 'utf8').split(/\r?\n/);
+  const env = Object.fromEntries(lines.flatMap(line => {
+    const match = /^\s*(?:export\s+)?([A-Z_]+)\s*=\s*(.*?)\s*$/.exec(line);
+    return match ? [[match[1], match[2].replace(/^(['"])(.*)\1$/, '$2')]] : [];
+  }));
+  return env.ROSTER_TEACHER_SECRET || env.TEACHER_SECRET;
+}
+
+export function jobOutcome(result, error) {
+  if (error) return { state: 'failed', code: 'failed', reason: String(error.message).slice(0, 300) };
+  if (result?.status === 'published') return { state: 'ok', code: 'ok', reason: 'published a sheet' };
+  if (result?.status === 'below floor') {
+    return { state: 'nothing', code: 'nothing-below-floor', reason: `no misconception label reached ${STUDENT_FLOOR} students` };
+  }
+  if (result?.status === 'already ran') return { state: 'nothing', code: 'nothing-already-ran', reason: 'already ran this week' };
+  return { state: 'ok', code: 'ok', reason: String(result?.status) };
+}
+
+export function nextStreak(prev, state, reason) {
+  if (prev && prev.state === state && prev.reason === reason) return (prev.streak || 0) + 1;
+  return 1;
+}
+
+export function writeJobStatus(file, { job, state, reason }, now = new Date()) {
+  try {
+    let prev = null;
+    try { prev = JSON.parse(fs.readFileSync(file, 'utf8').replace(/^\uFEFF/, '')); } catch { /* No usable previous record. */ }
+    const record = { job, ranAt: now.toISOString().replace(/\.\d{3}Z$/, 'Z'), state, reason,
+      streak: nextStreak(prev, state, reason) };
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    const temp = `${file}.${process.pid}.tmp`;
+    fs.writeFileSync(temp, JSON.stringify(record, null, 2) + '\n', 'utf8');
+    fs.renameSync(temp, file);
+    return record;
+  } catch {
+    console.log('job status not written');
+    return null;
+  }
+}
+
+export async function reportJobResult({ code, at }, { secret, fetchImpl = fetch } = {}) {
+  if (!secret) {
+    console.log('job-result not reported: no teacher secret');
+    return;
+  }
+  try {
+    const response = await fetchImpl('https://roster-production-12c1.up.railway.app/admin/job-result', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-teacher-secret': secret },
+      body: JSON.stringify({ job: 'weeklyDok', code, at }),
+      signal: AbortSignal.timeout(15000),
+    });
+    if (!response.ok) console.log(`job-result report failed (HTTP ${response.status})`);
+    else console.log(`job-result reported: weeklyDok ${code}`);
+  } catch {
+    console.log('job-result report failed (no response)');
+  }
+}
+
+// Who writes the sheet. WEEKLY_DOK_AUTHOR = codex (the default, unchanged) | grok | none.
+// "none" fails the run with a clear "author unavailable" reason instead of a bare "node.exe failed".
+export const AUTHOR_BACKENDS = ['codex', 'grok', 'none'];
+
+export function authorBackend(env = process.env) {
+  const value = String(env.WEEKLY_DOK_AUTHOR || 'codex').trim().toLowerCase();
+  if (!AUTHOR_BACKENDS.includes(value)) throw new Error(`Unknown WEEKLY_DOK_AUTHOR "${value}" (expected ${AUTHOR_BACKENDS.join(', ')})`);
+  return value;
+}
+
+// The exact author command; the prompt goes on stdin. null = no author.
+// grok: single-turn headless run in the throwaway worktree, file edits only, no web, no subagents.
+// UNVERIFIED: `--author-check` only asks grok for its version. tools/weekly-dok-author-prompt.md tells the
+// author to run python/powershell/npx vitest/pytest checks; acceptEdits may refuse those, which ends a
+// headless run. Prove it with one manual `--apply --now` (WEEKLY_DOK_AUTHOR=grok) and add --allow rules.
+export function authorCommand(backend, { work, promptFile, appData = process.env.APPDATA || '' } = {}) {
+  if (backend === 'none') return null;
+  if (backend === 'grok') {
+    return { program: 'grok', args: ['--cwd', work, '--permission-mode', 'acceptEdits', '--disable-web-search',
+      '--no-subagents', '--max-turns', '60', '--output-format', 'plain', '--prompt-file', promptFile] };
+  }
+  const codex = path.join(appData, 'npm/node_modules/@openai/codex/bin/codex.js');
+  return { program: process.execPath, args: [codex, 'exec', '--approve-for-me', '-m', 'gpt-6-astra',
+    '-c', 'model_reasoning_effort="medium"', '-'] };
+}
+
 export function createRuntime({ home, work }, overrides = {}) {
   const read = file => fs.readFileSync(path.join(work, file), 'utf8');
   const json = file => JSON.parse(read(file));
@@ -268,7 +377,8 @@ export function createRuntime({ home, work }, overrides = {}) {
         windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'], maxBuffer: 32 * 1024 * 1024 });
     } catch (error) {
       // Subprocess output can contain evidence or credentials; report the boundary only.
-      const failure = new Error(`${path.basename(program)} failed`);
+      const failure = new Error(`${path.basename(program)} failed (exit ${error.status ?? '?'})`);
+      if (!overrides.command) saveStderrTail(home, program, error);
       failure.originMoved = program === 'git' && args[0] === 'push' &&
         /\[rejected\].*(fetch first|non-fast-forward)/i.test(String(error.stderr));
       throw failure;
@@ -306,11 +416,7 @@ export function createRuntime({ home, work }, overrides = {}) {
       return triage;
     },
     fetchSections: async () => {
-      const env = Object.fromEntries(fs.readFileSync(path.join(home, 'roster-server/.env'), 'utf8').split(/\r?\n/).flatMap(line => {
-        const match = /^\s*(?:export\s+)?([A-Z_]+)\s*=\s*(.*?)\s*$/.exec(line);
-        return match ? [[match[1], match[2].replace(/^(['"])(.*)\1$/, '$2')]] : [];
-      }));
-      const secret = env.ROSTER_TEACHER_SECRET || env.TEACHER_SECRET;
+      const secret = teacherSecret(home);
       if (!secret) throw new Error('Teacher secret missing from roster-server/.env');
       const payloads = [];
       const skillMap = json('data/skill-map.json');
@@ -375,9 +481,13 @@ export function createRuntime({ home, work }, overrides = {}) {
         }
       }
       const prompt = `${read('tools/weekly-dok-author-prompt.md')}\n${brief}\nDate: ${date}; key: ${key}\n\nExisting contexts:\n${contexts.join('\n')}\n`;
-      const codex = path.join(process.env.APPDATA, 'npm/node_modules/@openai/codex/bin/codex.js');
-      command(process.execPath, [codex, 'exec', '--approve-for-me', '-m', 'gpt-6-astra',
-        '-c', 'model_reasoning_effort="medium"', '-'], prompt);
+      // The prompt file lives outside the worktree so it can never be staged.
+      const promptFile = path.join(os.tmpdir(), `weekly-dok-prompt-${date}.md`);
+      const author = authorCommand(authorBackend(), { work, promptFile });
+      if (!author) throw new Error('author unavailable (WEEKLY_DOK_AUTHOR=none): no sheet was written');
+      fs.writeFileSync(promptFile, prompt);
+      try { command(author.program, author.args, prompt); }
+      finally { fs.rmSync(promptFile, { force: true }); }
     },
     validate: () => command('python', ['dok/build_ladder.py', '--validate']),
     compile: slug => command('powershell', ['-NoProfile', '-File', 'dok/compile.ps1', slug]),
@@ -442,14 +552,45 @@ export function createRuntime({ home, work }, overrides = {}) {
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const flags = process.argv.slice(2);
   const modes = flags.filter(flag => ['--dry-run', '--apply'].includes(flag));
-  if (modes.length > 1 || flags.some(flag => !['--dry-run', '--apply', '--now'].includes(flag))) {
-    console.error('Usage: node scripts/weekly-dok.mjs [--dry-run|--apply] [--now]');
+  if (flags.length === 1 && flags[0] === '--author-check') {
+    // Read-only: name the author backend and its command, and ask the CLI for its version. Writes nothing.
+    try {
+      const backend = authorBackend();
+      const author = authorCommand(backend, { work: '<worktree>', promptFile: '<prompt file>' });
+      console.log(`author backend: ${backend}`);
+      if (!author) console.log('author unavailable: WEEKLY_DOK_AUTHOR=none');
+      else {
+        console.log(`author command: ${path.basename(author.program)} ${author.args.join(' ')}`);
+        const probe = backend === 'grok' ? ['grok', ['--version']] : [process.execPath, [author.args[0], 'login', 'status']];
+        console.log(execFileSync(probe[0], probe[1], { encoding: 'utf8', windowsHide: true }).trim());
+      }
+    } catch (error) {
+      console.error(`author check failed: ${String(error.message).split(/\r?\n/)[0]}`);
+      process.exitCode = 1;
+    }
+  } else if (modes.length > 1 || flags.some(flag => !['--dry-run', '--apply', '--now'].includes(flag))) {
+    console.error('Usage: node scripts/weekly-dok.mjs [--dry-run|--apply] [--now] | --author-check');
     process.exitCode = 1;
   } else {
     const home = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
     const mode = (modes[0] || '--dry-run').slice(2);
     const work = mode === 'apply' ? path.join(home, '.weekly-dok-wt') : home;
+    // The error message stays the LAST console line: tools/weekly_dok.ps1 copies the last log line
+    // into its "Weekly DOK sheet failed" issue.
+    const settle = async (result, error) => {
+      if (error) process.exitCode = 1;
+      if (mode === 'apply') {
+        const outcome = jobOutcome(result, error);
+        const record = writeJobStatus(path.join(home, 'roster-local/job-status/weeklyDok.json'), { job: 'weeklyDok', ...outcome });
+        let secret;
+        try { secret = teacherSecret(home); } catch { /* Reported as missing below. */ }
+        const at = record?.ranAt || new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
+        await reportJobResult({ code: outcome.code, at }, { secret });
+        console.log(`JOB-RESULT code=${outcome.code} state=${outcome.state}`);
+      }
+      if (error) console.error(error.message);
+    };
     runWeekly({ mode, now: flags.includes('--now') }, createRuntime({ home, work }))
-      .catch(error => { console.error(error.message); process.exitCode = 1; });
+      .then(result => settle(result, null), error => settle(null, error));
   }
 }
