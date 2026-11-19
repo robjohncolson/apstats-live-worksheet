@@ -1,0 +1,397 @@
+{
+ "1": {
+  "zones": {
+   "✓1": {
+    "blanks": [
+     "22",
+     "89",
+     "26",
+     "101",
+     "22",
+     "98",
+     "13",
+     "77",
+     "19",
+     "68",
+     "102",
+     "433",
+     "the row total",
+     "Freeze Time fans"
+    ]
+   },
+   "✓2": {
+    "blanks": [
+     "Status"
+    ]
+   },
+   "✓3": {
+    "blanks": [
+     "25.7",
+     "16.9",
+     "27.9",
+     "23.6",
+     "its 25.7% sits inside that range, close to 23.6%",
+     ""
+    ],
+    "choices": [
+     "do not"
+    ]
+   },
+   "✓4": {
+    "blanks": [
+     "Freeze Time",
+     "25.7",
+     "23.6",
+     "all 433 students"
+    ]
+   },
+   "✓5": {
+    "blanks": [
+     "Telepathy",
+     "72.1",
+     "Happy",
+     "Fly",
+     "53.9"
+    ],
+    "choices": [
+     "is"
+    ]
+   },
+   "verdict": {
+    "blanks": [
+     "Freeze Time fans are the ones who want to be rich",
+     "P(Rich | Freeze Time)",
+     "25.7%",
+     "it is close to the 23.6% of all students; 26 is the biggest count only because Freeze Time is the biggest group",
+     ""
+    ],
+    "choices": [
+     "not supported"
+    ]
+   }
+  }
+ },
+ "2": {
+  "zones": {
+   "✓1": {
+    "blanks": [
+     "5",
+     "15",
+     "33.3",
+     "Famous students",
+     "15",
+     "5",
+     "89",
+     "5.6",
+     "Fly students",
+     "89"
+    ]
+   },
+   "✓3": {
+    "blanks": [
+     "33.3",
+     "5.6",
+     "the given group is flipped: 5 of 89 Fly fans, not 5 of 15"
+    ],
+    "choices": [
+     "wrong",
+     "does not"
+    ]
+   },
+   "✓4": {
+    "blanks": [
+     "15",
+     "33.3",
+     "89",
+     "5.6"
+    ]
+   },
+   "✓5": {
+    "blanks": [
+     "Happy",
+     "Super Strength",
+     "43",
+     "77",
+     "55.8",
+     "Super Strength",
+     "Happy",
+     "43",
+     "265",
+     "16.2",
+     "the denominators differ: 77 Super Strength fans vs 265 Happy students",
+     ""
+    ]
+   },
+   "verdict": {
+    "blanks": [
+     "most Fly fans want to be Famous",
+     "P(Famous | Fly)",
+     "5.6%",
+     "only 5 of the 89 Fly fans want to be Famous; the claim flipped the given group",
+     ""
+    ],
+    "choices": [
+     "not supported"
+    ]
+   }
+  }
+ },
+ "3": {
+  "zones": {
+   "✓1": {
+    "blanks": [
+     "0",
+     "433",
+     "0",
+     "no student in this table chose Telepathy and wants to be Famous",
+     ""
+    ],
+    "choices": [
+     "are"
+    ]
+   },
+   "✓2": {
+    "blanks": [
+     "15",
+     "433",
+     "3.5",
+     "0",
+     "68",
+     "0"
+    ],
+    "choices": [
+     "not equal",
+     "are not"
+    ]
+   },
+   "✓3": {
+    "blanks": [
+     "3.5",
+     "0"
+    ],
+    "choices": [
+     "are",
+     "are not",
+     "changes"
+    ]
+   },
+   "✓4": {
+    "blanks": [
+     "P(A) · P(B)",
+     "0",
+     "P(A) · P(B) is more than 0, so it cannot also equal 0",
+     ""
+    ],
+    "choices": [
+     "cannot"
+    ]
+   },
+   "✓5": {
+    "blanks": [
+     "30",
+     "60",
+     "50",
+     "50",
+     "50",
+     "30"
+    ],
+    "choices": [
+     "are",
+     "are not"
+    ]
+   },
+   "verdict": {
+    "blanks": [
+     "Telepathy and Famous are independent",
+     "P(Famous | Telepathy) vs P(Famous)",
+     "0% vs 3.5%",
+     "they are mutually exclusive, and knowing Telepathy drops the chance of Famous to 0, so they are dependent",
+     ""
+    ],
+    "choices": [
+     "not supported"
+    ]
+   }
+  }
+ },
+ "4": {
+  "zones": {
+   "✓1": {
+    "blanks": [
+     "448",
+     "245",
+     "442",
+     "1,365"
+    ]
+   },
+   "✓2": {
+    "blanks": [
+     "693",
+     "687",
+     "245",
+     "both grads and internet readers",
+     "(693 + 687 − 245)",
+     "1,135",
+     "45.4"
+    ]
+   },
+   "✓3": {
+    "blanks": [
+     "grad and internet",
+     "all 2,500 adults",
+     "internet",
+     "grad",
+     "internet"
+    ],
+    "choices": [
+     "joint"
+    ]
+   },
+   "✓4": {
+    "blanks": [
+     "internet",
+     "grad",
+     "245",
+     "693",
+     "35.4",
+     "internet",
+     "687",
+     "2,500",
+     "27.5",
+     "College grads"
+    ],
+    "choices": [
+     "not equal",
+     "are not"
+    ]
+   },
+   "✓5": {
+    "blanks": [
+     "693 × 687 ÷ 2,500 = 190.4",
+     "190",
+     "55",
+     "the events are dependent: 55 is too big a gap to be rounding",
+     ""
+    ],
+    "choices": [
+     "more"
+    ]
+   },
+   "verdict": {
+    "blanks": [
+     "P(grad or internet) = 55.2% and grads are no more likely to get news online",
+     "P(internet | grad), next to P(internet)",
+     "35.4% vs 27.5%",
+     "the union counts the 245 twice (it is really 45.4%), and grads are MORE likely to get news online",
+     ""
+    ],
+    "choices": [
+     "not supported"
+    ]
+   }
+  }
+ },
+ "5": {
+  "zones": {
+   "✓1": {
+    "blanks": [
+     "1/6",
+     "1/6",
+     "4/6"
+    ]
+   },
+   "✓2": {
+    "blanks": [
+     "$0.17",
+     "13.47",
+     "$3.67"
+    ]
+   },
+   "✓3": {
+    "blanks": [
+     "0.17",
+     "3.67",
+     "0.17"
+    ],
+    "choices": [
+     "wins"
+    ]
+   },
+   "✓4": {
+    "blanks": [
+     "the player",
+     "+$0.17",
+     "how often you win",
+     "how much you win"
+    ],
+    "choices": [
+     "not fair"
+    ]
+   },
+   "✓5": {
+    "blanks": [
+     "6",
+     "9",
+     "(7 + 1 − 8)/6",
+     "20 games is a small sample",
+     "settle near $0.17"
+    ]
+   },
+   "verdict": {
+    "blanks": [
+     "the game is fair (win 2 of 6 rolls)",
+     "μ<sub>X</sub>, the expected net profit",
+     "+$0.17",
+     "a fair game has μ<sub>X</sub> = 0; this one pays the player 17¢ a game",
+     ""
+    ],
+    "choices": [
+     "not supported"
+    ]
+   }
+  }
+ },
+ "6": {
+  "zones": {
+   "✓1": {
+    "blanks": [
+     "1",
+     "0",
+     "randInt(0,1,20): 20 flips",
+     "",
+     "the longest run of heads (1s) in the 20 flips",
+     ""
+    ]
+   },
+   "✓4": {
+    "blanks": [
+     "about 3",
+     "about 0.12 (anything 0 to 0.24 is normal)"
+    ]
+   },
+   "✓5": {
+    "blanks": [
+     "5",
+     "about 0.12",
+     "a simulation is random, so every 25 trials give a different estimate",
+     "settle near the exact value, 0.122"
+    ],
+    "choices": [
+     "is not"
+    ]
+   },
+   "verdict": {
+    "blanks": [
+     "6 heads in a row in 20 flips means the coin is rigged",
+     "P(longest run is 6 or more)",
+     "about 0.12",
+     "a fair coin does this about 1 time in 8, which is not rare",
+     ""
+    ],
+    "choices": [
+     "not supported"
+    ]
+   }
+  }
+ }
+}

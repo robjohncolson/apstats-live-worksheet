@@ -1,0 +1,186 @@
+{
+  "kit": "u2_poster",
+  "title": "Unit 2 claim posters",
+  "note": "Build: node scripts/printables/build.mjs u2_poster. Each sheet renders one html (+ hash edition) to one pdf with an exact page count; headings[i] is the start of page i+1's first line, so a spill names the page that moved. frozen = printed for a past day from an older html: never re-rendered, page count still checked.",
+  "sheets": [
+    {
+      "id": "group-sheets",
+      "renderer": "edge-html",
+      "source": "claim_poster_job_cards.html",
+      "hash": "student",
+      "pdf": "pdf/u2_poster_group_sheets_student.pdf",
+      "audience": "student",
+      "pages": 12,
+      "headings": [
+        "Poster 1 — Who wants to be rich?", "Poster 1 — checklist",
+        "Poster 2 — The flipped headline", "Poster 2 — checklist",
+        "Poster 3 — Can't happen together", "Poster 3 — checklist",
+        "Poster 4 — Double counted", "Poster 4 — checklist",
+        "Poster 5 — Is the game fair?", "Poster 5 — checklist",
+        "Poster 6 — Rigged coin?", "Poster 6 — checklist"
+      ]
+    },
+    {
+      "id": "teacher-key",
+      "renderer": "edge-html",
+      "source": "claim_poster_job_cards.html",
+      "hash": "teacher",
+      "pdf": "pdf/u2_poster_teacher_key.pdf",
+      "audience": "teacher",
+      "pages": 35,
+      "headings": [
+        "Unit 2 Poster — Claim, Proof, Repair", "Unit 2 Poster — groups, roles", "AP Statistics · Period B",
+        "Poster 1 — Who wants to be rich?", "d. Repair.", "Poster 1 — checklist",
+        "Poster 2 — The flipped headline", "e. Build.", "Poster 2 — checklist",
+        "Poster 3 — Can't happen together", "e. Build.", "Poster 3 — checklist",
+        "Poster 4 — Double counted", "e. Build.", "Poster 4 — checklist",
+        "Poster 5 — Is the game fair?", "Our verdict in one sentence", "Poster 5 — checklist",
+        "Poster 6 — Rigged coin?", "Poster 6 — checklist",
+        "Exit ticket 1", "Exit ticket 2",
+        "Run of show, Tuesday", "Run of show, Thursday", "Run of show, Friday",
+        "Observer card", "Where each look-for lives", "The data and the four claims",
+        "Partner check — before the big paper", "Partner check — what the checkers",
+        "Hint cards", "Rubric and scoring grid", "Entering scores and grouping",
+        "Answer key — Do Nows", "Debrief notes"
+      ]
+    },
+    {
+      "id": "example-board",
+      "renderer": "edge-html",
+      "source": "claim_poster_job_cards.html",
+      "hash": "example",
+      "pdf": "pdf/u2_poster_example_board_demo.pdf",
+      "audience": "student",
+      "pages": 1,
+      "headings": ["Example board — project this first"]
+    },
+    {
+      "id": "walk-sheet",
+      "renderer": "edge-html",
+      "source": "claim_poster_job_cards.html",
+      "hash": "walk",
+      "pdf": "pdf/u2_poster_walk_sheet.pdf",
+      "audience": "student",
+      "pages": 1,
+      "headings": ["Gallery walk — Unit 2 claim posters"]
+    },
+    {
+      "id": "partner-check",
+      "renderer": "edge-html",
+      "source": "claim_poster_job_cards.html",
+      "hash": "check",
+      "pdf": "pdf/u2_poster_partner_check.pdf",
+      "audience": "student",
+      "pages": 1,
+      "headings": ["Partner check — before the big paper"]
+    },
+    {
+      "id": "thursday-screen",
+      "renderer": "edge-html",
+      "source": "claim_poster_job_cards.html",
+      "hash": "screen",
+      "pdf": "pdf/u2_poster_thursday_screen.pdf",
+      "audience": "student",
+      "pages": 1,
+      "headings": ["The data and the four claims"]
+    },
+    {
+      "id": "layouts",
+      "renderer": "edge-html",
+      "source": "poster_layouts.html",
+      "hash": "",
+      "pdf": "pdf/u2_poster_layouts.pdf",
+      "audience": "student",
+      "pages": 6,
+      "headings": [
+        "Poster 1 layout:", "Poster 2 layout:", "Poster 3 layout:",
+        "Poster 4 layout:", "Poster 5 layout:", "Poster 6 layout:"
+      ]
+    },
+    {
+      "id": "layouts-key",
+      "renderer": "edge-html",
+      "source": "poster_layouts_key.html",
+      "generator": "scripts/printables/kits/u2_layouts_key.py",
+      "hash": "",
+      "pdf": "pdf/u2_poster_layouts_key.pdf",
+      "audience": "teacher",
+      "pages": 6,
+      "headings": [
+        "Poster 1 layout:", "Poster 2 layout:", "Poster 3 layout:",
+        "Poster 4 layout:", "Poster 5 layout:", "Poster 6 layout:"
+      ]
+    },
+    {
+      "id": "peer-review",
+      "renderer": "edge-html",
+      "source": "peer_review_sheets.html",
+      "hash": "",
+      "pdf": "pdf/u2_poster_peer_review.pdf",
+      "audience": "student",
+      "pages": 8,
+      "headings": [
+        "Peer review: Poster 1", "Peer review: Poster 2", "Peer review: Poster 3",
+        "Peer review: Poster 4", "Peer review: Poster 5", "Peer review: Poster 6",
+        "Teacher tally: peer reviews", "Teacher tally: Period B, posters 4 to 6"
+      ]
+    },
+    {
+      "id": "poster6-jobs",
+      "renderer": "edge-html",
+      "source": "poster6_group_jobs.html",
+      "hash": "",
+      "pdf": "pdf/u2_poster6_group_jobs.pdf",
+      "audience": "student",
+      "pages": 1,
+      "headings": ["Poster 6 group: who does what"]
+    }
+  ],
+  "packs": [
+    {
+      "id": "b-4-6-groups",
+      "title": "Period B, posters 4 to 6: one pack per group (card pages 1-2, then the layout sheet), plus the Poster 6 job slip",
+      "pdf": "pdf/u2_poster_b_group_pack_4_5_6.pdf",
+      "audience": "student",
+      "copies": "one pack per poster group; the last page is the Poster 6 job slip (cut in half, one slip per Poster 6 group)",
+      "pageCount": 10,
+      "parts": [
+        { "sheet": "group-sheets", "pages": [7, 8] },
+        { "sheet": "layouts", "pages": [4] },
+        { "sheet": "group-sheets", "pages": [9, 10] },
+        { "sheet": "layouts", "pages": [5] },
+        { "sheet": "group-sheets", "pages": [11, 12] },
+        { "sheet": "layouts", "pages": [6] },
+        { "sheet": "poster6-jobs", "pages": [1] }
+      ]
+    },
+    {
+      "id": "b-4-6-review",
+      "title": "Period B, posters 4 to 6: peer review forms, plus the Period B teacher tally",
+      "pdf": "pdf/u2_poster_peer_review_4_5_6.pdf",
+      "audience": "student",
+      "copies": "pages 1-3: one per student for each poster they review; page 4 (teacher tally): one copy",
+      "pageCount": 4,
+      "parts": [
+        { "sheet": "peer-review", "pages": [4, 5, 6] },
+        { "sheet": "peer-review", "pages": [8] }
+      ]
+    },
+    {
+      "id": "partner-worksheets",
+      "title": "Thursday partner worksheets: page 1 of cards 1, 2, 3 and 6, clean",
+      "pdf": "pdf/u2_poster_partner_worksheets.pdf",
+      "audience": "student",
+      "copies": "each group gets a clean page 1 of its partner's card",
+      "pageCount": 4,
+      "frozen": true,
+      "frozenNote": "printed 11/10 when card 6 was titled 'Poster 6 (spare)'; the html dropped '(spare)' in the 11/17 audit. Remove frozen to reprint from today's html.",
+      "parts": [
+        { "sheet": "group-sheets", "pages": [1, 3, 5, 11] }
+      ]
+    }
+  ],
+  "sets": {
+    "b-posters-4-6": ["b-4-6-groups", "b-4-6-review"]
+  }
+}
