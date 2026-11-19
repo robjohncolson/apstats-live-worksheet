@@ -88,19 +88,38 @@ describe('parseJobResult', () => {
     const body = { job: 'snapshot', code: 'breaks', breaks: 3, at: '2026-11-05T03:00:00Z' };
     expect(parseJobResult(body, NOW)).toEqual({
       job: 'snapshot',
-      result: { ok: false, code: 'breaks', message: 'verification found breaks', breaks: 3, at: '2026-11-05T03:00:00.000Z', receivedAt: NOW },
+      result: { ok: false, nothing: false, code: 'breaks', message: 'verification found breaks', breaks: 3, at: '2026-11-05T03:00:00.000Z', receivedAt: NOW },
     });
     expect(parseJobResult({ job: 'pcReconcileB', code: 'ok' }, NOW).result).toMatchObject({ ok: true, message: 'reconciled' });
     expect(parseJobResult({ job: 'pcReconcileE', code: 'sign-in-needed' }, NOW).result).toMatchObject({ ok: false, message: 'SIGN IN NEEDED' });
   });
 
   it('every job lists its codes, each with a boolean ok and a message', () => {
-    expect(KNOWN_JOBS).toEqual(['snapshot', 'pcReconcileB', 'pcReconcileE']);
+    expect(KNOWN_JOBS).toEqual(['snapshot', 'pcReconcileB', 'pcReconcileE', 'weeklyDok']);
     for (const job of KNOWN_JOBS) {
       for (const outcome of Object.values(JOB_CODES[job])) {
         expect(typeof outcome.ok).toBe('boolean');
         expect(typeof outcome.message).toBe('string');
+        // "nothing to do" is never a failure.
+        if (outcome.nothing) expect(outcome.ok).toBe(true);
       }
+    }
+  });
+
+  it('"nothing to do" codes are ok + nothing with their reason; every other code has nothing: false', () => {
+    const outcome = (job, code) => parseJobResult({ job, code }, NOW).result;
+    expect(outcome('pcReconcileB', 'nothing-no-pages')).toMatchObject({ ok: true, nothing: true, message: 'nothing to do: AP Classroom pages not posted yet' });
+    expect(outcome('pcReconcileE', 'nothing-no-school')).toMatchObject({ ok: true, nothing: true, message: 'nothing to do: no school today' });
+    expect(outcome('weeklyDok', 'nothing-below-floor')).toMatchObject({ ok: true, nothing: true, message: 'nothing to do: no label reached the student floor' });
+    expect(outcome('weeklyDok', 'nothing-already-ran')).toMatchObject({ ok: true, nothing: true, message: 'nothing to do: already ran this week' });
+    expect(outcome('pcReconcileB', 'reader-down')).toMatchObject({ ok: false, nothing: false, message: 'no AP Classroom pages for several school days: check the reader' });
+    expect(outcome('weeklyDok', 'ok')).toMatchObject({ ok: true, nothing: false, message: 'published a sheet' });
+    expect(outcome('weeklyDok', 'failed')).toMatchObject({ ok: false, nothing: false, message: 'failed (see the weekly DOK log)' });
+    expect(outcome('pcReconcileB', 'ok').nothing).toBe(false);
+    expect(outcome('snapshot', 'verified').nothing).toBe(false);
+    // the existing PC codes survive
+    for (const code of ['ok', 'sign-in-needed', 'page-not-ready', 'post-failed', 'failed']) {
+      expect(Object.hasOwn(JOB_CODES.pcReconcileB, code)).toBe(true);
     }
   });
 
@@ -121,7 +140,7 @@ describe('parseJobResult', () => {
   it('free text in the body (detail, names) is never stored', () => {
     const parsed = parseJobResult({ job: 'snapshot', code: 'verified', detail: 'Alice Smith score 4/16', name: 'Bob' }, NOW);
     expect(JSON.stringify(parsed)).not.toMatch(/Alice|Smith|Bob|4\/16/);
-    expect(Object.keys(parsed.result).sort()).toEqual(['at', 'breaks', 'code', 'message', 'ok', 'receivedAt']);
+    expect(Object.keys(parsed.result).sort()).toEqual(['at', 'breaks', 'code', 'message', 'nothing', 'ok', 'receivedAt']);
   });
 });
 
@@ -158,6 +177,18 @@ describe('POST /admin/job-result + GET /health jobs', () => {
     expect(jobs.snapshot).toMatchObject({ ok: false, code: 'breaks', message: 'verification found breaks', breaks: 2, at: '2026-11-05T04:00:00.000Z' });
     expect(jobs.pcReconcileE).toMatchObject({ ok: false, code: 'sign-in-needed', message: 'SIGN IN NEEDED' });
     expect(jobs.pcReconcileB).toBe(null);
+    expect(jobs.weeklyDok).toBe(null);
+  });
+
+  it('a "nothing to do" report shows on /health with nothing: true and its reason', async () => {
+    srv = await startServer();
+    const post = (body) => srv.request('POST', '/admin/job-result', { headers: asTeacher, body });
+    expect((await post({ job: 'weeklyDok', code: 'nothing-below-floor' })).status).toBe(200);
+    await post({ job: 'pcReconcileB', code: 'nothing-no-school' });
+    const { jobs } = (await srv.request('GET', '/health')).body;
+    expect(jobs.weeklyDok).toMatchObject({ ok: true, nothing: true, code: 'nothing-below-floor', message: 'nothing to do: no label reached the student floor' });
+    expect(jobs.pcReconcileB).toMatchObject({ ok: true, nothing: true, message: 'nothing to do: no school today' });
+    expect(jobs.pcReconcileE).toBe(null);
   });
 
   it('a student name or a secret sent in `detail` never appears in /health', async () => {

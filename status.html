@@ -36,6 +36,8 @@
     --st-red-bg: #F3D6D1;
     --st-grey: #6E6C62;
     --st-grey-bg: #E9E7DA;
+    --st-idle: #2F5F8A;
+    --st-idle-bg: #DCE6F0;
   }
   * { box-sizing: border-box; }
   body {
@@ -98,6 +100,8 @@
   .tile[data-state="amber"] .light { background: var(--st-amber-bg); color: var(--st-amber); }
   .tile[data-state="red"] { border-left-color: var(--st-red); }
   .tile[data-state="red"] .light { background: var(--st-red-bg); color: var(--st-red); }
+  .tile[data-state="idle"] { border-left-color: var(--st-idle); }
+  .tile[data-state="idle"] .light { background: var(--st-idle-bg); color: var(--st-idle); }
   .tile[data-state="pending"] { opacity: 0.75; }
   .rules { margin-top: 20px; font-size: 0.8rem; color: var(--sg-text-dim); line-height: 1.5; }
   .rules summary { cursor: pointer; font-weight: 600; }
@@ -123,7 +127,8 @@
         <li><strong>Green</strong>: the endpoint answered, reports itself healthy, and nothing is lagging.</li>
         <li><strong>Amber</strong>: it answered, but something needs a look (persist failures, degraded storage, CI still running, a mirror behind GH Pages, a roster-server deploy behind the last green CI). roster-server only redeploys when a push changes <code>roster-server/</code>, so a deployed commit behind CI head is amber only if a commit since then touched <code>roster-server/</code> (or GitHub's compare API could not be read); docs-only pushes leave it green.</li>
         <li><strong>Red</strong>: it did not answer, answered an error, or CI failed.</li>
-        <li><strong>Ledger snapshot</strong> and <strong>PC reconcile</strong> are nightly jobs on the teacher's machine. Each one reports its last run to roster-server, which keeps it in memory only: right after a roster deploy they read "unknown" (amber) until the job runs again.</li>
+        <li><strong>Ledger snapshot</strong> and <strong>PC reconcile</strong> are nightly jobs on the teacher's machine, and <strong>Weekly DOK</strong> runs once a week. Each one reports its last run to roster-server, which keeps it in memory only: right after a roster deploy they read "unknown" (amber) until the job runs again.</li>
+        <li><strong>Blue, "nothing to do"</strong>: a job ran and nothing failed, but there was no work (no school today, AP Classroom pages not posted yet, no DOK label at the floor, already ran this week). The tile says why. It is not green because nothing was done, and not red because nothing broke; red and amber still outrank it.</li>
         <li>Hover a tile's light for the exact rule. "Age" is how old the service's own timestamp is; "checked" is when this page fetched it.</li>
       </ul>
     </details>
@@ -282,24 +287,29 @@
   // of a run; the server keeps the latest in memory, so after a deploy it is null
   // ("unknown") until the job runs again.
   var JOB_STALE_MS = 36 * 3600 * 1000;
+  var WEEKLY_JOB_STALE_MS = 8 * 24 * 3600 * 1000;
 
   function jobAgeMs(result, now) {
     var t = Date.parse(result && result.at);
     return isNaN(t) ? Infinity : now - t;
   }
 
-  // 'green' | 'amber' | 'red' for one job result (null = never reported).
-  function jobState(result, now) {
+  // 'green' | 'idle' | 'amber' | 'red' for one job result (null = never reported).
+  // idle = it ran fine but had nothing to do. staleMs defaults to the nightly 36 h.
+  function jobState(result, now, staleMs) {
     if (!result) return 'amber';
     if (result.ok !== true) return 'red';
     if (num(result.breaks) !== null && result.breaks > 0) return 'red';
-    if (jobAgeMs(result, now) > JOB_STALE_MS) return 'amber';
+    if (jobAgeMs(result, now) > (staleMs || JOB_STALE_MS)) return 'amber';
+    if (result.nothing === true) return 'idle';
     return 'green';
   }
 
+  // red > amber > idle > green
   function worstState(states) {
     if (states.indexOf('red') >= 0) return 'red';
     if (states.indexOf('amber') >= 0) return 'amber';
+    if (states.indexOf('idle') >= 0) return 'idle';
     return 'green';
   }
 
@@ -324,22 +334,42 @@
   function pcLine(section, r, now) {
     if (!r) return section + ': no report';
     var age = jobAgeMs(r, now) > JOB_STALE_MS ? ' (stale)' : '';
-    return section + ': ' + esc(r.ok === true ? 'ok' : (r.message || 'failed')) + age;
+    var text = 'failed';
+    if (r.nothing === true) text = r.message || 'nothing to do';
+    else if (r.ok === true) text = 'ok';
+    else if (r.message) text = r.message;
+    return section + ': ' + esc(text) + age;
   }
 
   function judgePcReconcile(data, now) {
     var rule = 'Green: both PeriodB and PeriodE reconciles exited 0 within the last 36 h. ' +
+      'Blue: a section ran but had nothing to do (no school, or AP Classroom pages not posted yet); the detail says why. ' +
       'Amber: a section has no report since the last roster deploy, or its last report is older than 36 h. ' +
       'Red: a section\'s last run failed (exit 2 = SIGN IN NEEDED: sign the Edge rig into AP Classroom).';
     var jobs = data.jobs || {};
     var b = jobs.pcReconcileB || null;
     var e = jobs.pcReconcileE || null;
     var state = worstState([jobState(b, now), jobState(e, now)]);
-    var value = { green: 'ok', amber: 'unknown', red: 'failed' }[state];
+    var value = { green: 'ok', idle: 'nothing to do', amber: 'unknown', red: 'failed' }[state];
     if (state === 'amber' && b && e) value = 'stale';
     var times = [b, e].filter(Boolean).map(function (r) { return r.at; }).filter(Boolean).sort();
     return { state: state, rule: rule, value: value,
       detail: pcLine('B', b, now) + '; ' + pcLine('E', e, now), at: times.length ? times[0] : null };
+  }
+
+  function judgeWeeklyDok(data, now) {
+    var rule = 'Green: the weekly DOK job published a sheet within the last 8 days. ' +
+      'Blue: it ran but had nothing to do (no label reached the student floor, or it already ran this week). ' +
+      'Amber: no report since the last roster deploy, or the last report is older than 8 days. ' +
+      'Red: the last run failed.';
+    var r = (data.jobs || {}).weeklyDok || null;
+    var state = jobState(r, now, WEEKLY_JOB_STALE_MS);
+    if (!r) {
+      return { state: state, rule: rule, value: 'unknown',
+        detail: 'no report since the last roster deploy (the weekly DOK job posts after each run)', at: null };
+    }
+    var value = { green: 'published', idle: 'nothing to do', amber: 'stale', red: 'failed' }[state];
+    return { state: state, rule: rule, value: value, detail: esc(r.message || ''), at: r.at || null };
   }
 
   // A job tile when the roster server itself did not answer: its own tile is already red.
@@ -405,7 +435,8 @@
   // Read from the roster /health answer above (no extra fetch).
   var JOB_TILES = [
     { id: 'snapshot', label: 'Ledger snapshot', url: ROSTER_URL },
-    { id: 'pcreconcile', label: 'PC reconcile', url: ROSTER_URL }
+    { id: 'pcreconcile', label: 'PC reconcile', url: ROSTER_URL },
+    { id: 'weeklydok', label: 'Weekly DOK', url: ROSTER_URL }
   ];
 
   function pending(t) {
@@ -419,12 +450,13 @@
   function render(tiles, now) {
     var el = document.getElementById('tiles');
     el.innerHTML = tiles.map(function (t) { return tileHtml(t, now); }).join('');
-    var counts = { green: 0, amber: 0, red: 0, pending: 0 };
+    var counts = { green: 0, idle: 0, amber: 0, red: 0, pending: 0 };
     tiles.forEach(function (t) { counts[t.state] = (counts[t.state] || 0) + 1; });
     var sum = document.getElementById('summary');
     if (counts.pending) { sum.textContent = 'Checking…'; return; }
     if (counts.red) sum.innerHTML = '<strong>' + counts.red + ' down</strong> · ' + counts.amber + ' to look at · ' + counts.green + ' fine';
     else if (counts.amber) sum.innerHTML = '<strong>Up, ' + counts.amber + ' to look at</strong> · ' + counts.green + ' fine';
+    else if (counts.idle) sum.innerHTML = '<strong>Everything is up.</strong> · ' + counts.idle + ' with nothing to do';
     else sum.innerHTML = '<strong>Everything is up.</strong>';
   }
 
@@ -470,7 +502,8 @@
         build(TILES[4], results.vercel.ok ? judgeVercel(results.vercel.data, { pagesBuild: pagesBuild }) : null),
         build(TILES[5], ci),
         jobTile(JOB_TILES[0], judgeSnapshot),
-        jobTile(JOB_TILES[1], judgePcReconcile)
+        jobTile(JOB_TILES[1], judgePcReconcile),
+        jobTile(JOB_TILES[2], judgeWeeklyDok)
       ];
       render(tiles, now);
       return tiles;
@@ -480,7 +513,7 @@
   window.StatusPage = {
     URLS: { roster: ROSTER_URL, cr: CR_URL, a2: A2_URL, pages: PAGES_URL, vercel: VERCEL_URL, ci: CI_URL },
     judgeHealthServer: judgeHealthServer, judgeCr: judgeCr, judgePages: judgePages, judgeVercel: judgeVercel, judgeCi: judgeCi,
-    judgeSnapshot: judgeSnapshot, judgePcReconcile: judgePcReconcile,
+    judgeSnapshot: judgeSnapshot, judgePcReconcile: judgePcReconcile, judgeWeeklyDok: judgeWeeklyDok,
     compareUrl: compareUrl, rosterChangeSince: rosterChangeSince,
     ageText: ageText, load: load
   };

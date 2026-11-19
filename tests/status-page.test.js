@@ -33,6 +33,7 @@ function freshJobs() {
     snapshot: { ok: true, code: 'verified', message: 'verified', breaks: 0, at: HOURS_AGO(12) },
     pcReconcileB: { ok: true, code: 'ok', message: 'reconciled', breaks: null, at: HOURS_AGO(23) },
     pcReconcileE: { ok: true, code: 'ok', message: 'reconciled', breaks: null, at: HOURS_AGO(23) },
+    weeklyDok: { ok: true, code: 'ok', message: 'published a sheet', breaks: null, at: HOURS_AGO(48) },
   };
 }
 
@@ -112,7 +113,7 @@ describe('status.html render (stubbed fetch)', () => {
 
   it('paints every tile green with value + age + rule when all sources are healthy', async () => {
     const { doc, tiles } = await boot(healthy());
-    expect(tiles.map((t) => t.state)).toEqual(['green', 'green', 'green', 'green', 'green', 'green', 'green', 'green']);
+    expect(tiles.map((t) => t.state)).toEqual(['green', 'green', 'green', 'green', 'green', 'green', 'green', 'green', 'green']);
     const roster = doc.getElementById('tile-roster');
     expect(roster.getAttribute('data-state')).toBe('green');
     expect(roster.querySelector('.value').textContent).toBe('commit c935058');
@@ -123,7 +124,7 @@ describe('status.html render (stubbed fetch)', () => {
     expect(doc.getElementById('tile-cr').querySelector('.detail').textContent).toContain('connections: 10');
     expect(doc.getElementById('tile-ci').querySelector('.value').textContent).toBe('success');
     expect(doc.getElementById('summary').textContent).toBe('Everything is up.');
-    expect(doc.querySelectorAll('.tile').length).toBe(8);
+    expect(doc.querySelectorAll('.tile').length).toBe(9);
     expect(doc.getElementById('tile-snapshot').querySelector('.value').textContent).toBe('verified');
     expect(doc.getElementById('tile-pcreconcile').querySelector('.detail').textContent).toBe('B: ok; E: ok');
   });
@@ -136,7 +137,7 @@ describe('status.html render (stubbed fetch)', () => {
     expect(cr.getAttribute('data-state')).toBe('red');
     expect(cr.querySelector('.value').textContent).toBe('no answer');
     expect(cr.querySelector('.detail').textContent).toBe('Failed to fetch');
-    expect(tiles.filter((t) => t.state === 'green').length).toBe(7);
+    expect(tiles.filter((t) => t.state === 'green').length).toBe(8);
     expect(doc.getElementById('summary').textContent).toContain('1 down');
   });
 
@@ -269,7 +270,7 @@ describe('status.html nightly-job tiles (roster /health jobs)', () => {
 
   it('every job tile light carries its Green/Amber/Red rule', async () => {
     const { doc } = await boot(healthy());
-    for (const id of ['tile-snapshot', 'tile-pcreconcile']) {
+    for (const id of ['tile-snapshot', 'tile-pcreconcile', 'tile-weeklydok']) {
       expect(doc.getElementById(id).querySelector('.light').getAttribute('title')).toMatch(/^Green: .*Amber: .*Red: /);
     }
   });
@@ -311,6 +312,67 @@ describe('status.html nightly-job tiles (roster /health jobs)', () => {
     expect(by.roster.state).toBe('red');
     expect(by.snapshot).toMatchObject({ state: 'amber', value: 'unknown' });
     expect(by.pcreconcile).toMatchObject({ state: 'amber', value: 'unknown' });
+    expect(by.weeklydok).toMatchObject({ state: 'amber', value: 'unknown' });
+  });
+
+  it('a fresh "nothing to do" result is idle (blue), with the server reason as the detail', async () => {
+    const bodies = healthy();
+    bodies[URLS.roster].jobs.pcReconcileB = { ok: true, nothing: true, code: 'nothing-no-school', message: 'nothing to do: no school today', breaks: null, at: HOURS_AGO(3) };
+    const { doc, tiles } = await boot(bodies);
+    expect(byId(tiles).pcreconcile).toMatchObject({ state: 'idle', value: 'nothing to do' });
+    expect(doc.getElementById('tile-pcreconcile').getAttribute('data-state')).toBe('idle');
+    expect(doc.getElementById('tile-pcreconcile').querySelector('.detail').textContent).toBe('B: nothing to do: no school today; E: ok');
+    expect(doc.getElementById('summary').textContent).toContain('nothing to do');
+  });
+
+  it('red beats idle, amber beats idle, idle beats green', async () => {
+    const nothing = { ok: true, nothing: true, code: 'nothing-no-pages', message: 'nothing to do: AP Classroom pages not posted yet', breaks: null, at: HOURS_AGO(3) };
+    const red = healthy();
+    red[URLS.roster].jobs.pcReconcileB = nothing;
+    red[URLS.roster].jobs.pcReconcileE = { ok: false, code: 'sign-in-needed', message: 'SIGN IN NEEDED', breaks: null, at: HOURS_AGO(3) };
+    expect(byId((await boot(red)).tiles).pcreconcile.state).toBe('red');
+
+    const amber = healthy();
+    amber[URLS.roster].jobs.pcReconcileB = nothing;
+    amber[URLS.roster].jobs.pcReconcileE = null;
+    expect(byId((await boot(amber)).tiles).pcreconcile.state).toBe('amber');
+
+    const idle = healthy();
+    idle[URLS.roster].jobs.pcReconcileB = nothing;
+    expect(byId((await boot(idle)).tiles).pcreconcile.state).toBe('idle');
+  });
+
+  it('a stale "nothing to do" result is amber, not idle', async () => {
+    const bodies = healthy();
+    bodies[URLS.roster].jobs.pcReconcileB = { ok: true, nothing: true, code: 'nothing-no-school', message: 'nothing to do: no school today', breaks: null, at: HOURS_AGO(40) };
+    expect(byId((await boot(bodies)).tiles).pcreconcile.state).toBe('amber');
+  });
+
+  it('Weekly DOK: green when it published, idle on nothing to do, red on failed, amber past 8 days', async () => {
+    expect(byId((await boot(healthy())).tiles).weeklydok).toMatchObject({ state: 'green', value: 'published' });
+
+    const idle = healthy();
+    idle[URLS.roster].jobs.weeklyDok = { ok: true, nothing: true, code: 'nothing-below-floor', message: 'nothing to do: no label reached the student floor', breaks: null, at: HOURS_AGO(24) };
+    const { doc, tiles } = await boot(idle);
+    expect(byId(tiles).weeklydok).toMatchObject({ state: 'idle', value: 'nothing to do' });
+    expect(doc.getElementById('tile-weeklydok').querySelector('.detail').textContent).toBe('nothing to do: no label reached the student floor');
+    expect(doc.getElementById('tile-weeklydok').querySelector('.light').getAttribute('title')).toMatch(/^Green: .*Blue: .*Amber: .*Red: /);
+
+    const failed = healthy();
+    failed[URLS.roster].jobs.weeklyDok = { ok: false, code: 'failed', message: 'failed (see the weekly DOK log)', breaks: null, at: HOURS_AGO(24) };
+    expect(byId((await boot(failed)).tiles).weeklydok).toMatchObject({ state: 'red', value: 'failed' });
+
+    const day7 = healthy();
+    day7[URLS.roster].jobs.weeklyDok.at = HOURS_AGO(7 * 24);
+    expect(byId((await boot(day7)).tiles).weeklydok.state).toBe('green');
+
+    const stale = healthy();
+    stale[URLS.roster].jobs.weeklyDok.at = HOURS_AGO(8 * 24 + 1);
+    expect(byId((await boot(stale)).tiles).weeklydok).toMatchObject({ state: 'amber', value: 'stale' });
+
+    const never = healthy();
+    never[URLS.roster].jobs.weeklyDok = null;
+    expect(byId((await boot(never)).tiles).weeklydok).toMatchObject({ state: 'amber', value: 'unknown' });
   });
 
   it('renders the server message, never a reporter detail field', async () => {

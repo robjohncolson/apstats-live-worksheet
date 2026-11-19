@@ -2,9 +2,17 @@
 //
 // The teacher's machines run nightly jobs the server cannot see: the ledger snapshot
 // verification (tools/nightly-backup.mjs) and the AP Classroom PC reconcile
-// (tools/daily_pc_reconcile.ps1, one run per section). Each job posts its outcome here
-// at the end of a run, and status.html shows the last outcome on its tiles, so a job
-// that fails night after night is visible instead of silent.
+// (tools/daily_pc_reconcile.ps1, one run per section), and the weekly DOK misconception
+// sheet (`weeklyDok`). Each job posts its outcome here at the end of a run, and
+// status.html shows the last outcome on its tiles, so a job that fails night after night
+// is visible instead of silent.
+//
+// THREE OUTCOMES. A code is one of: ok (it did its work), failed (ok: false), or
+// "nothing to do" (nothing: true, ok: true). Nothing failed, but there was no work: the
+// AP Classroom pages are not posted, there is no school today, no DOK label reached the
+// student floor, the weekly job already ran. status.html shows that as its own neutral
+// "idle" tile with the reason, so a quiet night is not mistaken for a healthy run (green)
+// or a broken one (red).
 //
 // IN-MEMORY ONLY: a deploy or restart forgets every result, and the status tile then
 // reads "unknown" (amber) until the job's next run.
@@ -20,7 +28,7 @@
 //     at:     optional ISO time of the run (defaults to now)
 //   -> 200 { ok: true, job, result } | 400 { ok:false, error } | 401 { ok:false, error }
 //
-//   Stored / on /health: { ok, code, message, breaks, at, receivedAt }
+//   Stored / on /health: { ok, nothing, code, message, breaks, at, receivedAt }
 
 import { requireTeacher } from './teacher-auth.js';
 
@@ -28,11 +36,14 @@ const PC_RECONCILE_CODES = {
   'ok': { ok: true, message: 'reconciled' },
   'sign-in-needed': { ok: false, message: 'SIGN IN NEEDED' },
   'page-not-ready': { ok: false, message: 'AP Classroom page not ready' },
+  'nothing-no-pages': { ok: true, nothing: true, message: 'nothing to do: AP Classroom pages not posted yet' },
+  'nothing-no-school': { ok: true, nothing: true, message: 'nothing to do: no school today' },
+  'reader-down': { ok: false, message: 'no AP Classroom pages for several school days: check the reader' },
   'post-failed': { ok: false, message: 'posting to roster failed' },
   'failed': { ok: false, message: 'failed (see the reconcile log)' },
 };
 
-// job -> code -> { ok, message }. The message is the only text /health ever shows.
+// job -> code -> { ok, nothing?, message }. The message is the only text /health ever shows.
 export const JOB_CODES = {
   snapshot: {
     'verified': { ok: true, message: 'verified' },
@@ -41,6 +52,12 @@ export const JOB_CODES = {
   },
   pcReconcileB: PC_RECONCILE_CODES,
   pcReconcileE: PC_RECONCILE_CODES,
+  weeklyDok: {
+    'ok': { ok: true, message: 'published a sheet' },
+    'nothing-below-floor': { ok: true, nothing: true, message: 'nothing to do: no label reached the student floor' },
+    'nothing-already-ran': { ok: true, nothing: true, message: 'nothing to do: already ran this week' },
+    'failed': { ok: false, message: 'failed (see the weekly DOK log)' },
+  },
 };
 
 export const KNOWN_JOBS = Object.keys(JOB_CODES);
@@ -72,6 +89,7 @@ export function parseJobResult(body, now = new Date().toISOString()) {
     job: body.job,
     result: {
       ok: outcome.ok,
+      nothing: outcome.nothing === true,
       code: body.code,
       message: outcome.message,
       breaks: cleanBreaks(body.breaks),
@@ -86,7 +104,7 @@ export function createJobResults() {
   const latest = new Map();
   return {
     record(job, result) { latest.set(job, result); },
-    // { snapshot: {...}|null, pcReconcileB: ..., pcReconcileE: ... } for /health.
+    // { snapshot: {...}|null, pcReconcileB: ..., pcReconcileE: ..., weeklyDok: ... } for /health.
     snapshot() {
       const out = {};
       for (const job of KNOWN_JOBS) out[job] = latest.has(job) ? { ...latest.get(job) } : null;
