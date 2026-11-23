@@ -26,7 +26,7 @@ Set-Location $repo
 
 $TASKS = @(
   'ApStatsPcReconcileB', 'ApStatsPcReconcileE', 'ApStatsSchoologySync-B', 'ApStatsSchoologySync-E',
-  'APStats Grade Nightly Backup', 'APStats-NightlyBrief', 'A2 Tomorrow Draft',
+  'APStats Grade Nightly Backup', 'APStats-NightlyBrief', 'A2 Tomorrow Draft', 'APStats-DailyCheck',
   'APStats DOGE Payout Agent', 'APStats Slips Agent', 'APStats Weekly Slips'
 )
 $HEALTH = @(
@@ -57,6 +57,39 @@ function Show-Status {
     if (-not $task) { Write-Output ("MISSING  {0}" -f $name); continue }
     $info = $task | Get-ScheduledTaskInfo
     Write-Output ("{0,-9} result={1,-11} last={2:MM-dd HH:mm}  {3}" -f $task.State, $info.LastTaskResult, $info.LastRunTime, $name)
+  }
+  $itin = Get-ScheduledTask -TaskPath '\DailyItinerary\' -TaskName 'DailyItinerary-Morning' -ErrorAction SilentlyContinue
+  if (-not $itin) {
+    Write-Output 'MISSING  \DailyItinerary\DailyItinerary-Morning'
+  } else {
+    $info = $itin | Get-ScheduledTaskInfo
+    Write-Output ("{0,-9} result={1,-11} last={2:MM-dd HH:mm}  {3}" -f $itin.State, $info.LastTaskResult, $info.LastRunTime, '\DailyItinerary\DailyItinerary-Morning')
+  }
+
+  Write-Output ''
+  Write-Output '== Ops inbox =='
+  $inboxDir = 'C:\Users\rober\fable-listener\inbox'
+  if (-not (Test-Path $inboxDir)) {
+    Write-Output 'Ops inbox: 0 pending (folder missing)'
+  } else {
+    $pending = @()
+    Get-ChildItem -LiteralPath $inboxDir -File -Filter '*.jsonl' -ErrorAction SilentlyContinue | Sort-Object Name | ForEach-Object {
+      $repoName = $_.BaseName
+      foreach ($line in (Get-Content -LiteralPath $_.FullName -Encoding UTF8 -ErrorAction SilentlyContinue)) {
+        $trimmed = $line.Trim()
+        if (-not $trimmed) { continue }
+        $nid = '<unparsed>'
+        try {
+          $obj = $trimmed | ConvertFrom-Json
+          if ($obj.id) { $nid = [string]$obj.id }
+        } catch { }
+        $pending += [pscustomobject]@{ Repo = $repoName; Id = $nid }
+      }
+    }
+    Write-Output ("Ops inbox: {0} pending" -f $pending.Count)
+    foreach ($item in $pending) {
+      Write-Output ("  {0}  {1}" -f $item.Repo, $item.Id)
+    }
   }
 
   Write-Output ''

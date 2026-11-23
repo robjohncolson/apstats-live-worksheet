@@ -23,7 +23,7 @@ From the repo root, in PowerShell:
 | `gate` | `npm run test:quick`, the release gate | No |
 | `prepush` | Lists unpushed commits and whether they touch `roster-server/` | No |
 
-Start every working session with `status`. Report in plain words; never name a student.
+Start every working session with `status`, and check the Ops inbox (`python C:\Users\rober\fable-listener\ops-note.py --list`) and summarize any pending notes (Grok has no delivery hook; do not auto-move notes to `delivered/`). Report in plain words; never name a student.
 
 ## What runs by itself (Windows Task Scheduler on this PC)
 
@@ -34,6 +34,7 @@ None of these call an AI model. They run the WORKING-TREE copies of `tools/` and
 |---|---|---|
 | 16:00 / 16:10 daily | ApStatsPcReconcileB / E | Reads AP Classroom pages already posted to the roster server, posts Progress Check parts. Never lowers a stored part. |
 | 16:30 / 16:45 daily | ApStatsSchoologySync-B / E | Writes grades into Schoology through the Edge rig, then the official quarter override. Best-wins: never lowers a cell. |
+| 17:15 daily | APStats-DailyCheck | `tools/daily_check.ps1`: status, red flags worked out by the script, then Grok Build (headless, read tools only) explains them. Report: `roster-local/daily-check/latest.md`; it opens in Notepad only when there is a red flag. Reads only. |
 | 20:30 daily | A2 Tomorrow Draft | Algebra 2: pulls summaries, drafts tomorrow's note, publishes ready plans. |
 | 20:45 daily | APStats-NightlyBrief | One brief per section for its next class, with open promises. |
 | 21:00 daily | APStats Grade Nightly Backup | Signed snapshot to `~/grade-backups/`, verified, plus a review digest. |
@@ -117,6 +118,7 @@ Push steps for follow-alongs, in order:
 - Do not repair or re-enable a disabled task, and do not change Railway variables or
   database tables, without the teacher asking.
 - When something "does not work", diagnose and report before changing anything.
+- **Master key outside every repo:** the Sovereign Ledger Teacher Master Key lives ONLY at `C:\Users\rober\.sovereign\teacher-master-key.json` (plus an offline backup). No agent may write key material inside any git repo.
 
 ## Where CLAUDE.md is stale (trust this file and the code instead)
 

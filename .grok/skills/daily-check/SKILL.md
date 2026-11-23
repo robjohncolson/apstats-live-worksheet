@@ -8,6 +8,10 @@ description: "Check that the AP Stats grade jobs and services ran and are health
 Read-only until the teacher says otherwise. Report in plain words: what is fine, what is not, and the one
 next step for each problem. Never name students in the report.
 
+A scheduled task (APStats-DailyCheck, 17:15) already runs `tools/daily_check.ps1` every day and writes
+`roster-local/daily-check/latest.md` (red flags, your headless reading, raw status). Read that file first.
+In that headless run you have read tools only: do not try a command.
+
 ## 1. Services
 - Open `https://robjohncolson.github.io/apstats-live-worksheet/status.html`, or fetch the same things yourself:
   `https://roster-production-12c1.up.railway.app/health`, `https://curriculumrender-production.up.railway.app/health`,
@@ -18,7 +22,7 @@ next step for each problem. Never name students in the report.
 ## 2. Scheduled jobs (Task Scheduler on this PC)
 `Get-ScheduledTask` / `schtasks /query /tn <name> /v /fo list` for: ApStatsPcReconcileB (16:00), ApStatsPcReconcileE (16:10),
 ApStatsSchoologySync-B (16:30), ApStatsSchoologySync-E (16:45), "APStats Grade Nightly Backup" (21:00),
-"APStats DOGE Payout Agent" (must be Running), "APStats Slips Agent", APStats-WeeklyDOK (Fri), "A2 Tomorrow Draft" (20:30).
+"APStats DOGE Payout Agent" (must be Running), "APStats Slips Agent", "A2 Tomorrow Draft" (20:30). (`APStats-WeeklyDOK` is frozen/disabled since 2026-11-18 — do not re-enable or repair.)
 The PC reconcile and the Schoology syncs do not start on battery.
 
 ## 3. Logs (in `tools/`; gitignored; may hold names: never paste them anywhere public)
