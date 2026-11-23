@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sovereign Ledger — Browser Web Crypto Probe</title>
+<style>
+  :root {
+    --bg: #f6f8fa;
+    --card: #ffffff;
+    --border: #d0d7de;
+    --text: #1f2328;
+    --muted: #57606a;
+    --pass-bg: #dafbe1;
+    --pass-fg: #116329;
+    --fail-bg: #ffebe9;
+    --fail-fg: #cf222e;
+    --warn-bg: #fff8c5;
+    --warn-fg: #7d4e00;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 24px 16px 48px;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.45;
+  }
+  .wrap { max-width: 900px; margin: 0 auto; }
+  h1 { margin: 0 0 6px; font-size: 1.5rem; }
+  .sub { color: var(--muted); margin: 0 0 18px; font-size: 0.95rem; }
+  .banner {
+    padding: 16px 18px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    margin-bottom: 18px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .banner.all-pass { background: var(--pass-bg); border-color: #82e09a; color: var(--pass-fg); }
+  .banner.has-fail { background: var(--fail-bg); border-color: #ffaba8; color: var(--fail-fg); }
+  .banner strong { font-size: 1.2rem; }
+  .actions { display: flex; gap: 10px; align-items: center; }
+  button {
+    font: inherit;
+    font-weight: 600;
+    padding: 9px 16px;
+    border-radius: 8px;
+    border: 1px solid #1b1f2426;
+    background: #1f2328;
+    color: #fff;
+    cursor: pointer;
+  }
+  button:hover { background: #32383f; }
+  button.secondary { background: #fff; color: var(--text); }
+  button.secondary:hover { background: #f3f4f6; }
+  .copy-status { font-size: 0.9rem; color: var(--muted); }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin-bottom: 18px;
+    overflow-x: auto;
+  }
+  .card h2 { margin: 0 0 12px; font-size: 1.05rem; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+  th, td {
+    text-align: left;
+    padding: 10px 10px;
+    border-bottom: 1px solid #eaeef2;
+    vertical-align: top;
+  }
+  th { font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+  tr:last-child td { border-bottom: none; }
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    letter-spacing: 0.03em;
+  }
+  .pass { background: var(--pass-bg); color: var(--pass-fg); }
+  .fail { background: var(--fail-bg); color: var(--fail-fg); }
+  .mono { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 0.86rem; word-break: break-word; }
+  .kv { display: grid; grid-template-columns: 190px 1fr; gap: 6px 14px; font-size: 0.92rem; }
+  .kv dt { font-weight: 600; color: var(--muted); }
+  .kv dd { margin: 0; }
+  @media (max-width: 600px) {
+    .kv { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Browser Web Crypto Capability Probe</h1>
+  <p class="sub">Read-only local check for Sovereign Ledger Phase 1. Runs entirely in memory: no network requests, no storage writes, no student data.</p>
+
+  <div id="summaryBanner" class="banner">
+    <div><strong id="summaryText">Running Web Crypto checks...</strong><div id="summarySub" class="mono"></div></div>
+    <div class="actions">
+      <button id="rerunBtn" class="secondary" type="button">Re-run</button>
+      <button id="copyBtn" type="button">Copy results</button>
+      <span id="copyStatus" class="copy-status" role="status" aria-live="polite"></span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Test Results</h2>
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 220px;">Primitive / Check</th>
+          <th style="width: 90px;">Status</th>
+          <th style="width: 80px;">Time</th>
+          <th>Details</th>
+        </tr>
+      </thead>
+      <tbody id="resultsBody">
+        <tr><td colspan="4" class="mono">Running...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>Device &amp; Browser Info</h2>
+    <dl class="kv" id="envList">
+      <dt>Loading</dt><dd class="mono">...</dd>
+    </dl>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  function bytesEqual(a, b) {
+    if (a.length !== b.length) return false;
+    var diff = 0;
+    for (var i = 0; i < a.length; i++) diff |= a[i] ^ b[i];
+    return diff === 0;
+  }
+
+  function toHex(buf) {
+    var u8 = buf instanceof Uint8Array ? buf : new Uint8Array(buf);
+    var s = "";
+    for (var i = 0; i < u8.length; i++) {
+      s += u8[i].toString(16).padStart(2, "0");
+    }
+    return s;
+  }
+
+  async function runCryptoSuite(cryptoObj, secureCtx) {
+    var subtle = cryptoObj && cryptoObj.subtle ? cryptoObj.subtle : null;
+    var enc = new TextEncoder();
+    var dec = new TextDecoder();
+
+    var tests = [
+      {
+        name: "isSecureContext",
+        fn: async function () {
+          if (secureCtx !== true) {
+            throw new Error("window.isSecureContext is " + String(secureCtx) + " (Web Crypto requires a secure origin)");
+          }
+          return "window.isSecureContext === true";
+        }
+      },
+      {
+        name: "crypto.randomUUID",
+        fn: async function () {
+          if (!cryptoObj || typeof cryptoObj.randomUUID !== "function") {
+            throw new Error("crypto.randomUUID is unavailable");
+          }
+          var id = cryptoObj.randomUUID();
+          if (!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) {
+            throw new Error("Unexpected UUID format: " + id);
+          }
+          return "Generated v4 UUID: " + id;
+        }
+      },
+      {
+        name: "SHA-256",
+        fn: async function () {
+          if (!subtle) throw new Error("crypto.subtle unavailable");
+          var digest = await subtle.digest("SHA-256", enc.encode("sovereign-ledger-probe"));
+          var hex = toHex(digest);
+          if (hex.length !== 64) throw new Error("Unexpected digest length " + hex.length);
+          return "256-bit digest ok (" + hex.slice(0, 16) + "...)";
+        }
+      },
+      {
+        name: "Ed25519 (generateKey / sign / verify)",
+        fn: async function () {
+          if (!subtle) throw new Error("crypto.subtle unavailable");
+          var kp = await subtle.generateKey({ name: "Ed25519" }, true, ["sign", "verify"]);
+          var msg = enc.encode("sovereign-ed25519-test-v1");
+          var sig = await subtle.sign({ name: "Ed25519" }, kp.privateKey, msg);
+          var ok = await subtle.verify({ name: "Ed25519" }, kp.publicKey, sig, msg);
+          if (!ok) throw new Error("Valid signature failed verify()");
+          var tampered = enc.encode("sovereign-ed25519-test-v2");
+          var bad = await subtle.verify({ name: "Ed25519" }, kp.publicKey, sig, tampered);
+          if (bad) throw new Error("Tampered message verified as true");
+          return "64-byte signature signed and verified; tamper rejected";
+        }
+      },
+      {
+        name: "X25519 (generateKey / deriveBits)",
+        fn: async function () {
+          if (!subtle) throw new Error("crypto.subtle unavailable");
+          var alice = await subtle.generateKey({ name: "X25519" }, false, ["deriveBits"]);
+          var bob = await subtle.generateKey({ name: "X25519" }, false, ["deriveBits"]);
+          var aBits = new Uint8Array(await subtle.deriveBits({ name: "X25519", public: bob.publicKey }, alice.privateKey, 256));
+          var bBits = new Uint8Array(await subtle.deriveBits({ name: "X25519", public: alice.publicKey }, bob.privateKey, 256));
+          if (aBits.length !== 32 || !bytesEqual(aBits, bBits)) {
+            throw new Error("Derived shared secrets did not match");
+          }
+          return "256-bit shared secret agreed by both sides";
+        }
+      },
+      {
+        name: "ECDH P-256 (deriveBits fallback)",
+        fn: async function () {
+          if (!subtle) throw new Error("crypto.subtle unavailable");
+          var alice = await subtle.generateKey({ name: "ECDH", namedCurve: "P-256" }, false, ["deriveBits"]);
+          var bob = await subtle.generateKey({ name: "ECDH", namedCurve: "P-256" }, false, ["deriveBits"]);
+          var aBits = new Uint8Array(await subtle.deriveBits({ name: "ECDH", public: bob.publicKey }, alice.privateKey, 256));
+          var bBits = new Uint8Array(await subtle.deriveBits({ name: "ECDH", public: alice.publicKey }, bob.privateKey, 256));
+          if (aBits.length !== 32 || !bytesEqual(aBits, bBits)) {
+            throw new Error("Derived P-256 secrets did not match");
+          }
+          return "256-bit P-256 shared secret agreed by both sides";
+        }
+      },
+      {
+        name: "HKDF (SHA-256 deriveBits)",
+        fn: async function () {
+          if (!subtle) throw new Error("crypto.subtle unavailable");
+          var ikmBytes = cryptoObj.getRandomValues(new Uint8Array(32));
+          var salt = cryptoObj.getRandomValues(new Uint8Array(16));
+          var info = enc.encode("sovereign-hkdf-probe");
+          var baseKey = await subtle.importKey("raw", ikmBytes, "HKDF", false, ["deriveBits"]);
+          var out1 = new Uint8Array(await subtle.deriveBits({ name: "HKDF", hash: "SHA-256", salt: salt, info: info }, baseKey, 256));
+          var out2 = new Uint8Array(await subtle.deriveBits({ name: "HKDF", hash: "SHA-256", salt: salt, info: info }, baseKey, 256));
+          if (out1.length !== 32 || !bytesEqual(out1, out2)) {
+            throw new Error("HKDF output mismatch or bad length");
+          }
+          return "256-bit deterministic HKDF-SHA256 derivation ok";
+        }
+      },
+      {
+        name: "AES-256-GCM (encrypt / decrypt)",
+        fn: async function () {
+          if (!subtle) throw new Error("crypto.subtle unavailable");
+          var key = await subtle.generateKey({ name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
+          var iv = cryptoObj.getRandomValues(new Uint8Array(12));
+          var aad = enc.encode("receipt-header-v1");
+          var pt = "Sovereign Ledger roundtrip payload #1";
+          var ct = await subtle.encrypt({ name: "AES-GCM", iv: iv, additionalData: aad }, key, enc.encode(pt));
+          var out = await subtle.decrypt({ name: "AES-GCM", iv: iv, additionalData: aad }, key, ct);
+          if (dec.decode(out) !== pt) throw new Error("Decrypted text did not match plaintext");
+          return "256-bit AES-GCM roundtrip with 96-bit IV + AAD ok";
+        }
+      },
+      {
+        name: "AES-KW (wrapKey / unwrapKey)",
+        fn: async function () {
+          if (!subtle) throw new Error("crypto.subtle unavailable");
+          var kek = await subtle.generateKey({ name: "AES-KW", length: 256 }, false, ["wrapKey", "unwrapKey"]);
+          var dek = await subtle.generateKey({ name: "AES-GCM", length: 256 }, true, ["encrypt", "decrypt"]);
+          var wrapped = await subtle.wrapKey("raw", dek, kek, "AES-KW");
+          var unwrapped = await subtle.unwrapKey(
+            "raw",
+            wrapped,
+            kek,
+            "AES-KW",
+            { name: "AES-GCM", length: 256 },
+            false,
+            ["encrypt", "decrypt"]
+          );
+          var iv = cryptoObj.getRandomValues(new Uint8Array(12));
+          var msg = "wrapped-key-check";
+          var ct = await subtle.encrypt({ name: "AES-GCM", iv: iv }, dek, enc.encode(msg));
+          var pt = await subtle.decrypt({ name: "AES-GCM", iv: iv }, unwrapped, ct);
+          if (dec.decode(pt) !== msg) throw new Error("Unwrapped DEK failed decrypt check");
+          return "40-byte RFC3394 wrapped DEK unwrapped and verified";
+        }
+      }
+    ];
+
+    var results = [];
+    for (var i = 0; i < tests.length; i++) {
+      var t = tests[i];
+      var t0 = performance.now();
+      try {
+        var detail = await t.fn();
+        results.push({ name: t.name, ok: true, ms: +(performance.now() - t0).toFixed(2), detail: detail });
+      } catch (err) {
+        var msg = err && err.message ? err.message : String(err);
+        results.push({ name: t.name, ok: false, ms: +(performance.now() - t0).toFixed(2), detail: msg });
+      }
+    }
+    return results;
+  }
+
+  async function collectEnvInfo() {
+    var info = {
+      userAgent: navigator.userAgent || "(unavailable)",
+      platform: navigator.platform || "(unavailable)",
+      userAgentData: null,
+      originProtocol: window.location && window.location.protocol ? window.location.protocol : "(unknown)",
+      isSecureContext: window.isSecureContext
+    };
+    if (navigator.userAgentData) {
+      var uad = {
+        platform: navigator.userAgentData.platform || "",
+        mobile: !!navigator.userAgentData.mobile,
+        brands: navigator.userAgentData.brands || []
+      };
+      if (typeof navigator.userAgentData.getHighEntropyValues === "function") {
+        try {
+          var hi = await navigator.userAgentData.getHighEntropyValues(["platformVersion", "fullVersionList"]);
+          uad.platformVersion = hi.platformVersion || "";
+          if (hi.fullVersionList) uad.fullVersionList = hi.fullVersionList;
+        } catch (e) {
+          uad.highEntropyError = e && e.message ? e.message : String(e);
+        }
+      }
+      info.userAgentData = uad;
+    }
+    return info;
+  }
+
+  function esc(str) {
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  var lastReportText = "";
+
+  function formatReportText(results, env) {
+    var passed = results.filter(function (r) { return r.ok; }).length;
+    var lines = [
+      "Sovereign Ledger Web Crypto Probe (" + passed + "/" + results.length + " PASS)",
+      "Timestamp: " + new Date().toISOString(),
+      "isSecureContext: " + String(env.isSecureContext) + " | protocol: " + env.originProtocol,
+      "userAgent: " + env.userAgent
+    ];
+    if (env.userAgentData) {
+      var uad = env.userAgentData;
+      var brands = (uad.fullVersionList || uad.brands || []).map(function (b) { return b.brand + " " + b.version; }).join(", ");
+      lines.push("userAgentData: platform=" + uad.platform + " platformVersion=" + (uad.platformVersion || "n/a") + " brands=[" + brands + "]");
+    } else {
+      lines.push("userAgentData: (not supported)");
+    }
+    lines.push("");
+    for (var i = 0; i < results.length; i++) {
+      var r = results[i];
+      lines.push((r.ok ? "PASS" : "FAIL") + " | " + r.name + " (" + r.ms + " ms) | " + r.detail);
+    }
+    return lines.join("\n");
+  }
+
+  async function renderAll() {
+    var banner = document.getElementById("summaryBanner");
+    var summaryText = document.getElementById("summaryText");
+    var summarySub = document.getElementById("summarySub");
+    var tbody = document.getElementById("resultsBody");
+    var envList = document.getElementById("envList");
+    document.getElementById("copyStatus").textContent = "";
+
+    var results = await runCryptoSuite(window.crypto, window.isSecureContext);
+    var env = await collectEnvInfo();
+
+    var passed = results.filter(function (r) { return r.ok; }).length;
+    var allOk = passed === results.length;
+    banner.className = "banner " + (allOk ? "all-pass" : "has-fail");
+    summaryText.textContent = allOk
+      ? ("ALL " + results.length + " CHECKS PASSED")
+      : (passed + " / " + results.length + " PASSED (" + (results.length - passed) + " FAILED)");
+
+    var edOk = results.find(function (r) { return r.name.indexOf("Ed25519") === 0; });
+    var xOk = results.find(function (r) { return r.name.indexOf("X25519") === 0; });
+    var p256Ok = results.find(function (r) { return r.name.indexOf("ECDH P-256") === 0; });
+    summarySub.textContent =
+      "Ed25519: " + (edOk && edOk.ok ? "OK" : "FAIL") +
+      " | X25519: " + (xOk && xOk.ok ? "OK" : "FAIL") +
+      " | P-256 fallback: " + (p256Ok && p256Ok.ok ? "OK" : "FAIL");
+
+    tbody.innerHTML = results.map(function (r) {
+      var cls = r.ok ? "pass" : "fail";
+      var label = r.ok ? "PASS" : "FAIL";
+      return "<tr>" +
+        "<td><strong>" + esc(r.name) + "</strong></td>" +
+        "<td><span class=\"badge " + cls + "\">" + label + "</span></td>" +
+        "<td class=\"mono\">" + esc(r.ms) + " ms</td>" +
+        "<td class=\"mono\">" + esc(r.detail) + "</td>" +
+        "</tr>";
+    }).join("");
+
+    var uadStr = "(not supported)";
+    if (env.userAgentData) {
+      var u = env.userAgentData;
+      var brandList = (u.fullVersionList || u.brands || []).map(function (b) { return b.brand + " " + b.version; }).join(", ");
+      uadStr = "platform=" + (u.platform || "n/a") +
+        ", platformVersion=" + (u.platformVersion || "n/a") +
+        ", mobile=" + String(u.mobile) +
+        (brandList ? ", brands=[" + brandList + "]" : "");
+    }
+    envList.innerHTML =
+      "<dt>navigator.userAgent</dt><dd class=\"mono\">" + esc(env.userAgent) + "</dd>" +
+      "<dt>userAgentData</dt><dd class=\"mono\">" + esc(uadStr) + "</dd>" +
+      "<dt>Origin / Secure</dt><dd class=\"mono\">protocol=" + esc(env.originProtocol) + ", isSecureContext=" + esc(env.isSecureContext) + "</dd>";
+
+    lastReportText = formatReportText(results, env);
+  }
+
+  document.getElementById("rerunBtn").addEventListener("click", function () {
+    renderAll();
+  });
+
+  document.getElementById("copyBtn").addEventListener("click", async function () {
+    var status = document.getElementById("copyStatus");
+    if (!lastReportText) {
+      status.textContent = "No results yet.";
+      return;
+    }
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(lastReportText);
+      } else {
+        var ta = document.createElement("textarea");
+        ta.value = lastReportText;
+        ta.setAttribute("readonly", "");
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+      }
+      status.textContent = "Copied!";
+    } catch (e) {
+      status.textContent = "Copy failed: " + (e && e.message ? e.message : String(e));
+    }
+  });
+
+  renderAll();
+})();
+</script>
+</body>
+</html>
