@@ -144,6 +144,131 @@
   }
   var Y_CHASE_SPEED = 600;    // Phase 2.2: peer y interpolation speed (px/s)
 
+  // --- Side-scroll camera (used by APStat Park & Calculator room) --------
+  // Module-scope camera state; each mount() reconfigures followFn + enabled.
+  // World sprites call _translateForCamera(ctx) as the first line of render()
+  // and _restoreFromCamera(ctx) at the end.
+  var DEADZONE_L = 100;
+  var DEADZONE_R = 220;
+  var CAM_LERP   = 0.15;
+  var DEFAULT_BOARD_W_LOCAL = 320;  // mirrors DEFAULT_BOARD_W (declared above)
+
+  var _camera = {
+    x:        0,
+    vw:       DEFAULT_BOARD_W_LOCAL,
+    levelW:   DEFAULT_BOARD_W_LOCAL,
+    enabled:  true,
+    followFn: null,
+    vwFn:     null,
+    levelWFn: null,
+    cameraStateFn: null
+  };
+
+  function _resetCamera() {
+    _camera.x             = 0;
+    _camera.vw            = DEFAULT_BOARD_W_LOCAL;
+    _camera.levelW        = DEFAULT_BOARD_W_LOCAL;
+    _camera.enabled       = true;
+    _camera.followFn      = null;
+    _camera.vwFn          = null;
+    _camera.levelWFn      = null;
+    _camera.cameraStateFn = null;
+  }
+
+  function _updateCamera(/* dt */) {
+    if (typeof _camera.vwFn === 'function') {
+      var v = _camera.vwFn();
+      if (typeof v === 'number' && v > 0) { _camera.vw = v; }
+    }
+    if (typeof _camera.levelWFn === 'function') {
+      var lw = _camera.levelWFn();
+      if (typeof lw === 'number' && lw > 0) { _camera.levelW = lw; }
+    }
+    if (!_camera.enabled) return;
+    if (typeof _camera.cameraStateFn === 'function') {
+      var sharedCam = _camera.cameraStateFn();
+      if (sharedCam && typeof sharedCam.x === 'number') {
+        _camera.x = sharedCam.x;
+        return;
+      }
+    }
+    var player = (typeof _camera.followFn === 'function') ? _camera.followFn() : null;
+    if (!player || typeof player.x !== 'number') return;
+    var vw     = _camera.vw     || DEFAULT_BOARD_W_LOCAL;
+    var levelW = _camera.levelW || vw;
+    var maxCam = Math.max(0, levelW - vw);
+
+    var screenX = player.x - _camera.x;
+    var targetCamX = _camera.x;
+    if (screenX > DEADZONE_R) {
+      targetCamX = player.x - DEADZONE_R;
+    } else if (screenX < DEADZONE_L) {
+      targetCamX = player.x - DEADZONE_L;
+    }
+    if (targetCamX < 0)      { targetCamX = 0; }
+    if (targetCamX > maxCam) { targetCamX = maxCam; }
+
+    _camera.x = _camera.x + (targetCamX - _camera.x) * CAM_LERP;
+    if (_camera.x < 0)      { _camera.x = 0; }
+    if (_camera.x > maxCam) { _camera.x = maxCam; }
+  }
+
+  function _translateForCamera(ctx) {
+    if (!ctx || typeof ctx.save !== 'function' || typeof ctx.restore !== 'function') return;
+    ctx.save();
+    var vw     = _camera.vw     || DEFAULT_BOARD_W_LOCAL;
+    var levelW = _camera.levelW || vw;
+    if (_camera.enabled) {
+      if (levelW > 0 && levelW < vw) {
+        if (typeof ctx.translate === 'function') {
+          var offset = (vw - levelW) / 2;
+          try { ctx.translate(offset, 0); } catch (_) {}
+        }
+      } else if (levelW > vw) {
+        if (typeof ctx.translate === 'function') {
+          try { ctx.translate(-_camera.x, 0); } catch (_) {}
+        }
+      }
+    } else if (levelW > 0 && levelW !== vw) {
+      if (typeof ctx.scale === 'function') {
+        try { ctx.scale(vw / levelW, 1); } catch (_) {}
+      }
+    }
+  }
+
+  function _restoreFromCamera(ctx) {
+    if (!ctx || typeof ctx.save !== 'function' || typeof ctx.restore !== 'function') return;
+    try { ctx.restore(); } catch (_) {}
+  }
+
+  function _projectWorldX(worldX) {
+    var vw     = _camera.vw     || DEFAULT_BOARD_W_LOCAL;
+    var levelW = _camera.levelW || vw;
+    if (_camera.enabled) {
+      if (levelW > 0 && levelW < vw) {
+        return worldX + (vw - levelW) / 2;
+      }
+      if (levelW > vw) {
+        return worldX - _camera.x;
+      }
+      return worldX;
+    }
+    if (levelW > 0 && levelW !== vw) {
+      return worldX * (vw / levelW);
+    }
+    return worldX;
+  }
+
+  function CameraController() {
+    this.zIndex = 0;
+    this.engine = null;
+  }
+  CameraController.prototype.update = function (dt) {
+    _updateCamera(dt);
+  };
+  CameraController.prototype.render = function () { /* no paint */ };
+  CameraController.prototype.getLabelSpec = function () { return null; };
+
   // --- unique canvas id generator ---------------------------------------
 
   var _canvasSeq = 0;
@@ -874,24 +999,26 @@
   };
 
   BoardSprite.prototype.render = function (ctx) {
-    if (this._hidden) { return; }
+    _translateForCamera(ctx);
+    if (this._hidden) { _restoreFromCamera(ctx); return; }
     var alpha = this.online ? 1.0 : 0.35;
     // s111 P4 UX rev4: peer in 'in-doorway' state -> fade out via
     // _peerAbsorbProgress (animated in update()).
     if ((this._peerAbsorbProgress || 0) > 0) {
       alpha *= (1 - this._peerAbsorbProgress);
     }
-    if (alpha <= 0) { return; }
+    if (alpha <= 0) { _restoreFromCamera(ctx); return; }
     if (alpha !== 1.0) { ctx.save(); ctx.globalAlpha = alpha; }
     this.spriteSheet.drawFrame(ctx, this.frameIndex, this.x, this.y, this.scale, this.hue);
     if (alpha !== 1.0) { ctx.restore(); }
+    _restoreFromCamera(ctx);
   };
 
   BoardSprite.prototype.getLabelSpec = function () {
     // AVATAR_MENU: Desk student board hides always-on names (revealed on click).
     if (this.hideLabel) return null;
     var sw = SPRITE_W * this.scale;
-    var centerX = this.x + sw / 2;
+    var centerX = _projectWorldX(this.x) + sw / 2;
     var topY    = this.y;
     return {
       text:  this.labelText,
@@ -1584,8 +1711,9 @@
   // over the 150 ms lifetime, fades to zero. Local-only -- the actual y
   // (and therefore the broadcast y) never moves, so peers don't see it.
   PlayerSprite.prototype.render = function (ctx) {
+    _translateForCamera(ctx);
     // s111 P4 UX rev4: skip when fully absorbed into a doorway.
-    if (this._hidden) { return; }
+    if (this._hidden) { _restoreFromCamera(ctx); return; }
     var yOffset = 0;
     if (this._blockedTwitchMs > 0) {
       var phase = this._blockedTwitchMs / 1000 * 30; // ~30 Hz oscillation
@@ -1609,10 +1737,11 @@
     if (typeof this._absorbProgress === 'number' && this._absorbProgress > 0) {
       alpha *= (1 - this._absorbProgress);
     }
-    if (alpha <= 0) { return; }
+    if (alpha <= 0) { _restoreFromCamera(ctx); return; }
     if (alpha !== 1.0) { ctx.save(); ctx.globalAlpha = alpha; }
     this.spriteSheet.drawFrame(ctx, fIndex, this.x + emoteX, this.y + yOffset, this.scale, this.hue);
     if (alpha !== 1.0) { ctx.restore(); }
+    _restoreFromCamera(ctx);
   };
 
   // AVATAR_SELF_EMOTE: trigger the one-shot happy bounce (idempotent re-trigger
@@ -1721,6 +1850,7 @@
   }
   Doorway.prototype.update = function () {};
   Doorway.prototype.render = function (ctx) {
+    _translateForCamera(ctx);
     var groundY = this.getGroundY();
     var holeH   = 32;
     var holeW   = this.width;
@@ -1750,6 +1880,7 @@
     // Count below the baseline.
     ctx.font = '10px Arial';
     ctx.fillText(String(this.count), this.x, groundY + 14);
+    _restoreFromCamera(ctx);
   };
   Doorway.prototype.containsX = function (x, halfPlayerW) {
     // Hit-test: is the player's center inside the doorway's hole?
@@ -2359,12 +2490,14 @@
             parkReturnAt = Date.now();
             parkExitKeyHeld = true;
             for (var key in playerInput) playerInput[key] = false;
-                }
+            if (!destroyed && engineReady) _refreshCameraDims();
+          }
         });
         if (levelIndex === -1) forgetRoomLink();
       }).catch(function (error) {
         nativeLoading = false;
         nativeActive = !!nativePanel;
+        parkReturnAt = Date.now();
         if (nativePanel === previousPanel) engine.sceneEntities = previousScene;
         setParkButtons(function (b) { b.disabled = false; b.style.visibility = ''; b.title = 'APStat Park did not load (' + error.message + ') \u2014 click the door to retry'; });
         if (!destroyed && engineReady) engine.start();
@@ -2622,6 +2755,22 @@
       var ccw = container && container.clientWidth;
       return (ccw > 0) ? ccw : DEFAULT_BOARD_W;
     }
+    function _refreshCameraDims() {
+      _camera.vw     = _viewportW();
+      _camera.levelW = _viewportW();
+    }
+    _resetCamera();
+    if (engineReady) {
+      _refreshCameraDims();
+      _camera.enabled = (role !== 'teacher');
+      _camera.followFn = function () {
+        return (username && spriteEntities && spriteEntities[username]) || null;
+      };
+      _camera.vwFn     = _viewportW;
+      _camera.levelWFn = _viewportW;
+      _camera.cameraStateFn = function () { return null; };
+      try { engine.addEntity('camera_controller', new CameraController()); } catch (_) {}
+    }
 
     // --- sprite entity registry ----------------------------------------
 
@@ -2696,7 +2845,7 @@
           parkLobbyAt = Date.now();
           try { ws.send(JSON.stringify({ type: 'park_lobby', requestId: 'board_lobby_' + (++parkLobbyN) })); } catch (_) {}
         }
-        var x = player.x + (player._spriteSize || 20) / 2;
+        var x = player.x + (player._spriteSize || 20) / 2 - (_camera.x || 0);
         // Deliberate walk-in applies to the first door (at the left edge, where walking LEFT
         // naturally stops): hold LEFT for ~a quarter second anywhere from the door's right edge
         // (x 60) to the wall. The cat stops at the wall (centre x 10), left of the door's own
@@ -2755,7 +2904,7 @@
       // Up enters only when the sprite is ON the door (±16px of its center), never from the first
       // idle slot beside it; never for teachers; never during a whole-class event.
       if (canPlayPark && !nativeActive && !classroomBusy() && Date.now() - parkReturnAt >= 1200) {
-        var footX = player.x + player._spriteSize / 2;
+        var footX = player.x + player._spriteSize / 2 - (_camera.x || 0);
         for (var di = 0; di < PARK_DOORS.length; di++) {
           if (Math.abs(footX - parkDoorCenter(di)) <= 16) { enterPark(PARK_DOORS[di].level); return; }
         }
@@ -4049,9 +4198,16 @@
     _AtlasCatSheet:    AtlasCatSheet,    // calendar cats from the level-6 atlas (unit tests)
     _catBodyForHue:    catBodyForHue,
     _catFrameCell:     catFrameCell,
-    _ResultPanel:      ResultPanel,      // V7.6 -- doorways dot plot (exposed for unit tests)
-    _BoardSprite:      BoardSprite,
-    _Doorway:          Doorway
+    _ResultPanel:        ResultPanel,      // V7.6 -- doorways dot plot (exposed for unit tests)
+    _camera:             _camera,
+    _updateCamera:       _updateCamera,
+    _translateForCamera: _translateForCamera,
+    _restoreFromCamera:  _restoreFromCamera,
+    _projectWorldX:      _projectWorldX,
+    _resetCamera:        _resetCamera,
+    _CameraController:   CameraController,
+    _BoardSprite:        BoardSprite,
+    _Doorway:            Doorway
   };
 
 }(typeof window !== 'undefined' ? window : this));

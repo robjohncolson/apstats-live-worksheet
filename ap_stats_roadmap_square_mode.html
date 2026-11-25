@@ -2709,8 +2709,8 @@
 <!-- Teacher-only Class Log "Recording" fold on the day panel (track L): the summary
      lib copied from a2 + the Desk glue (a2 sign-in token, mount). Both fail soft. -->
 <script src="lib/class-log-summary.js" onerror=""></script>
-<script src="js/desk-class-log.js?v=2026-11-25-ux4l" onerror=""></script>
-<script src="js/desk-missing-work.js?v=2026-11-25-ux4l"></script>
+<script src="js/desk-class-log.js?v=2026-11-25-9aes" onerror=""></script>
+<script src="js/desk-missing-work.js?v=2026-11-25-9aes"></script>
 <script src="pwa-register.js"></script>
 <script src="js/wallet_logic.js"></script>
 <script type="module" src="js/student-wallet.js"></script>
@@ -2720,10 +2720,10 @@
 <script src="js/ced2026-crosswalk.js"></script>
 <script src="js/ced2026-labels.js"></script>
 <script src="lib/qrcode.min.js"></script>
-<script src="canvas_engine.js?v=2026-11-25-ux4l"></script>
-<script src="sprite_sheet.js?v=2026-11-25-ux4l"></script>
-<script src="classroom-board.js?v=2026-11-25-ux4l"></script>
-<script src="pico-home.js?v=2026-11-25-ux4l" onerror="document.documentElement.classList.remove('pico-home')"></script>
+<script src="canvas_engine.js?v=2026-11-25-9aes"></script>
+<script src="sprite_sheet.js?v=2026-11-25-9aes"></script>
+<script src="classroom-board.js?v=2026-11-25-9aes"></script>
+<script src="pico-home.js?v=2026-11-25-9aes" onerror="document.documentElement.classList.remove('pico-home')"></script>
 <script>if(document.documentElement.classList.contains('pico-home')&&!window.PicoHome)document.documentElement.classList.remove('pico-home');</script>
 <script src="ti84-plot.js"></script>
 
@@ -4130,7 +4130,7 @@ function _renderPreviewAsStudentUI() {
 }
 </script>
 <!-- Sign-in wall, Name Finder, Self-Signup, Forced change-password: moved byte for byte to js/desk-signin.js. -->
-<script src="js/desk-signin.js?v=2026-11-25-ux4l"></script>
+<script src="js/desk-signin.js?v=2026-11-25-9aes"></script>
 <script>
 
 // ═══ Do Now card (DN3a) + calendar completion coloring (DN3b) ═══
@@ -4845,7 +4845,7 @@ function _serverEvidencePresent() {
 
 </script>
 <!-- On-device ledger merge and "Why so low?" grade coach: moved byte for byte to js/desk-grade-coach.js. -->
-<script src="js/desk-grade-coach.js?v=2026-11-25-ux4l"></script>
+<script src="js/desk-grade-coach.js?v=2026-11-25-9aes"></script>
 <script>
 async function renderDoNow() {
   var card = document.getElementById('donow-card');
@@ -7748,7 +7748,7 @@ async function studentMark(btn, topicId, artifact) {
 
 </script>
 <!-- Blooket flashcards, practice sync, and timed deck: moved byte for byte to js/desk-flashcards.js. -->
-<script src="js/desk-flashcards.js?v=2026-11-25-ux4l"></script>
+<script src="js/desk-flashcards.js?v=2026-11-25-9aes"></script>
 <script>
 // Repaint the My Ledger zero-warning surfaces from the current grade cache: the
 // icon badge always, the in-window card only while the window is open.
@@ -8564,12 +8564,12 @@ function _renderQuarterNotice() {
 }
 </script>
 <!-- Class Snapshot ("Where you stand" + Phase 2 assignment box plots): moved byte for byte to js/desk-class-snapshot.js. -->
-<script src="js/desk-class-snapshot.js?v=2026-11-25-ux4l"></script>
+<script src="js/desk-class-snapshot.js?v=2026-11-25-9aes"></script>
 <script>
 
 </script>
 <!-- My Ledger / Wallet UI, missing-work card, DOGE Effort Wallet, Candy Poke: moved byte for byte to js/desk-wallet.js. -->
-<script src="js/desk-wallet.js?v=2026-11-25-ux4l"></script>
+<script src="js/desk-wallet.js?v=2026-11-25-9aes"></script>
 <script>
 
 // ── Teacher Tools launcher ──────────────────────────────────────────────────
@@ -9407,7 +9407,7 @@ try {
      lives in js/desk-gradebook-grid.js (FABLE_SPRINT_2026_10_22C_SPEC.md track C3), same load position,
      versioned by scripts/bump-build.mjs like the other entry scripts. The old pop-up and the teacher's
      class picker were removed 2026-11-24. -->
-<script src="js/desk-gradebook-grid.js?v=2026-11-25-ux4l"></script>
+<script src="js/desk-gradebook-grid.js?v=2026-11-25-9aes"></script>
 <script>
 
 // openDayGrade(dateStr) — opens the Day Grade modal for a calendar date.
@@ -9804,7 +9804,7 @@ function _pwaInstallHelp() {
 <!-- Study Break Tetris (studyBreak, openGame, closeGame):
      Moved byte for byte to js/desk-study-break.js (FABLE_SPRINT_2026_10_22C_SPEC.md track C3). Same globals,
      same load position, versioned by scripts/bump-build.mjs like the other entry scripts. -->
-<script src="js/desk-study-break.js?v=2026-11-25-ux4l"></script>
+<script src="js/desk-study-break.js?v=2026-11-25-9aes"></script>
 <script>
 
 
@@ -9837,7 +9837,7 @@ function bumpUsage(id) {
 <!-- Desk <-> APStat Park calculator bridge (TI-84 skill button, calc-due chip, _openParkSolo, Calculator Skills progress modal):
      Moved byte for byte to js/desk-park-bridge.js (FABLE_SPRINT_2026_10_22C_SPEC.md track C3). Same globals,
      same load position, versioned by scripts/bump-build.mjs like the other entry scripts. -->
-<script src="js/desk-park-bridge.js?v=2026-11-25-ux4l"></script>
+<script src="js/desk-park-bridge.js?v=2026-11-25-9aes"></script>
 <script>
 
 // The URL an app window opens (SOLO_DOOR_SPEC §5: the calculator is no longer an app window).
@@ -10504,11 +10504,11 @@ function _walletAppendSessionQRRow(host, group) {
 
 </script>
 <!-- Doge Presence system (WebSocket multiplayer presence): moved byte for byte to js/desk-doge-presence.js. -->
-<script src="js/desk-doge-presence.js?v=2026-11-25-ux4l"></script>
+<script src="js/desk-doge-presence.js?v=2026-11-25-9aes"></script>
 <!-- Completion calendar (cP/setP, cell helpers, paging, summer-prep weeks, rCal, rCD, rProg, uClock):
      Moved byte for byte to js/desk-calendar.js (FABLE_SPRINT_2026_10_22C_SPEC.md track C3). Same globals,
      same load position, versioned by scripts/bump-build.mjs like the other entry scripts. -->
-<script src="js/desk-calendar.js?v=2026-11-25-ux4l"></script>
+<script src="js/desk-calendar.js?v=2026-11-25-9aes"></script>
 <script>
 
 /* ═══ TOOLTIP ═══ */
@@ -10801,7 +10801,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-11-25-ux4l';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-11-25-9aes';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.
