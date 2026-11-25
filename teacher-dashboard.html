@@ -843,6 +843,8 @@
               <th title="Of runs that gathered candidates">mDNS seen</th>
               <th title="Of connected runs: connected only through a NAT-mapped address">srflx-only</th>
               <th title="Of all runs: RTCPeerConnection unavailable">Policy-blocked</th>
+              <th title="Of tries made while your Desk was open">Teacher reached</th>
+              <th title="Of those connections: direct host-to-host, not via STUN">Teacher direct</th>
             </tr>
           </thead>
           <tbody id="net-probe-tbody"></tbody>
@@ -850,7 +852,8 @@
       </div>
       <div class="hint">
         Host↔host connected in school hours ⇒ direct P2P is viable. srflx-only, or mDNS never seen ⇒ client isolation (consider the LAN relay).
-        Policy-blocked ⇒ the device forbids WebRTC. In school = weekdays 07:30–15:30 New York time.
+        Policy-blocked ⇒ the device forbids WebRTC. Teacher reached is classmates connecting to this laptop while the Desk is open here;
+        "not open" means your Desk was not polling. In school = weekdays 07:30–15:30 New York time.
       </div>
     </div>
 
@@ -3697,6 +3700,11 @@
       if (typeof rate !== 'number') return '—';
       return Math.round(rate * 100) + '%' + (typeof of === 'number' ? ' (n=' + of + ')' : '');
     }
+    function teacherReached(cell) {
+      if (!cell.teacherSamples) return '—';
+      if (!cell.teacherTried) return 'not open';
+      return netPct(cell.teacherConnected, cell.teacherTried);
+    }
     function netProbeRow(section, where, cell) {
       var tr = document.createElement('tr');
       var values = [
@@ -3705,6 +3713,7 @@
         netPct(cell.p2pConnected, cell.peerFound), netPct(cell.hostHost, cell.connectedRuns),
         netPct(cell.mdnsSeen, cell.gatheredRuns), netPct(cell.srflxOnly, cell.connectedRuns),
         netPct(cell.policyBlocked, cell.samples),
+        teacherReached(cell), netPct(cell.teacherHostHost, cell.teacherConnectedRuns),
       ];
       values.forEach(function (text, i) {
         var td = document.createElement('td');

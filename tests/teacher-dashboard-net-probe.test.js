@@ -7,13 +7,14 @@ const html = readFileSync(resolve('teacher-dashboard.html'), 'utf8');
 const panel = html.slice(html.indexOf('// BEGIN NETWORK PROBE PANEL'), html.indexOf('// END NETWORK PROBE PANEL'));
 const cell = (o) => ({
   samples: 0, students: 0, medianRttRoster: null, medianRttRelay: null, peerFound: 0, p2pConnected: null,
-  connectedRuns: 0, hostHost: null, gatheredRuns: 0, mdnsSeen: null, srflxOnly: null, policyBlocked: null, ...o,
+  connectedRuns: 0, hostHost: null, gatheredRuns: 0, mdnsSeen: null, srflxOnly: null, policyBlocked: null,
+  teacherSamples: 0, teacherTried: 0, teacherConnected: null, teacherConnectedRuns: 0, teacherHostHost: null, ...o,
 });
 const fixture = {
   ok: true, enabled: true,
   summary: [{
     section: '<b>PeriodB</b>',
-    inSchool: cell({ samples: 4, students: 3, medianRttRoster: 41.6, medianRttRelay: 60, peerFound: 2, p2pConnected: 0.5, connectedRuns: 1, hostHost: 1, gatheredRuns: 4, mdnsSeen: 0.75, srflxOnly: 0, policyBlocked: 0.25 }),
+    inSchool: cell({ samples: 4, students: 3, medianRttRoster: 41.6, medianRttRelay: 60, peerFound: 2, p2pConnected: 0.5, connectedRuns: 1, hostHost: 1, gatheredRuns: 4, mdnsSeen: 0.75, srflxOnly: 0, policyBlocked: 0.25, teacherSamples: 4, teacherTried: 2, teacherConnected: 0.5, teacherConnectedRuns: 1, teacherHostHost: 1 }),
     atHome: cell({}),
   }],
   rows: [],
@@ -38,7 +39,7 @@ describe('teacher Network panel', () => {
     const rows = [...document.querySelectorAll('#net-probe-tbody tr')];
     expect(rows).toHaveLength(1);   // at-home cell has no samples
     expect([...rows[0].children].map(td => td.textContent)).toEqual([
-      '<b>PeriodB</b>', 'In school', '4', '3', '42 ms', '60 ms', '50% (n=2)', '100% (n=1)', '75% (n=4)', '0% (n=1)', '25% (n=4)',
+      '<b>PeriodB</b>', 'In school', '4', '3', '42 ms', '60 ms', '50% (n=2)', '100% (n=1)', '75% (n=4)', '0% (n=1)', '25% (n=4)', '50% (n=2)', '100% (n=1)',
     ]);
     expect(document.querySelector('#net-probe-tbody b')).toBeNull();
     expect(document.getElementById('net-probe-wrap').hidden).toBe(false);

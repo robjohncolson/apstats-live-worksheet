@@ -1151,6 +1151,9 @@
 
 
 
+
+
+
     // ===== guardrails =====
     // The x-teacher-secret is NEVER auto-persisted client-side. It is read
     // fresh from the input on every fetch (see api()).
@@ -3697,6 +3700,11 @@
       if (typeof rate !== 'number') return '—';
       return Math.round(rate * 100) + '%' + (typeof of === 'number' ? ' (n=' + of + ')' : '');
     }
+    function teacherReached(cell) {
+      if (!cell.teacherSamples) return '—';
+      if (!cell.teacherTried) return 'not open';
+      return netPct(cell.teacherConnected, cell.teacherTried);
+    }
     function netProbeRow(section, where, cell) {
       var tr = document.createElement('tr');
       var values = [
@@ -3705,6 +3713,7 @@
         netPct(cell.p2pConnected, cell.peerFound), netPct(cell.hostHost, cell.connectedRuns),
         netPct(cell.mdnsSeen, cell.gatheredRuns), netPct(cell.srflxOnly, cell.connectedRuns),
         netPct(cell.policyBlocked, cell.samples),
+        teacherReached(cell), netPct(cell.teacherHostHost, cell.teacherConnectedRuns),
       ];
       values.forEach(function (text, i) {
         var td = document.createElement('td');

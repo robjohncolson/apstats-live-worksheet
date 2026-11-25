@@ -95,6 +95,10 @@ function makeFetch(overrides = {}) {
     offer: () => ok({ ok: true, offerId: 'o1' }),
     getAnswer: () => ok({ ok: true, answer: SDP }),
     postAnswer: () => ok({ ok: true }),
+    teacherOnline: () => ok({ ok: true, online: false }),
+    teacherPending: () => ok({ ok: true, offer: null }),
+    teacherHere: () => ok({ ok: true }),
+    patch: () => ok({ ok: true }),
     record: () => ok({ ok: true }),
     ...overrides,
   };
@@ -104,9 +108,13 @@ function makeFetch(overrides = {}) {
     const route = url.startsWith('https://relay.test/health') ? 'relayHealth'
       : url.endsWith('/health') ? 'rosterHealth'
       : url.endsWith('/net/probe/config') ? 'config'
+      : url.endsWith('/net/probe/teacher-online') ? 'teacherOnline'
+      : url.endsWith('/net/probe/teacher-pending') ? 'teacherPending'
+      : url.endsWith('/net/probe/teacher-here') ? 'teacherHere'
       : url.includes('/net/probe/pending') ? 'pending'
       : url.endsWith('/net/probe/offer') ? 'offer'
       : url.includes('/net/probe/answer/') ? (method === 'POST' ? 'postAnswer' : 'getAnswer')
+      : method === 'PATCH' ? 'patch'
       : url.endsWith('/net/probe') ? 'record'
       : null;
     if (!route) throw new Error('unexpected ' + url);
@@ -283,6 +291,7 @@ describe('the record', () => {
       connected: true, role: 'offer', error: null,
       localPair: { local: 'host', remote: 'host' },
       candidates: { host: 2, srflx: 1, prflx: 0, relay: 0, mdns: true },
+      teacher: { online: false, connected: false, error: 'teacherOffline' },
     });
     expect(typeof posted.p2p.rtt).toBe('number');
     expect(typeof posted.rttRoster).toBe('number');
@@ -401,6 +410,54 @@ describe('never throws into the Desk', () => {
   it('the browser global is installed without a session and does nothing on its own', () => {
     expect(typeof globalThis.NetProbe.afterCal).toBe('function');
     expect(globalThis.NetProbe.state.started).toBe(false);
+  });
+});
+
+describe('the teacher laptop', () => {
+  it('when the teacher desk is polling, the probe offers to it and records the pair', async () => {
+    const env = makeEnv({ fetch: makeFetch({ teacherOnline: () => ok({ ok: true, online: true }) }) });
+    const record = await Lib.create(env, { ...FAST, teacherBudgetMs: 2000 }).run();
+    expect(record.p2p.teacher).toMatchObject({
+      online: true, connected: true, role: 'offer', error: null,
+      localPair: { local: 'host', remote: 'host' },
+    });
+    const offers = env.fetch.calls.filter(c => c.method === 'POST' && c.url.endsWith('/net/probe/offer'));
+    expect(offers.map(c => c.body.target)).toEqual([undefined, 'teacher']);
+    expect(env.fetch.calls.some(c => c.method === 'PATCH')).toBe(false);
+    expect(JSON.stringify(record.p2p.teacher)).not.toMatch(IP_RE);
+  });
+
+  it('retries while the teacher desk is closed, then patches that same row once it is open', async () => {
+    let online = false;
+    const env = makeEnv({ fetch: makeFetch({
+      teacherOnline: () => ok({ ok: true, online: online }),
+      record: () => ok({ ok: true, id: 'row1' }),
+    }) });
+    const record = await Lib.create(env, { ...FAST, teacherRetryMs: 20, teacherRetryLimit: 4, teacherBudgetMs: 2000 }).run();
+    expect(record.p2p.teacher.error).toBe('teacherOffline');
+    online = true;
+    await sleep(400);
+    const patches = env.fetch.calls.filter(c => c.method === 'PATCH');
+    expect(patches).toHaveLength(1);
+    expect(patches[0].url).toBe('https://roster.test/net/probe/row1');
+    expect(patches[0].body.teacher).toMatchObject({ online: true, connected: true });
+    await sleep(50);
+    expect(env.fetch.calls.filter(c => c.method === 'PATCH')).toHaveLength(1);
+  });
+
+  it('the teacher desk answers one offer and never posts a probe row', async () => {
+    const env = makeEnv({
+      role: 'teacher',
+      fetch: makeFetch({ teacherPending: () => ok({ ok: true, offer: { offerId: 't1', sdp: SDP } }) }),
+    });
+    const probe = Lib.create(env, { ...FAST, idleMs: 15, teacherPollMs: 40, teacherPollLimit: 1 });
+    probe.afterCal();
+    await sleep(50);
+    expect(env.fetch.posted()).toHaveLength(0);
+    const answer = env.fetch.calls.find(c => c.method === 'POST' && c.url.endsWith('/net/probe/answer/t1'));
+    expect(answer && answer.body.sdp.startsWith('v=0')).toBe(true);
+    await sleep(60);
+    expect(env.fetch.calls.filter(c => c.url.endsWith('/net/probe/teacher-pending'))).toHaveLength(1);
   });
 });
 

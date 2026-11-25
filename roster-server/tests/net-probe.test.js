@@ -6,7 +6,7 @@ import express from 'express';
 import http from 'http';
 import {
   mountNetProbe, inSchoolHours, buildProbeRow, summarizeProbes, looksLikeAddress,
-  createSignalStore, SIGNAL_TTL_MS,
+  createSignalStore, SIGNAL_TTL_MS, TEACHER_ONLINE_MS,
 } from '../net-probe.js';
 
 beforeAll(() => { process.env.ROSTER_TEACHER_SECRET = 'TS'; });
@@ -22,10 +22,21 @@ const SDP = 'v=0\r\no=- 1 2 IN IP4 127.0.0.1\r\na=candidate:1 1 udp 1 192.168.1.
 // A Tuesday, 10:00 in New York (EDT, UTC-4).
 const SCHOOL_TIME = Date.parse('2026-10-06T14:00:00Z');
 
-function start({ storeError = null, now = () => SCHOOL_TIME } = {}) {
+function start({ storeError = null, now = () => SCHOOL_TIME, signals } = {}) {
   const rows = [];
   const store = {
-    async insert(row) { if (storeError) return { data: null, error: storeError }; rows.push({ id: 'r' + rows.length, ...row }); return { data: { id: 'x' }, error: null }; },
+    async insert(row) {
+      if (storeError) return { data: null, error: storeError };
+      const id = 'r' + rows.length;
+      rows.push({ id, ...row });
+      return { data: { id }, error: null };
+    },
+    async updateTeacher({ id, studentId, teacher }) {
+      const row = rows.find(r => r.id === id && r.student_id === studentId);
+      if (!row) return { data: null, error: { code: 'notfound', message: 'not found' } };
+      row.p2p = { ...(row.p2p || {}), teacher };
+      return { data: { id }, error: null };
+    },
     async list({ since, section }) {
       if (storeError) return { data: null, error: storeError };
       return { data: rows.filter(r => r.ts >= since && (!section || r.section === section)), error: null };
@@ -38,7 +49,7 @@ function start({ storeError = null, now = () => SCHOOL_TIME } = {}) {
   const verifyToken = (t) => (typeof t === 'string' && t.startsWith('tok-') ? t.slice(4) : null);
   const app = express();
   app.use(express.json());
-  mountNetProbe(app, { db, verifyToken, store, now });
+  mountNetProbe(app, { db, verifyToken, store, signals, now });
   const server = http.createServer(app);
   return new Promise(resolve => server.listen(0, () => {
     const base = 'http://127.0.0.1:' + server.address().port;
@@ -179,8 +190,45 @@ describe('routes', () => {
       expect((await s.call('GET', '/net/probe/answer/' + offerId, { sid: 'S2' })).status).toBe(403);
       expect((await s.call('GET', '/net/probe/answer/' + offerId, { sid: 'S1' })).body.answer).toBe(SDP);
       expect((await s.call('GET', '/net/probe/answer/nope', { sid: 'S1' })).status).toBe(404);
-      // Teachers do not take part.
+      // Teachers do not post student offers.
       expect((await s.call('POST', '/net/probe/offer', { sid: 'T1', body: { sdp: SDP } })).status).toBe(403);
+    } finally { s.close(); }
+  });
+
+  it('teacher lane is separate: only the teacher desk claims it, and a later patch updates that row', async () => {
+    let t = SCHOOL_TIME;
+    const signals = createSignalStore({ now: () => t });
+    const s = await start({ now: () => t, signals });
+    try {
+      expect((await s.call('GET', '/net/probe/teacher-online', { sid: 'S1' })).body.online).toBe(false);
+      expect((await s.call('GET', '/net/probe/teacher-pending', { sid: 'S1' })).status).toBe(403);
+      expect((await s.call('GET', '/net/probe/teacher-pending', { sid: 'T1' })).body.offer).toBeNull();
+      expect((await s.call('GET', '/net/probe/teacher-online', { sid: 'S1' })).body.online).toBe(true);
+      expect((await s.call('GET', '/net/probe/teacher-online', { sid: 'S3' })).body.online).toBe(false);
+
+      const offer = await s.call('POST', '/net/probe/offer', { sid: 'S1', body: { sdp: SDP, target: 'teacher' } });
+      const offerId = offer.body.offerId;
+      expect((await s.call('GET', '/net/probe/pending?section=PeriodB', { sid: 'S2' })).body.offer).toBeNull();
+      const pending = await s.call('GET', '/net/probe/teacher-pending', { sid: 'T1' });
+      expect(pending.body.offer).toEqual({ offerId, sdp: SDP });
+      expect((await s.call('POST', '/net/probe/answer/' + offerId, { sid: 'S2', body: { sdp: SDP } })).status).toBe(403);
+      expect((await s.call('POST', '/net/probe/answer/' + offerId, { sid: 'T1', body: { sdp: SDP } })).status).toBe(200);
+      expect((await s.call('GET', '/net/probe/answer/' + offerId, { sid: 'S1' })).body.answer).toBe(SDP);
+
+      t += TEACHER_ONLINE_MS + 1;
+      expect((await s.call('GET', '/net/probe/teacher-online', { sid: 'S1' })).body.online).toBe(false);
+
+      const posted = await s.call('POST', '/net/probe', { sid: 'S1', body: { ...RECORD, p2p: { ...RECORD.p2p, teacher: { online: false, error: 'teacherOffline' } } } });
+      expect(posted.body.id).toBe('r0');
+      const teacher = { online: true, connected: true, role: 'offer', localPair: { local: 'host', remote: 'host' }, error: null };
+      expect((await s.call('PATCH', '/net/probe/r0', { sid: 'S2', body: { teacher } })).status).toBe(404);
+      expect((await s.call('PATCH', '/net/probe/r0', { sid: 'T1', body: { teacher } })).status).toBe(403);
+      expect((await s.call('PATCH', '/net/probe/r0', { sid: 'S1', body: { teacher: { online: false, error: 'teacherOffline' } } })).status).toBe(400);
+      expect((await s.call('PATCH', '/net/probe/r0', { sid: 'S1', body: { teacher } })).status).toBe(200);
+      expect(s.rows[0].p2p.teacher).toMatchObject({ online: true, connected: true, localPair: { local: 'host', remote: 'host' } });
+      const listed = await s.call('GET', '/class/net-probes', { teacher: true });
+      const b = listed.body.summary.find(x => x.section === 'PeriodB');
+      expect(b.inSchool).toMatchObject({ teacherSamples: 1, teacherTried: 1, teacherConnected: 1, teacherHostHost: 1 });
     } finally { s.close(); }
   });
 

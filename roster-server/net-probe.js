@@ -4,10 +4,14 @@
 //
 //   GET  /net/probe/config          {enabled, lanRelayUrl: null, stun}           (public)
 //   POST /net/probe                 store one probe record                        (student session)
-//   POST /net/probe/offer           {sdp} -> {offerId}  (in memory, 60 s TTL)     (student session)
-//   GET  /net/probe/pending         one open offer from a classmate, or null      (student session)
-//   POST /net/probe/answer/:id      {sdp}  (only the student who claimed it)      (student session)
+//   POST /net/probe/offer           {sdp, target?} -> {offerId}  (in memory, 60s) (student session)
+//   GET  /net/probe/pending         one open classmate offer (never a teacher one) (student session)
+//   GET  /net/probe/teacher-online  {online} — teacher's Desk polled this section  (student session)
+//   POST /net/probe/teacher-here    pulse only, when this browser cannot answer    (teacher session)
+//   GET  /net/probe/teacher-pending pulse, then one offer aimed at the teacher     (teacher session)
+//   POST /net/probe/answer/:id      {sdp}  (the classmate or teacher who claimed)  (session)
 //   GET  /net/probe/answer/:id      {answer: sdp|null}  (only the offer's owner)  (student session)
+//   PATCH /net/probe/:id            {teacher} merge into that student's p2p row   (student session)
 //   GET  /class/net-probes          raw rows + per-section summary               (teacher)
 //
 // Privacy: no IP address, hostname or candidate string is ever stored. The record is REBUILT from a
@@ -24,6 +28,8 @@ import { createServiceClient } from './ledger-db.js';
 
 export const STUN_URLS = ['stun:stun.l.google.com:19302'];
 export const SIGNAL_TTL_MS = 60 * 1000;
+// Teacher Desk must have polled within this window or students record "not open", not a failed link.
+export const TEACHER_ONLINE_MS = 20 * 1000;
 const MAX_SDP_LENGTH = 16000;
 const MAX_RECORDS_PER_DAY = 5;          // per student, in memory (the Desk sends one per device per day)
 const MAX_DAYS = 90;
@@ -34,11 +40,11 @@ const SCHOOL_TZ = 'America/New_York';
 const CANDIDATE_TYPES = ['host', 'srflx', 'prflx', 'relay'];
 const P2P_ERRORS = [
   'noPeer', 'gatherTimeout', 'iceFailed', 'policy', 'signalFailed', 'connectTimeout',
-  'pingFailed', 'noStats', 'timeout', 'budget', 'http', 'network', 'other',
+  'pingFailed', 'noStats', 'timeout', 'budget', 'http', 'network', 'teacherOffline', 'other',
 ];
 const EFFECTIVE_TYPES = ['slow-2g', '2g', '3g', '4g'];
 const CONN_TYPES = ['bluetooth', 'cellular', 'ethernet', 'none', 'wifi', 'wimax', 'other', 'unknown'];
-const ERROR_STEPS = ['config', 'rttRoster', 'rttRelay', 'p2p', 'stats', 'post'];
+const ERROR_STEPS = ['config', 'rttRoster', 'rttRelay', 'p2p', 'teacher', 'stats', 'post'];
 
 // ── Kill-switch ──────────────────────────────────────────────────────────────
 
@@ -115,7 +121,29 @@ function cleanCandidates(c) {
   return out;
 }
 
+// Same shape as a p2p result, plus whether the teacher's Desk was polling.
+// Null when the client did not try (rows from before this field existed).
+export function cleanTeacher(t) {
+  if (!t || typeof t !== 'object') return null;
+  const online = t.online === true;
+  const connected = t.connected === true;
+  const error = errorCode(t.error);
+  const localPair = cleanLocalPair(t.localPair);
+  const candidates = cleanCandidates(t.candidates);
+  if (!online && !connected && !error && !localPair && !candidates) return null;
+  return {
+    online,
+    connected,
+    rtt: msOrNull(t.rtt),
+    localPair,
+    candidates,
+    error,
+    role: pick(t.role, ['offer', 'answer']),
+  };
+}
+
 // Rebuild p2p from known fields only. Unknown keys (and their values) are dropped.
+// `teacher` rides inside this jsonb so no new column is required (migration 0040 is enough).
 export function cleanP2p(p) {
   if (!p || typeof p !== 'object') return {};
   return {
@@ -125,6 +153,7 @@ export function cleanP2p(p) {
     candidates: cleanCandidates(p.candidates),
     error: errorCode(p.error),
     role: pick(p.role, ['offer', 'answer']),
+    teacher: cleanTeacher(p.teacher),
   };
 }
 
@@ -246,6 +275,9 @@ export function summarizeCell(rows) {
   const attempted = p2ps.filter(p => p.connected || (p.error && p.error !== 'noPeer' && p.error !== 'policy'));
   const connected = p2ps.filter(p => p.connected);
   const gathered = p2ps.filter(p => p.candidates && CANDIDATE_TYPES.some(t => p.candidates[t] > 0));
+  const teachers = p2ps.map(p => p.teacher).filter(t => t && typeof t === 'object');
+  const teacherTried = teachers.filter(t => t.online === true);
+  const teacherConnected = teacherTried.filter(t => t.connected);
   return {
     samples: rows.length,
     students: new Set(rows.map(r => r.student_id)).size,
@@ -261,6 +293,11 @@ export function summarizeCell(rows) {
     mdnsSeen: rate(gathered.filter(p => p.candidates.mdns).length, gathered.length),
     policyBlocked: rate(p2ps.filter(p => p.error === 'policy').length, rows.length),
     noPeer: rate(p2ps.filter(p => p.error === 'noPeer').length, rows.length),
+    teacherSamples: teachers.length,
+    teacherTried: teacherTried.length,
+    teacherConnected: rate(teacherConnected.length, teacherTried.length),
+    teacherConnectedRuns: teacherConnected.length,
+    teacherHostHost: rate(teacherConnected.filter(isHostHost).length, teacherConnected.length),
   };
 }
 
@@ -290,6 +327,15 @@ export function createNetProbeStore(client) {
       if (section) query = query.eq('section', section);
       return query.order('ts', { ascending: false }).limit(ROW_LIMIT);
     },
+    // Merge a later teacher-leg result into the p2p jsonb. The student id must match the row.
+    async updateTeacher({ id, studentId, teacher }) {
+      const existing = await client.from('net_probes').select('id, student_id, p2p').eq('id', id).maybeSingle();
+      if (existing && existing.error) return existing;
+      const row = existing && existing.data;
+      if (!row || row.student_id !== studentId) return { data: null, error: { code: 'notfound', message: 'not found' } };
+      const p2p = { ...(row.p2p || {}), teacher };
+      return client.from('net_probes').update({ p2p }).eq('id', id).eq('student_id', studentId).select('id').single();
+    },
   };
 }
 
@@ -299,6 +345,7 @@ function lazyLiveStore() {
   return {
     async insert(row) { store = store || createNetProbeStore(createServiceClient()); return store.insert(row); },
     async list(opts) { store = store || createNetProbeStore(createServiceClient()); return store.list(opts); },
+    async updateTeacher(opts) { store = store || createNetProbeStore(createServiceClient()); return store.updateTeacher(opts); },
   };
 }
 
@@ -317,7 +364,8 @@ function notProvisioned(res) {
 // ── In-memory signaling (60 s TTL; never persisted) ──────────────────────────
 
 export function createSignalStore({ now = () => Date.now() } = {}) {
-  const offers = new Map();   // offerId -> { offerId, studentId, section, sdp, createdAt, claimedBy, answer }
+  const offers = new Map();   // offerId -> { offerId, studentId, section, sdp, target, createdAt, claimedBy, answer }
+  const teacherSeen = new Map();   // section -> timestamp of the teacher's last poll
 
   function prune() {
     const cutoff = now() - SIGNAL_TTL_MS;
@@ -327,20 +375,25 @@ export function createSignalStore({ now = () => Date.now() } = {}) {
   }
 
   return {
-    // One open offer per student: a new one replaces the old.
-    addOffer({ studentId, section, sdp }) {
+    // One open offer per student per lane. A teacher-aimed offer must not erase a classmate offer.
+    addOffer({ studentId, section, sdp, target }) {
       prune();
+      const lane = target === 'teacher' ? 'teacher' : 'peer';
       for (const [id, offer] of offers) {
-        if (offer.studentId === studentId) offers.delete(id);
+        if (offer.studentId === studentId && (offer.target || 'peer') === lane) offers.delete(id);
       }
       const offerId = randomUUID();
-      offers.set(offerId, { offerId, studentId, section, sdp, createdAt: now(), claimedBy: null, answer: null });
+      offers.set(offerId, {
+        offerId, studentId, section, sdp, target: lane, createdAt: now(), claimedBy: null, answer: null,
+      });
       return offerId;
     },
-    // The oldest unclaimed offer from a classmate (same section, not self). Claiming is atomic here.
-    claimPending({ studentId, section }) {
+    // The oldest unclaimed offer in this lane (same section, not self). Claiming is atomic here.
+    claimPending({ studentId, section, target }) {
       prune();
+      const lane = target === 'teacher' ? 'teacher' : 'peer';
       for (const offer of offers.values()) {
+        if ((offer.target || 'peer') !== lane) continue;
         if (offer.section !== section) continue;
         if (offer.studentId === studentId) continue;
         if (offer.claimedBy) continue;
@@ -348,6 +401,13 @@ export function createSignalStore({ now = () => Date.now() } = {}) {
         return { offerId: offer.offerId, sdp: offer.sdp };
       }
       return null;
+    },
+    markTeacher(section) {
+      if (section) teacherSeen.set(section, now());
+    },
+    teacherOnline(section) {
+      const seen = teacherSeen.get(section);
+      return typeof seen === 'number' && now() - seen <= TEACHER_ONLINE_MS;
     },
     get(offerId) {
       prune();
@@ -408,6 +468,31 @@ export function mountNetProbe(app, { db, verifyToken, store, signals, now = () =
     return { studentId, section: row.section };
   }
 
+  // Signed-in roster row, teacher or student. Preview is not checked here.
+  async function identify(req, res) {
+    if (!netProbeEnabled()) {
+      res.status(403).json({ ok: false, error: 'net probe disabled' });
+      return null;
+    }
+    const token = extractToken(req);
+    let studentId = null;
+    try { studentId = token ? verifyToken(token) : null; } catch (_) { studentId = null; }
+    if (!studentId) {
+      res.status(401).json({ ok: false, error: 'sign in required' });
+      return null;
+    }
+    let row = null;
+    try {
+      const result = await db.findByStudentId(studentId);
+      row = result && result.data;
+    } catch (_) { row = null; }
+    if (!row || !row.section) {
+      res.status(401).json({ ok: false, error: 'unknown student' });
+      return null;
+    }
+    return { studentId, section: row.section, role: row.role === 'teacher' ? 'teacher' : 'student' };
+  }
+
   app.get('/net/probe/config', (_req, res) => {
     res.setHeader('Cache-Control', 'no-store');
     res.json({ ok: true, enabled: netProbeEnabled(), lanRelayUrl: null, stun: STUN_URLS });
@@ -435,7 +520,7 @@ export function mountNetProbe(app, { db, verifyToken, store, signals, now = () =
       return res.status(500).json({ ok: false, error: 'store failed' });
     }
     postsToday.set(key, count + 1);
-    return res.json({ ok: true, inSchoolHours: row.in_school_hours });
+    return res.json({ ok: true, id: result && result.data && result.data.id, inSchoolHours: row.in_school_hours });
   });
 
   app.post('/net/probe/offer', async (req, res) => {
@@ -443,8 +528,36 @@ export function mountNetProbe(app, { db, verifyToken, store, signals, now = () =
     if (!who) return;
     const sdp = req.body && req.body.sdp;
     if (!validSdp(sdp)) return res.status(400).json({ ok: false, error: 'bad sdp' });
-    const offerId = signalStore.addOffer({ studentId: who.studentId, section: who.section, sdp });
+    const target = req.body.target === 'teacher' ? 'teacher' : 'peer';
+    const offerId = signalStore.addOffer({ studentId: who.studentId, section: who.section, sdp, target });
     return res.json({ ok: true, offerId, ttlMs: SIGNAL_TTL_MS });
+  });
+
+  // Students ask this before opening a peer connection. No SDP, no addresses.
+  app.get('/net/probe/teacher-online', async (req, res) => {
+    const who = await requireStudent(req, res);
+    if (!who) return;
+    res.setHeader('Cache-Control', 'no-store');
+    return res.json({ ok: true, online: signalStore.teacherOnline(who.section) });
+  });
+
+  // Teacher Desk heartbeats. Does not claim an offer (used when this browser cannot answer).
+  app.post('/net/probe/teacher-here', async (req, res) => {
+    const who = await identify(req, res);
+    if (!who) return;
+    if (who.role !== 'teacher') return res.status(403).json({ ok: false, error: 'teacher only' });
+    signalStore.markTeacher(who.section);
+    return res.json({ ok: true });
+  });
+
+  app.get('/net/probe/teacher-pending', async (req, res) => {
+    const who = await identify(req, res);
+    if (!who) return;
+    if (who.role !== 'teacher') return res.status(403).json({ ok: false, error: 'teacher only' });
+    res.setHeader('Cache-Control', 'no-store');
+    signalStore.markTeacher(who.section);
+    const offer = signalStore.claimPending({ studentId: who.studentId, section: who.section, target: 'teacher' });
+    return res.json({ ok: true, offer });
   });
 
   // ?section= is accepted for the spec's shape, but the caller's ROSTER section always wins.
@@ -457,11 +570,14 @@ export function mountNetProbe(app, { db, verifyToken, store, signals, now = () =
   });
 
   app.post('/net/probe/answer/:offerId', async (req, res) => {
-    const who = await requireStudent(req, res);
+    const who = await identify(req, res);
     if (!who) return;
     const offer = signalStore.get(req.params.offerId);
     if (!offer) return res.status(404).json({ ok: false, error: 'offer expired' });
     if (offer.claimedBy !== who.studentId) return res.status(403).json({ ok: false, error: 'not your offer to answer' });
+    if (who.role === 'teacher' && offer.target !== 'teacher') {
+      return res.status(403).json({ ok: false, error: 'not your offer to answer' });
+    }
     const sdp = req.body && req.body.sdp;
     if (!validSdp(sdp)) return res.status(400).json({ ok: false, error: 'bad sdp' });
     offer.answer = sdp;
@@ -476,6 +592,28 @@ export function mountNetProbe(app, { db, verifyToken, store, signals, now = () =
     if (!offer) return res.status(404).json({ ok: false, error: 'offer expired' });
     if (offer.studentId !== who.studentId) return res.status(403).json({ ok: false, error: 'not your offer' });
     return res.json({ ok: true, answer: offer.answer });
+  });
+
+  // A later teacher-leg result, merged into the row this student already posted.
+  app.patch('/net/probe/:id', async (req, res) => {
+    const who = await requireStudent(req, res);
+    if (!who) return;
+    const teacher = cleanTeacher(req.body && req.body.teacher);
+    if (!teacher || teacher.online !== true) {
+      return res.status(400).json({ ok: false, error: 'teacher attempt required' });
+    }
+    let result;
+    try {
+      result = await probeStore.updateTeacher({ id: req.params.id, studentId: who.studentId, teacher });
+    } catch (error) {
+      return res.status(500).json({ ok: false, error: 'store failed' });
+    }
+    if (result && result.error) {
+      if (isTableMissing(result.error)) return notProvisioned(res);
+      if (result.error.code === 'notfound') return res.status(404).json({ ok: false, error: 'not found' });
+      return res.status(500).json({ ok: false, error: 'store failed' });
+    }
+    return res.json({ ok: true });
   });
 
   app.get('/class/net-probes', async (req, res) => {
