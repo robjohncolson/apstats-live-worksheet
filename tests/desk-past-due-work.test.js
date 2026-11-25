@@ -10,9 +10,9 @@ import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { JSDOM } from 'jsdom';
 import { createContext, runInContext } from 'node:vm';
-import { deskSource, deskHtml } from './helpers/desk-source.js';
+import { deskSource, deskHtmlInlined } from './helpers/desk-source.js';
 
-const html = deskHtml();
+const html = deskHtmlInlined();
 const html_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
 const missingWorkSource = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), '../js/desk-missing-work.js'), 'utf8');
 function fnSrc(name) {

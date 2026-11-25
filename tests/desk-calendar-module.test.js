@@ -28,7 +28,7 @@ describe('Desk loads the calendar module in place', () => {
     expect(tags[0]).toContain('?v=' + stamp);
     expect(DESK.slice(at - 400, at)).toContain('</script>');
     expect(DESK.slice(at, at + 200)).toContain('<script>');
-    expect(at).toBeGreaterThan(DESK.indexOf('window.DogePresence = DogePresence;'));
+    expect(at).toBeGreaterThan(DESK.indexOf('js/desk-doge-presence.js'));
     expect(at).toBeLessThan(DESK.indexOf('/* ═══ TOOLTIP ═══ */'));
   });
   it('leaves nothing of the region inline', () => {

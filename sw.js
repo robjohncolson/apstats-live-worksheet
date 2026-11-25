@@ -13,7 +13,7 @@
 // is just `self.addEventListener('install',()=>self.skipWaiting()); self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.map(x=>caches.delete(x)))).then(()=>self.clients.claim())));`
 // to unregister-by-emptying (clears caches; pages fall back to plain network).
 
-const BUILD = '2026-11-25-6294'; // scripts/bump-build.mjs replaces this stamp
+const BUILD = '2026-11-25-ux4l'; // scripts/bump-build.mjs replaces this stamp
 const CACHE = 'apstats-pwa-' + BUILD;
 
 const CORE = [
@@ -27,7 +27,11 @@ const CORE = [
   'data/flashcard-flags.json',
   'js/ced2026-crosswalk.js', 'js/ced2026-labels.js',
   'canvas_engine.js', 'sprite_sheet.js', 'classroom-board.js', 'pico-home.js',
-  'lib/class-log-summary.js', 'js/desk-class-log.js', 'js/desk-study-break.js', 'js/desk-gradebook-grid.js', 'js/desk-park-bridge.js', 'js/desk-calendar.js', 'js/desk-missing-work.js',
+  'lib/class-log-summary.js', 'js/desk-class-log.js', 'js/desk-missing-work.js',
+  'js/desk-signin.js', 'js/desk-grade-coach.js', 'js/desk-flashcards.js',
+  'js/desk-class-snapshot.js', 'js/desk-wallet.js',
+  'js/desk-gradebook-grid.js', 'js/desk-study-break.js', 'js/desk-park-bridge.js',
+  'js/desk-doge-presence.js', 'js/desk-calendar.js',
 ];
 
 const ENTRY_SCRIPTS = ['canvas_engine.js', 'sprite_sheet.js', 'classroom-board.js', 'pico-home.js'];

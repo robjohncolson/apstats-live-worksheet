@@ -428,8 +428,8 @@ describe('Desk + client identity mirror', () => {
   });
 
   it('shows given − returned as In hand and exposes Handed back honestly', async () => {
-    const desk = await readFile(DESK, 'utf8');
-    const detail = functionSource(desk, '_walletLedgerDetail');
+    const deskWallet = await readFile(resolve(__dirname, '..', '..', 'js', 'desk-wallet.js'), 'utf8');
+    const detail = functionSource(deskWallet, '_walletLedgerDetail');
     expect(detail).toContain('materialized - returned');
     expect(detail).toContain("row(cg, 'In hand'");
     expect(detail).toContain("row(cg, 'Handed back'");

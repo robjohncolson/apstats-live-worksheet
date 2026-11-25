@@ -10,10 +10,10 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { deskSource, deskHtml } from './helpers/desk-source.js';
+import { deskSource, deskHtmlInlined } from './helpers/desk-source.js';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const DESK = deskHtml();
+const DESK = deskHtmlInlined();
 const DESK_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
 const paintFn = DESK.slice(DESK.indexOf('function _paintDoNowReadiness'), DESK.indexOf('async function renderDoNowGrades'));
 
@@ -99,7 +99,7 @@ describe('the grade coach never opens the ledger (teacher 2026-09-26: "when I cl
   it('_donowOpensLedger is false for anything inside #donow-helper (button, facts text, chat input)', async () => {
     const { JSDOM } = await import('jsdom');
     const dom = new JSDOM('<div id="donow-card" role="button"><div id="donow-msg">x</div><div id="donow-helper"><button id="b">Why</button><div class="wsl-panel"><div class="wsl-facts">facts</div><input id="q"></div></div></div>');
-    const src = deskHtml();
+    const src = deskHtmlInlined();
     const m = /function _donowOpensLedger\([^)]*\)\s*\{[\s\S]*?\n\}/.exec(src);
     const fn = new Function(m[0] + '\nreturn _donowOpensLedger;')();
     const d = dom.window.document, card = d.getElementById('donow-card');
