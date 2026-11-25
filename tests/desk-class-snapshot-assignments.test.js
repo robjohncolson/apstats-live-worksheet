@@ -94,7 +94,7 @@ function sandbox({ teacher = false, lessons, pick = null, roster = null, status 
   createContext(s);
   runInContext(
     "var SNAPSHOT_TTL_MS = 300000;\nvar ZERO_WARN_DAYS = 3;\nvar _snapApp = { mode: null, sections: {}, roster: " + JSON.stringify(roster) + ", pick: " + JSON.stringify(pick ? { PeriodB: pick } : {}) + ", request: 0, view: 'assignments', assign: {}, focusKey: null, amode: null, aidx: {}, aall: false };\nvar SNAP_TRACK_LABEL = { worksheet: 'worksheet', quiz: 'quiz', blooket: 'flashcards' };\n" +
-    ['_snapSection', '_snapModes', '_snapNeverZeroFor', '_snapAdvice', '_snapFocus', '_snapFocusIndex', '_snapDaysUntil', '_snapPickedSection', '_snapOpenWork', '_snapOwnAssignmentScore', '_snapFetchAssignments', '_snapZeroDateText', '_snapDayText', '_snapOwnSectionNotCounting', '_snapTentativeDay', '_snapTentativeLegend', '_snapAssignmentPlot', '_snapScoreList', '_snapListKey', '_snapAssignmentRow', '_renderAssignmentsView', '_snapTeacherPickedName', '_snapTeacherPickedLessons', '_snapOpenAssignment']
+    ['_snapSection', '_snapModes', '_snapNeverZeroFor', '_snapAdvice', '_snapFocus', '_snapDaysUntil', '_snapPickedSection', '_snapOpenWork', '_snapOwnAssignmentScore', '_snapFetchAssignments', '_snapZeroDateText', '_snapDayText', '_snapOwnSectionNotCounting', '_snapTentativeDay', '_snapTentativeLegend', '_snapAssignmentPlot', '_snapScoreList', '_snapListKey', '_snapAssignmentRow', '_renderAssignmentsView', '_snapTeacherPickedName', '_snapTeacherPickedLessons', '_snapOpenAssignment']
       .map(fnSrc).join('\n'), s);
   return { s, host: () => dom.window.document.getElementById('snapshot-content'), close: () => dom.window.close() };
 }
@@ -249,7 +249,7 @@ describe('Assignments view — focus and advice', () => {
     const { s, close } = sandbox();
     try {
       const rows = [Q13, A12, B11];
-      expect(s._snapFocusIndex(rows, [67, null, null], undefined)).toBe(2);        // 1.1 zeroDate is earliest
+      expect(s._snapFocus(rows, [67, null, null], undefined).index).toBe(2);        // 1.1 zeroDate is earliest
       expect(s._snapFocus(rows, [50, 100, 100], undefined)).toEqual({ index: 0, clear: false });   // 50 on Q13 is below its Q1 (67)
       expect(s._snapFocus(rows, [100, 100, 93], undefined)).toEqual({ index: 2, clear: true });    // 93 on B11 is inside the box → nothing to fix → newest (last row)
       expect(s._snapFocus(rows, [null, null, null], null)).toEqual({ index: 0, clear: false });    // nobody placed → most overdue

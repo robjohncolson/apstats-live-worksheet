@@ -1315,41 +1315,37 @@ describe('Timed deck — a failed slices fetch is not cached', () => {
 describe('Receipts show the score the server signed', () => {
   const RECEIPT_FUNCTIONS = [
     '_readDeskReceipts', '_receiptVerifyUrl', '_receiptPayload', '_receiptSourceIcon', '_formatReceiptDate',
-    '_isProctoredReceipt', '_renderReceiptQr', '_toggleReceiptQr', 'renderMyReceipts', '_receiptViewUrl', '_walletReceiptRow',
+    '_isProctoredReceipt', '_renderReceiptQr', '_receiptViewUrl', '_walletReceiptRow',
   ];
   const b64url = (text) => Buffer.from(text, 'utf8').toString('base64url');
   const compactFor = (payload) => b64url(JSON.stringify(payload)) + '.' + b64url('sig');
 
   function bootReceipts(rows) {
-    const dom = new JSDOM('<!doctype html><body><div id="my-receipts-body"></div></body>', {
+    const dom = new JSDOM('<!doctype html><body></body>', {
       runScripts: 'outside-only', url: 'https://desk.test/',
     });
     const win = dom.window;
     win.eval(CED_SOURCE);
     win.localStorage.setItem('desk_receipts_v1', JSON.stringify(rows));
-    Object.assign(win, { getRegistryEntry: () => null, _walletVerifyAndCheck: () => {}, _reviewByItem: {} });
+    Object.assign(win, { getRegistryEntry: () => null, _walletVerifyAndCheck: () => {} });
     win.eval(RECEIPT_FUNCTIONS.map((name) => fnBody(DESK, name)).join('\n'));
     return { dom, win, doc: win.document };
   }
+  // The My Ledger receipt row is the one place a receipt's score is shown (the separate
+  // My Receipts modal was removed 2026-11-24; it had no way to be opened since 2026-06-15).
   function shown(rows) {
     const s = bootReceipts(rows);
     try {
-      s.win.renderMyReceipts();
-      return {
-        mine: s.doc.getElementById('my-receipts-body').textContent,
-        ledger: s.win._walletReceiptRow(rows[0]).textContent,
-      };
+      return { ledger: s.win._walletReceiptRow(rows[0]).textContent };
     } finally {
       s.dom.window.close();
     }
   }
 
-  it('80: a lower run the server floored shows the KEPT score in My Receipts and My Ledger, not the score sent', () => {
+  it('80: a lower run the server floored shows the KEPT score in My Ledger, not the score sent', () => {
     const signed = { v: 1, t: 'ledger', src: 'worksheet', i: 'BL-U4-L7-DESK_DAY', a: 1, e: 'practice', sc: 100, ts: T0, n: 'abcd' };
     const stored = { id: 'r-floored', compact: compactFor(signed), src: 'worksheet', i: 'BL-U4-L7-DESK_DAY', sc: 80, ts: T0 };
-    const { mine, ledger } = shown([stored]);
-    expect(mine).toContain('score 100');
-    expect(mine).not.toContain('score 80');
+    const { ledger } = shown([stored]);
     expect(ledger).toContain('score 100');
     expect(ledger).not.toContain('score 80');
   });
@@ -1357,8 +1353,7 @@ describe('Receipts show the score the server signed', () => {
   it('81: a receipt whose signed payload carries no score still shows the stored one', () => {
     const signed = { v: 1, t: 'ledger', src: 'worksheet', i: 'BL-U4-L7-DESK_DAY', a: 1, e: 'practice', ts: T0, n: 'abcd' };
     const stored = { id: 'r-unscored', compact: compactFor(signed), src: 'worksheet', i: 'BL-U4-L7-DESK_DAY', sc: 80, ts: T0 };
-    const { mine, ledger } = shown([stored]);
-    expect(mine).toContain('score 80');
+    const { ledger } = shown([stored]);
     expect(ledger).toContain('score 80');
   });
 });

@@ -47,11 +47,12 @@ describe('Item 1 -- legend decodes overlay states (not just unit colors)', () =>
   it('the key labels every overlay signal', () => {
     const b = fnBody(html_SRC, 'updateLegend');
     for (const label of ['Today', 'Up next', 'Done', 'In progress', 'Ahead',
-                         'Locked', 'Progress Check', 'Poster', 'Class poll']) {
+                         'Progress Check', 'Poster', 'Class poll']) {
       expect(b).toContain(label);
     }
-    // the deprecated teacher "readiness" entry was removed (it contradicted student progress)
+    // deprecated entries stay gone: teacher "readiness" and retired lesson locks
     expect(b).not.toContain('status-dot status-ready');
+    expect(b).not.toContain('cell-locked');
   });
   it('swatches reuse the LIVE cell classes so the key cannot drift from the CSS', () => {
     const b = fnBody(html_SRC, 'updateLegend');
@@ -294,7 +295,7 @@ describe('Item 3 -- aria-label + screen-reader live region', () => {
     const b = fnBody(html_SRC, 'rCal');
     expect(b).toMatch(/\(next up\)/);
     expect(b).toMatch(/\(completed\)/);
-    expect(b).toMatch(/locked — finish/);
+    expect(b).not.toMatch(/locked — finish/);
   });
   it('paintDonowCells mirrors the SERVER done/ahead state into the aria-label, idempotently', () => {
     const b = fnBody(html_SRC, 'paintDonowCells');
@@ -382,13 +383,17 @@ describe('Item 4 -- crisp stepped hover/press feedback', () => {
 
 // --- Item 5: one indicator scale -------------------------------------------
 
-describe('Item 5 -- the two corner dots are one 7px scale', () => {
-  it('status-dot is 7px to pair with poll-dot', () => {
-    // the real (first position:absolute) status-dot rule -- 7px round
-    expect(html).toMatch(/\.status-dot\s*\{[^}]*width:7px;\s*height:7px;\s*border-radius:50%/);
+describe('Item 5 -- the corner dot is one 7px scale', () => {
+  it('the retired readiness dot (status-dot, s14) has no CSS left', () => {
+    // The dot stopped rendering in s14; its rules were purged with the mobile selector (2026-11-24).
+    expect(html).not.toMatch(/\.status-dot\b/);
+    expect(html).toMatch(/\.poll-dot\s*\{[^}]*width:7px;\s*height:7px/);
   });
-  it('mobile shrinks both dots and drops the 2x text', () => {
-    expect(html).toMatch(/\.poll-dot,\s*\.status-dot\s*\{\s*width:\s*5px/);
+  it('mobile drops the 2x text; the poll dot has ONE rule', () => {
+    // The old phone rule `.poll-dot, .status-dot { width: 5px }` sat BEFORE the 7px rule at the
+    // same specificity, so it never took effect. It was removed with the status-dot purge; a
+    // second `.poll-dot {` rule would also be the first match tests/poll-archive-desk.test.js reads.
+    expect(html.match(/\.poll-dot\s*\{/g)).toHaveLength(1);
     expect(html).toMatch(/\.dbl\s*\{\s*display:\s*none/);
   });
 });
@@ -396,14 +401,12 @@ describe('Item 5 -- the two corner dots are one 7px scale', () => {
 // --- Item 7: named magic numbers (code sharpening) -------------------------
 
 describe('Item 7 -- dim levels are named :root vars', () => {
-  it(':root defines the three cell-dim vars', () => {
+  it(':root defines the cell-dim vars', () => {
     expect(html).toMatch(/--cell-past-dim:\s*0\.5/);
-    expect(html).toMatch(/--cell-lock-dim:\s*0\.4/);
     expect(html).toMatch(/--cell-done-dim:\s*0\.6/);
   });
-  it('the done-greyscale + locked + past rules consume the vars (A1 still matches: grayscale then opacity)', () => {
+  it('the done-greyscale + past rules consume the vars (A1 still matches: grayscale then opacity)', () => {
     expect(html).toMatch(/\.cell-past\s*\{\s*opacity:\s*var\(--cell-past-dim\)/);
-    expect(html).toMatch(/\.cell-locked\s*\{[^}]*opacity:\s*var\(--cell-lock-dim\)/);
     expect(html).toMatch(/\.dc-done:not\(\.cell-today\):not\(\.cal-current\)\s*\{[^}]*grayscale[^}]*opacity:\s*var\(--cell-done-dim\)/);
   });
   it('htm names the double-topic badge const (no bare `let db`)', () => {

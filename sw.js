@@ -13,7 +13,7 @@
 // is just `self.addEventListener('install',()=>self.skipWaiting()); self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.map(x=>caches.delete(x)))).then(()=>self.clients.claim())));`
 // to unregister-by-emptying (clears caches; pages fall back to plain network).
 
-const BUILD = '2026-11-17-yywn'; // scripts/bump-build.mjs replaces this stamp
+const BUILD = '2026-11-25-6294'; // scripts/bump-build.mjs replaces this stamp
 const CACHE = 'apstats-pwa-' + BUILD;
 
 const CORE = [
@@ -26,8 +26,11 @@ const CORE = [
   'data/blooket-difficulty.json', 'data/blooket-deck-slices.json', 'data/blooket-topic-csv.json',
   'data/flashcard-flags.json',
   'js/ced2026-crosswalk.js', 'js/ced2026-labels.js',
-  'lib/class-log-summary.js', 'js/desk-class-log.js', 'js/desk-progress-app.js', 'js/desk-study-break.js', 'js/desk-gradebook-grid.js', 'js/desk-park-bridge.js', 'js/desk-calendar.js', 'js/desk-missing-work.js',
+  'canvas_engine.js', 'sprite_sheet.js', 'classroom-board.js', 'pico-home.js',
+  'lib/class-log-summary.js', 'js/desk-class-log.js', 'js/desk-study-break.js', 'js/desk-gradebook-grid.js', 'js/desk-park-bridge.js', 'js/desk-calendar.js', 'js/desk-missing-work.js',
 ];
+
+const ENTRY_SCRIPTS = ['canvas_engine.js', 'sprite_sheet.js', 'classroom-board.js', 'pico-home.js'];
 
 // Pure decision (unit-tested via extraction): 'navigate' | 'asset' | 'passthrough'.
 function cacheStrategyFor(request, selfOrigin) {
@@ -47,7 +50,9 @@ self.addEventListener('install', (e) => {
   self.skipWaiting();
   // The first online visit loads these before this worker controls the page.
   // Cache the exact versioned URLs too, so its first offline reload can boot.
-  const urls = CORE.concat(CORE.filter((u) => u.startsWith('js/desk-')).map((u) => u + '?v=' + BUILD));
+  const urls = CORE.concat(
+    CORE.filter((u) => u.startsWith('js/desk-') || ENTRY_SCRIPTS.includes(u)).map((u) => u + '?v=' + BUILD)
+  );
   e.waitUntil(caches.open(CACHE).then((c) => Promise.allSettled(urls.map((u) => c.add(u)))));
 });
 

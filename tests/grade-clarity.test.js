@@ -15,7 +15,7 @@ const START = readFileSync(resolve(repo, 'start-here.html'), 'utf8');
 const DESK = deskHtml();
 const DESK_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
 // Just the "How your grade works" modal markup.
-const MODAL = DESK.slice(DESK.indexOf('<div id="grade-help-overlay"'), DESK.indexOf('<!-- ═══ My Gradebook Modal'));
+const MODAL = DESK.slice(DESK.indexOf('<div id="grade-help-overlay"'), DESK.indexOf('<!-- ═══ Blooket Flashcard Quiz'));
 
 const plain = html => html.replace(/<[^>]+>/g, '').replace(/&mdash;/g, '—').replace(/&ndash;/g, '–').replace(/&nbsp;/g, ' ');
 // QUARTER_LINE_BY_DUE_DATE_SPEC §3.6 (teacher 2026-11-07), word for word in both explanations.

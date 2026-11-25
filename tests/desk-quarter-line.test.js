@@ -151,6 +151,13 @@ function desk({ today = '2026-11-09', period = 'B', withQuarters = true, config 
   return win;
 }
 
+// The gradebook grid draws into the containers its caller passes, as My Ledger's
+// "Score breakdown" does (the old pop-up with its own nodes was removed 2026-11-24).
+const GRID_HTML = '<div id="gb-body"></div><div id="gb-tabs"></div>';
+function renderGrid(win, qk) {
+  win.renderMyGradebook(qk, win.document.getElementById('gb-body'), win.document.getElementById('gb-tabs'));
+}
+
 const texts = (nodes) => [...nodes].map((n) => n.textContent.replace(/\s+/g, ' ').trim());
 
 // ── 1. The pure module ──────────────────────────────────────────────────────────────────────────
@@ -839,31 +846,30 @@ describe('My Gradebook (§3.5): the closing quarter opens first; tab labels; lif
   });
 
   it('a lift-only column says "can raise Quarter 1", is never owed, and a column without the flag is an ordinary one', () => {
-    const win = desk({ today: '2026-11-09', html: '<div id="my-gradebook-body"></div><div id="my-gradebook-qtabs"></div>' });
+    const win = desk({ today: '2026-11-09', html: GRID_HTML });
     win._activeGradebook = gradebook();
-    win.renderMyGradebook('Q1');
-    const body = win.document.getElementById('my-gradebook-body');
+    renderGrid(win, 'Q1');
+    const body = win.document.getElementById('gb-body');
     expect(body.querySelector('.mgb-lift').textContent).toBe('can raise Quarter 1');
     expect(body.textContent).not.toMatch(/due, not done yet/);   // the lift-only quiz is not owed
-    expect(texts(win.document.getElementById('my-gradebook-qtabs').children)).toEqual(['Quarter 1 · closes Tue Nov 10', 'Quarter 2 · 0 dates after Nov 6', 'Quarter 3', 'Quarter 4']);
+    expect(texts(win.document.getElementById('gb-tabs').children)).toEqual(['Quarter 1 · closes Tue Nov 10', 'Quarter 2 · 0 dates after Nov 6', 'Quarter 3', 'Quarter 4']);
     expect(body.firstChild.textContent).toMatch(/^Quarter 1 · closes Tue Nov 10 — /);
-    win.renderMyGradebook('Q2');
+    renderGrid(win, 'Q2');
     expect(body.querySelector('.mgb-lift')).toBeNull();
     expect(body.textContent).toMatch(/1 thing is due, not done yet/);   // the regular Q2 quiz is owed
   });
 
   it('D5: outside a close window a lift-only column "counts in Quarter 2"; in the last quarter it "can still raise Quarter 4 (never a 0)"', () => {
-    const html = '<div id="my-gradebook-body"></div><div id="my-gradebook-qtabs"></div>';
-    const later = desk({ today: '2026-11-20', html });
+    const later = desk({ today: '2026-11-20', html: GRID_HTML });
     later._activeGradebook = gradebook();
-    later.renderMyGradebook('Q1');
-    expect(later.document.querySelector('#my-gradebook-body .mgb-lift').textContent).toBe('counts in Quarter 2');
-    const june = desk({ today: '2027-06-10', html });
+    renderGrid(later, 'Q1');
+    expect(later.document.querySelector('#gb-body .mgb-lift').textContent).toBe('counts in Quarter 2');
+    const june = desk({ today: '2027-06-10', html: GRID_HTML });
     june._activeGradebook = { weights: {}, quarters: { Q4: { columns: [col('QUIZ:9.6', { liftOnly: true, topicKeys: ['9.6'] })],
       cells: {}, categoryAverages: {}, v3Total: 90, schoologyTotal: 90 } } };
-    june.renderMyGradebook('Q4');
-    expect(june.document.querySelector('#my-gradebook-body .mgb-lift').textContent).toBe('can still raise Quarter 4 (never a 0)');
-    expect(june.document.getElementById('my-gradebook-body').textContent).not.toContain('Quarter 5');
+    renderGrid(june, 'Q4');
+    expect(june.document.querySelector('#gb-body .mgb-lift').textContent).toBe('can still raise Quarter 4 (never a 0)');
+    expect(june.document.getElementById('gb-body').textContent).not.toContain('Quarter 5');
     expect(june._gradebookHasNextQuarter('Q3')).toBe(true);
     // Without /grade dates: Q1–Q3 have a next quarter, Q4 does not.
     const old = desk({ withQuarters: false, config: null });
@@ -871,7 +877,6 @@ describe('My Gradebook (§3.5): the closing quarter opens first; tab labels; lif
   });
 
   it('D7: a column whose Schoology copy is in another marking period is dimmed, tagged "(MP1)", never owed, never tinted "in Schoology"', () => {
-    const html = '<div id="my-gradebook-body"></div><div id="my-gradebook-qtabs"></div>';
     const straddle = () => {
       const gb = gradebook();
       gb.quarters.Q2.columns = [
@@ -881,10 +886,10 @@ describe('My Gradebook (§3.5): the closing quarter opens first; tab labels; lif
       gb.quarters.Q2.cells = {};
       return gb;
     };
-    const win = desk({ today: '2026-11-09', html });
+    const win = desk({ today: '2026-11-09', html: GRID_HTML });
     win._activeGradebook = straddle();
-    win.renderMyGradebook('Q2');
-    const body = win.document.getElementById('my-gradebook-body');
+    renderGrid(win, 'Q2');
+    const body = win.document.getElementById('gb-body');
     const dim = body.querySelectorAll('.mgb-elsewhere');
     expect(dim).toHaveLength(1);
     expect(dim[0].style.opacity).toBe('0.6');
@@ -892,7 +897,7 @@ describe('My Gradebook (§3.5): the closing quarter opens first; tab labels; lif
     expect(body.textContent).toMatch(/1 thing is due, not done yet/);   // only the regular quiz is owed
     // Scored: its number shows, but never the blue-grey "in your Schoology grade" tint.
     win._activeGradebook.quarters.Q2.cells = { 'FA:4.1-2': 90 };
-    win.renderMyGradebook('Q2');
+    renderGrid(win, 'Q2');
     const scored = body.querySelector('.mgb-elsewhere');
     expect(scored.textContent).toContain('90.0');
     expect(scored.title).toBe('This column is in Schoology MP1, not in this quarter\'s Schoology gradebook.');
@@ -900,7 +905,7 @@ describe('My Gradebook (§3.5): the closing quarter opens first; tab labels; lif
     // A column stamped with its own tab's quarter, or without the flag, is an ordinary column.
     win._activeGradebook = straddle();
     win._activeGradebook.quarters.Q2.columns[0].schoologyQuarter = 'Q2';
-    win.renderMyGradebook('Q2');
+    renderGrid(win, 'Q2');
     expect(body.querySelector('.mgb-elsewhere')).toBeNull();
     expect(body.textContent).toMatch(/2 things are due, not done yet/);
     // The ledger row's tag names the marking period the column really sits in.

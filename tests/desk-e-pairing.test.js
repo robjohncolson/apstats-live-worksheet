@@ -238,17 +238,4 @@ describe('group resources and override',()=>{
      expect(d.body.textContent).not.toContain('(alt)');
    }finally{dom.window.close();}
  });
- it('requires both override keys',()=>{
-   const keys=['1.4'];const s=load(['_isTopicLessonUnlocked'],{S,_readLessonUnlocks:()=>keys});
-   expect(s._isTopicLessonUnlocked(first.t)).toBe(false);keys.push('1.5');expect(s._isTopicLessonUnlocked(first.t)).toBe(true);
- });
- it('posts both keys and preserves successful partial results for retry',async()=>{
-   const dom=page(),posted=[];let fail=true;const d=dom.window.document;d.getElementById('ogm-lesson-key').value=first.t;
-   dom.window.ROSTER_SERVICE_URL='https://roster.example';dom.window.rosterClient={token:()=> 'fixture'};
-   const s=load(['_confirmOverrideGate'],{S,window:dom.window,document:d,sessionStorage:dom.window.sessionStorage,_viewAsContext:()=>({username:'fixture'}),_hideOverrideGateModal:()=>{},setTimeout:()=>{},
-     fetch:async(url,options)=>{const key=JSON.parse(options.body).lessonKey;posted.push(key);return {ok:!(fail&&key==='1.5'),json:async()=>({ok:!(fail&&key==='1.5')})};}});
-   try{await s._confirmOverrideGate();expect(posted).toEqual(['1.4','1.5']);expect(JSON.parse(dom.window.sessionStorage.getItem('apstats_view_as_lesson_unlocks'))).toEqual(['1.4']);
-     fail=false;await s._confirmOverrideGate();expect(posted).toEqual(['1.4','1.5','1.5']);expect(JSON.parse(dom.window.sessionStorage.getItem('apstats_view_as_lesson_unlocks'))).toEqual(['1.4','1.5']);
-   }finally{dom.window.close();}
- });
 });

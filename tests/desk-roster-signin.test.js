@@ -49,8 +49,8 @@ describe('DN2c — shared roster client is loaded', () => {
 
   it('both roster scripts load before the main inline app <script>', () => {
     const idxClient = html.indexOf('<script src="roster-client.js">');
-    // The main app script is the first inline <script> (BAKED_REGISTRY marker).
-    const idxApp = html.indexOf('/* ═══ BAKED REGISTRY');
+    // The main app script is the first inline <script> (LESSON REGISTRY marker).
+    const idxApp = html.indexOf('/* ═══ LESSON REGISTRY');
     expect(idxApp).toBeGreaterThan(-1);
     expect(idxClient).toBeLessThan(idxApp);
   });

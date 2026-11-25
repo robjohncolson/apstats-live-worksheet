@@ -900,11 +900,6 @@
     var inf = day.inf;
     cancelPollReturn();
     notePanelSourceRef('tile', ref, day);
-    if (isLessonCell(inf) && isLocked(day)) {
-      var prev = previousTopic(day);
-      callDesk('_showLessonLockedDialog', [inf.t, prev, day.ds]);
-      return;
-    }
     if (inf.kind === 'orientation') { callDesk('openGradeHelp'); return; }
     if (inf.kind === 'baseline') { callDesk('_openBaselineInfo'); return; }
     callDesk('maybeBumpThenOpen', [inf, day.ds]);
@@ -1147,20 +1142,6 @@
       }
     }
     refreshActive();
-  }
-
-  function previousTopic(day) {
-    var name = day.summer ? '_prevSummerTopic' : '_prevTopicInSequence';
-    var prev = callDesk(name, [day.inf.t]);
-    return prev == null ? null : prev;
-  }
-
-  // The Desk's own gate (it has returned "unlocked" for every lesson since 2026-09-10).
-  function isLocked(day) {
-    if (typeof window._isLessonUnlocked !== 'function') return false;
-    var marks = freshMarks();
-    var unlocked = callDesk('_isLessonUnlocked', [day.inf.t, day.date, previousTopic(day), deskToday(), marks, isSignedIn()]);
-    return unlocked === false;
   }
 
   function openDayGrade(day) {
@@ -1921,10 +1902,6 @@
 
   // How the panel was opened: a Pico tile (title = its weekday + date) or the sign (title = the
   // lesson label). Anything else looks the date up in the schedule.
-  function notePanelSource(kind, opener, day) {
-    notePanelSourceRef(kind, openerRef(opener), day);
-  }
-
   function notePanelSourceRef(kind, ref, day) {
     view.panel.source = { kind: kind, day: day || null };
     view.panel.opener = ref;
@@ -3244,8 +3221,6 @@
     { overlay: 'namefinder-overlay',      box: '.dialog-box', title: '',                               close: ['closeNameFinder'] },        // created by the Desk on first use
     { overlay: 'day-grade-overlay',       box: '.dialog-box', title: '#day-grade-header',              close: ['closeDayGrade'] },
     { overlay: 'grade-help-overlay',      box: '.dialog-box', title: '.dialog-box > .chicago',         close: ['closeGradeHelp'] },
-    { overlay: 'my-gradebook-overlay',    box: '.dialog-box', title: '#my-gradebook-title',            close: ['closeMyGradebook'] },
-    { overlay: 'my-receipts-overlay',     box: '.dialog-box', title: '.dialog-box > .chicago > span',  close: ['closeMyReceipts'] },
     { overlay: 'bf-overlay',              box: '.dialog-box', title: '#bf-header',                     close: ['closeBlooketFlashcards'] }, // Review + flashcard decks
     { overlay: 'calc-progress-overlay',   box: '.dialog-box', title: '#calc-progress-title',           close: ['closeCalcProgress'] },     // Calculator Skills (ABSORB_2 §5)
     { overlay: 'student-dm-modal',        box: '.sdm-panel',  title: '#sdm-title',                     close: ['_closeStudentDmModal'] },   // Message teacher
@@ -3257,13 +3232,8 @@
     { overlay: 'app-formulas-overlay',    box: '.app-window', title: '.game-title-bar .title-text',    close: ['destroyApp', 'formulas'] },
     { overlay: 'app-dok-overlay',         box: '.app-window', title: '.game-title-bar .title-text',    close: ['destroyApp', 'dok'] },        // teacher
     { overlay: 'app-teachertools-overlay', box: '.app-window', title: '.game-title-bar .title-text',   close: ['destroyTeacherTools'] },    // teacher workspace + inbox
-    { overlay: 'app-nightlyreview-overlay', box: '.app-window', title: '.game-title-bar .title-text',  close: ['closeNightlyReview'] },     // teacher
     { overlay: 'app-gradecheckin-overlay', box: '.app-window', title: '.game-title-bar .title-text',   close: ['closeGradeCheckin'] },      // teacher
-    { overlay: 'app-progress-overlay',    box: '.app-window', title: '.game-title-bar .title-text',    close: ['destroyProgress'] },        // My Progress (icon parked; kept framed)
-    { overlay: 'override-gate-modal',     box: '.ogm-panel',  title: '#ogm-title',                     close: ['_hideOverrideGateModal'] }, // teacher view-as: override gate
     { overlay: 'verify-qr-overlay',       box: '#verify-qr-card', title: 'strong',                     close: ['_escHide', 'verify-qr-overlay'] },    // teacher: Verify a Record (built on first use)
-    { overlay: 'reconcile-qr-overlay',    box: '#reconcile-qr-card', title: 'strong',                  close: ['_escHide', 'reconcile-qr-overlay'] }, // Guest Reconcile: no menu item since 2026-10-08 (dormant; kept framed)
-    { overlay: 'guest-pass-overlay',      box: '#guest-pass-card', title: 'strong',                    close: ['_escHide', 'guest-pass-overlay'] },   // guest pass: no menu item since 2026-10-08 (dormant; kept framed)
     { overlay: 'game-overlay',            box: '.game-window', title: '.game-title-bar .title-text',   close: ['closeGame'], ownClose: true }, // Study Break: frame only; its own close box (restyled in place) stays the ✕
   ];
 
@@ -4156,8 +4126,7 @@
     var summary = null;
     try { summary = _lastClassroomSummary; } catch (_) { summary = window._lastClassroomSummary || null; }
     if (!summary) return false;
-    return Boolean(summary.poll || (summary.gate && summary.gate.armed) || summary.greenlight || summary.doorways
-      || (summary.activity && !summary.activity.finished));
+    return Boolean(summary.poll || (summary.gate && summary.gate.armed) || summary.greenlight || summary.doorways);
   }
 
   function resultScreenDown(mount) {
@@ -4452,8 +4421,20 @@
     zeroSignature: zeroSignature,
   };
 
+  function bootPicoHome() {
+    try {
+      init();
+      if (!byId('pico-home')) document.documentElement.classList.remove('pico-home');
+    } catch (err) {
+      document.documentElement.classList.remove('pico-home');
+      var root = byId('pico-home');
+      if (root && root.parentNode) root.parentNode.removeChild(root);
+      if (typeof console !== 'undefined' && console.error) console.error('[pico-home] init failed, falling back to classic Desk:', err);
+    }
+  }
+
   // The Desk's own functions are defined by later scripts on the page, so start once the
   // document has been parsed.
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
-  else init();
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bootPicoHome);
+  else bootPicoHome();
 })();

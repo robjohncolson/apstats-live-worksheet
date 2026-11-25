@@ -250,8 +250,8 @@ function main() {
 
   // ── Mirror PC + Poster dates back to roadmap-data.json ────────────────────
   //
-  // BAKED_REGISTRY in ap_stats_roadmap_square_mode.html is derived from
-  // roadmap-data.json (via the Agent repo's export-registry.mjs). For the
+  // The Desk (ap_stats_roadmap_square_mode.html) loads roadmap-data.json at
+  // runtime and carries no built-in copy of it. For the
   // roadmap calendar to render PC + Poster tiles on their scheduled dates,
   // the SAME dates must live in roadmap-data.json's progressChecks/posters
   // maps. We dual-write here so a single `node build-sy2627-schedule.mjs`

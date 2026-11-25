@@ -349,12 +349,13 @@ describe('gradebook column titles (roster-server gradebook-grid → ced-titles)'
   });
 
   it('the in-app My Gradebook renders without old keys', () => {
-    const win = newWindow('<div id="my-gradebook-body"></div><div id="my-gradebook-qtabs"></div>');
+    const win = newWindow('<div id="gb-body"></div><div id="gb-tabs"></div>');
     win.eval(CED_SOURCE);
     Object.assign(win, { cYear: 'SY26-27', _deskIsTeacher: () => false, _activeGradebook: gradebook(), _lessonDateMap: () => ({}) });
     win.eval(['_myGradebookCatOrder', '_gradeBand', '_myGradebookColourKey', 'renderMyGradebook'].map(fnBody).join('\n'));
-    win.renderMyGradebook('Q1');
-    expectNoRawKeys(win.document.getElementById('my-gradebook-body').textContent, LESSON_KEYS, 'My Gradebook');
+    // Containers passed in, as My Ledger's "Score breakdown" does.
+    win.renderMyGradebook('Q1', win.document.getElementById('gb-body'), win.document.getElementById('gb-tabs'));
+    expectNoRawKeys(win.document.getElementById('gb-body').textContent, LESSON_KEYS, 'My Gradebook');
   });
 
   it('class-snapshot assignment titles are CED', () => {

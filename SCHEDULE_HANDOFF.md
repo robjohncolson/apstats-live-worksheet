@@ -4,6 +4,10 @@
 **For the next Claude/Codex instance:** §2 is the state as of 2026-08-19, §3 the ordered
 work, §4 the gates. Read `sy2627-schedule-reframe-spec.md` (Codex-reviewed v2) for the
 full design; this file only sequences it and records what changed since.
+**Building the next schedule (for example SUMMER27):** the two earlier calendars, SUMMER26 and
+SY25-26, are kept as developer reference in `scripts/schedule-archive/legacy-schedule-defs.mjs`.
+The Desk has not shipped them since 2026-11-24 (teacher: they exist only for future schedule
+building, never shown to students or teachers); no page loads that file.
 
 ---
 

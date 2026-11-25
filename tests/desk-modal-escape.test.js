@@ -52,11 +52,10 @@ const GAP_NAMED = {
   'dialog-overlay': 'closeDialog',
   'bf-overlay': 'closeBlooketFlashcards',
   'calc-progress-overlay': 'closeCalcProgress',
-  'override-gate-modal': '_hideOverrideGateModal',
 };
-// QR/guest overlays the net hides directly (no cleanup) — they open as flex.
-const GAP_DIRECT = ['guest-pass-overlay', 'reconcile-qr-overlay', 'verify-qr-overlay', 'big-qr-overlay'];
-const SELF_HANDLED = ['day-grade-overlay', 'grade-help-overlay', 'my-gradebook-overlay', 'my-receipts-overlay', 'student-dm-modal', 'game-overlay'];
+// QR overlays the net hides directly (no cleanup) — they open as flex.
+const GAP_DIRECT = ['verify-qr-overlay', 'big-qr-overlay'];
+const SELF_HANDLED = ['day-grade-overlay', 'grade-help-overlay', 'student-dm-modal', 'game-overlay'];
 const ALL_IDS = [...Object.keys(GAP_NAMED), ...GAP_DIRECT, ...SELF_HANDLED];
 
 let calls;
@@ -137,8 +136,8 @@ describe('Escape net — wiring + exclusions (structural)', () => {
   it('the global Escape handler invokes _escCloseTopModal()', () => {
     expect(html).toMatch(/querySelectorAll\('\.app-overlay'\)[\s\S]*?_escCloseTopModal\(\)/);
   });
-  it('the resource panel (day-material modal) and the 4 QR/guest overlays are covered', () => {
-    ['resource-overlay', 'guest-pass-overlay', 'reconcile-qr-overlay', 'verify-qr-overlay', 'big-qr-overlay']
+  it('the resource panel (day-material modal) and the 2 QR overlays are covered', () => {
+    ['resource-overlay', 'verify-qr-overlay', 'big-qr-overlay']
       .forEach((id) => expect(ESC_SRC).toContain(`'${id}'`));
   });
   it('does NOT auto-close the sign-in WALL (signin/signup/pwchange)', () => {

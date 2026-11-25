@@ -1,9 +1,9 @@
-// desk-gradebook-grid-module.test.js — the in-app My Gradebook grid (student modal, teacher
-// Class Gradebook picker, date-gating + colour helpers) lives in js/desk-gradebook-grid.js
+// desk-gradebook-grid-module.test.js — the in-app My Gradebook grid (renderMyGradebook, drawn by
+// My Ledger's Score breakdown, plus its date-gating + colour helpers) lives in js/desk-gradebook-grid.js
 // (FABLE_SPRINT_2026_10_22C_SPEC.md track C3). Pins: the Desk loads it from the old position with
-// the entry-script `?v=` stamp, nothing of it is left inline, the markup still reaches the module
-// globals, the PWA precache and bump-build list carry the file, and the module evaluates as a
-// classic script that defines the same globals.
+// the entry-script `?v=` stamp, nothing of it is left inline, the old pop-up and its teacher picker
+// stay gone (removed 2026-11-24), the PWA precache and bump-build list carry the file, and the module
+// evaluates as a classic script that defines the same globals.
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
@@ -17,7 +17,7 @@ const MODULE = readFileSync(resolve(ROOT, 'js/desk-gradebook-grid.js'), 'utf8');
 const SW = readFileSync(resolve(ROOT, 'sw.js'), 'utf8');
 const BUMP = readFileSync(resolve(ROOT, 'scripts/bump-build.mjs'), 'utf8');
 
-const GLOBALS = ['openMyGradebook', 'closeMyGradebook', 'renderMyGradebook', 'openClassGradebook', '_gradeBand', '_gbDateStr', '_lessonDateMap', '_colScheduledDate', '_myGradebookColourKey'];
+const GLOBALS = ['renderMyGradebook', '_firstGradebookQuarter', '_gradeBand', '_gbDateStr', '_lessonDateMap', '_colScheduledDate', '_myGradebookColourKey'];
 
 describe('Desk loads the gradebook grid module in place', () => {
   it('splits the inline script between the teacher review fold and openDayGrade', () => {
@@ -38,10 +38,11 @@ describe('Desk loads the gradebook grid module in place', () => {
     }
     expect(deskSource()).toContain(MODULE);
   });
-  it('keeps the HTML handlers and the modal that reach the module globals', () => {
-    expect(DESK).toContain('onclick="closeMyGradebook()"');
-    expect(DESK).toContain('onclick="if(event.target===this)closeMyGradebook()"');
-    expect(DESK).toContain('id="my-gradebook-title"');
+  it('the old My Gradebook pop-up and the teacher Class Gradebook picker stay gone (My Ledger draws the grid)', () => {
+    expect(DESK).not.toContain('my-gradebook-');
+    for (const gone of ['openMyGradebook', 'closeMyGradebook', 'openClassGradebook', '_selectClassStudent']) {
+      expect(deskSource()).not.toContain(gone);
+    }
   });
   it('is precached and versioned on bump-build', () => {
     const core = SW.slice(SW.indexOf('const CORE = ['), SW.indexOf('];', SW.indexOf('const CORE = [')));

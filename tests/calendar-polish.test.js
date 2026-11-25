@@ -295,16 +295,11 @@ describe('C5b -- cross-device grey-out from the synced /grade score', () => {
     expect(b).toMatch(/dc-localpartial/);
     expect(b).toMatch(/cal-current/);
   });
-  it('paintLocalDoneCells escalates to rCal ONLY when a lesson lock flips', () => {
+  it('paintLocalDoneCells never triggers an rCal rebuild on poll (lesson locks retired)', () => {
     const b = fnBody(html_SRC, 'paintLocalDoneCells');
-    // detects a stale lock via the same gate rCal uses...
-    expect(b).toMatch(/_isLessonUnlocked\(/);
-    expect(b).toMatch(/cell-locked/);
-    expect(b).toMatch(/lockChanged/);
-    // ...and the rCal rebuild is GUARDED by that flip (not unconditional —
-    // renderDoNowGrades runs on every visibilitychange, so an unconditional
-    // rCal here would reintroduce per-poll flicker).
-    expect(b).toMatch(/lockChanged\s*&&\s*typeof rCal === 'function'\)\s*rCal\(\)/);
+    expect(b).not.toMatch(/\brCal\s*\(/);
+    expect(b).not.toMatch(/_isLessonUnlocked/);
+    expect(b).not.toMatch(/cell-locked/);
   });
   it('renderDoNowGrades repaints local-done cells after the grade cache loads', () => {
     const b = fnBody(html_SRC, 'renderDoNowGrades');

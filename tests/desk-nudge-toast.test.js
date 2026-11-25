@@ -87,11 +87,13 @@ describe('nudge toast -- structure (T2 stacked)', () => {
     expect(html).toMatch(/classroom_teacher_nudge[\s\S]{0,200}_showNudgeToast/);
   });
 
-  it('_playNudgeChime, _showNudgeToast, _hideNudgeToast, _sendNudgeReply functions exist', () => {
+  it('_playNudgeChime and _showNudgeToast exist; the no-arg singleton aliases are gone', () => {
     expect(fnBody(html_SRC, '_playNudgeChime')).toMatch(/window\.sfx\.play\('mac:nudgeChime'\)/);   // SFX_SPEC: the shared engine
     expect(fnBody(html_SRC, '_showNudgeToast')).toMatch(/_activeNudges/);
-    expect(fnBody(html_SRC, '_hideNudgeToast')).toMatch(/_hideNudgeToastById/);
-    expect(fnBody(html_SRC, '_sendNudgeReply')).toMatch(/oldestId/);
+    // _hideNudgeToast() / _sendNudgeReply() (pre-stack singleton names) had no caller left and
+    // were removed 2026-11-24; every toast is addressed by its id.
+    expect(html_SRC).not.toMatch(/function\s+_hideNudgeToast\s*\(/);
+    expect(html_SRC).not.toMatch(/function\s+_sendNudgeReply\s*\(/);
   });
 
   it('_hideNudgeToastById and _sendNudgeReplyForId helpers exist', () => {

@@ -1,24 +1,24 @@
 // @vitest-environment node
-// Exercise the live access policy, rather than a second copy of the retired gate.
+// Lesson locks were retired 2026-09-10 and their inert machinery was removed 2026-11-25.
+// Pin that the Desk carries no sequential-gate / override-gate code and keeps every lesson open.
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
-import { deskSource } from './helpers/desk-source.js';
-const html = deskSource();
-const source = html.match(/function _isLessonUnlocked\([^)]*\)\s*\{[^}]*\}/)[0];
-const unlocked = new Function('return (' + source + ');')();
+import { deskSource, deskHtml } from './helpers/desk-source.js';
 
-describe('lessons remain accessible independently of completion', () => {
-  it.each(['2026-08-01', '2026-09-10', '2027-04-01'])('opens lessons dated %s with empty completion marks', date => {
-    for (const topic of ['1.1', '1.2', '1.2+1.3', '2.1', '9.5']) {
-      expect(unlocked(topic, new Date(date), '1.1', new Date('2026-09-10'), {}, true)).toBe(true);
+const html = deskHtml();
+const src = deskSource();
+
+describe('lesson-lock machinery stays retired', () => {
+  it('Desk HTML and modules define no sequential-gate or override-gate functions, ids, or classes', () => {
+    for (const fn of [
+      '_isLessonUnlocked', '_showLessonLockedDialog', '_readLessonUnlocks',
+      '_isTopicLessonUnlocked', '_refreshLessonUnlocks',
+      '_showOverrideGateModal', '_hideOverrideGateModal', '_confirmOverrideGate',
+    ]) {
+      expect(src, fn).not.toMatch(new RegExp(`function\\s+${fn}\\s*\\(`));
     }
-  });
-  it('does not read or mutate saved progress to allow access', () => {
-    const marks = new Proxy({}, {get() {throw Error('must not consult marks');}, set() {throw Error('must not alter marks');}});
-    expect(unlocked('1.3', null, '1.2', null, marks, true)).toBe(true);
-  });
-  it('does not require a role, override, or synchronized grade state', () => {
-    expect(unlocked('1.3', null, '1.2', null, null, true)).toBe(true);
-    expect(unlocked('1.3', null, '1.2', null, null, false)).toBe(true);
+    for (const token of ['id="override-gate-modal"', 'id="view-as-override-gate"', '.cell-locked', "'cell-locked'"]) {
+      expect(html, token).not.toContain(token);
+      expect(src, token).not.toContain(token);
+    }
   });
 });

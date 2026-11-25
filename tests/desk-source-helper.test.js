@@ -23,16 +23,16 @@ describe('deskHtml / deskSource', () => {
     expect(src).toContain('/* ═══ INIT ═══ */'); // inline, last block
     const modules = deskModulePaths();
     expect(modules).toContain('js/desk-class-log.js');
-    expect(modules).toContain('js/desk-progress-app.js');
+    expect(modules).toContain('js/desk-study-break.js');
     for (const path of modules) expect(src).toContain(readFileSync(resolve(ROOT, path), 'utf8'));
   });
   it('concatenates in document order: a module sits between the blocks that surround its <script src>', () => {
     const src = deskSource();
     const html = deskHtml();
-    const before = html.indexOf('/* ═══ DIALOG ═══ */') < html.indexOf('js/desk-progress-app.js');
+    const before = html.indexOf('/* ═══ DIALOG ═══ */') < html.indexOf('js/desk-study-break.js');
     expect(before).toBe(true);
-    expect(src.indexOf('/* ═══ DIALOG ═══ */')).toBeLessThan(src.indexOf('const ProgressApp = {'));
-    expect(src.indexOf('const ProgressApp = {')).toBeLessThan(src.indexOf('/* ═══ APP LAUNCHER ═══ */'));
+    expect(src.indexOf('/* ═══ DIALOG ═══ */')).toBeLessThan(src.indexOf('const studyBreak = {'));
+    expect(src.indexOf('const studyBreak = {')).toBeLessThan(src.indexOf('/* ═══ APP LAUNCHER ═══ */'));
   });
   it('deskHtmlInlined() pastes each js/desk-*.js back where its <script src> stood, leaving other src tags alone', () => {
     const inlined = deskHtmlInlined();
@@ -52,7 +52,7 @@ describe('deskHtml / deskSource', () => {
 describe('fnBody', () => {
   it('finds a function that is still inline and one that already lives in a module', () => {
     expect(fnBody('showResourcePanel').startsWith('function showResourcePanel(')).toBe(true);
-    expect(fnBody('openProgress')).toBe('function openProgress() { ProgressApp.open(); }');
+    expect(fnBody('openGame')).toContain('studyBreak.open()');
   });
   it('skips braces in the parameter list and accepts async functions', () => {
     const src = 'async function a(x = {}) { return 1; }\nfunction b() {}';

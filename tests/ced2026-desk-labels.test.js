@@ -29,7 +29,7 @@ function fnBody(name) {
 
 function boot(names, values = {}) {
   const ids = ['donow-card', 'donow-msg', 'donow-grades', 'bf-header', 'bf-modepick',
-    'bf-result', 'bf-overlay', 'my-receipts-body', 'my-gradebook-body', 'my-gradebook-qtabs',
+    'bf-result', 'bf-overlay', 'gb-body', 'gb-tabs',
     'day-grade-overlay', 'day-grade-header', 'day-grade-body'];
   const dom = new JSDOM(ids.map((id) => '<div id="' + id + '"></div>').join(''), {
     runScripts: 'outside-only', url: 'https://school.test/desk.html',
@@ -88,30 +88,6 @@ describe('CED labels preserve Do Now and coach identities', () => {
       expect(label.mapped, key).toBe(true);
       expect(label.text, key).not.toMatch(/\b[6-9]\.\d+\b/);
     }
-  });
-
-  it('explains locked lessons with CED names without changing either gate key', () => {
-    const showDialog = vi.fn();
-    const win = boot(['_resourcePanelEsc', '_showLessonLockedDialog'], { showDialog });
-    win._showLessonLockedDialog('3.2', '3.1', 'Sep 10');
-    const message = showDialog.mock.calls[0][1];
-    expect(message).toContain('1.10 ·');
-    expect(message).toContain('Day 2');
-    expect(message).toContain('Day 1');
-    expect(message).not.toMatch(/\b3\.[12]\b/);
-  });
-
-  it('keeps hydrated lesson labels literal in the locked-dialog HTML sink', () => {
-    const win = boot(['_resourcePanelEsc', '_showLessonLockedDialog']);
-    const message = win.document.createElement('div');
-    win.showDialog = (_icon, html) => { message.innerHTML = html; };
-    win.configureCedLabels({ lessons: { '3.1': { ced2026: {
-      status: 'core', newTopic: '1.10', newUnit: 1, newLabel: '<img src=x onerror=alert(1)>'
-    } } } });
-    win._showLessonLockedDialog('3.2', '3.1', 'Sep 10');
-    expect(message.querySelector('img')).toBeNull();
-    expect(message.textContent).toContain('<img src=x onerror=alert(1)>');
-    expect(message.textContent).toContain('Day 1');
   });
 
   it.each(['3.1', '4.1-2'])('renders the actual live manifest task %s while retaining its OLD lesson key', async (oldKey) => {
@@ -205,8 +181,7 @@ describe('CED receipt and grade displays preserve recorded evidence', () => {
     const lookup = vi.fn(() => ({ urls: { worksheet: 'u8_lesson4_live.html' } }));
     const qr = vi.fn(), verify = vi.fn(), open = vi.fn();
     const win = boot(['_receiptPayload', '_receiptVerifyUrl', '_receiptViewUrl', '_walletReceiptRow'], {
-      getRegistryEntry: lookup, _renderReceiptQr: qr, _walletVerifyAndCheck: verify,
-      _reviewByItem: {}, open,
+      getRegistryEntry: lookup, _renderReceiptQr: qr, _walletVerifyAndCheck: verify, open,
     });
     const row = win._walletReceiptRow(receipt);
     expect(row.textContent).toContain('3.14 ·');
@@ -248,8 +223,9 @@ describe('CED receipt and grade displays preserve recorded evidence', () => {
     const win = boot(['_myGradebookCatOrder', '_gradeBand', '_myGradebookColourKey', 'renderMyGradebook'], {
       _activeGradebook: gradebook, _lessonDateMap: () => ({}),
     });
-    win.renderMyGradebook('Q1');
-    const text = win.document.getElementById('my-gradebook-body').textContent;
+    // Containers passed in, as My Ledger's "Score breakdown" does.
+    win.renderMyGradebook('Q1', win.document.getElementById('gb-body'), win.document.getElementById('gb-tabs'));
+    const text = win.document.getElementById('gb-body').textContent;
     expect(text).toContain('1.10');
     expect(text).not.toMatch(/\b3\.1\b|\b8\.4\b/);
     expect(text).not.toContain('3.14');

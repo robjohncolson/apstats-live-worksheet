@@ -35,8 +35,6 @@ const CASES = [
   { overlay: 'namefinder-overlay', open: (w, d) => { w._nfEnsureOverlay(); d.getElementById('namefinder-overlay').style.display = 'flex'; }, title: '' },
   { overlay: 'day-grade-overlay', open: (w) => w.openDayGrade('Oct 5'), title: 'Day grade — Oct 5' },
   { overlay: 'grade-help-overlay', open: (w) => w.openGradeHelp(), title: 'How your grade works' },
-  { overlay: 'my-gradebook-overlay', open: (w) => w.openMyGradebook(), title: 'My Gradebook' },
-  { overlay: 'my-receipts-overlay', open: (w) => w.openMyReceipts(), title: 'My Receipts' },
   { overlay: 'calc-progress-overlay', open: (w) => w._openCalcProgress(), title: 'Calculator Skills' },
   { overlay: 'bf-overlay', open: (w, d) => { d.getElementById('bf-header').textContent = 'Flashcards'; d.getElementById('bf-overlay').style.display = 'block'; }, title: 'Flashcards' },
   { overlay: 'student-dm-modal', open: (w) => w._openStudentDmModal(), title: 'Message your teacher' },
@@ -48,21 +46,13 @@ const CASES = [
   { overlay: 'app-formulas-overlay', open: (w) => w.openApp('formulas'), title: 'Formula Lab' },
   { overlay: 'app-dok-overlay', open: (w) => w.openApp('dok'), title: 'DOK Ladders' },
   { overlay: 'app-teachertools-overlay', open: (w) => w.openTeacherTools(), title: 'Teacher workspace' },
-  // Legacy window: openNightlyReview() now opens the workspace; the overlay is still in the Desk, so
-  // it is opened the way the Desk shows it.
-  { overlay: 'app-nightlyreview-overlay', open: (w, d) => { d.getElementById('app-nightlyreview-overlay').style.display = 'block'; }, title: '🌙 Nightly Review' },
   { overlay: 'app-gradecheckin-overlay', open: (w) => w.openGradeCheckin(), title: '📈 Grade Check-in' },
-  { overlay: 'app-progress-overlay', open: (w, d) => { d.getElementById('app-progress-overlay').style.display = 'block'; }, title: 'My Progress' },
-  { overlay: 'override-gate-modal', open: (w, d) => { d.getElementById('override-gate-modal').style.display = 'block'; }, title: 'Override lesson gate' },
   { overlay: 'verify-qr-overlay', open: (w) => w.openVerifyQR(), title: String.fromCodePoint(128269) + ' Verify a Record' },
-  { overlay: 'reconcile-qr-overlay', open: (w) => w.openReconcileQR(), title: String.fromCodePoint(128241) + ' Guest Reconcile' },
-  { overlay: 'guest-pass-overlay', open: (w) => w.openGuestPass(), title: String.fromCodePoint(129701) + ' My Guest Pass' },
   { overlay: 'game-overlay', open: (w) => w.openGame(), title: 'Study Break — Square Mode' },
 ];
 
 // Other openers that land in a registry overlay.
 const EXTRA_OPENERS = [
-  { name: 'lesson locked dialog', overlay: 'dialog-overlay', open: (w) => w._showLessonLockedDialog('2.4', '2.3', 'Oct 5') },
   { name: 'baseline info dialog', overlay: 'dialog-overlay', open: (w) => w._openBaselineInfo() },
   { name: 'teacher inbox', overlay: 'app-teachertools-overlay', open: (w) => w.openTeacherInbox() },
   { name: 'review (sign-in / nothing-due alert)', overlay: 'dialog-overlay', open: (w) => w.openReview() },
@@ -118,13 +108,12 @@ function registryEntry(win, overlay) {
 function closeCase(win, c) {
   const entry = { 'dialog-overlay': ['closeDialog'], 'donow-bump-overlay': ['closeDoNowBump'], 'signin-overlay': ['closeSignInModal'],
     'signup-overlay': ['_switchToSignIn', 'closeSignInModal'], 'pwchange-overlay': ['closePwChangeModal'], 'namefinder-overlay': ['closeNameFinder'],
-    'day-grade-overlay': ['closeDayGrade'], 'grade-help-overlay': ['closeGradeHelp'], 'my-gradebook-overlay': ['closeMyGradebook'],
-    'my-receipts-overlay': ['closeMyReceipts'], 'bf-overlay': ['closeBlooketFlashcards'], 'calc-progress-overlay': ['closeCalcProgress'], 'student-dm-modal': ['_closeStudentDmModal'],
+    'day-grade-overlay': ['closeDayGrade'], 'grade-help-overlay': ['closeGradeHelp'],
+    'bf-overlay': ['closeBlooketFlashcards'], 'calc-progress-overlay': ['closeCalcProgress'], 'student-dm-modal': ['_closeStudentDmModal'],
     'teacher-nudge-modal': ['_closeTeacherNudgeModal'], 'app-bulletin-overlay': ['destroyBulletin'], 'game-overlay': ['closeGame'],
-    'app-teachertools-overlay': ['destroyTeacherTools'], 'app-nightlyreview-overlay': ['closeNightlyReview'], 'app-gradecheckin-overlay': ['closeGradeCheckin'],
-    'app-progress-overlay': ['destroyProgress'], 'override-gate-modal': ['_hideOverrideGateModal'] }[c.overlay];
+    'app-teachertools-overlay': ['destroyTeacherTools'], 'app-gradecheckin-overlay': ['closeGradeCheckin'] }[c.overlay];
   if (entry) { entry.forEach((name) => win[name]()); return; }
-  if (/-qr-overlay$|guest-pass-overlay/.test(c.overlay)) { win._escHide(c.overlay); return; }
+  if (/-qr-overlay$/.test(c.overlay)) { win._escHide(c.overlay); return; }
   win.destroyApp(c.overlay.replace(/^app-/, '').replace(/-overlay$/, ''));
 }
 
@@ -373,7 +362,7 @@ describe('Phase 3 -- review fixes', { timeout: budget(180_000) }, () => {
     const harness = await boot(true);
     try {
       const { window: win, document: doc } = harness;
-      for (const [open, id] of [['openVerifyQR', 'verify-qr'], ['openReconcileQR', 'reconcile-qr'], ['openGuestPass', 'guest-pass']]) {
+      for (const [open, id] of [['openVerifyQR', 'verify-qr']]) {
         win[open]();
         const card = doc.getElementById(id + '-card');
         await harness.waitFor(() => card.querySelector(':scope > [data-pico-close]'));
@@ -489,7 +478,7 @@ describe('Phase 3 -- flag off', { timeout: budget(180_000) }, () => {
     });
     const doc = dom.window.document;
     const ids = CASES.map((c) => c.overlay).filter((id) => doc.getElementById(id));
-    expect(ids.length).toBeGreaterThan(22);
+    expect(ids.length).toBeGreaterThanOrEqual(20);
     const before = ids.map((id) => doc.getElementById(id).outerHTML);
     dom.window.eval(PICO);
     doc.dispatchEvent(new dom.window.Event('DOMContentLoaded'));

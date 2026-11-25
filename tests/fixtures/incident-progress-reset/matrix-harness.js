@@ -134,7 +134,8 @@ export function composeLatchHarness(opts) {
     extractFn(DESK, '_serverCompleteFor'),
     extractFn(DESK, '_serverEvidencePresent'),
     extractFn(DESK, '_isLessonComplete'),
-    extractFn(DESK, '_isLessonUnlocked'),
+    // Lesson-lock machinery was removed from the Desk (2026-11-25); every lesson is open.
+    "function _isLessonUnlocked(){ return true; }",
     "window.__isLessonComplete = _isLessonComplete;",
     "window.__isLessonUnlocked = _isLessonUnlocked;",
     "window.__hydrateMarksFromDonow = _hydrateMarksFromDonow;",

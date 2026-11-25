@@ -224,19 +224,6 @@ describe('Pico floor = the real board', { timeout: budget(120_000) }, () => {
     }
   });
 
-  it('a teacher activity expands the floor until it ends', async () => {
-    const harness = await boot(true);
-    try {
-      await waitMode(harness, 'band');
-      deliver(harness, { type: 'classroom_activity_start', activity: { type: 'bridge-mean', startedAt: Date.now(), durationMs: 60000, state: {} } });
-      await waitMode(harness, 'room');
-      deliver(harness, { type: 'classroom_activity_cancel' });
-      await waitMode(harness, 'band');
-    } finally {
-      harness.teardown();
-    }
-  });
-
   it('the result screen keeps its chart, stepper and close button inside the board (chart capped)', async () => {
     const harness = await boot(true);
     try {

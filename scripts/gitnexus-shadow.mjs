@@ -29,7 +29,6 @@ export const SHADOWED_APPS = [
   'teacher-roster-console.html',
   'study_guide_diagnostic.html',
   'start-here.html',
-  'tools/level-editor.html',
 ];
 
 // Returns the shadow text: same number of lines as `html`; only inline-script

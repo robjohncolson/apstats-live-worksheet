@@ -1,7 +1,9 @@
-// desk-my-gradebook.test.js — jsdom smoke test for the Phase 3 "My Gradebook"
-// modal in the Desk (ap_stats_roadmap_square_mode.html). Loads the page, sets
-// _gradeGradebookCache (mirroring /grade's data.gradebook), calls renderMyGradebook,
-// and asserts the modal renders both totals + the component cells.
+// desk-my-gradebook.test.js — jsdom smoke test for the "My Gradebook" grid in the
+// Desk (ap_stats_roadmap_square_mode.html + js/desk-gradebook-grid.js). Loads the
+// page, sets _activeGradebook (mirroring /grade's data.gradebook), and calls
+// renderMyGradebook with its own containers the way My Ledger's "Score breakdown"
+// does (the old pop-up was removed 2026-11-24); asserts the grid renders both
+// totals + the component cells.
 //
 // The Desk is a large single file with many load-time deps; if it can't host in
 // jsdom this test is skipped (syntax-check + live test cover it instead).
@@ -61,13 +63,21 @@ beforeAll(async () => {
   }
 });
 
-describe('Desk My Gradebook modal', () => {
+// Draw the grid the way My Ledger's "Score breakdown" does: into containers the
+// caller passes. Returns them so a test can read the body and the quarter tabs.
+function render(qk) {
+  const body = doc.createElement('div');
+  const tabs = doc.createElement('div');
+  win.renderMyGradebook(qk, body, tabs);
+  return { body, tabs };
+}
+
+describe('Desk My Gradebook grid (My Ledger score breakdown)', () => {
   it('renders 105 while keeping the visual percentage bar at 100%', () => {
     expect(loaded).toBe(true);
     win._activeGradebook = gradebook();
     win._activeGradebook.quarters.Q1.cells['FA:1.1'] = 105;
-    win.renderMyGradebook('Q1');
-    const body = doc.getElementById('my-gradebook-body');
+    const { body } = render('Q1');
     expect(body.textContent).toContain('105');
     const bars = [...body.querySelectorAll('[style]')].filter(el => el.style.position === 'absolute' && el.style.width);
     expect(bars.length).toBeGreaterThan(0);
@@ -79,14 +89,11 @@ describe('Desk My Gradebook modal', () => {
       expect(true).toBe(true);
       return;
     }
-    // renderMyGradebook renders the _activeGradebook (decoupled from the Do Now
-    // cache so the teacher Class Gradebook view can't clobber it). openMyGradebook
-    // copies the student's own cache into it; here we set it directly.
+    // renderMyGradebook renders the _activeGradebook. My Ledger copies the
+    // student's own cache into it before each render; here we set it directly.
     win._gradeGradebookCache = gradebook();
     win._activeGradebook = gradebook();
-    win.renderMyGradebook('Q1');
-
-    const body = doc.getElementById('my-gradebook-body');
+    const { body } = render('Q1');
     const text = body.textContent;
     // Both totals + the why.
     // EFFORT_VISIBILITY_V2_SPEC §4: the two totals are labelled to match the colour key.
@@ -102,87 +109,20 @@ describe('Desk My Gradebook modal', () => {
     expect(text).toContain('Progress Check (50%)');
   });
 
-  it('openMyGradebook shows the overlay', () => {
+  it('draws only into the containers it is given; a quarter tab re-renders into the same ones', () => {
     if (!loaded) { expect(true).toBe(true); return; }
+    // My Ledger's way: the student's own cache, opened on _firstGradebookQuarter.
     win._gradeGradebookCache = gradebook();
-    win.openMyGradebook();
-    expect(doc.getElementById('my-gradebook-overlay').style.display).toBe('block');
-    win.closeMyGradebook();
-    expect(doc.getElementById('my-gradebook-overlay').style.display).toBe('none');
-  });
-
-  it('openClassGradebook fetches /class/grades with the teacher token and populates a sorted picker', async () => {
-    if (!loaded) { expect(true).toBe(true); return; }
-    let fetchUrl = null, fetchOpts = null;
-    win.ROSTER_SERVICE_URL = 'https://svc.test';
-    win.rosterClient = { token: () => 'tok123', current: () => ({ section: 'PeriodX' }) };
-    win.fetch = (url, opts) => { fetchUrl = url; fetchOpts = opts; return Promise.resolve({ json: async () => ({ ok: true, students: [
-      { realName: 'Zed Zulu', username: 'zed_owl', gradebook: gradebook() },
-      { realName: 'Ada Lovelace', username: 'ada_fox', gradebook: gradebook() },
-    ] }) }); };
-
-    await win.openClassGradebook();
-
-    expect(fetchUrl).toContain('/class/grades');
-    expect(fetchUrl).not.toContain('?section=');   // fetches ALL sections; the picker enumerates them
-    expect(fetchOpts.headers.Authorization).toBe('Bearer tok123');
-    const sel = doc.getElementById('my-gradebook-student');
-    expect(sel.options.length).toBe(2);
-    expect(sel.options[0].textContent).toBe('Ada Lovelace');   // sorted by real name
-    expect(doc.getElementById('my-gradebook-title').textContent).toContain('Ada Lovelace');
-    expect(doc.getElementById('my-gradebook-body').textContent).toContain('91.2');
-    expect(doc.getElementById('my-gradebook-student-row').style.display).toBe('block');
-    // Single (here: no) section → the section picker stays hidden.
-    expect(doc.getElementById('my-gradebook-section-row').style.display).toBe('none');
-  });
-
-  it('shows a section picker when students span >1 section, and filters the student list by it', async () => {
-    if (!loaded) { expect(true).toBe(true); return; }
-    win.ROSTER_SERVICE_URL = 'https://svc.test';
-    win.rosterClient = { token: () => 't', current: () => ({ section: 'PeriodB' }) };
-    win.fetch = () => Promise.resolve({ json: async () => ({ ok: true, students: [
-      { realName: 'Ana', username: 'a', section: 'PeriodB', gradebook: gradebook() },
-      { realName: 'Zed', username: 'z', section: 'PeriodE', gradebook: gradebook() },
-    ] }) });
-
-    await win.openClassGradebook();
-
-    expect(doc.getElementById('my-gradebook-section-row').style.display).toBe('block');
-    const secSel = doc.getElementById('my-gradebook-section');
-    expect(secSel.options.length).toBe(3);              // All + PeriodB + PeriodE
-    expect(secSel.value).toBe('PeriodB');               // defaults to the teacher's own section
-    expect(doc.getElementById('my-gradebook-student').options.length).toBe(1); // only PeriodB students
-    expect(doc.getElementById('my-gradebook-student').options[0].textContent).toBe('Ana');
-
-    // Switch to "All sections" → both students.
-    secSel.value = '__all__';
-    secSel.onchange();
-    expect(doc.getElementById('my-gradebook-student').options.length).toBe(2);
-  });
-
-  it('openClassGradebook with no token returns early — no fetch, modal stays closed', async () => {
-    if (!loaded) { expect(true).toBe(true); return; }
-    let called = 0;
-    win.ROSTER_SERVICE_URL = 'https://svc.test';
-    win.rosterClient = { token: () => null, current: () => ({}) };
-    win.fetch = () => { called++; return Promise.resolve({ json: async () => ({}) }); };
-    doc.getElementById('my-gradebook-overlay').style.display = 'none';
-
-    await win.openClassGradebook();
-
-    expect(called).toBe(0);
-    expect(doc.getElementById('my-gradebook-overlay').style.display).toBe('none');
-  });
-
-  it('openClassGradebook shows a distinct load-failure message when the fetch fails', async () => {
-    if (!loaded) { expect(true).toBe(true); return; }
-    win.ROSTER_SERVICE_URL = 'https://svc.test';
-    win.rosterClient = { token: () => 'tok', current: () => ({ section: 'PeriodX' }) };
-    win.fetch = () => Promise.reject(new Error('offline'));
-
-    await win.openClassGradebook();
-
-    expect(doc.getElementById('my-gradebook-body').textContent).toMatch(/could not load/i);
+    win._activeGradebook = win._gradeGradebookCache;
+    const qk = win._firstGradebookQuarter(win._activeGradebook);
+    expect(qk).toBe('Q1');                          // the only quarter with data
+    const { body, tabs } = render(qk);
+    expect(body.textContent).toContain('91.2');
+    expect([...tabs.children].map((b) => b.dataset.quarter)).toEqual(['Q1', 'Q2', 'Q3', 'Q4']);
+    tabs.children[1].onclick();
+    expect(body.textContent).toContain('No gradebook for Quarter 2 yet');
+    // Without containers there is nothing to draw into (no pop-up to fall back to).
+    expect(() => win.renderMyGradebook('Q1')).not.toThrow();
   });
 
   // ── threshold coloring + date-gating ──────────────────────────────────────
@@ -214,8 +154,7 @@ describe('Desk My Gradebook modal', () => {
         { key: 'FA:1.5', category: 'Lesson', title: '1.5 Follow-Along', unit: 1, topicKeys: ['1.5'] } ],
       { 'FA:1.1': 84, 'FA:1.5': null }
     );
-    win.renderMyGradebook('Q1');
-    var text = doc.getElementById('my-gradebook-body').textContent;
+    var text = render('Q1').body.textContent;
     expect(text).toContain('1.1 · What Can We Learn from Data?');       // started → shown
     expect(text).not.toContain('1.5 · Graphical Representations');      // future + not started → hidden
   });
@@ -228,8 +167,7 @@ describe('Desk My Gradebook modal', () => {
         { key: 'FA:1.5', category: 'Lesson', title: '1.5 Follow-Along', unit: 1, topicKeys: ['1.5'] } ],
       { 'FA:1.1': 84, 'FA:1.5': null }
     );
-    win.renderMyGradebook('Q1');
-    var text = doc.getElementById('my-gradebook-body').textContent;
+    var text = render('Q1').body.textContent;
     expect(text).toContain('1.5 · Graphical Representations');       // due now → shown
     expect(text).toContain('not done yet');
     expect(text).toMatch(/due, not done/i);           // the "what you owe" badge
@@ -243,8 +181,7 @@ describe('Desk My Gradebook modal', () => {
         { key: 'FA:1.2', category: 'Lesson', title: '1.2 Follow-Along', unit: 1, topicKeys: ['1.2'], due: true } ],
       { 'FA:1.1': null, 'FA:1.2': null }
     );
-    win.renderMyGradebook('Q1');
-    const text = doc.getElementById('my-gradebook-body').textContent;
+    const text = render('Q1').body.textContent;
     expect(text).not.toContain('1.1 · What Can We Learn from Data?');  // server due:false wins over the client calendar → hidden
     expect(text).toContain('1.2 · Variables');                       // server due:true → shown
   });
@@ -259,8 +196,7 @@ describe('Desk My Gradebook modal', () => {
       { 'FA:1.1': 84, 'FA:1.2': 100, 'FA:1.3': null },
       { schoologyTotal: 84, v3Total: 86.4 }
     );
-    win.renderMyGradebook('Q1');
-    const body = doc.getElementById('my-gradebook-body');
+    const { body } = render('Q1');
     const inSchoology = body.querySelectorAll('.mgb-cell-schoology');
     const ahead = body.querySelectorAll('.mgb-cell-ahead');
     expect(inSchoology.length).toBe(1);
@@ -289,14 +225,12 @@ describe('Desk My Gradebook modal', () => {
     const cells = { 'FA:1.1': 84, 'FA:1.2': 100 };
     // Projected Lesson = (84 + 100) / 2 = 92.
     win._activeGradebook = gbWith(cols, cells, { schoologyTotal: 84, v3Total: 86.4, schoologyProjectedTotal: 92, aheadCells: 1 });
-    win.renderMyGradebook('Q1');
-    expect(doc.getElementById('my-gradebook-body').querySelector('.mgb-key-ahead').textContent).toBe(
+    expect(render('Q1').body.querySelector('.mgb-key-ahead').textContent).toBe(
       'Recorded ahead of the calendar — counted on the Desk, reaches Schoology when the class gets there. Desk quarter grade: 86%.'
       + ' → Schoology will read about 92% once these come due.');
     // aheadCells 0 (or an older payload): no projection words.
     win._activeGradebook = gbWith(cols, cells, { schoologyTotal: 84, v3Total: 86.4, schoologyProjectedTotal: 92, aheadCells: 0 });
-    win.renderMyGradebook('Q1');
-    expect(doc.getElementById('my-gradebook-body').querySelector('.mgb-key-ahead').textContent).not.toContain('will read about');
+    expect(render('Q1').body.querySelector('.mgb-key-ahead').textContent).not.toContain('will read about');
   });
 
   it('colour key: columns without a `due` field (an older cache) show no colours and no key', () => {
@@ -306,8 +240,7 @@ describe('Desk My Gradebook modal', () => {
       [ { key: 'FA:1.1', category: 'Lesson', title: '1.1 Follow-Along', unit: 1, topicKeys: ['1.1'] } ],
       { 'FA:1.1': 84 }
     );
-    win.renderMyGradebook('Q1');
-    const body = doc.getElementById('my-gradebook-body');
+    const { body } = render('Q1');
     expect(body.querySelector('.mgb-cell-schoology, .mgb-cell-ahead')).toBeNull();
     expect(body.querySelector('.mgb-key')).toBeNull();
   });
@@ -320,22 +253,6 @@ describe('Desk My Gradebook modal', () => {
       { 'FA:1.1': 30 },
       { categoryAverages: { Lesson: 30 }, v3Total: 30, schoologyTotal: 35 }
     );
-    win.renderMyGradebook('Q1');
-    expect(doc.getElementById('my-gradebook-body').textContent).toMatch(/below the 40% floor/i);
-  });
-
-  it('Class Gradebook: _selectClassStudent shows the picked student WITHOUT clobbering the Do Now cache', () => {
-    if (!loaded) { expect(true).toBe(true); return; }
-    const ownCache = { quarters: {} };           // the teacher's own (empty) cache
-    win._gradeGradebookCache = ownCache;
-    win._classGradebookStudents = [{ realName: 'Ada Lovelace', username: 'ada_fox', gradebook: gradebook() }];
-
-    win._selectClassStudent(0);
-
-    const body = doc.getElementById('my-gradebook-body');
-    expect(body.textContent).toContain('91.2');  // the STUDENT's v3 total renders
-    expect(doc.getElementById('my-gradebook-title').textContent).toContain('Ada Lovelace');
-    // The Do Now cache (which gates the student's own grade chip) is untouched.
-    expect(win._gradeGradebookCache).toBe(ownCache);
+    expect(render('Q1').body.textContent).toMatch(/below the 40% floor/i);
   });
 });

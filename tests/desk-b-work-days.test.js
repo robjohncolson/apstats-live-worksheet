@@ -5,6 +5,7 @@ import {createContext,runInContext} from 'node:vm';
 import {parse} from 'acorn';
 import {JSDOM} from 'jsdom';
 import { deskSource, deskHtml } from './helpers/desk-source.js';
+import { legacyScheduleDefs, LEGACY_SCHEDULE_KEYS } from '../scripts/schedule-archive/legacy-schedule-defs.mjs';
 const html=deskHtml();
 // The Desk's JS incl. its js/desk-*.js modules, in load order (tests/helpers/desk-source.js).
 const source=deskSource();
@@ -28,6 +29,9 @@ function generated(){
  return s;
 }
 const actual=generated(),S=actual.S;
+// The SUMMER26 / SY25-26 calendars left the Desk on 2026-11-24 (teacher: developer reference only).
+// They are read from scripts/schedule-archive/, built with the Desk's own d() and day sentinels.
+const legacyDefs=legacyScheduleDefs({d:actual.d,R:actual.R,OFF:actual.OFF,EX:actual.EX,PO:actual.PO,NC:actual.NC});
 const iso=r=>r[0]+'-'+String(r[1]+1).padStart(2,'0')+'-'+String(r[2]).padStart(2,'0');
 // Sim output (never typed from memory). 2026-09-18: B Break Day (AP Classroom down) shifted B one meeting later,
 // so the first Work Day moved Oct 13 -> Oct 16 and the Oct 19 one disappeared (10 Work Days now).
@@ -79,9 +83,10 @@ describe('B Work Day generator',()=>{
   const def={...actual.def,range:{start:[2026,8,14],end:[2026,8,18]},daysOff:[],pacing};
   expect(actual.generateSchedule(def).filter(r=>r[3]?.kind==='work')).toHaveLength(0);
  });
- it('preserves legacy definitions and their generated calendars',()=>{
-  for(const key of ['SUMMER26','SY25-26']){
-   const def=actual.SCHEDULE_DEFS[key];expect(def.periods.B.workDayFrom).toBeUndefined();
+ it('the archived legacy definitions and their calendars have no Work Days; the Desk ships only SY26-27',()=>{
+  expect(Object.keys(actual.SCHEDULE_DEFS)).toEqual(['SY26-27']);
+  for(const key of LEGACY_SCHEDULE_KEYS){
+   const def=legacyDefs[key];expect(def.periods.B.workDayFrom).toBeUndefined();
    if(def._legacyS){expect(def._legacyS.some(r=>r[3]?.kind==='work')).toBe(false);continue;}
    const legacy=actual.generateSchedule(def);
    expect(legacy.some(r=>r[3]?.kind==='work')).toBe(false);
@@ -124,7 +129,7 @@ describe('real Work Day Desk consumers',()=>{
    const copy='Work Day — catch up on follow-alongs, flashcards, quiz retakes, and exit tickets (bonus)';
    expect(s.cellAria(work,'Oct 13')).toContain(copy);s.sTip({},new Date(2026,9,13),work,'Oct 13');expect(s.tip.textContent).toContain(copy);
    expect(html).toMatch(/\.cell-work\s*\{[^}]*dotted/);
-   for(const key of ['SY26-27','SUMMER26','SY25-26']){s.updateLegend(actual.SCHEDULE_DEFS[key]);expect(dom.window.document.getElementById('legend-bar').textContent.includes('Work Day')).toBe(key==='SY26-27');}
+   for(const key of ['SY26-27',...LEGACY_SCHEDULE_KEYS]){s.updateLegend(actual.SCHEDULE_DEFS[key]||legacyDefs[key]);expect(dom.window.document.getElementById('legend-bar').textContent.includes('Work Day')).toBe(key==='SY26-27');}
   }finally{dom.window.close();}
  });
  it('skips the gate, never greys even with stray local/server marks, and excludes pace/progress',()=>{

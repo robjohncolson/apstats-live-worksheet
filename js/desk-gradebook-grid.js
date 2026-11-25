@@ -1,10 +1,7 @@
 var _myGradebookQuarter = null;
-// The gradebook the modal is CURRENTLY showing. For a student it's their own
-// (= _gradeGradebookCache); for the teacher Class Gradebook it's the picked
-// student's. Decoupled from _gradeGradebookCache so the teacher view never
-// clobbers the Do Now cache (which gates the student's own grade chip).
+// The gradebook renderMyGradebook draws. My Ledger's "Score breakdown" sets it to
+// the student's own (= _gradeGradebookCache) right before each render.
 var _activeGradebook = null;
-var _myGradebookKeyHandler = null;
 
 function _myGradebookCatOrder() {
     // Local (not a top-level const) so the render never depends on top-level eval
@@ -14,29 +11,8 @@ function _myGradebookCatOrder() {
     return ['Lesson', 'Quizzes', 'Posters', 'Blooket', 'Progress Check'];
 }
 
-function _attachMyGradebookKeyHandler() {
-    _detachMyGradebookKeyHandler();
-    _myGradebookKeyHandler = function (e) {
-        if (e.ctrlKey || e.metaKey || e.altKey) return;
-        if (e.key === 'Escape') { e.preventDefault(); closeMyGradebook(); }
-    };
-    document.addEventListener('keydown', _myGradebookKeyHandler);
-}
-function _detachMyGradebookKeyHandler() {
-    if (_myGradebookKeyHandler) {
-        document.removeEventListener('keydown', _myGradebookKeyHandler);
-        _myGradebookKeyHandler = null;
-    }
-}
-
-function closeMyGradebook() {
-    _detachMyGradebookKeyHandler();
-    var ov = document.getElementById('my-gradebook-overlay');
-    if (ov) ov.style.display = 'none';
-}
-
 // Pick the quarter to show first: current quarter if it has data, else the first
-// quarter with data, else Q1. Shared by the student + teacher gradebook views.
+// quarter with data, else Q1. My Ledger's "Score breakdown" opens on it.
 // QUARTER_LINE_BY_DUE_DATE_SPEC §3.5: while a quarter is closing (its 0s still fixable) it opens
 // first; on the gap days around a close the next quarter is the current one.
 function _firstGradebookQuarter(gb) {
@@ -88,132 +64,6 @@ function _gradebookHasNextQuarter(qk) {
 // never owed here. A column without the flag (or stamped with this tab's own quarter) is ordinary.
 function _gradebookElsewhere(col, qk) {
     return Boolean(col && col.schoologyQuarter && col.schoologyQuarter !== qk);
-}
-
-function openMyGradebook() {
-    var ov = document.getElementById('my-gradebook-overlay');
-    if (!ov) return;
-    // Student's own view — hide the teacher student-picker, reset the title.
-    var sr = document.getElementById('my-gradebook-student-row'); if (sr) sr.style.display = 'none';
-    var title = document.getElementById('my-gradebook-title'); if (title) title.textContent = 'My Gradebook';
-    _activeGradebook = _gradeGradebookCache;
-    renderMyGradebook(_firstGradebookQuarter(_activeGradebook));
-    ov.style.display = 'block';
-    _attachMyGradebookKeyHandler();
-    try { if (typeof MacSFX !== 'undefined' && MacSFX.play) MacSFX.play('click', 0.3); } catch (_) {}
-}
-
-// ── Teacher: Class Gradebook ──────────────────────────────────────────────────
-// Reuses the My Gradebook modal: pick a section (only shown when >1 exists) + a
-// student → render that student's gradebook (the EXACT view the student sees).
-// Data = /class/grades (teacher-gated; the teacher's own session token authorizes
-// it). Fetches ALL sections so the section picker can enumerate them; today
-// (everyone in PeriodX) that's one section and the picker stays hidden.
-var _classGradebookAll = [];        // every student across all sections
-var _classGradebookStudents = [];   // the currently-shown (section-filtered) subset
-
-async function openClassGradebook() {
-    var ov = document.getElementById('my-gradebook-overlay');
-    if (!ov) return;
-    if (!window.rosterClient || typeof window.rosterClient.token !== 'function') return;
-    var token = window.rosterClient.token();
-    var base = window.ROSTER_SERVICE_URL;
-    if (!token || !base) return;
-    var who = (window.rosterClient.current && window.rosterClient.current()) || {};
-
-    var title = document.getElementById('my-gradebook-title'); if (title) title.textContent = 'Class Gradebook';
-    var body = document.getElementById('my-gradebook-body');
-    if (body) { while (body.firstChild) body.removeChild(body.firstChild); var ld = document.createElement('div'); ld.textContent = 'Loading class…'; ld.style.cssText = 'color:#888;padding:6px 0'; body.appendChild(ld); }
-    ov.style.display = 'block';
-    _attachMyGradebookKeyHandler();
-
-    var students = [];
-    var loadFailed = false;
-    try {
-        var res = await fetch(base + '/class/grades', { headers: { Authorization: 'Bearer ' + token } });
-        var data = await res.json();
-        if (data && data.ok && Array.isArray(data.students)) students = data.students;
-        else loadFailed = true; // ok:false / 401 / malformed payload
-    } catch (_) { loadFailed = true; }
-    _classGradebookAll = students;
-
-    if (!students.length) {
-        var secRow0 = document.getElementById('my-gradebook-section-row'); if (secRow0) secRow0.style.display = 'none';
-        var stuRow0 = document.getElementById('my-gradebook-student-row'); if (stuRow0) stuRow0.style.display = 'none';
-        if (body) {
-            while (body.firstChild) body.removeChild(body.firstChild);
-            var em = document.createElement('div');
-            em.textContent = loadFailed
-                ? 'Could not load the class — sign in as a teacher again, or check your connection.'
-                : 'No students found for this class yet.';
-            em.style.cssText = 'color:#888;font-style:italic;padding:6px 0';
-            body.appendChild(em);
-        }
-        return;
-    }
-
-    // Distinct sections → a section picker, shown only when more than one exists.
-    var sections = [];
-    students.forEach(function (s) { var sec = s.section || ''; if (sec && sections.indexOf(sec) === -1) sections.push(sec); });
-    sections.sort();
-    var secRow = document.getElementById('my-gradebook-section-row');
-    var secSel = document.getElementById('my-gradebook-section');
-    if (secSel) {
-        while (secSel.firstChild) secSel.removeChild(secSel.firstChild);
-        var allOpt = document.createElement('option'); allOpt.value = '__all__'; allOpt.textContent = 'All sections'; secSel.appendChild(allOpt);
-        sections.forEach(function (sec) { var o = document.createElement('option'); o.value = sec; o.textContent = sec; secSel.appendChild(o); });
-        secSel.value = (who.section && sections.indexOf(who.section) !== -1) ? who.section : '__all__';
-        secSel.onchange = function () { _renderClassSectionStudents(secSel.value); };
-    }
-    if (secRow) secRow.style.display = (sections.length > 1) ? 'block' : 'none';
-
-    _renderClassSectionStudents(secSel ? secSel.value : '__all__');
-    try { if (typeof MacSFX !== 'undefined' && MacSFX.play) MacSFX.play('click', 0.3); } catch (_) {}
-}
-
-// Populate the student picker for the chosen section ('__all__' = every section),
-// sorted by real name, and render the first student. Never throws.
-function _renderClassSectionStudents(sectionFilter) {
-    var all = _classGradebookAll || [];
-    var filtered = (sectionFilter && sectionFilter !== '__all__')
-        ? all.filter(function (s) { return (s.section || '') === sectionFilter; })
-        : all.slice();
-    filtered.sort(function (a, b) { return String((a && a.realName) || '').localeCompare(String((b && b.realName) || '')); });
-    _classGradebookStudents = filtered;
-
-    var row = document.getElementById('my-gradebook-student-row');
-    var sel = document.getElementById('my-gradebook-student');
-    if (sel) {
-        while (sel.firstChild) sel.removeChild(sel.firstChild);
-        filtered.forEach(function (s, i) {
-            var o = document.createElement('option');
-            o.value = String(i);
-            o.textContent = (s.realName || s.username || 'Student');
-            sel.appendChild(o);
-        });
-        sel.onchange = function () { _selectClassStudent(Number(sel.value) || 0); };
-    }
-    if (row) row.style.display = filtered.length ? 'block' : 'none';
-
-    if (filtered.length) {
-        _selectClassStudent(0);
-    } else {
-        var body = document.getElementById('my-gradebook-body');
-        if (body) { while (body.firstChild) body.removeChild(body.firstChild); var em = document.createElement('div'); em.textContent = 'No students in this section.'; em.style.cssText = 'color:#888;font-style:italic;padding:6px 0'; body.appendChild(em); }
-    }
-}
-
-// Render the picked student's gradebook into the shared modal. Sets the cache the
-// renderer reads (benign: a teacher account has no own-gradebook to preserve; the
-// next Do Now refresh re-populates it).
-function _selectClassStudent(idx) {
-    var s = _classGradebookStudents[idx];
-    if (!s) return;
-    // Show this student WITHOUT clobbering the Do Now cache (_gradeGradebookCache).
-    _activeGradebook = s.gradebook || null;
-    var title = document.getElementById('my-gradebook-title');
-    if (title) title.textContent = (s.realName || s.username || 'Student') + ' — Gradebook';
-    renderMyGradebook(_firstGradebookQuarter(_activeGradebook));
 }
 
 // ── My Gradebook: date-gating + threshold-coloring helpers ────────────────────
@@ -284,10 +134,10 @@ function _gbDateStr(d) {
 
 function renderMyGradebook(qk, bodyEl, tabsEl) {
     _myGradebookQuarter = qk;
-    // bodyEl/tabsEl default to the modal's elements; My Ledger passes its OWN
-    // containers so the same breakdown renders inline inside the wallet.
-    var body = bodyEl || document.getElementById('my-gradebook-body');
-    var tabs = tabsEl || document.getElementById('my-gradebook-qtabs');
+    // The caller passes the containers to draw into: My Ledger's "Score breakdown"
+    // passes its own, so the breakdown renders inline inside the wallet.
+    var body = bodyEl;
+    var tabs = tabsEl;
     if (!body || !tabs) return;
 
     // Quarter tabs.
@@ -331,9 +181,9 @@ function renderMyGradebook(qk, bodyEl, tabsEl) {
         if (cells[col.key] != null) return true;                 // started → always show
         // Prefer the SERVER-stamped `due` flag (the identical signal the teacher
         // dashboard gates on, computed from lesson-schedule.json) so the student
-        // self-view, the in-Desk Class Gradebook, and teacher-dashboard.html never
-        // disagree on what's "due". Fall back to the Desk's own calendar only when
-        // the server didn't stamp it (older server / no schedule) — a safe degrade.
+        // self-view and teacher-dashboard.html never disagree on what's "due".
+        // Fall back to the Desk's own calendar only when the server didn't stamp
+        // it (older server / no schedule) — a safe degrade.
         if (col.due !== undefined) return col.due !== false;
         if (!hasSchedule) return true;                           // no schedule → show all (safe)
         var d = _colScheduledDate(col, dateMap);

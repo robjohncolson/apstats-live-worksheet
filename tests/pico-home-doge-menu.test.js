@@ -276,9 +276,9 @@ describe('Pico PLAY window (the Doge menu in the Pico style)', { timeout: 120_00
       const dropdown = doc.getElementById('doge-dropdown');
       expect([...dropdown.querySelectorAll('.doge-dd-footer')].map((n) => n.textContent.trim())).toEqual([String.fromCodePoint(127918) + ' Study Break']);
       expect(dropdown.innerHTML).not.toMatch(/openGuestPass|openReconcileQR|Guest Pass|Guest Reconcile/);
-      // The functions stay defined, dormant.
-      expect(typeof win.openGuestPass).toBe('function');
-      expect(typeof win.openReconcileQR).toBe('function');
+      // Guest Pass and Guest Reconcile were removed 2026-11-25.
+      expect(win.openGuestPass).toBeUndefined();
+      expect(win.openReconcileQR).toBeUndefined();
       expect(PICO).not.toMatch(/GUEST RECONCILE|MY GUEST PASS/);
     } finally {
       closeAndTeardown(harness);

@@ -90,7 +90,7 @@ function createDesk({ period = 'B', role = 'student', preview = false, viewAs = 
   const functions = [
     'd', 'groupTopics', 'groupLabel', 'dateFromArr', 'buildOffSet', 'enumWeekdays', 'injectPcPosterEvents', 'generateSchedule',
     'eq', '_resourcePanelEsc', '_deskIsTeacher', 'cedTeacherBridgeAllowed',
-    'getRegistryEntry', 'getAllRegistryEntries', '_orderedPeriodTopics', 'quarterOfDate', '_isLessonUnlocked',
+    'getRegistryEntry', 'getAllRegistryEntries', '_orderedPeriodTopics', 'quarterOfDate',
     'cls', 'htm', 'cellAria', 'rCal', 'rProg', 'sTip', 'lookupTopic'
   ];
   win.eval('var R="review",OFF="off",EX="exam",PO="post",NC="noclass";\n'
@@ -311,8 +311,8 @@ describe('student calendar CED labels', () => {
       expect(visible.get('U2-Poster5').text).toContain('U2 Poster 5/5');
       for (let unit = 3; unit <= 5; unit += 1) expect(visible.has('U' + unit + '-Poster')).toBe(false);
       expect([...visible.values()].some(cell => /Unit [6-9]|U[6-9]\b/.test(cell.text))).toBe(false);
-      const baked = declarationSource('BAKED_REGISTRY', '{', '}');
-      expect(baked).not.toMatch(/"progressChecks"\s*:|"posters"\s*:/);
+      // The Desk carries no built-in registry, so no PC/poster maps can hide in its source.
+      expect(deskSource_SRC).not.toMatch(/"progressChecks"\s*:|"posters"\s*:/);
     } finally { win.close(); }
   });
 

@@ -116,7 +116,8 @@ export function composeOracles(opts) {
     extractFn(DESK, '_serverCompleteFor'),
     extractFn(DESK, '_serverEvidencePresent'),
     extractFn(DESK, '_isLessonComplete'),
-    extractFn(DESK, '_isLessonUnlocked'),
+    // Lesson-lock machinery was removed from the Desk (2026-11-25); every lesson is open.
+    "function _isLessonUnlocked(){ return true; }",
     // Export handles onto window for the test to call.
     "window.__isLessonComplete = _isLessonComplete;",
     "window.__isLessonUnlocked = _isLessonUnlocked;",

@@ -29,7 +29,7 @@ Both reuse the same three new primitives: an **offline write-queue**, an **expor
 
 ### Already works offline — reuse, don't rebuild
 - **Worksheets run fully offline.** Fill-in-the-blank validation is pure-local (`checkAnswer` reads the inline `data-answer`, ~`u*_lesson*_live.html:1258`). Completion tracking, reflection drafts, and the Show-Answers teacher gate are all local.
-- **The Desk loads offline.** `loadRegistry()` (~`ap_stats_roadmap_square_mode.html:19263`) falls back: live → 14-day localStorage cache → `BAKED_REGISTRY`. An offline banner + `online`/`offline` listeners are already wired (`_wireRoadmapNetworkStatus`).
+- **The Desk loads offline.** `loadRegistry()` (~`ap_stats_roadmap_square_mode.html:19263`) falls back: live → 14-day localStorage cache (also seeded before the first paint); there is no built-in copy (removed 2026-11-24), so a first-ever visit with roadmap-data.json unreachable has only the Supabase links. An offline banner + `online`/`offline` listeners are already wired (`_wireRoadmapNetworkStatus`).
 - **Cached sign-in survives offline.** `apstats_roster.v1` persists; `rosterClient.current()` reads it with no network. Guest identity (`apstats_guest_identity`) works fully offline.
 - **Work already partially survives.** Receipts are captured to `localStorage desk_receipts_v1` (cap 500) by `gradebook-client.js::_captureReceipt`.
 - **The write paths are centralized.** The "view-as read-only" module neuters `gradebookClient.record` + `railwayClient.submitAnswer` at one seam (~`:3547`, guarded by `window.__WS_READ_ONLY__` at `:3545`). **This is the exact interception point for the offline queue.**

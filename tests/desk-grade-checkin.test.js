@@ -469,7 +469,7 @@ describe('Grade Check-in — refresh + storage-boundary fixes', () => {
 describe('Grade Check-in — privacy boundary', () => {
   // Isolate the added block so the guard is precise.
   const start = DESK.indexOf('// ── Grade Check-in (DESK_GRADE_CHECKIN_SPEC');
-  const end = DESK.indexOf('// ── Nightly Review (NIGHTLY_REVIEW_SPEC', start);
+  const end = DESK.indexOf('function _reviewCfg()', start);
   const block = DESK.slice(start, end);
 
   it('copies only the generic run command — no absolute path', () => {

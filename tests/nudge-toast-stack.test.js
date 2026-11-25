@@ -173,15 +173,11 @@ function buildSandbox({ warnLines, chimeCalls } = {}) {
     'var MAX_NUDGE_STACK = 4;',
     'var _activeNudges = new Map();',
     fnBody(html_SRC, '_showNudgeToast'),
-    fnBody(html_SRC, '_hideNudgeToast'),
     fnBody(html_SRC, '_hideNudgeToastById'),
     fnBody(html_SRC, '_sendNudgeReplyForId'),
-    fnBody(html_SRC, '_sendNudgeReply'),
     'this.__show = _showNudgeToast;',
-    'this.__hide = _hideNudgeToast;',
     'this.__hideById = _hideNudgeToastById;',
     'this.__sendById = _sendNudgeReplyForId;',
-    'this.__send = _sendNudgeReply;',
     'this.__nudges = _activeNudges;',
     'this.__container = document.getElementById("nudge-toast-stack");',
     'this.__template = document.getElementById("nudge-toast-template");',
@@ -346,36 +342,22 @@ describe('Overflow drops oldest', () => {
 });
 
 // ============================================================================
-// 6. Backward-compatible no-arg helpers
+// 6. The pre-stack no-arg helpers are gone
 // ============================================================================
 
-describe('Backward-compatible no-arg helpers', () => {
-  it('_hideNudgeToast() with no args clears every toast', () => {
+describe('No-arg singleton helpers (removed 2026-11-24: no caller was left)', () => {
+  it('the Desk no longer defines _hideNudgeToast() or _sendNudgeReply()', () => {
+    expect(html_SRC).not.toMatch(/function\s+_hideNudgeToast\s*\(/);
+    expect(html_SRC).not.toMatch(/function\s+_sendNudgeReply\s*\(/);
+  });
+
+  it('each toast is hidden by its own id, leaving the others up', () => {
     const sb = buildSandbox();
     sb.__show({ nudgeId: 'a', text: 't', fromUsername: 'x' });
     sb.__show({ nudgeId: 'b', text: 't', fromUsername: 'x' });
     expect(sb.__nudges.size).toBe(2);
-    sb.__hide();
-    expect(sb.__nudges.size).toBe(0);
-  });
-
-  it('_sendNudgeReply() with no args targets the oldest visible toast', async () => {
-    const sentMessages = [];
-    const sb = buildSandbox();
-    sb._classroomBoardHandle = { sendMessage: (m) => sentMessages.push(m) };
-
-    // Two toasts; oldest is 'first'.
-    sb.__show({ nudgeId: 'first', text: 't', fromUsername: 'teacher' });
-    sb.__show({ nudgeId: 'second', text: 't', fromUsername: 'teacher' });
-
-    // Fill in reply text on the OLDEST toast (first clone).
-    sb.__template._clones[0].textarea.value = 'oldest reply';
-
-    await sb.__send();
-
-    expect(sentMessages.length).toBe(1);
-    expect(sentMessages[0].nudgeId).toBe('first');
-    expect(sentMessages[0].text).toBe('oldest reply');
+    sb.__hideById('a');
+    expect([...sb.__nudges.keys()]).toEqual(['b']);
   });
 });
 

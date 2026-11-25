@@ -522,21 +522,7 @@ function rCal(){
             }(dt, c));
             if(inf&&inf!==OFF&&inf!==NC&&inf!==EX&&inf!==PO&&inf.t){
                 c.style.cursor='pointer';
-                // Sequential lesson gate: only real lesson cells (dot-form
-                // topic) are gated; Review / other cells stay click-through.
-                const _isLessonCell = (typeof inf === 'object' && /^\d+\.\d+/.test(inf.t));
-                // Gate on the canonical topic-predecessor (window-independent +
-                // cross-portion), NOT the previous calendar cell — see §8. Summer
-                // cells carry individual topics, fall cells combined ("1.2+1.3"),
-                // so each dispatches to its own ordered sequence.
-                const _prevTopic = !_isLessonCell ? null
-                  : (wk._summer ? _prevSummerTopic(inf.t) : _prevTopicInSequence(inf.t));
-                if (_isLessonCell && !_isLessonUnlocked(inf.t, dt, _prevTopic, t, _gateMarks, _gateSignedIn)) {
-                    const _lockTopic = inf.t, _lockPrev = _prevTopic, _lockDs = ds;
-                    c.classList.add('cell-locked');
-                    c.insertAdjacentHTML('beforeend', '<span class="cell-lock">🔒</span>');
-                    c.onclick=()=>{hTip();_showLessonLockedDialog(_lockTopic,_lockPrev,_lockDs);};
-                } else if (inf.kind === 'orientation') {
+                if (inf.kind === 'orientation') {
                     // Day-1 welcome → the "how grades & makeups work" explainer.
                     c.onclick=()=>{hTip();if(typeof openGradeHelp==='function')openGradeHelp();};
                 } else if (inf.kind === 'baseline') {
@@ -552,12 +538,10 @@ function rCal(){
             }
             // a11y: a flat aria-label (from the same fields the tooltip shows) plus a
             // state suffix; every interactive cell becomes a keyboard-focusable
-            // role=button that reuses the onclick rCal already assigned (so the lock
-            // and Do-Now guards are honored). Non-interactive cells stay inert.
+            // role=button that reuses the onclick rCal already assigned. Non-interactive cells stay inert.
             let _aria = cellAria(inf, ds);
             if (c.classList.contains('cal-current')) { _aria += ' (next up)'; c.setAttribute('aria-current', 'step'); }
             else if (c.classList.contains('dc-localdone') || c.classList.contains('dc-done')) { _aria += ' (completed)'; }
-            if (c.classList.contains('cell-locked')) { _aria += ' (locked — finish the previous lesson first)'; }
             if (c.dataset.qmark) _aria += ' (' + c.dataset.qmark + ')';   // §3.4 quarter mark, in words
             c.setAttribute('aria-label', _aria);
             if (c.onclick) {

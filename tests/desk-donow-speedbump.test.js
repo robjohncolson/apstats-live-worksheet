@@ -75,9 +75,32 @@ describe('DN3c — D5 one-calendar collapse', () => {
     expect(b).toMatch(/textContent='Days to Exam'/);
   });
 
-  it('legacy SUMMER26/SY25-26 schedule defs are KEPT as dead code (not deleted)', () => {
-    expect(html).toMatch(/"SUMMER26"\s*:\s*\{/);
-    expect(html).toMatch(/"SY25-26"\s*:\s*\{/);
+  // Teacher 2026-11-24: the old calendars exist only for building future schedules (SUMMER27).
+  // They are developer reference in scripts/schedule-archive/, never shipped to a student or teacher.
+  it('the Desk no longer carries the SUMMER26 / SY25-26 schedule defs (SY26-27 is the only one)', () => {
+    expect(html).not.toMatch(/"SUMMER26"\s*:\s*\{/);
+    expect(html).not.toMatch(/"SY25-26"\s*:\s*\{/);
+    expect(html_SRC).not.toMatch(/"SUMMER26"\s*:\s*\{|"SY25-26"\s*:\s*\{/);
+    expect(html).toMatch(/const SCHEDULE_DEFS = \{\s*"SY26-27"\s*:\s*\{/);
+  });
+
+  it('both old calendars are kept, complete, in the developer archive that no page loads', async () => {
+    const { legacyScheduleDefs, LEGACY_SCHEDULE_KEYS } = await import('../scripts/schedule-archive/legacy-schedule-defs.mjs');
+    expect(LEGACY_SCHEDULE_KEYS).toEqual(['SUMMER26', 'SY25-26']);
+    const sb = { R: 'review', OFF: 'off', EX: 'exam', PO: 'post', NC: 'noclass' };
+    createContext(sb);
+    runInContext(fnBody(html_SRC, 'd') + '\nthis.__d = d;', sb);
+    const defs = legacyScheduleDefs({ d: sb.__d, R: sb.R, OFF: sb.OFF, EX: sb.EX, PO: sb.PO, NC: sb.NC });
+    expect(Object.keys(defs)).toEqual(['SUMMER26', 'SY25-26']);
+    expect(defs.SUMMER26._legacyS).toHaveLength(50);
+    expect(defs['SY25-26']._legacyS).toHaveLength(45);
+    expect(defs.SUMMER26._legacyS[0][3].t).toBe('1.1');
+    expect(defs['SY25-26'].periods.E.doubleDay).toBe(3);
+    // No script tag, import or service-worker list reaches the archive (a comment may name it).
+    const sw = readFileSync(resolve(REPO_ROOT, 'sw.js'), 'utf8');
+    expect(sw).not.toMatch(/schedule-archive/);
+    expect(html).not.toMatch(/(?:src|href)="[^"]*schedule-archive/);
+    expect(html_SRC).not.toMatch(/import\s*\([^)]*schedule-archive|from\s+['"][^'"]*schedule-archive/);
   });
 
   it('the #ib-year info-bar label is NOT a year-switcher (Codex escape-hatch fix)', () => {
@@ -86,15 +109,11 @@ describe('DN3c — D5 one-calendar collapse', () => {
     expect(span).not.toMatch(/cursor:\s*pointer/);
   });
 
-  it('cycleYear() is inert (no loadYear / no SCHEDULE_DEFS cycling)', () => {
-    const b = fnBody(html_SRC, 'cycleYear');
-    expect(b).not.toMatch(/loadYear\s*\(/);
-    expect(b).not.toMatch(/Object\.keys\(SCHEDULE_DEFS\)/);
-    // runtime: calling it does nothing / does not throw
-    const sb = { loadYear: () => { throw new Error('cycleYear must not loadYear'); }, console };
-    createContext(sb);
-    runInContext(fnBody(html_SRC, 'cycleYear') + '\nthis.__c = cycleYear;', sb);
-    expect(() => sb.__c()).not.toThrow();
+  it('cycleYear() is gone: nothing can cycle SCHEDULE_DEFS back to SUMMER26 / SY25-26', () => {
+    // It had been kept as an inert no-op (DN3c / D5); with no caller left it was removed 2026-11-24.
+    expect(html_SRC).not.toMatch(/function\s+cycleYear\s*\(/);
+    expect(html_SRC).not.toMatch(/cycleYear\s*\(\s*\)/);
+    expect(html).not.toMatch(/cycleYear/);
   });
 });
 

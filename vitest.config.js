@@ -8,9 +8,6 @@ import { defineConfig, configDefaults } from 'vitest/config';
 // TODO: make these self-skip on missing deps (describe.skipIf(existsSync(dep))) and drop
 // this list.
 const CI_ONLY_EXCLUDES = [
-  'tests/level-editor.test.js',          // ../curriculum_render activities corpus
-  'tests/level-editor-sim.test.js',      // ../curriculum_render activities corpus
-  'tests/level-editor-lint.test.js',     // ../curriculum_render activities corpus
   'tests/candy-poke.test.js',            // ../curriculum_render
   'tests/doge-presence-submenu.test.js', // ../curriculum_render
   'tests/disambiguate-skills.test.js',   // working data/skill-map.* (uncommitted)

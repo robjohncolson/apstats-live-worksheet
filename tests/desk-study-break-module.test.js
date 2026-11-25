@@ -17,7 +17,7 @@ const SW = readFileSync(resolve(ROOT, 'sw.js'), 'utf8');
 const BUMP = readFileSync(resolve(ROOT, 'scripts/bump-build.mjs'), 'utf8');
 
 describe('Desk loads the Study Break module in place', () => {
-  it('splits the inline script once more, between the PWA install hint and the My Progress module', () => {
+  it('splits the inline script once more, between the PWA install hint and the app launcher', () => {
     const tags = DESK.match(/<script src="js\/desk-study-break\.js\?v=[^"<>]+"><\/script>/g) || [];
     expect(tags.length).toBe(1);
     const at = DESK.indexOf(tags[0]);
@@ -25,12 +25,9 @@ describe('Desk loads the Study Break module in place', () => {
     expect(tags[0]).toContain('?v=' + stamp);
     expect(DESK.slice(at - 400, at)).toContain('</script>'); // the first inline block closes before it
     expect(at).toBeGreaterThan(DESK.indexOf('function _pwaInstallHelp()'));
-    // The My Progress module follows directly (no empty inline block between them), then the
-    // inline script reopens for the app launcher.
-    const next = DESK.indexOf('<script', at + tags[0].length);
-    expect(DESK.slice(next, next + 60)).toMatch(/^<script src="js\/desk-progress-app\.js\?v=/);
-    const reopen = DESK.indexOf('<script>', next);
-    expect(reopen).toBeGreaterThan(next);
+    // The inline script reopens directly after Study Break for the app launcher.
+    const reopen = DESK.indexOf('<script>', at + tags[0].length);
+    expect(reopen).toBeGreaterThan(at);
     expect(DESK.slice(reopen, reopen + 200)).toContain('/* ═══ APP LAUNCHER ═══ */');
   });
   it('leaves nothing of the region inline', () => {

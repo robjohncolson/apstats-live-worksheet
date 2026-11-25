@@ -89,24 +89,15 @@ describe('teacher onboarding + class gradebook (static)', () => {
     expect(workspace).toMatch(/openTool\(\s*'teacher-roster-console\.html'/);
   });
 
-  it('the My Gradebook modal has the teacher student-picker row', () => {
-    expect(document.getElementById('my-gradebook-student-row')).not.toBeNull();
-    expect(document.getElementById('my-gradebook-student')).not.toBeNull();
-  });
-
-  it('openClassGradebook + _selectClassStudent are defined in source', () => {
-    expect(deskSource()).toMatch(/async\s+function\s+openClassGradebook\s*\(/);
-    expect(deskSource()).toMatch(/function\s+_selectClassStudent\s*\(/);
-  });
-
-  it('the redundant Do-Now "Class Gradebook" chip was removed (Teacher Tools is the single entry)', () => {
+  it('the in-Desk Class Gradebook is gone: no Do-Now chip, no picker (the Dashboard is the class grid)', () => {
     // Do-Now declutter (2026-06-15): the Class Gradebook chip was dropped from the
-    // Do Now card — it duplicated the teacher path to Class Gradebook, which now
-    // lives in the Teacher Tools launcher (openTeacherTools → openClassGradebook).
+    // Do Now card. The Teacher Tools tile went next (it duplicated the Dashboard's
+    // class grid), and the unreachable picker + pop-up were removed 2026-11-24.
     // The Do-Now grade strip no longer builds a cgChip.
     expect(html).not.toContain('cgChip');
     expect(document.getElementById('menu-teacher').innerHTML).toContain('openTeacherTools()');
-    expect(deskSource()).toContain('openClassGradebook()');
+    expect(deskSource()).not.toContain('openClassGradebook');
+    expect(document.getElementById('my-gradebook-student')).toBeNull();
   });
 });
 
@@ -212,7 +203,7 @@ function makeSignup({ rosterClient } = {}) {
   const block = html.slice(start, end);
   runInContext(
     block +
-    '\nthis.__api = { _spinUsername, _renderSignupSections, openSignupModal, closeSignupModal, ' +
+    '\nthis.__api = { _spinUsername, _renderSignupSections, openSignupModal, ' +
     '_switchToSignUp, _switchToSignIn, submitSignUp, _toggleTeacherKey };',
     sandbox
   );

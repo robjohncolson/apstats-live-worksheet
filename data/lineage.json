@@ -102,14 +102,14 @@
       "notes": "The external builder also preserves progress-check and poster overlays from the existing file."
     },
     {
-      "id": "desk-baked-registry",
+      "id": "desk-page",
       "path": "ap_stats_roadmap_square_mode.html",
-      "kind": "derived",
-      "description": "Desk BAKED_REGISTRY offline fallback injected from roadmap-data.json.",
-      "inputs": ["roadmap-data"],
-      "regenerate": "node ../Agent/scripts/build-roadmap-data.mjs",
-      "pinnedBy": ["tests/schedule.test.js", "tests/roadmap-resilience.test.js"],
-      "notes": "The same command writes roadmap-data.json and injects the Desk constant."
+      "kind": "source",
+      "description": "The Desk page: the student home hub, edited by hand.",
+      "inputs": [],
+      "regenerate": null,
+      "pinnedBy": ["tests/desk-registry-boot.test.js", "tests/roadmap-resilience.test.js"],
+      "notes": "Carries no built-in lesson registry; it loads one at runtime (see desk-runtime-registry). bump-build stamps its APP_BUILD."
     },
     {
       "id": "supabase-lesson-urls",
@@ -126,10 +126,10 @@
       "path": "Desk runtime REGISTRY",
       "kind": "external",
       "description": "Merged Desk lesson registry visible to students at runtime.",
-      "inputs": ["roadmap-data", "desk-baked-registry", "supabase-lesson-urls"],
+      "inputs": ["roadmap-data", "supabase-lesson-urls"],
       "regenerate": null,
-      "pinnedBy": ["tests/roadmap-resilience.test.js", "manual"],
-      "notes": "Baked data is the fallback; Supabase lesson_urls overrides URLs after load."
+      "pinnedBy": ["tests/roadmap-resilience.test.js", "tests/desk-registry-boot.test.js", "manual"],
+      "notes": "Saved roadmap copy (localStorage), then roadmap-data.json, then Supabase lesson_urls on top; no built-in copy."
     },
     {
       "id": "lessons-index",
@@ -532,21 +532,11 @@
       "notes": "Only files in SHADOWED_APPS produce outputs; the broad glob makes root app edits visible in impact review."
     },
     {
-      "id": "gitnexus-shadow-tool-app",
-      "path": "tools/level-editor.html",
-      "kind": "source",
-      "description": "Nested level-editor app included in SHADOWED_APPS.",
-      "inputs": [],
-      "regenerate": null,
-      "pinnedBy": ["tests/gitnexus-shadow.test.js"],
-      "notes": "Listed separately because the root HTML glob does not include tools/."
-    },
-    {
       "id": "gitnexus-shadows",
       "path": "gitnexus-shadow/*.inline.js",
       "kind": "derived",
       "description": "Tracked line-preserving JavaScript shadows consumed by GitNexus indexing.",
-      "inputs": ["gitnexus-shadow-builder", "gitnexus-shadow-root-apps", "gitnexus-shadow-tool-app"],
+      "inputs": ["gitnexus-shadow-builder", "gitnexus-shadow-root-apps"],
       "regenerate": "npm run gitnexus:shadow",
       "pinnedBy": ["tests/gitnexus-shadow.test.js"],
       "notes": "The lineage freshness test reuses shadowOf and checks each SHADOWED_APPS output."
@@ -576,7 +566,7 @@
       "path": "version.json",
       "kind": "derived",
       "description": "Deployment build stamp polled by long-open Desk tabs.",
-      "inputs": ["desk-baked-registry"],
+      "inputs": ["desk-page"],
       "regenerate": "node scripts/bump-build.mjs",
       "pinnedBy": ["tests/desk-update-nudge.test.js", "tests/pwa.test.js"],
       "notes": "bump-build stamps version.json, Desk APP_BUILD, and service-worker BUILD together."

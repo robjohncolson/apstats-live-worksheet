@@ -174,7 +174,7 @@ describe('integrated teacher workspace', { timeout: 20_000 }, () => {
     expect(doc.getElementById('workspace-account').textContent).toContain('private-fixture');
     w.closeTscDrawer(); expect(doc.body.textContent).not.toContain('private-fixture');
   });
-  it('embeds the dashboard, gates teachers and routes deprecated review to recent work', () => {
+  it('embeds the dashboard and gates teachers', () => {
     const block = desk.slice(desk.indexOf('var _teacherWorkspaceFocus'), desk.indexOf('var _GRADE_CHECKIN_KEY'));
     expect(block).toContain("typeof _deskIsTeacher !== 'function' || !_deskIsTeacher()");
     expect(block).toContain('teacher-dashboard.html?workspace=1&view=');
@@ -182,7 +182,6 @@ describe('integrated teacher workspace', { timeout: 20_000 }, () => {
     expect(block).not.toContain('teacher-classroom.html');
     expect(block).not.toContain('teacher-code-generator.html');
     expect(block).toContain('event.source !== frame.contentWindow');
-    expect(desk).toContain("function openNightlyReview() {\n    openTeacherTools('recent');");
   });
 });
 

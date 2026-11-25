@@ -39,12 +39,12 @@ describe('Do Now card — readiness color + single My Ledger entry', () => {
   });
 
   it('folds the score breakdown · vs Schoology into the My Ledger window', () => {
-    // the wallet paint builds the collapsible breakdown and drives the SAME
-    // renderMyGradebook with its own containers (so the modal/teacher reuse stays).
+    // the wallet paint builds the collapsible breakdown and drives
+    // renderMyGradebook with its own containers (the old pop-up is gone).
     const paint = DESK.slice(DESK.indexOf('function _walletPaint'), DESK.indexOf('function _walletReceiptRow'));
     expect(paint).toMatch(/Score breakdown · vs Schoology/);
     expect(paint).toContain('renderMyGradebook(_firstGradebookQuarter(_activeGradebook), bdBody, bdTabs)');
-    // renderMyGradebook accepts injectable containers (defaults preserve the modal)
+    // renderMyGradebook draws into the containers its caller passes
     expect(DESK_SRC).toMatch(/function renderMyGradebook\(qk, bodyEl, tabsEl\)/);
   });
 
