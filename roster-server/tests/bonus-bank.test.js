@@ -4,7 +4,6 @@ import express from 'express';
 import http from 'node:http';
 import { mountClass, bonusAudit } from '../class.js';
 import { mountLedger } from '../ledger.js';
-import { mountReview } from '../review.js';
 import { createLedgerDb } from '../ledger-db.js';
 import { computeEffort } from '../doge-econ.js';
 import { initReceipts } from '../receipts.js';
@@ -34,7 +33,6 @@ async function start({ work = '35', pc = '90', frozen = '63', ledger = [bank()],
   const db = {
     async listRoster(section) { return { data: roster.filter(s => !section || s.section === section) }; },
     async listQuarterSnapshot(quarter) { return { data: frozenRows.filter(r => r.quarter === quarter) }; },
-    async listReviewMarksByStudents() { return { data: [] }; },
     async getRoleByStudentId(id) { return id === 'teacher' ? 'teacher' : 'student'; },
   };
   const ledgerDb = {
@@ -62,7 +60,6 @@ async function start({ work = '35', pc = '90', frozen = '63', ledger = [bank()],
   mountClass(app, { db, ledgerDb, config, lessonSchedule: SCHEDULE,
     loadAnswerKey: async () => ({ answerKey: ANSWER_KEY }) });
   mountLedger(app, { db: ledgerDb, rosterDb: db, verifyToken: token => token === 'teacher-token' ? 'teacher' : 's1' });
-  mountReview(app, { db, ledgerDb });
   const server = http.createServer(app);
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   servers.push(server);
@@ -225,13 +222,6 @@ describe('teacher bonus routes', () => {
       const detail = JSON.parse(result.body.rows.find(r => r.source === 'bonus_applied').response);
       expect(detail).toMatchObject({ workBefore: 35, workAfter: 40, switched: true, earlyBonus: 0 });
     }
-  });
-  it.each(['bonus', 'bonus_applied'])('excludes fresh %s rows from both review queues', async source => {
-    const { request } = await start({ ledger: [{ ...bank(), source, recorded_at: new Date().toISOString() }] });
-    const students = await request('/class/review-queue');
-    expect(students.body).toMatchObject({ unseenTotal: 0, students: [{ unseen: 0, items: [] }] });
-    const items = await request('/class/review-by-item');
-    expect(items.body).toMatchObject({ unseenTotal: 0, items: [] });
   });
   it('awards zero effort for signed and backfilled bonus receipts', async () => {
     vi.stubEnv('RECEIPT_ISSUER_PRIVATE_KEY', 'MC4CAQAwBQYDK2VwBCIEIEtFFgiPZyvBY+Udt3F77ZOHGypDcMHVJV9ck+a6kToO');

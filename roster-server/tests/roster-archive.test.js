@@ -373,14 +373,6 @@ describe('roster archive HTTP contract', () => {
     expect(ctx.db.listRosterCalls.at(-1)?.opts.includeArchived).not.toBe(true);
 
     ctx.db.listRosterCalls.length = 0;
-    const review = await ctx.server.request('GET', `/class/review-queue?section=${SECTION}`, {
-      headers: teacherHeader(),
-    });
-    expect(review.status).toBe(200);
-    expect(review.body.students.map((student) => student.studentId)).toEqual([ACTIVE_ID]);
-    expect(ctx.db.listRosterCalls.at(-1)?.opts.includeArchived).not.toBe(true);
-
-    ctx.db.listRosterCalls.length = 0;
     const picker = await ctx.server.request('GET', `/roster/section/${SECTION}`);
     expect(picker.status).toBe(200);
     expect(picker.body.students.map((student) => student.username)).toEqual(['active_student']);

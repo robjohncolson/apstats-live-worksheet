@@ -30,15 +30,12 @@ import { mountCommits } from './commits.js';
 import { mountMastery } from './mastery.js';
 import { mountClass } from './class.js';
 import { mountClassSnapshot } from './class-snapshot.js';
-import { mountReview } from './review.js';
 import { mountTeacherStudent } from './teacher.js';
 import { mountRemediation } from './remediation.js';
 import { mountPollArchive } from './poll-archive.js';
 import { mountNudge } from './nudge.js';
 import { mountWorksheetDiagnostics, createLiveDiagnosticsStore } from './worksheet-diagnostics.js';
 import { createLiveNudgesDb } from './nudge-db.js';
-import { mountLessonUnlock } from './lesson-unlock.js';
-import { createLiveLessonUnlockDb } from './lesson-unlock-db.js';
 import { mountOfficialGrade } from './official-grade.js';
 import { createLiveOfficialGradeDb } from './official-grade-db.js';
 import { mountPc } from './pc.js';
@@ -1242,32 +1239,6 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
   const nudgesDb = (typeof nudgesDbOverride !== 'undefined') ? nudgesDbOverride : createLiveNudgesDb();
   if (nudgesDb && db) {
     mountNudge(app, { db, nudgesDb });
-  }
-
-  // ── Nightly Review routes (NIGHTLY_REVIEW_SPEC.md) ────────────────────────
-  // GET /class/review-queue + POST /class/review. Teacher reviews recent work,
-  // marks it seen (+ optional comment), mints 1 bonus candy/student/review-day, and
-  // (on a comment) drops a teacher→student message via nudgesDb. Reviews are signed.
-  // Until migration 0025 runs, both routes respond 503 "nightly review not provisioned".
-  if (db && ledgerDb) {
-    mountReview(app, {
-      db, ledgerDb, nudgesDb,
-      loadAnswerKey: _gradingLoadAnswerKey || null,
-      lessonSchedule: _sched, eventSchedule: _events,
-      config: gradeConfig,
-      worksheetBlankCounts: worksheetBlankCounts || null,
-      ..._blooketBundle,
-    });
-  }
-
-  // ── Lesson-unlock routes (Phase 5 of TEACHER_STUDENT_CONSOLE_SPEC.md) ─────
-  // Needs lessonUnlockDb (data-access wrapper for the new lesson_unlock table).
-  // Until migrations/0009 is run on Supabase, the DB returns 42P01 and
-  // routes respond 503 "lesson_unlock not provisioned -- run migration 0009" --
-  // service stays up.
-  const lessonUnlockDb = (typeof lessonUnlockDbOverride !== 'undefined') ? lessonUnlockDbOverride : createLiveLessonUnlockDb();
-  if (lessonUnlockDb && db) {
-    mountLessonUnlock(app, { db, lessonUnlockDb });
   }
 
   // ── Official quarter grade (OFFICIAL_GRADE_SYNC_SPEC.md §4.3) ──────────────
