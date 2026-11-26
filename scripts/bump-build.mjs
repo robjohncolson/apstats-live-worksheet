@@ -34,9 +34,10 @@ desk = desk.replace(re, `$1${stamp}$2`);
 const ENTRY_SCRIPTS = ['canvas_engine.js', 'sprite_sheet.js', 'classroom-board.js', 'pico-home.js'];
 // Modules extracted from the Desk's inline script (js/desk-*.js) are versioned the same way.
 const DESK_MODULES = [
-  'js/desk-class-log.js', 'js/desk-missing-work.js',
-  'js/desk-signin.js', 'js/desk-grade-coach.js', 'js/desk-flashcards.js',
-  'js/desk-class-snapshot.js', 'js/desk-wallet.js',
+  'js/desk-class-log.js', 'js/desk-missing-work.js', 'js/desk-nudges.js',
+  'js/desk-signin.js', 'js/desk-donow.js', 'js/desk-grade-coach.js',
+  'js/desk-schedule.js', 'js/desk-resources.js', 'js/desk-flashcards.js',
+  'js/desk-class-snapshot.js', 'js/desk-wallet.js', 'js/desk-teacher-tools.js',
   'js/desk-gradebook-grid.js', 'js/desk-study-break.js', 'js/desk-park-bridge.js',
   'js/desk-doge-presence.js', 'js/desk-calendar.js',
 ];

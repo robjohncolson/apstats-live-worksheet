@@ -1133,27 +1133,6 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     // ===== guardrails =====
     // The x-teacher-secret is NEVER auto-persisted client-side. It is read
     // fresh from the input on every fetch (see api()).
@@ -4697,16 +4676,13 @@
         (stub.username ? '@' + stub.username : '') +
         (stub.section ? ' -- ' + stub.section : '');
 
-      // Body: loading state. Codex P6 MAJOR fold: clear unlocks-list too so
-      // stale rows from a prior student do not linger between the open and
-      // the resolution of the /lesson-unlocks fetch.
-      // P7: same pattern for nudges-list.
+      // Body: loading state. P7: clear nudges-list too so stale rows from a
+      // prior student do not linger between the open and the resolution of the
+      // nudge-history fetch.
       $('tsc-grade-card').textContent = 'Loading...';
       // Reconciliation reads the already-loaded class payload — render it now (sync).
       renderTscReconcile(_tscCurrentStudentId);
       $('tsc-recent-list').innerHTML = '';
-      var unlocksList = $('tsc-unlocks-list');
-      if (unlocksList) unlocksList.innerHTML = '';
       var nudgesList = $('tsc-nudges-list');
       if (nudgesList) nudgesList.innerHTML = '';
 
@@ -4723,12 +4699,11 @@
       Promise.allSettled([
         fetch(base + '/teacher/student/' + sid + '/grade', { headers: headers }).then(jsonOrErr),
         fetch(base + '/teacher/student/' + sid + '/recent?limit=100', { headers: headers }).then(jsonOrErr),
-        Promise.resolve({ ok: true, rows: [], lessonKeys: [] }),
         fetch(base + '/teacher/nudge-history?studentUsername=' + encodeURIComponent(stub.username || '') + '&limit=20', { headers: headers }).then(jsonOrErr)
       ]).then(function(results) {
         // Stale-result guard.
         if (reqId !== _tscReqSeq) return;
-        var gradeRes = results[0], recentRes = results[1], unlocksRes = results[2], nudgesRes = results[3];
+        var gradeRes = results[0], recentRes = results[1], nudgesRes = results[2];
         if (gradeRes.status === 'fulfilled') {
           renderTscGrade(gradeRes.value);
         } else {
@@ -4739,12 +4714,6 @@
           renderTscRecent(recentRes.value);
         } else {
           $('tsc-recent-list').innerHTML = '<li class="dim">Error loading recent submissions.</li>';
-        }
-        if (unlocksRes.status === 'fulfilled') {
-          renderTscUnlocks(unlocksRes.value);
-        } else {
-          // unlocks endpoint may 503 if migration not run -- silently render empty state.
-          renderTscUnlocks({ ok: false, lessonKeys: [], rows: [] });
         }
         if (nudgesRes.status === 'fulfilled') {
           renderTscNudges(nudgesRes.value);
@@ -4788,71 +4757,6 @@
     if (__viewAsBtn) __viewAsBtn.addEventListener('click', function() {
       _openViewAsTab(_tscCurrentStudentId);
     });
-
-    // T3 (P6 BUILD section 4.2): Render active lesson unlocks in the drawer section.
-    function renderTscUnlocks(payload) {
-      var el = $('tsc-unlocks-list');
-      if (!el) return;
-      el.innerHTML = '';
-      if (!payload || !payload.ok || !payload.rows || payload.rows.length === 0) {
-        el.innerHTML = '<li class="tsc-unlock-empty">No active overrides.</li>';
-        return;
-      }
-      payload.rows.forEach(function (row) {
-        var li = document.createElement('li');
-        var key = document.createElement('span');
-        key.className = 'tsc-unlock-key';
-        key.textContent = row.lesson_key;
-        var meta = document.createElement('span');
-        meta.className = 'tsc-unlock-meta';
-        var when = (row.unlocked_at || '').slice(0, 10);
-        var by = row.unlocked_by || 'teacher';
-        meta.textContent = when + ' \xB7 by ' + by + (row.reason ? ' \xB7 ' + row.reason : '');
-        var btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'tsc-unlock-revoke';
-        btn.textContent = 'Revoke';
-        btn.addEventListener('click', function () { revokeUnlock(row, li); });
-        li.appendChild(key); li.appendChild(meta); li.appendChild(btn);
-        el.appendChild(li);
-      });
-    }
-
-    // T3 (P6 BUILD section 4.2): Revoke a single lesson unlock row.
-    async function revokeUnlock(row, liEl) {
-      if (!_tscCurrentStudentStub) return;
-      // Confirm before destructive op.
-      if (!window.confirm('Revoke override for lesson ' + row.lesson_key + '?')) return;
-      try {
-        var res = await fetch(svcUrl() + '/teacher/lesson-unlock/revoke', {
-          method: 'POST',
-          headers: Object.assign({ 'Content-Type': 'application/json' }, teacherAuthHeaders()),
-          body: JSON.stringify({
-            studentUsername: _tscCurrentStudentStub.username,
-            lessonKey: row.lesson_key,
-          }),
-        });
-        var j = await res.json().catch(function () { return {}; });
-        if (!res.ok || !j.ok) {
-          showError('Revoke failed: ' + (j && j.error ? j.error : ('HTTP ' + res.status)));
-          return;
-        }
-        // Optimistic: fade the row out, then remove from DOM.
-        liEl.style.opacity = '0.4';
-        liEl.style.pointerEvents = 'none';
-        setTimeout(function () {
-          try { liEl.remove(); } catch (_) {}
-          // Codex P6 MINOR fold: if this was the last visible unlock, re-render
-          // the empty-state placeholder so the section does not end up blank.
-          var listEl = $('tsc-unlocks-list');
-          if (listEl && listEl.children.length === 0) {
-            listEl.innerHTML = '<li class="tsc-unlock-empty">No active overrides.</li>';
-          }
-        }, 240);
-      } catch (err) {
-        showError('Network error revoking: ' + (err && err.message ? err.message : 'unknown'));
-      }
-    }
 
     // P7 (TEACHER_STUDENT_CONSOLE_P7_BUILD.md section 3.3): Render nudge history.
     // XSS safety: all text from the row goes through textContent, never innerHTML.

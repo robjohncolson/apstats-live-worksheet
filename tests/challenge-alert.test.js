@@ -12,10 +12,10 @@ import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { JSDOM } from 'jsdom';
 import { runInContext, createContext } from 'node:vm';
-import { deskSource, deskHtml } from './helpers/desk-source.js';
+import { deskSource, deskHtmlInlined } from './helpers/desk-source.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const html = deskHtml();
+const html = deskHtmlInlined();
 const html_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
 
 function objLiteral(src, decl) {

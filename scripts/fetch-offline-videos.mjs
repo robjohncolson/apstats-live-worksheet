@@ -31,7 +31,8 @@ import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const DESK = resolve(REPO, 'ap_stats_roadmap_square_mode.html');
+// The Desk's RESOURCES table lives in js/desk-resources.js (moved out of ap_stats_roadmap_square_mode.html).
+const DESK = resolve(REPO, 'js/desk-resources.js');
 const CR_UNITS = resolve(REPO, '..', 'curriculum_render', 'data', 'units.js');
 const UA = 'Mozilla/5.0 (offline-pack builder) AppleWebKit/537.36';
 

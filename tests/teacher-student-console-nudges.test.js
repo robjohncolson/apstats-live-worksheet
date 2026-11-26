@@ -84,14 +84,14 @@ describe('Nudge History DOM presence', () => {
     expect(DASH).toMatch(/id="tsc-nudges-list"/);
   });
 
-  it('nudges section sits between unlocks section and actions nav in DOM order', () => {
-    const unlocksIdx = DASH.indexOf('id="tsc-section-unlocks"');
+  it('nudges section sits between recent section and actions nav in DOM order (lesson unlocks retired)', () => {
+    const recentIdx = DASH.indexOf('id="tsc-section-recent"');
     const nudgesIdx = DASH.indexOf('id="tsc-section-nudges"');
     const actionsIdx = DASH.indexOf('class="tsc-actions"');
-    expect(unlocksIdx).toBeGreaterThan(-1);
+    expect(recentIdx).toBeGreaterThan(-1);
     expect(nudgesIdx).toBeGreaterThan(-1);
     expect(actionsIdx).toBeGreaterThan(-1);
-    expect(unlocksIdx).toBeLessThan(nudgesIdx);
+    expect(recentIdx).toBeLessThan(nudgesIdx);
     expect(nudgesIdx).toBeLessThan(actionsIdx);
   });
 

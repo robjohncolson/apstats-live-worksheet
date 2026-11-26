@@ -58,7 +58,11 @@ const CHECK_ONLY = process.argv.includes('--check');
 const { PHASE3_CONFIG } = await import(new URL('../roster-server/grade-config.js', import.meta.url));
 
 // ── 1. Extract the live calendar + generator from the Desk ───────────────────
-const DESK = readFileSync(DESK_PATH, 'utf8');
+// The Desk HTML plus every js/desk-*.js module it loads, in document order: the schedule data
+// and RESOURCES now live in js/desk-schedule.js and js/desk-resources.js.
+const DESK_HTML = readFileSync(DESK_PATH, 'utf8');
+const DESK = [DESK_HTML, ...[...DESK_HTML.matchAll(/<script\b[^>]*\bsrc="(js\/desk-[^"?]+\.js)(?:\?[^"]*)?"/g)]
+  .map((m) => readFileSync(resolve(ROOT, m[1]), 'utf8'))].join('\n');
 
 function uniqueIndex(marker) {
   const at = DESK.indexOf(marker);

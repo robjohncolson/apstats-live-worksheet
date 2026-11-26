@@ -7,6 +7,8 @@ import path from 'node:path';
 
 const SKILLS = path.resolve(import.meta.dirname, '..', '.grok', 'skills');
 const read = (...parts) => fs.readFileSync(path.join(SKILLS, ...parts), 'utf8');
+// memory-refresh was retired to .grok/skills-retired; its pins apply only while the skill is installed.
+const HAS_MEMORY_REFRESH = fs.existsSync(path.join(SKILLS, 'memory-refresh', 'SKILL.md'));
 const PRIVACY = 'sends student names and grades to xAI';
 
 describe('privacy warning', () => {
@@ -122,7 +124,7 @@ describe('UTF-8 python', () => {
     if (probe.error) return; // python is not installed: skip
     expect(probe.stdout.trim().toLowerCase()).toBe('utf-8');
   });
-  it('every python command in memory-refresh/SKILL.md carries -X utf8', () => {
+  it.skipIf(!HAS_MEMORY_REFRESH)('every python command in memory-refresh/SKILL.md carries -X utf8', () => {
     const commands = read('memory-refresh', 'SKILL.md').split('\n').filter(line => line.startsWith('python '));
     expect(commands.length).toBeGreaterThan(0);
     for (const command of commands) expect(command).toContain('-X utf8');
@@ -134,7 +136,7 @@ describe('no hardcoded user paths', () => {
     expect(read('quarter-close', 'close-check.mjs')).not.toMatch(/C:[\/]+Users[\/]+rober/i);
   });
   for (const name of ['reminders', 'poster-scores', 'quarter-close', 'pc-frq-scoring', 'memory-refresh']) {
-    it(`${name}/SKILL.md has no C:/Users/rober`, () => {
+    it.skipIf(name === 'memory-refresh' && !HAS_MEMORY_REFRESH)(`${name}/SKILL.md has no C:/Users/rober`, () => {
       expect(read(name, 'SKILL.md')).not.toMatch(/C:[\/]+Users[\/]+rober/i);
     });
   }

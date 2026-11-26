@@ -9,11 +9,11 @@ import { fileURLToPath } from 'node:url';
 import { JSDOM } from 'jsdom';
 import { createContext, runInContext } from 'node:vm';
 import { beforeAll } from 'vitest';
-import { deskSource, deskHtml } from './helpers/desk-source.js';
+import { deskSource, deskHtml, deskHtmlInlined } from './helpers/desk-source.js';
 let C;
 beforeAll(async () => { await import('../lib/class-snapshot.js'); C = globalThis.ClassSnapshot; });
 
-const html = deskHtml();
+const html = deskHtmlInlined(); // markup + every js/desk-*.js module pasted back inline (the pinned code moved to modules)
 const html_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
 function fnSrc(name) {
   const m = new RegExp('(?:async\\s+)?function\\s+' + name + '\\s*\\(').exec(html_SRC);

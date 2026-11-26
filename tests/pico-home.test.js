@@ -706,11 +706,12 @@ describe('pico-home -- wiring and art', () => {
   });
 
   it('the Desk loads pico-home.js beside classroom-board.js with the same build stamp', () => {
-    const tags = deskSource.match(/<script src="(classroom-board|pico-home)\.js\?v=([^"]+)"><\/script>/g);
+    const tags = deskSource.match(/<script src="(classroom-board|pico-home)\.js\?v=([^"]+)"[^>]*><\/script>/g);
     expect(tags).toHaveLength(2);
     expect(tags[0]).toContain('classroom-board.js');
     expect(tags[1]).toContain('pico-home.js');
-    expect(tags[0].split('?v=')[1]).toBe(tags[1].split('?v=')[1]);
+    const stamp = (tag) => /\?v=([^"]+)/.exec(tag)[1];
+    expect(stamp(tags[0])).toBe(stamp(tags[1]));
     expect(bumpSource).toMatch(/'classroom-board\.js', 'pico-home\.js'\]/);
   });
 
@@ -886,16 +887,16 @@ describe('pico-home -- inside the real Desk', { timeout: 60_000 }, () => {
     try {
       const { document: doc, window: win } = harness;
       await signIn(harness);
-      // A live activity with this student in it: the Desk's capture-phase handler would turn
-      // ArrowUp / ArrowDown into an activity value.
+      // A live activity with this student in it. The Desk's capture-phase arrow handler that used to turn
+      // ArrowUp / ArrowDown into an activity value was removed with the V4/V7 activities (40149c13);
+      // the spy stays so a returning handler would still be caught.
       const sendActivityValue = vi.fn();
       win._classroomBoardHandle = { sendActivityValue };
       win._lastClassroomSummary = { activity: { finished: false, state: { values: { alpha_otter: 0 } } } };
       const down = (target) => target.dispatchEvent(new win.KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }));
 
-      // Sanity: with no Pico menu open, the Desk handler is live.
       down(doc.body);
-      expect(sendActivityValue).toHaveBeenCalledTimes(1);
+      expect(sendActivityValue).not.toHaveBeenCalled();
 
       doc.querySelector('#pico-home .navbtn[data-nav="OPTION"]').click();
       expect(doc.activeElement.textContent).toBe('SIGN OUT');
@@ -904,7 +905,7 @@ describe('pico-home -- inside the real Desk', { timeout: 60_000 }, () => {
       expect(doc.activeElement.classList.contains('is-selected')).toBe(true);
       down(doc.activeElement);
       expect(doc.activeElement.textContent.startsWith('SOUND')).toBe(true);
-      expect(sendActivityValue).toHaveBeenCalledTimes(1);
+      expect(sendActivityValue).not.toHaveBeenCalled();
 
       // Same inside LESSONS.
       doc.activeElement.dispatchEvent(new win.KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
@@ -912,7 +913,7 @@ describe('pico-home -- inside the real Desk', { timeout: 60_000 }, () => {
       doc.querySelector('#pico-home .navbtn[data-nav="LESSONS"]').click();
       down(doc.activeElement);
       expect(doc.activeElement.textContent).toMatch(/^REVIEW/);
-      expect(sendActivityValue).toHaveBeenCalledTimes(1);
+      expect(sendActivityValue).not.toHaveBeenCalled();
     } finally {
       harness.teardown();
     }

@@ -7,10 +7,10 @@ import { JSDOM } from 'jsdom';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 import { createContext, runInContext } from 'vm';
-import { deskSource, deskHtml } from './helpers/desk-source.js';
+import { deskSource, deskHtml, deskHtmlInlined } from './helpers/desk-source.js';
 
 const SRC = readFileSync(resolve(import.meta.dirname, '..', 'offline-video.js'), 'utf8');
-const DESK = deskHtml();
+const DESK = deskHtmlInlined(); // markup + every js/desk-*.js module pasted back inline (the video render branch lives in js/desk-resources.js)
 const DESK_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
 
 const MANIFEST = {

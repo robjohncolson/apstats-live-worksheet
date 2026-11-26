@@ -64,7 +64,8 @@ describe('Desk loads ti84-plot.js', () => {
     expect(cbIdx).toBeGreaterThan(-1);
     expect(plotIdx).toBeGreaterThan(-1);
     // They should be adjacent script tags; the gap must be small.
-    expect(Math.abs(plotIdx - cbIdx)).toBeLessThan(200);
+    // (Was 200: the pico-home.js <script> tag + its onerror fallback now sit between them.)
+    expect(Math.abs(plotIdx - cbIdx)).toBeLessThan(450);
   });
 });
 
@@ -152,12 +153,13 @@ describe('_fetchPollArchive function', () => {
 
   it('15: _fetchPollArchive is called at Desk init', () => {
     // Called once at startup alongside _mountClassroomBoard.
-    const initIdx = DESK.indexOf('_mountClassroomBoard');
+    // Anchor on the init CALL, not the first mention (the function definition comes earlier).
+    const initIdx = DESK.indexOf("if(typeof _mountClassroomBoard==='function')_mountClassroomBoard();");
     const fetchCallIdx = DESK.indexOf('_fetchPollArchive()', initIdx);
     expect(initIdx).toBeGreaterThan(-1);
     expect(fetchCallIdx).toBeGreaterThan(-1);
-    // Must be within 300 chars of the _mountClassroomBoard call.
-    expect(fetchCallIdx - initIdx).toBeLessThan(300);
+    // Must be in the same init block (the presence auto-connect comment sits between them).
+    expect(fetchCallIdx - initIdx).toBeLessThan(800);
   });
 });
 

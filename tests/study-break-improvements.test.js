@@ -10,10 +10,10 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { deskSource, deskHtml } from './helpers/desk-source.js';
+import { deskSource, deskHtmlInlined } from './helpers/desk-source.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const html = deskHtml();
+const html = deskHtmlInlined();
 const html_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
 
 const SB_START = html_SRC.indexOf('const studyBreak = {');
@@ -313,10 +313,7 @@ describe('square aids — hint + ghost material', () => {
 });
 
 describe('Desk-side guards + a11y + sound (source pins)', () => {
-  it('B2: the Live Classroom capture-phase ↑/↓ handler yields to an open game', () => {
-    // Other early-outs may sit between the key filter and the game guard (e.g. the APStat Park scene guard).
-    expect(html).toMatch(/if \(e\.key !== 'ArrowUp' && e\.key !== 'ArrowDown'\) return;[\s\S]{0,400}?if \(typeof studyBreak !== 'undefined' && studyBreak\.isOpen && studyBreak\.isOpen\(\)\) return;/);
-  });
+  // (The Live Classroom capture-phase arrow-key handler this used to pin was removed with the V4/V7 activities in 40149c13.)
   it('B2: the Desk Escape router does not destroy app windows under the game', () => {
     expect(html).toMatch(/var gameOpen = !!\(typeof studyBreak[\s\S]*?querySelectorAll\('\.app-overlay'\)\.forEach\(function\(el\) \{\s*if \(gameOpen\) return;/);
   });

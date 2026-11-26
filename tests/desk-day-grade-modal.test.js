@@ -9,11 +9,11 @@ import { readFileSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { JSDOM } from 'jsdom';
-import { deskSource, deskHtml } from './helpers/desk-source.js';
+import { deskSource, deskHtml, deskHtmlInlined } from './helpers/desk-source.js';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const deskPath = resolve(repo, 'ap_stats_roadmap_square_mode.html');
-const DESK = existsSync(deskPath) ? deskHtml() : null;
+const DESK = existsSync(deskPath) ? deskHtmlInlined() : null; // markup + every js/desk-*.js module pasted back inline (the pinned code moved to modules)
 const DESK_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
 
 it('day-grade display renders 105 and the earned exit-ticket bonus', () => {

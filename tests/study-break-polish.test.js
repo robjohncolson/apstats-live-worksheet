@@ -2,9 +2,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { deskSource, deskHtml } from './helpers/desk-source.js';
+import { deskSource, deskHtmlInlined } from './helpers/desk-source.js';
 
-const html = deskHtml();
+const html = deskHtmlInlined();
 const html_SRC = deskSource(); // the Desk's JS incl. js/desk-*.js modules: code pins read this
 const start = html_SRC.indexOf('const studyBreak = {');
 const source = html_SRC.slice(start, html_SRC.indexOf('\n};\n', start) + 3);

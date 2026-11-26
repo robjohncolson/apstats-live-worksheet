@@ -12,7 +12,7 @@ import { JSDOM } from 'jsdom';
 import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { deskSource, deskHtml } from './helpers/desk-source.js';
+import { deskSource, deskHtml, deskHtmlInlined } from './helpers/desk-source.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const DESK = deskHtml();
@@ -65,6 +65,7 @@ describe('Desk wiring', () => {
     expect(DESK.indexOf('lib/class-log-summary.js')).toBeGreaterThan(DESK.indexOf('<script src="lib/sfx.js"'));
   });
   it('mounts the fold from the lesson panel and the work-day panel, gated on the module', () => {
+    const DESK = deskHtmlInlined(); // the panel code moved to js/desk-*.js modules
     const calls = DESK.match(/_mountClassLogFold\(/g) || [];
     expect(calls.length).toBe(3); // definition + lesson panel + work-day panel (the typeof guards have no paren)
     const helper = DESK.slice(DESK.indexOf('function _mountClassLogFold('), DESK.indexOf('function _mountClassLogFold(') + 700);

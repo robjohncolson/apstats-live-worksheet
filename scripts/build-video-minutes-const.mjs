@@ -3,7 +3,8 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
-const deskPath = fileURLToPath(new URL('../ap_stats_roadmap_square_mode.html', import.meta.url));
+// VIDEO_MINUTES lives in the Desk's schedule module (moved out of ap_stats_roadmap_square_mode.html).
+const deskPath = fileURLToPath(new URL('../js/desk-schedule.js', import.meta.url));
 const inventory = JSON.parse(readFileSync(new URL('../data/video-minutes.json', import.meta.url), 'utf8'));
 const minutes = {};
 for (const [topic, entry] of Object.entries(inventory.topics)) {

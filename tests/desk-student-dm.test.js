@@ -471,11 +471,11 @@ describe('student DM modal -- _buildSdmHistoryLi', () => {
 
 import { readFileSync as _rfs } from 'fs';
 import { resolve as _resolve } from 'path';
-import { deskSource, deskHtml } from './helpers/desk-source.js';
+import { deskSource, deskHtml, deskHtmlInlined } from './helpers/desk-source.js';
 
 describe('Codex P13 fold regressions', () => {
   const DESK_PATH = _resolve(__dirname, '..', 'ap_stats_roadmap_square_mode.html');
-  const DESK_HTML = _rfs(DESK_PATH, 'utf-8');
+  const DESK_HTML = deskHtmlInlined(); // the student-DM code moved to js/desk-nudges.js
 
   // MAJOR: history-fetch race guard. _sdmHistoryEpoch is bumped on every
   // call; the awaits re-check before rendering so stale resolutions are
